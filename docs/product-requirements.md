@@ -44,44 +44,90 @@ Without AI, it would be considerably more difficult to block off time work appro
 
 #### Essential (Must-Have)
 
-<!-- Features required for the minimum viable product. -->
+
+- Users can log in using their Google account.
+- Users must complete a required onboarding process including:
+  - Basic information about study habits and preferences (preferred work hours, highest productivity times, focus block length).
+  - Transcript upload to identify strong and weak subject areas.
+- The system allows syllabi uploads and extracts relevant exams and assignment due dates. In case of failure, retries and manual text input are allowed.
+- Users can manually add, edit, or remove tasks and time estimates.
+- The system pulls the student’s availability from Google Calendar and schedules task-related time blocks and assignments in the in-app calendar, which is two-way synced with Google Calendar and Google Tasks.
+- An AI chatbot is available on the dashboard and can modify the schedule and update user habits based on input.
+- The system generates optimal time estimates for each task based on:
+  - Task type (problem set, essay, coding assignment, exam preparation).
+  - Performance in prerequisite or related courses from transcript analysis.
+  - Course difficulty indicators (credit hours, level).
+- The system provides finer task breakdowns for large assignments, homework, or midterm planning when sufficient information is provided.
+- Users can provide feedback on time estimates.
+- Manual time override is supported.
+- Users can designate missed study blocks.
+- The system learns from edits to the plan and user feedback for future assignments.
+- The system provides a daily outline of time to spend on upcoming tasks.
+- Users can view a daily summary and upcoming deadlines in a centralized dashboard.
+- Users have a settings dashboard where they can modify their preferences.
 
 #### Non-Essential (Nice-to-Have)
 
-<!-- Features to add if time permits. -->
+- Users can set priority levels for tasks.
+- Users can upload class websites to provide assignment data.
+- Integration with Gradescope API and Instructure Canvas API to pull active courses, assignment titles, and due dates.
+- Email integration to schedule meetings in Calendar or offer meeting times.
+- Users can connect email accounts so the system can scan academic emails for exams, meetings, and assignments.
 
 #### Out of Scope (Won't Have)
 
-<!-- Features explicitly excluded from this project. -->
+- Integration with non-Google calendar and task providers.
+- Native mobile apps (web-responsive design only).
+- Real-time collaboration features.
+- Grade prediction or GPA calculator.
+- Study assistance features.
 
 ### Non-Functional Requirements
 
 #### Performance
 
-<!-- Response time, load capacity, etc. -->
+- Pages load in under 2 seconds.
+- Study schedule generation in under 2 seconds.
+- Document upload and initial ingestion in under 10 seconds.
+- Document parsing and AI-based extraction in under 30 seconds.
 
 #### Security
 
-<!-- Authentication, authorization, data protection. -->
+- Authentication via Google OAuth.
+- All API endpoints require authenticated requests using OAuth tokens.
+- Role-based access control ensures users can only access their own data.
+- Rate limiting of 120 requests per minute per user.
+- HTTPS enforced for all API traffic.
 
 #### Privacy
 
-<!-- How user data is stored, shared, and deleted. -->
+- All stored user data and documents encrypted with:
+  - AES-256 at rest
+  - SSL/TLS in transit
+- Data retention policy:
+  - Active account data retained indefinitely.
+  - Deleted account data permanently removed within 30 days.
+  - Only the most recent transcript is retained.
+  - Syllabi retained indefinitely unless manually deleted.
 
 #### Usability
 
-<!-- Accessibility, responsive design, ease of use. -->
+- Initial onboarding survey takes no longer than 2 minutes to complete.
 
 ### Technology Stack
 
-- **Frontend:**
-- **Backend:**
-- **Database:**
-- **Auth:**
-- **AI Services:**
-- **External:**
-- **Deployment:**
-- **Testing:**
+- **Frontend:** React, TypeScript, TailwindCSS  
+- **Backend:** TypeScript
+- **Database:** Supabase
+- **Auth:** Google OAuth
+- **AI Services:** Google Gemini
+- **External:** 
+  - Google Calendar API  
+  - Google Tasks API  
+  - Gradescope API  
+  - Canvas API  
+- **Deployment:** Vercel
+- **Testing:** Jest
 
 ## Product Roadmap
 
