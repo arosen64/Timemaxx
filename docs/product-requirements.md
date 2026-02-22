@@ -137,38 +137,67 @@ Without AI, it would be considerably more difficult to block off time work appro
 
 **Dates:** Week 5-6
 
-**Goal:**
+**Goal:** Auth, Basic UI, and Initial Time Estimation
 
 **Must-Have Features:**
 
+- Users can log in using their Google account
+- Manual assignment entry: user pastes assignment description
+- The system generates optimal time estimates for each task based on task type (e.g., problem set, essay, coding assignment, exam preparation)
+- User completes basic onboarding survey with information about their study habits and preferences (e.g., preferred work hours, highest productivity times, focus block length)
+- Users' data from onboarding process is retained between sessions so they can return to the application without re-entering information
+
 **Nice-to-Have Features:**
+
+- Users can access a central dashboard that displays their task list, with the ability to manually add, edit, or remove tasks
 
 ### Iteration 2
 
 **Dates:** Week 7-8
 
-**Goal:**
+**Goal:** File Parsing and Improved Time Estimation
 
 **Must-Have Features:**
 
+- Onboarding survey is updated with transcript upload option
+- The system allows syllabi uploads and extracts relevant exams and assignment due dates. In case of failure, retries and text inputs are allowed
+- Users have a settings dashboard where they can modify their original preferences
+- The system pulls the student’s availability from Google Calendar and evaluates what time blocks the user is available and can schedule a task for that time
+
 **Nice-to-Have Features:**
+
+- Users can upload class websites to provide the system with assignment data
 
 ### Iteration 3
 
 **Dates:** Week 10-11
 
-**Goal:**
+**Goal:** System Learns Study Habits
 
 **Must-Have Features:**
 
+- Adaptive and accurate time block estimation using users transcripts, prior performance in classes (particularly pre recs), and user context given in text to the chatbot about reflection on certain tasks to give more context to particular skills that would translate to work time.
+- An AI chatbot will be present on the dashboard and will be able to modify the schedule and update user habits based on input and feedback
+- Sync tasks to be able to be automatically exported to users' Google Calendar
+
 **Nice-to-Have Features:**
+
+- System integrates with Instructure Canvas API to pull active courses, assignment titles, and due dates
+- System integrates with Gradescope API to pull active courses, assignment titles, and due dates
 
 ### Iteration 4
 
 **Dates:** Week 12-13
 
-**Goal:**
+**Goal:** Centralized Dashboard and Email Scanning
 
 **Must-Have Features:**
 
+- Users can view a daily summary of their to-dos and upcoming deadlines in a centralized dashboard
+- Final bug fixes and performance improvements
+- Users can connect the system to their email so the system can scan academic emails for exams/ meetings/ assignments.
+
 **Nice-to-Have Features:**
+
+- Users can set priority levels for their tasks
+- The application integrates with email to schedule meetings in Calendar/ offer times to meet.
