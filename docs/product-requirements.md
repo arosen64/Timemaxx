@@ -118,15 +118,14 @@ Without AI, it would be considerably more difficult to block off time work appro
 
 - **Frontend:** React, TypeScript, TailwindCSS  
 - **Backend:** TypeScript
-- **Database:** Supabase
+- **Database:** Convex
 - **Auth:** Google OAuth
 - **AI Services:** Google Gemini
 - **External:** 
   - Google Calendar API  
   - Google Tasks API  
-  - Gradescope API  
   - Canvas API  
-- **Deployment:** Vercel
+- **Deployment:** GitHub Actions
 - **Testing:** Jest
 
 ## Product Roadmap
