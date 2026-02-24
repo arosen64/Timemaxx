@@ -175,9 +175,6 @@ Return JSON: { "estimatedHours": number, "rationale": string }
 
 | # | Task | Type | Assignee(s) | Requirement |
 |---|---|---|---|---|
-| 2 | Write Product Requirements | task | riatalwar | — |
-| 3 | Fill Out Team Agreement | task | riatalwar | — |
-| 5 | Write Iteration 1 Plan | task | amintze2 | — |
 | 17 | Project setup: initialize React + Vite + TailwindCSS + Convex + routing | task | amintze2 | All |
 | 18 | Design and finalize Convex schema (users, tasks tables) | task | anviimishra | R3, R4 |
 | 11 | **R1: Google Authentication** | feature | riatalwar, mromoni1 | R1 |
@@ -199,5 +196,4 @@ Return JSON: { "estimatedHours": number, "rationale": string }
 | 16 | **R6: Task Dashboard (Nice-to-Have)** | feature | tranade, anviimishra | R6 |
 | 30 | &nbsp;&nbsp;Build dashboard task list: display tasks with title, type, and estimated time | task | tranade | R6 |
 | 31 | &nbsp;&nbsp;Add edit and delete task functionality to dashboard | task | tranade | R6 |
-| 33 | Create profile page with log out option | feature | (unassigned) | — |
-| 34 | Update task assignments in Iteration 1 plan | bug | riatalwar | — |
+| 33 | Create profile page with log out option | feature | mromoni1 | R1 |
