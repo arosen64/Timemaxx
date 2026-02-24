@@ -175,24 +175,25 @@ Return JSON: { "estimatedHours": number, "rationale": string }
 
 | # | Task | Type | Assignee(s) | Requirement |
 |---|---|---|---|---|
-| TBD | Project setup: initialize React + Vite + TailwindCSS + Convex + routing | task | TBD | All |
-| TBD | Design and finalize Convex schema (users, tasks tables) | task | TBD | R3, R4 |
-| TBD | **R1: Google Authentication** | feature | TBD | R1 |
-| TBD | &nbsp;&nbsp;Build landing/login page UI with "Sign in with Google" button | task | TBD | R1 |
-| TBD | &nbsp;&nbsp;Implement Google OAuth flow with Convex Auth and session persistence | task | TBD | R1 |
-| TBD | &nbsp;&nbsp;Add post-login redirect logic (new user → onboarding, returning → dashboard) | task | TBD | R1 |
-| TBD | **R2: Onboarding Survey** | feature | TBD | R2 |
-| TBD | &nbsp;&nbsp;Build work hours UI: per-day time windows with add/remove support | task | TBD | R2 |
-| TBD | &nbsp;&nbsp;Build focus block length field, form validation, and submission | task | TBD | R2 |
-| TBD | **R3: User Data Persistence** | feature | TBD | R3 |
-| TBD | &nbsp;&nbsp;Implement `saveOnboardingData` mutation and `getUserProfile` query in Convex | task | TBD | R3 |
-| TBD | &nbsp;&nbsp;Wire survey submission to Convex and enforce onboarding redirect guard | task | TBD | R2, R3 |
-| TBD | **R4: Manual Assignment Entry** | feature | TBD | R4 |
-| TBD | &nbsp;&nbsp;Build task entry form UI (description input, task type selector) | task | TBD | R4 |
-| TBD | &nbsp;&nbsp;Implement `createTask` Convex mutation and connect form to backend | task | TBD | R4 |
-| TBD | **R5: AI-Based Time Estimation** | feature | TBD | R5 |
-| TBD | &nbsp;&nbsp;Implement `estimateTaskTime` Convex action: finalize Gemini prompt and API call | task | TBD | R5 |
-| TBD | &nbsp;&nbsp;Display time estimate on task and handle loading/error/retry states | task | TBD | R5 |
-| TBD | **R6: Task Dashboard (Nice-to-Have)** | feature | TBD | R6 |
-| TBD | &nbsp;&nbsp;Build dashboard task list: display tasks with title, type, and estimated time | task | TBD | R6 |
-| TBD | &nbsp;&nbsp;Add edit and delete task functionality to dashboard | task | TBD | R6 |
+| 17 | Project setup: initialize React + Vite + TailwindCSS + Convex + routing | task | amintze2 | All |
+| 18 | Design and finalize Convex schema (users, tasks tables) | task | anviimishra | R3, R4 |
+| 11 | **R1: Google Authentication** | feature | riatalwar, mromoni1 | R1 |
+| 19 | &nbsp;&nbsp;Build landing/login page UI with "Sign in with Google" button | task | mromoni1 | R1 |
+| 20 | &nbsp;&nbsp;Implement Google OAuth flow with Convex Auth and session persistence | task | mromoni1 | R1 |
+| 21 | &nbsp;&nbsp;Add post-login redirect logic (new user → onboarding, returning → dashboard) | task | mromoni1 | R1 |
+| 12 | **R2: Onboarding Survey** | feature | tranade, amintze2 | R2 |
+| 22 | &nbsp;&nbsp;Build work hours UI: per-day time windows with add/remove support | task | amintze2 | R2 |
+| 23 | &nbsp;&nbsp;Build focus block length field, form validation, and submission | task | amintze2 | R2 |
+| 13 | **R3: User Data Persistence** | feature | mromoni1, anviimishra | R3 |
+| 24 | &nbsp;&nbsp;Implement `saveOnboardingData` mutation and `getUserProfile` query in Convex | task | anviimishra | R3 |
+| 25 | &nbsp;&nbsp;Wire survey submission to Convex and enforce onboarding redirect guard | task | anviimishra | R2, R3 |
+| 14 | **R4: Manual Assignment Entry** | feature | riatalwar, arosen64 | R4 |
+| 26 | &nbsp;&nbsp;Build task entry form UI (description input, task type selector) | task | riatalwar | R4 |
+| 27 | &nbsp;&nbsp;Implement `createTask` Convex mutation and connect form to backend | task | riatalwar | R4 |
+| 15 | **R5: AI-Based Time Estimation** | feature | arosen64, amintze2 | R5 |
+| 28 | &nbsp;&nbsp;Implement `estimateTaskTime` Convex action: finalize Gemini prompt and API call | task | arosen64 | R5 |
+| 29 | &nbsp;&nbsp;Display time estimate on task and handle loading/error/retry states | task | arosen64 | R5 |
+| 16 | **R6: Task Dashboard (Nice-to-Have)** | feature | tranade, anviimishra | R6 |
+| 30 | &nbsp;&nbsp;Build dashboard task list: display tasks with title, type, and estimated time | task | tranade | R6 |
+| 31 | &nbsp;&nbsp;Add edit and delete task functionality to dashboard | task | tranade | R6 |
+| 33 | Create profile page with log out option | feature | mromoni1 | R1 |
