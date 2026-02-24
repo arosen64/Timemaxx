@@ -19,11 +19,11 @@
 
 ### R2: Onboarding Survey
 
-**Description:** New users complete a required onboarding survey capturing study habits and preferences: preferred work hours, highest productivity times, and focus block length.
+**Description:** New users complete a required onboarding survey capturing study habits and preferences: preferred work hours (per day of the week) and focus block length.
 
 - **Acceptance Criteria:**
   - [ ] New users are redirected to the onboarding survey after first login
-  - [ ] Survey collects: preferred work hours, highest productivity times, and focus block length
+  - [ ] Survey collects: preferred work hours and focus block length
   - [ ] All required fields must be completed before submission
   - [ ] Survey can be completed in under 2 minutes
   - [ ] Returning users (who have already completed onboarding) are not shown the survey again
@@ -60,7 +60,7 @@
 
 - **Acceptance Criteria:**
   - [ ] Time estimate is generated automatically after task submission
-  - [ ] Estimation uses task type (problem set, essay, coding assignment, exam preparation) as input
+  - [ ] Estimation uses task type as input
   - [ ] Time estimate is displayed to the user alongside the task
   - [ ] Estimation completes within 30 seconds of submission
   - [ ] If estimation fails, an error is shown and the user can retry
@@ -74,7 +74,7 @@
 - **Acceptance Criteria:**
   - [ ] Dashboard displays all tasks for the logged-in user (title, type, estimated time)
   - [ ] Users can add new tasks from the dashboard
-  - [ ] Users can edit task details (description, type)
+  - [ ] Users can edit task details (description, type, due date)
   - [ ] Users can delete tasks
   - [ ] Dashboard is accessible immediately after login for returning users
 
@@ -106,8 +106,15 @@
 {
   googleId: string,         // from OAuth
   email: string,
-  preferredWorkHours: { start: string, end: string },
-  highestProductivityTimes: string[],
+  preferredWorkHours: {
+    monday: { start: string, end: string }[],
+    tuesday: { start: string, end: string }[],
+    wednesday: { start: string, end: string }[],
+    thursday: { start: string, end: string }[],
+    friday: { start: string, end: string }[],
+    saturday: { start: string, end: string }[],
+    sunday: { start: string, end: string }[],
+  },
   focusBlockLength: number, // in minutes
   onboardingComplete: boolean,
 }
