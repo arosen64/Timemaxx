@@ -1,33 +1,35 @@
-# Project Title
+# Timemaxx
 
-<!-- TODO: Replace with your project name and description -->
-
-## Project Description
-
-<!-- TODO: 2-3 sentences about what your project does and why -->
+An AI-powered study scheduler that estimates task time and builds personalized study plans.
 
 ## Prerequisites
 
 - [Git](https://git-scm.com/downloads)
 - [GitHub CLI (`gh`)](https://cli.github.com/) — used for issue, label, milestone, and PR management
+- [Node.js](https://nodejs.org/) v18+
 
 ## Setup
-
-<!-- TODO: Fill in after choosing your tech stack -->
 
 ```bash
 # Clone the repository
 git clone <repo-url>
-cd <project-name>
+cd team-04
 
 # Install dependencies
-<command>
+npm install
+
+# Connect to Convex (creates .env.local with VITE_CONVEX_URL)
+npx convex dev
 ```
 
 ## Running the Application
 
 ```bash
-<command>
+# In one terminal — starts the Convex backend
+npx convex dev
+
+# In another terminal — starts the Vite dev server
+npm run dev
 ```
 
 ## Running Tests

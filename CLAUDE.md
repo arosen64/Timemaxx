@@ -2,33 +2,40 @@
 
 ## Project Description
 
-<!-- TODO: Describe your project in 1-2 sentences -->
+AI-powered study scheduler that estimates task time using Google Gemini and builds personalized study plans based on user preferences.
 
 ## Tech Stack
 
-<!-- TODO: List your technologies (e.g., React + Vite, Python + Flask, etc.) -->
+React + Vite + TypeScript + TailwindCSS + Convex + React Router + Google Gemini
 
 ## Commands
 
-<!-- TODO: Fill in after choosing your tech stack -->
-
-- Install dependencies: `<command>`
-- Run development server: `<command>`
+- Install dependencies: `npm install`
+- Run development server: `npm run dev` (also run `npx convex dev` in a separate terminal)
 - Run tests: `<command>`
 - Run linter: `<command>`
-- Build for production: `<command>`
+- Build for production: `npm run build`
 
 ## Code Style
 
-<!-- TODO: Document your team's style decisions -->
-
 - Formatting: (e.g., Prettier, Black, etc.)
 - Linting: (e.g., ESLint, Ruff, etc.)
-- Naming conventions: (e.g., camelCase for JS, snake_case for Python)
+- Naming conventions: camelCase for variables/functions, PascalCase for components
 
 ## Architecture
 
-<!-- TODO: Describe your project structure -->
+```
+src/
+  pages/       # Route-level page components
+  components/  # Reusable UI components
+  main.tsx     # App entry point (ConvexProvider + BrowserRouter)
+  App.tsx      # Route definitions
+convex/
+  schema.ts    # Convex database schema
+  # mutations, queries, and actions added per feature
+```
+
+Routes: `/` (landing) → `/onboarding` (new users) → `/dashboard`
 
 ## Branch & Commit Conventions
 
