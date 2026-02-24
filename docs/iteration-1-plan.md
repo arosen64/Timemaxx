@@ -176,10 +176,23 @@ Return JSON: { "estimatedHours": number, "rationale": string }
 | # | Task | Type | Assignee(s) | Requirement |
 |---|---|---|---|---|
 | TBD | Project setup: initialize React + Vite + TailwindCSS + Convex + routing | task | TBD | All |
-| TBD | Implement Google OAuth with Convex Auth | feature | TBD | R1 |
 | TBD | Design and finalize Convex schema (users, tasks tables) | task | TBD | R3, R4 |
-| TBD | Build onboarding survey UI | feature | TBD | R2 |
-| TBD | Save onboarding data to Convex and enforce redirect logic | feature | TBD | R2, R3 |
-| TBD | Build manual task entry form | feature | TBD | R4 |
-| TBD | Integrate Gemini API for AI time estimation | feature | TBD | R5 |
-| TBD | Build task dashboard (nice-to-have) | feature | TBD | R6 |
+| TBD | **R1: Google Authentication** | feature | TBD | R1 |
+| TBD | &nbsp;&nbsp;Build landing/login page UI with "Sign in with Google" button | task | TBD | R1 |
+| TBD | &nbsp;&nbsp;Implement Google OAuth flow with Convex Auth and session persistence | task | TBD | R1 |
+| TBD | &nbsp;&nbsp;Add post-login redirect logic (new user → onboarding, returning → dashboard) | task | TBD | R1 |
+| TBD | **R2: Onboarding Survey** | feature | TBD | R2 |
+| TBD | &nbsp;&nbsp;Build work hours UI: per-day time windows with add/remove support | task | TBD | R2 |
+| TBD | &nbsp;&nbsp;Build focus block length field, form validation, and submission | task | TBD | R2 |
+| TBD | **R3: User Data Persistence** | feature | TBD | R3 |
+| TBD | &nbsp;&nbsp;Implement `saveOnboardingData` mutation and `getUserProfile` query in Convex | task | TBD | R3 |
+| TBD | &nbsp;&nbsp;Wire survey submission to Convex and enforce onboarding redirect guard | task | TBD | R2, R3 |
+| TBD | **R4: Manual Assignment Entry** | feature | TBD | R4 |
+| TBD | &nbsp;&nbsp;Build task entry form UI (description input, task type selector) | task | TBD | R4 |
+| TBD | &nbsp;&nbsp;Implement `createTask` Convex mutation and connect form to backend | task | TBD | R4 |
+| TBD | **R5: AI-Based Time Estimation** | feature | TBD | R5 |
+| TBD | &nbsp;&nbsp;Implement `estimateTaskTime` Convex action: finalize Gemini prompt and API call | task | TBD | R5 |
+| TBD | &nbsp;&nbsp;Display time estimate on task and handle loading/error/retry states | task | TBD | R5 |
+| TBD | **R6: Task Dashboard (Nice-to-Have)** | feature | TBD | R6 |
+| TBD | &nbsp;&nbsp;Build dashboard task list: display tasks with title, type, and estimated time | task | TBD | R6 |
+| TBD | &nbsp;&nbsp;Add edit and delete task functionality to dashboard | task | TBD | R6 |
