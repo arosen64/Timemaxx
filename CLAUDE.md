@@ -33,8 +33,10 @@ frontend/
     App.tsx      # Route definitions
 backend/
   convex/
-    schema.ts    # Convex database schema
-    # mutations, queries, and actions added per feature
+    schema.ts      # Convex database schema
+    queries/       # Read-only data fetching functions (useQuery)
+    mutations/     # Write operations that modify the database (useMutation)
+    actions/       # Side-effectful functions, e.g. Google Gemini API calls
 ```
 
 Routes: `/` (landing) → `/onboarding` (new users) → `/dashboard`

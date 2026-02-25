@@ -48,7 +48,11 @@ frontend/        # React + Vite + TailwindCSS app
     main.tsx     # App entry point
     App.tsx      # Route definitions
 backend/
-  convex/        # Convex backend (schema, queries, mutations, actions)
+  convex/
+    schema.ts      # Convex database schema
+    queries/       # Read-only data fetching functions (useQuery)
+    mutations/     # Write operations that modify the database (useMutation)
+    actions/       # Side-effectful functions, e.g. Google Gemini API calls
 ```
 
 ## Documentation
