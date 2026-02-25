@@ -11,7 +11,8 @@ React + Vite + TypeScript + TailwindCSS + Convex + React Router + Google Gemini
 ## Commands
 
 - Install dependencies: `npm install`
-- Run development server: `npm run dev` (also run `npx convex dev` in a separate terminal)
+- Run backend: `npx convex dev` (run this first, in its own terminal)
+- Run frontend: `npm run dev` (run this after the backend is running, in a separate terminal)
 - Run tests: `<command>`
 - Run linter: `<command>`
 - Build for production: `npm run build`
@@ -25,14 +26,18 @@ React + Vite + TypeScript + TailwindCSS + Convex + React Router + Google Gemini
 ## Architecture
 
 ```
-src/
-  pages/       # Route-level page components
-  components/  # Reusable UI components
-  main.tsx     # App entry point (ConvexProvider + BrowserRouter)
-  App.tsx      # Route definitions
-convex/
-  schema.ts    # Convex database schema
-  # mutations, queries, and actions added per feature
+frontend/
+  src/
+    pages/       # Route-level page components
+    components/  # Reusable UI components
+    main.tsx     # App entry point (ConvexProvider + BrowserRouter)
+    App.tsx      # Route definitions
+backend/
+  convex/
+    schema.ts      # Convex database schema
+    queries/       # Read-only data fetching functions (useQuery)
+    mutations/     # Write operations that modify the database (useMutation)
+    actions/       # Side-effectful functions, e.g. Google Gemini API calls
 ```
 
 Routes: `/` (landing) → `/onboarding` (new users) → `/dashboard`

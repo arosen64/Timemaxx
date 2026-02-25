@@ -38,6 +38,23 @@ npm run dev
 <command>
 ```
 
+## Project Structure
+
+```
+frontend/        # React + Vite + TailwindCSS app
+  src/
+    pages/       # Route-level page components
+    components/  # Reusable UI components
+    main.tsx     # App entry point
+    App.tsx      # Route definitions
+backend/
+  convex/
+    schema.ts      # Convex database schema
+    queries/       # Read-only data fetching functions (useQuery)
+    mutations/     # Write operations that modify the database (useMutation)
+    actions/       # Side-effectful functions, e.g. Google Gemini API calls
+```
+
 ## Documentation
 
 - Iteration plans: `docs/iteration-x-plan.md`
