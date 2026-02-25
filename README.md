@@ -38,6 +38,19 @@ npm run dev
 <command>
 ```
 
+## Project Structure
+
+```
+frontend/        # React + Vite + TailwindCSS app
+  src/
+    pages/       # Route-level page components
+    components/  # Reusable UI components
+    main.tsx     # App entry point
+    App.tsx      # Route definitions
+backend/
+  convex/        # Convex backend (schema, queries, mutations, actions)
+```
+
 ## Documentation
 
 - Iteration plans: `docs/iteration-x-plan.md`

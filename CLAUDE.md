@@ -25,14 +25,16 @@ React + Vite + TypeScript + TailwindCSS + Convex + React Router + Google Gemini
 ## Architecture
 
 ```
-src/
-  pages/       # Route-level page components
-  components/  # Reusable UI components
-  main.tsx     # App entry point (ConvexProvider + BrowserRouter)
-  App.tsx      # Route definitions
-convex/
-  schema.ts    # Convex database schema
-  # mutations, queries, and actions added per feature
+frontend/
+  src/
+    pages/       # Route-level page components
+    components/  # Reusable UI components
+    main.tsx     # App entry point (ConvexProvider + BrowserRouter)
+    App.tsx      # Route definitions
+backend/
+  convex/
+    schema.ts    # Convex database schema
+    # mutations, queries, and actions added per feature
 ```
 
 Routes: `/` (landing) → `/onboarding` (new users) → `/dashboard`

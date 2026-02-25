@@ -4,9 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
-    "preview": "vite preview"
+    "dev": "vite frontend",
+    "build": "tsc -b frontend/tsconfig.json && vite build frontend",
+    "preview": "vite preview frontend"
   },
   "dependencies": {
     "convex": "^1.17.0",
