@@ -46,15 +46,17 @@
                       "name": "logoMark",
                       "width": 40,
                       "height": 40,
-                      "fill": "#F1C400",
+                      "fill": "#86C8BC",
                       "cornerRadius": 4,
+                      "justifyContent": "center",
+                      "alignItems": "center",
                       "children": [
                         {
                           "type": "icon_font",
                           "id": "HfGRU",
                           "name": "logoMarkIcon",
-                          "width": 22,
-                          "height": 22,
+                          "width": 26,
+                          "height": 26,
                           "iconFontName": "book-open",
                           "iconFontFamily": "lucide",
                           "fill": "#002D72"
@@ -66,7 +68,7 @@
                       "id": "55ssu",
                       "name": "logoText",
                       "fill": "#FFFFFF",
-                      "content": "StudyAI",
+                      "content": "Timemaxx",
                       "fontFamily": "Space Grotesk",
                       "fontSize": 22,
                       "fontWeight": "700"
@@ -77,6 +79,7 @@
                   "type": "frame",
                   "id": "eULlv",
                   "name": "heroHeadline",
+                  "width": "fill_container",
                   "layout": "vertical",
                   "gap": 16,
                   "children": [
@@ -95,6 +98,7 @@
                       "type": "text",
                       "id": "10Cl9",
                       "name": "heroSub",
+                      "width": "fill_container",
                       "fill": "#68ACE5",
                       "content": "AI-powered scheduling that estimates your task time and builds a personalized study plan around your life.",
                       "lineHeight": 1.6,
@@ -126,7 +130,7 @@
                       "name": "feat1dot",
                       "width": 8,
                       "height": 8,
-                      "fill": "#F1C400",
+                      "fill": "#86C8BC",
                       "cornerRadius": 4
                     },
                     {
@@ -154,7 +158,7 @@
                       "name": "feat2dot",
                       "width": 8,
                       "height": 8,
-                      "fill": "#F1C400",
+                      "fill": "#86C8BC",
                       "cornerRadius": 4
                     },
                     {
@@ -182,7 +186,7 @@
                       "name": "feat3dot",
                       "width": 8,
                       "height": 8,
-                      "fill": "#F1C400",
+                      "fill": "#86C8BC",
                       "cornerRadius": 4
                     },
                     {
@@ -212,7 +216,7 @@
                   "name": "jhubadgeBar",
                   "width": 3,
                   "height": 32,
-                  "fill": "#F1C400"
+                  "fill": "#86C8BC"
                 },
                 {
                   "type": "text",
@@ -366,15 +370,17 @@
                   "name": "topbarMark",
                   "width": 30,
                   "height": 30,
-                  "fill": "#F1C400",
+                  "fill": "#86C8BC",
                   "cornerRadius": 4,
+                  "justifyContent": "center",
+                  "alignItems": "center",
                   "children": [
                     {
                       "type": "icon_font",
                       "id": "cjPpJ",
                       "name": "topbarMarkIcon",
-                      "width": 16,
-                      "height": 16,
+                      "width": 20,
+                      "height": 20,
                       "iconFontName": "book-open",
                       "iconFontFamily": "lucide",
                       "fill": "#002D72"
@@ -386,7 +392,7 @@
                   "id": "5Yu2s",
                   "name": "topbarName",
                   "fill": "#FFFFFF",
-                  "content": "StudyAI",
+                  "content": "Timemaxx",
                   "fontFamily": "Space Grotesk",
                   "fontSize": 18,
                   "fontWeight": "700"
@@ -406,7 +412,7 @@
                   "name": "step1pill",
                   "width": 32,
                   "height": 6,
-                  "fill": "#F1C400",
+                  "fill": "#86C8BC",
                   "cornerRadius": 3
                 },
                 {
@@ -777,7 +783,7 @@
                       "height": 16,
                       "iconFontName": "arrow-right",
                       "iconFontFamily": "lucide",
-                      "fill": "#F1C400"
+                      "fill": "#86C8BC"
                     }
                   ]
                 }
@@ -833,15 +839,17 @@
                       "name": "sideMark",
                       "width": 32,
                       "height": 32,
-                      "fill": "#F1C400",
+                      "fill": "#86C8BC",
                       "cornerRadius": 4,
+                      "justifyContent": "center",
+                      "alignItems": "center",
                       "children": [
                         {
                           "type": "icon_font",
                           "id": "HQelZ",
                           "name": "sideMarkIcon",
-                          "width": 18,
-                          "height": 18,
+                          "width": 22,
+                          "height": 22,
                           "iconFontName": "book-open",
                           "iconFontFamily": "lucide",
                           "fill": "#002D72"
@@ -853,7 +861,7 @@
                       "id": "GqFfG",
                       "name": "sideLogoText",
                       "fill": "#FFFFFF",
-                      "content": "StudyAI",
+                      "content": "Timemaxx",
                       "fontFamily": "Space Grotesk",
                       "fontSize": 18,
                       "fontWeight": "700"
@@ -1149,7 +1157,7 @@
                       "height": 16,
                       "iconFontName": "plus",
                       "iconFontFamily": "lucide",
-                      "fill": "#F1C400"
+                      "fill": "#86C8BC"
                     },
                     {
                       "type": "text",
@@ -1329,7 +1337,7 @@
                       "type": "text",
                       "id": "4Cuj7",
                       "name": "stat3val",
-                      "fill": "#F1C400",
+                      "fill": "#86C8BC",
                       "content": "7",
                       "fontFamily": "Space Grotesk",
                       "fontSize": 36,
@@ -1348,7 +1356,7 @@
                           "name": "stat3dot",
                           "width": 8,
                           "height": 8,
-                          "fill": "#F1C400",
+                          "fill": "#86C8BC",
                           "cornerRadius": 4
                         },
                         {
