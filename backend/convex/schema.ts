@@ -1,4 +1,9 @@
-import { defineSchema } from 'convex/server'
+import { defineSchema, defineTable } from "convex/server";
+import { v } from "convex/values";
 
-// Schema will be defined in issue #18
-export default defineSchema({})
+export default defineSchema({
+  randoms: defineTable({
+    value: v.string(),
+    createdAt: v.number(),
+  }),
+});
