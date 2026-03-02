@@ -1,10 +1,9 @@
 import { colors, fonts } from '../styles/tokens'
+import { useAuthActions } from "@convex-dev/auth/react";
 
 export default function LandingPage() {
-  function handleGoogleSignIn() {
-    // TODO: wire up Convex Auth Google OAuth (issue #20)
-    console.log("Google Sign In clicked")
-  }
+
+  const { signIn } = useAuthActions(); 
 
   return (
     <div className="flex min-h-screen w-full" style={{ fontFamily: fonts.body }}>
@@ -105,7 +104,7 @@ export default function LandingPage() {
 
           {/* Google Sign In Button */}
           <button
-            onClick={handleGoogleSignIn}
+            onClick={() => signIn("google")} 
             className="flex w-full items-center justify-center gap-3 font-semibold text-white transition hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2"
             style={{
               backgroundColor: colors.navy,
