@@ -8,20 +8,13 @@
  * @module
  */
 
-import type * as mutations_random from "../mutations/random.js";
-import type * as queries_random from "../queries/random.js";
-
 import type {
   ApiFromModules,
   FilterApi,
   FunctionReference,
 } from "convex/server";
 
-declare const fullApi: ApiFromModules<{
-  "mutations/random": typeof mutations_random;
-  "queries/random": typeof queries_random;
-}>;
-
+declare const fullApi: ApiFromModules<{}>;
 /**
  * A utility for referencing Convex functions in your app's public API.
  *
