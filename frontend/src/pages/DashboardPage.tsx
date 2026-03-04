@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { colors } from '../styles/tokens'
 import AddTaskModal from '../components/AddTaskModal'
 
 export default function DashboardPage() {
@@ -42,7 +41,7 @@ function PlusIcon() {
       height="16"
       viewBox="0 0 24 24"
       fill="none"
-      stroke={colors.teal}
+      className="stroke-teal"
       strokeWidth="2.5"
       strokeLinecap="round"
       strokeLinejoin="round"

@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { colors } from '../styles/tokens'
 
 const TASK_TYPES = ['Problem Set', 'Essay', 'Coding', 'Exam Prep'] as const
 
@@ -109,7 +108,7 @@ function CalendarIcon() {
       height="16"
       viewBox="0 0 24 24"
       fill="none"
-      stroke={colors.lightBlue}
+      className="stroke-light-blue"
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
