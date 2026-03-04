@@ -1,0 +1,171 @@
+/* ── Modal ───────────────────────────────────────── */
+
+.modal-backdrop {
+  @apply fixed inset-0 z-50 flex items-center justify-center;
+  background-color: rgba(0, 45, 114, 0.3);
+}
+
+.modal-card {
+  @apply flex flex-col bg-white;
+  width: 520px;
+  padding: 48px;
+  gap: 24px;
+  border-radius: 12px;
+  border: 1px solid theme('colors.border');
+}
+
+.modal-title {
+  @apply font-heading font-bold text-navy;
+  font-size: 26px;
+}
+
+.modal-close-btn {
+  @apply flex items-center justify-center bg-bg-gray text-light-blue cursor-pointer;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: none;
+  font-family: theme('fontFamily.body');
+  font-size: 18px;
+}
+
+.modal-subtitle {
+  @apply font-body text-slate-blue;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* ── Form fields ─────────────────────────────────── */
+
+.form-body {
+  @apply flex flex-col w-full;
+  gap: 20px;
+}
+
+.form-field {
+  @apply flex flex-col w-full;
+  gap: 6px;
+}
+
+.form-label {
+  @apply font-heading font-semibold text-navy;
+  font-size: 13px;
+}
+
+.form-input {
+  @apply bg-bg-gray font-body text-navy outline-none;
+  height: 44px;
+  border-radius: 6px;
+  border: 1px solid theme('colors.border');
+  padding: 0 14px;
+  font-size: 14px;
+}
+
+.form-input::placeholder {
+  @apply text-light-blue;
+}
+
+.form-textarea {
+  @apply bg-bg-gray font-body text-navy outline-none resize-none;
+  height: 96px;
+  border-radius: 6px;
+  border: 1px solid theme('colors.border');
+  padding: 10px 14px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.form-textarea::placeholder {
+  @apply text-light-blue;
+}
+
+.form-date-wrapper {
+  @apply flex items-center justify-between bg-bg-gray;
+  height: 44px;
+  border-radius: 6px;
+  border: 1px solid theme('colors.border');
+  padding: 0 14px;
+}
+
+.form-date-input {
+  @apply font-body text-navy outline-none flex-1 border-none bg-transparent;
+  font-size: 14px;
+}
+
+.form-date-input::placeholder {
+  @apply text-light-blue;
+}
+
+/* ── Task-type chips ─────────────────────────────── */
+
+.chip {
+  @apply flex items-center justify-center font-body cursor-pointer;
+  height: 36px;
+  border-radius: 6px;
+  padding: 0 14px;
+  font-size: 13px;
+}
+
+.chip-selected {
+  @apply bg-navy text-white font-semibold border-none;
+}
+
+.chip-unselected {
+  @apply bg-bg-gray text-slate-blue font-normal;
+  border: 1px solid theme('colors.border');
+}
+
+/* ── Modal buttons ───────────────────────────────── */
+
+.modal-btn-row {
+  @apply flex w-full;
+  gap: 12px;
+}
+
+.btn-cancel {
+  @apply flex flex-1 items-center justify-center font-heading font-semibold text-slate-blue bg-bg-gray cursor-pointer;
+  height: 48px;
+  border-radius: 8px;
+  border: 1px solid theme('colors.border');
+  font-size: 15px;
+}
+
+.btn-submit {
+  @apply flex flex-1 items-center justify-center font-heading font-semibold text-white bg-navy cursor-pointer border-none;
+  height: 48px;
+  border-radius: 8px;
+  font-size: 15px;
+  gap: 8px;
+}
+
+.btn-submit-dot {
+  @apply inline-block bg-teal;
+  width: 6px;
+  height: 6px;
+  border-radius: 3px;
+}
+
+/* ── Dashboard: Add Task button ──────────────────── */
+
+.add-task-btn {
+  @apply flex items-center bg-navy cursor-pointer border-none;
+  height: 44px;
+  border-radius: 8px;
+  padding: 0 20px;
+  gap: 8px;
+}
+
+.add-task-btn-text {
+  @apply font-heading font-semibold text-white;
+  font-size: 14px;
+}
+
+/* ── Dashboard: placeholder content area ─────────── */
+
+.dashboard-placeholder {
+  @apply flex flex-1 items-center justify-center text-slate-blue;
+  border-radius: 10px;
+  border: 1px dashed theme('colors.border');
+  font-size: 14px;
+}
