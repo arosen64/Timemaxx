@@ -27,7 +27,6 @@ export default function OnboardingPage() {
   const [profileErrors, setProfileErrors] = useState<{ major?: string; year?: string }>({})
   const [workHours, setWorkHours] = useState<WorkHoursData>(DEFAULT_WORK_HOURS)
   const [preferences, setPreferences] = useState<PreferencesData>(DEFAULT_PREFERENCES)
-  const [focusBlockError, setFocusBlockError] = useState<string | undefined>()
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const validateStep1 = (): boolean => {
@@ -36,15 +35,6 @@ export default function OnboardingPage() {
     if (!profile.year) errors.year = 'Please select your year'
     setProfileErrors(errors)
     return Object.keys(errors).length === 0
-  }
-
-  const validateStep3 = (): boolean => {
-    if (preferences.focusBlockLength === '' || Number(preferences.focusBlockLength) <= 0) {
-      setFocusBlockError('Please enter your preferred focus block length')
-      return false
-    }
-    setFocusBlockError(undefined)
-    return true
   }
 
   const handleNext = () => {
@@ -57,7 +47,6 @@ export default function OnboardingPage() {
   }
 
   const handleSubmit = async () => {
-    if (!validateStep3()) return
     setIsSubmitting(true)
     // TODO (issue #18): Replace with Convex mutation once schema is defined.
     // The mutation should save: profile, workHours, and preferences.
@@ -111,11 +100,7 @@ export default function OnboardingPage() {
         )}
 
         {step === 3 && (
-          <PreferencesForm
-            data={preferences}
-            onChange={setPreferences}
-            focusBlockError={focusBlockError}
-          />
+          <PreferencesForm data={preferences} onChange={setPreferences} />
         )}
 
         {/* Navigation */}

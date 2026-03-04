@@ -173,10 +173,9 @@ export const DEFAULT_PREFERENCES: PreferencesData = {
 interface PreferencesFormProps {
   data: PreferencesData
   onChange: (data: PreferencesData) => void
-  focusBlockError?: string
 }
 
-export default function PreferencesForm({ data, onChange, focusBlockError }: PreferencesFormProps) {
+export default function PreferencesForm({ data, onChange }: PreferencesFormProps) {
   const getSelected = (key: string): string[] => data.traits[key] ?? []
 
   const handleToggle = (key: string, option: string) => {
@@ -216,7 +215,7 @@ export default function PreferencesForm({ data, onChange, focusBlockError }: Pre
       {/* Focus block length */}
       <div className="flex flex-col gap-1 border-t border-gray-100 pt-4">
         <label className="text-sm font-semibold text-gray-800">
-          Focus Block Length (minutes) <span className="text-red-500">*</span>
+          Focus Block Length (minutes)
         </label>
         <p className="text-xs text-gray-400">How long is your ideal uninterrupted study session?</p>
         <input
@@ -231,11 +230,8 @@ export default function PreferencesForm({ data, onChange, focusBlockError }: Pre
             })
           }
           placeholder="e.g. 45"
-          className={`w-32 rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 ${
-            focusBlockError ? 'border-red-400' : 'border-gray-300 focus:border-blue-500'
-          }`}
+          className="w-32 rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
         />
-        {focusBlockError && <p className="text-xs text-red-500">{focusBlockError}</p>}
       </div>
     </div>
   )
