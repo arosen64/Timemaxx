@@ -22,6 +22,13 @@ Before reaching for custom CSS, check whether Tailwind's modifier syntax already
 
 Never use inline `style={{}}` props unless the value is genuinely dynamic and cannot be expressed as a Tailwind class.
 
+### Custom Class Naming
+
+When a custom class is necessary, use kebab-case and prefix it with `tm-` to avoid collisions with Tailwind-generated class names:
+
+- **Do**: `tm-card-shimmer`, `tm-fade-in`
+- **Don't**: `cardShimmer`, `anim1`, `shimmer`
+
 ## Class Ordering
 
 Order Tailwind classes consistently within each element:
