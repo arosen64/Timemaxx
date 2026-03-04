@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import ProfileForm from '../components/ProfileForm'
-import { ProfileData } from '../types'
+import WorkHoursSelector, { DEFAULT_WORK_HOURS } from '../components/WorkHoursSelector'
+import { ProfileData, WorkHoursData } from '../types'
 
 // TODO (issue #18 + #45): After schema is defined, add a Convex query here to check
 // if the current user already has a profile, and redirect to /dashboard if so.
@@ -23,8 +24,9 @@ export default function OnboardingPage() {
   const [step, setStep] = useState<Step>(1)
   const [profile, setProfile] = useState<ProfileData>(DEFAULT_PROFILE)
   const [profileErrors, setProfileErrors] = useState<{ major?: string; year?: string }>({})
+  const [workHours, setWorkHours] = useState<WorkHoursData>(DEFAULT_WORK_HOURS)
 
-  // workHoursData and preferencesData state will be added in issues #22 and #23
+  // preferencesData state will be added in issue #23
 
   const validateStep1 = (): boolean => {
     const errors: { major?: string; year?: string } = {}
@@ -77,18 +79,14 @@ export default function OnboardingPage() {
         })}
       </div>
 
-      {/* Form card */}
-      <div className="w-full max-w-lg rounded-2xl bg-white p-8 shadow-sm">
+      {/* Form card — wider on step 2 to accommodate the grid */}
+      <div className={`w-full rounded-2xl bg-white p-8 shadow-sm ${step === 2 ? 'max-w-2xl' : 'max-w-lg'}`}>
         {step === 1 && (
           <ProfileForm data={profile} onChange={setProfile} errors={profileErrors} />
         )}
 
-        {/* Placeholder for issue #22 */}
         {step === 2 && (
-          <div className="flex flex-col gap-4">
-            <h2 className="text-xl font-semibold text-gray-900">Work Hours</h2>
-            <p className="text-sm text-gray-500">Coming soon — see issue #22.</p>
-          </div>
+          <WorkHoursSelector data={workHours} onChange={setWorkHours} />
         )}
 
         {/* Placeholder for issue #23 */}
