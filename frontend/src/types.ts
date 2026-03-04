@@ -1,9 +1,14 @@
+export interface Course {
+  title: string
+  studyGoal: string
+}
+
 export interface ProfileData {
   major: string
   year: string
   difficultSubjects: string[]
   enjoyedSubjects: string[]
-  studyGoal: string
+  courses: Course[]
 }
 
 // Shape defined in issue #22

@@ -15,7 +15,7 @@ const DEFAULT_PROFILE: ProfileData = {
   year: '',
   difficultSubjects: [],
   enjoyedSubjects: [],
-  studyGoal: '',
+  courses: [],
 }
 
 export default function OnboardingPage() {

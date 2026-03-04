@@ -1,5 +1,5 @@
 import { useState, KeyboardEvent } from 'react'
-import { ProfileData } from '../types'
+import { ProfileData, Course } from '../types'
 
 const YEARS = ['Freshman', 'Sophomore', 'Junior', 'Senior', 'Graduate']
 const STUDY_GOALS = ['Just pass', 'Do well', 'Ace it']
@@ -143,32 +143,75 @@ export default function ProfileForm({ data, onChange, errors }: ProfileFormProps
         />
       </div>
 
-      {/* Study Goal */}
-      <div className="flex flex-col gap-2">
-        <label className="text-sm font-medium text-gray-700">Study Goal</label>
-        <div className="flex gap-3">
-          {STUDY_GOALS.map((goal) => (
-            <label
-              key={goal}
-              className={`flex flex-1 cursor-pointer items-center justify-center rounded-lg border px-4 py-3 text-sm font-medium transition-colors ${
-                data.studyGoal === goal
-                  ? 'border-blue-500 bg-blue-50 text-blue-700'
-                  : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50'
-              }`}
-            >
-              <input
-                type="radio"
-                name="studyGoal"
-                value={goal}
-                checked={data.studyGoal === goal}
-                onChange={() => update('studyGoal', goal)}
-                className="sr-only"
-              />
-              {goal}
-            </label>
-          ))}
+      {/* Courses */}
+      <div className="flex flex-col gap-3">
+        <div>
+          <label className="text-sm font-medium text-gray-700">Current Courses</label>
+          <p className="mt-0.5 text-xs text-gray-400">Add each course and set your goal for it</p>
         </div>
+        {data.courses.map((course, i) => (
+          <div key={i} className="flex flex-col gap-2 rounded-lg border border-gray-200 p-3">
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={course.title}
+                onChange={(e) => {
+                  const updated = data.courses.map((c, j) =>
+                    j === i ? { ...c, title: e.target.value } : c
+                  )
+                  update('courses', updated)
+                }}
+                placeholder="e.g. CS 101"
+                className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+              />
+              <button
+                type="button"
+                onClick={() => update('courses', data.courses.filter((_, j) => j !== i))}
+                className="text-gray-400 hover:text-red-500"
+              >
+                ×
+              </button>
+            </div>
+            <div className="flex gap-2">
+              {STUDY_GOALS.map((goal) => (
+                <label
+                  key={goal}
+                  className={`flex flex-1 cursor-pointer items-center justify-center rounded-lg border px-2 py-2 text-xs font-medium transition-colors ${
+                    course.studyGoal === goal
+                      ? 'border-blue-500 bg-blue-50 text-blue-700'
+                      : 'border-gray-200 text-gray-500 hover:border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name={`studyGoal-${i}`}
+                    value={goal}
+                    checked={course.studyGoal === goal}
+                    onChange={() => {
+                      const updated = data.courses.map((c, j) =>
+                        j === i ? { ...c, studyGoal: goal } : c
+                      )
+                      update('courses', updated)
+                    }}
+                    className="sr-only"
+                  />
+                  {goal}
+                </label>
+              ))}
+            </div>
+          </div>
+        ))}
+        <button
+          type="button"
+          onClick={() => update('courses', [...data.courses, { title: '', studyGoal: '' }])}
+          className="flex items-center gap-1 self-start rounded-lg border border-dashed border-gray-300 px-4 py-2 text-sm text-gray-500 hover:border-blue-400 hover:text-blue-600"
+        >
+          + Add course
+        </button>
       </div>
     </div>
   )
 }
+
+// Exported for use in OnboardingPage default state
+export const DEFAULT_COURSE: Course = { title: '', studyGoal: '' }
