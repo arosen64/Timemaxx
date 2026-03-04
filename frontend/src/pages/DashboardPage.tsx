@@ -7,20 +7,20 @@ export default function DashboardPage() {
   return (
     <div className="flex min-h-screen bg-bg-gray font-body">
       {/* Main Content */}
-      <div className="flex flex-1 flex-col p-10 gap-7">
+      <div className="flex flex-1 flex-col gap-7 p-10">
         {/* Page Header */}
         <div className="flex w-full items-center justify-between">
           <button
             onClick={() => setIsModalOpen(true)}
-            className="add-task-btn"
+            className="flex h-11 cursor-pointer items-center gap-2 rounded-lg border-none bg-navy px-5"
           >
             <PlusIcon />
-            <span className="add-task-btn-text">Add Task</span>
+            <span className="font-heading text-sm font-semibold text-white">Add Task</span>
           </button>
         </div>
 
         {/* Placeholder for rest of dashboard content */}
-        <div className="dashboard-placeholder">
+        <div className="flex flex-1 items-center justify-center rounded-[10px] border border-dashed border-border text-sm text-slate-blue">
           Dashboard content goes here
         </div>
       </div>

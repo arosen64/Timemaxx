@@ -16,42 +16,57 @@ export default function AddTaskModal({ isOpen, onClose }: AddTaskModalProps) {
   if (!isOpen) return null
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-navy/30"
+      onClick={onClose}
+    >
+      <div
+        className="flex w-[520px] flex-col gap-6 rounded-xl border border-border bg-white p-12"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="flex w-full items-center justify-between">
-          <span className="modal-title">Add new task</span>
-          <button onClick={onClose} className="modal-close-btn">
+          <span className="font-heading text-[26px] font-bold text-navy">Add new task</span>
+          <button
+            onClick={onClose}
+            className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-md border-none bg-bg-gray font-body text-lg text-light-blue"
+          >
             &times;
           </button>
         </div>
 
         {/* Subtitle */}
-        <p className="modal-subtitle">Fill in the details below.</p>
+        <p className="m-0 font-body text-sm leading-normal text-slate-blue">
+          Fill in the details below.
+        </p>
 
         {/* Form Body */}
-        <div className="form-body">
+        <div className="flex w-full flex-col gap-5">
           {/* Task name */}
-          <div className="form-field">
-            <label className="form-label">Task name</label>
+          <div className="flex w-full flex-col gap-1.5">
+            <label className="font-heading text-[13px] font-semibold text-navy">Task name</label>
             <input
               type="text"
               value={taskName}
               onChange={(e) => setTaskName(e.target.value)}
               placeholder="e.g. Calculus Problem Set 5"
-              className="form-input"
+              className="h-11 w-full rounded-md border border-border bg-bg-gray px-3.5 font-body text-sm text-navy outline-none placeholder:text-light-blue"
             />
           </div>
 
           {/* Task type */}
-          <div className="form-field">
-            <label className="form-label">Task type</label>
+          <div className="flex w-full flex-col gap-1.5">
+            <label className="font-heading text-[13px] font-semibold text-navy">Task type</label>
             <div className="flex gap-2">
               {TASK_TYPES.map((type) => (
                 <button
                   key={type}
                   onClick={() => setSelectedType(type)}
-                  className={`chip ${selectedType === type ? 'chip-selected' : 'chip-unselected'}`}
+                  className={`flex h-9 cursor-pointer items-center justify-center rounded-md px-3.5 font-body text-[13px] ${
+                    selectedType === type
+                      ? 'border-none bg-navy font-semibold text-white'
+                      : 'border border-border bg-bg-gray font-normal text-slate-blue'
+                  }`}
                 >
                   {type}
                 </button>
@@ -60,26 +75,26 @@ export default function AddTaskModal({ isOpen, onClose }: AddTaskModalProps) {
           </div>
 
           {/* Description */}
-          <div className="form-field">
-            <label className="form-label">Description</label>
+          <div className="flex w-full flex-col gap-1.5">
+            <label className="font-heading text-[13px] font-semibold text-navy">Description</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Paste or type your assignment description here..."
-              className="form-textarea"
+              className="h-24 w-full resize-none rounded-md border border-border bg-bg-gray px-3.5 py-2.5 font-body text-sm leading-normal text-navy outline-none placeholder:text-light-blue"
             />
           </div>
 
           {/* Due date */}
-          <div className="form-field">
-            <label className="form-label">Due date</label>
-            <div className="form-date-wrapper">
+          <div className="flex w-full flex-col gap-1.5">
+            <label className="font-heading text-[13px] font-semibold text-navy">Due date</label>
+            <div className="flex h-11 items-center justify-between rounded-md border border-border bg-bg-gray px-3.5">
               <input
                 type="text"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
                 placeholder="MM / DD / YYYY"
-                className="form-date-input"
+                className="flex-1 border-none bg-transparent font-body text-sm text-navy outline-none placeholder:text-light-blue"
               />
               <CalendarIcon />
             </div>
@@ -87,13 +102,16 @@ export default function AddTaskModal({ isOpen, onClose }: AddTaskModalProps) {
         </div>
 
         {/* Button Row */}
-        <div className="modal-btn-row">
-          <button onClick={onClose} className="btn-cancel">
+        <div className="flex w-full gap-3">
+          <button
+            onClick={onClose}
+            className="flex h-12 flex-1 cursor-pointer items-center justify-center rounded-lg border border-border bg-bg-gray font-heading text-[15px] font-semibold text-slate-blue"
+          >
             Cancel
           </button>
-          <button className="btn-submit">
+          <button className="flex h-12 flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border-none bg-navy font-heading text-[15px] font-semibold text-white">
             Add Task
-            <span className="btn-submit-dot" />
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-teal" />
           </button>
         </div>
       </div>
