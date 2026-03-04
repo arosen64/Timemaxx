@@ -173,7 +173,7 @@ export default function WorkHoursSelector({ data, onChange }: WorkHoursSelectorP
               <Fragment key={slot}>
                 {/* Time label every 2 hours */}
                 <div className="flex h-4 items-start justify-end pr-1.5 pt-px text-[10px] leading-none text-gray-400">
-                  {slot % 4 === 0 ? slotToLabel(slot) : ''}
+                  {slot % 2 === 0 ? slotToLabel(slot) : ''}
                 </div>
                 {/* One cell per day */}
                 {DAYS_FULL.map((day) => (
