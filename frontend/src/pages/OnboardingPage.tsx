@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import ProfileForm from '../components/ProfileForm'
 import WorkHoursSelector, { DEFAULT_WORK_HOURS } from '../components/WorkHoursSelector'
-import { ProfileData, WorkHoursData } from '../types'
+import PreferencesForm, { DEFAULT_PREFERENCES } from '../components/PreferencesForm'
+import { ProfileData, WorkHoursData, PreferencesData } from '../types'
 
 // TODO (issue #18 + #45): After schema is defined, add a Convex query here to check
 // if the current user already has a profile, and redirect to /dashboard if so.
@@ -25,8 +26,9 @@ export default function OnboardingPage() {
   const [profile, setProfile] = useState<ProfileData>(DEFAULT_PROFILE)
   const [profileErrors, setProfileErrors] = useState<{ major?: string; year?: string }>({})
   const [workHours, setWorkHours] = useState<WorkHoursData>(DEFAULT_WORK_HOURS)
-
-  // preferencesData state will be added in issue #23
+  const [preferences, setPreferences] = useState<PreferencesData>(DEFAULT_PREFERENCES)
+  const [focusBlockError, setFocusBlockError] = useState<string | undefined>()
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const validateStep1 = (): boolean => {
     const errors: { major?: string; year?: string } = {}
@@ -34,6 +36,15 @@ export default function OnboardingPage() {
     if (!profile.year) errors.year = 'Please select your year'
     setProfileErrors(errors)
     return Object.keys(errors).length === 0
+  }
+
+  const validateStep3 = (): boolean => {
+    if (preferences.focusBlockLength === '' || Number(preferences.focusBlockLength) <= 0) {
+      setFocusBlockError('Please enter your preferred focus block length')
+      return false
+    }
+    setFocusBlockError(undefined)
+    return true
   }
 
   const handleNext = () => {
@@ -44,6 +55,16 @@ export default function OnboardingPage() {
   const handleBack = () => {
     setStep((s) => (s - 1) as Step)
   }
+
+  const handleSubmit = async () => {
+    if (!validateStep3()) return
+    setIsSubmitting(true)
+    // TODO (issue #18): Replace with Convex mutation once schema is defined.
+    // The mutation should save: profile, workHours, and preferences.
+    navigate('/dashboard')
+  }
+
+  const isWide = step === 2 || step === 3
 
   return (
     <div className="flex min-h-screen flex-col items-center bg-gray-50 px-4 py-12">
@@ -79,8 +100,8 @@ export default function OnboardingPage() {
         })}
       </div>
 
-      {/* Form card — wider on step 2 to accommodate the grid */}
-      <div className={`w-full rounded-2xl bg-white p-8 shadow-sm ${step === 2 ? 'max-w-2xl' : 'max-w-lg'}`}>
+      {/* Form card */}
+      <div className={`w-full rounded-2xl bg-white p-8 shadow-sm ${isWide ? 'max-w-2xl' : 'max-w-lg'}`}>
         {step === 1 && (
           <ProfileForm data={profile} onChange={setProfile} errors={profileErrors} />
         )}
@@ -89,19 +110,19 @@ export default function OnboardingPage() {
           <WorkHoursSelector data={workHours} onChange={setWorkHours} />
         )}
 
-        {/* Placeholder for issue #23 */}
         {step === 3 && (
-          <div className="flex flex-col gap-4">
-            <h2 className="text-xl font-semibold text-gray-900">Productivity Preferences</h2>
-            <p className="text-sm text-gray-500">Coming soon — see issue #23.</p>
-          </div>
+          <PreferencesForm
+            data={preferences}
+            onChange={setPreferences}
+            focusBlockError={focusBlockError}
+          />
         )}
 
         {/* Navigation */}
         <div className="mt-8 flex justify-between">
           <button
             onClick={handleBack}
-            disabled={step === 1}
+            disabled={step === 1 || isSubmitting}
             className="rounded-lg border border-gray-300 px-5 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
           >
             Back
@@ -115,13 +136,11 @@ export default function OnboardingPage() {
             </button>
           ) : (
             <button
-              onClick={() => {
-                // TODO (issue #23): call Convex mutation to save all onboarding data
-                navigate('/dashboard')
-              }}
-              className="rounded-lg bg-blue-600 px-5 py-2 text-sm font-medium text-white hover:bg-blue-700"
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+              className="rounded-lg bg-blue-600 px-5 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Submit
+              {isSubmitting ? 'Saving...' : 'Submit'}
             </button>
           )}
         </div>
