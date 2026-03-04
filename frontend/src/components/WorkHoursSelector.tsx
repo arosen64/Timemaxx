@@ -166,20 +166,20 @@ export default function WorkHoursSelector({ data, onChange }: WorkHoursSelectorP
           ))}
         </div>
 
-        {/* Scrollable slot rows */}
-        <div className="overflow-y-auto max-h-80">
+        {/* Slot rows */}
+        <div>
           <div className="grid" style={{ gridTemplateColumns: '2.5rem repeat(7, 1fr)' }}>
             {Array.from({ length: TOTAL_SLOTS }, (_, slot) => (
               <Fragment key={slot}>
                 {/* Time label every 2 hours */}
-                <div className="flex h-3 items-start justify-end pr-1.5 pt-px text-[10px] leading-none text-gray-400">
+                <div className="flex h-4 items-start justify-end pr-1.5 pt-px text-[10px] leading-none text-gray-400">
                   {slot % 4 === 0 ? slotToLabel(slot) : ''}
                 </div>
                 {/* One cell per day */}
                 {DAYS_FULL.map((day) => (
                   <div
                     key={day}
-                    className={`h-3 cursor-crosshair border-b border-r border-gray-100 transition-colors ${getCellClass(day, slot)}`}
+                    className={`h-4 cursor-crosshair border-b border-r border-gray-100 transition-colors ${getCellClass(day, slot)}`}
                     onMouseDown={(e) => {
                       e.preventDefault()
                       handleMouseDown(day, slot)
