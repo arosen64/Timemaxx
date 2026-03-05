@@ -38,7 +38,9 @@ const BADGE_MAP: Record<string, { bg: string; text: string; label: string }> = {
 }
 
 export default function DashboardPage() {
-  const tasks = useQuery(api.queries.tasks.getTasks) as TaskType[] | undefined
+  
+  // TODO: revert to getTasks once auth (#20) is complete
+  const tasks = useQuery(api.queries.tasks.getAllTasks) as TaskType[] | undefined
   const taskRows = useMemo(() => tasks ?? [], [tasks])
 
   const totalEstimatedHours = useMemo(

@@ -1,6 +1,13 @@
 import { query } from "../_generated/server";
 import { v } from "convex/values";
 
+export const getAllTasks = query({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db.query("tasks").order("desc").collect();
+  },
+});
+
 export const getTasks = query({
   args: {},
   handler: async (ctx) => {
