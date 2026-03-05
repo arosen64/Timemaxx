@@ -26,7 +26,7 @@ export default {
       fontFamily: {
         heading: ["'Space Grotesk'", 'sans-serif'],
         body: ["'Inter'", 'sans-serif'],
-      }
+      },
     },
   },
   plugins: [],
