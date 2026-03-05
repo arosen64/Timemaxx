@@ -1,6 +1,6 @@
 import { useAuthActions } from "@convex-dev/auth/react";
-import { Link, useNavigate } from "react-router-dom";
-import { BookOpenIcon, DashboardIcon, TasksIcon, ScheduleIcon, UserIcon } from "../components/sidebar";
+import { useNavigate } from "react-router-dom";
+import Sidebar from "../components/Sidebar";
 
 export default function ProfilePage() {
   const { signOut } = useAuthActions();
@@ -13,56 +13,7 @@ export default function ProfilePage() {
 
   return (
     <div className="flex h-screen font-body bg-bg-gray">
-      {/* Sidebar */}
-      <aside className="flex flex-shrink-0 flex-col justify-between h-full w-64 py-8 px-6 bg-navy">
-        {/* Top: Logo + Nav */}
-        <div className="flex flex-col gap-8">
-          {/* Logo Row */}
-          <div className="flex items-center gap-2.5">
-            <div className="flex items-center justify-center h-8 w-8 text-navy bg-teal rounded">
-              <BookOpenIcon />
-            </div>
-            <span className="font-heading text-lg font-bold text-white">Timemaxx</span>
-          </div>
-
-          {/* Nav Menu */}
-          <nav className="flex flex-col gap-1">
-            <Link
-              to="/dashboard"
-              className="flex items-center h-11 w-full gap-2.5 px-3.5 text-sky-blue rounded-lg hover:bg-white/10"
-            >
-              <DashboardIcon />
-              <span className="font-heading text-sm font-normal">Dashboard</span>
-            </Link>
-            <div className="flex items-center h-11 w-full gap-2.5 px-3.5 text-sky-blue rounded-lg">
-              <TasksIcon />
-              <span className="font-heading text-sm font-normal">Tasks</span>
-            </div>
-            <div className="flex items-center h-11 w-full gap-2.5 px-3.5 text-sky-blue rounded-lg">
-              <ScheduleIcon />
-              <span className="font-heading text-sm font-normal">Schedule</span>
-            </div>
-            <Link
-              to="/profile"
-              className="flex items-center h-11 w-full gap-2.5 px-3.5 text-navy bg-white rounded-lg"
-            >
-              <UserIcon />
-              <span className="font-heading text-sm font-semibold">Profile</span>
-            </Link>
-          </nav>
-        </div>
-
-        {/* Footer: User Info */}
-        <div className="flex items-center gap-2.5">
-          <div className="flex flex-shrink-0 items-center justify-center h-9 w-9 bg-sky-blue rounded-full">
-            <span className="font-heading text-sm font-bold text-navy">AJ</span>
-          </div>
-          <div className="flex flex-col gap-0.5">
-            <span className="font-heading text-sm font-semibold text-white">Alex Johnson</span>
-            <span className="font-body text-xs text-sky-blue">alex@jhu.edu</span>
-          </div>
-        </div>
-      </aside>
+      <Sidebar />
 
       {/* Main Content */}
       <main className="flex flex-1 flex-col overflow-y-auto gap-8 p-10">
