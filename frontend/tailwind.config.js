@@ -23,8 +23,8 @@ export default {
         green: '#008767',
       },
       fontFamily: {
-        heading: ["'Space Grotesk'", 'sans-serif'],
-        body: ["'Inter'", 'sans-serif'],
+        heading: ['Space Grotesk', 'sans-serif'],
+        body: ['Inter', 'sans-serif'],
       }
     },
   },
