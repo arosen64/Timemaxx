@@ -58,17 +58,20 @@ function EditModal({
   onClose: () => void
   onSave: (form: EditForm) => Promise<void>
 }) {
-  const [form, setForm] = useState<EditForm>({
+  const [form, setForm] = useState({
     title: task.title,
     description: task.description,
     taskType: task.taskType,
-    timeEstimate: task.timeEstimate,
+    timeEstimate: String(task.timeEstimate), // store as string while editing
   })
   const [saving, setSaving] = useState(false)
 
   async function handleSave() {
     setSaving(true)
-    await onSave(form)
+    await onSave({
+      ...form,
+      timeEstimate: parseFloat(form.timeEstimate) || 0.5, // parse only on save
+    })
     setSaving(false)
     onClose()
   }
@@ -143,7 +146,12 @@ function EditModal({
               min={0.5}
               step={0.5}
               value={form.timeEstimate}
-              onChange={e => setForm(f => ({ ...f, timeEstimate: parseFloat(e.target.value) || 0 }))}
+              onChange={e => setForm(f => ({ ...f, timeEstimate: e.target.value }))}
+              onBlur={e => {
+                // clean up on blur: clamp to 0.5 minimum, strip leading zeros
+                const parsed = parseFloat(e.target.value)
+                setForm(f => ({ ...f, timeEstimate: String(Math.max(0.5, parsed || 0.5)) }))
+              }}
               className="h-10 px-3 text-sm border rounded-lg border-border bg-bg-gray text-navy focus:border-sky-blue focus:outline-none focus:ring-1 focus:ring-sky-blue"
             />
           </div>
