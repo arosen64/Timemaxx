@@ -10,7 +10,6 @@
 
 import type * as auth from "../auth.js";
 import type * as http from "../http.js";
-import type * as queries_tasks from "../queries/tasks.js";
 
 import type {
   ApiFromModules,
@@ -21,7 +20,6 @@ import type {
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   http: typeof http;
-  "queries/tasks": typeof queries_tasks;
 }>;
 
 /**
