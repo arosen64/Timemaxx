@@ -34,7 +34,7 @@ users: defineTable({
     title: v.string(),
     description: v.string(),
     taskType: v.string(),
-    timeEstimate: v.number(),
+    timeEstimate: v.optional(v.number()),
     createdAt: v.number(),
   })
     .index("by_userId", ["userId"])
