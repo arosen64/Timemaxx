@@ -1,4 +1,6 @@
 import { defineSchema } from 'convex/server'
+import { authTables } from '@convex-dev/auth/server'
 
-// Schema will be defined in issue #18
-export default defineSchema({})
+export default defineSchema({
+  ...authTables,
+})
