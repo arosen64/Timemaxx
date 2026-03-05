@@ -98,7 +98,6 @@
                       "type": "text",
                       "id": "10Cl9",
                       "name": "heroSub",
-                      "width": "fill_container",
                       "fill": "#68ACE5",
                       "content": "AI-powered scheduling that estimates your task time and builds a personalized study plan around your life.",
                       "lineHeight": 1.6,
@@ -1858,6 +1857,619 @@
                           "fontWeight": "normal"
                         }
                       ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "CDqc0",
+      "x": 4560,
+      "y": 0,
+      "name": "Profile",
+      "width": 1440,
+      "height": 900,
+      "fill": "#F5F7FA",
+      "children": [
+        {
+          "type": "frame",
+          "id": "d6VD2",
+          "name": "sidebar",
+          "width": 260,
+          "height": "fill_container",
+          "fill": "#002D72",
+          "layout": "vertical",
+          "gap": 8,
+          "padding": [
+            32,
+            24
+          ],
+          "justifyContent": "space_between",
+          "children": [
+            {
+              "type": "frame",
+              "id": "k9i3M",
+              "name": "sideTop",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 32,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "o3IwU",
+                  "name": "sideLogoRow",
+                  "gap": 10,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "XOI83",
+                      "name": "sideMark",
+                      "width": 32,
+                      "height": 32,
+                      "fill": "#86C8BC",
+                      "cornerRadius": 4,
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon_font",
+                          "id": "SvUlZ",
+                          "name": "sideMarkIcon",
+                          "width": 22,
+                          "height": 22,
+                          "iconFontName": "book-open",
+                          "iconFontFamily": "lucide",
+                          "fill": "#002D72"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "id": "EN7An",
+                      "name": "sideLogoText",
+                      "fill": "#FFFFFF",
+                      "content": "Timemaxx",
+                      "fontFamily": "Space Grotesk",
+                      "fontSize": 18,
+                      "fontWeight": "700"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "oCKH2",
+                  "name": "navMenu",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 4,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "WZbdi",
+                      "name": "navDash",
+                      "width": "fill_container",
+                      "height": 44,
+                      "fill": "",
+                      "cornerRadius": 8,
+                      "gap": 10,
+                      "padding": [
+                        0,
+                        14
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon_font",
+                          "id": "JoBFm",
+                          "name": "navDashIcon",
+                          "width": 16,
+                          "height": 16,
+                          "iconFontName": "layout-dashboard",
+                          "iconFontFamily": "lucide",
+                          "fill": "#68ACE5"
+                        },
+                        {
+                          "type": "text",
+                          "id": "1ICS0",
+                          "name": "navDashText",
+                          "fill": "#68ACE5",
+                          "content": "Dashboard",
+                          "fontFamily": "Space Grotesk",
+                          "fontSize": 14,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "Ub8x4",
+                      "name": "navTasks",
+                      "width": "fill_container",
+                      "height": 44,
+                      "cornerRadius": 8,
+                      "gap": 10,
+                      "padding": [
+                        0,
+                        14
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon_font",
+                          "id": "FBWZe",
+                          "name": "navTasksIcon",
+                          "width": 16,
+                          "height": 16,
+                          "iconFontName": "square",
+                          "iconFontFamily": "lucide",
+                          "fill": "#68ACE5"
+                        },
+                        {
+                          "type": "text",
+                          "id": "hiGWy",
+                          "name": "navTasksText",
+                          "fill": "#68ACE5",
+                          "content": "Tasks",
+                          "fontFamily": "Space Grotesk",
+                          "fontSize": 14,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "9wUoW",
+                      "name": "navSched",
+                      "width": "fill_container",
+                      "height": 44,
+                      "cornerRadius": 8,
+                      "gap": 10,
+                      "padding": [
+                        0,
+                        14
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon_font",
+                          "id": "QXkwq",
+                          "name": "navSchedIcon",
+                          "width": 16,
+                          "height": 16,
+                          "iconFontName": "calendar",
+                          "iconFontFamily": "lucide",
+                          "fill": "#68ACE5"
+                        },
+                        {
+                          "type": "text",
+                          "id": "gjWxp",
+                          "name": "navSchedText",
+                          "fill": "#68ACE5",
+                          "content": "Schedule",
+                          "fontFamily": "Space Grotesk",
+                          "fontSize": 14,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "DNm2T",
+                      "name": "navProfile",
+                      "width": "fill_container",
+                      "height": 44,
+                      "fill": "#FFFFFF",
+                      "cornerRadius": 8,
+                      "gap": 10,
+                      "padding": [
+                        0,
+                        14
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon_font",
+                          "id": "ZqvpC",
+                          "name": "navProfileIcon",
+                          "width": 16,
+                          "height": 16,
+                          "iconFontName": "user",
+                          "iconFontFamily": "lucide",
+                          "fill": "#002D72"
+                        },
+                        {
+                          "type": "text",
+                          "id": "wWSDR",
+                          "name": "navProfileText",
+                          "fill": "#002D72",
+                          "content": "Profile",
+                          "fontFamily": "Space Grotesk",
+                          "fontSize": 14,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "M6vUP",
+              "name": "sideFooter",
+              "gap": 10,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "VQcWE",
+                  "name": "avatarCircle",
+                  "width": 36,
+                  "height": 36,
+                  "fill": "#68ACE5",
+                  "cornerRadius": 18,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "2ANph",
+                      "name": "avatarText",
+                      "fill": "#002D72",
+                      "content": "AJ",
+                      "fontFamily": "Space Grotesk",
+                      "fontSize": 13,
+                      "fontWeight": "700"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "so1J2",
+                  "name": "userInfo",
+                  "layout": "vertical",
+                  "gap": 2,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "kUrsQ",
+                      "name": "userName",
+                      "fill": "#FFFFFF",
+                      "content": "Alex Johnson",
+                      "fontFamily": "Space Grotesk",
+                      "fontSize": 13,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "text",
+                      "id": "717R9",
+                      "name": "userEmail",
+                      "fill": "#68ACE5",
+                      "content": "alex@jhu.edu",
+                      "fontFamily": "Inter",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "5HdmB",
+          "name": "main",
+          "width": "fill_container",
+          "height": "fill_container",
+          "layout": "vertical",
+          "gap": 32,
+          "padding": 40,
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "Y6dTT",
+              "name": "profileHeader",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 4,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "7ejy3",
+                  "name": "profileTitle",
+                  "fill": "#002D72",
+                  "content": "Profile",
+                  "fontFamily": "Space Grotesk",
+                  "fontSize": 28,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "text",
+                  "id": "GF2jF",
+                  "name": "profileSub",
+                  "fill": "#4E6A8C",
+                  "content": "Manage your account settings",
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "KlvPY",
+              "name": "profileCard",
+              "width": "fill_container",
+              "fill": "#FFFFFF",
+              "cornerRadius": 12,
+              "stroke": {
+                "align": "inside",
+                "thickness": 1,
+                "fill": "#D8E4F0"
+              },
+              "layout": "vertical",
+              "gap": 32,
+              "padding": 48,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "bqLSI",
+                  "name": "avatarRow",
+                  "width": "fill_container",
+                  "gap": 20,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "2UnGy",
+                      "name": "avatarLarge",
+                      "width": 72,
+                      "height": 72,
+                      "fill": "#68ACE5",
+                      "cornerRadius": 36,
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "gryMV",
+                          "name": "avatarLetter",
+                          "fill": "#002D72",
+                          "content": "AJ",
+                          "fontFamily": "Space Grotesk",
+                          "fontSize": 24,
+                          "fontWeight": "700"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "waRZd",
+                      "name": "avatarInfo",
+                      "layout": "vertical",
+                      "gap": 4,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "ONIIE",
+                          "name": "avatarName",
+                          "fill": "#002D72",
+                          "content": "Alex Johnson",
+                          "fontFamily": "Space Grotesk",
+                          "fontSize": 22,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "QfSb1",
+                          "name": "avatarEmail",
+                          "fill": "#4E6A8C",
+                          "content": "alex@jhu.edu",
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "5bfjj",
+                  "name": "divider1",
+                  "width": "fill_container",
+                  "height": 1,
+                  "fill": "#D8E4F0"
+                },
+                {
+                  "type": "frame",
+                  "id": "N3uV8",
+                  "name": "fieldsRow1",
+                  "width": "fill_container",
+                  "gap": 32,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "BYX1f",
+                      "name": "fieldName",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 6,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "lTOu8",
+                          "name": "field1Label",
+                          "fill": "#4E6A8C",
+                          "content": "Full Name",
+                          "fontFamily": "Inter",
+                          "fontSize": 12,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "u1uyI",
+                          "name": "field1Value",
+                          "fill": "#002D72",
+                          "content": "Alex Johnson",
+                          "fontFamily": "Space Grotesk",
+                          "fontSize": 16,
+                          "fontWeight": "500"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "WpRPv",
+                      "name": "fieldEmail",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 6,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "eoMXh",
+                          "name": "field2Label",
+                          "fill": "#4E6A8C",
+                          "content": "Email",
+                          "fontFamily": "Inter",
+                          "fontSize": 12,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "29r7B",
+                          "name": "field2Value",
+                          "fill": "#002D72",
+                          "content": "alex@jhu.edu",
+                          "fontFamily": "Space Grotesk",
+                          "fontSize": 16,
+                          "fontWeight": "500"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "AwD4I",
+                  "name": "fieldsRow2",
+                  "width": "fill_container",
+                  "gap": 32,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "63znS",
+                      "name": "fieldSchool",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 6,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "7YdH6",
+                          "name": "field3Label",
+                          "fill": "#4E6A8C",
+                          "content": "School",
+                          "fontFamily": "Inter",
+                          "fontSize": 12,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "mkSkz",
+                          "name": "field3Value",
+                          "fill": "#002D72",
+                          "content": "Johns Hopkins University",
+                          "fontFamily": "Space Grotesk",
+                          "fontSize": 16,
+                          "fontWeight": "500"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "UEC9s",
+                      "name": "fieldYear",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 6,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "4QZBS",
+                          "name": "field4Label",
+                          "fill": "#4E6A8C",
+                          "content": "Year",
+                          "fontFamily": "Inter",
+                          "fontSize": 12,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "V0sKt",
+                          "name": "field4Value",
+                          "fill": "#002D72",
+                          "content": "Junior",
+                          "fontFamily": "Space Grotesk",
+                          "fontSize": 16,
+                          "fontWeight": "500"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "7W13I",
+                  "name": "divider2",
+                  "width": "fill_container",
+                  "height": 1,
+                  "fill": "#D8E4F0"
+                },
+                {
+                  "type": "frame",
+                  "id": "PHV8g",
+                  "name": "logoutBtn",
+                  "width": 160,
+                  "height": 44,
+                  "fill": "#a6192e",
+                  "cornerRadius": 8,
+                  "gap": 8,
+                  "padding": [
+                    0,
+                    20
+                  ],
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "iYO92",
+                      "name": "logoutIcon",
+                      "width": 16,
+                      "height": 16,
+                      "iconFontName": "log-out",
+                      "iconFontFamily": "lucide",
+                      "fill": "#FFFFFF"
+                    },
+                    {
+                      "type": "text",
+                      "id": "Gr2FD",
+                      "name": "logoutText",
+                      "fill": "#FFFFFF",
+                      "content": "Log Out",
+                      "fontFamily": "Space Grotesk",
+                      "fontSize": 14,
+                      "fontWeight": "600"
                     }
                   ]
                 }
