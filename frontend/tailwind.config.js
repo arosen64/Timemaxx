@@ -20,6 +20,7 @@ export default {
         border: '#D8E4F0',
         'bg-gray': '#F5F7FA',
         'urgent-red': '#CF4520',
+        'dark-red': '#A6192E',
         green: '#008767',
       },
       fontFamily: {
