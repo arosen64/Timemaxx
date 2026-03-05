@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { useMutation } from 'convex/react'
+import { api } from '../../../backend/convex/_generated/api'
 
 const TASK_TYPES = ['Problem Set', 'Essay', 'Coding', 'Exam Prep'] as const
 
@@ -12,6 +14,20 @@ export default function AddTaskModal({ isOpen, onClose }: AddTaskModalProps) {
   const [selectedType, setSelectedType] = useState<string>('Problem Set')
   const [description, setDescription] = useState('')
   const [dueDate, setDueDate] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const createTask = useMutation(api.mutations.tasks.createTask)
+
+  async function handleSubmit() {
+    if (!taskName.trim()) return
+    setIsSubmitting(true)
+    try {
+      await createTask({ title: taskName, description, taskType: selectedType })
+      onClose()
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
 
   if (!isOpen) return null
 
@@ -109,8 +125,12 @@ export default function AddTaskModal({ isOpen, onClose }: AddTaskModalProps) {
           >
             Cancel
           </button>
-          <button className="flex h-12 flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border-none bg-navy font-heading text-[15px] font-semibold text-white">
-            Add Task
+          <button
+            onClick={handleSubmit}
+            disabled={isSubmitting || !taskName.trim()}
+            className="flex h-12 flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border-none bg-navy font-heading text-[15px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {isSubmitting ? 'Adding…' : 'Add Task'}
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-teal" />
           </button>
         </div>
