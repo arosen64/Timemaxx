@@ -399,7 +399,11 @@ export default function DashboardPage() {
               <span className="inline-block h-9 w-72 animate-pulse rounded-md bg-navy/10" />
             ) : (
               <h1 className="font-heading text-[28px] font-bold text-navy">
-                Good morning, {user?.name?.split(' ')[0] ?? 'student'}!
+                {(() => {
+                  const hour = new Date().getHours()
+                  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
+                  return `${greeting}, ${user?.name?.split(' ')[0] ?? 'student'}!`
+                })()}
               </h1>
             )}
             <p className="text-sm text-slate-blue">
