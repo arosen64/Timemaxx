@@ -8,4 +8,9 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 export default defineConfig({
   plugins: [react()],
   envDir: resolve(__dirname, '..'),
+  server: {
+    fs: {
+      allow: [resolve(__dirname, '..')],
+    },
+  },
 })
