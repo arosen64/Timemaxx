@@ -1,5 +1,6 @@
 import { mutation } from "../_generated/server";
 import { v } from "convex/values";
+import { getAuthUserId } from "@convex-dev/auth/server";
 
 /**
  * Creates a new task for the authenticated user with timeEstimate left unset.
@@ -12,23 +13,13 @@ export const createTask = mutation({
     taskType: v.string(),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
       throw new Error("Unauthenticated");
     }
 
-    // Look up the user record by email to get the Convex user ID
-    const user = await ctx.db
-      .query("users")
-      .withIndex("email", (q) => q.eq("email", identity.email!))
-      .unique();
-
-    if (!user) {
-      throw new Error("User not found");
-    }
-
     const taskId = await ctx.db.insert("tasks", {
-      userId: user._id,
+      userId,
       title: args.title,
       description: args.description,
       taskType: args.taskType,
