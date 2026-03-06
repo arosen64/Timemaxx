@@ -1,7 +1,15 @@
-import { query } from "../_generated/server";
+import { internalQuery, query } from "../_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
 import { paginationOptsValidator } from "convex/server";
+
+// Internal query for fetching a task by ID without auth (used by scheduled actions)
+export const getTaskInternal = internalQuery({
+  args: { taskId: v.id("tasks") },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.taskId);
+  },
+});
 
 // Get a single task by ID
 export const getTask = query({
