@@ -1,12 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useQuery, useMutation } from 'convex/react'
+import { api } from '../../../backend/convex/_generated/api'
 import ProfileForm from '../components/ProfileForm'
 import WorkHoursSelector, { DEFAULT_WORK_HOURS } from '../components/WorkHoursSelector'
 import PreferencesForm, { DEFAULT_PREFERENCES } from '../components/PreferencesForm'
 import { ProfileData, WorkHoursData, PreferencesData } from '../types'
-
-// TODO (issue #18 + #45): After schema is defined, add a Convex query here to check
-// if the current user already has a profile, and redirect to /dashboard if so.
 
 type Step = 1 | 2 | 3
 
@@ -22,12 +21,20 @@ const DEFAULT_PROFILE: ProfileData = {
 
 export default function OnboardingPage() {
   const navigate = useNavigate()
+  const isOnboardingComplete = useQuery(api.queries.users.isOnboardingComplete)
+  const saveOnboarding = useMutation(api.mutations.users.completeOnboarding)
   const [step, setStep] = useState<Step>(1)
   const [profile, setProfile] = useState<ProfileData>(DEFAULT_PROFILE)
   const [profileErrors, setProfileErrors] = useState<{ major?: string; year?: string }>({})
   const [workHours, setWorkHours] = useState<WorkHoursData>(DEFAULT_WORK_HOURS)
   const [preferences, setPreferences] = useState<PreferencesData>(DEFAULT_PREFERENCES)
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  useEffect(() => {
+    if (isOnboardingComplete === true) navigate('/dashboard')
+  }, [isOnboardingComplete, navigate])
+
+  if (isOnboardingComplete === undefined) return null
 
   const validateStep1 = (): boolean => {
     const errors: { major?: string; year?: string } = {}
@@ -48,9 +55,25 @@ export default function OnboardingPage() {
 
   const handleSubmit = async () => {
     setIsSubmitting(true)
-    // TODO (issue #18): Replace with Convex mutation once schema is defined.
-    // The mutation should save: profile, workHours, and preferences.
-    navigate('/dashboard')
+    try {
+      await saveOnboarding({
+        major: profile.major,
+        year: profile.year,
+        difficultSubjects: profile.difficultSubjects,
+        enjoyedSubjects: profile.enjoyedSubjects,
+        courses: profile.courses,
+        workHoursGrid: Object.entries(workHours).map(([day, slots]) => ({
+          day,
+          available: slots.available,
+          blocked: slots.blocked,
+        })),
+        productivityTraits: preferences.traits,
+        focusBlockLength: Number(preferences.focusBlockLength),
+      })
+      navigate('/dashboard')
+    } catch {
+      setIsSubmitting(false)
+    }
   }
 
   const isWide = step === 2 || step === 3
