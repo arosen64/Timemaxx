@@ -22,7 +22,13 @@ export default function AddTaskModal({ isOpen, onClose }: AddTaskModalProps) {
     if (!taskName.trim()) return
     setIsSubmitting(true)
     try {
-      await createTask({ title: taskName, description, taskType: selectedType })
+      const parsedDueDate = dueDate ? new Date(dueDate).getTime() : undefined
+      await createTask({
+        title: taskName,
+        description,
+        taskType: selectedType,
+        dueDate: parsedDueDate && !isNaN(parsedDueDate) ? parsedDueDate : undefined,
+      })
       onClose()
     } finally {
       setIsSubmitting(false)

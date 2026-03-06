@@ -11,6 +11,7 @@ export const createTask = mutation({
     title: v.string(),
     description: v.string(),
     taskType: v.string(),
+    dueDate: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -23,6 +24,7 @@ export const createTask = mutation({
       title: args.title,
       description: args.description,
       taskType: args.taskType,
+      dueDate: args.dueDate,
       timeEstimate: undefined, // populated later by the AI estimation action
       createdAt: Date.now(),
     });
