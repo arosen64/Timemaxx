@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite frontend",
     "build": "tsc -b frontend/tsconfig.json && vite build frontend",
-    "preview": "vite preview frontend"
+    "preview": "vite preview frontend",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "convex": "^1.32.0",
@@ -18,14 +20,17 @@
     "react-router-dom": "^6.28.0"
   },
   "devDependencies": {
+    "@edge-runtime/vm": "^4.0.4",
     "@types/node": "^25.3.0",
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.20",
+    "convex-test": "^0.0.33",
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.7.2",
-    "vite": "^6.0.7"
+    "vite": "^6.0.7",
+    "vitest": "^3.2.4"
   }
 }

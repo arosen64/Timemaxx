@@ -23,7 +23,20 @@ export const createTask = mutation({
     if (!userId) {
       throw new Error("Unauthenticated");
     }
+    const now = Date.now();
 
+    // Basic validation
+    if (args.title.trim().length === 0) {
+      throw new Error("Title cannot be empty");
+    }
+    if (args.description.trim().length === 0) {
+      throw new Error("Description cannot be empty");
+    }
+    if (args.dueDate <= now) {
+      throw new Error("Due date must be in the future");
+    }
+
+    // Insert the new task with timeEstimate left as undefined for now
     const taskId = await ctx.db.insert("tasks", {
       userId,
       title: args.title,
