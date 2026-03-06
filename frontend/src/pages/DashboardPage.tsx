@@ -140,9 +140,14 @@ function EditModal({
       setError('Please enter a description.')
       return
     }
-    if (!dueDate || !validateDueDate(dueDate)) return
+    const trimmedDueDate = dueDate.trim()
+    if (!trimmedDueDate) {
+      setError('Please enter a due date.')
+      return
+    }
+    if (!validateDueDate(trimmedDueDate)) return
 
-    const parsedDueDate = new Date(dueDate).getTime()
+    const parsedDueDate = new Date(trimmedDueDate).getTime()
     setSaving(true)
     setError(null)
     try {
