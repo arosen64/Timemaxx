@@ -20,6 +20,15 @@ export default function AddTaskModal({ isOpen, onClose }: AddTaskModalProps) {
 
   const createTask = useMutation(api.mutations.tasks.createTask)
 
+  function handleClose() {
+    setTaskName('')
+    setSelectedType('Problem Set')
+    setDescription('')
+    setDueDate('')
+    setError(null)
+    onClose()
+  }
+
   function validateDueDate(value: string): boolean {
     const match = value.match(/^(\d{1,2})\s*\/\s*(\d{1,2})\s*\/\s*(\d{4})$/)
     if (!match) return false
@@ -51,7 +60,7 @@ export default function AddTaskModal({ isOpen, onClose }: AddTaskModalProps) {
         taskType: selectedType,
         dueDate: parsedDueDate,
       })
-      onClose()
+      handleClose()
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Something went wrong. Please try again.')
     } finally {
@@ -64,7 +73,7 @@ export default function AddTaskModal({ isOpen, onClose }: AddTaskModalProps) {
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-navy/30"
-      onClick={onClose}
+      onClick={handleClose}
     >
       <div
         className="flex w-[520px] flex-col gap-6 rounded-xl border border-border bg-white p-12"
@@ -74,7 +83,7 @@ export default function AddTaskModal({ isOpen, onClose }: AddTaskModalProps) {
         <div className="flex w-full items-center justify-between">
           <span className="font-heading text-[26px] font-bold text-navy">Add new task</span>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-md border-none bg-bg-gray font-body text-lg text-light-blue"
           >
             &times;
@@ -160,7 +169,7 @@ export default function AddTaskModal({ isOpen, onClose }: AddTaskModalProps) {
         {/* Button Row */}
         <div className="flex w-full gap-3">
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="flex h-12 flex-1 cursor-pointer items-center justify-center rounded-lg border border-border bg-bg-gray font-heading text-[15px] font-semibold text-slate-blue"
           >
             Cancel
