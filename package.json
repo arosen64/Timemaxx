@@ -11,10 +11,11 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "convex": "^1.32.0",
-    "dotenv": "^17.3.1",
     "@auth/core": "^0.37.4",
     "@convex-dev/auth": "^0.0.91",
+    "@google/genai": "^1.44.0",
+    "convex": "^1.32.0",
+    "dotenv": "^17.3.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.28.0"
