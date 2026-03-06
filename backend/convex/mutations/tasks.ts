@@ -51,7 +51,8 @@ export const updateTask = mutation({
     title: v.string(),
     description: v.string(),
     taskType: taskTypeValidator,
-    timeEstimate: v.number(),
+    dueDate: v.number(),
+    timeEstimate: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -60,12 +61,15 @@ export const updateTask = mutation({
     const task = await ctx.db.get(args.taskId);
     if (!task || task.userId !== userId) throw new Error("Task not found");
 
-    await ctx.db.patch(args.taskId, {
+    const patch = {
       title: args.title,
       description: args.description,
       taskType: args.taskType,
-      timeEstimate: args.timeEstimate,
-    });
+      dueDate: args.dueDate,
+      ...(args.timeEstimate !== undefined ? { timeEstimate: args.timeEstimate } : {}),
+    };
+
+    await ctx.db.patch(args.taskId, patch);
   },
 });
 
