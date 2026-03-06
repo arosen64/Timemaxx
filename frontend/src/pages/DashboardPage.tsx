@@ -2,20 +2,25 @@ import { useMemo, useState, type ReactNode } from 'react'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '../../../backend/convex/_generated/api'
 import { Id } from '../../../backend/convex/_generated/dataModel'
+import AddTaskModal from '../components/AddTaskModal'
 
 type TaskType = {
   _id: Id<'tasks'>
   title: string
   description: string
   taskType: string
-  timeEstimate: number
+  timeEstimate?: number
+  dueDate: number
   createdAt: number
 }
+
+const SCHEMA_TASK_TYPES = ['Problem Set', 'Essay', 'Coding', 'Exam Prep'] as const
+type SchemaTaskType = (typeof SCHEMA_TASK_TYPES)[number]
 
 type EditForm = {
   title: string
   description: string
-  taskType: string
+  taskType: SchemaTaskType
   timeEstimate: number
 }
 
@@ -45,7 +50,7 @@ const BADGE_MAP: Record<string, { bg: string; text: string; label: string }> = {
   default:    { bg: 'bg-[#E6F5F0]', text: 'text-[#008767]', label: 'Not Started' },
 }
 
-const TASK_TYPE_OPTIONS = ['Assignment', 'Essay', 'Lab Report', 'Problem Set', 'Reading', 'Project', 'Other']
+const TASK_TYPE_OPTIONS: SchemaTaskType[] = [...SCHEMA_TASK_TYPES]
 
 // ─── Edit Modal ──────────────────────────────────────────────────────────────
 
@@ -61,8 +66,8 @@ function EditModal({
   const [form, setForm] = useState({
     title: task.title,
     description: task.description,
-    taskType: task.taskType,
-    timeEstimate: String(task.timeEstimate), // store as string while editing
+    taskType: (TASK_TYPE_OPTIONS.includes(task.taskType as SchemaTaskType) ? task.taskType : 'Problem Set') as SchemaTaskType,
+    timeEstimate: String(task.timeEstimate ?? 0.5), // store as string while editing
   })
   const [saving, setSaving] = useState(false)
 
@@ -127,7 +132,7 @@ function EditModal({
             <label className="text-xs font-semibold font-heading text-navy">Task Type</label>
             <select
               value={form.taskType}
-              onChange={e => setForm(f => ({ ...f, taskType: e.target.value }))}
+              onChange={e => setForm(f => ({ ...f, taskType: e.target.value as SchemaTaskType }))}
               className="h-10 px-3 text-sm border rounded-lg border-border bg-bg-gray text-navy focus:border-sky-blue focus:outline-none focus:ring-1 focus:ring-sky-blue"
             >
               {TASK_TYPE_OPTIONS.map(opt => (
@@ -240,7 +245,7 @@ function DeleteModal({
 
 export default function DashboardPage() {
   // TODO: revert to getTasks once auth (#20) is complete
-  const tasks = useQuery(api.queries.tasks.getAllTasks) as TaskType[] | undefined
+  const tasks = useQuery(api.queries.tasks.getAllTasks, {}) as TaskType[] | undefined
   const updateTask = useMutation(api.mutations.tasks.updateTask)
   const deleteTask = useMutation(api.mutations.tasks.deleteTask)
 
@@ -253,6 +258,7 @@ export default function DashboardPage() {
 
   const [editingTask, setEditingTask] = useState<TaskType | null>(null)
   const [deletingTask, setDeletingTask] = useState<TaskType | null>(null)
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
 
   async function handleSaveEdit(form: EditForm) {
     if (!editingTask) return
@@ -282,6 +288,10 @@ export default function DashboardPage() {
           onConfirm={handleConfirmDelete}
         />
       )}
+      <AddTaskModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+      />
 
       {/* ── Sidebar ── */}
       <aside className="flex w-[260px] shrink-0 flex-col justify-between bg-navy px-6 py-8">
@@ -338,6 +348,7 @@ export default function DashboardPage() {
           </div>
           <button
             type="button"
+            onClick={() => setIsAddModalOpen(true)}
             className="flex items-center gap-2 px-5 text-sm font-semibold text-white transition rounded-lg h-11 bg-navy font-heading hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-sky-blue focus:ring-offset-2"
           >
             <PlusIcon color="#86C8BC" />
@@ -421,7 +432,7 @@ export default function DashboardPage() {
                           {displayTitle(task)}
                         </div>
                         <div className="text-xs text-slate-blue">
-                          {task.taskType} · ~{formatHours(task.timeEstimate)} estimated
+                          {task.taskType} · ~{formatHours(task.timeEstimate ?? 0)} estimated
                         </div>
                       </div>
 

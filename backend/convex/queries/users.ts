@@ -1,22 +1,24 @@
 import { query } from "../_generated/server";
-import { v } from "convex/values";
+import { getAuthUserId } from "@convex-dev/auth/server";
 
-export const getUserByGoogleId = query({
-  args: { googleId: v.string() },
-  handler: async (ctx, { googleId }) => {
-    return await ctx.db
-      .query("users")
-      .withIndex("by_googleId", (q) => q.eq("googleId", googleId))
-      .unique();
+// Get the current logged-in user
+export const getCurrUser = query({
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+    return await ctx.db.get(userId);
   },
 });
 
-export const getUserByEmail = query({
-  args: { email: v.string() },
-  handler: async (ctx, { email }) => {
-    return await ctx.db
-      .query("users")
-      .withIndex("by_email", (q) => q.eq("email", email))
-      .unique();
+// Check if the current user has completed onboarding
+export const isOnboardingComplete = query({
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+
+    const user = await ctx.db.get(userId);
+    if (!user) return null;
+
+    return user.onboardingComplete === true;
   },
 });
