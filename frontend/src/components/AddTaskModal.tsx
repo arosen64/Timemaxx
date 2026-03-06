@@ -20,10 +20,21 @@ export default function AddTaskModal({ isOpen, onClose }: AddTaskModalProps) {
 
   const createTask = useMutation(api.mutations.tasks.createTask)
 
+  function validateDueDate(value: string): boolean {
+    const match = value.match(/^(\d{1,2})\s*\/\s*(\d{1,2})\s*\/\s*(\d{4})$/)
+    if (!match) return false
+    const [, month, day, year] = match.map(Number)
+    const date = new Date(year, month - 1, day)
+    return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day
+  }
+
   async function handleSubmit() {
     if (!taskName.trim()) return
+    if (!dueDate || !validateDueDate(dueDate)) {
+      setError('Please enter a valid date in MM/DD/YYYY format.')
+      return
+    }
     const parsedDueDate = new Date(dueDate).getTime()
-    if (!dueDate || isNaN(parsedDueDate)) return
     setIsSubmitting(true)
     setError(null)
     try {
@@ -121,6 +132,12 @@ export default function AddTaskModal({ isOpen, onClose }: AddTaskModalProps) {
                 type="text"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
+                onBlur={() => {
+                  if (dueDate && !validateDueDate(dueDate)) {
+                    setError('Please enter a valid date in MM/DD/YYYY format.')
+                  }
+                }}
+                onFocus={() => setError(null)}
                 placeholder="MM / DD / YYYY"
                 className="flex-1 border-none bg-transparent font-body text-sm text-navy outline-none placeholder:text-light-blue"
               />
