@@ -341,6 +341,7 @@ export default function DashboardPage() {
   const tasks = useQuery(api.queries.tasks.getAllTasks, {}) as TaskType[] | undefined
   const updateTask = useMutation(api.mutations.tasks.updateTask)
   const deleteTask = useMutation(api.mutations.tasks.deleteTask)
+  const user = useQuery(api.queries.users.getCurrUser)
 
   const taskRows = useMemo(() => tasks ?? [], [tasks])
 
@@ -394,7 +395,13 @@ export default function DashboardPage() {
         {/* Page Header */}
         <header className="flex items-center justify-between">
           <div className="flex flex-col gap-1">
-            <h1 className="font-heading text-[28px] font-bold text-navy">Good morning, Alex</h1>
+            {user === undefined ? (
+              <span className="inline-block h-9 w-72 animate-pulse rounded-md bg-navy/10" />
+            ) : (
+              <h1 className="font-heading text-[28px] font-bold text-navy">
+                Good morning, {user?.name?.split(' ')[0] ?? 'student'}!
+              </h1>
+            )}
             <p className="text-sm text-slate-blue">
               {new Date().toLocaleDateString('en-US', {
                 weekday: 'long', month: 'long', day: 'numeric',
