@@ -10,7 +10,12 @@ export const createTask = mutation({
   args: {
     title: v.string(),
     description: v.string(),
-    taskType: v.string(),
+    taskType: v.union(
+      v.literal("Problem Set"),
+      v.literal("Essay"),
+      v.literal("Coding"),
+      v.literal("Exam Prep"),
+    ),
     dueDate: v.number(),
   },
   handler: async (ctx, args) => {

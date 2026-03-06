@@ -3,6 +3,7 @@ import { useMutation } from 'convex/react'
 import { api } from '../../../backend/convex/_generated/api'
 
 const TASK_TYPES = ['Problem Set', 'Essay', 'Coding', 'Exam Prep'] as const
+type TaskType = typeof TASK_TYPES[number]
 
 interface AddTaskModalProps {
   isOpen: boolean
@@ -11,7 +12,7 @@ interface AddTaskModalProps {
 
 export default function AddTaskModal({ isOpen, onClose }: AddTaskModalProps) {
   const [taskName, setTaskName] = useState('')
-  const [selectedType, setSelectedType] = useState<string>('Problem Set')
+  const [selectedType, setSelectedType] = useState<TaskType>('Problem Set')
   const [description, setDescription] = useState('')
   const [dueDate, setDueDate] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
