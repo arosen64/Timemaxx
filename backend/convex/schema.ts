@@ -3,10 +3,10 @@ import { v } from "convex/values";
 import { authTables } from "@convex-dev/auth/server";
 
 export default defineSchema({
-  ...authTables,  // Google auth tables with email/phone + verification fields
+  ...authTables,
 
-  // Override users table with auth fields + your custom fields
-users: defineTable({
+  // Users table
+  users: defineTable({
     // Auth fields
     name: v.optional(v.string()),
     email: v.optional(v.string()),
@@ -15,20 +15,39 @@ users: defineTable({
     emailVerificationTime: v.optional(v.number()),
     phoneVerificationTime: v.optional(v.number()),
     isAnonymous: v.optional(v.boolean()),
-    // My custom fields
-    preferredWorkHours: v.optional(v.array(
-      v.object({
-        startHour: v.number(),
-        endHour: v.number(),
-      })
-    )),
-    focusBlockLength: v.optional(v.number()), 
+
+    // Custom onboarding fields
     onboardingComplete: v.optional(v.boolean()),
+    focusBlockLength: v.optional(v.number()),
+    major: v.optional(v.string()),
+    year: v.optional(v.string()),
+    difficultSubjects: v.optional(v.array(v.string())),
+    enjoyedSubjects: v.optional(v.array(v.string())),
+    courses: v.optional(
+      v.array(
+        v.object({
+          title: v.string(),
+          studyGoal: v.string(),
+        })
+      )
+    ),
+
+    workHoursGrid: v.optional(
+      v.array(
+        v.object({
+          day: v.string(),
+          available: v.array(v.number()),
+          blocked: v.array(v.number()),
+        })
+      )
+    ),
+
+    productivityTraits: v.optional(v.any()),
   })
-    .index("email", ["email"])    // Index for looking up users by email (for auth)  
-    .index("phone", ["phone"])    // Index for looking up users by phone (for auth)
-    ,
-  // Tasks table to store user tasks with time estimates
+    .index("email", ["email"])
+    .index("phone", ["phone"]),
+
+  // Tasks table
   tasks: defineTable({
     userId: v.id("users"),
     title: v.string(),
