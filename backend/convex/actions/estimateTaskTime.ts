@@ -1,3 +1,5 @@
+"use node"; // Required: @google/genai uses Node.js APIs not available in the default Convex runtime
+
 import { internalAction } from "../_generated/server";
 import { v } from "convex/values";
 import { api, internal } from "../_generated/api";
