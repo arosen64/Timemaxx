@@ -168,23 +168,23 @@ function EditModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex w-full items-center justify-between">
+        <div className="flex items-center justify-between w-full">
           <span className="font-heading text-[26px] font-bold text-navy">Edit task</span>
           <button
             onClick={handleClose}
-            className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-md border-none bg-bg-gray font-body text-lg text-light-blue"
+            className="flex items-center justify-center text-lg border-none rounded-md cursor-pointer h-7 w-7 bg-bg-gray font-body text-light-blue"
           >
             &times;
           </button>
         </div>
 
         {/* Subtitle */}
-        <p className="m-0 font-body text-sm leading-normal text-slate-blue">
+        <p className="m-0 text-sm leading-normal font-body text-slate-blue">
           Update the details below.
         </p>
 
         {/* Form Body */}
-        <div className="flex w-full flex-col gap-5">
+        <div className="flex flex-col w-full gap-5">
           {/* Task name */}
           <div className="flex w-full flex-col gap-1.5">
             <label className="font-heading text-[13px] font-semibold text-navy">Task name</label>
@@ -241,7 +241,7 @@ function EditModal({
                 }}
                 onFocus={() => setError(null)}
                 placeholder="MM / DD / YYYY"
-                className="flex-1 border-none bg-transparent font-body text-sm text-navy outline-none placeholder:text-light-blue"
+                className="flex-1 text-sm bg-transparent border-none outline-none font-body text-navy placeholder:text-light-blue"
               />
               <AddModalCalendarIcon />
             </div>
@@ -249,7 +249,7 @@ function EditModal({
         </div>
 
         {error && (
-          <p className="font-body text-sm text-red-500">{error}</p>
+          <p className="text-sm text-red-500 font-body">{error}</p>
         )}
 
         {/* Button Row */}
@@ -333,7 +333,6 @@ function DeleteModal({
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
-  // TODO: revert to getTasks once auth (#20) is complete
   const tasks = useQuery(api.queries.tasks.getAllTasks, {}) as TaskType[] | undefined
   const updateTask = useMutation(api.mutations.tasks.updateTask)
   const deleteTask = useMutation(api.mutations.tasks.deleteTask)
@@ -385,7 +384,7 @@ export default function DashboardPage() {
       <Sidebar />
 
       {/* ── Main ── */}
-      <main className="flex min-h-0 flex-1 flex-col overflow-y-auto p-10 gap-7">
+      <main className="flex flex-col flex-1 min-h-0 p-10 overflow-y-auto gap-7">
 
         {/* Page Header */}
         <header className="flex items-center justify-between">
@@ -487,7 +486,7 @@ export default function DashboardPage() {
                           Due {formatDateMMDDYYYY(task.dueDate)} · {task.taskType} · ~{formatHours(task.timeEstimate ?? 0)} estimated
                         </div>
                         {task.description.trim().length > 0 && (
-                          <div className="text-xs text-light-blue truncate">
+                          <div className="text-xs truncate text-light-blue">
                             {task.description}
                           </div>
                         )}
