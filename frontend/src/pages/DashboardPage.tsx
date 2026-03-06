@@ -520,8 +520,13 @@ export default function DashboardPage() {
                           {displayTitle(task)}
                         </div>
                         <div className="text-xs text-slate-blue">
-                          {task.taskType} · ~{formatHours(task.timeEstimate ?? 0)} estimated
+                          Due {formatDateMMDDYYYY(task.dueDate)} · {task.taskType} · ~{formatHours(task.timeEstimate ?? 0)} estimated
                         </div>
+                        {task.description.trim().length > 0 && (
+                          <div className="text-xs text-light-blue truncate">
+                            {task.description}
+                          </div>
+                        )}
                       </div>
 
                       <div className={`shrink-0 rounded px-2.5 py-1 ${badge.bg}`}>
@@ -531,7 +536,7 @@ export default function DashboardPage() {
                       </div>
 
                       {/* Edit / Delete buttons — visible on hover */}
-                      <div className="flex items-center gap-1 transition-opacity opacity-0 group-hover:opacity-100">
+                      <div className="flex items-center gap-1">
                         <button
                           type="button"
                           onClick={() => setEditingTask(task)}
