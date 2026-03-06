@@ -1,5 +1,14 @@
-import { query } from "../_generated/server";
+import { internalQuery, query } from "../_generated/server";
+import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
+
+// Internal query for fetching a user by ID without auth (used by scheduled actions)
+export const getUserInternal = internalQuery({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.userId);
+  },
+});
 
 // Get the current logged-in user
 export const getCurrUser = query({

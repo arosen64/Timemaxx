@@ -2,7 +2,7 @@
 
 import { internalAction } from "../_generated/server";
 import { v } from "convex/values";
-import { api, internal } from "../_generated/api";
+import { internal } from "../_generated/api";
 import { GoogleGenAI, Type } from "@google/genai";
 
 export const estimateTaskTime = internalAction({
@@ -10,13 +10,15 @@ export const estimateTaskTime = internalAction({
     taskId: v.id("tasks"),
   },
   handler: async (ctx, args) => {
-    // Fetch task and user profile
-    const task = await ctx.runQuery(api.queries.tasks.getTask, {
+    // Fetch task and user profile (internal queries — no auth required for scheduled actions)
+    const task = await ctx.runQuery(internal.queries.tasks.getTaskInternal, {
       taskId: args.taskId,
     });
     if (!task) return;
 
-    const user = await ctx.runQuery(api.queries.users.getCurrUser);
+    const user = await ctx.runQuery(internal.queries.users.getUserInternal, {
+      userId: task.userId,
+    });
 
     // Build prompt
     const userContext = [
@@ -50,7 +52,7 @@ Respond with the estimated number of minutes as a single integer.`;
     try {
       const genai = new GoogleGenAI({ apiKey });
       const response = await genai.models.generateContent({
-        model: "gemini-2.0-flash",
+        model: "gemini-2.5-pro",
         contents: prompt,
         config: {
           responseMimeType: "application/json",
@@ -64,8 +66,10 @@ Respond with the estimated number of minutes as a single integer.`;
         },
       });
 
+      console.log("Gemini raw response:", response.text);
       const json = JSON.parse(response.text ?? "{}");
       const estimatedMinutes = json.estimatedMinutes;
+      console.log("Parsed estimatedMinutes:", estimatedMinutes, typeof estimatedMinutes);
 
       if (typeof estimatedMinutes === "number") {
         await ctx.runMutation(internal.mutations.timeEstimate.setTimeEstimate, {
