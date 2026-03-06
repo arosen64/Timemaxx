@@ -3,6 +3,7 @@ import { useQuery, useMutation } from 'convex/react'
 import { api } from '../../../backend/convex/_generated/api'
 import { Id } from '../../../backend/convex/_generated/dataModel'
 import AddTaskModal from '../components/AddTaskModal'
+import Sidebar from '../components/sidebar'
 
 type TaskType = {
   _id: Id<'tasks'>
@@ -359,7 +360,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="flex min-h-screen bg-bg-gray font-body text-slate-blue">
+    <div className="flex h-screen overflow-hidden bg-bg-gray font-body text-slate-blue">
 
       {/* Modals */}
       {editingTask && (
@@ -381,47 +382,10 @@ export default function DashboardPage() {
         onClose={() => setIsAddModalOpen(false)}
       />
 
-      {/* ── Sidebar ── */}
-      <aside className="flex w-[260px] shrink-0 flex-col justify-between bg-navy px-6 py-8">
-        <div className="flex flex-col gap-8">
-          <div className="flex items-center gap-2.5">
-            <div className="flex items-center justify-center w-8 h-8 rounded shrink-0 bg-teal">
-              <BookOpenIcon />
-            </div>
-            <span className="text-lg font-bold text-white font-heading">Timemaxx</span>
-          </div>
-
-          <nav className="flex flex-col gap-1">
-            <div className="flex h-11 items-center gap-2.5 rounded-lg bg-white px-3.5">
-              <LayoutDashboardIcon color="#002D72" />
-              <span className="text-sm font-semibold font-heading text-navy">Dashboard</span>
-            </div>
-            {[
-              { label: 'Tasks',    Icon: SquareIcon   },
-              { label: 'Schedule', Icon: CalendarIcon },
-              { label: 'Profile',  Icon: UserIcon     },
-            ].map(({ label, Icon }) => (
-              <div key={label} className="flex h-11 cursor-pointer items-center gap-2.5 rounded-lg px-3.5">
-                <Icon color="#68ACE5" />
-                <span className="text-sm font-heading text-sky-blue">{label}</span>
-              </div>
-            ))}
-          </nav>
-        </div>
-
-        <div className="flex items-center gap-2.5">
-          <div className="flex items-center justify-center rounded-full h-9 w-9 shrink-0 bg-sky-blue">
-            <span className="text-xs font-bold font-heading text-navy">AJ</span>
-          </div>
-          <div className="flex flex-col leading-tight">
-            <span className="font-heading text-[13px] font-semibold text-white">Alex Johnson</span>
-            <span className="text-[11px] text-sky-blue">alex@jhu.edu</span>
-          </div>
-        </div>
-      </aside>
+      <Sidebar />
 
       {/* ── Main ── */}
-      <main className="flex flex-col flex-1 p-10 gap-7">
+      <main className="flex min-h-0 flex-1 flex-col overflow-y-auto p-10 gap-7">
 
         {/* Page Header */}
         <header className="flex items-center justify-between">
@@ -619,50 +583,6 @@ function IconBase({
     >
       {children}
     </svg>
-  )
-}
-
-function BookOpenIcon() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
-      stroke="#002D72" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
-      <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
-    </svg>
-  )
-}
-
-function LayoutDashboardIcon({ color }: { color?: string }) {
-  return (
-    <IconBase color={color}>
-      <rect width="7" height="9" x="3" y="3" rx="1" />
-      <rect width="7" height="5" x="14" y="3" rx="1" />
-      <rect width="7" height="9" x="14" y="12" rx="1" />
-      <rect width="7" height="5" x="3" y="16" rx="1" />
-    </IconBase>
-  )
-}
-
-function SquareIcon({ color }: { color?: string }) {
-  return <IconBase color={color}><rect width="18" height="18" x="3" y="3" rx="2" /></IconBase>
-}
-
-function CalendarIcon({ color }: { color?: string }) {
-  return (
-    <IconBase color={color}>
-      <path d="M8 2v4" /><path d="M16 2v4" />
-      <rect width="18" height="18" x="3" y="4" rx="2" />
-      <path d="M3 10h18" />
-    </IconBase>
-  )
-}
-
-function UserIcon({ color }: { color?: string }) {
-  return (
-    <IconBase color={color}>
-      <path d="M19 21a7 7 0 0 0-14 0" />
-      <circle cx="12" cy="7" r="4" />
-    </IconBase>
   )
 }
 
