@@ -5,11 +5,14 @@ import LandingPage from './pages/LandingPage'
 import OnboardingPage from './pages/OnboardingPage'
 import DashboardPage from './pages/DashboardPage'
 import ProfilePage from './pages/ProfilePage'
+import { useQuery } from "convex/react";
+import { api } from "../../backend/convex/_generated/api";
 
 const PROTECTED_ROUTES = ['/onboarding', '/dashboard', '/profile']
 
 export default function App() {
   const { isAuthenticated, isLoading } = useConvexAuth()
+  const user = useQuery(api.queries.users.getCurrUser);
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -19,9 +22,14 @@ export default function App() {
       navigate('/')
     }
     if (isAuthenticated && location.pathname === '/') {
-      navigate('/dashboard')
+      if (user === undefined) return
+      if (user?.onboardingComplete) {
+        navigate('/dashboard')
+      } else {
+        navigate('/onboarding')
+      }
     }
-  }, [isAuthenticated, isLoading, location.pathname])
+  }, [isAuthenticated, isLoading, location.pathname, user])
 
   return (
     <Routes>
