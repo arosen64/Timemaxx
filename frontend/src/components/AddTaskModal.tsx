@@ -29,7 +29,14 @@ export default function AddTaskModal({ isOpen, onClose }: AddTaskModalProps) {
   }
 
   async function handleSubmit() {
-    if (!taskName.trim()) return
+    if (!taskName.trim()) {
+      setError('Please enter a task name.')
+      return
+    }
+    if (!selectedType || !TASK_TYPES.includes(selectedType)) {
+      setError('Please select a task type.')
+      return
+    }
     if (!dueDate || !validateDueDate(dueDate)) {
       setError('Please enter a valid date in MM/DD/YYYY format.')
       return
@@ -160,7 +167,7 @@ export default function AddTaskModal({ isOpen, onClose }: AddTaskModalProps) {
           </button>
           <button
             onClick={handleSubmit}
-            disabled={isSubmitting || !taskName.trim() || !dueDate}
+            disabled={isSubmitting}
             className="flex h-12 flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border-none bg-navy font-heading text-[15px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isSubmitting ? 'Adding…' : 'Add Task'}
