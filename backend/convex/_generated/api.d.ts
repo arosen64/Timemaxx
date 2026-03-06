@@ -13,6 +13,7 @@ import type * as http from "../http.js";
 import type * as mutations_users from "../mutations/users.js";
 import type * as queries_tasks from "../queries/tasks.js";
 import type * as queries_users from "../queries/users.js";
+import type * as mutations_tasks from "../mutations/tasks.js";
 
 import type {
   ApiFromModules,
@@ -26,6 +27,7 @@ declare const fullApi: ApiFromModules<{
   "mutations/users": typeof mutations_users;
   "queries/tasks": typeof queries_tasks;
   "queries/users": typeof queries_users;
+  "mutations/tasks": typeof mutations_tasks;
 }>;
 
 /**
