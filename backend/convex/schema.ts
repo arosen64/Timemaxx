@@ -33,8 +33,14 @@ users: defineTable({
     userId: v.id("users"),
     title: v.string(),
     description: v.string(),
-    taskType: v.string(),
-    timeEstimate: v.number(),
+    taskType: v.union(
+      v.literal("Problem Set"),
+      v.literal("Essay"),
+      v.literal("Coding"),
+      v.literal("Exam Prep"),
+    ),
+    timeEstimate: v.optional(v.number()),
+    dueDate: v.number(),
     createdAt: v.number(),
   })
     .index("by_userId", ["userId"])

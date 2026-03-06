@@ -1,6 +1,9 @@
 import { useState } from 'react'
+import { useMutation } from 'convex/react'
+import { api } from '../../../backend/convex/_generated/api'
 
 const TASK_TYPES = ['Problem Set', 'Essay', 'Coding', 'Exam Prep'] as const
+type TaskType = typeof TASK_TYPES[number]
 
 interface AddTaskModalProps {
   isOpen: boolean
@@ -9,9 +12,34 @@ interface AddTaskModalProps {
 
 export default function AddTaskModal({ isOpen, onClose }: AddTaskModalProps) {
   const [taskName, setTaskName] = useState('')
-  const [selectedType, setSelectedType] = useState<string>('Problem Set')
+  const [selectedType, setSelectedType] = useState<TaskType>('Problem Set')
   const [description, setDescription] = useState('')
   const [dueDate, setDueDate] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const createTask = useMutation(api.mutations.tasks.createTask)
+
+  async function handleSubmit() {
+    if (!taskName.trim()) return
+    const parsedDueDate = new Date(dueDate).getTime()
+    if (!dueDate || isNaN(parsedDueDate)) return
+    setIsSubmitting(true)
+    setError(null)
+    try {
+      await createTask({
+        title: taskName,
+        description,
+        taskType: selectedType,
+        dueDate: parsedDueDate,
+      })
+      onClose()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Something went wrong. Please try again.')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
 
   if (!isOpen) return null
 
@@ -101,6 +129,10 @@ export default function AddTaskModal({ isOpen, onClose }: AddTaskModalProps) {
           </div>
         </div>
 
+        {error && (
+          <p className="font-body text-sm text-red-500">{error}</p>
+        )}
+
         {/* Button Row */}
         <div className="flex w-full gap-3">
           <button
@@ -109,8 +141,12 @@ export default function AddTaskModal({ isOpen, onClose }: AddTaskModalProps) {
           >
             Cancel
           </button>
-          <button className="flex h-12 flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border-none bg-navy font-heading text-[15px] font-semibold text-white">
-            Add Task
+          <button
+            onClick={handleSubmit}
+            disabled={isSubmitting || !taskName.trim() || !dueDate}
+            className="flex h-12 flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border-none bg-navy font-heading text-[15px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {isSubmitting ? 'Adding…' : 'Add Task'}
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-teal" />
           </button>
         </div>
