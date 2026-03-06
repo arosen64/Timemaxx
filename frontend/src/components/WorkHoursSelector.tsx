@@ -67,27 +67,29 @@ export default function WorkHoursSelector({ data, onChange }: WorkHoursSelectorP
     return () => document.removeEventListener('mouseup', handleMouseUp)
   }, [])
 
+  const slotsRef = useRef(slots)
+  slotsRef.current = slots
+
   const applyToSlot = useCallback(
     (day: string, slot: number, action: DragAction, mode: PaintMode) => {
-      setSlots((prev) => {
-        const available = new Set(prev[day].available)
-        const blocked = new Set(prev[day].blocked)
-        if (action === 'paint') {
-          if (mode === 'available') {
-            available.add(slot)
-            blocked.delete(slot)
-          } else {
-            blocked.add(slot)
-            available.delete(slot)
-          }
+      const prev = slotsRef.current
+      const available = new Set(prev[day].available)
+      const blocked = new Set(prev[day].blocked)
+      if (action === 'paint') {
+        if (mode === 'available') {
+          available.add(slot)
+          blocked.delete(slot)
         } else {
-          if (mode === 'available') available.delete(slot)
-          else blocked.delete(slot)
+          blocked.add(slot)
+          available.delete(slot)
         }
-        const next = { ...prev, [day]: { available, blocked } }
-        onChange(slotsToData(next))
-        return next
-      })
+      } else {
+        if (mode === 'available') available.delete(slot)
+        else blocked.delete(slot)
+      }
+      const next = { ...prev, [day]: { available, blocked } }
+      setSlots(next)
+      onChange(slotsToData(next))
     },
     [onChange]
   )
