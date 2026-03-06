@@ -16,6 +16,7 @@ export default function AddTaskModal({ isOpen, onClose }: AddTaskModalProps) {
   const [description, setDescription] = useState('')
   const [dueDate, setDueDate] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const createTask = useMutation(api.mutations.tasks.createTask)
 
@@ -24,6 +25,7 @@ export default function AddTaskModal({ isOpen, onClose }: AddTaskModalProps) {
     const parsedDueDate = new Date(dueDate).getTime()
     if (!dueDate || isNaN(parsedDueDate)) return
     setIsSubmitting(true)
+    setError(null)
     try {
       await createTask({
         title: taskName,
@@ -32,6 +34,8 @@ export default function AddTaskModal({ isOpen, onClose }: AddTaskModalProps) {
         dueDate: parsedDueDate,
       })
       onClose()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Something went wrong. Please try again.')
     } finally {
       setIsSubmitting(false)
     }
@@ -124,6 +128,10 @@ export default function AddTaskModal({ isOpen, onClose }: AddTaskModalProps) {
             </div>
           </div>
         </div>
+
+        {error && (
+          <p className="font-body text-sm text-red-500">{error}</p>
+        )}
 
         {/* Button Row */}
         <div className="flex w-full gap-3">
