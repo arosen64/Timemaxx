@@ -46,6 +46,10 @@ export default function AddTaskModal({ isOpen, onClose }: AddTaskModalProps) {
       setError('Please select a task type.')
       return
     }
+    if (!description.trim()) {
+      setError('Please enter a description.')
+      return
+    }
     if (!dueDate || !validateDueDate(dueDate)) {
       setError('Please enter a valid date in MM/DD/YYYY format.')
       return
