@@ -1,6 +1,9 @@
 import { useState } from 'react'
+import { useMutation } from 'convex/react'
+import { api } from '../../../backend/convex/_generated/api'
 
 const TASK_TYPES = ['Problem Set', 'Essay', 'Coding', 'Exam Prep'] as const
+type TaskType = typeof TASK_TYPES[number]
 
 interface AddTaskModalProps {
   isOpen: boolean
@@ -9,16 +12,82 @@ interface AddTaskModalProps {
 
 export default function AddTaskModal({ isOpen, onClose }: AddTaskModalProps) {
   const [taskName, setTaskName] = useState('')
-  const [selectedType, setSelectedType] = useState<string>('Problem Set')
+  const [selectedType, setSelectedType] = useState<TaskType>('Problem Set')
   const [description, setDescription] = useState('')
   const [dueDate, setDueDate] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const createTask = useMutation(api.mutations.tasks.createTask)
+
+  function handleClose() {
+    setTaskName('')
+    setSelectedType('Problem Set')
+    setDescription('')
+    setDueDate('')
+    setError(null)
+    onClose()
+  }
+
+  function validateDueDate(value: string): boolean {
+    const match = value.match(/^(\d{1,2})\s*\/\s*(\d{1,2})\s*\/\s*(\d{4})$/)
+    if (!match) {
+      setError('Please enter a valid date in MM/DD/YYYY format.')
+      return false
+    }
+    const [, month, day, year] = match.map(Number)
+    const date = new Date(year, month - 1, day)
+    if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
+      setError('Please enter a valid date in MM/DD/YYYY format.')
+      return false
+    }
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    if (date < today) {
+      setError('Due date cannot be in the past.')
+      return false
+    }
+    return true
+  }
+
+  async function handleSubmit() {
+    if (!taskName.trim()) {
+      setError('Please enter a task name.')
+      return
+    }
+    if (!selectedType || !TASK_TYPES.includes(selectedType)) {
+      setError('Please select a task type.')
+      return
+    }
+    if (!description.trim()) {
+      setError('Please enter a description.')
+      return
+    }
+    if (!dueDate || !validateDueDate(dueDate)) return
+    const parsedDueDate = new Date(dueDate).getTime()
+    setIsSubmitting(true)
+    setError(null)
+    try {
+      await createTask({
+        title: taskName,
+        description,
+        taskType: selectedType,
+        dueDate: parsedDueDate,
+      })
+      handleClose()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Something went wrong. Please try again.')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
 
   if (!isOpen) return null
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-navy/30"
-      onClick={onClose}
+      onClick={handleClose}
     >
       <div
         className="flex w-[520px] flex-col gap-6 rounded-xl border border-border bg-white p-12"
@@ -28,7 +97,7 @@ export default function AddTaskModal({ isOpen, onClose }: AddTaskModalProps) {
         <div className="flex w-full items-center justify-between">
           <span className="font-heading text-[26px] font-bold text-navy">Add new task</span>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-md border-none bg-bg-gray font-body text-lg text-light-blue"
           >
             &times;
@@ -93,6 +162,10 @@ export default function AddTaskModal({ isOpen, onClose }: AddTaskModalProps) {
                 type="text"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
+                onBlur={() => {
+                  if (dueDate) validateDueDate(dueDate)
+                }}
+                onFocus={() => setError(null)}
                 placeholder="MM / DD / YYYY"
                 className="flex-1 border-none bg-transparent font-body text-sm text-navy outline-none placeholder:text-light-blue"
               />
@@ -101,16 +174,24 @@ export default function AddTaskModal({ isOpen, onClose }: AddTaskModalProps) {
           </div>
         </div>
 
+        {error && (
+          <p className="font-body text-sm text-red-500">{error}</p>
+        )}
+
         {/* Button Row */}
         <div className="flex w-full gap-3">
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="flex h-12 flex-1 cursor-pointer items-center justify-center rounded-lg border border-border bg-bg-gray font-heading text-[15px] font-semibold text-slate-blue"
           >
             Cancel
           </button>
-          <button className="flex h-12 flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border-none bg-navy font-heading text-[15px] font-semibold text-white">
-            Add Task
+          <button
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+            className="flex h-12 flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border-none bg-navy font-heading text-[15px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {isSubmitting ? 'Adding…' : 'Add Task'}
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-teal" />
           </button>
         </div>
