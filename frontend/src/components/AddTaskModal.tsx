@@ -20,14 +20,15 @@ export default function AddTaskModal({ isOpen, onClose }: AddTaskModalProps) {
 
   async function handleSubmit() {
     if (!taskName.trim()) return
+    const parsedDueDate = new Date(dueDate).getTime()
+    if (!dueDate || isNaN(parsedDueDate)) return
     setIsSubmitting(true)
     try {
-      const parsedDueDate = dueDate ? new Date(dueDate).getTime() : undefined
       await createTask({
         title: taskName,
         description,
         taskType: selectedType,
-        dueDate: parsedDueDate && !isNaN(parsedDueDate) ? parsedDueDate : undefined,
+        dueDate: parsedDueDate,
       })
       onClose()
     } finally {
@@ -133,7 +134,7 @@ export default function AddTaskModal({ isOpen, onClose }: AddTaskModalProps) {
           </button>
           <button
             onClick={handleSubmit}
-            disabled={isSubmitting || !taskName.trim()}
+            disabled={isSubmitting || !taskName.trim() || !dueDate}
             className="flex h-12 flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border-none bg-navy font-heading text-[15px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isSubmitting ? 'Adding…' : 'Add Task'}

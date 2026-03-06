@@ -11,7 +11,7 @@ export const createTask = mutation({
     title: v.string(),
     description: v.string(),
     taskType: v.string(),
-    dueDate: v.optional(v.number()),
+    dueDate: v.number(),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
