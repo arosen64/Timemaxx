@@ -54,8 +54,8 @@ export default function ProfilePage() {
           {/* Fields Row 2 */}
           <div className="flex w-full gap-8">
             <div className="flex flex-1 flex-col gap-1.5">
-              <span className="font-body text-xs font-semibold text-slate-blue">School</span>
-              <span className="font-heading text-base font-medium text-navy">Johns Hopkins University</span>
+              <span className="font-body text-xs font-semibold text-slate-blue">Major</span>
+              <span className="font-heading text-base font-medium text-navy">Computer Science</span>
             </div>
             <div className="flex flex-1 flex-col gap-1.5">
               <span className="font-body text-xs font-semibold text-slate-blue">Year</span>
