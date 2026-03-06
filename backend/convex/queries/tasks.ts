@@ -19,10 +19,9 @@ export const getTask = query({
   },
 });
 
-// Get paginated + sorted list of tasks
-export const getTasks = query({
+//Sorted list of all queries
+export const getAllTasks = query({
   args: {
-    paginationOpts: v.optional(paginationOptsValidator),
     sortOrder: v.optional(v.union(v.literal("asc"), v.literal("desc"))),
     taskType: v.optional(
       v.union(
@@ -33,27 +32,53 @@ export const getTasks = query({
       )
     ),
   },
+
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
+
+    const order = args.sortOrder ?? "desc";
+
+    const tasks = await ctx.db
+      .query("tasks")
+      .withIndex("by_userId_createdAt", (q) => q.eq("userId", userId))
+      .order(order)
+      .collect();
+
+    if (args.taskType) {
+      return tasks.filter((t) => t.taskType === args.taskType);
+    }
+
+    return tasks;
+  },
+});
+
+
+export const getTasksPaginated = query({
+  args: {
+    paginationOpts: paginationOptsValidator,
+    sortOrder: v.optional(v.union(v.literal("asc"), v.literal("desc"))),
+    taskType: v.optional(
+      v.union(
+        v.literal("Problem Set"),
+        v.literal("Essay"),
+        v.literal("Coding"),
+        v.literal("Exam Prep")
+      )
+    ),
+  },
+
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) return null;
 
     const order = args.sortOrder ?? "desc";
 
-    const baseQuery = ctx.db
+    const result = await ctx.db
       .query("tasks")
       .withIndex("by_userId_createdAt", (q) => q.eq("userId", userId))
-      .order(order);
-
-    // No pagination — return all (filtered)
-    if (!args.paginationOpts) {
-      const tasks = await baseQuery.collect();
-      return args.taskType
-        ? tasks.filter((t) => t.taskType === args.taskType)
-        : tasks;
-    }
-
-    // With pagination
-    const result = await baseQuery.paginate(args.paginationOpts);
+      .order(order)
+      .paginate(args.paginationOpts);
 
     return {
       ...result,
