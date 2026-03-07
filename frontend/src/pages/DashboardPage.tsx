@@ -25,16 +25,12 @@ type EditForm = {
   dueDate: number
 }
 
-function formatHours(hours: number) {
-  if (!Number.isFinite(hours) || hours <= 0) return '—'
-  if (hours === 1) return '1 hr'
-  return `${trimTrailingZeros(hours)} hrs`
+function formatMinutes(minutes: number) {
+  if (!Number.isFinite(minutes) || minutes <= 0) return '—'
+  if (minutes === 1) return '1 min'
+  return `${Math.round(minutes)} mins`
 }
 
-function trimTrailingZeros(n: number) {
-  const s = n.toFixed(2)
-  return s.replace(/\.?0+$/, '')
-}
 
 function displayTitle(task: Pick<TaskType, 'title' | 'description'>) {
   const t = task.title.trim()
@@ -397,7 +393,7 @@ export default function DashboardPage() {
 
   const taskRows = useMemo(() => tasks ?? [], [tasks])
 
-  const totalEstimatedHours = useMemo(
+  const totalEstimatedMinutes = useMemo(
     () => taskRows.reduce((sum, t) => sum + (t.timeEstimate ?? 0), 0),
     [taskRows]
   )
@@ -526,9 +522,9 @@ export default function DashboardPage() {
           </div>
 
           <div className="flex flex-1 flex-col gap-2 rounded-[10px] border border-border bg-white p-5">
-            <span className="text-xs font-semibold text-slate-blue">Estimated Hours</span>
+            <span className="text-xs font-semibold text-slate-blue">Estimated Minutes</span>
             <span className="font-heading text-[36px] font-bold leading-none text-navy">
-              {totalEstimatedHours > 0 ? trimTrailingZeros(totalEstimatedHours) : '—'}
+              {totalEstimatedMinutes > 0 ? Math.round(totalEstimatedMinutes) : '—'}
             </span>
             <div className="flex items-center gap-1">
               <div className="w-2 h-2 rounded-full shrink-0 bg-sky-blue" />
@@ -590,7 +586,7 @@ export default function DashboardPage() {
                           {displayTitle(task)}
                         </div>
                         <div className="text-xs text-slate-blue">
-                          Due {formatDateMMDDYYYY(task.dueDate)} · {task.taskType} · ~{formatHours(task.timeEstimate ?? 0)} estimated
+                          Due {formatDateMMDDYYYY(task.dueDate)} · {task.taskType} · ~{formatMinutes(task.timeEstimate ?? 0)} estimated
                         </div>
                         {task.description.trim().length > 0 && (
                           <div className="text-xs truncate text-light-blue">
