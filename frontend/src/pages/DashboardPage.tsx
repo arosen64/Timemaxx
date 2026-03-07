@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react'
+import { useMemo, useState, useEffect, type ReactNode } from 'react'
 import { useQuery, useMutation, useAction } from 'convex/react'
 import { api } from '../../../backend/convex/_generated/api'
 import { Id } from '../../../backend/convex/_generated/dataModel'
@@ -389,6 +389,19 @@ export default function DashboardPage() {
   const [estimatingTasks, setEstimatingTasks] = useState<Set<Id<'tasks'>>>(new Set())
   const [estimationError, setEstimationError] = useState<string | null>(null)
 
+  // Clear tasks from estimatingTasks once their timeEstimate is populated by the server
+  useEffect(() => {
+    setEstimatingTasks((prev) => {
+      if (prev.size === 0) return prev
+      const next = new Set(prev)
+      for (const id of prev) {
+        const task = taskRows.find((t) => t._id === id)
+        if (task?.timeEstimate !== undefined) next.delete(id)
+      }
+      return next.size === prev.size ? prev : next
+    })
+  }, [taskRows])
+
   async function handleSaveEdit(form: EditForm) {
     if (!editingTask) return
     await updateTask({ taskId: editingTask._id, ...form })
@@ -441,6 +454,7 @@ export default function DashboardPage() {
       <AddTaskModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
+        onTaskCreated={(taskId) => setEstimatingTasks((prev) => new Set(prev).add(taskId as Id<'tasks'>))}
       />
 
       <Sidebar />
