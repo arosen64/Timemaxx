@@ -406,7 +406,7 @@ export default function DashboardPage() {
     if (!editingTask) return
     const taskId = editingTask._id
     await updateTask({ taskId, ...form })
-    setEstimatingTasks((prev) => new Set(prev).add(taskId))
+    handleEstimateTask(taskId)
   }
 
   async function handleConfirmDelete() {
@@ -456,7 +456,7 @@ export default function DashboardPage() {
       <AddTaskModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
-        onTaskCreated={(taskId) => setEstimatingTasks((prev) => new Set(prev).add(taskId as Id<'tasks'>))}
+        onTaskCreated={(taskId) => handleEstimateTask(taskId as Id<'tasks'>)}
       />
 
       <Sidebar />

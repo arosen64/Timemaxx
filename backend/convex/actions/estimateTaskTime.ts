@@ -79,6 +79,7 @@ Respond with the estimated number of minutes as a single integer.`;
       }
     } catch (err) {
       console.error("Failed to estimate task time:", err);
+      throw err;
     }
   },
 });

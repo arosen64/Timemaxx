@@ -1,7 +1,6 @@
 import { mutation } from "../_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
-import { internal } from "../_generated/api";
 
 /**
  * Creates a new task for the authenticated user with timeEstimate left unset.
@@ -48,8 +47,6 @@ export const createTask = mutation({
       createdAt: Date.now(),
     });
 
-    await ctx.scheduler.runAfter(0, internal.actions.estimateTaskTime.estimateTaskTime, { taskId });
-
     return taskId;
   },
 });
@@ -83,8 +80,6 @@ export const updateTask = mutation({
       dueDate: args.dueDate,
       timeEstimate: undefined,
     });
-
-    await ctx.scheduler.runAfter(0, internal.actions.estimateTaskTime.estimateTaskTime, { taskId: args.taskId });
   },
 });
 
