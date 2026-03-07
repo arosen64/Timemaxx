@@ -529,8 +529,18 @@ export default function DashboardPage() {
                         </span>
                       </div>
 
-                      {/* Edit / Delete buttons — visible on hover */}
+                      {/* Edit / Delete / Estimate buttons */}
                       <div className="flex items-center gap-1">
+                        {task.timeEstimate === undefined && !estimatingTasks.has(task._id) && (
+                          <button
+                            type="button"
+                            onClick={() => handleEstimateTask(task._id)}
+                            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-blue transition hover:bg-bg-gray hover:text-navy"
+                            aria-label="Estimate task time"
+                          >
+                            <SparklesIcon color="currentColor" size={16} />
+                          </button>
+                        )}
                         <button
                           type="button"
                           onClick={() => setEditingTask(task)}
