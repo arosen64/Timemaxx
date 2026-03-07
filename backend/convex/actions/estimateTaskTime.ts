@@ -45,7 +45,9 @@ Respond with the estimated number of minutes as a single integer.`;
     // Call Gemini with structured output
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      console.error("GEMINI_API_KEY is not set");
+      if (process.env.VITEST !== "true") {
+        console.error("GEMINI_API_KEY is not set");
+      }
       return;
     }
 
