@@ -9,6 +9,7 @@
  */
 
 import type * as actions_estimateTaskTime from "../actions/estimateTaskTime.js";
+import type * as actions_requestEstimateTaskTime from "../actions/requestEstimateTaskTime.js";
 import type * as auth from "../auth.js";
 import type * as http from "../http.js";
 import type * as mutations_tasks from "../mutations/tasks.js";
@@ -25,6 +26,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   "actions/estimateTaskTime": typeof actions_estimateTaskTime;
+  "actions/requestEstimateTaskTime": typeof actions_requestEstimateTaskTime;
   auth: typeof auth;
   http: typeof http;
   "mutations/tasks": typeof mutations_tasks;

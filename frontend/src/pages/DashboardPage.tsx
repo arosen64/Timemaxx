@@ -335,6 +335,38 @@ function DeleteModal({
   )
 }
 
+// ─── Estimation Error Modal ───────────────────────────────────────────────────
+
+function EstimationErrorModal({
+  message,
+  onClose,
+}: {
+  message: string
+  onClose: () => void
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-navy/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative z-10 w-full max-w-sm p-8 bg-white border shadow-xl rounded-xl border-border">
+        <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-[#FFF0EC]">
+          <WarningIcon />
+        </div>
+        <h2 className="mt-4 text-lg font-bold font-heading text-navy">Estimation Failed</h2>
+        <p className="mt-2 text-sm leading-relaxed text-slate-blue">{message}</p>
+        <div className="mt-8">
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-full h-10 rounded-lg bg-navy font-heading text-sm font-semibold text-white hover:opacity-90 transition"
+          >
+            Dismiss
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
@@ -355,6 +387,7 @@ export default function DashboardPage() {
   const [deletingTask, setDeletingTask] = useState<TaskType | null>(null)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [estimatingTasks, setEstimatingTasks] = useState<Set<Id<'tasks'>>>(new Set())
+  const [estimationError, setEstimationError] = useState<string | null>(null)
 
   async function handleSaveEdit(form: EditForm) {
     if (!editingTask) return
@@ -370,6 +403,8 @@ export default function DashboardPage() {
     setEstimatingTasks((prev) => new Set(prev).add(taskId))
     try {
       await requestEstimate({ taskId })
+    } catch (err) {
+      setEstimationError(err instanceof Error ? err.message : 'Failed to estimate task time. Please try again.')
     } finally {
       setEstimatingTasks((prev) => {
         const next = new Set(prev)
@@ -383,6 +418,12 @@ export default function DashboardPage() {
     <div className="flex h-screen overflow-hidden bg-bg-gray font-body text-slate-blue">
 
       {/* Modals */}
+      {estimationError && (
+        <EstimationErrorModal
+          message={estimationError}
+          onClose={() => setEstimationError(null)}
+        />
+      )}
       {editingTask && (
         <EditModal
           task={editingTask}
@@ -654,6 +695,16 @@ function TrashIcon({ color }: { color?: string }) {
       <path d="M3 6h18" />
       <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
       <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+    </IconBase>
+  )
+}
+
+function WarningIcon({ color = '#CF4520', size = 20 }: { color?: string; size?: number }) {
+  return (
+    <IconBase color={color} size={size}>
+      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+      <line x1="12" y1="9" x2="12" y2="13" />
+      <line x1="12" y1="17" x2="12.01" y2="17" />
     </IconBase>
   )
 }
