@@ -23,9 +23,9 @@ export default {
         'dark-red': '#A6192E',
       },
       fontFamily: {
-        heading: ["'Space Grotesk'", 'sans-serif'],
-        body: ["'Inter'", 'sans-serif'],
-      },
+        heading: ['Space Grotesk', 'sans-serif'],
+        body: ['Inter', 'sans-serif'],
+      }
     },
   },
   plugins: [],

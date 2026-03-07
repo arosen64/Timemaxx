@@ -53,3 +53,53 @@ export const createTask = mutation({
     return taskId;
   },
 });
+
+const taskTypeValidator = v.union(
+  v.literal("Problem Set"),
+  v.literal("Essay"),
+  v.literal("Coding"),
+  v.literal("Exam Prep")
+);
+
+export const updateTask = mutation({
+  args: {
+    taskId: v.id("tasks"),
+    title: v.string(),
+    description: v.string(),
+    taskType: taskTypeValidator,
+    dueDate: v.number(),
+    timeEstimate: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Unauthenticated");
+
+    const task = await ctx.db.get(args.taskId);
+    if (!task || task.userId !== userId) throw new Error("Task not found");
+
+    const patch = {
+      title: args.title,
+      description: args.description,
+      taskType: args.taskType,
+      dueDate: args.dueDate,
+      ...(args.timeEstimate !== undefined ? { timeEstimate: args.timeEstimate } : {}),
+    };
+
+    await ctx.db.patch(args.taskId, patch);
+  },
+});
+
+export const deleteTask = mutation({
+  args: {
+    taskId: v.id("tasks"),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Unauthenticated");
+
+    const task = await ctx.db.get(args.taskId);
+    if (!task || task.userId !== userId) throw new Error("Task not found");
+
+    await ctx.db.delete(args.taskId);
+  },
+});

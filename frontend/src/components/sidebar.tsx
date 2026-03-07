@@ -1,7 +1,10 @@
 import { Link, useLocation } from "react-router-dom";
+import { useQuery } from "convex/react";
+import { api } from "../../../backend/convex/_generated/api";
 
 export default function Sidebar() {
     const { pathname } = useLocation();
+    const user = useQuery(api.queries.users.getCurrUser);
 
     const navItem = (to: string, icon: React.ReactNode, label: string) => {
         const active = pathname === to;
@@ -50,12 +53,29 @@ export default function Sidebar() {
 
             {/* Footer: User Info */}
             <div className="flex items-center gap-2.5">
-                <div className="flex flex-shrink-0 items-center justify-center h-9 w-9 bg-sky-blue rounded-full">
-                    <span className="font-heading text-sm font-bold text-navy">AJ</span>
-                </div>
+                {user === undefined ? (
+                    <div className="flex-shrink-0 h-9 w-9 bg-white/20 rounded-full animate-pulse" />
+                ) : user?.image ? (
+                    <img src={user.image} alt="Profile" referrerPolicy="no-referrer" className="flex-shrink-0 h-9 w-9 rounded-full object-cover" />
+                ) : (
+                    <div className="flex flex-shrink-0 items-center justify-center h-9 w-9 bg-sky-blue rounded-full">
+                        <span className="font-heading text-sm font-bold text-navy">
+                            {user?.name?.charAt(0).toUpperCase() ?? "?"}
+                        </span>
+                    </div>
+                )}
                 <div className="flex flex-col gap-0.5">
-                    <span className="font-heading text-sm font-semibold text-white">Alex Johnson</span>
-                    <span className="font-body text-xs text-sky-blue">alex@jhu.edu</span>
+                    {user === undefined ? (
+                        <>
+                            <div className="h-3.5 w-24 bg-white/20 rounded animate-pulse" />
+                            <div className="h-3 w-32 bg-white/10 rounded animate-pulse" />
+                        </>
+                    ) : (
+                        <>
+                            <span className="font-heading text-sm font-semibold text-white">{user?.name}</span>
+                            <span className="font-body text-xs text-sky-blue">{user?.email}</span>
+                        </>
+                    )}
                 </div>
             </div>
         </aside>
