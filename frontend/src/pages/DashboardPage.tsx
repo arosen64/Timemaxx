@@ -404,7 +404,9 @@ export default function DashboardPage() {
 
   async function handleSaveEdit(form: EditForm) {
     if (!editingTask) return
-    await updateTask({ taskId: editingTask._id, ...form })
+    const taskId = editingTask._id
+    await updateTask({ taskId, ...form })
+    setEstimatingTasks((prev) => new Set(prev).add(taskId))
   }
 
   async function handleConfirmDelete() {
