@@ -10,16 +10,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # TODO: Set up Node.js
-      # - uses: actions/setup-node@v4
-      #   with:
-      #     node-version: '20'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
 
-      # TODO: Install dependencies
-      # - run: npm install
+      - run: npm ci
 
-      # TODO: Run linter
-      # - run: npm run lint
+      - run: npm run build
 
-      # TODO: Run tests
-      # - run: npm test
+      - run: npm test
