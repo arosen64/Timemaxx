@@ -1,5 +1,5 @@
 import { useMemo, useState, type ReactNode } from 'react'
-import { useQuery, useMutation } from 'convex/react'
+import { useQuery, useMutation, useAction } from 'convex/react'
 import { api } from '../../../backend/convex/_generated/api'
 import { Id } from '../../../backend/convex/_generated/dataModel'
 import AddTaskModal from '../components/AddTaskModal'
@@ -341,6 +341,7 @@ export default function DashboardPage() {
   const tasks = useQuery(api.queries.tasks.getAllTasks, {}) as TaskType[] | undefined
   const updateTask = useMutation(api.mutations.tasks.updateTask)
   const deleteTask = useMutation(api.mutations.tasks.deleteTask)
+  const requestEstimate = useAction(api.actions.requestEstimateTaskTime.requestEstimateTaskTime)
   const user = useQuery(api.queries.users.getCurrUser)
 
   const taskRows = useMemo(() => tasks ?? [], [tasks])
@@ -353,6 +354,7 @@ export default function DashboardPage() {
   const [editingTask, setEditingTask] = useState<TaskType | null>(null)
   const [deletingTask, setDeletingTask] = useState<TaskType | null>(null)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  const [estimatingTasks, setEstimatingTasks] = useState<Set<Id<'tasks'>>>(new Set())
 
   async function handleSaveEdit(form: EditForm) {
     if (!editingTask) return
@@ -362,6 +364,19 @@ export default function DashboardPage() {
   async function handleConfirmDelete() {
     if (!deletingTask) return
     await deleteTask({ taskId: deletingTask._id })
+  }
+
+  async function handleEstimateTask(taskId: Id<'tasks'>) {
+    setEstimatingTasks((prev) => new Set(prev).add(taskId))
+    try {
+      await requestEstimate({ taskId })
+    } finally {
+      setEstimatingTasks((prev) => {
+        const next = new Set(prev)
+        next.delete(taskId)
+        return next
+      })
+    }
   }
 
   return (
