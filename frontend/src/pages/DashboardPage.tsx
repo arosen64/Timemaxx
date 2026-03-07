@@ -531,15 +531,21 @@ export default function DashboardPage() {
 
                       {/* Edit / Delete / Estimate buttons */}
                       <div className="flex items-center gap-1">
-                        {task.timeEstimate === undefined && !estimatingTasks.has(task._id) && (
-                          <button
-                            type="button"
-                            onClick={() => handleEstimateTask(task._id)}
-                            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-blue transition hover:bg-bg-gray hover:text-navy"
-                            aria-label="Estimate task time"
-                          >
-                            <SparklesIcon color="currentColor" size={16} />
-                          </button>
+                        {task.timeEstimate === undefined && (
+                          estimatingTasks.has(task._id) ? (
+                            <div className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-blue">
+                              <SpinnerIcon color="currentColor" size={16} />
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleEstimateTask(task._id)}
+                              className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-blue transition hover:bg-bg-gray hover:text-navy"
+                              aria-label="Estimate task time"
+                            >
+                              <SparklesIcon color="currentColor" size={16} />
+                            </button>
+                          )
                         )}
                         <button
                           type="button"
@@ -649,6 +655,25 @@ function TrashIcon({ color }: { color?: string }) {
       <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
       <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
     </IconBase>
+  )
+}
+
+function SpinnerIcon({ color = 'currentColor', size = 16 }: { color?: string; size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      aria-hidden="true"
+      className="animate-spin"
+      style={{ flexShrink: 0 }}
+    >
+      <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+    </svg>
   )
 }
 
