@@ -1,8 +1,11 @@
-import { describe, expect, test } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { api } from "../_generated/api";
 import { makeTestCtx, createTestUser } from "../../convex-tests/helpers";
 
 describe("mutations/tasks – createTask", () => {
+  beforeEach(() => { vi.useFakeTimers(); });
+  afterEach(() => { vi.useRealTimers(); });
+
   test("throws when unauthenticated", async () => {
     const t = makeTestCtx();
     await expect(
@@ -26,6 +29,8 @@ describe("mutations/tasks – createTask", () => {
       dueDate: Date.now() + 86_400_000,
     });
 
+    await t.finishAllScheduledFunctions(vi.runAllTimers);
+
     expect(taskId).toBeDefined();
 
     const task = await t.run((ctx) => ctx.db.get(taskId));
@@ -47,6 +52,8 @@ describe("mutations/tasks – createTask", () => {
       taskType: "Coding",
       dueDate: Date.now() + 86_400_000,
     });
+
+    await t.finishAllScheduledFunctions(vi.runAllTimers);
 
     const task = await t.run((ctx) => ctx.db.get(taskId));
     expect(task!.userId).toBe(userId);
@@ -71,6 +78,8 @@ describe("mutations/tasks – createTask", () => {
         taskType,
         dueDate,
       });
+      await t.finishAllScheduledFunctions(vi.runAllTimers);
+
       const task = await t.run((ctx) => ctx.db.get(taskId));
       expect(task!.taskType).toBe(taskType);
     }
