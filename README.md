@@ -35,25 +35,58 @@ npm run dev
 ## Running Tests
 
 ```bash
-<command>
+npm test
+```
+
+## Building for Production
+
+```bash
+npm run build
 ```
 
 ## Project Structure
 
 ```
-frontend/        # React + Vite + TailwindCSS app
+design/
+  timemaxx.pen              # File for UI design 
+frontend/
   src/
-    pages/       # Route-level page components
-    components/  # Reusable UI components
-    main.tsx     # App entry point
-    App.tsx      # Route definitions
+    pages/
+      LandingPage.tsx       # Public landing / sign-in page (/)
+      OnboardingPage.tsx    # New-user setup (/onboarding)
+      DashboardPage.tsx     # Main study dashboard (/dashboard)
+      ProfilePage.tsx       # User profile (/profile)
+    components/
+      AddTaskModal.tsx      # Modal for adding a new task
+      PreferencesForm.tsx   # Study preferences form
+      ProfileForm.tsx       # Profile editing form
+      sidebar.tsx           # Dashboard sidebar navigation
+      WorkHoursSelector.tsx # Weekly work-hours picker
+    main.tsx                # App entry point (ConvexProvider + BrowserRouter)
+    App.tsx                 # Route definitions
 backend/
   convex/
-    schema.ts      # Convex database schema
-    queries/       # Read-only data fetching functions (useQuery)
-    mutations/     # Write operations that modify the database (useMutation)
-    actions/       # Side-effectful functions, e.g. Google Gemini API calls
+    schema.ts               # Convex database schema
+    auth.ts                 # Convex Auth configuration
+    queries/
+      users.ts              # User read queries
+      tasks.ts              # Task read queries
+    mutations/
+      users.ts              # User write operations
+      tasks.ts              # Task write operations
+    actions/
+      estimateTaskTime.ts         # Google Gemini time-estimation action
+      requestEstimateTaskTime.ts  # Triggers time-estimation for a task
 ```
+
+## Routes
+
+| Path | Page | Access |
+|---|---|---|
+| `/` | LandingPage | Public |
+| `/onboarding` | OnboardingPage | Authenticated |
+| `/dashboard` | DashboardPage | Authenticated |
+| `/profile` | ProfilePage | Authenticated |
 
 ## Documentation
 
