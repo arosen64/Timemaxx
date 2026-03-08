@@ -4,25 +4,72 @@ on:
   push:
     branches: [master]
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
 
-      # TODO: Set up Node.js
-      # - uses: actions/setup-node@v4
-      #   with:
-      #     node-version: '20'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
 
-      # TODO: Install dependencies
-      # - run: npm install
+      - run: npm ci
 
-      # TODO: Build for production
-      # - run: npm run build
+      # Install Convex CLI
+      - name: Install Convex
+        run: npm install -g convex
 
-      # TODO: Deploy to your hosting platform
-      # Example:
-      # - uses: amondnet/vercel-action@v25
-      #   with:
-      #     vercel-token: ${{ secrets.VERCEL_TOKEN }}
+      # Deploy backend to production
+      - name: Deploy Convex backend
+        run: npx convex deploy
+        env:
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
+
+      # Set SITE_URL so Convex Auth redirects back to the deployed frontend after OAuth
+      - name: Set Convex SITE_URL
+        run: npx convex env set SITE_URL ${{ secrets.SITE_URL }}
+        env:
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
+
+      # Build frontend
+      - run: npm run build
+        env:
+          VITE_CONVEX_URL: ${{ secrets.VITE_CONVEX_URL }}
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: frontend/dist
+      
+      - name: Check VITE_CONVEX_URL secret
+        run: |
+          if [ -z "$VITE_CONVEX_URL" ]; then
+            echo "VITE_CONVEX_URL is empty or  unset"
+          else
+            echo "VITE_CONVEX_URL is set: $VITE_CONVEX_URL"
+          fi
+        env:
+          VITE_CONVEX_URL: ${{ secrets.VITE_CONVEX_URL }}
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4

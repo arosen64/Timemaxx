@@ -126,7 +126,7 @@ Without AI, it would be considerably more difficult to block off time work appro
   - Google Tasks API  
   - Canvas API  
 - **Deployment:** GitHub Actions
-- **Testing:** Jest
+- **Testing:** Vitest
 
 ## Product Roadmap
 

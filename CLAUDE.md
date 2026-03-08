@@ -13,7 +13,7 @@ React + Vite + TypeScript + TailwindCSS + Convex + React Router + Google Gemini
 - Install dependencies: `npm install`
 - Run backend: `npx convex dev` (run this first, in its own terminal)
 - Run frontend: `npm run dev` (run this after the backend is running, in a separate terminal)
-- Run tests: `<command>`
+- Run tests: `npm test`
 - Run linter: `<command>`
 - Build for production: `npm run build`
 
@@ -40,7 +40,7 @@ backend/
     actions/       # Side-effectful functions, e.g. Google Gemini API calls
 ```
 
-Routes: `/` (landing) → `/onboarding` (new users) → `/dashboard`
+Routes: `/` (landing) → `/onboarding` (new users) → `/dashboard` → `/profile`
 
 ## Branch & Commit Conventions
 
