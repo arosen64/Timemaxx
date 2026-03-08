@@ -29,7 +29,7 @@ frontend/
     DashboardPage.test.tsx  # task list, modals, error handling
     ProfileForm.test.tsx    # form field and tag input behavior
     utils.tsx               # shared frontend test helpers
-    setup.ts                # jest-dom matchers + vitest globals
+    setup.ts                # jest-dom matchers + Vitest globals
 ```
 
 ---
