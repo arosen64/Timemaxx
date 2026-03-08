@@ -35,7 +35,17 @@ npm run dev
 ## Running Tests
 
 ```bash
-<command>
+# Run all tests (backend + frontend)
+npm test
+
+# Run in watch mode
+npm run test:watch
+
+# Run only backend tests
+npx vitest run --project backend
+
+# Run only frontend tests
+npx vitest run --project frontend
 ```
 
 ## Project Structure
