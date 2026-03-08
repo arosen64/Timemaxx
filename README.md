@@ -35,7 +35,17 @@ npm run dev
 ## Running Tests
 
 ```bash
+# Run all tests (backend + frontend)
 npm test
+
+# Run in watch mode
+npm run test:watch
+
+# Run only backend tests
+npx vitest run --project backend
+
+# Run only frontend tests
+npx vitest run --project frontend
 ```
 
 ## Building for Production
@@ -64,6 +74,7 @@ frontend/
       WorkHoursSelector.tsx # Weekly work-hours picker
     main.tsx                # App entry point (ConvexProvider + BrowserRouter)
     App.tsx                 # Route definitions
+  tests/                    # Frontend behavioral tests (Vitest + React Testing Library)
 backend/
   convex/
     schema.ts               # Convex database schema
