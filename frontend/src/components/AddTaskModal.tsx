@@ -8,9 +8,10 @@ type TaskType = typeof TASK_TYPES[number]
 interface AddTaskModalProps {
   isOpen: boolean
   onClose: () => void
+  onTaskCreated?: (taskId: string) => void
 }
 
-export default function AddTaskModal({ isOpen, onClose }: AddTaskModalProps) {
+export default function AddTaskModal({ isOpen, onClose, onTaskCreated }: AddTaskModalProps) {
   const [taskName, setTaskName] = useState('')
   const [selectedType, setSelectedType] = useState<TaskType>('Problem Set')
   const [description, setDescription] = useState('')
@@ -73,12 +74,13 @@ export default function AddTaskModal({ isOpen, onClose }: AddTaskModalProps) {
     setIsSubmitting(true)
     setError(null)
     try {
-      await createTask({
+      const taskId = await createTask({
         title: taskName,
         description,
         taskType: selectedType,
         dueDate: parsedDueDate,
       })
+      onTaskCreated?.(taskId)
       handleClose()
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Something went wrong. Please try again.')

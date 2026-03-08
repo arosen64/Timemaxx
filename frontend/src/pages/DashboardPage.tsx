@@ -1,5 +1,5 @@
-import { useMemo, useState, type ReactNode } from 'react'
-import { useQuery, useMutation } from 'convex/react'
+import { useMemo, useState, useEffect, type ReactNode } from 'react'
+import { useQuery, useMutation, useAction } from 'convex/react'
 import { api } from '../../../backend/convex/_generated/api'
 import { Id } from '../../../backend/convex/_generated/dataModel'
 import AddTaskModal from '../components/AddTaskModal'
@@ -25,16 +25,12 @@ type EditForm = {
   dueDate: number
 }
 
-function formatHours(hours: number) {
-  if (!Number.isFinite(hours) || hours <= 0) return '—'
-  if (hours === 1) return '1 hr'
-  return `${trimTrailingZeros(hours)} hrs`
+function formatMinutes(minutes: number) {
+  if (!Number.isFinite(minutes) || minutes <= 0) return '—'
+  if (minutes === 1) return '1 min'
+  return `${Math.round(minutes)} mins`
 }
 
-function trimTrailingZeros(n: number) {
-  const s = n.toFixed(2)
-  return s.replace(/\.?0+$/, '')
-}
 
 function displayTitle(task: Pick<TaskType, 'title' | 'description'>) {
   const t = task.title.trim()
@@ -335,17 +331,69 @@ function DeleteModal({
   )
 }
 
+// ─── Estimation Error Helpers ─────────────────────────────────────────────────
+
+function parseEstimationError(err: unknown): string {
+  const raw = err instanceof Error ? err.message : String(err)
+  const jsonMatch = raw.match(/(\{.+\})/s)
+  if (jsonMatch) {
+    try {
+      const parsed = JSON.parse(jsonMatch[1])
+      const inner = parsed?.error
+      if (inner?.code && inner?.message) {
+        return `Error ${inner.code}: ${inner.message}`
+      }
+    } catch {
+      // not valid JSON — fall through
+    }
+  }
+  return 'Failed to estimate task time. Please try again.'
+}
+
+// ─── Estimation Error Modal ───────────────────────────────────────────────────
+
+function EstimationErrorModal({
+  message,
+  onClose,
+}: {
+  message: string
+  onClose: () => void
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-navy/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative z-10 w-full max-w-sm p-8 bg-white border shadow-xl rounded-xl border-border">
+        <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-[#FFF0EC]">
+          <WarningIcon />
+        </div>
+        <h2 className="mt-4 text-lg font-bold font-heading text-navy">Estimation Failed</h2>
+        <p className="mt-2 text-sm leading-relaxed text-slate-blue">{message}</p>
+        <div className="mt-8">
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-full h-10 rounded-lg bg-navy font-heading text-sm font-semibold text-white hover:opacity-90 transition"
+          >
+            Dismiss
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
   const tasks = useQuery(api.queries.tasks.getAllTasks, {}) as TaskType[] | undefined
   const updateTask = useMutation(api.mutations.tasks.updateTask)
   const deleteTask = useMutation(api.mutations.tasks.deleteTask)
+  const requestEstimate = useAction(api.actions.requestEstimateTaskTime.requestEstimateTaskTime)
   const user = useQuery(api.queries.users.getCurrUser)
 
   const taskRows = useMemo(() => tasks ?? [], [tasks])
 
-  const totalEstimatedHours = useMemo(
+  const totalEstimatedMinutes = useMemo(
     () => taskRows.reduce((sum, t) => sum + (t.timeEstimate ?? 0), 0),
     [taskRows]
   )
@@ -353,10 +401,27 @@ export default function DashboardPage() {
   const [editingTask, setEditingTask] = useState<TaskType | null>(null)
   const [deletingTask, setDeletingTask] = useState<TaskType | null>(null)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  const [estimatingTasks, setEstimatingTasks] = useState<Set<Id<'tasks'>>>(new Set())
+  const [estimationError, setEstimationError] = useState<string | null>(null)
+
+  // Clear tasks from estimatingTasks once their timeEstimate is populated by the server
+  useEffect(() => {
+    setEstimatingTasks((prev) => {
+      if (prev.size === 0) return prev
+      const next = new Set(prev)
+      for (const id of prev) {
+        const task = taskRows.find((t) => t._id === id)
+        if (task?.timeEstimate !== undefined) next.delete(id)
+      }
+      return next.size === prev.size ? prev : next
+    })
+  }, [taskRows])
 
   async function handleSaveEdit(form: EditForm) {
     if (!editingTask) return
-    await updateTask({ taskId: editingTask._id, ...form })
+    const taskId = editingTask._id
+    await updateTask({ taskId, ...form })
+    handleEstimateTask(taskId)
   }
 
   async function handleConfirmDelete() {
@@ -364,10 +429,31 @@ export default function DashboardPage() {
     await deleteTask({ taskId: deletingTask._id })
   }
 
+  async function handleEstimateTask(taskId: Id<'tasks'>) {
+    setEstimatingTasks((prev) => new Set(prev).add(taskId))
+    try {
+      await requestEstimate({ taskId })
+    } catch (err) {
+      setEstimationError(parseEstimationError(err))
+    } finally {
+      setEstimatingTasks((prev) => {
+        const next = new Set(prev)
+        next.delete(taskId)
+        return next
+      })
+    }
+  }
+
   return (
     <div className="flex h-screen overflow-hidden bg-bg-gray font-body text-slate-blue">
 
       {/* Modals */}
+      {estimationError && (
+        <EstimationErrorModal
+          message={estimationError}
+          onClose={() => setEstimationError(null)}
+        />
+      )}
       {editingTask && (
         <EditModal
           task={editingTask}
@@ -385,6 +471,7 @@ export default function DashboardPage() {
       <AddTaskModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
+        onTaskCreated={(taskId) => handleEstimateTask(taskId as Id<'tasks'>)}
       />
 
       <Sidebar />
@@ -435,9 +522,9 @@ export default function DashboardPage() {
           </div>
 
           <div className="flex flex-1 flex-col gap-2 rounded-[10px] border border-border bg-white p-5">
-            <span className="text-xs font-semibold text-slate-blue">Estimated Hours</span>
+            <span className="text-xs font-semibold text-slate-blue">Estimated Minutes</span>
             <span className="font-heading text-[36px] font-bold leading-none text-navy">
-              {totalEstimatedHours > 0 ? trimTrailingZeros(totalEstimatedHours) : '—'}
+              {totalEstimatedMinutes > 0 ? Math.round(totalEstimatedMinutes) : '—'}
             </span>
             <div className="flex items-center gap-1">
               <div className="w-2 h-2 rounded-full shrink-0 bg-sky-blue" />
@@ -499,7 +586,7 @@ export default function DashboardPage() {
                           {displayTitle(task)}
                         </div>
                         <div className="text-xs text-slate-blue">
-                          Due {formatDateMMDDYYYY(task.dueDate)} · {task.taskType} · ~{formatHours(task.timeEstimate ?? 0)} estimated
+                          Due {formatDateMMDDYYYY(task.dueDate)} · {task.taskType} · ~{formatMinutes(task.timeEstimate ?? 0)} estimated
                         </div>
                         {task.description.trim().length > 0 && (
                           <div className="text-xs truncate text-light-blue">
@@ -514,8 +601,24 @@ export default function DashboardPage() {
                         </span>
                       </div>
 
-                      {/* Edit / Delete buttons — visible on hover */}
+                      {/* Edit / Delete / Estimate buttons */}
                       <div className="flex items-center gap-1">
+                        {task.timeEstimate === undefined && (
+                          estimatingTasks.has(task._id) ? (
+                            <div className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-blue">
+                              <SpinnerIcon color="currentColor" size={16} />
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleEstimateTask(task._id)}
+                              className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-blue transition hover:bg-bg-gray hover:text-navy"
+                              aria-label="Estimate task time"
+                            >
+                              <SparklesIcon color="currentColor" size={16} />
+                            </button>
+                          )
+                        )}
                         <button
                           type="button"
                           onClick={() => setEditingTask(task)}
@@ -624,6 +727,35 @@ function TrashIcon({ color }: { color?: string }) {
       <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
       <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
     </IconBase>
+  )
+}
+
+function WarningIcon({ color = '#CF4520', size = 20 }: { color?: string; size?: number }) {
+  return (
+    <IconBase color={color} size={size}>
+      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+      <line x1="12" y1="9" x2="12" y2="13" />
+      <line x1="12" y1="17" x2="12.01" y2="17" />
+    </IconBase>
+  )
+}
+
+function SpinnerIcon({ color = 'currentColor', size = 16 }: { color?: string; size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      aria-hidden="true"
+      className="animate-spin"
+      style={{ flexShrink: 0 }}
+    >
+      <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+    </svg>
   )
 }
 
