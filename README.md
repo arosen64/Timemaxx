@@ -2,11 +2,23 @@
 
 An AI-powered study scheduler that estimates task time and builds personalized study plans.
 
+## Deployment
+
+The application is deployed via **GitHub Actions** to **GitHub Pages**. On each push to `master`, the CD workflow builds the frontend, deploys the Convex backend, and publishes to GitHub Pages.
+
+**Deployed site:** [https://cs423sp26-homeworks.github.io/team-04/](https://cs423sp26-homeworks.github.io/team-04/)
+
+If you encounter any issues with the deployed site, please reach out to a team member via Slack or email.
+
 ## Prerequisites
 
 - [Git](https://git-scm.com/downloads)
 - [GitHub CLI (`gh`)](https://cli.github.com/) — used for issue, label, milestone, and PR management
 - [Node.js](https://nodejs.org/) v18+
+
+## Project Invites
+
+For access to project invites (e.g., Convex, Google Cloud project), please contact a team member via Slack or email.
 
 ## Setup
 
@@ -21,6 +33,8 @@ npm install
 # Connect to Convex (creates .env.local with VITE_CONVEX_URL)
 npx convex dev
 ```
+
+For Google OAuth configuration, see the [Google Auth Setup](guides/google-auth-setup.md) guide.
 
 ## Running the Application
 
