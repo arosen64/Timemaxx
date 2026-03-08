@@ -546,7 +546,7 @@ export default function DashboardPage() {
         <div className="flex flex-1 gap-6">
 
           {/* Task Column */}
-          <section className="flex flex-col flex-1 gap-4">
+          <section className="flex flex-col flex-1 min-w-0 gap-4">
             <h2 className="text-base font-bold font-heading text-navy">Upcoming Tasks</h2>
 
             {tasks === undefined ? (
@@ -577,7 +577,7 @@ export default function DashboardPage() {
                   return (
                     <div
                       key={task._id}
-                      className="group flex items-center gap-3.5 rounded-[10px] border border-border bg-white px-[18px] py-4"
+                      className="group flex items-center gap-3.5 min-w-0 rounded-[10px] border border-border bg-white px-[18px] py-4 overflow-hidden"
                     >
                       <div className={`h-10 w-1 shrink-0 rounded ${barColor}`} />
 
@@ -589,7 +589,7 @@ export default function DashboardPage() {
                           Due {formatDateMMDDYYYY(task.dueDate)} · {task.taskType} · ~{formatMinutes(task.timeEstimate ?? 0)} estimated
                         </div>
                         {task.description.trim().length > 0 && (
-                          <div className="text-xs truncate text-light-blue">
+                          <div className="text-xs text-light-blue break-words line-clamp-2">
                             {task.description}
                           </div>
                         )}
