@@ -47,6 +47,8 @@ npm run build
 ## Project Structure
 
 ```
+design/
+  timemaxx.pen              # File for UI design 
 frontend/
   src/
     pages/
