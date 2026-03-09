@@ -32,7 +32,9 @@
 ## GitHub Expectations
 
 * Use GitHub issues to track all progress and assign specific members tasks  
-* Use pull requests and get them reviewed by someone before adding to the codebase    
+* Use pull requests and get them reviewed by someone before adding to the codebase
+  * PRs should be reviewed within 24 hours of being opened
+  * Delete branches directly after the work is merged
 * Be descriptive in commit messages to allow other team members to stay informed
 
 ## Team Communication
@@ -40,10 +42,13 @@
 * Express any concerns early on to continuously improve as a team & not repeat mistakes. Roadblocks should be communicated to the whole team as soon as they occur  
 * Be honest and open about your skill sets so we can best allocate work, and put in the effort to learn new skills as needed  
 * Developers are expected to meet on Tuesdays and Thursdays, and once outside of class time each week  
-  * At these meetings, developers will share progress updates, roadblocks, and plans  
-  * Team members are expected to participate in all meetings unless ill or dealing with an emergency. Other absences must be communicated 24 hours in advance.  
-  * Be on time for meetings :)  
-  * If you have to miss a meeting, be proactive in catching up to speed by reviewing meeting notes or speaking with other team members  
+  * At these meetings, developers will share progress updates, roadblocks, and plans
+  * Come to all project meetings with an agenda to ensure efficient use of time; use this time to review/merge PRs, resolve conflicts, and have important discussions. A Slack thread for agenda items will be posted by 9am the morning of each meeting
+  * At the first meeting of each iteration, discuss dependencies, plan the timeline, and schedule the iteration presentation meeting in advance
+  * Dependencies should be clearly communicated with established deadlines as needed
+  * Team members are expected to participate in all meetings unless ill or dealing with an emergency. Other absences must be communicated 24 hours in advance.
+  * Be on time for meetings :)
+  * If you have to miss a meeting, be proactive in catching up to speed by reviewing meeting notes or speaking with other team members
 * Slack will be the primary communication tool for project-related matters  
   * Engage in a conversation in a dedicated thread (click "Reply to thread") for questions, comments, objections, etc.  
   * Use the 👍 emoji to indicate agreement or acknowledgment  
