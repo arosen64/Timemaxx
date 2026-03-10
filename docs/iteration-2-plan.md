@@ -109,7 +109,6 @@ Changes needed for Iteration 2:
 {
   transcriptFileId?: Id<"_storage">,        // file stored in Convex storage
   transcriptDescription?: string,           // AI-generated plain-language description
-  // NOTE: remove the old courses[] list from transcript; replaced by transcriptDescription
 }
 
 // tasks table additions
