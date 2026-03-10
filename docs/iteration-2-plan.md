@@ -86,15 +86,18 @@
 
 ---
 
-### R12: UI Update
+### R12: Classes Tab
 
-**Description:** Update the dashboard and onboarding UI to accommodate the new features added in Iteration 2, ensuring a consistent and responsive layout.
+**Description:** A dedicated Classes section is added to the sidebar with its own route (`/classes`). Users can manage their courses here, upload a syllabus per class, and view extracted tasks per class. Syllabus upload is also available during onboarding at the classes step.
 
 - **Acceptance Criteria:**
-  - [ ] Dashboard includes a schedule tab alongside the existing task list
-  - [ ] Onboarding flow includes the transcript upload step and syllabus upload step at the appropriate screens
-  - [ ] All new UI components follow the existing TailwindCSS design conventions
-  - [ ] Layout is responsive across mobile, tablet, and desktop breakpoints
+  - [ ] A "Classes" item is added to the sidebar navigation
+  - [ ] Navigating to `/classes` renders a classes page (only accessible to authenticated users)
+  - [ ] Users can add and remove classes from the classes page
+  - [ ] Each class card shows the class name and a syllabus upload option
+  - [ ] Syllabus upload on the classes page follows the same flow as R8 (independent upload, Gemini extraction, review before saving)
+  - [ ] Tasks created from a syllabus appear tagged with the corresponding class
+  - [ ] The classes page is also linked from onboarding at the step where users add their courses
 
 ---
 
@@ -187,7 +190,7 @@ Return plain text only. Do not include names, IDs, or identifying information.
 | R9: Settings dashboard + account deletion | TBD |
 | R10: Google Calendar schedule integration + schedule tab | TBD |
 | R11: Task improvements (custom types + estimate feedback) | TBD |
-| R12: UI update (dashboard + onboarding layout) | TBD |
+| R12: Classes tab (sidebar nav + `/classes` route + syllabus upload per class) | TBD |
 
 ### Dependencies
 
@@ -195,7 +198,7 @@ Return plain text only. Do not include names, IDs, or identifying information.
 - Transcript description field must be defined before R7 backend work starts (replaces old courses list)
 - Syllabus extraction depends on Gemini action patterns established in Iteration 1
 - Google Calendar integration requires OAuth token storage before the action is built
-- R12 (UI update) depends on R7–R11 feature shapes being stable
+- R12 (Classes tab) depends on R8 syllabus upload being stable since it reuses that flow
 
 ---
 
@@ -218,21 +221,17 @@ Return plain text only. Do not include names, IDs, or identifying information.
 | TBD | &nbsp;&nbsp;Add account deletion UI and `deleteAccount` mutation | task | TBD | R9 |
 | TBD | **R10: Google Calendar Schedule Integration** | feature | TBD | R10 |
 | TBD | &nbsp;&nbsp;Add Google Calendar OAuth scope and token storage | task | TBD | R10 |
-| TBD | &nbsp;&nbsp;Build schedule tab UI displaying calendar events | task | TBD | R10 |
+| TBD | &nbsp;&nbsp;Build schedule tab on dashboard displaying calendar events | task | TBD | R10 |
 | TBD | &nbsp;&nbsp;Implement `getCalendarAvailability` action and available-time picker | task | TBD | R10 |
 | TBD | **R11: Task Improvements** | feature | TBD | R11 |
 | TBD | &nbsp;&nbsp;Extend task types and add custom type input | task | TBD | R11 |
 | TBD | &nbsp;&nbsp;Add class tag field to task create/edit forms | task | TBD | R11 |
 | TBD | &nbsp;&nbsp;Implement time estimate feedback UI and `submitEstimateFeedback` mutation | task | TBD | R11 |
-| TBD | **R12: UI Update** | task | TBD | R12 |
-| TBD | &nbsp;&nbsp;Update dashboard layout to include schedule tab | task | TBD | R12 |
-| TBD | &nbsp;&nbsp;Update onboarding flow with transcript and syllabus upload steps | task | TBD | R12 |
+| TBD | **R12: Classes Tab** | feature | TBD | R12 |
+| TBD | &nbsp;&nbsp;Add Classes item to sidebar and create `/classes` route | task | TBD | R12 |
+| TBD | &nbsp;&nbsp;Build classes page UI (add/remove classes, class cards with syllabus upload) | task | TBD | R12 |
+| TBD | &nbsp;&nbsp;Link classes page from onboarding courses step | task | TBD | R12 |
 | 76 | Add date picker for add/edit task modal | feature | TBD | — |
 | 75 | Fix responsive design for various screen sizes | bug | TBD | — |
 | 74 | Route sidebar logo and user info clicks to correct pages | task | TBD | — |
-| TBD | **R11: Class Website Upload (Nice-to-Have)** | feature | TBD | R11 |
-| TBD | &nbsp;&nbsp;Build class website URL input UI and extracted task review screen | task | TBD | R11 |
-| TBD | &nbsp;&nbsp;Implement Convex action to fetch and parse class website for assignment data | task | TBD | R11 |
-| 58 | Modularize existing pages into reusable components *(backlog)* | task | riatalwar | — |
-| 56 | Refactor timemaxx.pen to use reusable components *(backlog)* | task | riatalwar | — |
 
