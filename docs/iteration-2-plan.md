@@ -170,3 +170,9 @@ Return JSON: {
 | 76 | Add date picker for add/edit task modal | feature | TBD | — |
 | 75 | Fix responsive design for various screen sizes | bug | TBD | — |
 | 74 | Route sidebar logo and user info clicks to correct pages | task | TBD | — |
+| TBD | **R11: Class Website Upload (Nice-to-Have)** | feature | TBD | R11 |
+| TBD | &nbsp;&nbsp;Build class website URL input UI and extracted task review screen | task | TBD | R11 |
+| TBD | &nbsp;&nbsp;Implement Convex action to fetch and parse class website for assignment data | task | TBD | R11 |
+| 58 | Modularize existing pages into reusable components *(backlog)* | task | riatalwar | — |
+| 56 | Refactor timemaxx.pen to use reusable components *(backlog)* | task | riatalwar | — |
+
