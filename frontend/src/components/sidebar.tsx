@@ -52,7 +52,7 @@ export default function Sidebar() {
             </div>
 
             {/* Footer: User Info */}
-            <div className="flex items-center gap-2.5">
+            <Link to="/profile" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
                 {user === undefined ? (
                     <div className="flex-shrink-0 h-9 w-9 bg-white/20 rounded-full animate-pulse" />
                 ) : user?.image ? (
@@ -77,7 +77,7 @@ export default function Sidebar() {
                         </>
                     )}
                 </div>
-            </div>
+            </Link>
         </aside>
     );
 }
