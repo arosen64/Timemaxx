@@ -29,12 +29,12 @@ export default function Sidebar() {
             {/* Top: Logo + Nav */}
             <div className="flex flex-col gap-8">
                 {/* Logo Row */}
-                <div className="flex items-center gap-2.5">
+                <Link to="/dashboard" className="flex items-center gap-2.5">
                     <div className="flex items-center justify-center h-8 w-8 text-navy bg-teal rounded">
                         <BookOpenIcon />
                     </div>
                     <span className="font-heading text-lg font-bold text-white">Timemaxx</span>
-                </div>
+                </Link>
 
                 {/* Nav Menu */}
                 <nav className="flex flex-col gap-1">
