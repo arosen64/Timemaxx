@@ -6,6 +6,7 @@ import ProfileForm from '../components/ProfileForm'
 import WorkHoursSelector, { DEFAULT_WORK_HOURS } from '../components/WorkHoursSelector'
 import PreferencesForm, { DEFAULT_PREFERENCES } from '../components/PreferencesForm'
 import { ProfileData, WorkHoursData, PreferencesData } from '../types'
+import { BookOpenIcon } from '../components/sidebar'
 
 type Step = 1 | 2 | 3
 
@@ -79,80 +80,94 @@ export default function OnboardingPage() {
   const isWide = step === 2 || step === 3
 
   return (
-    <div className="flex min-h-screen flex-col items-center bg-gray-50 px-4 py-12">
-      {/* Step indicator */}
-      <div className="mb-10 flex items-center">
-        {STEP_LABELS.map((label, i) => {
-          const stepNum = (i + 1) as Step
-          const isActive = step === stepNum
-          const isComplete = step > stepNum
-          return (
-            <div key={label} className="flex items-center">
-              <div className="flex items-center gap-2">
-                <div
-                  className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold ${
-                    isComplete
-                      ? 'bg-green-500 text-white'
-                      : isActive
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-200 text-gray-500'
-                  }`}
-                >
-                  {isComplete ? '✓' : stepNum}
-                </div>
-                <span
-                  className={`text-sm ${isActive ? 'font-semibold text-gray-900' : 'text-gray-400'}`}
-                >
-                  {label}
-                </span>
-              </div>
-              {i < STEP_LABELS.length - 1 && <div className="mx-4 h-px w-12 bg-gray-300" />}
-            </div>
-          )
-        })}
-      </div>
+    <div className="flex min-h-screen flex-col bg-bg-gray">
+      {/* Top bar */}
+      <header className="flex h-16 w-full flex-shrink-0 items-center justify-between bg-navy px-10">
+        {/* Logo */}
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-8 w-8 items-center justify-center rounded bg-teal text-navy">
+            <BookOpenIcon />
+          </div>
+          <span className="font-heading text-lg font-bold text-white">Timemaxx</span>
+        </div>
 
-      {/* Form card */}
-      <div className={`w-full rounded-2xl bg-white p-8 shadow-sm ${isWide ? 'max-w-2xl' : 'max-w-lg'}`}>
-        {step === 1 && (
-          <ProfileForm data={profile} onChange={setProfile} errors={profileErrors} />
-        )}
+        {/* Step pills */}
+        <div className="flex items-center gap-2">
+          {STEP_LABELS.map((_, i) => {
+            const stepNum = (i + 1) as Step
+            const isActive = step === stepNum
+            const isComplete = step > stepNum
+            return (
+              <div
+                key={stepNum}
+                className={`h-1.5 w-8 rounded-full ${
+                  isComplete || isActive ? 'bg-teal' : 'bg-sky-blue/40'
+                }`}
+              />
+            )
+          })}
+        </div>
 
-        {step === 2 && (
-          <WorkHoursSelector data={workHours} onChange={setWorkHours} />
-        )}
+        {/* Step label */}
+        <span className="font-body text-sm text-sky-blue">Step {step} of 3</span>
+      </header>
 
-        {step === 3 && (
-          <PreferencesForm data={preferences} onChange={setPreferences} />
-        )}
-
-        {/* Navigation */}
-        <div className="mt-8 flex justify-between">
-          <button
-            onClick={handleBack}
-            disabled={step === 1 || isSubmitting}
-            className="rounded-lg border border-gray-300 px-5 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            Back
-          </button>
-          {step < 3 ? (
-            <button
-              onClick={handleNext}
-              className="rounded-lg bg-blue-600 px-5 py-2 text-sm font-medium text-white hover:bg-blue-700"
-            >
-              Next
-            </button>
-          ) : (
-            <button
-              onClick={handleSubmit}
-              disabled={isSubmitting}
-              className="rounded-lg bg-blue-600 px-5 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {isSubmitting ? 'Saving...' : 'Submit'}
-            </button>
+      {/* Content */}
+      <div className="flex flex-1 flex-col items-center justify-center px-4 py-12">
+        <div className={`w-full rounded-xl border border-border bg-white p-12 ${isWide ? 'max-w-2xl' : 'max-w-xl'}`}>
+          {step === 1 && (
+            <ProfileForm data={profile} onChange={setProfile} errors={profileErrors} />
           )}
+
+          {step === 2 && (
+            <WorkHoursSelector data={workHours} onChange={setWorkHours} />
+          )}
+
+          {step === 3 && (
+            <PreferencesForm data={preferences} onChange={setPreferences} />
+          )}
+
+          {/* Navigation */}
+          <div className={`mt-8 flex ${step === 1 ? 'justify-end' : 'justify-between'}`}>
+            {step > 1 && (
+              <button
+                onClick={handleBack}
+                disabled={isSubmitting}
+                className="rounded-lg border border-border px-5 py-2 font-body text-sm font-medium text-slate-blue hover:bg-bg-gray disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Back
+              </button>
+            )}
+            {step < 3 ? (
+              <button
+                onClick={handleNext}
+                className="flex items-center gap-2 rounded-lg bg-navy px-5 py-2 font-heading text-sm font-semibold text-white hover:bg-navy/90"
+              >
+                Continue
+                <ArrowRightIcon />
+              </button>
+            ) : (
+              <button
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                className="flex items-center gap-2 rounded-lg bg-navy px-5 py-2 font-heading text-sm font-semibold text-white hover:bg-navy/90 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isSubmitting ? 'Saving...' : 'Finish'}
+                {!isSubmitting && <ArrowRightIcon />}
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>
+  )
+}
+
+function ArrowRightIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="5" y1="12" x2="19" y2="12" />
+      <polyline points="12 5 19 12 12 19" />
+    </svg>
   )
 }

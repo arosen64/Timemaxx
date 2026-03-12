@@ -37,6 +37,7 @@ const CATEGORIES = [
     key: 'deadlineBehavior',
     label: '⏰ Deadline Behavior',
     description: 'How deadlines affect your work',
+    singleSelect: true,
     options: [
       'I work best well in advance',
       'I need the pressure of a deadline',
@@ -47,6 +48,7 @@ const CATEGORIES = [
     key: 'breakPreferences',
     label: '🔄 Break Preferences',
     description: 'How you like to take breaks',
+    singleSelect: true,
     options: [
       'Frequent short breaks (every 25–30 min)',
       'Occasional medium breaks (every hour)',
@@ -58,6 +60,7 @@ const CATEGORIES = [
     key: 'subjectSwitching',
     label: '📚 Subject/Task Switching',
     description: 'How you prefer to switch between topics',
+    singleSelect: true,
     options: [
       'I prefer focusing on one subject per session',
       'I like switching between subjects',
@@ -73,6 +76,7 @@ interface CategorySectionProps {
   selected: string[]
   onToggle: (option: string) => void
   onAddCustom: (value: string) => void
+  singleSelect?: boolean
 }
 
 function CategorySection({
@@ -82,6 +86,7 @@ function CategorySection({
   selected,
   onToggle,
   onAddCustom,
+  singleSelect = false,
 }: CategorySectionProps) {
   const [customInput, setCustomInput] = useState('')
 
@@ -125,7 +130,7 @@ function CategorySection({
           </button>
         ))}
         {/* Custom trait chips */}
-        {customTraits.map((trait) => (
+        {!singleSelect && customTraits.map((trait) => (
           <span
             key={trait}
             className="flex items-center gap-1 rounded-full border border-blue-500 bg-blue-600 px-3 py-1 text-sm text-white"
@@ -142,25 +147,27 @@ function CategorySection({
         ))}
       </div>
       {/* Custom trait input */}
-      <div className="flex gap-2">
-        <input
-          type="text"
-          value={customInput}
-          onChange={(e) => setCustomInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Add custom..."
-          className="rounded-lg border border-dashed border-gray-300 px-3 py-1 text-sm outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400"
-        />
-        {customInput.trim() && (
-          <button
-            type="button"
-            onClick={handleAddCustom}
-            className="rounded-lg bg-blue-50 px-3 py-1 text-sm text-blue-600 hover:bg-blue-100"
-          >
-            Add
-          </button>
-        )}
-      </div>
+      {!singleSelect && (
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={customInput}
+            onChange={(e) => setCustomInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Add custom..."
+            className="rounded-lg border border-dashed border-gray-300 px-3 py-1 text-sm outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400"
+          />
+          {customInput.trim() && (
+            <button
+              type="button"
+              onClick={handleAddCustom}
+              className="rounded-lg bg-blue-50 px-3 py-1 text-sm text-blue-600 hover:bg-blue-100"
+            >
+              Add
+            </button>
+          )}
+        </div>
+      )}
     </div>
   )
 }
@@ -178,11 +185,13 @@ interface PreferencesFormProps {
 export default function PreferencesForm({ data, onChange }: PreferencesFormProps) {
   const getSelected = (key: string): string[] => data.traits[key] ?? []
 
-  const handleToggle = (key: string, option: string) => {
+  const handleToggle = (key: string, option: string, singleSelect: boolean) => {
     const current = getSelected(key)
-    const updated = current.includes(option)
-      ? current.filter((o) => o !== option)
-      : [...current, option]
+    const updated = singleSelect
+      ? current.includes(option) ? [] : [option]
+      : current.includes(option)
+        ? current.filter((o) => o !== option)
+        : [...current, option]
     onChange({ ...data, traits: { ...data.traits, [key]: updated } })
   }
 
@@ -207,8 +216,9 @@ export default function PreferencesForm({ data, onChange }: PreferencesFormProps
           description={cat.description}
           options={cat.options}
           selected={getSelected(cat.key)}
-          onToggle={(option) => handleToggle(cat.key, option)}
+          onToggle={(option) => handleToggle(cat.key, option, cat.singleSelect ?? false)}
           onAddCustom={(value) => handleAddCustom(cat.key, value)}
+          singleSelect={cat.singleSelect}
         />
       ))}
 
