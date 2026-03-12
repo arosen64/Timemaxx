@@ -2366,6 +2366,18 @@
               }
             },
             {
+              "id": "aAW94",
+              "type": "ref",
+              "ref": "tIwJu",
+              "name": "btn_iconLeft"
+            },
+            {
+              "id": "RFPN0",
+              "type": "ref",
+              "ref": "KISDQ",
+              "name": "btn_iconRight"
+            },
+            {
               "id": "z6mON",
               "type": "ref",
               "ref": "RruJv",
