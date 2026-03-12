@@ -618,15 +618,15 @@
                   ]
                 },
                 {
-                  "id": "ULMHo",
+                  "id": "TPB2q",
                   "type": "ref",
-                  "ref": "Xdrqk",
+                  "ref": "tIwJu",
                   "name": "addTaskBtn",
                   "descendants": {
-                    "fptin": {
+                    "hXb93": {
                       "iconFontName": "plus"
                     },
-                    "vxzyR": {
+                    "RxGN2": {
                       "content": "Add Task"
                     }
                   }
@@ -943,15 +943,15 @@
                   ]
                 },
                 {
-                  "id": "1LU5K",
+                  "id": "QyPyn",
                   "type": "ref",
-                  "ref": "Xdrqk",
+                  "ref": "tIwJu",
                   "name": "addTaskBtn",
                   "descendants": {
-                    "fptin": {
+                    "hXb93": {
                       "iconFontName": "plus"
                     },
-                    "vxzyR": {
+                    "RxGN2": {
                       "content": "Add Task"
                     }
                   }
@@ -2850,18 +2850,9 @@
         0,
         20
       ],
+      "justifyContent": "center",
       "alignItems": "center",
       "children": [
-        {
-          "type": "icon_font",
-          "id": "fptin",
-          "name": "icon",
-          "width": 16,
-          "height": 16,
-          "iconFontName": "plus",
-          "iconFontFamily": "lucide",
-          "fill": "$--accent"
-        },
         {
           "type": "text",
           "id": "vxzyR",
@@ -3708,6 +3699,84 @@
           "fontFamily": "Space Grotesk",
           "fontSize": 14,
           "fontWeight": "600"
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "tIwJu",
+      "x": 6500,
+      "y": 2000,
+      "name": "Button/Primary/IconLeft",
+      "reusable": true,
+      "height": 44,
+      "fill": "$--primary",
+      "cornerRadius": "$--radius-m",
+      "gap": 8,
+      "padding": [
+        0,
+        20
+      ],
+      "alignItems": "center",
+      "children": [
+        {
+          "type": "icon_font",
+          "id": "hXb93",
+          "name": "icon",
+          "width": 16,
+          "height": 16,
+          "iconFontName": "plus",
+          "iconFontFamily": "lucide",
+          "fill": "$--accent"
+        },
+        {
+          "type": "text",
+          "id": "RxGN2",
+          "name": "label",
+          "fill": "$--primary-foreground",
+          "content": "Button",
+          "fontFamily": "Space Grotesk",
+          "fontSize": 14,
+          "fontWeight": "600"
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "KISDQ",
+      "x": 6500,
+      "y": 2080,
+      "name": "Button/Primary/IconRight",
+      "reusable": true,
+      "height": 44,
+      "fill": "$--primary",
+      "cornerRadius": "$--radius-m",
+      "gap": 8,
+      "padding": [
+        0,
+        20
+      ],
+      "alignItems": "center",
+      "children": [
+        {
+          "type": "text",
+          "id": "KYEWI",
+          "name": "label",
+          "fill": "$--primary-foreground",
+          "content": "Button",
+          "fontFamily": "Space Grotesk",
+          "fontSize": 14,
+          "fontWeight": "600"
+        },
+        {
+          "type": "icon_font",
+          "id": "Zuzpu",
+          "name": "icon",
+          "width": 16,
+          "height": 16,
+          "iconFontName": "arrow-right",
+          "iconFontFamily": "lucide",
+          "fill": "$--accent"
         }
       ]
     }
