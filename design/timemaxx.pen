@@ -2749,7 +2749,7 @@
           "type": "text",
           "id": "6YpiG",
           "name": "wordmark",
-          "fill": "#FFFFFF",
+          "fill": "$--primary-foreground",
           "content": "Timemaxx",
           "fontFamily": "Space Grotesk",
           "fontSize": 18,
@@ -2764,7 +2764,7 @@
       "y": 60,
       "name": "Badge/Urgent",
       "reusable": true,
-      "fill": "#FFF0EC",
+      "fill": "$--urgent-bg",
       "cornerRadius": 4,
       "padding": [
         4,
@@ -2790,7 +2790,7 @@
       "y": 100,
       "name": "Badge/InProgress",
       "reusable": true,
-      "fill": "#EBF5FF",
+      "fill": "$--info-bg",
       "cornerRadius": 4,
       "padding": [
         4,
@@ -2801,7 +2801,7 @@
           "type": "text",
           "id": "adDaz",
           "name": "label",
-          "fill": "#0077D8",
+          "fill": "$--info-emphasis",
           "content": "In Progress",
           "fontFamily": "Space Grotesk",
           "fontSize": 11,
@@ -2816,7 +2816,7 @@
       "y": 140,
       "name": "Badge/NotStarted",
       "reusable": true,
-      "fill": "#E6F5F0",
+      "fill": "$--success-bg",
       "cornerRadius": 4,
       "padding": [
         4,
@@ -3788,6 +3788,22 @@
     "--success": {
       "type": "color",
       "value": "#008767"
+    },
+    "--info-bg": {
+      "type": "color",
+      "value": "#EBF5FF"
+    },
+    "--info-emphasis": {
+      "type": "color",
+      "value": "#0077D8"
+    },
+    "--success-bg": {
+      "type": "color",
+      "value": "#E6F5F0"
+    },
+    "--urgent-bg": {
+      "type": "color",
+      "value": "#FFF0EC"
     }
   }
 }
