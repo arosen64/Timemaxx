@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { Task } from '../types'
 import { displayTitle } from '../utils/tasks'
 import { TrashIcon } from './icons/icons'
+import Modal from './Modal'
+import Button from './Button'
 
 interface DeleteModalProps {
   task: Task
@@ -20,37 +22,24 @@ export default function DeleteModal({ task, onClose, onConfirm }: DeleteModalPro
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-navy/40 backdrop-blur-sm" onClick={onClose} />
-
-      <div className="relative z-10 w-full max-w-sm p-8 bg-white border shadow-xl rounded-xl border-border">
-        <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-urgent-tint text-urgent-red">
-          <TrashIcon />
-        </div>
-        <h2 className="mt-4 text-lg font-bold font-heading text-navy">Delete Task?</h2>
-        <p className="mt-2 text-sm leading-relaxed text-slate-blue">
-          <span className="font-semibold text-navy">"{displayTitle(task)}"</span> will be
-          permanently deleted. This cannot be undone.
-        </p>
-
-        <div className="flex gap-3 mt-8">
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex-1 h-10 text-sm font-semibold transition border rounded-lg border-border font-heading text-slate-blue hover:bg-bg-gray"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={handleConfirm}
-            disabled={deleting}
-            className="flex-1 h-10 rounded-lg bg-urgent-red font-heading text-sm font-semibold text-white hover:opacity-90 transition disabled:opacity-50"
-          >
-            {deleting ? 'Deleting…' : 'Delete'}
-          </button>
-        </div>
+    <Modal onClose={onClose}>
+      <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-urgent-tint text-urgent-red">
+        <TrashIcon />
       </div>
-    </div>
+      <h2 className="mt-4 text-lg font-bold font-heading text-navy">Delete Task?</h2>
+      <p className="mt-2 text-sm leading-relaxed text-slate-blue">
+        <span className="font-semibold text-navy">"{displayTitle(task)}"</span> will be
+        permanently deleted. This cannot be undone.
+      </p>
+
+      <div className="flex gap-3 mt-8">
+        <Button variant="ghost" size="sm" className="flex-1" onClick={onClose}>
+          Cancel
+        </Button>
+        <Button variant="destructive" size="sm" className="flex-1" disabled={deleting} onClick={handleConfirm}>
+          {deleting ? 'Deleting…' : 'Delete'}
+        </Button>
+      </div>
+    </Modal>
   )
 }

@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { TaskFormData, SchemaTaskType, TASK_TYPE_OPTIONS } from '../types'
 import { validateDueDateValue } from '../utils/tasks'
 import { CalendarIcon } from './icons/icons'
+import Modal from './Modal'
+import Button from './Button'
 
 interface TaskFormModalProps {
   heading: string
@@ -74,14 +76,7 @@ export default function TaskFormModal({
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-navy/30"
-      onClick={handleClose}
-    >
-      <div
-        className="flex w-[520px] flex-col gap-6 rounded-xl border border-border bg-white p-12"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <Modal variant="form" onClose={handleClose}>
         {/* Header */}
         <div className="flex w-full items-center justify-between">
           <span className="font-heading text-[26px] font-bold text-navy">{heading}</span>
@@ -158,22 +153,14 @@ export default function TaskFormModal({
 
         {/* Button row */}
         <div className="flex w-full gap-3">
-          <button
-            onClick={handleClose}
-            className="flex h-12 flex-1 cursor-pointer items-center justify-center rounded-lg border border-border bg-bg-gray font-heading text-[15px] font-semibold text-slate-blue"
-          >
+          <Button variant="ghost" className="flex-1" onClick={handleClose}>
             Cancel
-          </button>
-          <button
-            onClick={handleSubmit}
-            disabled={submitting}
-            className="flex h-12 flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border-none bg-navy font-heading text-[15px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
-          >
+          </Button>
+          <Button variant="primary" className="flex-1" disabled={submitting} onClick={handleSubmit}>
             {submitting ? submittingLabel : submitLabel}
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-teal" />
-          </button>
+          </Button>
         </div>
-      </div>
-    </div>
+    </Modal>
   )
 }

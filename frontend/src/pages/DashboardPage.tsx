@@ -7,6 +7,7 @@ import Sidebar from '../components/sidebar'
 import { Task, TaskFormData } from '../types'
 import { formatDateMMDDYYYY, displayTitle } from '../utils/tasks'
 import { PlusIcon, SparklesIcon } from '../components/icons/icons'
+import Button from '../components/Button'
 import { type BadgeVariant } from '../components/Badge'
 import StatCard from '../components/StatCard'
 import TaskCard from '../components/TaskCard'
@@ -162,14 +163,14 @@ export default function DashboardPage() {
               · {taskRows.length} task{taskRows.length !== 1 ? 's' : ''} due this week
             </p>
           </div>
-          <button
-            type="button"
+          <Button
+            size="nav"
             onClick={() => setIsAddModalOpen(true)}
-            className="flex items-center gap-2 px-5 text-sm font-semibold text-white transition rounded-lg h-11 bg-navy font-heading hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-sky-blue focus:ring-offset-2"
+            className="h-11 font-heading font-semibold focus:outline-none focus:ring-2 focus:ring-sky-blue focus:ring-offset-2"
           >
             <span className="text-teal"><PlusIcon /></span>
             Add Task
-          </button>
+          </Button>
         </header>
 
         {/* Stats Row */}

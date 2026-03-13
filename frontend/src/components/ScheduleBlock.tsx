@@ -1,3 +1,5 @@
+import Card from './Card'
+
 interface ScheduleBlockProps {
   /** 'active' = navy background; 'default' = white card */
   variant?: 'active' | 'default'
@@ -15,11 +17,7 @@ export default function ScheduleBlock({
   const isActive = variant === 'active'
 
   return (
-    <div
-      className={`flex flex-col gap-1.5 rounded-[10px] p-[18px] ${
-        isActive ? 'bg-navy' : 'border border-border bg-white'
-      }`}
-    >
+    <Card variant={isActive ? 'accent' : 'default'} className="flex flex-col gap-1.5 p-[18px]">
       <span className={`text-[11px] font-semibold ${isActive ? 'text-sky-blue' : 'text-slate-blue'}`}>
         {time}
       </span>
@@ -29,6 +27,6 @@ export default function ScheduleBlock({
       <span className={`text-xs ${isActive ? 'text-sky-blue' : 'text-slate-blue'}`}>
         {duration}
       </span>
-    </div>
+    </Card>
   )
 }

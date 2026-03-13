@@ -1,3 +1,5 @@
+import Card from './Card'
+
 interface StatCardProps {
   /** 'default' = white card; 'accent' = navy card */
   variant?: 'default' | 'accent'
@@ -19,13 +21,7 @@ export default function StatCard({
   const isAccent = variant === 'accent'
 
   return (
-    <div
-      className={`flex flex-1 flex-col gap-2 rounded-[10px] p-5 ${
-        isAccent
-          ? 'bg-navy'
-          : 'border border-border bg-white'
-      }`}
-    >
+    <Card variant={isAccent ? 'accent' : 'default'} className="flex flex-1 flex-col gap-2 p-5">
       <span className={`text-xs font-semibold ${isAccent ? 'text-sky-blue' : 'text-slate-blue'}`}>
         {label}
       </span>
@@ -38,6 +34,6 @@ export default function StatCard({
           {subtitle}
         </span>
       </div>
-    </div>
+    </Card>
   )
 }

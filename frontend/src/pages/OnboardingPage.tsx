@@ -6,6 +6,7 @@ import ProfileForm from '../components/ProfileForm'
 import WorkHoursSelector, { DEFAULT_WORK_HOURS } from '../components/WorkHoursSelector'
 import PreferencesForm, { DEFAULT_PREFERENCES } from '../components/PreferencesForm'
 import { ProfileData, WorkHoursData, PreferencesData } from '../types'
+import Button from '../components/Button'
 
 type Step = 1 | 2 | 3
 
@@ -128,28 +129,15 @@ export default function OnboardingPage() {
 
         {/* Navigation */}
         <div className="mt-8 flex justify-between">
-          <button
-            onClick={handleBack}
-            disabled={step === 1 || isSubmitting}
-            className="rounded-lg border border-border px-5 py-2 text-sm font-medium text-slate-blue hover:bg-bg-gray disabled:cursor-not-allowed disabled:opacity-40"
-          >
+          <Button variant="ghost" size="nav" onClick={handleBack} disabled={step === 1 || isSubmitting}>
             Back
-          </button>
+          </Button>
           {step < 3 ? (
-            <button
-              onClick={handleNext}
-              className="rounded-lg bg-navy px-5 py-2 text-sm font-medium text-white hover:opacity-90"
-            >
-              Next
-            </button>
+            <Button size="nav" onClick={handleNext}>Next</Button>
           ) : (
-            <button
-              onClick={handleSubmit}
-              disabled={isSubmitting}
-              className="rounded-lg bg-navy px-5 py-2 text-sm font-medium text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-            >
+            <Button size="nav" onClick={handleSubmit} disabled={isSubmitting}>
               {isSubmitting ? 'Saving...' : 'Submit'}
-            </button>
+            </Button>
           )}
         </div>
       </div>
