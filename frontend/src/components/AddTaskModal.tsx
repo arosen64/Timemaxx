@@ -1,10 +1,7 @@
-import { useState } from 'react'
 import { useMutation } from 'convex/react'
 import { api } from '../../../backend/convex/_generated/api'
-import { validateDueDateValue } from '../utils/tasks'
-
-const TASK_TYPES = ['Problem Set', 'Essay', 'Coding', 'Exam Prep'] as const
-type TaskType = typeof TASK_TYPES[number]
+import { TaskFormData } from '../types'
+import TaskFormModal from './TaskFormModal'
 
 interface AddTaskModalProps {
   isOpen: boolean
@@ -13,202 +10,28 @@ interface AddTaskModalProps {
 }
 
 export default function AddTaskModal({ isOpen, onClose, onTaskCreated }: AddTaskModalProps) {
-  const [taskName, setTaskName] = useState('')
-  const [selectedType, setSelectedType] = useState<TaskType>('Problem Set')
-  const [description, setDescription] = useState('')
-  const [dueDate, setDueDate] = useState('')
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
   const createTask = useMutation(api.mutations.tasks.createTask)
-
-  function handleClose() {
-    setTaskName('')
-    setSelectedType('Problem Set')
-    setDescription('')
-    setDueDate('')
-    setError(null)
-    onClose()
-  }
-
-  function validateDueDate(value: string): boolean {
-    const errorMsg = validateDueDateValue(value)
-    if (errorMsg) { setError(errorMsg); return false }
-    return true
-  }
-
-  async function handleSubmit() {
-    if (!taskName.trim()) {
-      setError('Please enter a task name.')
-      return
-    }
-    if (!selectedType || !TASK_TYPES.includes(selectedType)) {
-      setError('Please select a task type.')
-      return
-    }
-    if (!description.trim()) {
-      setError('Please enter a description.')
-      return
-    }
-    const trimmedDueDate = dueDate.trim()
-    if (!trimmedDueDate) {
-      setError('Please enter a due date.')
-      return
-    }
-    if (!validateDueDate(trimmedDueDate)) return
-    const parsedDueDate = new Date(trimmedDueDate).getTime()
-    setIsSubmitting(true)
-    setError(null)
-    try {
-      const taskId = await createTask({
-        title: taskName,
-        description,
-        taskType: selectedType,
-        dueDate: parsedDueDate,
-      })
-      onTaskCreated?.(taskId)
-      handleClose()
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Something went wrong. Please try again.')
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
 
   if (!isOpen) return null
 
+  async function handleSubmit(form: TaskFormData) {
+    const taskId = await createTask({
+      title: form.title,
+      description: form.description,
+      taskType: form.taskType,
+      dueDate: form.dueDate,
+    })
+    onTaskCreated?.(taskId)
+  }
+
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-navy/30"
-      onClick={handleClose}
-    >
-      <div
-        className="flex w-[520px] flex-col gap-6 rounded-xl border border-border bg-white p-12"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="flex w-full items-center justify-between">
-          <span className="font-heading text-[26px] font-bold text-navy">Add new task</span>
-          <button
-            onClick={handleClose}
-            className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-md border-none bg-bg-gray font-body text-lg text-light-blue"
-          >
-            &times;
-          </button>
-        </div>
-
-        {/* Subtitle */}
-        <p className="m-0 font-body text-sm leading-normal text-slate-blue">
-          Fill in the details below.
-        </p>
-
-        {/* Form Body */}
-        <div className="flex w-full flex-col gap-5">
-          {/* Task name */}
-          <div className="flex w-full flex-col gap-1.5">
-            <label className="font-heading text-[13px] font-semibold text-navy">Task name</label>
-            <input
-              type="text"
-              value={taskName}
-              onChange={(e) => setTaskName(e.target.value)}
-              placeholder="e.g. Calculus Problem Set 5"
-              className="h-11 w-full rounded-md border border-border bg-bg-gray px-3.5 font-body text-sm text-navy outline-none placeholder:text-light-blue"
-            />
-          </div>
-
-          {/* Task type */}
-          <div className="flex w-full flex-col gap-1.5">
-            <label className="font-heading text-[13px] font-semibold text-navy">Task type</label>
-            <div className="flex gap-2">
-              {TASK_TYPES.map((type) => (
-                <button
-                  key={type}
-                  onClick={() => setSelectedType(type)}
-                  className={`flex h-9 cursor-pointer items-center justify-center rounded-md px-3.5 font-body text-[13px] ${
-                    selectedType === type
-                      ? 'border-none bg-navy font-semibold text-white'
-                      : 'border border-border bg-bg-gray font-normal text-slate-blue'
-                  }`}
-                >
-                  {type}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Description */}
-          <div className="flex w-full flex-col gap-1.5">
-            <label className="font-heading text-[13px] font-semibold text-navy">Description</label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Paste or type your assignment description here..."
-              className="h-24 w-full resize-none rounded-md border border-border bg-bg-gray px-3.5 py-2.5 font-body text-sm leading-normal text-navy outline-none placeholder:text-light-blue"
-            />
-          </div>
-
-          {/* Due date */}
-          <div className="flex w-full flex-col gap-1.5">
-            <label className="font-heading text-[13px] font-semibold text-navy">Due date</label>
-            <div className="flex h-11 items-center justify-between rounded-md border border-border bg-bg-gray px-3.5">
-              <input
-                type="text"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
-                onBlur={() => {
-                  if (dueDate) validateDueDate(dueDate)
-                }}
-                onFocus={() => setError(null)}
-                placeholder="MM / DD / YYYY"
-                className="flex-1 border-none bg-transparent font-body text-sm text-navy outline-none placeholder:text-light-blue"
-              />
-              <CalendarIcon />
-            </div>
-          </div>
-        </div>
-
-        {error && (
-          <p className="font-body text-sm text-red-500">{error}</p>
-        )}
-
-        {/* Button Row */}
-        <div className="flex w-full gap-3">
-          <button
-            onClick={handleClose}
-            className="flex h-12 flex-1 cursor-pointer items-center justify-center rounded-lg border border-border bg-bg-gray font-heading text-[15px] font-semibold text-slate-blue"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSubmit}
-            disabled={isSubmitting}
-            className="flex h-12 flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border-none bg-navy font-heading text-[15px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {isSubmitting ? 'Adding…' : 'Add Task'}
-            <span className="inline-block h-1.5 w-1.5 rounded-full bg-teal" />
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function CalendarIcon() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      className="stroke-light-blue"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-      <line x1="16" y1="2" x2="16" y2="6" />
-      <line x1="8" y1="2" x2="8" y2="6" />
-      <line x1="3" y1="10" x2="21" y2="10" />
-    </svg>
+    <TaskFormModal
+      heading="Add new task"
+      subtitle="Fill in the details below."
+      submitLabel="Add Task"
+      submittingLabel="Adding…"
+      onClose={onClose}
+      onSubmit={handleSubmit}
+    />
   )
 }

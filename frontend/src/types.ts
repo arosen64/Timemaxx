@@ -14,7 +14,7 @@ export const SCHEMA_TASK_TYPES = ['Problem Set', 'Essay', 'Coding', 'Exam Prep']
 export type SchemaTaskType = (typeof SCHEMA_TASK_TYPES)[number]
 export const TASK_TYPE_OPTIONS: SchemaTaskType[] = [...SCHEMA_TASK_TYPES]
 
-export interface EditForm {
+export interface TaskFormData {
   title: string
   description: string
   taskType: SchemaTaskType
