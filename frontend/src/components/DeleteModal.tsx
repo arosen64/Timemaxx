@@ -24,8 +24,8 @@ export default function DeleteModal({ task, onClose, onConfirm }: DeleteModalPro
       <div className="absolute inset-0 bg-navy/40 backdrop-blur-sm" onClick={onClose} />
 
       <div className="relative z-10 w-full max-w-sm p-8 bg-white border shadow-xl rounded-xl border-border">
-        <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-urgent-tint">
-          <TrashIcon color="#CF4520" />
+        <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-urgent-tint text-urgent-red">
+          <TrashIcon />
         </div>
         <h2 className="mt-4 text-lg font-bold font-heading text-navy">Delete Task?</h2>
         <p className="mt-2 text-sm leading-relaxed text-slate-blue">

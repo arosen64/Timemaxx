@@ -79,7 +79,7 @@ export default function OnboardingPage() {
   const isWide = step === 2 || step === 3
 
   return (
-    <div className="flex min-h-screen flex-col items-center bg-gray-50 px-4 py-12">
+    <div className="flex min-h-screen flex-col items-center bg-bg-gray px-4 py-12">
       {/* Step indicator */}
       <div className="mb-10 flex items-center">
         {STEP_LABELS.map((label, i) => {
@@ -92,21 +92,21 @@ export default function OnboardingPage() {
                 <div
                   className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold ${
                     isComplete
-                      ? 'bg-green-500 text-white'
+                      ? 'bg-teal text-white'
                       : isActive
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-200 text-gray-500'
+                        ? 'bg-navy text-white'
+                        : 'bg-border text-slate-blue'
                   }`}
                 >
                   {isComplete ? '✓' : stepNum}
                 </div>
                 <span
-                  className={`text-sm ${isActive ? 'font-semibold text-gray-900' : 'text-gray-400'}`}
+                  className={`text-sm ${isActive ? 'font-semibold text-navy' : 'text-slate-blue'}`}
                 >
                   {label}
                 </span>
               </div>
-              {i < STEP_LABELS.length - 1 && <div className="mx-4 h-px w-12 bg-gray-300" />}
+              {i < STEP_LABELS.length - 1 && <div className="mx-4 h-px w-12 bg-border" />}
             </div>
           )
         })}
@@ -131,14 +131,14 @@ export default function OnboardingPage() {
           <button
             onClick={handleBack}
             disabled={step === 1 || isSubmitting}
-            className="rounded-lg border border-gray-300 px-5 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+            className="rounded-lg border border-border px-5 py-2 text-sm font-medium text-slate-blue hover:bg-bg-gray disabled:cursor-not-allowed disabled:opacity-40"
           >
             Back
           </button>
           {step < 3 ? (
             <button
               onClick={handleNext}
-              className="rounded-lg bg-blue-600 px-5 py-2 text-sm font-medium text-white hover:bg-blue-700"
+              className="rounded-lg bg-navy px-5 py-2 text-sm font-medium text-white hover:opacity-90"
             >
               Next
             </button>
@@ -146,7 +146,7 @@ export default function OnboardingPage() {
             <button
               onClick={handleSubmit}
               disabled={isSubmitting}
-              className="rounded-lg bg-blue-600 px-5 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-lg bg-navy px-5 py-2 text-sm font-medium text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isSubmitting ? 'Saving...' : 'Submit'}
             </button>

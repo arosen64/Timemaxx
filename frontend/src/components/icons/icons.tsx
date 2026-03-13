@@ -92,7 +92,7 @@ export function LogoutIcon({ color }: { color?: string }) {
 
 // ─── Status / indicator icons ─────────────────────────────────────────────────
 
-export function WarningIcon({ color = '#CF4520', size = 20 }: { color?: string; size?: number }) {
+export function WarningIcon({ color = 'currentColor', size = 20 }: { color?: string; size?: number }) {
   return (
     <IconBase color={color} size={size}>
       <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />

@@ -167,7 +167,7 @@ export default function DashboardPage() {
             onClick={() => setIsAddModalOpen(true)}
             className="flex items-center gap-2 px-5 text-sm font-semibold text-white transition rounded-lg h-11 bg-navy font-heading hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-sky-blue focus:ring-offset-2"
           >
-            <PlusIcon color="#86C8BC" />
+            <span className="text-teal"><PlusIcon /></span>
             Add Task
           </button>
         </header>
@@ -211,8 +211,8 @@ export default function DashboardPage() {
             ) : taskRows.length === 0 ? (
               <div className="rounded-[10px] border border-border bg-white p-6">
                 <div className="flex items-start gap-3">
-                  <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-bg-gray">
-                    <SparklesIcon color="#68ACE5" />
+                  <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-bg-gray text-sky-blue">
+                    <SparklesIcon />
                   </div>
                   <div>
                     <div className="text-sm font-semibold font-heading text-navy">No tasks yet</div>
