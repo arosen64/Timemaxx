@@ -4,6 +4,7 @@ import { displayTitle } from '../utils/tasks'
 import { TrashIcon } from './icons/icons'
 import Modal from './Modal'
 import Button from './Button'
+import IconCircle from './IconCircle'
 
 interface DeleteModalProps {
   task: Task
@@ -23,9 +24,9 @@ export default function DeleteModal({ task, onClose, onConfirm }: DeleteModalPro
 
   return (
     <Modal onClose={onClose}>
-      <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-urgent-tint text-urgent-red">
+      <IconCircle className="bg-urgent-tint text-urgent-red">
         <TrashIcon />
-      </div>
+      </IconCircle>
       <h2 className="mt-4 text-lg font-bold font-heading text-navy">Delete Task?</h2>
       <p className="mt-2 text-sm leading-relaxed text-slate-blue">
         <span className="font-semibold text-navy">"{displayTitle(task)}"</span> will be

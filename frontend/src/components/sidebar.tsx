@@ -3,6 +3,7 @@ import { useQuery } from "convex/react";
 import { api } from "../../../backend/convex/_generated/api";
 import { DashboardIcon, TasksIcon, ScheduleIcon, UserIcon } from "./icons/icons";
 import BrandLogo from "./BrandLogo";
+import Avatar from "./Avatar";
 
 
 export default function Sidebar() {
@@ -51,17 +52,7 @@ export default function Sidebar() {
 
             {/* Footer: User Info */}
             <div className="flex items-center gap-2.5">
-                {user === undefined ? (
-                    <div className="flex-shrink-0 h-9 w-9 bg-white/20 rounded-full animate-pulse" />
-                ) : user?.image ? (
-                    <img src={user.image} alt="Profile" referrerPolicy="no-referrer" className="flex-shrink-0 h-9 w-9 rounded-full object-cover" />
-                ) : (
-                    <div className="flex flex-shrink-0 items-center justify-center h-9 w-9 bg-sky-blue rounded-full">
-                        <span className="font-heading text-sm font-bold text-navy">
-                            {user?.name?.charAt(0).toUpperCase() ?? "?"}
-                        </span>
-                    </div>
-                )}
+                <Avatar user={user} size="sm" theme="dark" />
                 <div className="flex flex-col gap-0.5">
                     {user === undefined ? (
                         <>

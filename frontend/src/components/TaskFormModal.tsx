@@ -4,6 +4,9 @@ import { validateDueDateValue } from '../utils/tasks'
 import { CalendarIcon } from './icons/icons'
 import Modal from './Modal'
 import Button from './Button'
+import FormField from './FormField'
+import Input from './Input'
+import Textarea from './Textarea'
 
 interface TaskFormModalProps {
   heading: string
@@ -92,19 +95,16 @@ export default function TaskFormModal({
 
         {/* Form fields */}
         <div className="flex w-full flex-col gap-5">
-          <div className="flex w-full flex-col gap-1.5">
-            <label className="font-heading text-[13px] font-semibold text-navy">Task name</label>
-            <input
+          <FormField label="Task name">
+            <Input
               type="text"
               value={taskName}
               onChange={(e) => setTaskName(e.target.value)}
               placeholder="e.g. Calculus Problem Set 5"
-              className="h-11 w-full rounded-md border border-border bg-bg-gray px-3.5 font-body text-sm text-navy outline-none placeholder:text-light-blue"
             />
-          </div>
+          </FormField>
 
-          <div className="flex w-full flex-col gap-1.5">
-            <label className="font-heading text-[13px] font-semibold text-navy">Task type</label>
+          <FormField label="Task type">
             <div className="flex gap-2">
               {TASK_TYPE_OPTIONS.map((type) => (
                 <button
@@ -120,33 +120,27 @@ export default function TaskFormModal({
                 </button>
               ))}
             </div>
-          </div>
+          </FormField>
 
-          <div className="flex w-full flex-col gap-1.5">
-            <label className="font-heading text-[13px] font-semibold text-navy">Description</label>
-            <textarea
+          <FormField label="Description">
+            <Textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Paste or type your assignment description here..."
-              className="h-24 w-full resize-none rounded-md border border-border bg-bg-gray px-3.5 py-2.5 font-body text-sm leading-normal text-navy outline-none placeholder:text-light-blue"
             />
-          </div>
+          </FormField>
 
-          <div className="flex w-full flex-col gap-1.5">
-            <label className="font-heading text-[13px] font-semibold text-navy">Due date</label>
-            <div className="flex h-11 items-center justify-between rounded-md border border-border bg-bg-gray px-3.5">
-              <input
-                type="text"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
-                onBlur={() => { if (dueDate) validateDueDate(dueDate) }}
-                onFocus={() => setError(null)}
-                placeholder="MM / DD / YYYY"
-                className="flex-1 border-none bg-transparent font-body text-sm text-navy outline-none placeholder:text-light-blue"
-              />
-              <CalendarIcon />
-            </div>
-          </div>
+          <FormField label="Due date">
+            <Input
+              type="text"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+              onBlur={() => { if (dueDate) validateDueDate(dueDate) }}
+              onFocus={() => setError(null)}
+              placeholder="MM / DD / YYYY"
+              icon={<CalendarIcon />}
+            />
+          </FormField>
         </div>
 
         {error && <p className="font-body text-sm text-red-500">{error}</p>}
