@@ -2,8 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useQuery } from "convex/react";
 import { api } from "../../../../backend/convex/_generated/api";
 import { DashboardIcon, TasksIcon, ScheduleIcon, UserIcon } from "../icons/icons";
-import BrandLogo from "./BrandLogo";
-import Avatar from "./Avatar";
+import { BrandLogo, Avatar } from '.'
 
 
 export default function Sidebar() {
