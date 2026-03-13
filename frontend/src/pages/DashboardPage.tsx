@@ -11,7 +11,6 @@ import {
   TASK_TYPE_OPTIONS,
 } from '../types'
 import {
-  formatMinutes,
   formatDateMMDDYYYY,
   displayTitle,
   validateDueDateValue,
@@ -19,16 +18,15 @@ import {
 import {
   CalendarIcon,
   PlusIcon,
-  PencilIcon,
   TrashIcon,
   WarningIcon,
-  SpinnerIcon,
   SparklesIcon,
 } from '../components/icons/icons'
-import Badge, { type BadgeVariant } from '../components/Badge'
+import { type BadgeVariant } from '../components/Badge'
 import StatCard from '../components/StatCard'
+import TaskCard from '../components/TaskCard'
 
-const BAR_COLORS = ['bg-[#CF4520]', 'bg-sky-blue', 'bg-[#008767]']
+const BAR_COLORS = ['bg-urgent-red', 'bg-sky-blue', 'bg-success']
 
 /** Maps a normalized taskType key to a Badge variant. Falls back to 'notstarted'. */
 function badgeVariant(taskTypeKey: string): BadgeVariant {
@@ -508,68 +506,22 @@ export default function DashboardPage() {
             ) : (
               <div className="flex flex-col gap-3">
                 {taskRows.map((task, i) => {
-                  const barColor = BAR_COLORS[i % BAR_COLORS.length]
                   const key = task.taskType?.toLowerCase().replace(/\s+/g, '') ?? ''
-
                   return (
-                    <div
+                    <TaskCard
                       key={task._id}
-                      className="group flex items-center gap-3.5 min-w-0 rounded-[10px] border border-border bg-white px-[18px] py-4 overflow-hidden"
-                    >
-                      <div className={`h-10 w-1 shrink-0 rounded ${barColor}`} />
-
-                      <div className="flex flex-col flex-1 min-w-0 gap-1">
-                        <div className="text-sm font-semibold truncate font-heading text-navy">
-                          {displayTitle(task)}
-                        </div>
-                        <div className="text-xs text-slate-blue">
-                          Due {formatDateMMDDYYYY(task.dueDate)} · {task.taskType} · ~{formatMinutes(task.timeEstimate ?? 0)} estimated
-                        </div>
-                        {task.description.trim().length > 0 && (
-                          <div className="text-xs text-light-blue break-words line-clamp-2">
-                            {task.description}
-                          </div>
-                        )}
-                      </div>
-
-                      <Badge variant={badgeVariant(key)} />
-
-                      {/* Edit / Delete / Estimate buttons */}
-                      <div className="flex items-center gap-1">
-                        {task.timeEstimate === undefined && (
-                          estimatingTasks.has(task._id) ? (
-                            <div className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-blue">
-                              <SpinnerIcon color="currentColor" size={16} />
-                            </div>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() => handleEstimateTask(task._id)}
-                              className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-blue transition hover:bg-bg-gray hover:text-navy"
-                              aria-label="Estimate task time"
-                            >
-                              <SparklesIcon color="currentColor" size={16} />
-                            </button>
-                          )
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => setEditingTask(task)}
-                          className="flex items-center justify-center w-8 h-8 transition rounded-lg text-slate-blue hover:bg-bg-gray hover:text-navy"
-                          aria-label="Edit task"
-                        >
-                          <PencilIcon />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setDeletingTask(task)}
-                          className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-blue hover:bg-[#FFF0EC] hover:text-[#CF4520] transition"
-                          aria-label="Delete task"
-                        >
-                          <TrashIcon />
-                        </button>
-                      </div>
-                    </div>
+                      title={displayTitle(task)}
+                      dueDate={formatDateMMDDYYYY(task.dueDate)}
+                      taskType={task.taskType}
+                      description={task.description}
+                      timeEstimate={task.timeEstimate}
+                      barColorClass={BAR_COLORS[i % BAR_COLORS.length]}
+                      badgeVariant={badgeVariant(key)}
+                      isEstimating={estimatingTasks.has(task._id)}
+                      onEdit={() => setEditingTask(task)}
+                      onDelete={() => setDeletingTask(task)}
+                      onEstimate={() => handleEstimateTask(task._id)}
+                    />
                   )
                 })}
               </div>
