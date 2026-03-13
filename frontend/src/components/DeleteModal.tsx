@@ -7,12 +7,13 @@ import Button from './Button'
 import IconCircle from './IconCircle'
 
 interface DeleteModalProps {
-  task: Task
+  isOpen: boolean
+  task: Task | null
   onClose: () => void
   onConfirm: () => Promise<void>
 }
 
-export default function DeleteModal({ task, onClose, onConfirm }: DeleteModalProps) {
+export default function DeleteModal({ isOpen, task, onClose, onConfirm }: DeleteModalProps) {
   const [deleting, setDeleting] = useState(false)
 
   async function handleConfirm() {
@@ -23,13 +24,13 @@ export default function DeleteModal({ task, onClose, onConfirm }: DeleteModalPro
   }
 
   return (
-    <Modal onClose={onClose}>
+    <Modal isOpen={isOpen} onClose={onClose}>
       <IconCircle className="bg-urgent-tint text-urgent-red">
         <TrashIcon />
       </IconCircle>
       <h2 className="mt-4 text-lg font-bold font-heading text-navy">Delete Task?</h2>
       <p className="mt-2 text-sm leading-relaxed text-slate-blue">
-        <span className="font-semibold text-navy">"{displayTitle(task)}"</span> will be
+        <span className="font-semibold text-navy">"{task ? displayTitle(task) : ''}"</span> will be
         permanently deleted. This cannot be undone.
       </p>
 

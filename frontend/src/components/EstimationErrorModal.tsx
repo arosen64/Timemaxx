@@ -4,13 +4,14 @@ import Button from './Button'
 import IconCircle from './IconCircle'
 
 interface EstimationErrorModalProps {
+  isOpen: boolean
   message: string
   onClose: () => void
 }
 
-export default function EstimationErrorModal({ message, onClose }: EstimationErrorModalProps) {
+export default function EstimationErrorModal({ isOpen, message, onClose }: EstimationErrorModalProps) {
   return (
-    <Modal onClose={onClose}>
+    <Modal isOpen={isOpen} onClose={onClose}>
       <IconCircle className="bg-urgent-tint text-urgent-red">
         <WarningIcon />
       </IconCircle>

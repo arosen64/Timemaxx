@@ -12,8 +12,6 @@ interface AddTaskModalProps {
 export default function AddTaskModal({ isOpen, onClose, onTaskCreated }: AddTaskModalProps) {
   const createTask = useMutation(api.mutations.tasks.createTask)
 
-  if (!isOpen) return null
-
   async function handleSubmit(form: TaskFormData) {
     const taskId = await createTask({
       title: form.title,
@@ -26,6 +24,7 @@ export default function AddTaskModal({ isOpen, onClose, onTaskCreated }: AddTask
 
   return (
     <TaskFormModal
+      isOpen={isOpen}
       heading="Add new task"
       subtitle="Fill in the details below."
       submitLabel="Add Task"

@@ -112,26 +112,23 @@ export default function DashboardPage() {
     <PageLayout mainClassName="gap-7">
 
       {/* Modals */}
-      {estimationError && (
-        <EstimationErrorModal
-          message={estimationError}
-          onClose={() => setEstimationError(null)}
-        />
-      )}
-      {editingTask && (
-        <EditModal
-          task={editingTask}
-          onClose={() => setEditingTask(null)}
-          onSave={handleSaveEdit}
-        />
-      )}
-      {deletingTask && (
-        <DeleteModal
-          task={deletingTask}
-          onClose={() => setDeletingTask(null)}
-          onConfirm={handleConfirmDelete}
-        />
-      )}
+      <EstimationErrorModal
+        isOpen={estimationError !== null}
+        message={estimationError ?? ''}
+        onClose={() => setEstimationError(null)}
+      />
+      <EditModal
+        isOpen={editingTask !== null}
+        task={editingTask}
+        onClose={() => setEditingTask(null)}
+        onSave={handleSaveEdit}
+      />
+      <DeleteModal
+        isOpen={deletingTask !== null}
+        task={deletingTask}
+        onClose={() => setDeletingTask(null)}
+        onConfirm={handleConfirmDelete}
+      />
       <AddTaskModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}

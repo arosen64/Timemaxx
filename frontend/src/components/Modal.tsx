@@ -1,12 +1,14 @@
 import { type ReactNode } from 'react'
 
 interface ModalProps {
+  isOpen: boolean
   onClose: () => void
   variant?: 'form' | 'alert'
   children: ReactNode
 }
 
-export default function Modal({ onClose, variant = 'alert', children }: ModalProps) {
+export default function Modal({ isOpen, onClose, variant = 'alert', children }: ModalProps) {
+  if (!isOpen) return null
   if (variant === 'form') {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-navy/30" onClick={onClose}>

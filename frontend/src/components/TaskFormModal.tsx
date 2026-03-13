@@ -9,6 +9,7 @@ import Input from './Input'
 import Textarea from './Textarea'
 
 interface TaskFormModalProps {
+  isOpen: boolean
   heading: string
   subtitle: string
   submitLabel: string
@@ -25,6 +26,7 @@ interface TaskFormModalProps {
 }
 
 export default function TaskFormModal({
+  isOpen,
   heading,
   subtitle,
   submitLabel,
@@ -79,7 +81,7 @@ export default function TaskFormModal({
   }
 
   return (
-    <Modal variant="form" onClose={handleClose}>
+    <Modal isOpen={isOpen} variant="form" onClose={handleClose}>
         {/* Header */}
         <div className="flex w-full items-center justify-between">
           <span className="font-heading text-[26px] font-bold text-navy">{heading}</span>
