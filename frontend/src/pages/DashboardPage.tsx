@@ -4,40 +4,18 @@ import { api } from '../../../backend/convex/_generated/api'
 import { Id } from '../../../backend/convex/_generated/dataModel'
 import AddTaskModal from '../components/AddTaskModal'
 import Sidebar from '../components/sidebar'
-
-type TaskType = {
-  _id: Id<'tasks'>
-  title: string
-  description: string
-  taskType: string
-  timeEstimate?: number
-  dueDate: number
-  createdAt: number
-}
-
-const SCHEMA_TASK_TYPES = ['Problem Set', 'Essay', 'Coding', 'Exam Prep'] as const
-type SchemaTaskType = (typeof SCHEMA_TASK_TYPES)[number]
-
-type EditForm = {
-  title: string
-  description: string
-  taskType: SchemaTaskType
-  dueDate: number
-}
-
-function formatMinutes(minutes: number) {
-  if (!Number.isFinite(minutes) || minutes <= 0) return '—'
-  if (minutes === 1) return '1 min'
-  return `${Math.round(minutes)} mins`
-}
-
-
-function displayTitle(task: Pick<TaskType, 'title' | 'description'>) {
-  const t = task.title.trim()
-  if (t.length > 0) return t
-  const d = task.description.trim()
-  return d.length > 0 ? d : 'Untitled task'
-}
+import {
+  Task,
+  EditForm,
+  SchemaTaskType,
+  TASK_TYPE_OPTIONS,
+} from '../types'
+import {
+  formatMinutes,
+  formatDateMMDDYYYY,
+  displayTitle,
+  validateDueDateValue,
+} from '../utils/tasks'
 
 const BAR_COLORS = ['bg-[#CF4520]', 'bg-sky-blue', 'bg-[#008767]']
 
@@ -45,16 +23,6 @@ const BADGE_MAP: Record<string, { bg: string; text: string; label: string }> = {
   urgent:     { bg: 'bg-[#FFF0EC]', text: 'text-[#CF4520]', label: 'Urgent' },
   inprogress: { bg: 'bg-[#EBF5FF]', text: 'text-[#0077D8]', label: 'In Progress' },
   default:    { bg: 'bg-[#E6F5F0]', text: 'text-[#008767]', label: 'Not Started' },
-}
-
-const TASK_TYPE_OPTIONS: SchemaTaskType[] = [...SCHEMA_TASK_TYPES]
-
-function formatDateMMDDYYYY(ms: number) {
-  const d = new Date(ms)
-  const mm = String(d.getMonth() + 1).padStart(2, '0')
-  const dd = String(d.getDate()).padStart(2, '0')
-  const yyyy = String(d.getFullYear())
-  return `${mm}/${dd}/${yyyy}`
 }
 
 function AddModalCalendarIcon() {
@@ -84,7 +52,7 @@ function EditModal({
   onClose,
   onSave,
 }: {
-  task: TaskType
+  task: Task
   onClose: () => void
   onSave: (form: EditForm) => Promise<void>
 }) {
@@ -98,23 +66,8 @@ function EditModal({
   const [error, setError] = useState<string | null>(null)
 
   function validateDueDate(value: string): boolean {
-    const match = value.match(/^(\d{1,2})\s*\/\s*(\d{1,2})\s*\/\s*(\d{4})$/)
-    if (!match) {
-      setError('Please enter a valid date in MM/DD/YYYY format.')
-      return false
-    }
-    const [, month, day, year] = match.map(Number)
-    const date = new Date(year, month - 1, day)
-    if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
-      setError('Please enter a valid date in MM/DD/YYYY format.')
-      return false
-    }
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    if (date < today) {
-      setError('Due date cannot be in the past.')
-      return false
-    }
+    const errorMsg = validateDueDateValue(value)
+    if (errorMsg) { setError(errorMsg); return false }
     return true
   }
 
@@ -282,7 +235,7 @@ function DeleteModal({
   onClose,
   onConfirm,
 }: {
-  task: TaskType
+  task: Task
   onClose: () => void
   onConfirm: () => Promise<void>
 }) {
@@ -385,7 +338,7 @@ function EstimationErrorModal({
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
-  const tasks = useQuery(api.queries.tasks.getAllTasks, {}) as TaskType[] | undefined
+  const tasks = useQuery(api.queries.tasks.getAllTasks, {}) as Task[] | undefined
   const updateTask = useMutation(api.mutations.tasks.updateTask)
   const deleteTask = useMutation(api.mutations.tasks.deleteTask)
   const requestEstimate = useAction(api.actions.requestEstimateTaskTime.requestEstimateTaskTime)
@@ -398,8 +351,8 @@ export default function DashboardPage() {
     [taskRows]
   )
 
-  const [editingTask, setEditingTask] = useState<TaskType | null>(null)
-  const [deletingTask, setDeletingTask] = useState<TaskType | null>(null)
+  const [editingTask, setEditingTask] = useState<Task | null>(null)
+  const [deletingTask, setDeletingTask] = useState<Task | null>(null)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [estimatingTasks, setEstimatingTasks] = useState<Set<Id<'tasks'>>>(new Set())
   const [estimationError, setEstimationError] = useState<string | null>(null)

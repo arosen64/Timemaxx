@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useMutation } from 'convex/react'
 import { api } from '../../../backend/convex/_generated/api'
+import { validateDueDateValue } from '../utils/tasks'
 
 const TASK_TYPES = ['Problem Set', 'Essay', 'Coding', 'Exam Prep'] as const
 type TaskType = typeof TASK_TYPES[number]
@@ -31,23 +32,8 @@ export default function AddTaskModal({ isOpen, onClose, onTaskCreated }: AddTask
   }
 
   function validateDueDate(value: string): boolean {
-    const match = value.match(/^(\d{1,2})\s*\/\s*(\d{1,2})\s*\/\s*(\d{4})$/)
-    if (!match) {
-      setError('Please enter a valid date in MM/DD/YYYY format.')
-      return false
-    }
-    const [, month, day, year] = match.map(Number)
-    const date = new Date(year, month - 1, day)
-    if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
-      setError('Please enter a valid date in MM/DD/YYYY format.')
-      return false
-    }
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    if (date < today) {
-      setError('Due date cannot be in the past.')
-      return false
-    }
+    const errorMsg = validateDueDateValue(value)
+    if (errorMsg) { setError(errorMsg); return false }
     return true
   }
 
