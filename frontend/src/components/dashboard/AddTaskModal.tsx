@@ -1,6 +1,6 @@
 import { useMutation } from 'convex/react'
-import { api } from '../../../backend/convex/_generated/api'
-import { TaskFormData } from '../types'
+import { api } from '../../../../backend/convex/_generated/api'
+import { TaskFormData } from '../../types'
 import TaskFormModal from './TaskFormModal'
 
 interface AddTaskModalProps {

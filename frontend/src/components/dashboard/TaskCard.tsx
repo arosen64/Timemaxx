@@ -1,6 +1,6 @@
 import Badge, { type BadgeVariant } from '../ui/Badge'
 import { PencilIcon, TrashIcon, SparklesIcon, SpinnerIcon } from '../icons/icons'
-import { formatMinutes } from '../utils/tasks'
+import { formatMinutes } from '../../utils/tasks'
 
 interface TaskCardProps {
   title: string
