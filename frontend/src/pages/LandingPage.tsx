@@ -1,6 +1,6 @@
 import { useAuthActions } from "@convex-dev/auth/react";
-import { BookOpenIcon } from '../components/icons/BookOpenIcon';
 import { GoogleIcon } from '../components/icons/icons';
+import BrandLogo from '../components/BrandLogo';
 
 export default function LandingPage() {
 
@@ -13,14 +13,7 @@ export default function LandingPage() {
         {/* Top: Logo + Headline */}
         <div className="flex flex-col gap-10">
           {/* Logo Row */}
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded bg-teal text-navy">
-              <BookOpenIcon size={26} />
-            </div>
-            <span className="font-heading text-xl font-bold text-white">
-              Timemaxx
-            </span>
-          </div>
+          <BrandLogo size="md" />
 
           {/* Headline */}
           <div className="flex flex-col gap-4">
