@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { TaskFormData, SchemaTaskType, TASK_TYPE_OPTIONS } from '../types'
 import { validateDueDateValue } from '../utils/tasks'
-import { CalendarIcon } from './icons/icons'
-import Modal from './Modal'
-import Button from './Button'
-import FormField from './FormField'
-import Input from './Input'
-import Textarea from './Textarea'
+import { CalendarIcon } from '../icons/icons'
+import Modal from '../ui/Modal'
+import Button from '../ui/Button'
+import FormField from '../ui/FormField'
+import Input from '../ui/Input'
+import Textarea from '../ui/Textarea'
 
 interface TaskFormModalProps {
   isOpen: boolean

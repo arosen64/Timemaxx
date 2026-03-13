@@ -1,4 +1,4 @@
-import Card from './Card'
+import Card from '../ui/Card'
 
 interface StatCardProps {
   /** 'default' = white card; 'accent' = navy card */

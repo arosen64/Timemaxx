@@ -1,6 +1,6 @@
 import { useAuthActions } from "@convex-dev/auth/react";
 import { GoogleIcon } from '../components/icons/icons';
-import BrandLogo from '../components/BrandLogo';
+import BrandLogo from '../components/ui/BrandLogo';
 
 export default function LandingPage() {
 

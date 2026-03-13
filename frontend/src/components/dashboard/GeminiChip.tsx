@@ -1,4 +1,4 @@
-import { SparklesIcon } from './icons/icons'
+import { SparklesIcon } from '../icons/icons'
 
 interface GeminiChipProps {
   label?: string

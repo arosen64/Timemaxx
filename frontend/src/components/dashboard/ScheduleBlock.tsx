@@ -1,4 +1,4 @@
-import Card from './Card'
+import Card from '../ui/Card'
 
 interface ScheduleBlockProps {
   /** 'active' = navy background; 'default' = white card */

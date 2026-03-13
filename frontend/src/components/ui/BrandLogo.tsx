@@ -1,4 +1,4 @@
-import { BookOpenIcon } from './icons/BookOpenIcon'
+import { BookOpenIcon } from '../icons/BookOpenIcon'
 
 interface BrandLogoProps {
   /** 'sm' = sidebar (h-8 w-8 icon box, text-lg label); 'md' = landing page (h-10 w-10, text-xl). */

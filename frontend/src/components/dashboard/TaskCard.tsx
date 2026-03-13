@@ -1,5 +1,5 @@
-import Badge, { type BadgeVariant } from './Badge'
-import { PencilIcon, TrashIcon, SparklesIcon, SpinnerIcon } from './icons/icons'
+import Badge, { type BadgeVariant } from '../ui/Badge'
+import { PencilIcon, TrashIcon, SparklesIcon, SpinnerIcon } from '../icons/icons'
 import { formatMinutes } from '../utils/tasks'
 
 interface TaskCardProps {

@@ -1,7 +1,7 @@
-import { WarningIcon } from './icons/icons'
-import Modal from './Modal'
-import Button from './Button'
-import IconCircle from './IconCircle'
+import { WarningIcon } from '../icons/icons'
+import Modal from '../ui/Modal'
+import Button from '../ui/Button'
+import IconCircle from '../ui/IconCircle'
 
 interface EstimationErrorModalProps {
   isOpen: boolean

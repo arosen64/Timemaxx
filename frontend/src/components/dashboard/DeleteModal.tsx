@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { Task } from '../types'
 import { displayTitle } from '../utils/tasks'
-import { TrashIcon } from './icons/icons'
-import Modal from './Modal'
-import Button from './Button'
-import IconCircle from './IconCircle'
+import { TrashIcon } from '../icons/icons'
+import Modal from '../ui/Modal'
+import Button from '../ui/Button'
+import IconCircle from '../ui/IconCircle'
 
 interface DeleteModalProps {
   isOpen: boolean
