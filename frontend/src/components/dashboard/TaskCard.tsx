@@ -1,4 +1,4 @@
-import Badge, { type BadgeVariant } from '../ui/Badge'
+import { Badge, type BadgeVariant } from '../ui'
 import { PencilIcon, TrashIcon, SparklesIcon, SpinnerIcon } from '../icons/icons'
 import { formatMinutes } from '../../utils/tasks'
 
