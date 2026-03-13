@@ -25,13 +25,15 @@ import {
   SpinnerIcon,
   SparklesIcon,
 } from '../components/icons/icons'
+import Badge, { type BadgeVariant } from '../components/Badge'
 
 const BAR_COLORS = ['bg-[#CF4520]', 'bg-sky-blue', 'bg-[#008767]']
 
-const BADGE_MAP: Record<string, { bg: string; text: string; label: string }> = {
-  urgent:     { bg: 'bg-[#FFF0EC]', text: 'text-[#CF4520]', label: 'Urgent' },
-  inprogress: { bg: 'bg-[#EBF5FF]', text: 'text-[#0077D8]', label: 'In Progress' },
-  default:    { bg: 'bg-[#E6F5F0]', text: 'text-[#008767]', label: 'Not Started' },
+/** Maps a normalized taskType key to a Badge variant. Falls back to 'notstarted'. */
+function badgeVariant(taskTypeKey: string): BadgeVariant {
+  if (taskTypeKey === 'urgent') return 'urgent'
+  if (taskTypeKey === 'inprogress') return 'inprogress'
+  return 'notstarted'
 }
 
 // ─── Edit Modal ──────────────────────────────────────────────────────────────
@@ -514,7 +516,6 @@ export default function DashboardPage() {
                 {taskRows.map((task, i) => {
                   const barColor = BAR_COLORS[i % BAR_COLORS.length]
                   const key = task.taskType?.toLowerCase().replace(/\s+/g, '') ?? ''
-                  const badge = BADGE_MAP[key] ?? BADGE_MAP.default
 
                   return (
                     <div
@@ -537,11 +538,7 @@ export default function DashboardPage() {
                         )}
                       </div>
 
-                      <div className={`shrink-0 rounded px-2.5 py-1 ${badge.bg}`}>
-                        <span className={`font-heading text-[11px] font-semibold ${badge.text}`}>
-                          {badge.label}
-                        </span>
-                      </div>
+                      <Badge variant={badgeVariant(key)} />
 
                       {/* Edit / Delete / Estimate buttons */}
                       <div className="flex items-center gap-1">
