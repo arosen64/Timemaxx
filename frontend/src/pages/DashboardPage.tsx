@@ -25,6 +25,8 @@ import {
 import { type BadgeVariant } from '../components/Badge'
 import StatCard from '../components/StatCard'
 import TaskCard from '../components/TaskCard'
+import ScheduleBlock from '../components/ScheduleBlock'
+import GeminiChip from '../components/GeminiChip'
 
 const BAR_COLORS = ['bg-urgent-red', 'bg-sky-blue', 'bg-success']
 
@@ -532,27 +534,21 @@ export default function DashboardPage() {
           <aside className="flex w-[300px] shrink-0 flex-col gap-4">
             <h2 className="text-base font-bold font-heading text-navy">Today's Schedule</h2>
 
-            <div className="flex flex-col gap-1.5 rounded-[10px] bg-navy p-[18px]">
-              <span className="text-[11px] font-semibold text-sky-blue">9:00 AM – 10:30 AM</span>
-              <span className="font-heading text-[13px] font-semibold text-white">Calculus Problem Set 5</span>
-              <span className="text-xs text-sky-blue">1.5 hrs · Focus block</span>
-            </div>
+            <ScheduleBlock
+              variant="active"
+              time="9:00 AM – 10:30 AM"
+              taskName="Calculus Problem Set 5"
+              duration="1.5 hrs · Focus block"
+            />
 
             {[
               { time: '2:00 PM – 3:00 PM',  task: 'History Essay',        dur: '1 hr · Focus block' },
               { time: '6:00 PM – 7:00 PM',  task: 'Chemistry Lab Report', dur: '1 hr · Focus block' },
             ].map(({ time, task, dur }) => (
-              <div key={time} className="flex flex-col gap-1.5 rounded-[10px] border border-border bg-white p-[18px]">
-                <span className="text-[11px] font-semibold text-slate-blue">{time}</span>
-                <span className="font-heading text-[13px] font-semibold text-navy">{task}</span>
-                <span className="text-xs text-slate-blue">{dur}</span>
-              </div>
+              <ScheduleBlock key={time} time={time} taskName={task} duration={dur} />
             ))}
 
-            <div className="flex items-center gap-2 rounded-lg border border-border bg-bg-gray px-3.5 py-3">
-              <SparklesIcon color="#68ACE5" size={14} />
-              <span className="text-[11px] text-slate-blue">Powered by Google Gemini</span>
-            </div>
+            <GeminiChip />
           </aside>
         </div>
       </main>
