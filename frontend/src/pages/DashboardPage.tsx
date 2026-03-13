@@ -3,7 +3,8 @@ import { useQuery, useMutation, useAction } from 'convex/react'
 import { api } from '../../../backend/convex/_generated/api'
 import { Id } from '../../../backend/convex/_generated/dataModel'
 import AddTaskModal from '../components/AddTaskModal'
-import Sidebar from '../components/sidebar'
+import PageLayout from '../components/PageLayout'
+import EmptyState from '../components/EmptyState'
 import { Task, TaskFormData } from '../types'
 import { formatDateMMDDYYYY, displayTitle } from '../utils/tasks'
 import { PlusIcon, SparklesIcon } from '../components/icons/icons'
@@ -108,7 +109,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-bg-gray font-body text-slate-blue">
+    <PageLayout mainClassName="gap-7">
 
       {/* Modals */}
       {estimationError && (
@@ -137,12 +138,7 @@ export default function DashboardPage() {
         onTaskCreated={(taskId) => handleEstimateTask(taskId as Id<'tasks'>)}
       />
 
-      <Sidebar />
-
-      {/* ── Main ── */}
-      <main className="flex flex-col flex-1 min-h-0 p-10 overflow-y-auto gap-7">
-
-        {/* Page Header */}
+      {/* Page Header */}
         <header className="flex items-center justify-between">
           <div className="flex flex-col gap-1">
             {user === undefined ? (
@@ -210,19 +206,11 @@ export default function DashboardPage() {
                 Loading tasks…
               </div>
             ) : taskRows.length === 0 ? (
-              <div className="rounded-[10px] border border-border bg-white p-6">
-                <div className="flex items-start gap-3">
-                  <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-bg-gray text-sky-blue">
-                    <SparklesIcon />
-                  </div>
-                  <div>
-                    <div className="text-sm font-semibold font-heading text-navy">No tasks yet</div>
-                    <div className="mt-1 text-sm text-slate-blue">
-                      Add your first task to get an AI time estimate and a personalized schedule.
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <EmptyState
+                icon={<span className="text-sky-blue"><SparklesIcon /></span>}
+                title="No tasks yet"
+                description="Add your first task to get an AI time estimate and a personalized schedule."
+              />
             ) : (
               <div className="flex flex-col gap-3">
                 {taskRows.map((task, i) => {
@@ -269,8 +257,7 @@ export default function DashboardPage() {
             <GeminiChip />
           </aside>
         </div>
-      </main>
-    </div>
+    </PageLayout>
   )
 }
 
