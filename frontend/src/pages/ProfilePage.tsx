@@ -3,8 +3,7 @@ import { LogoutIcon } from '../components/icons/icons';
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "convex/react";
 import { api } from "../../../backend/convex/_generated/api";
-import PageLayout from "../components/ui/PageLayout";
-import Avatar from "../components/ui/Avatar";
+import { PageLayout, Avatar } from '../components/ui'
 
 export default function ProfilePage() {
   const { signOut } = useAuthActions();

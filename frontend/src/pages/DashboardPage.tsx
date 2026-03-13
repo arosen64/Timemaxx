@@ -2,21 +2,14 @@ import { useMemo, useState, useEffect } from 'react'
 import { useQuery, useMutation, useAction } from 'convex/react'
 import { api } from '../../../backend/convex/_generated/api'
 import { Id } from '../../../backend/convex/_generated/dataModel'
-import AddTaskModal from '../components/dashboard/AddTaskModal'
-import PageLayout from '../components/ui/PageLayout'
-import EmptyState from '../components/ui/EmptyState'
 import { Task, TaskFormData } from '../types'
 import { formatDateMMDDYYYY, displayTitle } from '../utils/tasks'
 import { PlusIcon, SparklesIcon } from '../components/icons/icons'
-import Button from '../components/ui/Button'
-import { type BadgeVariant } from '../components/ui/Badge'
-import StatCard from '../components/dashboard/StatCard'
-import TaskCard from '../components/dashboard/TaskCard'
-import ScheduleBlock from '../components/dashboard/ScheduleBlock'
-import GeminiChip from '../components/dashboard/GeminiChip'
-import EditModal from '../components/dashboard/EditModal'
-import DeleteModal from '../components/dashboard/DeleteModal'
-import EstimationErrorModal from '../components/dashboard/EstimationErrorModal'
+import { type BadgeVariant, Button, EmptyState, PageLayout } from '../components/ui'
+import {
+  AddTaskModal, DeleteModal, EditModal, EstimationErrorModal,
+  GeminiChip, ScheduleBlock, StatCard, TaskCard,
+} from '../components/dashboard'
 
 const BAR_COLORS = ['bg-urgent-red', 'bg-sky-blue', 'bg-success']
 

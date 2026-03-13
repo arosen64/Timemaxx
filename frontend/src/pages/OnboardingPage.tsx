@@ -2,11 +2,9 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '../../../backend/convex/_generated/api'
-import ProfileForm from '../components/onboarding/ProfileForm'
-import WorkHoursSelector, { DEFAULT_WORK_HOURS } from '../components/onboarding/WorkHoursSelector'
-import PreferencesForm, { DEFAULT_PREFERENCES } from '../components/onboarding/PreferencesForm'
 import { ProfileData, WorkHoursData, PreferencesData } from '../types'
-import Button from '../components/ui/Button'
+import { Button } from '../components/ui'
+import { ProfileForm, WorkHoursSelector, DEFAULT_WORK_HOURS, PreferencesForm, DEFAULT_PREFERENCES } from '../components/onboarding'
 
 type Step = 1 | 2 | 3
 
