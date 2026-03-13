@@ -26,6 +26,7 @@ import {
   SparklesIcon,
 } from '../components/icons/icons'
 import Badge, { type BadgeVariant } from '../components/Badge'
+import StatCard from '../components/StatCard'
 
 const BAR_COLORS = ['bg-[#CF4520]', 'bg-sky-blue', 'bg-[#008767]']
 
@@ -456,34 +457,27 @@ export default function DashboardPage() {
 
         {/* Stats Row */}
         <div className="flex gap-4">
-          <div className="flex flex-1 flex-col gap-2 rounded-[10px] border border-border bg-white p-5">
-            <span className="text-xs font-semibold text-slate-blue">Tasks This Week</span>
-            <span className="font-heading text-[36px] font-bold leading-none text-navy">{taskRows.length}</span>
-            <div className="flex items-center gap-1">
-              <div className="h-2 w-2 shrink-0 rounded-full bg-[#008767]" />
-              <span className="text-xs text-[#008767]">0 completed</span>
-            </div>
-          </div>
-
-          <div className="flex flex-1 flex-col gap-2 rounded-[10px] border border-border bg-white p-5">
-            <span className="text-xs font-semibold text-slate-blue">Estimated Minutes</span>
-            <span className="font-heading text-[36px] font-bold leading-none text-navy">
-              {totalEstimatedMinutes > 0 ? Math.round(totalEstimatedMinutes) : '—'}
-            </span>
-            <div className="flex items-center gap-1">
-              <div className="w-2 h-2 rounded-full shrink-0 bg-sky-blue" />
-              <span className="text-xs text-sky-blue">AI estimated</span>
-            </div>
-          </div>
-
-          <div className="flex flex-1 flex-col gap-2 rounded-[10px] bg-navy p-5">
-            <span className="text-xs font-semibold text-sky-blue">Study Streak</span>
-            <span className="font-heading text-[36px] font-bold leading-none text-teal">7</span>
-            <div className="flex items-center gap-1">
-              <div className="w-2 h-2 rounded-full shrink-0 bg-teal" />
-              <span className="text-xs text-white">days in a row</span>
-            </div>
-          </div>
+          <StatCard
+            label="Tasks This Week"
+            value={taskRows.length}
+            dotColorClass="bg-success"
+            subtitle="0 completed"
+            subtitleColorClass="text-success"
+          />
+          <StatCard
+            label="Estimated Minutes"
+            value={totalEstimatedMinutes > 0 ? Math.round(totalEstimatedMinutes) : '—'}
+            dotColorClass="bg-sky-blue"
+            subtitle="AI estimated"
+            subtitleColorClass="text-sky-blue"
+          />
+          <StatCard
+            variant="accent"
+            label="Study Streak"
+            value={7}
+            dotColorClass="bg-teal"
+            subtitle="days in a row"
+          />
         </div>
 
         {/* Columns */}
