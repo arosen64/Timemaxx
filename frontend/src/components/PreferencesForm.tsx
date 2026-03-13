@@ -111,8 +111,8 @@ function CategorySection({
   return (
     <div className="flex flex-col gap-2">
       <div>
-        <p className="text-sm font-semibold text-gray-800">{label}</p>
-        <p className="text-xs text-gray-400">{description}</p>
+        <p className="font-heading text-sm font-semibold text-navy">{label}</p>
+        <p className="font-body text-xs text-light-blue">{description}</p>
       </div>
       <div className="flex flex-wrap gap-2">
         {options.map((option) => (
@@ -120,10 +120,10 @@ function CategorySection({
             key={option}
             type="button"
             onClick={() => onToggle(option)}
-            className={`rounded-full border px-3 py-1 text-sm transition-colors ${
+            className={`rounded-full border px-3 py-1 font-body text-sm transition-colors ${
               selected.includes(option)
-                ? 'border-blue-500 bg-blue-600 text-white'
-                : 'border-gray-300 text-gray-600 hover:border-blue-400 hover:bg-blue-50'
+                ? 'border-navy bg-navy text-white'
+                : 'border-border text-slate-blue hover:border-sky-blue hover:bg-bg-gray'
             }`}
           >
             {option}
@@ -133,7 +133,7 @@ function CategorySection({
         {!singleSelect && customTraits.map((trait) => (
           <span
             key={trait}
-            className="flex items-center gap-1 rounded-full border border-blue-500 bg-blue-600 px-3 py-1 text-sm text-white"
+            className="flex items-center gap-1 rounded-full border border-navy bg-navy px-3 py-1 font-body text-sm text-white"
           >
             {trait}
             <button
@@ -155,13 +155,13 @@ function CategorySection({
             onChange={(e) => setCustomInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Add custom..."
-            className="rounded-lg border border-dashed border-gray-300 px-3 py-1 text-sm outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400"
+            className="rounded-lg border border-dashed border-border bg-bg-gray px-3 py-1 font-body text-sm text-navy outline-none placeholder:text-light-blue focus:border-sky-blue focus:ring-1 focus:ring-sky-blue/20"
           />
           {customInput.trim() && (
             <button
               type="button"
               onClick={handleAddCustom}
-              className="rounded-lg bg-blue-50 px-3 py-1 text-sm text-blue-600 hover:bg-blue-100"
+              className="rounded-lg bg-navy/10 px-3 py-1 font-body text-sm text-navy hover:bg-navy/20"
             >
               Add
             </button>
@@ -203,8 +203,8 @@ export default function PreferencesForm({ data, onChange }: PreferencesFormProps
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h2 className="text-xl font-semibold text-gray-900">Productivity Preferences</h2>
-        <p className="mt-1 text-sm text-gray-500">
+        <h2 className="font-heading text-xl font-semibold text-navy">Productivity Preferences</h2>
+        <p className="mt-1 font-body text-sm text-slate-blue">
           Select everything that applies — this helps us schedule smarter.
         </p>
       </div>
@@ -223,11 +223,11 @@ export default function PreferencesForm({ data, onChange }: PreferencesFormProps
       ))}
 
       {/* Focus block length */}
-      <div className="flex flex-col gap-1 border-t border-gray-100 pt-4">
-        <label className="text-sm font-semibold text-gray-800">
+      <div className="flex flex-col gap-1 border-t border-border pt-4">
+        <label className="font-heading text-sm font-semibold text-navy">
           Focus Block Length (minutes)
         </label>
-        <p className="text-xs text-gray-400">How long is your ideal uninterrupted study session?</p>
+        <p className="font-body text-xs text-light-blue">How long is your ideal uninterrupted study session?</p>
         <input
           type="number"
           min={5}
@@ -240,7 +240,7 @@ export default function PreferencesForm({ data, onChange }: PreferencesFormProps
             })
           }
           placeholder="e.g. 45"
-          className="w-32 rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+          className="w-32 rounded-lg border border-border bg-bg-gray px-3 py-2 font-body text-sm text-navy outline-none placeholder:text-light-blue focus:border-sky-blue focus:ring-2 focus:ring-sky-blue/20"
         />
       </div>
     </div>
