@@ -1,6 +1,6 @@
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useNavigate } from "react-router-dom";
-import Sidebar from "../components/sidebar";
+import Sidebar from "../components/Sidebar";
 import { useQuery } from "convex/react";
 import { api } from "../../../backend/convex/_generated/api";
 

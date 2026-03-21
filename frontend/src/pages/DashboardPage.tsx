@@ -3,7 +3,7 @@ import { useQuery, useMutation, useAction } from 'convex/react'
 import { api } from '../../../backend/convex/_generated/api'
 import { Id } from '../../../backend/convex/_generated/dataModel'
 import AddTaskModal from '../components/AddTaskModal'
-import Sidebar from '../components/sidebar'
+import Sidebar from '../components/Sidebar'
 
 type TaskType = {
   _id: Id<'tasks'>
@@ -42,9 +42,9 @@ function displayTitle(task: Pick<TaskType, 'title' | 'description'>) {
 const BAR_COLORS = ['bg-[#CF4520]', 'bg-sky-blue', 'bg-[#008767]']
 
 const BADGE_MAP: Record<string, { bg: string; text: string; label: string }> = {
-  urgent:     { bg: 'bg-[#FFF0EC]', text: 'text-[#CF4520]', label: 'Urgent' },
+  urgent: { bg: 'bg-[#FFF0EC]', text: 'text-[#CF4520]', label: 'Urgent' },
   inprogress: { bg: 'bg-[#EBF5FF]', text: 'text-[#0077D8]', label: 'In Progress' },
-  default:    { bg: 'bg-[#E6F5F0]', text: 'text-[#008767]', label: 'Not Started' },
+  default: { bg: 'bg-[#E6F5F0]', text: 'text-[#008767]', label: 'Not Started' },
 }
 
 const TASK_TYPE_OPTIONS: SchemaTaskType[] = [...SCHEMA_TASK_TYPES]
@@ -206,11 +206,10 @@ function EditModal({
                 <button
                   key={type}
                   onClick={() => setSelectedType(type)}
-                  className={`flex h-9 cursor-pointer items-center justify-center rounded-md px-3.5 font-body text-[13px] ${
-                    selectedType === type
+                  className={`flex h-9 cursor-pointer items-center justify-center rounded-md px-3.5 font-body text-[13px] ${selectedType === type
                       ? 'border-none bg-navy font-semibold text-white'
                       : 'border border-border bg-bg-gray font-normal text-slate-blue'
-                  }`}
+                    }`}
                 >
                   {type}
                 </button>
@@ -654,8 +653,8 @@ export default function DashboardPage() {
             </div>
 
             {[
-              { time: '2:00 PM – 3:00 PM',  task: 'History Essay',        dur: '1 hr · Focus block' },
-              { time: '6:00 PM – 7:00 PM',  task: 'Chemistry Lab Report', dur: '1 hr · Focus block' },
+              { time: '2:00 PM – 3:00 PM', task: 'History Essay', dur: '1 hr · Focus block' },
+              { time: '6:00 PM – 7:00 PM', task: 'Chemistry Lab Report', dur: '1 hr · Focus block' },
             ].map(({ time, task, dur }) => (
               <div key={time} className="flex flex-col gap-1.5 rounded-[10px] border border-border bg-white p-[18px]">
                 <span className="text-[11px] font-semibold text-slate-blue">{time}</span>
