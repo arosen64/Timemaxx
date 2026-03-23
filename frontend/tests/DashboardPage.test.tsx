@@ -22,18 +22,14 @@ vi.mock('../../backend/convex/_generated/api', () => ({
 vi.mock('../src/components/sidebar', () => ({ default: () => <div data-testid="sidebar" /> }))
 
 // AddTaskModal is tested separately; mock it here so dashboard tests stay focused
-vi.mock('../src/components/dashboard', async (importActual) => {
-  const actual = await importActual<typeof import('../src/components/dashboard')>()
-  return {
-    ...actual,
-    AddTaskModal: ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) =>
-      isOpen ? (
-        <div role="dialog" aria-label="Add Task Modal">
-          <button onClick={onClose}>Close Modal</button>
-        </div>
-      ) : null,
-  }
-})
+vi.mock('../src/components/AddTaskModal', () => ({
+  default: ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) =>
+    isOpen ? (
+      <div role="dialog" aria-label="Add Task Modal">
+        <button onClick={onClose}>Close Modal</button>
+      </div>
+    ) : null,
+}))
 
 vi.mock('convex/react', () => ({
   useQuery: vi.fn(),
