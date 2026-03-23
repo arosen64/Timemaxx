@@ -6,6 +6,7 @@ import { internal } from "../_generated/api";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { GoogleGenAI, Type } from "@google/genai";
 import { TaskType, TASK_TYPES } from "../lib/taskValidators";
+import { UploadSyllabusResult } from "../lib/syllabusTypes";
 
 /**
  * Sends syllabus text to Gemini and returns extracted tasks.
@@ -27,7 +28,7 @@ export const uploadSyllabus = action({
     fileText: v.string(),
     className: v.string(),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<UploadSyllabusResult> => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Unauthenticated");
 
