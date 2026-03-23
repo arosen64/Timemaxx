@@ -1,6 +1,5 @@
-import { useState } from 'react'
 import { TrashIcon } from '../icons/icons'
-import { Modal, Button, IconCircle } from '../ui'
+import { Modal, Button } from '../ui'
 import DestructButton from './DestructButton'
 
 interface DeleteAccountModalProps {
@@ -10,12 +9,8 @@ interface DeleteAccountModalProps {
 }
 
 export default function DeleteAccountModal({ isOpen, onClose, onConfirm }: DeleteAccountModalProps) {
-  const [deleting, setDeleting] = useState(false)
-
   async function handleConfirm() {
-    setDeleting(true)
     await onConfirm()
-    setDeleting(false)
     onClose()
   }
 
