@@ -1,6 +1,7 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 import { authTables } from "@convex-dev/auth/server";
+import { taskTypeValidator } from "./lib/validators";
 
 export default defineSchema({
   ...authTables,
@@ -52,12 +53,7 @@ export default defineSchema({
     userId: v.id("users"),
     title: v.string(),
     description: v.string(),
-    taskType: v.union(
-      v.literal("Problem Set"),
-      v.literal("Essay"),
-      v.literal("Coding"),
-      v.literal("Exam Prep"),
-    ),
+    taskType: taskTypeValidator,
     timeEstimate: v.optional(v.number()),
     dueDate: v.number(),
     createdAt: v.number(),
