@@ -79,7 +79,7 @@ ${args.fileText}`;
                     dueDate: { type: Type.STRING },
                     taskType: {
                       type: Type.STRING,
-                      enum: ["Problem Set", "Essay", "Coding", "Exam Prep"],
+                      enum: [...TASK_TYPES],
                     },
                     classTag: { type: Type.STRING },
                   },
