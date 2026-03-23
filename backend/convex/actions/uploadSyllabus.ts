@@ -5,7 +5,7 @@ import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { GoogleGenAI, Type } from "@google/genai";
-import { TaskType, TASK_TYPES } from "../lib/validators";
+import { TaskType, TASK_TYPES } from "../lib/taskValidators";
 
 /**
  * Sends syllabus text to Gemini and returns extracted tasks.

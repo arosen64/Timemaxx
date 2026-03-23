@@ -1,7 +1,7 @@
 import { internalMutation, mutation } from "../_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
-import { taskTypeValidator } from "../lib/validators";
+import { taskTypeValidator } from "../lib/taskValidators";
 
 /**
  * Internal mutation called by the uploadSyllabus action to create a syllabi
