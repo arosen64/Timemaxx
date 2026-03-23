@@ -1,12 +1,12 @@
-import Sidebar from '../components/Sidebar'
+import { PageLayout } from '../components/ui'
 
 export default function ClassesPage() {
   return (
-    <div className="flex h-screen">
-      <Sidebar />
-      <main className="flex flex-1 items-center justify-center bg-bg-gray">
-        <p className="font-body text-sm text-slate-blue">Classes coming soon.</p>
-      </main>
-    </div>
+    <PageLayout>
+      <div className="flex flex-col gap-1">
+        <h1 className="font-heading text-3xl font-bold text-navy">Classes</h1>
+        <p className="font-body text-sm text-slate-blue">Manage your classes and syllabi</p>
+      </div>
+    </PageLayout>
   )
 }
