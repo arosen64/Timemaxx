@@ -1,7 +1,7 @@
 import { useAuthActions } from "@convex-dev/auth/react";
-import { LogoutIcon } from '../components/icons/icons';
+import { LogoutIcon, TrashIcon } from '../components/icons/icons';
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../backend/convex/_generated/api";
 import { PageLayout, Avatar } from '../components/ui'
 
@@ -9,9 +9,16 @@ export default function ProfilePage() {
   const { signOut } = useAuthActions();
   const navigate = useNavigate();
   const user = useQuery(api.queries.users.getCurrUser);
+  const deleteAccount = useMutation(api.mutations.users.deleteAccount);
 
   async function handleLogout() {
     await signOut();
+    navigate("/");
+  }
+
+  async function handleDeleteAccount() {
+    await signOut();
+    await deleteAccount();
     navigate("/");
   }
 
@@ -114,14 +121,23 @@ export default function ProfilePage() {
         {/* Divider */}
         <div className="h-px w-full bg-border" />
 
-        {/* Logout Button */}
-        <button
-          onClick={handleLogout}
-          className="flex items-center justify-center h-11 w-40 gap-2 font-heading text-sm font-semibold text-white bg-dark-red rounded-lg transition hover:opacity-90"
-        >
-          <LogoutIcon />
-          Log Out
-        </button>
+        {/* Account Actions */}
+        <div className="flex gap-4">
+          <button
+            onClick={handleLogout}
+            className="flex items-center justify-center h-11 w-40 gap-2 font-heading text-sm font-semibold text-white bg-dark-red rounded-lg transition hover:opacity-90"
+          >
+            <LogoutIcon />
+            Log Out
+          </button>
+          <button
+            onClick={handleDeleteAccount}
+            className="flex items-center justify-center h-11 w-40 gap-2 font-heading text-sm font-semibold text-white bg-dark-red rounded-lg transition hover:opacity-90"
+          >
+            <TrashIcon />
+            Delete Account
+          </button>
+        </div>
       </div>
     </PageLayout>
   );
