@@ -2,11 +2,9 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '../../../backend/convex/_generated/api'
-import ProfileForm from '../components/ProfileForm'
-import WorkHoursSelector, { DEFAULT_WORK_HOURS } from '../components/WorkHoursSelector'
-import PreferencesForm, { DEFAULT_PREFERENCES } from '../components/PreferencesForm'
 import { ProfileData, WorkHoursData, PreferencesData } from '../types'
-import { BookOpenIcon } from '../components/sidebar'
+import { Button, BrandLogo } from '../components/ui'
+import { ProfileForm, WorkHoursSelector, DEFAULT_WORK_HOURS, PreferencesForm, DEFAULT_PREFERENCES } from '../components/onboarding'
 
 type Step = 1 | 2 | 3
 
@@ -83,13 +81,7 @@ export default function OnboardingPage() {
     <div className="flex min-h-screen flex-col bg-bg-gray">
       {/* Top bar */}
       <header className="flex h-16 w-full flex-shrink-0 items-center justify-between bg-navy px-10">
-        {/* Logo */}
-        <div className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded bg-teal text-navy">
-            <BookOpenIcon />
-          </div>
-          <span className="font-heading text-lg font-bold text-white">Timemaxx</span>
-        </div>
+        <BrandLogo size="sm" />
 
         {/* Step pills */}
         <div className="flex items-center gap-2">
@@ -108,7 +100,6 @@ export default function OnboardingPage() {
           })}
         </div>
 
-        {/* Step label */}
         <span className="font-body text-sm text-sky-blue">Step {step} of 3</span>
       </header>
 
@@ -130,44 +121,22 @@ export default function OnboardingPage() {
           {/* Navigation */}
           <div className={`mt-8 flex ${step === 1 ? 'justify-end' : 'justify-between'}`}>
             {step > 1 && (
-              <button
-                onClick={handleBack}
-                disabled={isSubmitting}
-                className="rounded-lg border border-border px-5 py-2 font-body text-sm font-medium text-slate-blue hover:bg-bg-gray disabled:cursor-not-allowed disabled:opacity-40"
-              >
+              <Button variant="ghost" size="nav" onClick={handleBack} disabled={isSubmitting}>
                 Back
-              </button>
+              </Button>
             )}
             {step < 3 ? (
-              <button
-                onClick={handleNext}
-                className="flex items-center gap-2 rounded-lg bg-navy px-5 py-2 font-heading text-sm font-semibold text-white hover:bg-navy/90"
-              >
+              <Button size="nav" onClick={handleNext}>
                 Continue
-                <ArrowRightIcon />
-              </button>
+              </Button>
             ) : (
-              <button
-                onClick={handleSubmit}
-                disabled={isSubmitting}
-                className="flex items-center gap-2 rounded-lg bg-navy px-5 py-2 font-heading text-sm font-semibold text-white hover:bg-navy/90 disabled:cursor-not-allowed disabled:opacity-60"
-              >
+              <Button size="nav" onClick={handleSubmit} disabled={isSubmitting}>
                 {isSubmitting ? 'Saving...' : 'Finish'}
-                {!isSubmitting && <ArrowRightIcon />}
-              </button>
+              </Button>
             )}
           </div>
         </div>
       </div>
     </div>
-  )
-}
-
-function ArrowRightIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="5" y1="12" x2="19" y2="12" />
-      <polyline points="12 5 19 12 12 19" />
-    </svg>
   )
 }
