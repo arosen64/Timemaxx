@@ -1,5 +1,5 @@
 import { Fragment, useState, useEffect, useRef, useCallback } from 'react'
-import { WorkHoursData } from '../types'
+import { WorkHoursData } from '../../types'
 
 const DAYS_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 const DAYS_FULL = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
