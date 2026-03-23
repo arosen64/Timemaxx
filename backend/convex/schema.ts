@@ -61,7 +61,21 @@ export default defineSchema({
     timeEstimate: v.optional(v.number()),
     dueDate: v.number(),
     createdAt: v.number(),
+    extractedFrom: v.optional(v.id("syllabi")),
   })
     .index("by_userId", ["userId"])
     .index("by_userId_createdAt", ["userId", "createdAt"]),
+
+  // Syllabi table — tracks uploaded syllabus files and their processing status
+  syllabi: defineTable({
+    userId: v.id("users"),
+    fileName: v.string(),
+    courseName: v.string(),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("confirmed"),
+      v.literal("failed"),
+    ),
+    createdAt: v.number(),
+  }).index("by_userId", ["userId"]),
 });
