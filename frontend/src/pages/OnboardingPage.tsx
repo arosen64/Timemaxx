@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '../../../backend/convex/_generated/api'
+import ProfileForm from '../components/ProfileForm'
+import WorkHoursSelector, { DEFAULT_WORK_HOURS } from '../components/WorkHoursSelector'
+import PreferencesForm, { DEFAULT_PREFERENCES } from '../components/PreferencesForm'
 import { ProfileData, WorkHoursData, PreferencesData } from '../types'
-import { Button } from '../components/ui'
-import { ProfileForm, WorkHoursSelector, DEFAULT_WORK_HOURS, PreferencesForm, DEFAULT_PREFERENCES } from '../components/onboarding'
 
 type Step = 1 | 2 | 3
 
@@ -78,7 +79,7 @@ export default function OnboardingPage() {
   const isWide = step === 2 || step === 3
 
   return (
-    <div className="flex min-h-screen flex-col items-center bg-bg-gray px-4 py-12">
+    <div className="flex min-h-screen flex-col items-center bg-gray-50 px-4 py-12">
       {/* Step indicator */}
       <div className="mb-10 flex items-center">
         {STEP_LABELS.map((label, i) => {
@@ -91,21 +92,21 @@ export default function OnboardingPage() {
                 <div
                   className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold ${
                     isComplete
-                      ? 'bg-teal text-white'
+                      ? 'bg-green-500 text-white'
                       : isActive
-                        ? 'bg-navy text-white'
-                        : 'bg-border text-slate-blue'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-200 text-gray-500'
                   }`}
                 >
                   {isComplete ? '✓' : stepNum}
                 </div>
                 <span
-                  className={`text-sm ${isActive ? 'font-semibold text-navy' : 'text-slate-blue'}`}
+                  className={`text-sm ${isActive ? 'font-semibold text-gray-900' : 'text-gray-400'}`}
                 >
                   {label}
                 </span>
               </div>
-              {i < STEP_LABELS.length - 1 && <div className="mx-4 h-px w-12 bg-border" />}
+              {i < STEP_LABELS.length - 1 && <div className="mx-4 h-px w-12 bg-gray-300" />}
             </div>
           )
         })}
@@ -127,15 +128,28 @@ export default function OnboardingPage() {
 
         {/* Navigation */}
         <div className="mt-8 flex justify-between">
-          <Button variant="ghost" size="nav" onClick={handleBack} disabled={step === 1 || isSubmitting}>
+          <button
+            onClick={handleBack}
+            disabled={step === 1 || isSubmitting}
+            className="rounded-lg border border-gray-300 px-5 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+          >
             Back
-          </Button>
+          </button>
           {step < 3 ? (
-            <Button size="nav" onClick={handleNext}>Next</Button>
+            <button
+              onClick={handleNext}
+              className="rounded-lg bg-blue-600 px-5 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            >
+              Next
+            </button>
           ) : (
-            <Button size="nav" onClick={handleSubmit} disabled={isSubmitting}>
+            <button
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+              className="rounded-lg bg-blue-600 px-5 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+            >
               {isSubmitting ? 'Saving...' : 'Submit'}
-            </Button>
+            </button>
           )}
         </div>
       </div>
