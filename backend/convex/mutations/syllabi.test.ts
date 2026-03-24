@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { api } from "../_generated/api";
 import { makeTestCtx, createTestUser } from "../../convex-tests/helpers";
+import { TASK_TYPES } from "../lib/taskValidators";
 
 const FUTURE_DATE = Date.now() + 86_400_000;
 
@@ -123,5 +124,116 @@ describe("mutations/syllabi – confirmSyllabusTasks", () => {
     );
 
     expect(taskIds).toEqual([]);
+  });
+
+  test("sets extractedFrom to the source syllabusId on every task", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+    const syllabusId = await createTestSyllabus(t, userId);
+
+    const taskIds = await withAuth.mutation(
+      api.mutations.syllabi.confirmSyllabusTasks,
+      {
+        syllabusId,
+        tasks: [
+          {
+            title: "Homework 1",
+            description: "Complete chapter 3 exercises.",
+            dueDate: FUTURE_DATE,
+            taskType: "Problem Set",
+          },
+          {
+            title: "Final Project",
+            description: "Build a full-stack app.",
+            dueDate: FUTURE_DATE,
+            taskType: "Coding",
+          },
+        ],
+      }
+    );
+
+    const tasks = await t.run((ctx) =>
+      Promise.all(taskIds.map((id) => ctx.db.get(id)))
+    );
+
+    for (const task of tasks) {
+      expect(task?.extractedFrom).toEqual(syllabusId);
+    }
+  });
+
+  test("accepts all valid task types", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+    const syllabusId = await createTestSyllabus(t, userId);
+
+    const tasks = TASK_TYPES.map((taskType) => ({
+      title: taskType,
+      description: "desc",
+      dueDate: FUTURE_DATE,
+      taskType,
+    }));
+
+    const taskIds = await withAuth.mutation(
+      api.mutations.syllabi.confirmSyllabusTasks,
+      { syllabusId, tasks }
+    );
+
+    expect(taskIds).toHaveLength(TASK_TYPES.length);
+
+    const inserted = await t.run((ctx) =>
+      Promise.all(taskIds.map((id) => ctx.db.get(id)))
+    );
+
+    expect(inserted.map((task) => task?.taskType)).toEqual([...TASK_TYPES]);
+  });
+
+  test("persists dueDate exactly as provided", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+    const syllabusId = await createTestSyllabus(t, userId);
+
+    const specificDate = 1_800_000_000_000;
+
+    const [taskId] = await withAuth.mutation(
+      api.mutations.syllabi.confirmSyllabusTasks,
+      {
+        syllabusId,
+        tasks: [
+          {
+            title: "Midterm",
+            description: "Covers chapters 1-5.",
+            dueDate: specificDate,
+            taskType: "Exam Prep",
+          },
+        ],
+      }
+    );
+
+    const task = await t.run((ctx) => ctx.db.get(taskId));
+    expect(task?.dueDate).toEqual(specificDate);
+  });
+
+  test("assigns the authenticated user's id to every inserted task", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+    const syllabusId = await createTestSyllabus(t, userId);
+
+    const taskIds = await withAuth.mutation(
+      api.mutations.syllabi.confirmSyllabusTasks,
+      {
+        syllabusId,
+        tasks: [
+          {
+            title: "Quiz 1",
+            description: "Short answer questions.",
+            dueDate: FUTURE_DATE,
+            taskType: "Exam Prep",
+          },
+        ],
+      }
+    );
+
+    const task = await t.run((ctx) => ctx.db.get(taskIds[0]));
+    expect(task?.userId).toEqual(userId);
   });
 });
