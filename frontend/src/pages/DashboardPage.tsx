@@ -1,9 +1,10 @@
-import { useMemo, useState, useEffect, type ReactNode } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { useQuery, useMutation, useAction } from 'convex/react'
 import { api } from '../../../backend/convex/_generated/api'
 import { Id } from '../../../backend/convex/_generated/dataModel'
 import AddTaskModal from '../components/AddTaskModal'
 import Sidebar from '../components/Sidebar'
+import { PlusIcon, PencilIcon, TrashIcon, WarningIcon, SpinnerIcon, SparklesIcon, CalendarIcon } from '../components/icons'
 
 type TaskType = {
   _id: Id<'tasks'>
@@ -57,25 +58,6 @@ function formatDateMMDDYYYY(ms: number) {
   return `${mm}/${dd}/${yyyy}`
 }
 
-function AddModalCalendarIcon() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      className="stroke-light-blue"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-      <line x1="16" y1="2" x2="16" y2="6" />
-      <line x1="8" y1="2" x2="8" y2="6" />
-      <line x1="3" y1="10" x2="21" y2="10" />
-    </svg>
-  )
-}
 
 // ─── Edit Modal ──────────────────────────────────────────────────────────────
 
@@ -243,7 +225,7 @@ function EditModal({
                 placeholder="MM / DD / YYYY"
                 className="flex-1 text-sm bg-transparent border-none outline-none font-body text-navy placeholder:text-light-blue"
               />
-              <AddModalCalendarIcon />
+              <CalendarIcon />
             </div>
           </div>
         </div>
@@ -674,96 +656,3 @@ export default function DashboardPage() {
   )
 }
 
-// ─── Icons ───────────────────────────────────────────────────────────────────
-
-function IconBase({
-  children,
-  color = 'currentColor',
-  size = 16,
-}: {
-  children: ReactNode
-  color?: string
-  size?: number
-}) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke={color}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      style={{ flexShrink: 0 }}
-    >
-      {children}
-    </svg>
-  )
-}
-
-function PlusIcon({ color }: { color?: string }) {
-  return (
-    <IconBase color={color}>
-      <path d="M5 12h14" /><path d="M12 5v14" />
-    </IconBase>
-  )
-}
-
-function PencilIcon({ color }: { color?: string }) {
-  return (
-    <IconBase color={color}>
-      <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
-    </IconBase>
-  )
-}
-
-function TrashIcon({ color }: { color?: string }) {
-  return (
-    <IconBase color={color}>
-      <path d="M3 6h18" />
-      <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-      <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-    </IconBase>
-  )
-}
-
-function WarningIcon({ color = '#CF4520', size = 20 }: { color?: string; size?: number }) {
-  return (
-    <IconBase color={color} size={size}>
-      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-      <line x1="12" y1="9" x2="12" y2="13" />
-      <line x1="12" y1="17" x2="12.01" y2="17" />
-    </IconBase>
-  )
-}
-
-function SpinnerIcon({ color = 'currentColor', size = 16 }: { color?: string; size?: number }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke={color}
-      strokeWidth="2"
-      strokeLinecap="round"
-      aria-hidden="true"
-      className="animate-spin"
-      style={{ flexShrink: 0 }}
-    >
-      <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
-    </svg>
-  )
-}
-
-function SparklesIcon({ color, size }: { color?: string; size?: number }) {
-  return (
-    <IconBase color={color} size={size}>
-      <path d="M9 3l1.7 4.3L15 9l-4.3 1.7L9 15l-1.7-4.3L3 9l4.3-1.7L9 3z" />
-      <path d="M18 3l.8 2.1L21 6l-2.2.9L18 9l-.8-2.1L15 6l2.2-.9L18 3z" />
-      <path d="M18 13l1 2.5L22 17l-3 1.2L18 21l-1-2.8L14 17l3-1.5L18 13z" />
-    </IconBase>
-  )
-}
