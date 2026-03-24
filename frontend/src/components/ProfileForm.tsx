@@ -1,5 +1,5 @@
 import { useState, KeyboardEvent } from 'react'
-import { ProfileData, Course } from '../../types'
+import { ProfileData, Course } from '../types'
 
 const YEARS = ['Freshman', 'Sophomore', 'Junior', 'Senior', 'Graduate']
 const STUDY_GOALS = ['Just pass', 'Do well', 'Ace it']

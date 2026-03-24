@@ -1,5 +1,5 @@
 import { useState, KeyboardEvent } from 'react'
-import { PreferencesData } from '../../types'
+import { PreferencesData } from '../types'
 
 const CATEGORIES = [
   {
