@@ -21,11 +21,6 @@ export default {
         'bg-gray': '#F5F7FA',
         'urgent-red': '#CF4520',
         'dark-red': '#A6192E',
-        success: '#008767',
-        'urgent-tint': '#FFF0EC',
-        'sky-tint': '#EBF5FF',
-        'sky-dark': '#0077D8',
-        'success-tint': '#E6F5F0',
       },
       fontFamily: {
         heading: ['Space Grotesk', 'sans-serif'],

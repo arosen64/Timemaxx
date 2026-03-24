@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { render } from '@testing-library/react'
-import { ProfileForm } from '../src/components/onboarding'
+import ProfileForm from '../src/components/ProfileForm'
 import { ProfileData } from '../src/types'
 
 const DEFAULT_DATA: ProfileData = {
