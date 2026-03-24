@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useMutation } from 'convex/react'
-import { api } from '../../../backend/convex/_generated/api'
-import { CalendarIcon } from './icons'
+import { api } from '../../../../backend/convex/_generated/api'
+import { CalendarIcon } from '../icons'
 
 const TASK_TYPES = ['Problem Set', 'Essay', 'Coding', 'Exam Prep'] as const
 type TaskType = typeof TASK_TYPES[number]
