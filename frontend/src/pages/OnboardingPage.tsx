@@ -127,7 +127,7 @@ export default function OnboardingPage() {
             )}
             {step < 3 ? (
               <Button size="nav" onClick={handleNext}>
-                Continue
+                Continue →
               </Button>
             ) : (
               <Button size="nav" onClick={handleSubmit} disabled={isSubmitting}>

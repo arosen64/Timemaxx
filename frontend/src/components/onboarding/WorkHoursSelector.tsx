@@ -115,7 +115,7 @@ export default function WorkHoursSelector({ data, onChange }: WorkHoursSelectorP
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h2 className="font-heading text-xl font-semibold text-navy">Work Hours</h2>
+        <h2 className="font-heading text-2xl font-bold text-navy">Work Hours</h2>
         <p className="mt-1 font-body text-sm text-slate-blue">
           Click or drag to mark when you're available to study or when you'll never work.
         </p>
@@ -130,11 +130,11 @@ export default function WorkHoursSelector({ data, onChange }: WorkHoursSelectorP
             onClick={() => setPaintMode('available')}
             className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 font-body text-sm font-medium transition-colors ${
               paintMode === 'available'
-                ? 'border-teal bg-teal/10 text-navy'
+                ? 'border-teal bg-success-tint text-navy'
                 : 'border-border text-slate-blue hover:border-teal'
             }`}
           >
-            <span className="inline-block h-3 w-3 rounded-sm bg-teal/40" />
+            <span className="inline-block h-3 w-3 rounded-sm bg-teal" />
             Available
           </button>
           <button
@@ -162,7 +162,7 @@ export default function WorkHoursSelector({ data, onChange }: WorkHoursSelectorP
         >
           <div />
           {DAYS_SHORT.map((day) => (
-            <div key={day} className="py-2 text-center font-heading text-xs font-semibold text-slate-blue">
+            <div key={day} className="py-2 text-center font-body text-xs font-semibold text-slate-blue">
               {day}
             </div>
           ))}

@@ -203,7 +203,7 @@ export default function PreferencesForm({ data, onChange }: PreferencesFormProps
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h2 className="font-heading text-xl font-semibold text-navy">Productivity Preferences</h2>
+        <h2 className="font-heading text-2xl font-bold text-navy">Productivity Preferences</h2>
         <p className="mt-1 font-body text-sm text-slate-blue">
           Select everything that applies — this helps us schedule smarter.
         </p>
