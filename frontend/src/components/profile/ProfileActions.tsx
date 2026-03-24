@@ -26,9 +26,9 @@ export default function ProfileActions() {
 
   return (
     <>
-      <div className="flex gap-4">
+      <div className="flex gap-3">
         <DestructButton icon={<LogoutIcon />} text="Log Out" onClick={handleLogout} />
-        <DestructButton icon={<TrashIcon />} text="Delete Account" onClick={() => setShowDeleteConfirm(true)} />
+        <DestructButton icon={<TrashIcon />} text="Delete Account" onClick={() => setShowDeleteConfirm(true)} className="w-[200px]" />
       </div>
 
       <DeleteAccountModal
