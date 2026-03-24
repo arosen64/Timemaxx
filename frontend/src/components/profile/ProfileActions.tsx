@@ -19,8 +19,8 @@ export default function ProfileActions() {
   }
 
   async function handleDeleteAccount() {
-    await signOut()
     await deleteAccount()
+    await signOut()
     navigate('/')
   }
 

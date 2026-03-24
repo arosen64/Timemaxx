@@ -57,6 +57,18 @@ export const deleteAccount = mutation({
       .collect();
     await Promise.all(syllabi.map((syllabus) => ctx.db.delete(syllabus._id)));
 
+    const authAccounts = await ctx.db
+      .query("authAccounts")
+      .withIndex("userIdAndProvider", (q) => q.eq("userId", userId))
+      .collect();
+    await Promise.all(authAccounts.map((account) => ctx.db.delete(account._id)));
+
+    const authSessions = await ctx.db
+      .query("authSessions")
+      .withIndex("userId", (q) => q.eq("userId", userId))
+      .collect();
+    await Promise.all(authSessions.map((session) => ctx.db.delete(session._id)));
+
     await ctx.db.delete(userId);
   },
 });

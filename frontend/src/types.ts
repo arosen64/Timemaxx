@@ -1,26 +1,3 @@
-import { Id } from '../../backend/convex/_generated/dataModel'
-
-export interface Task {
-  _id: Id<'tasks'>
-  title: string
-  description: string
-  taskType: string
-  timeEstimate?: number
-  dueDate: number
-  createdAt: number
-}
-
-export const SCHEMA_TASK_TYPES = ['Problem Set', 'Essay', 'Coding', 'Exam Prep'] as const
-export type SchemaTaskType = (typeof SCHEMA_TASK_TYPES)[number]
-export const TASK_TYPE_OPTIONS: SchemaTaskType[] = [...SCHEMA_TASK_TYPES]
-
-export interface TaskFormData {
-  title: string
-  description: string
-  taskType: SchemaTaskType
-  dueDate: number
-}
-
 export interface Course {
   title: string
   studyGoal: string
