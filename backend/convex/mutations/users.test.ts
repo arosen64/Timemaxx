@@ -93,6 +93,45 @@ describe("mutations/users – deleteAccount", () => {
     expect(syllabi).toHaveLength(0);
   });
 
+  test("deletes all authAccounts belonging to the user", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("authAccounts", {
+        userId,
+        provider: "google",
+        providerAccountId: "google-123",
+      });
+    });
+
+    await withAuth.mutation(api.mutations.users.deleteAccount, {});
+
+    const accounts = await t.run((ctx) =>
+      ctx.db.query("authAccounts").withIndex("userIdAndProvider", (q) => q.eq("userId", userId)).collect()
+    );
+    expect(accounts).toHaveLength(0);
+  });
+
+  test("deletes all authSessions belonging to the user", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("authSessions", {
+        userId,
+        expirationTime: Date.now() + 86_400_000,
+      });
+    });
+
+    await withAuth.mutation(api.mutations.users.deleteAccount, {});
+
+    const sessions = await t.run((ctx) =>
+      ctx.db.query("authSessions").withIndex("userId", (q) => q.eq("userId", userId)).collect()
+    );
+    expect(sessions).toHaveLength(0);
+  });
+
   test("only deletes data belonging to the authenticated user", async () => {
     const t = makeTestCtx();
     const { userId, withAuth } = await createTestUser(t);
