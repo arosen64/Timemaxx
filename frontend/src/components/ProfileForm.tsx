@@ -120,10 +120,11 @@ export default function ProfileForm({ data, onChange, errors }: ProfileFormProps
 
       {/* Year */}
       <div className="flex flex-col gap-1">
-        <label className="text-sm font-medium text-gray-700">
+        <label htmlFor="year-select" className="text-sm font-medium text-gray-700">
           Current Year <span className="text-red-500">*</span>
         </label>
         <select
+          id="year-select"
           value={data.year}
           onChange={(e) => update('year', e.target.value)}
           className={`rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 ${

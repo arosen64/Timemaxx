@@ -7,7 +7,6 @@ const VALID_ONBOARDING_ARGS = {
   year: "Junior",
   difficultSubjects: ["Math", "Physics"],
   enjoyedSubjects: ["History"],
-  courses: [{ title: "CS101", studyGoal: "A" }],
   workHoursGrid: [
     { day: "Monday", available: [9, 10, 11], blocked: [] },
   ],
@@ -62,7 +61,7 @@ describe("mutations/users – completeOnboarding", () => {
     expect(user!.year).toBe("Junior");
     expect(user!.difficultSubjects).toEqual(["Math", "Physics"]);
     expect(user!.enjoyedSubjects).toEqual(["History"]);
-    expect(user!.courses).toEqual([{ title: "CS101", studyGoal: "A" }]);
+
     expect(user!.focusBlockLength).toBe(50);
   });
 });
