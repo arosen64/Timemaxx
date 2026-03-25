@@ -42,14 +42,15 @@ const mockUseAction = vi.mocked(useAction)
 /** Renders OnboardingPage with onboarding not yet complete */
 function setup(calendarConnected = false) {
   const saveOnboarding = makeMutationFn()
+  const mockCalendarAction = makeMutationFn('https://accounts.google.com/oauth')
   mockUseQuery.mockImplementation((query) => {
     if (query === 'getCalendarConnectionStatus') return { connected: calendarConnected }
     return false
   })
   mockUseMutation.mockReturnValue(saveOnboarding as never)
-  mockUseAction.mockReturnValue(makeMutationFn('https://accounts.google.com/oauth') as never)
+  mockUseAction.mockReturnValue(mockCalendarAction as never)
   renderWithProviders(<OnboardingPage />)
-  return { saveOnboarding }
+  return { saveOnboarding, mockCalendarAction }
 }
 
 describe('OnboardingPage', () => {
@@ -204,13 +205,11 @@ describe('OnboardingPage – Google Calendar section (Step 3)', () => {
   })
 
   it('calls initiateGoogleCalendarOAuth when "Connect" is clicked on Step 3', async () => {
-    const mockAction = makeMutationFn('https://accounts.google.com/oauth')
-    mockUseAction.mockReturnValue(mockAction as never)
-    setup(false)
+    const { mockCalendarAction } = setup(false)
     const user = await advanceToStep3()
 
     await user.click(screen.getByRole('button', { name: /^connect$/i }))
 
-    await waitFor(() => expect(mockAction).toHaveBeenCalledWith({}))
+    await waitFor(() => expect(mockCalendarAction).toHaveBeenCalledWith({}))
   })
 })

@@ -54,13 +54,16 @@ const MOCK_USER = {
 }
 
 function setup(calendarConnected: boolean) {
+  const mockAction = makeMutationFn('https://accounts.google.com/oauth')
+  const mockMutation = makeMutationFn()
   mockUseQuery.mockImplementation((query) => {
     if (query === 'getCalendarConnectionStatus') return { connected: calendarConnected }
     return MOCK_USER
   })
-  mockUseMutation.mockReturnValue(makeMutationFn() as never)
-  mockUseAction.mockReturnValue(makeMutationFn('https://accounts.google.com/oauth') as never)
+  mockUseMutation.mockReturnValue(mockMutation as never)
+  mockUseAction.mockReturnValue(mockAction as never)
   renderWithProviders(<ProfilePage />)
+  return { mockAction, mockMutation }
 }
 
 describe('ProfilePage – Google Calendar section', () => {
@@ -83,9 +86,7 @@ describe('ProfilePage – Google Calendar section', () => {
 
   it('calls initiateGoogleCalendarOAuth when "Connect Calendar" is clicked', async () => {
     const user = userEvent.setup()
-    const mockAction = makeMutationFn('https://accounts.google.com/oauth')
-    mockUseAction.mockReturnValue(mockAction as never)
-    setup(false)
+    const { mockAction } = setup(false)
 
     await user.click(screen.getByRole('button', { name: /connect calendar/i }))
 
@@ -94,9 +95,7 @@ describe('ProfilePage – Google Calendar section', () => {
 
   it('calls deleteCalendarToken when "Revoke Access" is clicked', async () => {
     const user = userEvent.setup()
-    const mockMutation = makeMutationFn()
-    mockUseMutation.mockReturnValue(mockMutation as never)
-    setup(true)
+    const { mockMutation } = setup(true)
 
     await user.click(screen.getByRole('button', { name: /revoke access/i }))
 
