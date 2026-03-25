@@ -61,3 +61,40 @@ export const completeOnboarding = mutation({
     });
   },
 });
+
+/**
+ * Deletes the authenticated user's account along with all their tasks and syllabi.
+ */
+export const deleteAccount = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated: must be logged in to delete account");
+
+    const tasks = await ctx.db
+      .query("tasks")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .collect();
+    await Promise.all(tasks.map((task) => ctx.db.delete(task._id)));
+
+    const syllabi = await ctx.db
+      .query("syllabi")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .collect();
+    await Promise.all(syllabi.map((syllabus) => ctx.db.delete(syllabus._id)));
+
+    const authAccounts = await ctx.db
+      .query("authAccounts")
+      .withIndex("userIdAndProvider", (q) => q.eq("userId", userId))
+      .collect();
+    await Promise.all(authAccounts.map((account) => ctx.db.delete(account._id)));
+
+    const authSessions = await ctx.db
+      .query("authSessions")
+      .withIndex("userId", (q) => q.eq("userId", userId))
+      .collect();
+    await Promise.all(authSessions.map((session) => ctx.db.delete(session._id)));
+
+    await ctx.db.delete(userId);
+  },
+});

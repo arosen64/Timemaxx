@@ -1,6 +1,7 @@
 import { mutation } from "../_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { taskTypeValidator } from "../lib/taskValidators";
 
 /**
  * Creates a new task for the authenticated user with timeEstimate left unset.
@@ -10,12 +11,7 @@ export const createTask = mutation({
   args: {
     title: v.string(),
     description: v.string(),
-    taskType: v.union(
-      v.literal("Problem Set"),
-      v.literal("Essay"),
-      v.literal("Coding"),
-      v.literal("Exam Prep"),
-    ),
+    taskType: taskTypeValidator,
     dueDate: v.number(),
   },
   handler: async (ctx, args) => {
@@ -51,12 +47,6 @@ export const createTask = mutation({
   },
 });
 
-const taskTypeValidator = v.union(
-  v.literal("Problem Set"),
-  v.literal("Essay"),
-  v.literal("Coding"),
-  v.literal("Exam Prep")
-);
 
 export const updateTask = mutation({
   args: {
