@@ -168,6 +168,71 @@ describe("mutations/users – deleteAccount", () => {
   });
 });
 
+describe("mutations/users – updateUserSettings", () => {
+  test("throws when unauthenticated", async () => {
+    const t = makeTestCtx();
+    await expect(
+      t.mutation(api.mutations.users.updateUserSettings, { focusBlockLength: 45 })
+    ).rejects.toThrow("Not authenticated");
+  });
+
+  test("updates a single field", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+
+    await withAuth.mutation(api.mutations.users.updateUserSettings, {
+      focusBlockLength: 45,
+    });
+
+    const user = await t.run((ctx) => ctx.db.get(userId));
+    expect(user!.focusBlockLength).toBe(45);
+  });
+
+  test("updates multiple fields at once", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+
+    await withAuth.mutation(api.mutations.users.updateUserSettings, {
+      major: "Biology",
+      year: "Senior",
+      focusBlockLength: 60,
+    });
+
+    const user = await t.run((ctx) => ctx.db.get(userId));
+    expect(user!.major).toBe("Biology");
+    expect(user!.year).toBe("Senior");
+    expect(user!.focusBlockLength).toBe(60);
+  });
+
+  test("updates workHoursGrid", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+
+    const grid = [{ day: "Monday", available: [9, 10], blocked: [8] }];
+    await withAuth.mutation(api.mutations.users.updateUserSettings, {
+      workHoursGrid: grid,
+    });
+
+    const user = await t.run((ctx) => ctx.db.get(userId));
+    expect(user!.workHoursGrid).toEqual(grid);
+  });
+
+  test("does not affect unspecified fields", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+
+    await withAuth.mutation(api.mutations.users.completeOnboarding, VALID_ONBOARDING_ARGS);
+    await withAuth.mutation(api.mutations.users.updateUserSettings, {
+      focusBlockLength: 30,
+    });
+
+    const user = await t.run((ctx) => ctx.db.get(userId));
+    expect(user!.major).toBe("Computer Science");
+    expect(user!.year).toBe("Junior");
+    expect(user!.focusBlockLength).toBe(30);
+  });
+});
+
 describe("mutations/users – completeOnboarding", () => {
   test("throws when unauthenticated", async () => {
     const t = makeTestCtx();
