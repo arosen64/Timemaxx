@@ -14,6 +14,7 @@ export default function EditModal({
 }) {
   return (
     <TaskModal
+      key={task?._id}
       isOpen={isOpen && task !== null}
       title="Edit task"
       subtitle="Update the details below."
