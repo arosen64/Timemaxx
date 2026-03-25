@@ -598,44 +598,238 @@
                       "name": "sect-courses",
                       "width": "fill_container",
                       "layout": "vertical",
-                      "gap": 12,
+                      "gap": 8,
                       "children": [
                         {
                           "type": "frame",
-                          "id": "gGiaC",
-                          "name": "coursesHeader",
+                          "id": "JmEVk",
+                          "name": "hdr",
                           "width": "fill_container",
                           "layout": "vertical",
                           "gap": 2,
                           "children": [
                             {
                               "type": "text",
-                              "id": "IIGUP",
-                              "fill": "$--primary",
-                              "content": "Current Courses",
+                              "id": "qfpCt",
+                              "fill": "$--foreground",
+                              "content": "Courses",
                               "fontFamily": "Space Grotesk",
                               "fontSize": 13,
                               "fontWeight": "600"
                             },
                             {
                               "type": "text",
-                              "id": "QJcxJ",
+                              "id": "60jlp",
                               "fill": "$--light-muted",
-                              "textGrowth": "fixed-width",
-                              "width": "fill_container",
-                              "content": "Add each course and set your goal for it",
+                              "content": "Select a term and school, then search for courses",
                               "fontFamily": "Inter",
-                              "fontSize": 10,
+                              "fontSize": 11,
                               "fontWeight": "normal"
                             }
                           ]
                         },
                         {
                           "type": "frame",
-                          "id": "tDXFB",
-                          "name": "courseItem",
+                          "id": "iKcb6",
+                          "name": "termSel",
                           "width": "fill_container",
-                          "cornerRadius": 8,
+                          "height": 38,
+                          "fill": "$--background",
+                          "cornerRadius": "$--radius-m",
+                          "stroke": {
+                            "align": "inside",
+                            "thickness": 1,
+                            "fill": "$--border"
+                          },
+                          "padding": [
+                            0,
+                            12
+                          ],
+                          "justifyContent": "space_between",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "ivm0g",
+                              "fill": "$--light-muted",
+                              "content": "Select a term",
+                              "fontFamily": "Inter",
+                              "fontSize": 13,
+                              "fontWeight": "normal"
+                            },
+                            {
+                              "type": "icon_font",
+                              "id": "SeNvM",
+                              "layoutPosition": "absolute",
+                              "x": 516,
+                              "y": 12,
+                              "width": 14,
+                              "height": 14,
+                              "iconFontName": "chevron-down",
+                              "iconFontFamily": "lucide",
+                              "fill": "$--light-muted"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "0fktL",
+                          "name": "schoolSel",
+                          "width": "fill_container",
+                          "height": 38,
+                          "fill": "$--background",
+                          "cornerRadius": "$--radius-m",
+                          "stroke": {
+                            "align": "inside",
+                            "thickness": 1,
+                            "fill": "$--border"
+                          },
+                          "padding": [
+                            0,
+                            12
+                          ],
+                          "justifyContent": "space_between",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "C7v3K",
+                              "fill": "$--light-muted",
+                              "content": "Select a term first",
+                              "fontFamily": "Inter",
+                              "fontSize": 13,
+                              "fontWeight": "normal"
+                            },
+                            {
+                              "type": "icon_font",
+                              "id": "K0ceL",
+                              "width": 14,
+                              "height": 14,
+                              "iconFontName": "chevron-down",
+                              "iconFontFamily": "lucide",
+                              "fill": "$--light-muted"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "g5a9W",
+                          "name": "srch",
+                          "width": "fill_container",
+                          "height": 38,
+                          "fill": "$--background",
+                          "cornerRadius": "$--radius-m",
+                          "stroke": {
+                            "align": "inside",
+                            "thickness": 1,
+                            "fill": "$--border"
+                          },
+                          "padding": [
+                            0,
+                            12
+                          ],
+                          "justifyContent": "space_between",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "qPzbx",
+                              "fill": "$--light-muted",
+                              "content": "Select a school first",
+                              "fontFamily": "Inter",
+                              "fontSize": 13,
+                              "fontWeight": "normal"
+                            },
+                            {
+                              "type": "icon_font",
+                              "id": "7d1Nq",
+                              "width": 14,
+                              "height": 14,
+                              "iconFontName": "search",
+                              "iconFontFamily": "lucide",
+                              "fill": "$--light-muted"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "rWk5N",
+                          "name": "goalRow",
+                          "width": "fill_container",
+                          "height": 38,
+                          "gap": 8,
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "llhbP",
+                              "name": "goalSel",
+                              "width": "fill_container",
+                              "height": 38,
+                              "fill": "$--background",
+                              "cornerRadius": "$--radius-m",
+                              "stroke": {
+                                "align": "inside",
+                                "thickness": 1,
+                                "fill": "$--border"
+                              },
+                              "padding": [
+                                0,
+                                12
+                              ],
+                              "justifyContent": "space_between",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "Yvxmh",
+                                  "fill": "$--light-muted",
+                                  "content": "Select a study goal (optional)",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "normal"
+                                },
+                                {
+                                  "type": "icon_font",
+                                  "id": "4xnxA",
+                                  "width": 14,
+                                  "height": 14,
+                                  "iconFontName": "chevron-down",
+                                  "iconFontFamily": "lucide",
+                                  "fill": "$--light-muted"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "6Z4qa",
+                              "name": "addBtn",
+                              "width": 60,
+                              "height": 38,
+                              "fill": "$--primary",
+                              "cornerRadius": "$--radius-m",
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "lypC9",
+                                  "fill": "$--primary-foreground",
+                                  "content": "Add",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "500"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "pTImC",
+                          "name": "courseCard",
+                          "width": "fill_container",
+                          "fill": "$--background",
+                          "cornerRadius": "$--radius-m",
                           "stroke": {
                             "align": "inside",
                             "thickness": 1,
@@ -647,20 +841,79 @@
                           "children": [
                             {
                               "type": "frame",
-                              "id": "P4Tfg",
-                              "name": "inputRow",
+                              "id": "60GJM",
+                              "name": "cardTop",
                               "width": "fill_container",
-                              "gap": 8,
+                              "justifyContent": "space_between",
                               "alignItems": "center",
                               "children": [
                                 {
                                   "type": "frame",
-                                  "id": "aUiT0",
-                                  "name": "courseInput",
+                                  "id": "hEvI8",
+                                  "name": "cardLeft",
+                                  "layout": "vertical",
+                                  "gap": 4,
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "sx5Dk",
+                                      "fill": "$--foreground",
+                                      "content": "EN.601.421: Object-Oriented Software Engineering",
+                                      "fontFamily": "Inter",
+                                      "fontSize": 13,
+                                      "fontWeight": "600"
+                                    },
+                                    {
+                                      "type": "frame",
+                                      "id": "KTX4e",
+                                      "name": "termBadge",
+                                      "height": 20,
+                                      "fill": "#002D7220",
+                                      "cornerRadius": 10,
+                                      "padding": [
+                                        0,
+                                        8
+                                      ],
+                                      "alignItems": "center",
+                                      "children": [
+                                        {
+                                          "type": "text",
+                                          "id": "EqDme",
+                                          "fill": "$--foreground",
+                                          "content": "Spring 2026",
+                                          "fontFamily": "Inter",
+                                          "fontSize": 11,
+                                          "fontWeight": "500"
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "icon_font",
+                                  "id": "xMZ5d",
+                                  "width": 14,
+                                  "height": 14,
+                                  "iconFontName": "x",
+                                  "iconFontFamily": "lucide",
+                                  "fill": "$--light-muted"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "F8iRA",
+                              "name": "goalRow2",
+                              "width": "fill_container",
+                              "gap": 8,
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "99ncX",
                                   "width": "fill_container",
-                                  "height": 36,
+                                  "height": 32,
                                   "fill": "$--background",
-                                  "cornerRadius": 8,
+                                  "cornerRadius": "$--radius-m",
                                   "stroke": {
                                     "align": "inside",
                                     "thickness": 1,
@@ -668,147 +921,83 @@
                                   },
                                   "padding": [
                                     0,
-                                    12
+                                    8
                                   ],
+                                  "justifyContent": "center",
                                   "alignItems": "center",
                                   "children": [
                                     {
                                       "type": "text",
-                                      "id": "HLarE",
-                                      "fill": "$--primary",
-                                      "content": "CS 101",
+                                      "id": "wwTB2",
+                                      "fill": "$--muted-foreground",
+                                      "content": "Just pass",
                                       "fontFamily": "Inter",
-                                      "fontSize": 13,
+                                      "fontSize": 12,
                                       "fontWeight": "normal"
                                     }
                                   ]
                                 },
                                 {
-                                  "type": "text",
-                                  "id": "6hN6O",
-                                  "fill": "$--light-muted",
-                                  "content": "×",
-                                  "fontFamily": "Inter",
-                                  "fontSize": 16,
-                                  "fontWeight": "normal"
-                                }
-                              ]
-                            },
-                            {
-                              "type": "frame",
-                              "id": "rKwac",
-                              "name": "goalsRow",
-                              "width": "fill_container",
-                              "gap": 8,
-                              "children": [
-                                {
                                   "type": "frame",
-                                  "id": "nMiCG",
-                                  "name": "g1",
+                                  "id": "vMAPR",
                                   "width": "fill_container",
                                   "height": 32,
-                                  "cornerRadius": 8,
+                                  "fill": "$--info-bg",
+                                  "cornerRadius": "$--radius-m",
                                   "stroke": {
                                     "align": "inside",
                                     "thickness": 1,
-                                    "fill": "$--border"
+                                    "fill": "$--info"
                                   },
+                                  "padding": [
+                                    0,
+                                    8
+                                  ],
                                   "justifyContent": "center",
                                   "alignItems": "center",
                                   "children": [
                                     {
                                       "type": "text",
-                                      "id": "WBrLh",
-                                      "fill": "$--muted-foreground",
-                                      "content": "Just pass",
-                                      "fontFamily": "Inter",
-                                      "fontSize": 11,
-                                      "fontWeight": "500"
-                                    }
-                                  ]
-                                },
-                                {
-                                  "type": "frame",
-                                  "id": "8whlZ",
-                                  "name": "g2",
-                                  "width": "fill_container",
-                                  "height": 32,
-                                  "fill": "#E8EDF5",
-                                  "cornerRadius": 8,
-                                  "stroke": {
-                                    "align": "inside",
-                                    "thickness": 1,
-                                    "fill": "$--primary"
-                                  },
-                                  "justifyContent": "center",
-                                  "alignItems": "center",
-                                  "children": [
-                                    {
-                                      "type": "text",
-                                      "id": "F2ojH",
-                                      "fill": "$--primary",
+                                      "id": "JoGKi",
+                                      "fill": "$--foreground",
                                       "content": "Do well",
                                       "fontFamily": "Inter",
-                                      "fontSize": 11,
+                                      "fontSize": 12,
                                       "fontWeight": "500"
                                     }
                                   ]
                                 },
                                 {
                                   "type": "frame",
-                                  "id": "kWcMz",
-                                  "name": "g3",
+                                  "id": "ptH5a",
                                   "width": "fill_container",
                                   "height": 32,
-                                  "cornerRadius": 8,
+                                  "fill": "$--background",
+                                  "cornerRadius": "$--radius-m",
                                   "stroke": {
                                     "align": "inside",
                                     "thickness": 1,
                                     "fill": "$--border"
                                   },
+                                  "padding": [
+                                    0,
+                                    8
+                                  ],
                                   "justifyContent": "center",
                                   "alignItems": "center",
                                   "children": [
                                     {
                                       "type": "text",
-                                      "id": "WQx9w",
+                                      "id": "09p3Q",
                                       "fill": "$--muted-foreground",
                                       "content": "Ace it",
                                       "fontFamily": "Inter",
-                                      "fontSize": 11,
-                                      "fontWeight": "500"
+                                      "fontSize": 12,
+                                      "fontWeight": "normal"
                                     }
                                   ]
                                 }
                               ]
-                            }
-                          ]
-                        },
-                        {
-                          "type": "frame",
-                          "id": "qexQB",
-                          "name": "addCourseBtn",
-                          "cornerRadius": 8,
-                          "stroke": {
-                            "align": "outside",
-                            "thickness": 1,
-                            "fill": "$--border"
-                          },
-                          "gap": 4,
-                          "padding": [
-                            8,
-                            16
-                          ],
-                          "alignItems": "center",
-                          "children": [
-                            {
-                              "type": "text",
-                              "id": "QZevW",
-                              "fill": "$--muted-foreground",
-                              "content": "+ Add course",
-                              "fontFamily": "Inter",
-                              "fontSize": 13,
-                              "fontWeight": "normal"
                             }
                           ]
                         }
@@ -823,7 +1012,7 @@
                   "name": "nextBtn",
                   "width": "fill_container",
                   "x": 48,
-                  "y": 735,
+                  "y": 876,
                   "descendants": {
                     "AkprM": {
                       "x": 227,
@@ -5208,7 +5397,17 @@
               "height": 32,
               "width": "fit_content",
               "x": 40,
-              "y": 16
+              "y": 16,
+              "descendants": {
+                "NZ5gH": {
+                  "x": 5,
+                  "y": 5
+                },
+                "6YpiG": {
+                  "x": 42,
+                  "y": 4.5
+                }
+              }
             },
             {
               "type": "frame",
@@ -5884,7 +6083,9 @@
                       "y": 0,
                       "descendants": {
                         "zZ3E7": {
-                          "content": "← Back"
+                          "content": "← Back",
+                          "x": 24,
+                          "y": 15
                         }
                       }
                     },
@@ -5893,7 +6094,18 @@
                       "type": "ref",
                       "ref": "RruJv",
                       "x": 486,
-                      "y": 0
+                      "y": 0,
+                      "width": "fit_content",
+                      "descendants": {
+                        "AkprM": {
+                          "x": 24,
+                          "y": 14.5
+                        },
+                        "TRgda": {
+                          "x": 98,
+                          "y": 16
+                        }
+                      }
                     }
                   ]
                 }
@@ -5935,7 +6147,17 @@
               "height": 32,
               "width": "fit_content",
               "x": 40,
-              "y": 16
+              "y": 16,
+              "descendants": {
+                "NZ5gH": {
+                  "x": 5,
+                  "y": 5
+                },
+                "6YpiG": {
+                  "x": 42,
+                  "y": 4.5
+                }
+              }
             },
             {
               "type": "frame",
@@ -7249,7 +7471,9 @@
                       "y": 0,
                       "descendants": {
                         "zZ3E7": {
-                          "content": "← Back"
+                          "content": "← Back",
+                          "x": 24,
+                          "y": 15
                         }
                       }
                     },
@@ -7262,7 +7486,9 @@
                       "y": 2,
                       "descendants": {
                         "vxzyR": {
-                          "content": "Finish"
+                          "content": "Finish",
+                          "x": 20,
+                          "y": 13
                         }
                       }
                     }

@@ -188,8 +188,8 @@ export default function CourseSelector({ onAddCourse }: CourseSelectorProps) {
   return (
     <div className="flex flex-col gap-3">
       <div>
-        <label className="text-sm font-medium text-gray-700">Current Courses</label>
-        <p className="mt-0.5 text-xs text-gray-400">Select a term and school, then search for courses</p>
+        <label className="font-heading text-sm font-semibold text-navy">Courses</label>
+        <p className="mt-0.5 font-body text-xs text-light-blue">Select a term and school, then search for courses</p>
       </div>
 
       {/* Term selector */}
@@ -197,7 +197,7 @@ export default function CourseSelector({ onAddCourse }: CourseSelectorProps) {
         value={selectedTerm}
         onChange={(e) => handleTermChange(e.target.value)}
         disabled={termsLoading}
-        className="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+        className="rounded-lg border border-border bg-bg-gray px-3 py-2 font-body text-sm text-navy outline-none focus:border-sky-blue focus:ring-2 focus:ring-sky-blue/20 disabled:opacity-50"
       >
         <option value="">{termsLoading ? 'Loading terms…' : 'Select a term'}</option>
         {terms.map((t) => (
@@ -210,7 +210,7 @@ export default function CourseSelector({ onAddCourse }: CourseSelectorProps) {
         value={selectedSchool}
         onChange={(e) => handleSchoolChange(e.target.value)}
         disabled={!selectedTerm || schoolsLoading}
-        className="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+        className="rounded-lg border border-border bg-bg-gray px-3 py-2 font-body text-sm text-navy outline-none focus:border-sky-blue focus:ring-2 focus:ring-sky-blue/20 disabled:opacity-50"
       >
         <option value="">
           {!selectedTerm ? 'Select a term first' : schoolsLoading ? 'Loading schools…' : 'Select a school'}
@@ -239,10 +239,10 @@ export default function CourseSelector({ onAddCourse }: CourseSelectorProps) {
                 ? 'Loading courses…'
                 : 'Type to search courses…'
           }
-          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+          className="w-full rounded-lg border border-border bg-bg-gray px-3 py-2 font-body text-sm text-navy outline-none placeholder:text-light-blue focus:border-sky-blue focus:ring-2 focus:ring-sky-blue/20 disabled:opacity-50"
         />
         {showSuggestions && filteredCourses.length > 0 && (
-          <ul className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-lg border border-gray-200 bg-white shadow-lg">
+          <ul className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-lg border border-border bg-white shadow-lg">
             {filteredCourses.map((c) => (
               <li
                 key={c.OfferingName}
@@ -251,10 +251,10 @@ export default function CourseSelector({ onAddCourse }: CourseSelectorProps) {
                   setCourseSearch(`${c.OfferingName}: ${c.Title}`)
                   setShowSuggestions(false)
                 }}
-                className="cursor-pointer px-3 py-2 text-sm hover:bg-blue-50"
+                className="cursor-pointer px-3 py-2 font-body text-sm hover:bg-sky-blue/10"
               >
-                <span className="font-medium text-gray-800">{c.OfferingName}</span>
-                <span className="ml-2 text-gray-500">{c.Title}</span>
+                <span className="font-semibold text-navy">{c.OfferingName}</span>
+                <span className="ml-2 text-slate-blue">{c.Title}</span>
               </li>
             ))}
           </ul>
@@ -267,7 +267,7 @@ export default function CourseSelector({ onAddCourse }: CourseSelectorProps) {
           <select
             value={isCurrent ? studyGoalInput : gradeInput}
             onChange={(e) => isCurrent ? setStudyGoalInput(e.target.value) : setGradeInput(e.target.value)}
-            className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+            className="flex-1 rounded-lg border border-border bg-bg-gray px-3 py-2 font-body text-sm text-navy outline-none focus:border-sky-blue focus:ring-2 focus:ring-sky-blue/20"
           >
             {isCurrent ? (
               <>
@@ -288,7 +288,7 @@ export default function CourseSelector({ onAddCourse }: CourseSelectorProps) {
           <button
             type="button"
             onClick={handleAddCourse}
-            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            className="rounded-lg bg-navy px-4 py-2 font-body text-sm font-medium text-white transition-colors hover:bg-navy/90"
           >
             Add
           </button>
@@ -296,7 +296,7 @@ export default function CourseSelector({ onAddCourse }: CourseSelectorProps) {
       )}
 
       {addError && (
-        <p className="text-xs text-red-500">{addError}</p>
+        <p className="font-body text-xs text-urgent-red">{addError}</p>
       )}
     </div>
   )

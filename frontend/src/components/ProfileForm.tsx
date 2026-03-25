@@ -167,23 +167,27 @@ export default function ProfileForm({ data, onChange, errors }: ProfileFormProps
 
         {/* Added courses list */}
         {data.courses.map((course, i) => (
-          <div key={i} className="flex flex-col gap-2 rounded-lg border border-gray-200 p-3">
+          <div key={i} className="flex flex-col gap-2 rounded-lg border border-border bg-bg-gray p-3">
             <div className="flex items-center justify-between gap-2">
               <div className="flex flex-col gap-0.5">
-                <span className="text-sm font-medium text-gray-800">{course.title}</span>
-                {course.term && <span className="text-xs text-gray-400">{course.term}</span>}
+                <span className="font-body text-sm font-semibold text-navy">{course.title}</span>
+                {course.term && (
+                  <span className="inline-block w-fit rounded-full bg-navy/10 px-2 py-0.5 font-body text-xs font-medium text-navy">
+                    {course.term}
+                  </span>
+                )}
               </div>
               <button
                 type="button"
                 onClick={() => handleRemoveCourse(i)}
-                className="text-gray-400 hover:text-red-500"
+                className="text-light-blue transition-colors hover:text-urgent-red"
               >
                 ×
               </button>
             </div>
             {course.grade !== undefined ? (
               <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-500">Grade:</span>
+                <span className="font-body text-xs text-slate-blue">Grade:</span>
                 <select
                   value={course.grade}
                   onChange={(e) => {
@@ -192,7 +196,7 @@ export default function ProfileForm({ data, onChange, errors }: ProfileFormProps
                     )
                     update('courses', updated)
                   }}
-                  className="rounded border border-gray-300 px-2 py-1 text-xs outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  className="rounded-lg border border-border bg-white px-2 py-1 font-body text-xs text-navy outline-none focus:border-sky-blue focus:ring-1 focus:ring-sky-blue/20"
                 >
                   <option value="">Select grade</option>
                   {['A+', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D+', 'D', 'D-', 'IP'].map((g) => (
@@ -205,10 +209,10 @@ export default function ProfileForm({ data, onChange, errors }: ProfileFormProps
                 {STUDY_GOALS.map((goal) => (
                   <label
                     key={goal}
-                    className={`flex flex-1 cursor-pointer items-center justify-center rounded-lg border px-2 py-2 text-xs font-medium transition-colors ${
+                    className={`flex flex-1 cursor-pointer items-center justify-center rounded-lg border px-2 py-2 font-body text-xs font-medium transition-colors ${
                       course.studyGoal === goal
-                        ? 'border-blue-500 bg-blue-50 text-blue-700'
-                        : 'border-gray-200 text-gray-500 hover:border-gray-300 hover:bg-gray-50'
+                        ? 'border-sky-blue bg-sky-blue/10 text-navy'
+                        : 'border-border text-slate-blue hover:border-sky-blue/50 hover:bg-sky-blue/5'
                     }`}
                   >
                     <input
