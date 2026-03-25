@@ -92,6 +92,14 @@ export function PencilIcon({ color = 'currentColor', size = 16 }: { color?: stri
   )
 }
 
+export function ChevronDownIcon({ color = 'currentColor', size = 16 }: { color?: string; size?: number }) {
+  return (
+    <IconBase color={color} size={size}>
+      <polyline points="6 9 12 15 18 9" />
+    </IconBase>
+  )
+}
+
 export function TrashIcon({ color = 'currentColor', size = 16 }: { color?: string; size?: number }) {
   return (
     <IconBase color={color} size={size}>
@@ -160,5 +168,19 @@ export function GoogleIcon() {
       <path fill="#FBBC05" d="M3.964 10.707A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z" />
       <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.961L3.964 7.293C4.672 5.163 6.656 3.58 9 3.58z" />
     </svg>
+  )
+}
+
+// SlidersHorizontalIcon is a custom icon that doesn't fit the currentColor scheme, so it has its own color prop.
+export function SlidersHorizontalIcon({ color = 'currentColor', size = 16 }: { color?: string; size?: number }) {
+  return (
+    <IconBase color={color} size={size}>
+      <line x1="21" y1="6" x2="3" y2="6" />
+      <path d="M17 6a2 2 0 1 0-4 0 2 2 0 0 0 4 0z" />
+      <line x1="21" y1="12" x2="3" y2="12" />
+      <path d="M9 12a2 2 0 1 0-4 0 2 2 0 0 0 4 0z" />
+      <line x1="21" y1="18" x2="3" y2="18" />
+      <path d="M17 18a2 2 0 1 0-4 0 2 2 0 0 0 4 0z" />
+    </IconBase>
   )
 }
