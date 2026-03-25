@@ -19,6 +19,7 @@ import type * as lib_taskValidators from "../lib/taskValidators.js";
 import type * as mutations_syllabi from "../mutations/syllabi.js";
 import type * as mutations_tasks from "../mutations/tasks.js";
 import type * as mutations_timeEstimate from "../mutations/timeEstimate.js";
+import type * as mutations_userCourses from "../mutations/userCourses.js";
 import type * as mutations_users from "../mutations/users.js";
 import type * as queries_tasks from "../queries/tasks.js";
 import type * as queries_users from "../queries/users.js";
@@ -41,6 +42,7 @@ declare const fullApi: ApiFromModules<{
   "mutations/syllabi": typeof mutations_syllabi;
   "mutations/tasks": typeof mutations_tasks;
   "mutations/timeEstimate": typeof mutations_timeEstimate;
+  "mutations/userCourses": typeof mutations_userCourses;
   "mutations/users": typeof mutations_users;
   "queries/tasks": typeof queries_tasks;
   "queries/users": typeof queries_users;

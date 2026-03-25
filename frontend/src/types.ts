@@ -1,6 +1,9 @@
 export interface Course {
   title: string
   studyGoal: string
+  grade?: string
+  term?: string
+  userCourseId?: string
 }
 
 export interface ProfileData {

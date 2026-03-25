@@ -12,7 +12,7 @@ export const completeOnboarding = mutation({
     year: v.string(),
     difficultSubjects: v.array(v.string()),
     enjoyedSubjects: v.array(v.string()),
-    courses: v.array(v.object({ title: v.string(), studyGoal: v.string() })),
+
     workHoursGrid: v.array(v.object({
       day: v.string(),
       available: v.array(v.number()),
