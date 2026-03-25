@@ -43,8 +43,8 @@ export const calendarOAuthCallback = httpAction(async (ctx, request) => {
   const state = url.searchParams.get("state");
   const error = url.searchParams.get("error");
 
-  const frontendUrl = process.env.FRONTEND_URL ?? "http://localhost:5173";
-  const profileRedirect = `${frontendUrl}/profile`;
+  // SITE_URL is already set by the existing auth setup
+  const profileRedirect = `${process.env.SITE_URL ?? "http://localhost:5173"}/profile`;
 
   if (error || !code || !state) {
     return new Response(null, { status: 302, headers: { Location: profileRedirect } });
