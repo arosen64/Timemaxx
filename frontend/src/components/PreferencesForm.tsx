@@ -154,7 +154,7 @@ function CategorySection({
             value={customInput}
             onChange={(e) => setCustomInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Add custom..."
+            placeholder="Add notes..."
             className="rounded-lg border border-dashed border-border bg-bg-gray px-3 py-1 font-body text-sm text-navy outline-none placeholder:text-light-blue focus:border-sky-blue focus:ring-1 focus:ring-sky-blue/20"
           />
           {customInput.trim() && (
