@@ -35,14 +35,28 @@ Say **No** when asked to change `SITE_URL`, and **Yes** to continue at the end.
 
 ### 5. Add Google redirect URIs
 Go to [Google Cloud Console](https://console.cloud.google.com) → APIs & Services → Credentials → OAuth client → add both redirect URIs:
-Or ask Maria to do this.
+Or ask Aviel or Maria to do this.
 ```
 https://<your-personal-deployment>.convex.site/api/auth/callback/google
 https://<your-personal-deployment>.convex.site/api/calendar/callback
 ```
 Your personal deployment URL is in your `.env.local` as `VITE_CONVEX_SITE_URL`.
 
-### 6. Start the dev server
+### 6. Set the calendar token encryption secret
+Calendar OAuth tokens are encrypted at rest using AES-256-GCM. Generate and set a random 32-byte key on your personal deployment:
+```bash
+npx convex env set CALENDAR_TOKEN_SECRET $(openssl rand -hex 32)
+```
+This secret is per-deployment — each developer generates their own. Do not share it.
+
+### 7. Add yourself as a Google OAuth test user
+The Google Calendar `calendar.readonly` scope is a sensitive scope. While the app is unpublished, only explicitly added test users can complete the calendar OAuth flow — anyone else will be blocked by Google.
+
+Go to [Google Cloud Console](https://console.cloud.google.com) Three Lines → APIs & Services → OAuth consent screen → Audience → **Add users** → enter your Google account email.
+
+If you don't have access to the Google Cloud project, ask Aviel to add you as a test user.
+
+### 8. Start the dev server
 ```bash
 npx convex dev
 npm run dev
