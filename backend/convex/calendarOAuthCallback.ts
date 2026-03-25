@@ -1,6 +1,5 @@
-"use node";
-import { httpAction } from "../_generated/server";
-import { internal } from "../_generated/api";
+import { httpAction } from "./_generated/server";
+import { internal } from "./_generated/api";
 
 /**
  * Encrypts plaintext using AES-256-GCM via the Web Crypto API.
@@ -36,6 +35,7 @@ async function encryptToken(plaintext: string, hexSecret: string): Promise<strin
  * then redirects the user back to the frontend profile page.
  *
  * Registered at /api/calendar/callback in http.ts.
+ * Lives at the convex/ root (not in /actions) because httpAction cannot use "use node".
  */
 export const calendarOAuthCallback = httpAction(async (ctx, request) => {
   const url = new URL(request.url);

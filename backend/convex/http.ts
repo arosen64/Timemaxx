@@ -1,6 +1,6 @@
 import { httpRouter } from "convex/server";
 import { auth } from "./auth";
-import { calendarOAuthCallback } from "./actions/calendarOAuthCallback";
+import { calendarOAuthCallback } from "./calendarOAuthCallback";
 
 const http = httpRouter();
 auth.addHttpRoutes(http);
