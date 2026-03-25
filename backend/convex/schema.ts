@@ -1,9 +1,11 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 import { authTables } from "@convex-dev/auth/server";
+import { calendarTables } from "./calendarSchema";
 
 export default defineSchema({
   ...authTables,
+  ...calendarTables,
 
   // Users table
   users: defineTable({
@@ -65,14 +67,6 @@ export default defineSchema({
   })
     .index("by_userId", ["userId"])
     .index("by_userId_createdAt", ["userId", "createdAt"]),
-
-  // Calendar tokens table — stores encrypted Google Calendar OAuth tokens per user
-  calendarTokens: defineTable({
-    userId: v.id("users"),
-    accessToken: v.string(),
-    refreshToken: v.string(),
-    expiresAt: v.number(),
-  }).index("by_userId", ["userId"]),
 
   // Syllabi table — tracks uploaded syllabus files and their processing status
   syllabi: defineTable({
