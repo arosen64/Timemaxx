@@ -1,19 +1,14 @@
-import { useAuthActions } from "@convex-dev/auth/react";
-import { LogoutIcon } from "../components/icons";
+// import { useAuthActions } from "@convex-dev/auth/react"; NOTE: will uncomment in issue #145 
+// import { LogoutIcon } from "../components/icons"; NOTE: will uncomment in issue #145 
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import { useQuery } from "convex/react";
 import { api } from "../../../backend/convex/_generated/api";
+import ProfileActions from '../components/profile/ProfileActions'
 
 export default function ProfilePage() {
-  const { signOut } = useAuthActions();
   const navigate = useNavigate();
   const user = useQuery(api.queries.users.getCurrUser);
-
-  async function handleLogout() {
-    await signOut();
-    navigate("/");
-  }
 
   return (
     <div className="flex h-screen font-body bg-bg-gray">
@@ -128,17 +123,10 @@ export default function ProfilePage() {
           {/* Divider */}
           <div className="h-px w-full bg-border" />
 
-          {/* Logout Button */}
-          <button
-            onClick={handleLogout}
-            className="flex items-center justify-center h-11 w-40 gap-2 font-heading text-sm font-semibold text-white bg-dark-red rounded-lg transition hover:opacity-90"
-          >
-            <LogoutIcon />
-            Log Out
-          </button>
+          {/* Account Actions */}
+          <ProfileActions />
         </div>
       </main>
     </div>
   );
 }
-
