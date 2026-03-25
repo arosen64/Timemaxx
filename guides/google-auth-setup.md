@@ -33,11 +33,12 @@ npx @convex-dev/auth keygen
 ```
 Say **No** when asked to change `SITE_URL`, and **Yes** to continue at the end.
 
-### 5. Add Google redirect URI
-Go to [Google Cloud Console](https://console.cloud.google.com) → APIs & Services → Credentials → OAuth client → add your redirect URI:
-Or ask Maria to do this. 
+### 5. Add Google redirect URIs
+Go to [Google Cloud Console](https://console.cloud.google.com) → APIs & Services → Credentials → OAuth client → add both redirect URIs:
+Or ask Maria to do this.
 ```
 https://<your-personal-deployment>.convex.site/api/auth/callback/google
+https://<your-personal-deployment>.convex.site/api/calendar/callback
 ```
 Your personal deployment URL is in your `.env.local` as `VITE_CONVEX_SITE_URL`.
 
