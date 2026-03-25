@@ -1,6 +1,7 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 import { authTables } from "@convex-dev/auth/server";
+import { taskTypeValidator } from "./lib/taskValidators";
 
 export default defineSchema({
   ...authTables,
@@ -52,16 +53,25 @@ export default defineSchema({
     userId: v.id("users"),
     title: v.string(),
     description: v.string(),
-    taskType: v.union(
-      v.literal("Problem Set"),
-      v.literal("Essay"),
-      v.literal("Coding"),
-      v.literal("Exam Prep"),
-    ),
+    taskType: taskTypeValidator,
     timeEstimate: v.optional(v.number()),
     dueDate: v.number(),
     createdAt: v.number(),
+    extractedFrom: v.optional(v.id("syllabi")),
   })
     .index("by_userId", ["userId"])
     .index("by_userId_createdAt", ["userId", "createdAt"]),
+
+  // Syllabi table — tracks uploaded syllabus files and their processing status
+  syllabi: defineTable({
+    userId: v.id("users"),
+    fileName: v.string(),
+    courseName: v.string(),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("confirmed"),
+      v.literal("failed"),
+    ),
+    createdAt: v.number(),
+  }).index("by_userId", ["userId"]),
 });

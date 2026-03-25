@@ -1,5 +1,5 @@
 import { ReactNode } from 'react'
-import { BrandLogo } from '../ui'
+import { BookOpenIcon } from './icons'
 
 interface OnboardingStepShellProps {
   currentStep: number
@@ -17,7 +17,13 @@ export default function OnboardingStepShell({
   return (
     <div className="flex min-h-screen flex-col bg-bg-gray">
       <header className="flex h-16 w-full flex-shrink-0 items-center justify-between bg-navy px-10">
-        <BrandLogo size="sm" />
+        {/* Brand logo */}
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-8 w-8 items-center justify-center rounded bg-teal text-navy">
+            <BookOpenIcon size={18} />
+          </div>
+          <span className="font-heading text-lg font-bold text-white">Timemaxx</span>
+        </div>
 
         <div className="flex items-center gap-2">
           {Array.from({ length: totalSteps }, (_, i) => {

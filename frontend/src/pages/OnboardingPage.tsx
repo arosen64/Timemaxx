@@ -3,15 +3,11 @@ import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '../../../backend/convex/_generated/api'
 import { ProfileData, WorkHoursData, PreferencesData } from '../types'
-import {
-  ProfileForm,
-  WorkHoursSelector,
-  DEFAULT_WORK_HOURS,
-  PreferencesForm,
-  DEFAULT_PREFERENCES,
-  OnboardingStepShell,
-  OnboardingNav,
-} from '../components/onboarding'
+import ProfileForm from '../components/ProfileForm'
+import WorkHoursSelector, { DEFAULT_WORK_HOURS } from '../components/WorkHoursSelector'
+import PreferencesForm, { DEFAULT_PREFERENCES } from '../components/PreferencesForm'
+import OnboardingStepShell from '../components/OnboardingStepShell'
+import OnboardingNav from '../components/OnboardingNav'
 
 type Step = 1 | 2 | 3
 
