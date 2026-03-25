@@ -673,8 +673,8 @@
                         },
                         {
                           "type": "frame",
-                          "id": "0fktL",
-                          "name": "schoolSel",
+                          "id": "3H8OI",
+                          "name": "school",
                           "width": "fill_container",
                           "height": 38,
                           "fill": "$--background",
@@ -693,16 +693,16 @@
                           "children": [
                             {
                               "type": "text",
-                              "id": "C7v3K",
+                              "id": "k348h",
                               "fill": "$--light-muted",
-                              "content": "Select a term first",
+                              "content": "Select a school",
                               "fontFamily": "Inter",
                               "fontSize": 13,
                               "fontWeight": "normal"
                             },
                             {
                               "type": "icon_font",
-                              "id": "K0ceL",
+                              "id": "7Ajxy",
                               "width": 14,
                               "height": 14,
                               "iconFontName": "chevron-down",
@@ -735,7 +735,7 @@
                               "type": "text",
                               "id": "qPzbx",
                               "fill": "$--light-muted",
-                              "content": "Select a school first",
+                              "content": "Type to search courses…",
                               "fontFamily": "Inter",
                               "fontSize": 13,
                               "fontWeight": "normal"

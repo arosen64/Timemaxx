@@ -57,6 +57,12 @@ export const deleteAccount = mutation({
       .collect();
     await Promise.all(syllabi.map((syllabus) => ctx.db.delete(syllabus._id)));
 
+    const userCourses = await ctx.db
+      .query("userCourses")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .collect();
+    await Promise.all(userCourses.map((uc) => ctx.db.delete(uc._id)));
+
     const authAccounts = await ctx.db
       .query("authAccounts")
       .withIndex("userIdAndProvider", (q) => q.eq("userId", userId))
