@@ -1,4 +1,5 @@
-import { query } from "../_generated/server";
+import { internalQuery, query } from "../_generated/server";
+import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
 /**
@@ -15,5 +16,18 @@ export const getCalendarConnectionStatus = query({
       .unique();
 
     return { connected: token !== null };
+  },
+});
+
+/**
+ * Looks up a calendar OAuth state record by its state string — called from the HTTP callback.
+ */
+export const getCalendarOAuthState = internalQuery({
+  args: { state: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("calendarOAuthStates")
+      .withIndex("by_state", (q) => q.eq("state", args.state))
+      .unique();
   },
 });
