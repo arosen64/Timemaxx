@@ -90,7 +90,7 @@ describe('OnboardingPage', () => {
 
     await user.type(screen.getByPlaceholderText(/computer science/i), 'Computer Science')
     await user.selectOptions(document.getElementById('year-select')!, 'Junior')
-    await user.click(screen.getByRole('button', { name: /next/i }))
+    await user.click(screen.getByRole('button', { name: /continue/i }))
 
     await waitFor(() => {
       // Step 2 renders WorkHoursSelector — look for its heading
@@ -105,7 +105,7 @@ describe('OnboardingPage', () => {
     // Complete step 1
     await user.type(screen.getByPlaceholderText(/computer science/i), 'Biology')
     await user.selectOptions(document.getElementById('year-select')!, 'Sophomore')
-    await user.click(screen.getByRole('button', { name: /next/i }))
+    await user.click(screen.getByRole('button', { name: /continue/i }))
 
     // Now on step 2 — click Next again
     await waitFor(() => expect(screen.queryByText('Tell us about yourself')).not.toBeInTheDocument())
@@ -123,7 +123,7 @@ describe('OnboardingPage', () => {
 
     await user.type(screen.getByPlaceholderText(/computer science/i), 'Physics')
     await user.selectOptions(document.getElementById('year-select')!, 'Senior')
-    await user.click(screen.getByRole('button', { name: /next/i }))
+    await user.click(screen.getByRole('button', { name: /continue/i }))
 
     await waitFor(() => expect(screen.queryByText('Tell us about yourself')).not.toBeInTheDocument())
 
@@ -141,7 +141,7 @@ describe('OnboardingPage', () => {
     // Step 1
     await user.type(screen.getByPlaceholderText(/computer science/i), 'Math')
     await user.selectOptions(document.getElementById('year-select')!, 'Freshman')
-    await user.click(screen.getByRole('button', { name: /next/i }))
+    await user.click(screen.getByRole('button', { name: /continue/i }))
 
     // Step 2 — advance without changing hours
     await waitFor(() => expect(screen.queryByText('Tell us about yourself')).not.toBeInTheDocument())
