@@ -6000,7 +6000,7 @@
                       "type": "text",
                       "id": "PNbmH",
                       "fill": "$--primary",
-                      "content": "Time of Day",
+                      "content": "🕐 Time of Day",
                       "fontFamily": "Space Grotesk",
                       "fontSize": 13,
                       "fontWeight": "600"
@@ -6021,78 +6021,233 @@
                       "id": "P1vKO",
                       "name": "chips",
                       "width": "fill_container",
+                      "layout": "vertical",
                       "gap": 8,
                       "children": [
                         {
                           "type": "frame",
-                          "id": "8tLKy",
-                          "name": "c1a",
-                          "fill": "$--primary",
-                          "cornerRadius": 16,
-                          "padding": [
-                            4,
-                            12
-                          ],
+                          "id": "5ZzFY",
+                          "name": "tod1",
+                          "width": "fill_container",
+                          "gap": 8,
                           "children": [
                             {
-                              "type": "text",
-                              "id": "DX4g6",
-                              "fill": "$--primary-foreground",
-                              "content": "Morning",
-                              "fontFamily": "Inter",
-                              "fontSize": 13,
-                              "fontWeight": "normal"
+                              "type": "frame",
+                              "id": "U0T9X",
+                              "name": "c1",
+                              "fill": "$--card",
+                              "cornerRadius": 16,
+                              "stroke": {
+                                "align": "inside",
+                                "thickness": 1,
+                                "fill": "$--border"
+                              },
+                              "padding": [
+                                4,
+                                12
+                              ],
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "aMdJO",
+                                  "fill": "$--muted-foreground",
+                                  "content": "Early Morning (5–8am)",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "tTEk9",
+                              "name": "c2",
+                              "fill": "$--primary",
+                              "cornerRadius": 16,
+                              "padding": [
+                                4,
+                                12
+                              ],
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "2HRdj",
+                                  "fill": "$--primary-foreground",
+                                  "content": "Morning (8–11am)",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "CYczC",
+                              "name": "c3",
+                              "fill": "$--card",
+                              "cornerRadius": 16,
+                              "stroke": {
+                                "align": "inside",
+                                "thickness": 1,
+                                "fill": "$--border"
+                              },
+                              "padding": [
+                                4,
+                                12
+                              ],
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "IuD8a",
+                                  "fill": "$--muted-foreground",
+                                  "content": "Midday (11am–2pm)",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "MMgiM",
+                              "name": "c4",
+                              "fill": "$--card",
+                              "cornerRadius": 16,
+                              "stroke": {
+                                "align": "inside",
+                                "thickness": 1,
+                                "fill": "$--border"
+                              },
+                              "padding": [
+                                4,
+                                12
+                              ],
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "PcQjS",
+                                  "fill": "$--muted-foreground",
+                                  "content": "Afternoon (2–5pm)",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "normal"
+                                }
+                              ]
                             }
                           ]
                         },
                         {
                           "type": "frame",
-                          "id": "6lyAH",
-                          "name": "c1b",
-                          "fill": "$--primary",
-                          "cornerRadius": 16,
-                          "padding": [
-                            4,
-                            12
-                          ],
+                          "id": "tXi86",
+                          "name": "tod2",
+                          "width": "fill_container",
+                          "gap": 8,
                           "children": [
                             {
-                              "type": "text",
-                              "id": "tq1JA",
-                              "fill": "$--primary-foreground",
-                              "content": "Evening",
-                              "fontFamily": "Inter",
-                              "fontSize": 13,
-                              "fontWeight": "normal"
+                              "type": "frame",
+                              "id": "2miFY",
+                              "name": "c5",
+                              "fill": "$--primary",
+                              "cornerRadius": 16,
+                              "padding": [
+                                4,
+                                12
+                              ],
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "s6tu2",
+                                  "fill": "$--primary-foreground",
+                                  "content": "Evening (5–8pm)",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "GvGKa",
+                              "name": "c6",
+                              "fill": "$--card",
+                              "cornerRadius": 16,
+                              "stroke": {
+                                "align": "inside",
+                                "thickness": 1,
+                                "fill": "$--border"
+                              },
+                              "padding": [
+                                4,
+                                12
+                              ],
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "ecUfD",
+                                  "fill": "$--muted-foreground",
+                                  "content": "Night (8–11pm)",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "p2Yta",
+                              "name": "c7",
+                              "fill": "$--card",
+                              "cornerRadius": 16,
+                              "stroke": {
+                                "align": "inside",
+                                "thickness": 1,
+                                "fill": "$--border"
+                              },
+                              "padding": [
+                                4,
+                                12
+                              ],
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "1WoPV",
+                                  "fill": "$--muted-foreground",
+                                  "content": "Late Night (11pm+)",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "normal"
+                                }
+                              ]
                             }
                           ]
-                        },
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "lfTnE",
+                      "name": "customInput",
+                      "width": 128,
+                      "fill": "$--background",
+                      "cornerRadius": 8,
+                      "stroke": {
+                        "align": "inside",
+                        "thickness": 1,
+                        "fill": "$--border"
+                      },
+                      "padding": [
+                        4,
+                        12
+                      ],
+                      "children": [
                         {
-                          "type": "frame",
-                          "id": "LnVqY",
-                          "name": "c1c",
-                          "fill": "$--card",
-                          "cornerRadius": 16,
-                          "stroke": {
-                            "align": "inside",
-                            "thickness": 1,
-                            "fill": "$--border"
-                          },
-                          "padding": [
-                            4,
-                            12
-                          ],
-                          "children": [
-                            {
-                              "type": "text",
-                              "id": "JAc4a",
-                              "fill": "$--muted-foreground",
-                              "content": "Midday",
-                              "fontFamily": "Inter",
-                              "fontSize": 13,
-                              "fontWeight": "normal"
-                            }
-                          ]
+                          "type": "text",
+                          "id": "isqyr",
+                          "fill": "$--light-muted",
+                          "content": "Add custom...",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
                         }
                       ]
                     }
@@ -6110,7 +6265,7 @@
                       "type": "text",
                       "id": "POKIF",
                       "fill": "$--primary",
-                      "content": "Day of Week",
+                      "content": "📅 Day of Week",
                       "fontFamily": "Space Grotesk",
                       "fontSize": 13,
                       "fontWeight": "600"
@@ -6131,186 +6286,233 @@
                       "id": "TG06i",
                       "name": "chips",
                       "width": "fill_container",
+                      "layout": "vertical",
                       "gap": 8,
                       "children": [
                         {
                           "type": "frame",
-                          "id": "1d8Z9",
-                          "name": "d1",
-                          "fill": "$--primary",
-                          "cornerRadius": 16,
-                          "padding": [
-                            4,
-                            12
-                          ],
+                          "id": "a1KgB",
+                          "name": "dow1",
+                          "width": "fill_container",
+                          "gap": 8,
                           "children": [
                             {
-                              "type": "text",
-                              "id": "ArGT5",
-                              "fill": "$--primary-foreground",
-                              "content": "Mon",
-                              "fontFamily": "Inter",
-                              "fontSize": 13,
-                              "fontWeight": "normal"
+                              "type": "frame",
+                              "id": "1d8Z9",
+                              "name": "d1",
+                              "fill": "$--primary",
+                              "cornerRadius": 16,
+                              "padding": [
+                                4,
+                                12
+                              ],
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "ArGT5",
+                                  "fill": "$--primary-foreground",
+                                  "content": "Monday",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "oFVYx",
+                              "name": "d2",
+                              "fill": "$--card",
+                              "cornerRadius": 16,
+                              "stroke": {
+                                "align": "inside",
+                                "thickness": 1,
+                                "fill": "$--border"
+                              },
+                              "padding": [
+                                4,
+                                12
+                              ],
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "gzN9I",
+                                  "fill": "$--muted-foreground",
+                                  "content": "Tuesday",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "Dr9Or",
+                              "name": "d3",
+                              "fill": "$--card",
+                              "cornerRadius": 16,
+                              "stroke": {
+                                "align": "inside",
+                                "thickness": 1,
+                                "fill": "$--border"
+                              },
+                              "padding": [
+                                4,
+                                12
+                              ],
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "qOiPG",
+                                  "fill": "$--muted-foreground",
+                                  "content": "Wednesday",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "MQV1Z",
+                              "name": "d4",
+                              "fill": "$--primary",
+                              "cornerRadius": 16,
+                              "padding": [
+                                4,
+                                12
+                              ],
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "s4y05",
+                                  "fill": "$--primary-foreground",
+                                  "content": "Thursday",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "normal"
+                                }
+                              ]
                             }
                           ]
                         },
                         {
                           "type": "frame",
-                          "id": "oFVYx",
-                          "name": "d2",
-                          "fill": "$--card",
-                          "cornerRadius": 16,
-                          "stroke": {
-                            "align": "inside",
-                            "thickness": 1,
-                            "fill": "$--border"
-                          },
-                          "padding": [
-                            4,
-                            12
-                          ],
+                          "id": "LB1il",
+                          "name": "dow2",
+                          "width": "fill_container",
+                          "gap": 8,
                           "children": [
                             {
-                              "type": "text",
-                              "id": "gzN9I",
-                              "fill": "$--muted-foreground",
-                              "content": "Tue",
-                              "fontFamily": "Inter",
-                              "fontSize": 13,
-                              "fontWeight": "normal"
+                              "type": "frame",
+                              "id": "xwqY2",
+                              "name": "d5",
+                              "fill": "$--card",
+                              "cornerRadius": 16,
+                              "stroke": {
+                                "align": "inside",
+                                "thickness": 1,
+                                "fill": "$--border"
+                              },
+                              "padding": [
+                                4,
+                                12
+                              ],
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "39Vsz",
+                                  "fill": "$--muted-foreground",
+                                  "content": "Friday",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "XV06h",
+                              "name": "d6",
+                              "fill": "$--card",
+                              "cornerRadius": 16,
+                              "stroke": {
+                                "align": "inside",
+                                "thickness": 1,
+                                "fill": "$--border"
+                              },
+                              "padding": [
+                                4,
+                                12
+                              ],
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "yqcjz",
+                                  "fill": "$--muted-foreground",
+                                  "content": "Saturday",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "Az03O",
+                              "name": "d7",
+                              "fill": "$--card",
+                              "cornerRadius": 16,
+                              "stroke": {
+                                "align": "inside",
+                                "thickness": 1,
+                                "fill": "$--border"
+                              },
+                              "padding": [
+                                4,
+                                12
+                              ],
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "RCL7W",
+                                  "fill": "$--muted-foreground",
+                                  "content": "Sunday",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "normal"
+                                }
+                              ]
                             }
                           ]
-                        },
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "hwgm1",
+                      "name": "customInput",
+                      "width": 128,
+                      "fill": "$--background",
+                      "cornerRadius": 8,
+                      "stroke": {
+                        "align": "inside",
+                        "thickness": 1,
+                        "fill": "$--border"
+                      },
+                      "padding": [
+                        4,
+                        12
+                      ],
+                      "children": [
                         {
-                          "type": "frame",
-                          "id": "Dr9Or",
-                          "name": "d3",
-                          "fill": "$--card",
-                          "cornerRadius": 16,
-                          "stroke": {
-                            "align": "inside",
-                            "thickness": 1,
-                            "fill": "$--border"
-                          },
-                          "padding": [
-                            4,
-                            12
-                          ],
-                          "children": [
-                            {
-                              "type": "text",
-                              "id": "qOiPG",
-                              "fill": "$--muted-foreground",
-                              "content": "Wed",
-                              "fontFamily": "Inter",
-                              "fontSize": 13,
-                              "fontWeight": "normal"
-                            }
-                          ]
-                        },
-                        {
-                          "type": "frame",
-                          "id": "MQV1Z",
-                          "name": "d4",
-                          "fill": "$--primary",
-                          "cornerRadius": 16,
-                          "padding": [
-                            4,
-                            12
-                          ],
-                          "children": [
-                            {
-                              "type": "text",
-                              "id": "s4y05",
-                              "fill": "$--primary-foreground",
-                              "content": "Thu",
-                              "fontFamily": "Inter",
-                              "fontSize": 13,
-                              "fontWeight": "normal"
-                            }
-                          ]
-                        },
-                        {
-                          "type": "frame",
-                          "id": "xwqY2",
-                          "name": "d5",
-                          "fill": "$--card",
-                          "cornerRadius": 16,
-                          "stroke": {
-                            "align": "inside",
-                            "thickness": 1,
-                            "fill": "$--border"
-                          },
-                          "padding": [
-                            4,
-                            12
-                          ],
-                          "children": [
-                            {
-                              "type": "text",
-                              "id": "39Vsz",
-                              "fill": "$--muted-foreground",
-                              "content": "Fri",
-                              "fontFamily": "Inter",
-                              "fontSize": 13,
-                              "fontWeight": "normal"
-                            }
-                          ]
-                        },
-                        {
-                          "type": "frame",
-                          "id": "XV06h",
-                          "name": "d6",
-                          "fill": "$--card",
-                          "cornerRadius": 16,
-                          "stroke": {
-                            "align": "inside",
-                            "thickness": 1,
-                            "fill": "$--border"
-                          },
-                          "padding": [
-                            4,
-                            12
-                          ],
-                          "children": [
-                            {
-                              "type": "text",
-                              "id": "yqcjz",
-                              "fill": "$--muted-foreground",
-                              "content": "Sat",
-                              "fontFamily": "Inter",
-                              "fontSize": 13,
-                              "fontWeight": "normal"
-                            }
-                          ]
-                        },
-                        {
-                          "type": "frame",
-                          "id": "Az03O",
-                          "name": "d7",
-                          "fill": "$--card",
-                          "cornerRadius": 16,
-                          "stroke": {
-                            "align": "inside",
-                            "thickness": 1,
-                            "fill": "$--border"
-                          },
-                          "padding": [
-                            4,
-                            12
-                          ],
-                          "children": [
-                            {
-                              "type": "text",
-                              "id": "RCL7W",
-                              "fill": "$--muted-foreground",
-                              "content": "Sun",
-                              "fontFamily": "Inter",
-                              "fontSize": 13,
-                              "fontWeight": "normal"
-                            }
-                          ]
+                          "type": "text",
+                          "id": "wGNsb",
+                          "fill": "$--light-muted",
+                          "content": "Add custom...",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
                         }
                       ]
                     }
@@ -6328,7 +6530,7 @@
                       "type": "text",
                       "id": "2kZuQ",
                       "fill": "$--primary",
-                      "content": "Work Session Style",
+                      "content": "⚡ Work Session Style",
                       "fontFamily": "Space Grotesk",
                       "fontSize": 13,
                       "fontWeight": "600"
@@ -6349,83 +6551,157 @@
                       "id": "UrOt8",
                       "name": "chips",
                       "width": "fill_container",
+                      "layout": "vertical",
                       "gap": 8,
                       "children": [
                         {
                           "type": "frame",
-                          "id": "zrWYQ",
-                          "name": "c2a",
-                          "fill": "$--primary",
-                          "cornerRadius": 16,
-                          "padding": [
-                            4,
-                            12
-                          ],
+                          "id": "ZuiKd",
+                          "name": "wss1",
+                          "width": "fill_container",
+                          "gap": 8,
                           "children": [
                             {
-                              "type": "text",
-                              "id": "ZrsxP",
-                              "fill": "$--primary-foreground",
-                              "content": "Short bursts (25–30 min)",
-                              "fontFamily": "Inter",
-                              "fontSize": 13,
-                              "fontWeight": "normal"
+                              "type": "frame",
+                              "id": "zrWYQ",
+                              "name": "c2a",
+                              "fill": "$--primary",
+                              "cornerRadius": 16,
+                              "padding": [
+                                4,
+                                12
+                              ],
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "ZrsxP",
+                                  "fill": "$--primary-foreground",
+                                  "content": "Short bursts (25–30 min)",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "QM8Ch",
+                              "name": "c2b",
+                              "fill": "$--card",
+                              "cornerRadius": 16,
+                              "stroke": {
+                                "align": "inside",
+                                "thickness": 1,
+                                "fill": "$--border"
+                              },
+                              "padding": [
+                                4,
+                                12
+                              ],
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "kb8rn",
+                                  "fill": "$--muted-foreground",
+                                  "content": "Medium sessions (45–60 min)",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "normal"
+                                }
+                              ]
                             }
                           ]
                         },
                         {
                           "type": "frame",
-                          "id": "QM8Ch",
-                          "name": "c2b",
-                          "fill": "$--card",
-                          "cornerRadius": 16,
-                          "stroke": {
-                            "align": "inside",
-                            "thickness": 1,
-                            "fill": "$--border"
-                          },
-                          "padding": [
-                            4,
-                            12
-                          ],
+                          "id": "YQLr2",
+                          "name": "wss2",
+                          "width": "fill_container",
+                          "gap": 8,
                           "children": [
                             {
-                              "type": "text",
-                              "id": "kb8rn",
-                              "fill": "$--muted-foreground",
-                              "content": "Medium sessions (45–60 min)",
-                              "fontFamily": "Inter",
-                              "fontSize": 13,
-                              "fontWeight": "normal"
+                              "type": "frame",
+                              "id": "5Jmi6",
+                              "name": "c2c",
+                              "fill": "$--card",
+                              "cornerRadius": 16,
+                              "stroke": {
+                                "align": "inside",
+                                "thickness": 1,
+                                "fill": "$--border"
+                              },
+                              "padding": [
+                                4,
+                                12
+                              ],
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "wIfgw",
+                                  "fill": "$--muted-foreground",
+                                  "content": "Long deep work (2+ hours)",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "1m4Oe",
+                              "name": "w4",
+                              "fill": "$--card",
+                              "cornerRadius": 16,
+                              "stroke": {
+                                "align": "inside",
+                                "thickness": 1,
+                                "fill": "$--border"
+                              },
+                              "padding": [
+                                4,
+                                12
+                              ],
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "twMkX",
+                                  "fill": "$--muted-foreground",
+                                  "content": "Varies by task",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "normal"
+                                }
+                              ]
                             }
                           ]
-                        },
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "OvGbF",
+                      "name": "customInput",
+                      "width": 128,
+                      "fill": "$--background",
+                      "cornerRadius": 8,
+                      "stroke": {
+                        "align": "inside",
+                        "thickness": 1,
+                        "fill": "$--border"
+                      },
+                      "padding": [
+                        4,
+                        12
+                      ],
+                      "children": [
                         {
-                          "type": "frame",
-                          "id": "5Jmi6",
-                          "name": "c2c",
-                          "fill": "$--card",
-                          "cornerRadius": 16,
-                          "stroke": {
-                            "align": "inside",
-                            "thickness": 1,
-                            "fill": "$--border"
-                          },
-                          "padding": [
-                            4,
-                            12
-                          ],
-                          "children": [
-                            {
-                              "type": "text",
-                              "id": "wIfgw",
-                              "fill": "$--muted-foreground",
-                              "content": "Long deep work (2+ hrs)",
-                              "fontFamily": "Inter",
-                              "fontSize": 13,
-                              "fontWeight": "normal"
-                            }
-                          ]
+                          "type": "text",
+                          "id": "Z38UW",
+                          "fill": "$--light-muted",
+                          "content": "Add custom...",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
                         }
                       ]
                     }
@@ -6443,7 +6719,7 @@
                       "type": "text",
                       "id": "jwnju",
                       "fill": "$--primary",
-                      "content": "Deadline Behavior",
+                      "content": "⏰ Deadline Behavior",
                       "fontFamily": "Space Grotesk",
                       "fontSize": 13,
                       "fontWeight": "600"
@@ -6486,7 +6762,7 @@
                               "type": "text",
                               "id": "Bf5de",
                               "fill": "$--muted-foreground",
-                              "content": "Work well in advance",
+                              "content": "I work best well in advance",
                               "fontFamily": "Inter",
                               "fontSize": 13,
                               "fontWeight": "normal"
@@ -6508,7 +6784,7 @@
                               "type": "text",
                               "id": "9UmWo",
                               "fill": "$--primary-foreground",
-                              "content": "Need the pressure",
+                              "content": "I need the pressure of a deadline",
                               "fontFamily": "Inter",
                               "fontSize": 13,
                               "fontWeight": "normal"
@@ -6558,7 +6834,7 @@
                       "type": "text",
                       "id": "tG9Mu",
                       "fill": "$--primary",
-                      "content": "Break Preferences",
+                      "content": "🔄 Break Preferences",
                       "fontFamily": "Space Grotesk",
                       "fontSize": 13,
                       "fontWeight": "600"
@@ -6579,81 +6855,127 @@
                       "id": "WaTUc",
                       "name": "chips",
                       "width": "fill_container",
+                      "layout": "vertical",
                       "gap": 8,
                       "children": [
                         {
                           "type": "frame",
-                          "id": "FwdYS",
-                          "name": "b1",
-                          "fill": "$--card",
-                          "cornerRadius": 16,
-                          "stroke": {
-                            "align": "inside",
-                            "thickness": 1,
-                            "fill": "$--border"
-                          },
-                          "padding": [
-                            4,
-                            12
-                          ],
+                          "id": "OSs1t",
+                          "name": "bp1",
+                          "width": "fill_container",
+                          "gap": 8,
                           "children": [
                             {
-                              "type": "text",
-                              "id": "NCUq0",
-                              "fill": "$--muted-foreground",
-                              "content": "Frequent short breaks",
-                              "fontFamily": "Inter",
-                              "fontSize": 13,
-                              "fontWeight": "normal"
+                              "type": "frame",
+                              "id": "FwdYS",
+                              "name": "b1",
+                              "fill": "$--card",
+                              "cornerRadius": 16,
+                              "stroke": {
+                                "align": "inside",
+                                "thickness": 1,
+                                "fill": "$--border"
+                              },
+                              "padding": [
+                                4,
+                                12
+                              ],
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "NCUq0",
+                                  "fill": "$--muted-foreground",
+                                  "content": "Frequent short breaks (every 25–30 min)",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "w07DY",
+                              "name": "b2",
+                              "fill": "$--primary",
+                              "cornerRadius": 16,
+                              "padding": [
+                                4,
+                                12
+                              ],
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "QRI7X",
+                                  "fill": "$--primary-foreground",
+                                  "content": "Occasional medium breaks (every hour)",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "normal"
+                                }
+                              ]
                             }
                           ]
                         },
                         {
                           "type": "frame",
-                          "id": "w07DY",
-                          "name": "b2",
-                          "fill": "$--primary",
-                          "cornerRadius": 16,
-                          "padding": [
-                            4,
-                            12
-                          ],
+                          "id": "U13FW",
+                          "name": "bp2",
+                          "width": "fill_container",
+                          "gap": 8,
                           "children": [
                             {
-                              "type": "text",
-                              "id": "QRI7X",
-                              "fill": "$--primary-foreground",
-                              "content": "Occasional medium breaks",
-                              "fontFamily": "Inter",
-                              "fontSize": 13,
-                              "fontWeight": "normal"
-                            }
-                          ]
-                        },
-                        {
-                          "type": "frame",
-                          "id": "212aF",
-                          "name": "b3",
-                          "fill": "$--card",
-                          "cornerRadius": 16,
-                          "stroke": {
-                            "align": "inside",
-                            "thickness": 1,
-                            "fill": "$--border"
-                          },
-                          "padding": [
-                            4,
-                            12
-                          ],
-                          "children": [
+                              "type": "frame",
+                              "id": "212aF",
+                              "name": "b3",
+                              "fill": "$--card",
+                              "cornerRadius": 16,
+                              "stroke": {
+                                "align": "inside",
+                                "thickness": 1,
+                                "fill": "$--border"
+                              },
+                              "padding": [
+                                4,
+                                12
+                              ],
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "aSPB4",
+                                  "fill": "$--muted-foreground",
+                                  "content": "Few long breaks (every 2+ hours)",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            },
                             {
-                              "type": "text",
-                              "id": "aSPB4",
-                              "fill": "$--muted-foreground",
-                              "content": "Few long breaks",
-                              "fontFamily": "Inter",
-                              "fontSize": 13,
-                              "fontWeight": "normal"
+                              "type": "frame",
+                              "id": "m805C",
+                              "name": "b4",
+                              "fill": "$--card",
+                              "cornerRadius": 16,
+                              "stroke": {
+                                "align": "inside",
+                                "thickness": 1,
+                                "fill": "$--border"
+                              },
+                              "padding": [
+                                4,
+                                12
+                              ],
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "otYTN",
+                                  "fill": "$--muted-foreground",
+                                  "content": "I don't take planned breaks",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "normal"
+                                }
+                              ]
                             }
                           ]
                         }
@@ -6673,7 +6995,7 @@
                       "type": "text",
                       "id": "KtfSS",
                       "fill": "$--primary",
-                      "content": "Subject / Task Switching",
+                      "content": "📚 Subject/Task Switching",
                       "fontFamily": "Space Grotesk",
                       "fontSize": 13,
                       "fontWeight": "600"
@@ -6694,81 +7016,100 @@
                       "id": "jQ4JW",
                       "name": "chips",
                       "width": "fill_container",
+                      "layout": "vertical",
                       "gap": 8,
                       "children": [
                         {
                           "type": "frame",
-                          "id": "mdgTk",
-                          "name": "s1",
-                          "fill": "$--card",
-                          "cornerRadius": 16,
-                          "stroke": {
-                            "align": "inside",
-                            "thickness": 1,
-                            "fill": "$--border"
-                          },
-                          "padding": [
-                            4,
-                            12
-                          ],
+                          "id": "Hy4ID",
+                          "name": "ss1",
+                          "width": "fill_container",
+                          "gap": 8,
                           "children": [
                             {
-                              "type": "text",
-                              "id": "kOMg5",
-                              "fill": "$--muted-foreground",
-                              "content": "One subject per session",
-                              "fontFamily": "Inter",
-                              "fontSize": 13,
-                              "fontWeight": "normal"
+                              "type": "frame",
+                              "id": "mdgTk",
+                              "name": "s1",
+                              "fill": "$--card",
+                              "cornerRadius": 16,
+                              "stroke": {
+                                "align": "inside",
+                                "thickness": 1,
+                                "fill": "$--border"
+                              },
+                              "padding": [
+                                4,
+                                12
+                              ],
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "kOMg5",
+                                  "fill": "$--muted-foreground",
+                                  "content": "I prefer focusing on one subject per session",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "normal"
+                                }
+                              ]
                             }
                           ]
                         },
                         {
                           "type": "frame",
-                          "id": "gqmTi",
-                          "name": "s2",
-                          "fill": "$--card",
-                          "cornerRadius": 16,
-                          "stroke": {
-                            "align": "inside",
-                            "thickness": 1,
-                            "fill": "$--border"
-                          },
-                          "padding": [
-                            4,
-                            12
-                          ],
+                          "id": "Qg7P7",
+                          "name": "ss2",
+                          "width": "fill_container",
+                          "gap": 8,
                           "children": [
                             {
-                              "type": "text",
-                              "id": "nzxKL",
-                              "fill": "$--muted-foreground",
-                              "content": "Switch between subjects",
-                              "fontFamily": "Inter",
-                              "fontSize": 13,
-                              "fontWeight": "normal"
-                            }
-                          ]
-                        },
-                        {
-                          "type": "frame",
-                          "id": "PElTj",
-                          "name": "s3",
-                          "fill": "$--primary",
-                          "cornerRadius": 16,
-                          "padding": [
-                            4,
-                            12
-                          ],
-                          "children": [
+                              "type": "frame",
+                              "id": "gqmTi",
+                              "name": "s2",
+                              "fill": "$--card",
+                              "cornerRadius": 16,
+                              "stroke": {
+                                "align": "inside",
+                                "thickness": 1,
+                                "fill": "$--border"
+                              },
+                              "padding": [
+                                4,
+                                12
+                              ],
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "nzxKL",
+                                  "fill": "$--muted-foreground",
+                                  "content": "I like switching between subjects",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            },
                             {
-                              "type": "text",
-                              "id": "yONf5",
-                              "fill": "$--primary-foreground",
-                              "content": "Depends on the day",
-                              "fontFamily": "Inter",
-                              "fontSize": 13,
-                              "fontWeight": "normal"
+                              "type": "frame",
+                              "id": "PElTj",
+                              "name": "s3",
+                              "fill": "$--primary",
+                              "cornerRadius": 16,
+                              "padding": [
+                                4,
+                                12
+                              ],
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "yONf5",
+                                  "fill": "$--primary-foreground",
+                                  "content": "Depends on the day",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "normal"
+                                }
+                              ]
                             }
                           ]
                         }
