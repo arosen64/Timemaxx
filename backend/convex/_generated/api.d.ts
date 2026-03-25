@@ -13,8 +13,8 @@ import type * as actions_requestEstimateTaskTime from "../actions/requestEstimat
 import type * as actions_uploadSyllabus from "../actions/uploadSyllabus.js";
 import type * as auth from "../auth.js";
 import type * as http from "../http.js";
-import type * as lib_types from "../lib/syllabusTypes.js";
-import type * as lib_validators from "../lib/taskValidators.js";
+import type * as lib_syllabusTypes from "../lib/syllabusTypes.js";
+import type * as lib_taskValidators from "../lib/taskValidators.js";
 import type * as mutations_syllabi from "../mutations/syllabi.js";
 import type * as mutations_tasks from "../mutations/tasks.js";
 import type * as mutations_timeEstimate from "../mutations/timeEstimate.js";
@@ -34,8 +34,8 @@ declare const fullApi: ApiFromModules<{
   "actions/uploadSyllabus": typeof actions_uploadSyllabus;
   auth: typeof auth;
   http: typeof http;
-  "lib/types": typeof lib_types;
-  "lib/validators": typeof lib_validators;
+  "lib/syllabusTypes": typeof lib_syllabusTypes;
+  "lib/taskValidators": typeof lib_taskValidators;
   "mutations/syllabi": typeof mutations_syllabi;
   "mutations/tasks": typeof mutations_tasks;
   "mutations/timeEstimate": typeof mutations_timeEstimate;
