@@ -22,6 +22,7 @@ import type * as mutations_timeEstimate from "../mutations/timeEstimate.js";
 import type * as mutations_userCourses from "../mutations/userCourses.js";
 import type * as mutations_users from "../mutations/users.js";
 import type * as queries_tasks from "../queries/tasks.js";
+import type * as queries_userCourses from "../queries/userCourses.js";
 import type * as queries_users from "../queries/users.js";
 
 import type {
@@ -45,6 +46,7 @@ declare const fullApi: ApiFromModules<{
   "mutations/userCourses": typeof mutations_userCourses;
   "mutations/users": typeof mutations_users;
   "queries/tasks": typeof queries_tasks;
+  "queries/userCourses": typeof queries_userCourses;
   "queries/users": typeof queries_users;
 }>;
 
