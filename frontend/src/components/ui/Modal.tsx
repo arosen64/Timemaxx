@@ -74,6 +74,7 @@ export default function Modal({
             <button
               type="button"
               onClick={onClose}
+              aria-label="Close modal"
               className="flex items-center justify-center text-lg border-none rounded-md cursor-pointer h-7 w-7 bg-bg-gray font-body text-light-blue"
             >
               &times;
