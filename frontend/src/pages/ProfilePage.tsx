@@ -19,7 +19,7 @@ export default function ProfilePage() {
         {/* Page Header */}
         <div className="flex flex-col gap-1">
           <h1 className="font-heading text-3xl font-bold text-navy">Profile</h1>
-          <p className="font-body text-sm text-slate-blue">Manage your account settings</p>
+          <p className="font-body text-sm text-slate-blue">View and manage your profile</p>
         </div>
 
         {/* Profile Card */}
