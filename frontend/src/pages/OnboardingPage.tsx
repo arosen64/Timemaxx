@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useQuery, useMutation } from 'convex/react'
+import { useQuery, useMutation, useAction } from 'convex/react'
 import { api } from '../../../backend/convex/_generated/api'
 import ProfileForm from '../components/ProfileForm'
 import WorkHoursSelector, { DEFAULT_WORK_HOURS } from '../components/WorkHoursSelector'
@@ -23,12 +23,19 @@ export default function OnboardingPage() {
   const navigate = useNavigate()
   const isOnboardingComplete = useQuery(api.queries.users.isOnboardingComplete)
   const saveOnboarding = useMutation(api.mutations.users.completeOnboarding)
+  const calendarStatus = useQuery(api.queries.calendar.getCalendarConnectionStatus)
+  const initiateCalendarOAuth = useAction(api.actions.initiateGoogleCalendarOAuth.initiateGoogleCalendarOAuth)
   const [step, setStep] = useState<Step>(1)
   const [profile, setProfile] = useState<ProfileData>(DEFAULT_PROFILE)
   const [profileErrors, setProfileErrors] = useState<{ major?: string; year?: string }>({})
   const [workHours, setWorkHours] = useState<WorkHoursData>(DEFAULT_WORK_HOURS)
   const [preferences, setPreferences] = useState<PreferencesData>(DEFAULT_PREFERENCES)
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  async function handleConnectCalendar() {
+    const authUrl = await initiateCalendarOAuth({})
+    window.location.href = authUrl
+  }
 
   useEffect(() => {
     if (isOnboardingComplete === true) navigate('/dashboard')
@@ -124,6 +131,26 @@ export default function OnboardingPage() {
 
         {step === 3 && (
           <PreferencesForm data={preferences} onChange={setPreferences} />
+        )}
+
+        {/* Google Calendar (optional) — shown on final step */}
+        {step === 3 && (
+          <div className="flex items-center justify-between rounded-lg border border-border p-4">
+            <div className="flex flex-col gap-1">
+              <span className="font-heading text-sm font-semibold text-navy">Google Calendar (optional)</span>
+              <span className="font-body text-xs text-slate-blue">Connect to schedule around your existing events</span>
+            </div>
+            {calendarStatus?.connected ? (
+              <span className="font-heading text-sm font-semibold text-teal">Connected</span>
+            ) : (
+              <button
+                onClick={handleConnectCalendar}
+                className="flex items-center justify-center h-12 px-6 font-heading text-sm font-semibold text-navy bg-white border border-border rounded-lg transition hover:opacity-90"
+              >
+                Connect
+              </button>
+            )}
+          </div>
         )}
 
         {/* Navigation */}

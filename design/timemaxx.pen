@@ -1,5 +1,5 @@
 {
-  "version": "2.8",
+  "version": "2.9",
   "children": [
     {
       "type": "frame",
@@ -38,6 +38,9 @@
                   "type": "ref",
                   "ref": "P9sB9",
                   "name": "logoRow",
+                  "width": "fit_content",
+                  "height": "fit_content",
+                  "x": 0,
                   "descendants": {
                     "eQ4pk": {
                       "width": 40,
@@ -45,10 +48,14 @@
                     },
                     "NZ5gH": {
                       "width": 26,
-                      "height": 26
+                      "height": 26,
+                      "x": 7,
+                      "y": 7
                     },
                     "6YpiG": {
-                      "fontSize": 22
+                      "fontSize": 22,
+                      "x": 50,
+                      "y": 6
                     }
                   }
                 },
@@ -100,9 +107,17 @@
                   "type": "ref",
                   "ref": "T5dmw",
                   "name": "feat1",
+                  "width": "fit_content",
+                  "height": "fit_content",
+                  "x": 0,
+                  "y": 0,
                   "descendants": {
+                    "lAtK4": {
+                      "y": 5
+                    },
                     "N4uKF": {
-                      "content": "Gemini-powered time estimation"
+                      "content": "Gemini-powered time estimation",
+                      "x": 20
                     }
                   }
                 },
@@ -111,9 +126,17 @@
                   "type": "ref",
                   "ref": "T5dmw",
                   "name": "feat2",
+                  "width": "fit_content",
+                  "height": "fit_content",
+                  "x": 0,
+                  "y": 34,
                   "descendants": {
+                    "lAtK4": {
+                      "y": 5
+                    },
                     "N4uKF": {
-                      "content": "Personalized daily study windows"
+                      "content": "Personalized daily study windows",
+                      "x": 20
                     }
                   }
                 },
@@ -122,9 +145,17 @@
                   "type": "ref",
                   "ref": "T5dmw",
                   "name": "feat3",
+                  "width": "fit_content",
+                  "height": "fit_content",
+                  "x": 0,
+                  "y": 68,
                   "descendants": {
+                    "lAtK4": {
+                      "y": 5
+                    },
                     "N4uKF": {
-                      "content": "Smart scheduling around your life"
+                      "content": "Smart scheduling around your life",
+                      "x": 20
                     }
                   }
                 }
@@ -213,7 +244,19 @@
                   "type": "ref",
                   "ref": "7G76U",
                   "name": "googleBtn",
-                  "width": "fill_container"
+                  "width": "fill_container",
+                  "x": 48,
+                  "y": 171,
+                  "descendants": {
+                    "IA0LV": {
+                      "x": 86.5,
+                      "y": 16
+                    },
+                    "cHUQQ": {
+                      "x": 118.5,
+                      "y": 16.5
+                    }
+                  }
                 },
                 {
                   "type": "text",
@@ -261,7 +304,21 @@
               "id": "dsHFw",
               "type": "ref",
               "ref": "P9sB9",
-              "name": "topbarLogo"
+              "name": "topbarLogo",
+              "width": "fit_content",
+              "height": "fit_content",
+              "x": 40,
+              "y": 16,
+              "descendants": {
+                "NZ5gH": {
+                  "x": 5,
+                  "y": 5
+                },
+                "6YpiG": {
+                  "x": 42,
+                  "y": 4.5
+                }
+              }
             },
             {
               "type": "frame",
@@ -372,15 +429,20 @@
                       "ref": "RBd4m",
                       "name": "nameField",
                       "width": "fill_container",
+                      "height": "fit_content",
+                      "x": 0,
                       "descendants": {
                         "I6EfZ": {
                           "content": "Your name"
                         },
                         "Ib0si": {
-                          "width": "fill_container"
+                          "width": "fill_container",
+                          "y": 23
                         },
                         "WXZeW": {
-                          "content": "e.g. Alex Johnson"
+                          "content": "e.g. Alex Johnson",
+                          "x": 14,
+                          "y": 13.5
                         }
                       }
                     },
@@ -526,15 +588,78 @@
                       "ref": "kbg32",
                       "name": "focusField",
                       "width": "fill_container",
+                      "height": "fit_content",
+                      "x": 0,
+                      "y": 170,
                       "descendants": {
                         "hEMk0": {
                           "content": "Preferred focus block length"
                         },
                         "MHn5O": {
-                          "width": "fill_container"
+                          "width": "fill_container",
+                          "y": 23
                         },
                         "O9TP7": {
-                          "content": "45 minutes"
+                          "content": "45 minutes",
+                          "x": 14,
+                          "y": 13.5
+                        },
+                        "oXE40": {
+                          "x": 514,
+                          "y": 14
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "kuCRf",
+                  "name": "calOptSection",
+                  "width": "fill_container",
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "lL0Zd",
+                      "name": "calOptLeft",
+                      "layout": "vertical",
+                      "gap": 4,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "RBbRI",
+                          "name": "calOptTitle",
+                          "fill": "$--primary",
+                          "content": "Google Calendar (optional)",
+                          "fontFamily": "Space Grotesk",
+                          "fontSize": 14,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "Reqwh",
+                          "name": "calOptSub",
+                          "fill": "$--muted-foreground",
+                          "content": "Connect to schedule around your existing events",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "bq9CK",
+                      "type": "ref",
+                      "ref": "uzHQ8",
+                      "width": "fit_content",
+                      "name": "calOptBtn",
+                      "x": 438,
+                      "y": 0,
+                      "descendants": {
+                        "zZ3E7": {
+                          "content": "Connect"
                         }
                       }
                     }
@@ -545,7 +670,19 @@
                   "type": "ref",
                   "ref": "RruJv",
                   "name": "nextBtn",
-                  "width": "fill_container"
+                  "width": "fill_container",
+                  "x": 48,
+                  "y": 499,
+                  "descendants": {
+                    "AkprM": {
+                      "x": 227,
+                      "y": 14.5
+                    },
+                    "TRgda": {
+                      "x": 301,
+                      "y": 16
+                    }
+                  }
                 }
               ]
             }
@@ -568,7 +705,106 @@
           "type": "ref",
           "ref": "GeaRV",
           "name": "sidebar",
-          "height": "fill_container"
+          "height": "fill_container",
+          "x": 0,
+          "y": 0,
+          "descendants": {
+            "pM9zH": {
+              "width": "fill_container",
+              "height": "fit_content",
+              "x": 24,
+              "y": 32
+            },
+            "qwLOb": {
+              "width": "fit_content",
+              "height": "fit_content",
+              "x": 0
+            },
+            "qwLOb/NZ5gH": {
+              "x": 5,
+              "y": 5
+            },
+            "qwLOb/6YpiG": {
+              "x": 42,
+              "y": 4.5
+            },
+            "99Oq1": {
+              "width": "fill_container",
+              "height": "fit_content",
+              "y": 64
+            },
+            "t2ejm": {
+              "width": "fill_container",
+              "x": 0,
+              "y": 0
+            },
+            "t2ejm/r853k": {
+              "x": 14,
+              "y": 14
+            },
+            "t2ejm/yUJUI": {
+              "x": 40,
+              "y": 13
+            },
+            "dLWqu": {
+              "width": "fill_container",
+              "x": 0,
+              "y": 48
+            },
+            "dLWqu/j0EVc": {
+              "x": 14,
+              "y": 14
+            },
+            "dLWqu/Xkhsc": {
+              "x": 40,
+              "y": 13
+            },
+            "ipMWX": {
+              "width": "fill_container",
+              "x": 0,
+              "y": 96
+            },
+            "ipMWX/j0EVc": {
+              "x": 14,
+              "y": 14
+            },
+            "ipMWX/Xkhsc": {
+              "x": 40,
+              "y": 13
+            },
+            "78Cxh": {
+              "width": "fill_container",
+              "x": 0,
+              "y": 144
+            },
+            "78Cxh/j0EVc": {
+              "x": 14,
+              "y": 14
+            },
+            "78Cxh/Xkhsc": {
+              "x": 40,
+              "y": 13
+            },
+            "jzFAO": {
+              "width": "fit_content",
+              "height": "fit_content",
+              "x": 24,
+              "y": 832
+            },
+            "lrM5h": {
+              "x": 9.5,
+              "y": 9.5
+            },
+            "LBXyg": {
+              "width": "fit_content",
+              "height": "fit_content",
+              "x": 46,
+              "y": 2
+            },
+            "AqSvO": {
+              "y": 19
+            }
+          }
         },
         {
           "type": "frame",
@@ -622,12 +858,19 @@
                   "type": "ref",
                   "ref": "tIwJu",
                   "name": "addTaskBtn",
+                  "width": "fit_content",
+                  "x": 975,
+                  "y": 6.5,
                   "descendants": {
                     "hXb93": {
-                      "iconFontName": "plus"
+                      "iconFontName": "plus",
+                      "x": 20,
+                      "y": 14
                     },
                     "RxGN2": {
-                      "content": "Add Task"
+                      "content": "Add Task",
+                      "x": 44,
+                      "y": 13
                     }
                   }
                 }
@@ -646,15 +889,32 @@
                   "ref": "yMD7j",
                   "name": "stat1",
                   "width": "fill_container",
+                  "height": "fit_content",
+                  "x": 0,
+                  "y": 0,
                   "descendants": {
                     "oMHR7": {
-                      "content": "Tasks This Week"
+                      "content": "Tasks This Week",
+                      "x": 20,
+                      "y": 20
                     },
                     "7XF3C": {
-                      "content": "8"
+                      "content": "8",
+                      "x": 20,
+                      "y": 43
+                    },
+                    "5SwIp": {
+                      "width": "fit_content",
+                      "height": "fit_content",
+                      "x": 20,
+                      "y": 97
+                    },
+                    "hlOCO": {
+                      "y": 3.5
                     },
                     "xeZJ4": {
-                      "content": "3 completed"
+                      "content": "3 completed",
+                      "x": 12
                     }
                   }
                 },
@@ -664,19 +924,34 @@
                   "ref": "yMD7j",
                   "name": "stat2",
                   "width": "fill_container",
+                  "height": "fit_content",
+                  "x": 372,
+                  "y": 0,
                   "descendants": {
                     "oMHR7": {
-                      "content": "Estimated Hours"
+                      "content": "Estimated Hours",
+                      "x": 20,
+                      "y": 20
                     },
                     "7XF3C": {
-                      "content": "14.5"
+                      "content": "14.5",
+                      "x": 20,
+                      "y": 43
+                    },
+                    "5SwIp": {
+                      "width": "fit_content",
+                      "height": "fit_content",
+                      "x": 20,
+                      "y": 97
                     },
                     "hlOCO": {
-                      "fill": "$--info"
+                      "fill": "$--info",
+                      "y": 3.5
                     },
                     "xeZJ4": {
                       "fill": "$--info",
-                      "content": "AI estimated"
+                      "content": "AI estimated",
+                      "x": 12
                     }
                   }
                 },
@@ -686,15 +961,32 @@
                   "ref": "UpqxB",
                   "name": "stat3",
                   "width": "fill_container",
+                  "height": "fit_content",
+                  "x": 744,
+                  "y": 0,
                   "descendants": {
                     "uflvb": {
-                      "content": "Study Streak"
+                      "content": "Study Streak",
+                      "x": 20,
+                      "y": 20
                     },
                     "EwvQz": {
-                      "content": "7"
+                      "content": "7",
+                      "x": 20,
+                      "y": 43
+                    },
+                    "K1bdi": {
+                      "width": "fit_content",
+                      "height": "fit_content",
+                      "x": 20,
+                      "y": 97
+                    },
+                    "7s2Pz": {
+                      "y": 3.5
                     },
                     "VPUFt": {
-                      "content": "days in a row"
+                      "content": "days in a row",
+                      "x": 12
                     }
                   }
                 }
@@ -732,12 +1024,36 @@
                       "ref": "f6r4k",
                       "name": "task1",
                       "width": "fill_container",
+                      "height": "fit_content",
+                      "x": 0,
+                      "y": 36,
                       "descendants": {
+                        "xSyvj": {
+                          "x": 18,
+                          "y": 16
+                        },
+                        "irAAT": {
+                          "width": "fit_content",
+                          "height": "fit_content",
+                          "x": 36,
+                          "y": 17.5
+                        },
                         "x5jOH": {
                           "content": "Calculus Problem Set 5"
                         },
                         "ks9wy": {
-                          "content": "Due tomorrow · ~2.5 hrs estimated"
+                          "content": "Due tomorrow · ~2.5 hrs estimated",
+                          "y": 22
+                        },
+                        "fwllh": {
+                          "width": "fit_content",
+                          "height": "fit_content",
+                          "x": 247,
+                          "y": 25
+                        },
+                        "fwllh/RDasw": {
+                          "x": 10,
+                          "y": 4
                         }
                       }
                     },
@@ -747,21 +1063,43 @@
                       "ref": "f6r4k",
                       "name": "task2",
                       "width": "fill_container",
+                      "height": "fit_content",
+                      "x": 0,
+                      "y": 124,
                       "descendants": {
                         "xSyvj": {
-                          "fill": "$--info"
+                          "fill": "$--info",
+                          "x": 18,
+                          "y": 16
+                        },
+                        "irAAT": {
+                          "width": "fit_content",
+                          "height": "fit_content",
+                          "x": 36,
+                          "y": 17.5
                         },
                         "x5jOH": {
                           "content": "History Essay: Industrial Revolution"
                         },
                         "ks9wy": {
-                          "content": "Due in 3 days · ~4 hrs estimated"
+                          "content": "Due in 3 days · ~4 hrs estimated",
+                          "y": 22
                         },
                         "fwllh": {
                           "id": "n87Ra",
                           "type": "ref",
                           "ref": "9qrvT",
-                          "name": "badge"
+                          "name": "badge",
+                          "width": "fit_content",
+                          "height": "fit_content",
+                          "x": 290,
+                          "y": 25,
+                          "descendants": {
+                            "adDaz": {
+                              "x": 10,
+                              "y": 4
+                            }
+                          }
                         }
                       }
                     },
@@ -771,21 +1109,43 @@
                       "ref": "f6r4k",
                       "name": "task3",
                       "width": "fill_container",
+                      "height": "fit_content",
+                      "x": 0,
+                      "y": 212,
                       "descendants": {
                         "xSyvj": {
-                          "fill": "$--success"
+                          "fill": "$--success",
+                          "x": 18,
+                          "y": 16
+                        },
+                        "irAAT": {
+                          "width": "fit_content",
+                          "height": "fit_content",
+                          "x": 36,
+                          "y": 17.5
                         },
                         "x5jOH": {
                           "content": "Chemistry Lab Report"
                         },
                         "ks9wy": {
-                          "content": "Due in 5 days · ~3 hrs estimated"
+                          "content": "Due in 5 days · ~3 hrs estimated",
+                          "y": 22
                         },
                         "fwllh": {
                           "id": "j9AjD",
                           "type": "ref",
                           "ref": "YOta6",
-                          "name": "badge"
+                          "name": "badge",
+                          "width": "fit_content",
+                          "height": "fit_content",
+                          "x": 233,
+                          "y": 25,
+                          "descendants": {
+                            "ezeW9": {
+                              "x": 10,
+                              "y": 4
+                            }
+                          }
                         }
                       }
                     }
@@ -815,15 +1175,24 @@
                       "ref": "mGYEk",
                       "name": "schedBlock1",
                       "width": "fill_container",
+                      "height": "fit_content",
+                      "x": 0,
+                      "y": 36,
                       "descendants": {
                         "5gvFR": {
-                          "content": "9:00 AM – 10:30 AM"
+                          "content": "9:00 AM – 10:30 AM",
+                          "x": 18,
+                          "y": 16
                         },
                         "TnhIo": {
-                          "content": "Calculus Problem Set 5"
+                          "content": "Calculus Problem Set 5",
+                          "x": 18,
+                          "y": 35
                         },
                         "HkeGx": {
-                          "content": "1.5 hrs · Focus block"
+                          "content": "1.5 hrs · Focus block",
+                          "x": 18,
+                          "y": 58
                         }
                       }
                     },
@@ -833,15 +1202,24 @@
                       "ref": "kdXz7",
                       "name": "schedBlock2",
                       "width": "fill_container",
+                      "height": "fit_content",
+                      "x": 0,
+                      "y": 141,
                       "descendants": {
                         "ephls": {
-                          "content": "2:00 PM – 3:00 PM"
+                          "content": "2:00 PM – 3:00 PM",
+                          "x": 18,
+                          "y": 16
                         },
                         "s6t53": {
-                          "content": "History Essay"
+                          "content": "History Essay",
+                          "x": 18,
+                          "y": 35
                         },
                         "G8o9F": {
-                          "content": "1 hr · Focus block"
+                          "content": "1 hr · Focus block",
+                          "x": 18,
+                          "y": 58
                         }
                       }
                     },
@@ -851,15 +1229,24 @@
                       "ref": "kdXz7",
                       "name": "schedBlock3",
                       "width": "fill_container",
+                      "height": "fit_content",
+                      "x": 0,
+                      "y": 246,
                       "descendants": {
                         "ephls": {
-                          "content": "6:00 PM – 7:00 PM"
+                          "content": "6:00 PM – 7:00 PM",
+                          "x": 18,
+                          "y": 16
                         },
                         "s6t53": {
-                          "content": "Chemistry Lab Report"
+                          "content": "Chemistry Lab Report",
+                          "x": 18,
+                          "y": 35
                         },
                         "G8o9F": {
-                          "content": "1 hr · Focus block"
+                          "content": "1 hr · Focus block",
+                          "x": 18,
+                          "y": 58
                         }
                       }
                     },
@@ -868,7 +1255,20 @@
                       "type": "ref",
                       "ref": "SO0nX",
                       "name": "geminiChip",
-                      "width": "fill_container"
+                      "width": "fill_container",
+                      "height": "fit_content",
+                      "x": 0,
+                      "y": 351,
+                      "descendants": {
+                        "K3qRc": {
+                          "x": 14,
+                          "y": 12
+                        },
+                        "xTJtL": {
+                          "x": 36,
+                          "y": 12.5
+                        }
+                      }
                     }
                   ]
                 }
@@ -893,7 +1293,106 @@
           "type": "ref",
           "ref": "GeaRV",
           "name": "sidebar",
-          "height": "fill_container"
+          "height": "fill_container",
+          "x": 0,
+          "y": 0,
+          "descendants": {
+            "pM9zH": {
+              "width": "fill_container",
+              "height": "fit_content",
+              "x": 24,
+              "y": 32
+            },
+            "qwLOb": {
+              "width": "fit_content",
+              "height": "fit_content",
+              "x": 0
+            },
+            "qwLOb/NZ5gH": {
+              "x": 5,
+              "y": 5
+            },
+            "qwLOb/6YpiG": {
+              "x": 42,
+              "y": 4.5
+            },
+            "99Oq1": {
+              "width": "fill_container",
+              "height": "fit_content",
+              "y": 64
+            },
+            "t2ejm": {
+              "width": "fill_container",
+              "x": 0,
+              "y": 0
+            },
+            "t2ejm/r853k": {
+              "x": 14,
+              "y": 14
+            },
+            "t2ejm/yUJUI": {
+              "x": 40,
+              "y": 13
+            },
+            "dLWqu": {
+              "width": "fill_container",
+              "x": 0,
+              "y": 48
+            },
+            "dLWqu/j0EVc": {
+              "x": 14,
+              "y": 14
+            },
+            "dLWqu/Xkhsc": {
+              "x": 40,
+              "y": 13
+            },
+            "ipMWX": {
+              "width": "fill_container",
+              "x": 0,
+              "y": 96
+            },
+            "ipMWX/j0EVc": {
+              "x": 14,
+              "y": 14
+            },
+            "ipMWX/Xkhsc": {
+              "x": 40,
+              "y": 13
+            },
+            "78Cxh": {
+              "width": "fill_container",
+              "x": 0,
+              "y": 144
+            },
+            "78Cxh/j0EVc": {
+              "x": 14,
+              "y": 14
+            },
+            "78Cxh/Xkhsc": {
+              "x": 40,
+              "y": 13
+            },
+            "jzFAO": {
+              "width": "fit_content",
+              "height": "fit_content",
+              "x": 24,
+              "y": 832
+            },
+            "lrM5h": {
+              "x": 9.5,
+              "y": 9.5
+            },
+            "LBXyg": {
+              "width": "fit_content",
+              "height": "fit_content",
+              "x": 46,
+              "y": 2
+            },
+            "AqSvO": {
+              "y": 19
+            }
+          }
         },
         {
           "type": "frame",
@@ -947,12 +1446,19 @@
                   "type": "ref",
                   "ref": "tIwJu",
                   "name": "addTaskBtn",
+                  "width": "fit_content",
+                  "x": 975,
+                  "y": 6.5,
                   "descendants": {
                     "hXb93": {
-                      "iconFontName": "plus"
+                      "iconFontName": "plus",
+                      "x": 20,
+                      "y": 14
                     },
                     "RxGN2": {
-                      "content": "Add Task"
+                      "content": "Add Task",
+                      "x": 44,
+                      "y": 13
                     }
                   }
                 }
@@ -971,15 +1477,32 @@
                   "ref": "yMD7j",
                   "name": "stat1",
                   "width": "fill_container",
+                  "height": "fit_content",
+                  "x": 0,
+                  "y": 0,
                   "descendants": {
                     "oMHR7": {
-                      "content": "Tasks This Week"
+                      "content": "Tasks This Week",
+                      "x": 20,
+                      "y": 20
                     },
                     "7XF3C": {
-                      "content": "8"
+                      "content": "8",
+                      "x": 20,
+                      "y": 43
+                    },
+                    "5SwIp": {
+                      "width": "fit_content",
+                      "height": "fit_content",
+                      "x": 20,
+                      "y": 97
+                    },
+                    "hlOCO": {
+                      "y": 3.5
                     },
                     "xeZJ4": {
-                      "content": "3 completed"
+                      "content": "3 completed",
+                      "x": 12
                     }
                   }
                 },
@@ -989,19 +1512,34 @@
                   "ref": "yMD7j",
                   "name": "stat2",
                   "width": "fill_container",
+                  "height": "fit_content",
+                  "x": 372,
+                  "y": 0,
                   "descendants": {
                     "oMHR7": {
-                      "content": "Estimated Hours"
+                      "content": "Estimated Hours",
+                      "x": 20,
+                      "y": 20
                     },
                     "7XF3C": {
-                      "content": "14.5"
+                      "content": "14.5",
+                      "x": 20,
+                      "y": 43
+                    },
+                    "5SwIp": {
+                      "width": "fit_content",
+                      "height": "fit_content",
+                      "x": 20,
+                      "y": 97
                     },
                     "hlOCO": {
-                      "fill": "$--info"
+                      "fill": "$--info",
+                      "y": 3.5
                     },
                     "xeZJ4": {
                       "content": "AI estimated",
-                      "fill": "$--info"
+                      "fill": "$--info",
+                      "x": 12
                     }
                   }
                 },
@@ -1011,15 +1549,32 @@
                   "ref": "UpqxB",
                   "name": "stat3",
                   "width": "fill_container",
+                  "height": "fit_content",
+                  "x": 744,
+                  "y": 0,
                   "descendants": {
                     "uflvb": {
-                      "content": "Study Streak"
+                      "content": "Study Streak",
+                      "x": 20,
+                      "y": 20
                     },
                     "EwvQz": {
-                      "content": "7"
+                      "content": "7",
+                      "x": 20,
+                      "y": 43
+                    },
+                    "K1bdi": {
+                      "width": "fit_content",
+                      "height": "fit_content",
+                      "x": 20,
+                      "y": 97
+                    },
+                    "7s2Pz": {
+                      "y": 3.5
                     },
                     "VPUFt": {
-                      "content": "days in a row"
+                      "content": "days in a row",
+                      "x": 12
                     }
                   }
                 }
@@ -1057,12 +1612,36 @@
                       "ref": "f6r4k",
                       "name": "task1",
                       "width": "fill_container",
+                      "height": "fit_content",
+                      "x": 0,
+                      "y": 36,
                       "descendants": {
+                        "xSyvj": {
+                          "x": 18,
+                          "y": 16
+                        },
+                        "irAAT": {
+                          "width": "fit_content",
+                          "height": "fit_content",
+                          "x": 36,
+                          "y": 17.5
+                        },
                         "x5jOH": {
                           "content": "Calculus Problem Set 5"
                         },
                         "ks9wy": {
-                          "content": "Due tomorrow · ~2.5 hrs estimated"
+                          "content": "Due tomorrow · ~2.5 hrs estimated",
+                          "y": 22
+                        },
+                        "fwllh": {
+                          "width": "fit_content",
+                          "height": "fit_content",
+                          "x": 247,
+                          "y": 25
+                        },
+                        "fwllh/RDasw": {
+                          "x": 10,
+                          "y": 4
                         }
                       }
                     },
@@ -1072,21 +1651,43 @@
                       "ref": "f6r4k",
                       "name": "task2",
                       "width": "fill_container",
+                      "height": "fit_content",
+                      "x": 0,
+                      "y": 124,
                       "descendants": {
                         "xSyvj": {
-                          "fill": "$--info"
+                          "fill": "$--info",
+                          "x": 18,
+                          "y": 16
+                        },
+                        "irAAT": {
+                          "width": "fit_content",
+                          "height": "fit_content",
+                          "x": 36,
+                          "y": 17.5
                         },
                         "x5jOH": {
                           "content": "History Essay: Industrial Revolution"
                         },
                         "ks9wy": {
-                          "content": "Due in 3 days · ~4 hrs estimated"
+                          "content": "Due in 3 days · ~4 hrs estimated",
+                          "y": 22
                         },
                         "fwllh": {
                           "id": "5JriD",
                           "type": "ref",
                           "ref": "9qrvT",
-                          "name": "badge"
+                          "name": "badge",
+                          "width": "fit_content",
+                          "height": "fit_content",
+                          "x": 290,
+                          "y": 25,
+                          "descendants": {
+                            "adDaz": {
+                              "x": 10,
+                              "y": 4
+                            }
+                          }
                         }
                       }
                     },
@@ -1096,21 +1697,43 @@
                       "ref": "f6r4k",
                       "name": "task3",
                       "width": "fill_container",
+                      "height": "fit_content",
+                      "x": 0,
+                      "y": 212,
                       "descendants": {
                         "xSyvj": {
-                          "fill": "$--success"
+                          "fill": "$--success",
+                          "x": 18,
+                          "y": 16
+                        },
+                        "irAAT": {
+                          "width": "fit_content",
+                          "height": "fit_content",
+                          "x": 36,
+                          "y": 17.5
                         },
                         "x5jOH": {
                           "content": "Chemistry Lab Report"
                         },
                         "ks9wy": {
-                          "content": "Due in 5 days · ~3 hrs estimated"
+                          "content": "Due in 5 days · ~3 hrs estimated",
+                          "y": 22
                         },
                         "fwllh": {
                           "id": "SviJc",
                           "type": "ref",
                           "ref": "YOta6",
-                          "name": "badge"
+                          "name": "badge",
+                          "width": "fit_content",
+                          "height": "fit_content",
+                          "x": 233,
+                          "y": 25,
+                          "descendants": {
+                            "ezeW9": {
+                              "x": 10,
+                              "y": 4
+                            }
+                          }
                         }
                       }
                     }
@@ -1140,15 +1763,24 @@
                       "ref": "mGYEk",
                       "name": "schedBlock1",
                       "width": "fill_container",
+                      "height": "fit_content",
+                      "x": 0,
+                      "y": 36,
                       "descendants": {
                         "5gvFR": {
-                          "content": "9:00 AM – 10:30 AM"
+                          "content": "9:00 AM – 10:30 AM",
+                          "x": 18,
+                          "y": 16
                         },
                         "TnhIo": {
-                          "content": "Calculus Problem Set 5"
+                          "content": "Calculus Problem Set 5",
+                          "x": 18,
+                          "y": 35
                         },
                         "HkeGx": {
-                          "content": "1.5 hrs · Focus block"
+                          "content": "1.5 hrs · Focus block",
+                          "x": 18,
+                          "y": 58
                         }
                       }
                     },
@@ -1158,15 +1790,24 @@
                       "ref": "kdXz7",
                       "name": "schedBlock2",
                       "width": "fill_container",
+                      "height": "fit_content",
+                      "x": 0,
+                      "y": 141,
                       "descendants": {
                         "ephls": {
-                          "content": "2:00 PM – 3:00 PM"
+                          "content": "2:00 PM – 3:00 PM",
+                          "x": 18,
+                          "y": 16
                         },
                         "s6t53": {
-                          "content": "History Essay"
+                          "content": "History Essay",
+                          "x": 18,
+                          "y": 35
                         },
                         "G8o9F": {
-                          "content": "1 hr · Focus block"
+                          "content": "1 hr · Focus block",
+                          "x": 18,
+                          "y": 58
                         }
                       }
                     },
@@ -1176,15 +1817,24 @@
                       "ref": "kdXz7",
                       "name": "schedBlock3",
                       "width": "fill_container",
+                      "height": "fit_content",
+                      "x": 0,
+                      "y": 246,
                       "descendants": {
                         "ephls": {
-                          "content": "6:00 PM – 7:00 PM"
+                          "content": "6:00 PM – 7:00 PM",
+                          "x": 18,
+                          "y": 16
                         },
                         "s6t53": {
-                          "content": "Chemistry Lab Report"
+                          "content": "Chemistry Lab Report",
+                          "x": 18,
+                          "y": 35
                         },
                         "G8o9F": {
-                          "content": "1 hr · Focus block"
+                          "content": "1 hr · Focus block",
+                          "x": 18,
+                          "y": 58
                         }
                       }
                     },
@@ -1193,7 +1843,20 @@
                       "type": "ref",
                       "ref": "SO0nX",
                       "name": "geminiChip",
-                      "width": "fill_container"
+                      "width": "fill_container",
+                      "height": "fit_content",
+                      "x": 0,
+                      "y": 351,
+                      "descendants": {
+                        "K3qRc": {
+                          "x": 14,
+                          "y": 12
+                        },
+                        "xTJtL": {
+                          "x": 36,
+                          "y": 12.5
+                        }
+                      }
                     }
                   ]
                 }
@@ -1298,15 +1961,20 @@
               "ref": "RBd4m",
               "name": "taskNameField",
               "width": "fill_container",
+              "height": "fit_content",
+              "x": 0,
               "descendants": {
                 "I6EfZ": {
                   "content": "Task name"
                 },
                 "Ib0si": {
-                  "width": "fill_container"
+                  "width": "fill_container",
+                  "y": 23
                 },
                 "WXZeW": {
-                  "content": "e.g. Calculus Problem Set 5"
+                  "content": "e.g. Calculus Problem Set 5",
+                  "x": 14,
+                  "y": 13.5
                 }
               }
             },
@@ -1515,15 +2183,21 @@
               "ref": "RBd4m",
               "name": "dueDateField",
               "width": "fill_container",
+              "height": "fit_content",
+              "x": 0,
+              "y": 305,
               "descendants": {
                 "I6EfZ": {
                   "content": "Due date"
                 },
                 "Ib0si": {
-                  "width": "fill_container"
+                  "width": "fill_container",
+                  "y": 23
                 },
                 "WXZeW": {
-                  "content": "MM / DD / YYYY"
+                  "content": "MM / DD / YYYY",
+                  "x": 14,
+                  "y": 13.5
                 }
               }
             }
@@ -1541,7 +2215,15 @@
               "type": "ref",
               "ref": "uzHQ8",
               "name": "cancelBtn",
-              "width": "fill_container"
+              "width": "fill_container",
+              "x": 0,
+              "y": 0,
+              "descendants": {
+                "zZ3E7": {
+                  "x": 80,
+                  "y": 15
+                }
+              }
             },
             {
               "id": "JbXEL",
@@ -1549,12 +2231,18 @@
               "ref": "RruJv",
               "name": "addTaskBtn",
               "width": "fill_container",
+              "x": 218,
+              "y": 0,
               "descendants": {
                 "AkprM": {
-                  "content": "Add Task"
+                  "content": "Add Task",
+                  "x": 58.5,
+                  "y": 14.5
                 },
                 "TRgda": {
-                  "iconFontName": "check"
+                  "iconFontName": "check",
+                  "x": 131.5,
+                  "y": 16
                 }
               }
             }
@@ -1578,21 +2266,79 @@
           "ref": "GeaRV",
           "name": "sidebar",
           "height": "fill_container",
+          "x": 0,
+          "y": 0,
           "descendants": {
+            "pM9zH": {
+              "width": "fill_container",
+              "height": "fit_content",
+              "x": 24,
+              "y": 32
+            },
+            "qwLOb": {
+              "width": "fit_content",
+              "height": "fit_content",
+              "x": 0
+            },
+            "qwLOb/NZ5gH": {
+              "x": 5,
+              "y": 5
+            },
+            "qwLOb/6YpiG": {
+              "x": 42,
+              "y": 4.5
+            },
+            "99Oq1": {
+              "width": "fill_container",
+              "height": "fit_content",
+              "y": 64
+            },
             "t2ejm": {
               "id": "8Zbpu",
               "type": "ref",
               "ref": "Dfji9",
               "name": "navDash",
               "width": "fill_container",
+              "x": 0,
+              "y": 0,
               "descendants": {
                 "j0EVc": {
-                  "iconFontName": "layout-dashboard"
+                  "iconFontName": "layout-dashboard",
+                  "x": 14,
+                  "y": 14
                 },
                 "Xkhsc": {
-                  "content": "Dashboard"
+                  "content": "Dashboard",
+                  "x": 40,
+                  "y": 13
                 }
               }
+            },
+            "dLWqu": {
+              "width": "fill_container",
+              "x": 0,
+              "y": 48
+            },
+            "dLWqu/j0EVc": {
+              "x": 14,
+              "y": 14
+            },
+            "dLWqu/Xkhsc": {
+              "x": 40,
+              "y": 13
+            },
+            "ipMWX": {
+              "width": "fill_container",
+              "x": 0,
+              "y": 96
+            },
+            "ipMWX/j0EVc": {
+              "x": 14,
+              "y": 14
+            },
+            "ipMWX/Xkhsc": {
+              "x": 40,
+              "y": 13
             },
             "78Cxh": {
               "id": "YsS8l",
@@ -1600,14 +2346,39 @@
               "ref": "IrWsh",
               "name": "navProfile",
               "width": "fill_container",
+              "x": 0,
+              "y": 144,
               "descendants": {
                 "r853k": {
-                  "iconFontName": "user"
+                  "iconFontName": "user",
+                  "x": 14,
+                  "y": 14
                 },
                 "yUJUI": {
-                  "content": "Profile"
+                  "content": "Profile",
+                  "x": 40,
+                  "y": 13
                 }
               }
+            },
+            "jzFAO": {
+              "width": "fit_content",
+              "height": "fit_content",
+              "x": 24,
+              "y": 832
+            },
+            "lrM5h": {
+              "x": 9.5,
+              "y": 9.5
+            },
+            "LBXyg": {
+              "width": "fit_content",
+              "height": "fit_content",
+              "x": 46,
+              "y": 2
+            },
+            "AqSvO": {
+              "y": 19
             }
           }
         },
@@ -1884,6 +2655,70 @@
                   "width": "fill_container",
                   "height": 1,
                   "fill": "#D8E4F0"
+                },
+                {
+                  "type": "frame",
+                  "id": "FNpSE",
+                  "name": "calendarSection",
+                  "width": "fill_container",
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "hjWSt",
+                      "name": "calInfo",
+                      "layout": "vertical",
+                      "gap": 4,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "qIS3k",
+                          "name": "calTitle",
+                          "fill": "$--primary",
+                          "content": "Google Calendar",
+                          "fontFamily": "Space Grotesk",
+                          "fontSize": 16,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "M9kq7",
+                          "name": "calSub",
+                          "fill": "$--muted-foreground",
+                          "content": "Connect to improve schedule accuracy",
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "IFbFE",
+                      "type": "ref",
+                      "ref": "tIwJu",
+                      "width": "fit_content",
+                      "name": "calConnectBtn",
+                      "x": 819,
+                      "y": 0,
+                      "descendants": {
+                        "hXb93": {
+                          "iconFontName": "calendar"
+                        },
+                        "RxGN2": {
+                          "content": "Connect Calendar"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "qnxiZ",
+                  "name": "calDivider",
+                  "width": "fill_container",
+                  "height": 1,
+                  "fill": "$--border"
                 },
                 {
                   "type": "frame",
@@ -2317,19 +3152,49 @@
               "id": "0EB2g",
               "type": "ref",
               "ref": "adMMy",
-              "name": "badge1"
+              "name": "badge1",
+              "width": "fit_content",
+              "height": "fit_content",
+              "x": 0,
+              "y": 0,
+              "descendants": {
+                "RDasw": {
+                  "x": 10,
+                  "y": 4
+                }
+              }
             },
             {
               "id": "q2oXV",
               "type": "ref",
               "ref": "9qrvT",
-              "name": "badge2"
+              "name": "badge2",
+              "width": "fit_content",
+              "height": "fit_content",
+              "x": 69,
+              "y": 0,
+              "descendants": {
+                "adDaz": {
+                  "x": 10,
+                  "y": 4
+                }
+              }
             },
             {
               "id": "hV0N4",
               "type": "ref",
               "ref": "YOta6",
-              "name": "badge3"
+              "name": "badge3",
+              "width": "fit_content",
+              "height": "fit_content",
+              "x": 160,
+              "y": 0,
+              "descendants": {
+                "ezeW9": {
+                  "x": 10,
+                  "y": 4
+                }
+              }
             }
           ]
         },
@@ -2359,9 +3224,14 @@
               "type": "ref",
               "ref": "Xdrqk",
               "name": "btn1",
+              "width": "fit_content",
+              "x": 0,
+              "y": 4,
               "descendants": {
                 "vxzyR": {
-                  "content": "Add Task"
+                  "content": "Add Task",
+                  "x": 20,
+                  "y": 13
                 }
               }
             },
@@ -2369,36 +3239,102 @@
               "id": "aAW94",
               "type": "ref",
               "ref": "tIwJu",
-              "name": "btn_iconLeft"
+              "name": "btn_iconLeft",
+              "width": "fit_content",
+              "x": 117,
+              "y": 4,
+              "descendants": {
+                "hXb93": {
+                  "x": 20,
+                  "y": 14
+                },
+                "RxGN2": {
+                  "x": 44,
+                  "y": 13
+                }
+              }
             },
             {
               "id": "RFPN0",
               "type": "ref",
               "ref": "KISDQ",
-              "name": "btn_iconRight"
+              "name": "btn_iconRight",
+              "width": "fit_content",
+              "x": 244,
+              "y": 4,
+              "descendants": {
+                "KYEWI": {
+                  "x": 20,
+                  "y": 13
+                },
+                "Zuzpu": {
+                  "x": 75,
+                  "y": 14
+                }
+              }
             },
             {
               "id": "z6mON",
               "type": "ref",
               "ref": "RruJv",
-              "name": "btn2"
+              "name": "btn2",
+              "width": "fit_content",
+              "x": 371,
+              "y": 2,
+              "descendants": {
+                "AkprM": {
+                  "x": 24,
+                  "y": 14.5
+                },
+                "TRgda": {
+                  "x": 98,
+                  "y": 16
+                }
+              }
             },
             {
               "id": "4XOWD",
               "type": "ref",
               "ref": "7G76U",
-              "name": "btn3"
+              "name": "btn3",
+              "width": "fit_content",
+              "x": 525,
+              "y": 0,
+              "descendants": {
+                "IA0LV": {
+                  "x": 24,
+                  "y": 16
+                },
+                "cHUQQ": {
+                  "x": 56,
+                  "y": 16.5
+                }
+              }
             },
             {
               "id": "LTgwK",
               "type": "ref",
               "ref": "uzHQ8",
               "name": "btn4",
+              "width": "fit_content",
+              "x": 760,
+              "y": 2,
               "descendants": {
                 "zZ3E7": {
-                  "content": "Cancel"
+                  "content": "Cancel",
+                  "x": 24,
+                  "y": 15
                 }
               }
+            },
+            {
+              "id": "gDqmm",
+              "type": "ref",
+              "ref": "Gux0S",
+              "name": "btnDestructive",
+              "width": "fit_content",
+              "x": 870,
+              "y": 4
             }
           ]
         },
@@ -2427,19 +3363,39 @@
               "id": "8JCqS",
               "type": "ref",
               "ref": "IrWsh",
-              "name": "nav1"
+              "name": "nav1",
+              "width": "fit_content",
+              "x": 0,
+              "y": 0,
+              "descendants": {
+                "r853k": {
+                  "x": 14,
+                  "y": 14
+                },
+                "yUJUI": {
+                  "x": 40,
+                  "y": 13
+                }
+              }
             },
             {
               "id": "px0KX",
               "type": "ref",
               "ref": "Dfji9",
               "name": "nav2",
+              "width": "fit_content",
+              "x": 140,
+              "y": 0,
               "descendants": {
                 "j0EVc": {
-                  "iconFontName": "calendar"
+                  "iconFontName": "calendar",
+                  "x": 14,
+                  "y": 14
                 },
                 "Xkhsc": {
-                  "content": "Schedule"
+                  "content": "Schedule",
+                  "x": 40,
+                  "y": 13
                 }
               }
             },
@@ -2448,12 +3404,19 @@
               "type": "ref",
               "ref": "Dfji9",
               "name": "nav3",
+              "width": "fit_content",
+              "x": 270,
+              "y": 0,
               "descendants": {
                 "j0EVc": {
-                  "iconFontName": "user"
+                  "iconFontName": "user",
+                  "x": 14,
+                  "y": 14
                 },
                 "Xkhsc": {
-                  "content": "Profile"
+                  "content": "Profile",
+                  "x": 40,
+                  "y": 13
                 }
               }
             }
@@ -2485,12 +3448,20 @@
               "ref": "RBd4m",
               "width": 240,
               "name": "form1",
+              "height": "fit_content",
+              "x": 0,
               "descendants": {
                 "I6EfZ": {
                   "content": "Your name"
                 },
+                "Ib0si": {
+                  "width": "fit_content",
+                  "y": 23
+                },
                 "WXZeW": {
-                  "content": "e.g. Alex Johnson"
+                  "content": "e.g. Alex Johnson",
+                  "x": 14,
+                  "y": 13.5
                 }
               }
             },
@@ -2500,12 +3471,25 @@
               "ref": "kbg32",
               "width": 240,
               "name": "form2",
+              "height": "fit_content",
+              "x": 260,
+              "y": 0,
               "descendants": {
                 "hEMk0": {
                   "content": "Focus block length"
                 },
+                "MHn5O": {
+                  "width": "fit_content",
+                  "y": 23
+                },
                 "O9TP7": {
-                  "content": "45 minutes"
+                  "content": "45 minutes",
+                  "x": 14,
+                  "y": 13.5
+                },
+                "oXE40": {
+                  "x": 88,
+                  "y": 14
                 }
               }
             },
@@ -2514,7 +3498,20 @@
               "type": "ref",
               "ref": "SO0nX",
               "width": 220,
-              "name": "form3"
+              "name": "form3",
+              "height": "fit_content",
+              "x": 520,
+              "y": 0,
+              "descendants": {
+                "K3qRc": {
+                  "x": 14,
+                  "y": 12
+                },
+                "xTJtL": {
+                  "x": 36,
+                  "y": 12.5
+                }
+              }
             }
           ]
         },
@@ -2544,12 +3541,36 @@
               "ref": "f6r4k",
               "width": 340,
               "name": "tcard",
+              "height": "fit_content",
+              "x": 0,
+              "y": 0,
               "descendants": {
+                "xSyvj": {
+                  "x": 18,
+                  "y": 16
+                },
+                "irAAT": {
+                  "width": "fit_content",
+                  "height": "fit_content",
+                  "x": 36,
+                  "y": 17.5
+                },
                 "x5jOH": {
                   "content": "Calculus Problem Set 5"
                 },
                 "ks9wy": {
-                  "content": "Due tomorrow · ~2.5 hrs estimated"
+                  "content": "Due tomorrow · ~2.5 hrs estimated",
+                  "y": 22
+                },
+                "fwllh": {
+                  "width": "fit_content",
+                  "height": "fit_content",
+                  "x": 247,
+                  "y": 25
+                },
+                "fwllh/RDasw": {
+                  "x": 10,
+                  "y": 4
                 }
               }
             },
@@ -2559,15 +3580,32 @@
               "ref": "yMD7j",
               "width": 160,
               "name": "stat1",
+              "height": "fit_content",
+              "x": 356,
+              "y": 0,
               "descendants": {
                 "oMHR7": {
-                  "content": "Tasks This Week"
+                  "content": "Tasks This Week",
+                  "x": 20,
+                  "y": 20
                 },
                 "7XF3C": {
-                  "content": "8"
+                  "content": "8",
+                  "x": 20,
+                  "y": 43
+                },
+                "5SwIp": {
+                  "width": "fit_content",
+                  "height": "fit_content",
+                  "x": 20,
+                  "y": 97
+                },
+                "hlOCO": {
+                  "y": 3.5
                 },
                 "xeZJ4": {
-                  "content": "3 completed"
+                  "content": "3 completed",
+                  "x": 12
                 }
               }
             },
@@ -2577,15 +3615,32 @@
               "ref": "UpqxB",
               "width": 160,
               "name": "stat2",
+              "height": "fit_content",
+              "x": 532,
+              "y": 0,
               "descendants": {
                 "uflvb": {
-                  "content": "Study Streak"
+                  "content": "Study Streak",
+                  "x": 20,
+                  "y": 20
                 },
                 "EwvQz": {
-                  "content": "7"
+                  "content": "7",
+                  "x": 20,
+                  "y": 43
+                },
+                "K1bdi": {
+                  "width": "fit_content",
+                  "height": "fit_content",
+                  "x": 20,
+                  "y": 97
+                },
+                "7s2Pz": {
+                  "y": 3.5
                 },
                 "VPUFt": {
-                  "content": "days in a row"
+                  "content": "days in a row",
+                  "x": 12
                 }
               }
             }
@@ -2617,15 +3672,24 @@
               "ref": "mGYEk",
               "width": 300,
               "name": "sched1",
+              "height": "fit_content",
+              "x": 0,
+              "y": 0,
               "descendants": {
                 "5gvFR": {
-                  "content": "9:00 AM – 10:30 AM"
+                  "content": "9:00 AM – 10:30 AM",
+                  "x": 18,
+                  "y": 16
                 },
                 "TnhIo": {
-                  "content": "Calculus Problem Set 5"
+                  "content": "Calculus Problem Set 5",
+                  "x": 18,
+                  "y": 35
                 },
                 "HkeGx": {
-                  "content": "1.5 hrs · Focus block"
+                  "content": "1.5 hrs · Focus block",
+                  "x": 18,
+                  "y": 58
                 }
               }
             },
@@ -2635,15 +3699,24 @@
               "ref": "kdXz7",
               "width": 300,
               "name": "sched2",
+              "height": "fit_content",
+              "x": 316,
+              "y": 0,
               "descendants": {
                 "ephls": {
-                  "content": "2:00 PM – 3:00 PM"
+                  "content": "2:00 PM – 3:00 PM",
+                  "x": 18,
+                  "y": 16
                 },
                 "s6t53": {
-                  "content": "History Essay"
+                  "content": "History Essay",
+                  "x": 18,
+                  "y": 35
                 },
                 "G8o9F": {
-                  "content": "1 hr · Focus block"
+                  "content": "1 hr · Focus block",
+                  "x": 18,
+                  "y": 58
                 }
               }
             }
@@ -2675,9 +3748,17 @@
               "type": "ref",
               "ref": "T5dmw",
               "name": "feat1",
+              "width": "fit_content",
+              "height": "fit_content",
+              "x": 0,
+              "y": 0,
               "descendants": {
+                "lAtK4": {
+                  "y": 5
+                },
                 "N4uKF": {
-                  "content": "Gemini-powered time estimation"
+                  "content": "Gemini-powered time estimation",
+                  "x": 20
                 }
               }
             },
@@ -2686,9 +3767,17 @@
               "type": "ref",
               "ref": "T5dmw",
               "name": "feat2",
+              "width": "fit_content",
+              "height": "fit_content",
+              "x": 0,
+              "y": 30,
               "descendants": {
+                "lAtK4": {
+                  "y": 5
+                },
                 "N4uKF": {
-                  "content": "Personalized daily study windows"
+                  "content": "Personalized daily study windows",
+                  "x": 20
                 }
               }
             },
@@ -2697,9 +3786,17 @@
               "type": "ref",
               "ref": "T5dmw",
               "name": "feat3",
+              "width": "fit_content",
+              "height": "fit_content",
+              "x": 0,
+              "y": 60,
               "descendants": {
+                "lAtK4": {
+                  "y": 5
+                },
                 "N4uKF": {
-                  "content": "Smart scheduling around your life"
+                  "content": "Smart scheduling around your life",
+                  "x": 20
                 }
               }
             }
@@ -2711,7 +3808,19 @@
           "ref": "P9sB9",
           "x": 700,
           "y": 1144,
-          "name": "logoDisplay"
+          "name": "logoDisplay",
+          "width": "fit_content",
+          "height": "fit_content",
+          "descendants": {
+            "NZ5gH": {
+              "x": 5,
+              "y": 5
+            },
+            "6YpiG": {
+              "x": 42,
+              "y": 4.5
+            }
+          }
         },
         {
           "id": "akA0L",
@@ -2720,7 +3829,104 @@
           "x": 900,
           "y": 870,
           "height": 600,
-          "name": "sidebarDisplay"
+          "name": "sidebarDisplay",
+          "descendants": {
+            "pM9zH": {
+              "width": "fill_container",
+              "height": "fit_content",
+              "x": 24,
+              "y": 32
+            },
+            "qwLOb": {
+              "width": "fit_content",
+              "height": "fit_content",
+              "x": 0
+            },
+            "qwLOb/NZ5gH": {
+              "x": 5,
+              "y": 5
+            },
+            "qwLOb/6YpiG": {
+              "x": 42,
+              "y": 4.5
+            },
+            "99Oq1": {
+              "width": "fill_container",
+              "height": "fit_content",
+              "y": 64
+            },
+            "t2ejm": {
+              "width": "fill_container",
+              "x": 0,
+              "y": 0
+            },
+            "t2ejm/r853k": {
+              "x": 14,
+              "y": 14
+            },
+            "t2ejm/yUJUI": {
+              "x": 40,
+              "y": 13
+            },
+            "dLWqu": {
+              "width": "fill_container",
+              "x": 0,
+              "y": 48
+            },
+            "dLWqu/j0EVc": {
+              "x": 14,
+              "y": 14
+            },
+            "dLWqu/Xkhsc": {
+              "x": 40,
+              "y": 13
+            },
+            "ipMWX": {
+              "width": "fill_container",
+              "x": 0,
+              "y": 96
+            },
+            "ipMWX/j0EVc": {
+              "x": 14,
+              "y": 14
+            },
+            "ipMWX/Xkhsc": {
+              "x": 40,
+              "y": 13
+            },
+            "78Cxh": {
+              "width": "fill_container",
+              "x": 0,
+              "y": 144
+            },
+            "78Cxh/j0EVc": {
+              "x": 14,
+              "y": 14
+            },
+            "78Cxh/Xkhsc": {
+              "x": 40,
+              "y": 13
+            },
+            "jzFAO": {
+              "width": "fit_content",
+              "height": "fit_content",
+              "x": 24,
+              "y": 532
+            },
+            "lrM5h": {
+              "x": 9.5,
+              "y": 9.5
+            },
+            "LBXyg": {
+              "width": "fit_content",
+              "height": "fit_content",
+              "x": 46,
+              "y": 2
+            },
+            "AqSvO": {
+              "y": 19
+            }
+          }
         }
       ]
     },
@@ -3286,7 +4492,17 @@
           "id": "fwllh",
           "type": "ref",
           "ref": "adMMy",
-          "name": "badge"
+          "name": "badge",
+          "width": "fit_content",
+          "height": "fit_content",
+          "x": 247,
+          "y": 25,
+          "descendants": {
+            "RDasw": {
+              "x": 10,
+              "y": 4
+            }
+          }
         }
       ]
     },
@@ -3551,7 +4767,20 @@
               "id": "qwLOb",
               "type": "ref",
               "ref": "P9sB9",
-              "name": "logo"
+              "name": "logo",
+              "width": "fit_content",
+              "height": "fit_content",
+              "x": 0,
+              "descendants": {
+                "NZ5gH": {
+                  "x": 5,
+                  "y": 5
+                },
+                "6YpiG": {
+                  "x": 42,
+                  "y": 4.5
+                }
+              }
             },
             {
               "type": "frame",
@@ -3566,7 +4795,19 @@
                   "type": "ref",
                   "ref": "IrWsh",
                   "name": "navDash",
-                  "width": "fill_container"
+                  "width": "fill_container",
+                  "x": 0,
+                  "y": 0,
+                  "descendants": {
+                    "r853k": {
+                      "x": 14,
+                      "y": 14
+                    },
+                    "yUJUI": {
+                      "x": 40,
+                      "y": 13
+                    }
+                  }
                 },
                 {
                   "id": "dLWqu",
@@ -3574,12 +4815,18 @@
                   "ref": "Dfji9",
                   "name": "navTasks",
                   "width": "fill_container",
+                  "x": 0,
+                  "y": 48,
                   "descendants": {
                     "j0EVc": {
-                      "iconFontName": "square"
+                      "iconFontName": "square",
+                      "x": 14,
+                      "y": 14
                     },
                     "Xkhsc": {
-                      "content": "Tasks"
+                      "content": "Tasks",
+                      "x": 40,
+                      "y": 13
                     }
                   }
                 },
@@ -3589,12 +4836,18 @@
                   "ref": "Dfji9",
                   "name": "navSched",
                   "width": "fill_container",
+                  "x": 0,
+                  "y": 96,
                   "descendants": {
                     "j0EVc": {
-                      "iconFontName": "calendar"
+                      "iconFontName": "calendar",
+                      "x": 14,
+                      "y": 14
                     },
                     "Xkhsc": {
-                      "content": "Schedule"
+                      "content": "Schedule",
+                      "x": 40,
+                      "y": 13
                     }
                   }
                 },
@@ -3604,12 +4857,18 @@
                   "ref": "Dfji9",
                   "name": "navProfile",
                   "width": "fill_container",
+                  "x": 0,
+                  "y": 144,
                   "descendants": {
                     "j0EVc": {
-                      "iconFontName": "user"
+                      "iconFontName": "user",
+                      "x": 14,
+                      "y": 14
                     },
                     "Xkhsc": {
-                      "content": "Profile"
+                      "content": "Profile",
+                      "x": 40,
+                      "y": 13
                     }
                   }
                 }
@@ -3789,6 +5048,36 @@
           "iconFontName": "arrow-right",
           "iconFontFamily": "lucide",
           "fill": "$--accent"
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "Gux0S",
+      "x": 7700,
+      "y": 680,
+      "name": "Button/Destructive",
+      "reusable": true,
+      "height": 44,
+      "fill": "$--destructive",
+      "cornerRadius": "$--radius-m",
+      "gap": 8,
+      "padding": [
+        0,
+        20
+      ],
+      "justifyContent": "center",
+      "alignItems": "center",
+      "children": [
+        {
+          "type": "text",
+          "id": "FFCiX",
+          "name": "label",
+          "fill": "$--primary-foreground",
+          "content": "Button",
+          "fontFamily": "Space Grotesk",
+          "fontSize": 14,
+          "fontWeight": "600"
         }
       ]
     }

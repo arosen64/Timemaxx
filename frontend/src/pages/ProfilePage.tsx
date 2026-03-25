@@ -1,13 +1,25 @@
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
-import { useQuery } from "convex/react";
+import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "../../../backend/convex/_generated/api";
 
 export default function ProfilePage() {
   const { signOut } = useAuthActions();
   const navigate = useNavigate();
   const user = useQuery(api.queries.users.getCurrUser);
+  const calendarStatus = useQuery(api.queries.calendar.getCalendarConnectionStatus);
+  const deleteCalendarToken = useMutation(api.mutations.calendar.deleteCalendarToken);
+  const initiateCalendarOAuth = useAction(api.actions.initiateGoogleCalendarOAuth.initiateGoogleCalendarOAuth);
+
+  async function handleConnectCalendar() {
+    const authUrl = await initiateCalendarOAuth({});
+    window.location.href = authUrl;
+  }
+
+  async function handleRevokeCalendar() {
+    await deleteCalendarToken({});
+  }
 
   async function handleLogout() {
     await signOut();
@@ -127,6 +139,33 @@ export default function ProfilePage() {
           {/* Divider */}
           <div className="h-px w-full bg-border" />
 
+          {/* Google Calendar */}
+          <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-1">
+              <span className="font-heading text-base font-semibold text-navy">Google Calendar</span>
+              <span className="font-body text-sm text-slate-blue">Connect to improve schedule accuracy</span>
+            </div>
+            {calendarStatus?.connected ? (
+              <button
+                onClick={handleRevokeCalendar}
+                className="flex items-center justify-center h-11 gap-2 px-5 font-heading text-sm font-semibold text-white bg-urgent-red rounded-lg transition hover:opacity-90"
+              >
+                Revoke Access
+              </button>
+            ) : (
+              <button
+                onClick={handleConnectCalendar}
+                className="flex items-center justify-center h-11 gap-2 px-5 font-heading text-sm font-semibold text-white bg-navy rounded-lg transition hover:opacity-90"
+              >
+                <CalendarIcon />
+                Connect Calendar
+              </button>
+            )}
+          </div>
+
+          {/* Divider */}
+          <div className="h-px w-full bg-border" />
+
           {/* Logout Button */}
           <button
             onClick={handleLogout}
@@ -138,6 +177,17 @@ export default function ProfilePage() {
         </div>
       </main>
     </div>
+  );
+}
+
+function CalendarIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+      <line x1="16" y1="2" x2="16" y2="6" />
+      <line x1="8" y1="2" x2="8" y2="6" />
+      <line x1="3" y1="10" x2="21" y2="10" />
+    </svg>
   );
 }
 
