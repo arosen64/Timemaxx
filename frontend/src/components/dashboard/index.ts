@@ -1,3 +1,4 @@
+export { default as TaskModal } from './TaskModal'
 export { default as AddTaskModal } from './AddTaskModal'
 export { default as EditModal } from './EditModal'
 export { default as DeleteModal } from './DeleteModal'
