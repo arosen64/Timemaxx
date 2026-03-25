@@ -22,10 +22,9 @@ export default function AddTaskModal({ isOpen, onClose, onTaskCreated }: AddTask
     onTaskCreated?.(taskId)
   }
 
-  if (!isOpen) return null
-
   return (
     <TaskModal
+      isOpen={isOpen}
       title="Add task"
       subtitle="Fill in the details below."
       primaryLabel="Add Task"

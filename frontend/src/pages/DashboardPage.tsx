@@ -144,20 +144,18 @@ export default function DashboardPage() {
           onClose={() => setEstimationError(null)}
         />
       )}
-      {editingTask && (
-        <EditModal
-          task={editingTask}
-          onClose={() => setEditingTask(null)}
-          onSave={handleSaveEdit}
-        />
-      )}
-      {deletingTask && (
-        <DeleteModal
-          task={deletingTask}
-          onClose={() => setDeletingTask(null)}
-          onConfirm={handleConfirmDelete}
-        />
-      )}
+      <EditModal
+        isOpen={editingTask !== null}
+        task={editingTask}
+        onClose={() => setEditingTask(null)}
+        onSave={handleSaveEdit}
+      />
+      <DeleteModal
+        isOpen={deletingTask !== null}
+        task={deletingTask}
+        onClose={() => setDeletingTask(null)}
+        onConfirm={handleConfirmDelete}
+      />
       <AddTaskModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}

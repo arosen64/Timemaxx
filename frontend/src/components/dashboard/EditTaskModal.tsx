@@ -2,27 +2,30 @@ import { type TaskType, type EditForm, type SchemaTaskType, TASK_TYPE_OPTIONS, f
 import TaskModal from './TaskModal'
 
 export default function EditModal({
+  isOpen,
   task,
   onClose,
   onSave,
 }: {
-  task: TaskType
+  isOpen: boolean
+  task: TaskType | null
   onClose: () => void
   onSave: (form: EditForm) => Promise<void>
 }) {
   return (
     <TaskModal
+      isOpen={isOpen && task !== null}
       title="Edit task"
       subtitle="Update the details below."
       primaryLabel="Save Changes"
       primaryLoadingLabel="Saving…"
       initialValues={{
-        taskName: task.title,
-        selectedType: (TASK_TYPE_OPTIONS.includes(task.taskType as SchemaTaskType)
+        taskName: task?.title ?? '',
+        selectedType: (task && TASK_TYPE_OPTIONS.includes(task.taskType as SchemaTaskType)
           ? task.taskType
           : 'Problem Set') as SchemaTaskType,
-        description: task.description,
-        dueDate: formatDateMMDDYYYY(task.dueDate),
+        description: task?.description ?? '',
+        dueDate: task ? formatDateMMDDYYYY(task.dueDate) : '',
       }}
       onClose={onClose}
       onSubmit={onSave}

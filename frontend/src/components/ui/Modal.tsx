@@ -1,6 +1,7 @@
 import { type ReactNode } from 'react'
 
 interface ModalProps {
+  isOpen?: boolean
   onClose: () => void
   title: string
   subtitle?: string
@@ -24,6 +25,7 @@ interface ModalProps {
 }
 
 export default function Modal({
+  isOpen = true,
   onClose,
   title,
   subtitle,
@@ -39,6 +41,8 @@ export default function Modal({
   size = 'default',
   backdrop = 'default',
 }: ModalProps) {
+  if (!isOpen) return null
+
   const isDestructive = primaryVariant === 'destructive'
   const isSm = size === 'sm'
 

@@ -4,11 +4,13 @@ import { type TaskType, displayTitle } from './types'
 import { Modal } from '../ui'
 
 export default function DeleteModal({
+  isOpen,
   task,
   onClose,
   onConfirm,
 }: {
-  task: TaskType
+  isOpen: boolean
+  task: TaskType | null
   onClose: () => void
   onConfirm: () => Promise<void>
 }) {
@@ -23,6 +25,7 @@ export default function DeleteModal({
 
   return (
     <Modal
+      isOpen={isOpen && task !== null}
       onClose={onClose}
       title="Delete Task?"
       icon={<TrashIcon color="#CF4520" />}
@@ -36,7 +39,7 @@ export default function DeleteModal({
       backdrop="blur"
     >
       <p className="text-sm leading-relaxed text-slate-blue">
-        <span className="font-semibold text-navy">"{displayTitle(task)}"</span> will be
+        <span className="font-semibold text-navy">"{task ? displayTitle(task) : ''}"</span> will be
         permanently deleted. This cannot be undone.
       </p>
     </Modal>

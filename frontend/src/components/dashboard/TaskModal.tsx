@@ -4,6 +4,7 @@ import { type EditForm, type SchemaTaskType, TASK_TYPE_OPTIONS } from './types'
 import Modal from '../ui/Modal'
 
 interface TaskModalProps {
+  isOpen?: boolean
   title: string
   subtitle: string
   primaryLabel: string
@@ -19,6 +20,7 @@ interface TaskModalProps {
 }
 
 export default function TaskModal({
+  isOpen,
   title,
   subtitle,
   primaryLabel,
@@ -82,6 +84,7 @@ export default function TaskModal({
 
   return (
     <Modal
+      isOpen={isOpen}
       onClose={onClose}
       title={title}
       subtitle={subtitle}
