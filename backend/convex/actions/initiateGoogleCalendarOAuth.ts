@@ -18,10 +18,12 @@ export const initiateGoogleCalendarOAuth = action({
     if (!userId) throw new Error("Not authenticated");
 
     const clientId = process.env.AUTH_GOOGLE_ID;
-    const redirectUri = process.env.GOOGLE_CALENDAR_REDIRECT_URI;
+    // CONVEX_SITE_URL is set automatically by Convex on every deployment —
+    // same approach used by @convex-dev/auth for its callback URIs.
+    const redirectUri = `${process.env.CONVEX_SITE_URL}/api/calendar/callback`;
 
-    if (!clientId || !redirectUri) {
-      throw new Error("Missing AUTH_GOOGLE_ID or GOOGLE_CALENDAR_REDIRECT_URI env var");
+    if (!clientId) {
+      throw new Error("Missing AUTH_GOOGLE_ID env var");
     }
 
     const state = crypto.randomUUID();

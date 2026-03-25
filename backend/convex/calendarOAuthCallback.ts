@@ -63,10 +63,10 @@ export const calendarOAuthCallback = httpAction(async (ctx, request) => {
 
   const clientId = process.env.AUTH_GOOGLE_ID;
   const clientSecret = process.env.AUTH_GOOGLE_SECRET;
-  const redirectUri = process.env.GOOGLE_CALENDAR_REDIRECT_URI;
+  const redirectUri = `${process.env.CONVEX_SITE_URL}/api/calendar/callback`;
   const tokenSecret = process.env.CALENDAR_TOKEN_SECRET;
 
-  if (!clientId || !clientSecret || !redirectUri || !tokenSecret) {
+  if (!clientId || !clientSecret || !tokenSecret) {
     return new Response(null, { status: 302, headers: { Location: profileRedirect } });
   }
 
