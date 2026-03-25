@@ -2809,39 +2809,86 @@
                 },
                 {
                   "type": "frame",
-                  "id": "PHV8g",
-                  "name": "logoutBtn",
-                  "width": 160,
-                  "height": 44,
-                  "fill": "#a6192e",
-                  "cornerRadius": 8,
-                  "gap": 8,
-                  "padding": [
-                    0,
-                    20
-                  ],
-                  "justifyContent": "center",
+                  "id": "EIIWT",
+                  "name": "buttonRow",
+                  "gap": 12,
                   "alignItems": "center",
                   "children": [
                     {
-                      "type": "icon_font",
-                      "id": "iYO92",
-                      "name": "logoutIcon",
-                      "width": 16,
-                      "height": 16,
-                      "iconFontName": "log-out",
-                      "iconFontFamily": "lucide",
-                      "fill": "#FFFFFF"
+                      "type": "frame",
+                      "id": "PHV8g",
+                      "name": "logoutBtn",
+                      "width": 160,
+                      "height": 44,
+                      "fill": "#a6192e",
+                      "cornerRadius": 8,
+                      "gap": 8,
+                      "padding": [
+                        0,
+                        20
+                      ],
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon_font",
+                          "id": "iYO92",
+                          "name": "logoutIcon",
+                          "width": 16,
+                          "height": 16,
+                          "iconFontName": "log-out",
+                          "iconFontFamily": "lucide",
+                          "fill": "#FFFFFF"
+                        },
+                        {
+                          "type": "text",
+                          "id": "Gr2FD",
+                          "name": "logoutText",
+                          "fill": "#FFFFFF",
+                          "content": "Log Out",
+                          "fontFamily": "Space Grotesk",
+                          "fontSize": 14,
+                          "fontWeight": "600"
+                        }
+                      ]
                     },
                     {
-                      "type": "text",
-                      "id": "Gr2FD",
-                      "name": "logoutText",
-                      "fill": "#FFFFFF",
-                      "content": "Log Out",
-                      "fontFamily": "Space Grotesk",
-                      "fontSize": 14,
-                      "fontWeight": "600"
+                      "type": "frame",
+                      "id": "Ay7cC",
+                      "name": "deleteAccountBtn",
+                      "width": 200,
+                      "height": 44,
+                      "fill": "#a6192e",
+                      "cornerRadius": 8,
+                      "gap": 8,
+                      "padding": [
+                        0,
+                        20
+                      ],
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon_font",
+                          "id": "pyrAr",
+                          "name": "deleteIcon",
+                          "width": 16,
+                          "height": 16,
+                          "iconFontName": "trash-2",
+                          "iconFontFamily": "lucide",
+                          "fill": "#FFFFFF"
+                        },
+                        {
+                          "type": "text",
+                          "id": "oeBWC",
+                          "name": "deleteText",
+                          "fill": "#FFFFFF",
+                          "content": "Delete Account",
+                          "fontFamily": "Space Grotesk",
+                          "fontSize": 14,
+                          "fontWeight": "600"
+                        }
+                      ]
                     }
                   ]
                 }
