@@ -25,10 +25,9 @@ export const getUserCoursesByTerm = query({
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) return [];
-    const courses = await ctx.db
+    return await ctx.db
       .query("userCourses")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .withIndex("by_user_term", (q) => q.eq("userId", userId).eq("term", args.term))
       .collect();
-    return courses.filter((c) => c.term === args.term);
   },
 });

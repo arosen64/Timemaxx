@@ -51,7 +51,7 @@ export default defineSchema({
   // UserCourses table — per-user course enrollment records
   userCourses: defineTable({
     userId: v.id("users"),
-    courseCode: v.string(),
+    courseCode: v.string(), //e.g. "EN.501.303 (SIS Code)"
     title: v.string(),
     credits: v.optional(v.number()),
     term: v.string(),
@@ -61,7 +61,7 @@ export default defineSchema({
   })
     .index("by_user", ["userId"])
     .index("by_user_course", ["userId", "courseCode"])
-    .index("by_user_course_term", ["userId", "courseCode", "term"]),
+    .index("by_user_term", ["userId", "term"]),
 
   // Tasks table
   tasks: defineTable({

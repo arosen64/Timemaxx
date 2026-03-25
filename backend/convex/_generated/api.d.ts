@@ -9,7 +9,7 @@
  */
 
 import type * as actions_estimateTaskTime from "../actions/estimateTaskTime.js";
-import type * as actions_jhsCourses from "../actions/jhsCourses.js";
+import type * as actions_jhuCourses from "../actions/jhuCourses.js";
 import type * as actions_requestEstimateTaskTime from "../actions/requestEstimateTaskTime.js";
 import type * as actions_uploadSyllabus from "../actions/uploadSyllabus.js";
 import type * as auth from "../auth.js";
@@ -33,7 +33,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   "actions/estimateTaskTime": typeof actions_estimateTaskTime;
-  "actions/jhsCourses": typeof actions_jhsCourses;
+  "actions/jhuCourses": typeof actions_jhuCourses;
   "actions/requestEstimateTaskTime": typeof actions_requestEstimateTaskTime;
   "actions/uploadSyllabus": typeof actions_uploadSyllabus;
   auth: typeof auth;

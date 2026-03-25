@@ -9,7 +9,7 @@ vi.mock('../../backend/convex/_generated/api', () => ({
       users: { isOnboardingComplete: 'isOnboardingComplete' },
     },
     actions: {
-      jhsCourses: {
+      jhuCourses: {
         getAvailableTerms: 'getAvailableTerms',
         getAvailableSchools: 'getAvailableSchools',
         getCoursesByTerm: 'getCoursesByTerm',

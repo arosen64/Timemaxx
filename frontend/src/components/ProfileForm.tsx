@@ -4,9 +4,7 @@ import { api } from '../../../backend/convex/_generated/api'
 import { Id } from '../../../backend/convex/_generated/dataModel'
 import { ProfileData, Course } from '../types'
 import CourseSelector from './CourseSelector'
-
-const YEARS = ['Freshman', 'Sophomore', 'Junior', 'Senior', 'Graduate']
-const STUDY_GOALS = ['Just pass', 'Do well', 'Ace it']
+import { GRADES, STUDY_GOALS, YEARS } from '../constants'
 
 interface TagInputProps {
   tags: string[]
@@ -199,7 +197,7 @@ export default function ProfileForm({ data, onChange, errors }: ProfileFormProps
                   className="rounded-lg border border-border bg-white px-2 py-1 font-body text-xs text-navy outline-none focus:border-sky-blue focus:ring-1 focus:ring-sky-blue/20"
                 >
                   <option value="">Select grade</option>
-                  {['A+', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D+', 'D', 'D-', 'IP'].map((g) => (
+                  {GRADES.map((g) => (
                     <option key={g} value={g}>{g}</option>
                   ))}
                 </select>

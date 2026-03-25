@@ -1,28 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
 import { useAction, useMutation } from 'convex/react'
 import { api } from '../../../backend/convex/_generated/api'
-import { Course } from '../types'
+import { JhuCourse, JhuSchool, JhuTerm, CourseSelectorProps } from '../types'
+import { GRADES, STUDY_GOALS } from '../constants'
+import Selector from './ui/Selector'
+import Button from './ui/Button'
 
-interface JhuTerm {
-  Name: string
-  [key: string]: unknown
-}
-
-interface JhuSchool {
-  Name: string
-  [key: string]: unknown
-}
-
-interface JhuCourse {
-  OfferingName: string
-  Title: string
-  Credits?: string
-  [key: string]: unknown
-}
-
-interface CourseSelectorProps {
-  onAddCourse: (course: Course) => void
-}
 
 function getCurrentTerm(date: Date): { season: string; year: number } {
   const month = date.getMonth() + 1 // 1-based
@@ -65,9 +48,9 @@ function isPastTerm(termName: string): boolean {
 }
 
 export default function CourseSelector({ onAddCourse }: CourseSelectorProps) {
-  const getAvailableTerms = useAction(api.actions.jhsCourses.getAvailableTerms)
-  const getAvailableSchools = useAction(api.actions.jhsCourses.getAvailableSchools)
-  const getCoursesByTerm = useAction(api.actions.jhsCourses.getCoursesByTerm)
+  const getAvailableTerms = useAction(api.actions.jhuCourses.getAvailableTerms)
+  const getAvailableSchools = useAction(api.actions.jhuCourses.getAvailableSchools)
+  const getCoursesByTerm = useAction(api.actions.jhuCourses.getCoursesByTerm)
   const addUserCourse = useMutation(api.mutations.userCourses.addUserCourse)
 
   const [terms, setTerms] = useState<JhuTerm[]>([])
@@ -126,6 +109,7 @@ export default function CourseSelector({ onAddCourse }: CourseSelectorProps) {
     setSelectedCourse(null)
     setStudyGoalInput('')
     setGradeInput('')
+    setAddError(null)
   }
 
   const handleSchoolChange = (school: string) => {
@@ -133,6 +117,7 @@ export default function CourseSelector({ onAddCourse }: CourseSelectorProps) {
     setTermCourses([])
     setCourseSearch('')
     setSelectedCourse(null)
+    setAddError(null)
     if (!school || !selectedTerm) return
     setCoursesLoading(true)
     getCoursesByTerm({ term: selectedTerm, school })
@@ -173,7 +158,15 @@ export default function CourseSelector({ onAddCourse }: CourseSelectorProps) {
         userCourseId,
       })
     } catch (err) {
-      setAddError('Course already added!')
+      const message = err instanceof Error ? err.message : String(err)
+      if (message.includes('COURSE_ALREADY_COMPLETED')) {
+        setAddError('You have already completed this course.')
+      } else if (message.includes('Unauthenticated') || message.includes('Not authenticated')) {
+        setAddError('You must be signed in to add courses.')
+      } else {
+        setAddError('Failed to add course. Please try again.')
+      }
+      setGradeInput('')
       return
     }
 
@@ -192,33 +185,25 @@ export default function CourseSelector({ onAddCourse }: CourseSelectorProps) {
         <p className="mt-0.5 font-body text-xs text-light-blue">Select a term and school, then search for courses</p>
       </div>
 
-      {/* Term selector */}
-      <select
-        value={selectedTerm}
-        onChange={(e) => handleTermChange(e.target.value)}
-        disabled={termsLoading}
-        className="rounded-lg border border-border bg-bg-gray px-3 py-2 font-body text-sm text-navy outline-none focus:border-sky-blue focus:ring-2 focus:ring-sky-blue/20 disabled:opacity-50"
-      >
-        <option value="">{termsLoading ? 'Loading terms…' : 'Select a term'}</option>
-        {terms.map((t) => (
-          <option key={t.Name} value={t.Name}>{t.Name}</option>
-        ))}
-      </select>
+      <Selector
+  value={selectedTerm}
+  onChange={handleTermChange}
+  options={terms.map((t) => ({ label: t.Name, value: t.Name }))}
+  placeholder="Select a term"
+  loading={termsLoading}
+  loadingText="Loading terms…"
+/>
 
       {/* School selector */}
-      <select
-        value={selectedSchool}
-        onChange={(e) => handleSchoolChange(e.target.value)}
-        disabled={!selectedTerm || schoolsLoading}
-        className="rounded-lg border border-border bg-bg-gray px-3 py-2 font-body text-sm text-navy outline-none focus:border-sky-blue focus:ring-2 focus:ring-sky-blue/20 disabled:opacity-50"
-      >
-        <option value="">
-          {!selectedTerm ? 'Select a term first' : schoolsLoading ? 'Loading schools…' : 'Select a school'}
-        </option>
-        {schools.map((s) => (
-          <option key={s.Name} value={s.Name}>{s.Name}</option>
-        ))}
-      </select>
+      <Selector
+  value={selectedSchool}
+  onChange={handleSchoolChange}
+  options={schools.map((s) => ({ label: s.Name, value: s.Name }))}
+  placeholder="Select a school"
+  loading={schoolsLoading}
+  loadingText="Loading schools…"
+  disabled={!selectedTerm}
+/>
 
       {/* Course search */}
       <div ref={searchRef} className="relative">
@@ -243,13 +228,14 @@ export default function CourseSelector({ onAddCourse }: CourseSelectorProps) {
         />
         {showSuggestions && filteredCourses.length > 0 && (
           <ul className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-lg border border-border bg-white shadow-lg">
-            {filteredCourses.map((c) => (
+            {filteredCourses.map((c, i) => (
               <li
-                key={c.OfferingName}
+                key={`${c.OfferingName}-${i}`}
                 onMouseDown={() => {
                   setSelectedCourse(c)
                   setCourseSearch(`${c.OfferingName}: ${c.Title}`)
                   setShowSuggestions(false)
+                  setAddError(null)
                 }}
                 className="cursor-pointer px-3 py-2 font-body text-sm hover:bg-sky-blue/10"
               >
@@ -272,26 +258,26 @@ export default function CourseSelector({ onAddCourse }: CourseSelectorProps) {
             {isCurrent ? (
               <>
                 <option value="">Select a study goal (optional)</option>
-                {['Just pass', 'Do well', 'Ace it'].map((g) => (
+                {STUDY_GOALS.map((g) => (
                   <option key={g} value={g}>{g}</option>
                 ))}
               </>
             ) : (
               <>
                 <option value="">Select your grade (optional)</option>
-                {['A+', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D+', 'D', 'D-', 'IP'].map((g) => (
+                {GRADES.map((g) => (
                   <option key={g} value={g}>{g}</option>
                 ))}
               </>
             )}
           </select>
-          <button
-            type="button"
+          <Button
+            variant="primary"
             onClick={handleAddCourse}
-            className="rounded-lg bg-navy px-4 py-2 font-body text-sm font-medium text-white transition-colors hover:bg-navy/90"
+            className="px-4"
           >
             Add
-          </button>
+          </Button>
         </div>
       )}
 

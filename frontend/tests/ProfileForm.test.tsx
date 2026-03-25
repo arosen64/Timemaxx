@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { render } from '@testing-library/react'
@@ -8,7 +8,7 @@ import { ProfileData } from '../src/types'
 vi.mock('../../backend/convex/_generated/api', () => ({
   api: {
     actions: {
-      jhsCourses: {
+      jhuCourses: {
         getAvailableTerms: 'getAvailableTerms',
         getAvailableSchools: 'getAvailableSchools',
         getCoursesByTerm: 'getCoursesByTerm',
@@ -104,8 +104,7 @@ describe('ProfileForm', () => {
       const user = userEvent.setup()
       const { onChange } = setup()
 
-      const inputs = screen.getAllByRole('textbox')
-      // First textbox is major, tag inputs follow — find by placeholder
+      // Find by placeholder directly
       const tagInput = screen.getByPlaceholderText(/organic chemistry/i)
       await user.type(tagInput, 'Calculus{Enter}')
 

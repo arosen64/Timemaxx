@@ -11,6 +11,14 @@ function getApiKey(): string {
   return key;
 }
 
+async function sisFetch(url: string, endpoint: string): Promise<Response> {
+  try {
+    return await fetch(url);
+  } catch {
+    throw new Error(`JHU SIS API request failed for ${endpoint}`);
+  }
+}
+
 /**
  * Returns courses using the JHU SIS advanced search query string format.
  * Dept names with "/" must use "_" per the non-standard API encoding requirement.
@@ -23,7 +31,10 @@ export const getCoursesByTerm = action({
     courseTitle: v.optional(v.string()),
     courseNumber: v.optional(v.string()),
   },
-  handler: async (_ctx, args) => {
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+
     // Build query string manually so we can apply the API's non-standard
     // department encoding: "/" must be replaced with "_" (not %2F).
     const encode = (v: string) => encodeURIComponent(v);
@@ -35,7 +46,7 @@ export const getCoursesByTerm = action({
     if (args.courseTitle) parts.push(`CourseTitle=${encode(args.courseTitle)}`);
     if (args.courseNumber) parts.push(`CourseNumber=${encode(args.courseNumber)}`);
 
-    const res = await fetch(`${JHU_SIS_BASE_URL}?${parts.join("&")}`);
+    const res = await sisFetch(`${JHU_SIS_BASE_URL}?${parts.join("&")}`, "courses");
     if (!res.ok) {
       throw new Error(`JHU SIS API error: ${res.status} ${res.statusText}`);
     }
@@ -56,9 +67,11 @@ export const getCoursesByTerm = action({
  */
 export const getAvailableSchools = action({
   args: {},
-  handler: async (_ctx) => {
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
     const params = new URLSearchParams({ key: getApiKey() });
-    const res = await fetch(`${JHU_SIS_BASE_URL}/codes/schools?${params}`);
+    const res = await sisFetch(`${JHU_SIS_BASE_URL}/codes/schools?${params}`, "schools");
     if (!res.ok) {
       throw new Error(`JHU SIS API error: ${res.status} ${res.statusText}`);
     }
@@ -73,9 +86,11 @@ export const getAvailableSchools = action({
  */
 export const getAvailableTerms = action({
   args: {},
-  handler: async (_ctx) => {
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
     const params = new URLSearchParams({ key: getApiKey() });
-    const res = await fetch(`${JHU_SIS_BASE_URL}/codes/terms?${params}`);
+    const res = await sisFetch(`${JHU_SIS_BASE_URL}/codes/terms?${params}`, "terms");
     if (!res.ok) {
       throw new Error(`JHU SIS API error: ${res.status} ${res.statusText}`);
     }

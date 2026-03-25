@@ -24,3 +24,27 @@ export interface PreferencesData {
   traits: { [category: string]: string[] }
   focusBlockLength: number | ''
 }
+
+
+// From Course Selector
+export interface JhuTerm {
+  Name: string
+  [key: string]: unknown
+}
+
+export interface JhuSchool {
+  Name: string
+  [key: string]: unknown
+}
+
+export interface JhuCourse {
+  OfferingName: string
+  Title: string
+  Credits?: string
+  [key: string]: unknown
+}
+
+export interface CourseSelectorProps {
+  onAddCourse: (course: Course) => void
+}
+
