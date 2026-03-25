@@ -22,7 +22,7 @@ vi.mock('../../backend/convex/_generated/api', () => ({
 vi.mock('../src/components/sidebar', () => ({ default: () => <div data-testid="sidebar" /> }))
 
 // AddTaskModal is tested separately; mock it here so dashboard tests stay focused
-vi.mock('../src/components/AddTaskModal', () => ({
+vi.mock('../src/components/dashboard/AddTaskModal', () => ({
   default: ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) =>
     isOpen ? (
       <div role="dialog" aria-label="Add Task Modal">
