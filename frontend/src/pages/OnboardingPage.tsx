@@ -3,12 +3,17 @@ import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '../../../backend/convex/_generated/api'
 import { ProfileData, WorkHoursData, PreferencesData } from '../types'
-import { Button, BrandLogo } from '../components/ui'
-import { ProfileForm, WorkHoursSelector, DEFAULT_WORK_HOURS, PreferencesForm, DEFAULT_PREFERENCES } from '../components/onboarding'
+import {
+  ProfileForm,
+  WorkHoursSelector,
+  DEFAULT_WORK_HOURS,
+  PreferencesForm,
+  DEFAULT_PREFERENCES,
+  OnboardingStepShell,
+  OnboardingNav,
+} from '../components/onboarding'
 
 type Step = 1 | 2 | 3
-
-const STEP_LABELS = ['Profile', 'Work Hours', 'Preferences']
 
 const DEFAULT_PROFILE: ProfileData = {
   major: '',
@@ -75,68 +80,25 @@ export default function OnboardingPage() {
     }
   }
 
-  const isWide = step === 2 || step === 3
-
   return (
-    <div className="flex min-h-screen flex-col bg-bg-gray">
-      {/* Top bar */}
-      <header className="flex h-16 w-full flex-shrink-0 items-center justify-between bg-navy px-10">
-        <BrandLogo size="sm" />
-
-        {/* Step pills */}
-        <div className="flex items-center gap-2">
-          {STEP_LABELS.map((_, i) => {
-            const stepNum = (i + 1) as Step
-            const isActive = step === stepNum
-            const isComplete = step > stepNum
-            return (
-              <div
-                key={stepNum}
-                className={`h-1.5 w-8 rounded-full ${
-                  isComplete || isActive ? 'bg-teal' : 'bg-sky-blue/40'
-                }`}
-              />
-            )
-          })}
-        </div>
-
-        <span className="font-body text-sm text-sky-blue">Step {step} of 3</span>
-      </header>
-
-      {/* Content */}
-      <div className="flex flex-1 flex-col items-center justify-center px-4 py-12">
-        <div className={`w-full rounded-xl border border-border bg-white p-12 ${isWide ? 'max-w-2xl' : 'max-w-xl'}`}>
-          {step === 1 && (
-            <ProfileForm data={profile} onChange={setProfile} errors={profileErrors} />
-          )}
-
-          {step === 2 && (
-            <WorkHoursSelector data={workHours} onChange={setWorkHours} />
-          )}
-
-          {step === 3 && (
-            <PreferencesForm data={preferences} onChange={setPreferences} />
-          )}
-
-          {/* Navigation */}
-          <div className={`mt-8 flex ${step === 1 ? 'justify-end' : 'justify-between'}`}>
-            {step > 1 && (
-              <Button variant="ghost" size="nav" onClick={handleBack} disabled={isSubmitting}>
-                Back
-              </Button>
-            )}
-            {step < 3 ? (
-              <Button size="nav" onClick={handleNext}>
-                Continue →
-              </Button>
-            ) : (
-              <Button size="nav" onClick={handleSubmit} disabled={isSubmitting}>
-                {isSubmitting ? 'Saving...' : 'Finish'}
-              </Button>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
+    <OnboardingStepShell currentStep={step} totalSteps={3} wide={step === 2 || step === 3}>
+      {step === 1 && (
+        <ProfileForm data={profile} onChange={setProfile} errors={profileErrors} />
+      )}
+      {step === 2 && (
+        <WorkHoursSelector data={workHours} onChange={setWorkHours} />
+      )}
+      {step === 3 && (
+        <PreferencesForm data={preferences} onChange={setPreferences} />
+      )}
+      <OnboardingNav
+        onBack={handleBack}
+        onContinue={step < 3 ? handleNext : handleSubmit}
+        isFirstStep={step === 1}
+        isLastStep={step === 3}
+        continueLabel={isSubmitting ? 'Saving...' : undefined}
+        disabled={isSubmitting}
+      />
+    </OnboardingStepShell>
   )
 }
