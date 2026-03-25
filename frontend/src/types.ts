@@ -1,9 +1,14 @@
+
+//Compatible with User Courses schema in backend/convex/schema.ts
 export interface Course {
-  title: string
-  studyGoal: string
-  grade?: string
-  term?: string
   userCourseId?: string
+  courseCode?: string
+  title: string
+  credits?: number
+  term?: string
+  grade?: string
+  studyGoal?: string
+  difficultyRating?: number
 }
 
 export interface ProfileData {
