@@ -1,3 +1,5 @@
+// import { useAuthActions } from "@convex-dev/auth/react"; NOTE: will uncomment in issue #145 
+// import { LogoutIcon } from "../components/icons"; NOTE: will uncomment in issue #145 
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import { useQuery } from "convex/react";
