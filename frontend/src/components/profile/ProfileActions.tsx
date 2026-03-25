@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import { api } from '../../../../backend/convex/_generated/api'
 import { LogoutIcon, TrashIcon } from '../icons/icons'
 import DeleteAccountModal from './DeleteAccountModal'
-import DestructButton from './DestructButton'
+import Button from '../ui/Button'
 
 export default function ProfileActions() {
   const { signOut } = useAuthActions()
@@ -27,8 +27,12 @@ export default function ProfileActions() {
   return (
     <>
       <div className="flex gap-3">
-        <DestructButton icon={<LogoutIcon />} text="Log Out" onClick={handleLogout} />
-        <DestructButton icon={<TrashIcon />} text="Delete Account" onClick={() => setShowDeleteConfirm(true)} className="w-[200px]" />
+        <Button variant="destructive" icon={<LogoutIcon />} onClick={handleLogout} className="w-40">
+          Log Out
+        </Button>
+        <Button variant="destructive" icon={<TrashIcon />} onClick={() => setShowDeleteConfirm(true)} className="w-[200px]">
+          Delete Account
+        </Button>
       </div>
 
       <DeleteAccountModal

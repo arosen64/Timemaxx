@@ -2591,66 +2591,22 @@
               "padding": 48,
               "children": [
                 {
-                  "type": "frame",
-                  "id": "bqLSI",
+                  "id": "1mbpZ",
+                  "type": "ref",
+                  "ref": "BUAHR",
                   "name": "avatarRow",
                   "width": "fill_container",
-                  "gap": 20,
-                  "alignItems": "center",
-                  "children": [
-                    {
-                      "type": "frame",
-                      "id": "2UnGy",
-                      "name": "avatarLarge",
-                      "width": 72,
-                      "height": 72,
-                      "fill": "#68ACE5",
-                      "cornerRadius": 36,
-                      "justifyContent": "center",
-                      "alignItems": "center",
-                      "children": [
-                        {
-                          "type": "text",
-                          "id": "gryMV",
-                          "name": "avatarLetter",
-                          "fill": "#002D72",
-                          "content": "AJ",
-                          "fontFamily": "Space Grotesk",
-                          "fontSize": 24,
-                          "fontWeight": "700"
-                        }
-                      ]
+                  "descendants": {
+                    "BJBh9": {
+                      "content": "AJ"
                     },
-                    {
-                      "type": "frame",
-                      "id": "waRZd",
-                      "name": "avatarInfo",
-                      "layout": "vertical",
-                      "gap": 4,
-                      "children": [
-                        {
-                          "type": "text",
-                          "id": "ONIIE",
-                          "name": "avatarName",
-                          "fill": "#002D72",
-                          "content": "Alex Johnson",
-                          "fontFamily": "Space Grotesk",
-                          "fontSize": 22,
-                          "fontWeight": "700"
-                        },
-                        {
-                          "type": "text",
-                          "id": "QfSb1",
-                          "name": "avatarEmail",
-                          "fill": "#4E6A8C",
-                          "content": "alex@jhu.edu",
-                          "fontFamily": "Inter",
-                          "fontSize": 14,
-                          "fontWeight": "normal"
-                        }
-                      ]
+                    "irN7Z": {
+                      "content": "Alex Johnson"
+                    },
+                    "yyiZO": {
+                      "content": "alex@jhu.edu"
                     }
-                  ]
+                  }
                 },
                 {
                   "type": "frame",
@@ -2668,64 +2624,34 @@
                   "gap": 32,
                   "children": [
                     {
-                      "type": "frame",
-                      "id": "BYX1f",
+                      "id": "INcdv",
+                      "type": "ref",
+                      "ref": "N9yiZ",
                       "name": "fieldName",
                       "width": "fill_container",
-                      "layout": "vertical",
-                      "gap": 6,
-                      "children": [
-                        {
-                          "type": "text",
-                          "id": "lTOu8",
-                          "name": "field1Label",
-                          "fill": "#4E6A8C",
-                          "content": "Full Name",
-                          "fontFamily": "Inter",
-                          "fontSize": 12,
-                          "fontWeight": "600"
+                      "descendants": {
+                        "Hz14F": {
+                          "content": "Full Name"
                         },
-                        {
-                          "type": "text",
-                          "id": "u1uyI",
-                          "name": "field1Value",
-                          "fill": "#002D72",
-                          "content": "Alex Johnson",
-                          "fontFamily": "Space Grotesk",
-                          "fontSize": 16,
-                          "fontWeight": "500"
+                        "CTKgH": {
+                          "content": "Alex Johnson"
                         }
-                      ]
+                      }
                     },
                     {
-                      "type": "frame",
-                      "id": "WpRPv",
+                      "id": "jzaYk",
+                      "type": "ref",
+                      "ref": "N9yiZ",
                       "name": "fieldEmail",
                       "width": "fill_container",
-                      "layout": "vertical",
-                      "gap": 6,
-                      "children": [
-                        {
-                          "type": "text",
-                          "id": "eoMXh",
-                          "name": "field2Label",
-                          "fill": "#4E6A8C",
-                          "content": "Email",
-                          "fontFamily": "Inter",
-                          "fontSize": 12,
-                          "fontWeight": "600"
+                      "descendants": {
+                        "Hz14F": {
+                          "content": "Email"
                         },
-                        {
-                          "type": "text",
-                          "id": "29r7B",
-                          "name": "field2Value",
-                          "fill": "#002D72",
-                          "content": "alex@jhu.edu",
-                          "fontFamily": "Space Grotesk",
-                          "fontSize": 16,
-                          "fontWeight": "500"
+                        "CTKgH": {
+                          "content": "alex@jhu.edu"
                         }
-                      ]
+                      }
                     }
                   ]
                 },
@@ -2737,65 +2663,34 @@
                   "gap": 32,
                   "children": [
                     {
-                      "type": "frame",
-                      "id": "63znS",
-                      "name": "fieldSchool",
+                      "id": "oMBkd",
+                      "type": "ref",
+                      "ref": "N9yiZ",
+                      "name": "fieldMajor",
                       "width": "fill_container",
-                      "layout": "vertical",
-                      "gap": 6,
-                      "children": [
-                        {
-                          "type": "text",
-                          "id": "7YdH6",
-                          "name": "field3Label",
-                          "fill": "#4E6A8C",
-                          "content": "Major",
-                          "fontFamily": "Inter",
-                          "fontSize": 12,
-                          "fontWeight": "600"
+                      "descendants": {
+                        "Hz14F": {
+                          "content": "Major"
                         },
-                        {
-                          "type": "text",
-                          "id": "mkSkz",
-                          "name": "field3Value",
-                          "rotation": -0.30706672592217493,
-                          "fill": "#002D72",
-                          "content": "Computer Science",
-                          "fontFamily": "Space Grotesk",
-                          "fontSize": 16,
-                          "fontWeight": "500"
+                        "CTKgH": {
+                          "content": "Computer Science"
                         }
-                      ]
+                      }
                     },
                     {
-                      "type": "frame",
-                      "id": "UEC9s",
+                      "id": "BhU9t",
+                      "type": "ref",
+                      "ref": "N9yiZ",
                       "name": "fieldYear",
                       "width": "fill_container",
-                      "layout": "vertical",
-                      "gap": 6,
-                      "children": [
-                        {
-                          "type": "text",
-                          "id": "4QZBS",
-                          "name": "field4Label",
-                          "fill": "#4E6A8C",
-                          "content": "Year",
-                          "fontFamily": "Inter",
-                          "fontSize": 12,
-                          "fontWeight": "600"
+                      "descendants": {
+                        "Hz14F": {
+                          "content": "Year"
                         },
-                        {
-                          "type": "text",
-                          "id": "V0sKt",
-                          "name": "field4Value",
-                          "fill": "#002D72",
-                          "content": "Junior",
-                          "fontFamily": "Space Grotesk",
-                          "fontSize": 16,
-                          "fontWeight": "500"
+                        "CTKgH": {
+                          "content": "Junior"
                         }
-                      ]
+                      }
                     }
                   ]
                 },
@@ -3954,102 +3849,49 @@
           "x": 900,
           "y": 870,
           "height": 600,
-          "name": "sidebarDisplay",
+          "name": "sidebarDisplay"
+        },
+        {
+          "type": "text",
+          "id": "ysxA6",
+          "x": 60,
+          "y": 1300,
+          "name": "profileLabel",
+          "fill": "#FFFFFF",
+          "content": "Profile Components",
+          "fontFamily": "Space Grotesk",
+          "fontSize": 13,
+          "fontWeight": "600"
+        },
+        {
+          "id": "CLS5g",
+          "type": "ref",
+          "ref": "BUAHR",
+          "name": "profileAvatarDisplay",
+          "x": 60,
+          "y": 1324
+        },
+        {
+          "id": "iSbk0",
+          "type": "ref",
+          "ref": "N9yiZ",
+          "name": "profileFieldDisplay1",
+          "x": 60,
+          "y": 1420
+        },
+        {
+          "id": "IDgla",
+          "type": "ref",
+          "ref": "N9yiZ",
+          "name": "profileFieldDisplay2",
+          "x": 200,
+          "y": 1420,
           "descendants": {
-            "pM9zH": {
-              "width": "fill_container",
-              "height": "fit_content",
-              "x": 24,
-              "y": 32
+            "Hz14F": {
+              "content": "Email"
             },
-            "qwLOb": {
-              "width": "fit_content",
-              "height": "fit_content",
-              "x": 0
-            },
-            "qwLOb/NZ5gH": {
-              "x": 5,
-              "y": 5
-            },
-            "qwLOb/6YpiG": {
-              "x": 42,
-              "y": 4.5
-            },
-            "99Oq1": {
-              "width": "fill_container",
-              "height": "fit_content",
-              "y": 64
-            },
-            "t2ejm": {
-              "width": "fill_container",
-              "x": 0,
-              "y": 0
-            },
-            "t2ejm/r853k": {
-              "x": 14,
-              "y": 14
-            },
-            "t2ejm/yUJUI": {
-              "x": 40,
-              "y": 13
-            },
-            "dLWqu": {
-              "width": "fill_container",
-              "x": 0,
-              "y": 48
-            },
-            "dLWqu/j0EVc": {
-              "x": 14,
-              "y": 14
-            },
-            "dLWqu/Xkhsc": {
-              "x": 40,
-              "y": 13
-            },
-            "ipMWX": {
-              "width": "fill_container",
-              "x": 0,
-              "y": 96
-            },
-            "ipMWX/j0EVc": {
-              "x": 14,
-              "y": 14
-            },
-            "ipMWX/Xkhsc": {
-              "x": 40,
-              "y": 13
-            },
-            "78Cxh": {
-              "width": "fill_container",
-              "x": 0,
-              "y": 144
-            },
-            "78Cxh/j0EVc": {
-              "x": 14,
-              "y": 14
-            },
-            "78Cxh/Xkhsc": {
-              "x": 40,
-              "y": 13
-            },
-            "jzFAO": {
-              "width": "fit_content",
-              "height": "fit_content",
-              "x": 24,
-              "y": 532
-            },
-            "lrM5h": {
-              "x": 9.5,
-              "y": 9.5
-            },
-            "LBXyg": {
-              "width": "fit_content",
-              "height": "fit_content",
-              "x": 46,
-              "y": 2
-            },
-            "AqSvO": {
-              "y": 19
+            "CTKgH": {
+              "content": "jane@example.com"
             }
           }
         }
@@ -7271,6 +7113,102 @@
               ]
             }
           ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "BUAHR",
+      "x": 8100,
+      "y": 1500,
+      "name": "ProfileAvatar",
+      "reusable": true,
+      "gap": 20,
+      "alignItems": "center",
+      "children": [
+        {
+          "type": "frame",
+          "id": "tt1gY",
+          "name": "avatarCircle",
+          "width": 72,
+          "height": 72,
+          "fill": "$--info",
+          "cornerRadius": 36,
+          "justifyContent": "center",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "BJBh9",
+              "name": "letter",
+              "fill": "$--primary",
+              "content": "J",
+              "fontFamily": "Space Grotesk",
+              "fontSize": 24,
+              "fontWeight": "700"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "Mqiqx",
+          "name": "info",
+          "layout": "vertical",
+          "gap": 4,
+          "children": [
+            {
+              "type": "text",
+              "id": "irN7Z",
+              "name": "name",
+              "fill": "$--primary",
+              "content": "Jane Smith",
+              "fontFamily": "Space Grotesk",
+              "fontSize": 24,
+              "fontWeight": "700"
+            },
+            {
+              "type": "text",
+              "id": "yyiZO",
+              "name": "email",
+              "fill": "$--muted-foreground",
+              "content": "jane@example.com",
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "N9yiZ",
+      "x": 8100,
+      "y": 1650,
+      "name": "ProfileField",
+      "reusable": true,
+      "layout": "vertical",
+      "gap": 6,
+      "children": [
+        {
+          "type": "text",
+          "id": "Hz14F",
+          "name": "label",
+          "fill": "$--muted-foreground",
+          "content": "Full Name",
+          "fontFamily": "Inter",
+          "fontSize": 12,
+          "fontWeight": "600"
+        },
+        {
+          "type": "text",
+          "id": "CTKgH",
+          "name": "value",
+          "fill": "$--primary",
+          "content": "Jane Smith",
+          "fontFamily": "Space Grotesk",
+          "fontSize": 16,
+          "fontWeight": "500"
         }
       ]
     }
