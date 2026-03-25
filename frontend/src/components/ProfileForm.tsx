@@ -39,17 +39,17 @@ function TagInput({ tags, onChange, placeholder }: TagInputProps) {
   }
 
   return (
-    <div className="flex flex-wrap gap-2 rounded-lg border border-gray-300 p-2 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500">
+    <div className="flex flex-wrap gap-2 rounded-lg border border-border bg-bg-gray p-2 focus-within:border-sky-blue focus-within:ring-2 focus-within:ring-sky-blue/20">
       {tags.map((tag, i) => (
         <span
           key={i}
-          className="flex items-center gap-1 rounded-full bg-blue-100 px-3 py-1 text-sm text-blue-800"
+          className="flex items-center gap-1 rounded-full bg-navy/10 px-3 py-1 font-body text-sm text-navy"
         >
           {tag}
           <button
             type="button"
             onClick={() => removeTag(i)}
-            className="ml-1 text-blue-500 hover:text-blue-800"
+            className="ml-1 text-navy/50 hover:text-navy"
           >
             ×
           </button>
@@ -62,7 +62,7 @@ function TagInput({ tags, onChange, placeholder }: TagInputProps) {
         onKeyDown={handleKeyDown}
         onBlur={() => addTag(input)}
         placeholder={tags.length === 0 ? placeholder : 'Add more...'}
-        className="min-w-[140px] flex-1 text-sm outline-none"
+        className="min-w-[140px] flex-1 bg-transparent font-body text-sm text-navy outline-none placeholder:text-light-blue"
       />
     </div>
   )
@@ -97,38 +97,38 @@ export default function ProfileForm({ data, onChange, errors }: ProfileFormProps
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h2 className="text-xl font-semibold text-gray-900">Tell us about yourself</h2>
-        <p className="mt-1 text-sm text-gray-500">This helps us personalize your study plan.</p>
+        <h2 className="font-heading text-2xl font-bold text-navy">Tell us about yourself</h2>
+        <p className="mt-1 font-body text-sm text-slate-blue">This helps us personalize your study plan.</p>
       </div>
 
       {/* Major */}
       <div className="flex flex-col gap-1">
-        <label className="text-sm font-medium text-gray-700">
-          Major / Field of Study <span className="text-red-500">*</span>
+        <label className="font-heading text-sm font-semibold text-navy">
+          Major / Field of Study <span className="text-urgent-red">*</span>
         </label>
         <input
           type="text"
           value={data.major}
           onChange={(e) => update('major', e.target.value)}
           placeholder="e.g. Computer Science"
-          className={`rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 ${
-            errors.major ? 'border-red-400' : 'border-gray-300 focus:border-blue-500'
+          className={`rounded-lg border bg-bg-gray px-3 py-2 font-body text-sm text-navy outline-none placeholder:text-light-blue focus:ring-2 focus:ring-sky-blue/20 ${
+            errors.major ? 'border-urgent-red' : 'border-border focus:border-sky-blue'
           }`}
         />
-        {errors.major && <p className="text-xs text-red-500">{errors.major}</p>}
+        {errors.major && <p className="font-body text-xs text-urgent-red">{errors.major}</p>}
       </div>
 
       {/* Year */}
       <div className="flex flex-col gap-1">
-        <label htmlFor="year-select" className="text-sm font-medium text-gray-700">
-          Current Year <span className="text-red-500">*</span>
+        <label className="font-heading text-sm font-semibold text-navy">
+          Current Year <span className="text-urgent-red">*</span>
         </label>
         <select
           id="year-select"
           value={data.year}
           onChange={(e) => update('year', e.target.value)}
-          className={`rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 ${
-            errors.year ? 'border-red-400' : 'border-gray-300 focus:border-blue-500'
+          className={`rounded-lg border bg-bg-gray px-3 py-2 font-body text-sm text-navy outline-none focus:ring-2 focus:ring-sky-blue/20 ${
+            errors.year ? 'border-urgent-red' : 'border-border focus:border-sky-blue'
           }`}
         >
           <option value="">Select your year</option>
@@ -136,13 +136,13 @@ export default function ProfileForm({ data, onChange, errors }: ProfileFormProps
             <option key={y} value={y}>{y}</option>
           ))}
         </select>
-        {errors.year && <p className="text-xs text-red-500">{errors.year}</p>}
+        {errors.year && <p className="font-body text-xs text-urgent-red">{errors.year}</p>}
       </div>
 
       {/* Difficult Subjects */}
       <div className="flex flex-col gap-1">
-        <label className="text-sm font-medium text-gray-700">Subjects You Find Difficult</label>
-        <p className="text-xs text-gray-400">Press Enter or comma to add each subject</p>
+        <label className="font-heading text-sm font-semibold text-navy">Subjects You Find Difficult</label>
+        <p className="font-body text-xs text-light-blue">Press Enter or comma to add each subject</p>
         <TagInput
           tags={data.difficultSubjects}
           onChange={(tags) => update('difficultSubjects', tags)}
@@ -152,8 +152,8 @@ export default function ProfileForm({ data, onChange, errors }: ProfileFormProps
 
       {/* Enjoyed Subjects */}
       <div className="flex flex-col gap-1">
-        <label className="text-sm font-medium text-gray-700">Subjects You Enjoy</label>
-        <p className="text-xs text-gray-400">Press Enter or comma to add each subject</p>
+        <label className="font-heading text-sm font-semibold text-navy">Subjects You Enjoy</label>
+        <p className="font-body text-xs text-light-blue">Press Enter or comma to add each subject</p>
         <TagInput
           tags={data.enjoyedSubjects}
           onChange={(tags) => update('enjoyedSubjects', tags)}
