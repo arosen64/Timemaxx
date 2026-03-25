@@ -26,7 +26,7 @@ export default function AddTaskModal({ isOpen, onClose, onTaskCreated }: AddTask
 
   return (
     <TaskModal
-      title="Add new task"
+      title="Add task"
       subtitle="Fill in the details below."
       primaryLabel="Add Task"
       primaryLoadingLabel="Adding…"

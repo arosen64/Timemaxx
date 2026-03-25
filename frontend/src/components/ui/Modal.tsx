@@ -53,6 +53,9 @@ export default function Modal({
 
       {/* Card */}
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={`${title} modal`}
         className={`relative z-10 flex flex-col bg-white border border-border rounded-xl ${
           isSm
             ? 'w-full max-w-sm p-8 gap-4 shadow-xl'
