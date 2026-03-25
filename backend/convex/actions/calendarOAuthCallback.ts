@@ -1,20 +1,32 @@
-"use node";
 import { httpAction } from "../_generated/server";
 import { internal } from "../_generated/api";
-import { createCipheriv, randomBytes } from "node:crypto";
 
 /**
- * Encrypts plaintext using AES-256-GCM.
- * Returns a base64 string containing iv + authTag + ciphertext.
+ * Encrypts plaintext using AES-256-GCM via the Web Crypto API.
+ * Returns a base64 string: iv (12 bytes) + ciphertext+authTag.
  * Key is derived from a 64-char hex string (openssl rand -hex 32).
+ * Uses Web Crypto (crypto.subtle) so no "use node" is required.
  */
-function encryptToken(plaintext: string, hexSecret: string): string {
-  const key = Buffer.from(hexSecret.padEnd(64, "0").slice(0, 64), "hex");
-  const iv = randomBytes(16);
-  const cipher = createCipheriv("aes-256-gcm", key, iv);
-  const encrypted = Buffer.concat([cipher.update(plaintext, "utf8"), cipher.final()]);
-  const authTag = cipher.getAuthTag();
-  return Buffer.concat([iv, authTag, encrypted]).toString("base64");
+async function encryptToken(plaintext: string, hexSecret: string): Promise<string> {
+  const keyBytes = hexSecret.padEnd(64, "0").slice(0, 64).match(/.{2}/g)!
+    .map((b) => parseInt(b, 16));
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new Uint8Array(keyBytes),
+    { name: "AES-GCM", length: 256 },
+    false,
+    ["encrypt"],
+  );
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const encrypted = await crypto.subtle.encrypt(
+    { name: "AES-GCM", iv },
+    key,
+    new TextEncoder().encode(plaintext),
+  );
+  const result = new Uint8Array(12 + encrypted.byteLength);
+  result.set(iv, 0);
+  result.set(new Uint8Array(encrypted), 12);
+  return btoa(String.fromCharCode(...result));
 }
 
 /**
@@ -87,8 +99,8 @@ export const calendarOAuthCallback = httpAction(async (ctx, request) => {
   // Encrypt tokens and store them for the identified user
   await ctx.runMutation(internal.mutations.calendar.storeCalendarTokenForUser, {
     userId: stateRecord.userId,
-    accessToken: encryptToken(data.access_token, tokenSecret),
-    refreshToken: encryptToken(data.refresh_token, tokenSecret),
+    accessToken: await encryptToken(data.access_token, tokenSecret),
+    refreshToken: await encryptToken(data.refresh_token, tokenSecret),
     expiresAt: Date.now() + data.expires_in * 1000,
   });
 
