@@ -226,23 +226,29 @@ export default function CourseSelector({ onAddCourse }: CourseSelectorProps) {
           }
           className="w-full rounded-lg border border-border bg-bg-gray px-3 py-2 font-body text-sm text-navy outline-none placeholder:text-light-blue focus:border-sky-blue focus:ring-2 focus:ring-sky-blue/20 disabled:opacity-50"
         />
-        {showSuggestions && filteredCourses.length > 0 && (
+        {showSuggestions && courseSearch.trim().length >= 2 && (
           <ul className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-lg border border-border bg-white shadow-lg">
-            {filteredCourses.map((c, i) => (
-              <li
-                key={`${c.OfferingName}-${i}`}
-                onMouseDown={() => {
-                  setSelectedCourse(c)
-                  setCourseSearch(`${c.OfferingName}: ${c.Title}`)
-                  setShowSuggestions(false)
-                  setAddError(null)
-                }}
-                className="cursor-pointer px-3 py-2 font-body text-sm hover:bg-sky-blue/10"
-              >
-                <span className="font-semibold text-navy">{c.OfferingName}</span>
-                <span className="ml-2 text-slate-blue">{c.Title}</span>
+            {filteredCourses.length > 0 ? (
+              filteredCourses.map((c, i) => (
+                <li
+                  key={`${c.OfferingName}-${i}`}
+                  onMouseDown={() => {
+                    setSelectedCourse(c)
+                    setCourseSearch(`${c.OfferingName}: ${c.Title}`)
+                    setShowSuggestions(false)
+                    setAddError(null)
+                  }}
+                  className="cursor-pointer px-3 py-2 font-body text-sm hover:bg-sky-blue/10"
+                >
+                  <span className="font-semibold text-navy">{c.OfferingName}</span>
+                  <span className="ml-2 text-slate-blue">{c.Title}</span>
+                </li>
+              ))
+            ) : (
+              <li className="px-3 py-2 font-body text-sm text-light-blue select-none">
+                No courses found
               </li>
-            ))}
+            )}
           </ul>
         )}
       </div>
