@@ -29,15 +29,18 @@ export default function OnboardingPage() {
   const [step, setStep] = useState<Step>(() => {
     try {
       const saved = localStorage.getItem('timemaxx_onboarding_state')
-      if (saved) {
-        localStorage.removeItem('timemaxx_onboarding_state')
-        return 4
-      }
+      if (saved) return 4
     } catch {
       // localStorage unavailable
     }
     return 1
   })
+
+  // Remove the localStorage key once — useEffect is not double-invoked by StrictMode,
+  // unlike the useState initializer above.
+  useEffect(() => {
+    try { localStorage.removeItem('timemaxx_onboarding_state') } catch { /* unavailable */ }
+  }, [])
   const [profile, setProfile] = useState<ProfileData>(DEFAULT_PROFILE)
   const [profileErrors, setProfileErrors] = useState<{ major?: string; year?: string }>({})
   const [workHours, setWorkHours] = useState<WorkHoursData>(DEFAULT_WORK_HOURS)
