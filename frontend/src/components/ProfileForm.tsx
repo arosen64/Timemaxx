@@ -1,8 +1,10 @@
-import { useState, KeyboardEvent } from 'react'
+import { KeyboardEvent, useState } from 'react'
+import { useMutation } from 'convex/react'
+import { api } from '../../../backend/convex/_generated/api'
+import { Id } from '../../../backend/convex/_generated/dataModel'
 import { ProfileData, Course } from '../types'
-
-const YEARS = ['Freshman', 'Sophomore', 'Junior', 'Senior', 'Graduate']
-const STUDY_GOALS = ['Just pass', 'Do well', 'Ace it']
+import CourseSelector from './CourseSelector'
+import { GRADES, STUDY_GOALS, YEARS } from '../constants'
 
 interface TagInputProps {
   tags: string[]
@@ -35,17 +37,17 @@ function TagInput({ tags, onChange, placeholder }: TagInputProps) {
   }
 
   return (
-    <div className="flex flex-wrap gap-2 rounded-lg border border-gray-300 p-2 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500">
+    <div className="flex flex-wrap gap-2 rounded-lg border border-border bg-bg-gray p-2 focus-within:border-sky-blue focus-within:ring-2 focus-within:ring-sky-blue/20">
       {tags.map((tag, i) => (
         <span
           key={i}
-          className="flex items-center gap-1 rounded-full bg-blue-100 px-3 py-1 text-sm text-blue-800"
+          className="flex items-center gap-1 rounded-full bg-navy/10 px-3 py-1 font-body text-sm text-navy"
         >
           {tag}
           <button
             type="button"
             onClick={() => removeTag(i)}
-            className="ml-1 text-blue-500 hover:text-blue-800"
+            className="ml-1 text-navy/50 hover:text-navy"
           >
             ×
           </button>
@@ -58,7 +60,7 @@ function TagInput({ tags, onChange, placeholder }: TagInputProps) {
         onKeyDown={handleKeyDown}
         onBlur={() => addTag(input)}
         placeholder={tags.length === 0 ? placeholder : 'Add more...'}
-        className="min-w-[140px] flex-1 text-sm outline-none"
+        className="min-w-[140px] flex-1 bg-transparent font-body text-sm text-navy outline-none placeholder:text-light-blue"
       />
     </div>
   )
@@ -71,60 +73,74 @@ interface ProfileFormProps {
 }
 
 export default function ProfileForm({ data, onChange, errors }: ProfileFormProps) {
+  const deleteUserCourse = useMutation(api.mutations.userCourses.deleteUserCourse)
+
   const update = <K extends keyof ProfileData>(field: K, value: ProfileData[K]) => {
     onChange({ ...data, [field]: value })
+  }
+
+  const handleAddCourse = (course: Course) => {
+    if (data.courses.some((c) => c.title === course.title)) return
+    onChange({ ...data, courses: [...data.courses, course] })
+  }
+
+  const handleRemoveCourse = async (index: number) => {
+    const course = data.courses[index]
+    if (course.userCourseId) {
+      await deleteUserCourse({ userCourseId: course.userCourseId as Id<'userCourses'> })
+    }
+    update('courses', data.courses.filter((_, j) => j !== index))
   }
 
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h2 className="text-xl font-semibold text-gray-900">Tell us about yourself</h2>
-        <p className="mt-1 text-sm text-gray-500">This helps us personalize your study plan.</p>
+        <h2 className="font-heading text-2xl font-bold text-navy">Tell us about yourself</h2>
+        <p className="mt-1 font-body text-sm text-slate-blue">This helps us personalize your study plan.</p>
       </div>
 
       {/* Major */}
       <div className="flex flex-col gap-1">
-        <label className="text-sm font-medium text-gray-700">
-          Major / Field of Study <span className="text-red-500">*</span>
+        <label className="font-heading text-sm font-semibold text-navy">
+          Major / Field of Study <span className="text-urgent-red">*</span>
         </label>
         <input
           type="text"
           value={data.major}
           onChange={(e) => update('major', e.target.value)}
           placeholder="e.g. Computer Science"
-          className={`rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 ${
-            errors.major ? 'border-red-400' : 'border-gray-300 focus:border-blue-500'
+          className={`rounded-lg border bg-bg-gray px-3 py-2 font-body text-sm text-navy outline-none placeholder:text-light-blue focus:ring-2 focus:ring-sky-blue/20 ${
+            errors.major ? 'border-urgent-red' : 'border-border focus:border-sky-blue'
           }`}
         />
-        {errors.major && <p className="text-xs text-red-500">{errors.major}</p>}
+        {errors.major && <p className="font-body text-xs text-urgent-red">{errors.major}</p>}
       </div>
 
       {/* Year */}
       <div className="flex flex-col gap-1">
-        <label className="text-sm font-medium text-gray-700">
-          Current Year <span className="text-red-500">*</span>
+        <label className="font-heading text-sm font-semibold text-navy">
+          Current Year <span className="text-urgent-red">*</span>
         </label>
         <select
+          id="year-select"
           value={data.year}
           onChange={(e) => update('year', e.target.value)}
-          className={`rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 ${
-            errors.year ? 'border-red-400' : 'border-gray-300 focus:border-blue-500'
+          className={`rounded-lg border bg-bg-gray px-3 py-2 font-body text-sm text-navy outline-none focus:ring-2 focus:ring-sky-blue/20 ${
+            errors.year ? 'border-urgent-red' : 'border-border focus:border-sky-blue'
           }`}
         >
           <option value="">Select your year</option>
           {YEARS.map((y) => (
-            <option key={y} value={y}>
-              {y}
-            </option>
+            <option key={y} value={y}>{y}</option>
           ))}
         </select>
-        {errors.year && <p className="text-xs text-red-500">{errors.year}</p>}
+        {errors.year && <p className="font-body text-xs text-urgent-red">{errors.year}</p>}
       </div>
 
       {/* Difficult Subjects */}
       <div className="flex flex-col gap-1">
-        <label className="text-sm font-medium text-gray-700">Subjects You Find Difficult</label>
-        <p className="text-xs text-gray-400">Press Enter or comma to add each subject</p>
+        <label className="font-heading text-sm font-semibold text-navy">Subjects You Find Difficult</label>
+        <p className="font-body text-xs text-light-blue">Press Enter or comma to add each subject</p>
         <TagInput
           tags={data.difficultSubjects}
           onChange={(tags) => update('difficultSubjects', tags)}
@@ -134,8 +150,8 @@ export default function ProfileForm({ data, onChange, errors }: ProfileFormProps
 
       {/* Enjoyed Subjects */}
       <div className="flex flex-col gap-1">
-        <label className="text-sm font-medium text-gray-700">Subjects You Enjoy</label>
-        <p className="text-xs text-gray-400">Press Enter or comma to add each subject</p>
+        <label className="font-heading text-sm font-semibold text-navy">Subjects You Enjoy</label>
+        <p className="font-body text-xs text-light-blue">Press Enter or comma to add each subject</p>
         <TagInput
           tags={data.enjoyedSubjects}
           onChange={(tags) => update('enjoyedSubjects', tags)}
@@ -143,71 +159,80 @@ export default function ProfileForm({ data, onChange, errors }: ProfileFormProps
         />
       </div>
 
-      {/* Courses */}
+      {/* Courses — term + school + search */}
       <div className="flex flex-col gap-3">
-        <div>
-          <label className="text-sm font-medium text-gray-700">Current Courses</label>
-          <p className="mt-0.5 text-xs text-gray-400">Add each course and set your goal for it</p>
-        </div>
+        <CourseSelector onAddCourse={handleAddCourse} />
+
+        {/* Added courses list */}
         {data.courses.map((course, i) => (
-          <div key={i} className="flex flex-col gap-2 rounded-lg border border-gray-200 p-3">
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                value={course.title}
-                onChange={(e) => {
-                  const updated = data.courses.map((c, j) =>
-                    j === i ? { ...c, title: e.target.value } : c
-                  )
-                  update('courses', updated)
-                }}
-                placeholder="e.g. CS 101"
-                className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
-              />
+          <div key={i} className="flex flex-col gap-2 rounded-lg border border-border bg-bg-gray p-3">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex flex-col gap-0.5">
+                <span className="font-body text-sm font-semibold text-navy">{course.title}</span>
+                {course.term && (
+                  <span className="inline-block w-fit rounded-full bg-navy/10 px-2 py-0.5 font-body text-xs font-medium text-navy">
+                    {course.term}
+                  </span>
+                )}
+              </div>
               <button
                 type="button"
-                onClick={() => update('courses', data.courses.filter((_, j) => j !== i))}
-                className="text-gray-400 hover:text-red-500"
+                onClick={() => handleRemoveCourse(i)}
+                className="text-light-blue transition-colors hover:text-urgent-red"
               >
                 ×
               </button>
             </div>
-            <div className="flex gap-2">
-              {STUDY_GOALS.map((goal) => (
-                <label
-                  key={goal}
-                  className={`flex flex-1 cursor-pointer items-center justify-center rounded-lg border px-2 py-2 text-xs font-medium transition-colors ${
-                    course.studyGoal === goal
-                      ? 'border-blue-500 bg-blue-50 text-blue-700'
-                      : 'border-gray-200 text-gray-500 hover:border-gray-300 hover:bg-gray-50'
-                  }`}
+            {course.grade !== undefined ? (
+              <div className="flex items-center gap-2">
+                <span className="font-body text-xs text-slate-blue">Grade:</span>
+                <select
+                  value={course.grade}
+                  onChange={(e) => {
+                    const updated = data.courses.map((c, j) =>
+                      j === i ? { ...c, grade: e.target.value } : c
+                    )
+                    update('courses', updated)
+                  }}
+                  className="rounded-lg border border-border bg-white px-2 py-1 font-body text-xs text-navy outline-none focus:border-sky-blue focus:ring-1 focus:ring-sky-blue/20"
                 >
-                  <input
-                    type="radio"
-                    name={`studyGoal-${i}`}
-                    value={goal}
-                    checked={course.studyGoal === goal}
-                    onChange={() => {
-                      const updated = data.courses.map((c, j) =>
-                        j === i ? { ...c, studyGoal: goal } : c
-                      )
-                      update('courses', updated)
-                    }}
-                    className="sr-only"
-                  />
-                  {goal}
-                </label>
-              ))}
-            </div>
+                  <option value="">Select grade</option>
+                  {GRADES.map((g) => (
+                    <option key={g} value={g}>{g}</option>
+                  ))}
+                </select>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                {STUDY_GOALS.map((goal) => (
+                  <label
+                    key={goal}
+                    className={`flex flex-1 cursor-pointer items-center justify-center rounded-lg border px-2 py-2 font-body text-xs font-medium transition-colors ${
+                      course.studyGoal === goal
+                        ? 'border-sky-blue bg-sky-blue/10 text-navy'
+                        : 'border-border text-slate-blue hover:border-sky-blue/50 hover:bg-sky-blue/5'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name={`studyGoal-${i}`}
+                      value={goal}
+                      checked={course.studyGoal === goal}
+                      onChange={() => {
+                        const updated = data.courses.map((c, j) =>
+                          j === i ? { ...c, studyGoal: goal } : c
+                        )
+                        update('courses', updated)
+                      }}
+                      className="sr-only"
+                    />
+                    {goal}
+                  </label>
+                ))}
+              </div>
+            )}
           </div>
         ))}
-        <button
-          type="button"
-          onClick={() => update('courses', [...data.courses, { title: '', studyGoal: '' }])}
-          className="flex items-center gap-1 self-start rounded-lg border border-dashed border-gray-300 px-4 py-2 text-sm text-gray-500 hover:border-blue-400 hover:text-blue-600"
-        >
-          + Add course
-        </button>
       </div>
     </div>
   )
