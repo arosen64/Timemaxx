@@ -71,14 +71,12 @@ describe("mutations/users – deleteAccount", () => {
       await ctx.db.insert("syllabi", {
         userId,
         fileName: "cs101.pdf",
-        courseName: "CS 101",
         status: "confirmed",
         createdAt: Date.now(),
       });
       await ctx.db.insert("syllabi", {
         userId,
         fileName: "math201.pdf",
-        courseName: "Math 201",
         status: "pending",
         createdAt: Date.now(),
       });
@@ -177,7 +175,6 @@ describe("mutations/users – deleteAccount", () => {
       await ctx.db.insert("syllabi", {
         userId: otherUserId,
         fileName: "other.pdf",
-        courseName: "Other Course",
         status: "confirmed",
         createdAt: Date.now(),
       });
