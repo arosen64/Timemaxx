@@ -2,14 +2,14 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '../../../backend/convex/_generated/api'
+import { ProfileData, WorkHoursData, PreferencesData } from '../types'
 import ProfileForm from '../components/ProfileForm'
 import WorkHoursSelector, { DEFAULT_WORK_HOURS } from '../components/WorkHoursSelector'
 import PreferencesForm, { DEFAULT_PREFERENCES } from '../components/PreferencesForm'
-import { ProfileData, WorkHoursData, PreferencesData } from '../types'
+import OnboardingStepShell from '../components/onboarding/OnboardingStepShell'
+import OnboardingNav from '../components/onboarding/OnboardingNav'
 
 type Step = 1 | 2 | 3
-
-const STEP_LABELS = ['Profile', 'Work Hours', 'Preferences']
 
 const DEFAULT_PROFILE: ProfileData = {
   major: '',
@@ -61,7 +61,7 @@ export default function OnboardingPage() {
         year: profile.year,
         difficultSubjects: profile.difficultSubjects,
         enjoyedSubjects: profile.enjoyedSubjects,
-        courses: profile.courses,
+
         workHoursGrid: Object.entries(workHours).map(([day, slots]) => ({
           day,
           available: slots.available,
@@ -76,83 +76,25 @@ export default function OnboardingPage() {
     }
   }
 
-  const isWide = step === 2 || step === 3
-
   return (
-    <div className="flex min-h-screen flex-col items-center bg-gray-50 px-4 py-12">
-      {/* Step indicator */}
-      <div className="mb-10 flex items-center">
-        {STEP_LABELS.map((label, i) => {
-          const stepNum = (i + 1) as Step
-          const isActive = step === stepNum
-          const isComplete = step > stepNum
-          return (
-            <div key={label} className="flex items-center">
-              <div className="flex items-center gap-2">
-                <div
-                  className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold ${
-                    isComplete
-                      ? 'bg-green-500 text-white'
-                      : isActive
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-200 text-gray-500'
-                  }`}
-                >
-                  {isComplete ? '✓' : stepNum}
-                </div>
-                <span
-                  className={`text-sm ${isActive ? 'font-semibold text-gray-900' : 'text-gray-400'}`}
-                >
-                  {label}
-                </span>
-              </div>
-              {i < STEP_LABELS.length - 1 && <div className="mx-4 h-px w-12 bg-gray-300" />}
-            </div>
-          )
-        })}
-      </div>
-
-      {/* Form card */}
-      <div className={`w-full rounded-2xl bg-white p-8 shadow-sm ${isWide ? 'max-w-2xl' : 'max-w-lg'}`}>
-        {step === 1 && (
-          <ProfileForm data={profile} onChange={setProfile} errors={profileErrors} />
-        )}
-
-        {step === 2 && (
-          <WorkHoursSelector data={workHours} onChange={setWorkHours} />
-        )}
-
-        {step === 3 && (
-          <PreferencesForm data={preferences} onChange={setPreferences} />
-        )}
-
-        {/* Navigation */}
-        <div className="mt-8 flex justify-between">
-          <button
-            onClick={handleBack}
-            disabled={step === 1 || isSubmitting}
-            className="rounded-lg border border-gray-300 px-5 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            Back
-          </button>
-          {step < 3 ? (
-            <button
-              onClick={handleNext}
-              className="rounded-lg bg-blue-600 px-5 py-2 text-sm font-medium text-white hover:bg-blue-700"
-            >
-              Next
-            </button>
-          ) : (
-            <button
-              onClick={handleSubmit}
-              disabled={isSubmitting}
-              className="rounded-lg bg-blue-600 px-5 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {isSubmitting ? 'Saving...' : 'Submit'}
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
+    <OnboardingStepShell currentStep={step} totalSteps={3} wide={step === 2 || step === 3}>
+      {step === 1 && (
+        <ProfileForm data={profile} onChange={setProfile} errors={profileErrors} />
+      )}
+      {step === 2 && (
+        <WorkHoursSelector data={workHours} onChange={setWorkHours} />
+      )}
+      {step === 3 && (
+        <PreferencesForm data={preferences} onChange={setPreferences} />
+      )}
+      <OnboardingNav
+        onBack={handleBack}
+        onContinue={step < 3 ? handleNext : handleSubmit}
+        isFirstStep={step === 1}
+        isLastStep={step === 3}
+        continueLabel={isSubmitting ? 'Saving...' : undefined}
+        disabled={isSubmitting}
+      />
+    </OnboardingStepShell>
   )
 }
