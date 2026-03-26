@@ -13,11 +13,10 @@ export default function ProfilePage() {
   const user = useQuery(api.queries.users.getCurrUser);
 
   useEffect(() => {
-    const saved = localStorage.getItem('timemaxx_onboarding_state')
+    const saved = window.localStorage.getItem('timemaxx_onboarding_state')
     if (saved) {
-      const { returnTo } = JSON.parse(saved)
+      const { returnTo } = JSON.parse(saved) as { returnTo?: string }
       if (returnTo) {
-        localStorage.removeItem('timemaxx_onboarding_state')
         navigate(returnTo, { replace: true })
       }
     }

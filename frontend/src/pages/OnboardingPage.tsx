@@ -27,9 +27,9 @@ export default function OnboardingPage() {
   const initiateCalendarOAuth = useAction(api.actions.initiateGoogleCalendarOAuth.initiateGoogleCalendarOAuth)
 
   const [step, setStep] = useState<Step>(() => {
-    const saved = localStorage.getItem('timemaxx_onboarding_state')
+    const saved = window.localStorage.getItem('timemaxx_onboarding_state')
     if (saved) {
-      localStorage.removeItem('timemaxx_onboarding_state')
+      window.localStorage.removeItem('timemaxx_onboarding_state')
       return 4
     }
     return 1
@@ -41,7 +41,7 @@ export default function OnboardingPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   async function handleConnectCalendar() {
-    localStorage.setItem('timemaxx_onboarding_state', JSON.stringify({ returnTo: '/onboarding' }))
+    window.localStorage.setItem('timemaxx_onboarding_state', JSON.stringify({ returnTo: '/onboarding' }))
     const authUrl = await initiateCalendarOAuth({})
     window.location.href = authUrl
   }
