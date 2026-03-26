@@ -127,13 +127,13 @@ export default function CourseSelector({ onAddCourse }: CourseSelectorProps) {
   }
 
   const filteredCourses =
-    courseSearch.trim().length >= 2
-      ? termCourses
+    courseSearch.trim().length === 0
+      ? termCourses.slice(0, 50)
+      : termCourses
           .filter((c) =>
             `${c.OfferingName} ${c.Title}`.toLowerCase().includes(courseSearch.toLowerCase())
           )
           .slice(0, 50)
-      : []
 
   const handleAddCourse = async () => {
     if (!selectedCourse) return
@@ -226,7 +226,7 @@ export default function CourseSelector({ onAddCourse }: CourseSelectorProps) {
           }
           className="w-full rounded-lg border border-border bg-bg-gray px-3 py-2 font-body text-sm text-navy outline-none placeholder:text-light-blue focus:border-sky-blue focus:ring-2 focus:ring-sky-blue/20 disabled:opacity-50"
         />
-        {showSuggestions && courseSearch.trim().length >= 2 && (
+        {showSuggestions && selectedSchool && !coursesLoading && (
           <ul className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-lg border border-border bg-white shadow-lg">
             {filteredCourses.length > 0 ? (
               filteredCourses.map((c, i) => (
