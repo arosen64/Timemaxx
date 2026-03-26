@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { CalendarIcon } from '../icons'
 import { type EditForm, CUSTOM_TASK_TYPE_OPTION, TASK_TYPE_OPTIONS } from './types'
 import Modal from '../ui/Modal'
@@ -37,6 +37,24 @@ export default function TaskModal({
   const [dueDate, setDueDate] = useState(initialValues.dueDate)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!isOpen) return
+    setTaskName(initialValues.taskName)
+    setSelectedType(initialValues.selectedType)
+    setCustomTaskType(initialValues.customTaskType)
+    setDescription(initialValues.description)
+    setDueDate(initialValues.dueDate)
+    setError(null)
+    setSubmitting(false)
+  }, [
+    isOpen,
+    initialValues.taskName,
+    initialValues.selectedType,
+    initialValues.customTaskType,
+    initialValues.description,
+    initialValues.dueDate,
+  ])
 
   function validateDueDate(value: string): boolean {
     const match = value.match(/^(\d{1,2})\s*\/\s*(\d{1,2})\s*\/\s*(\d{4})$/)
