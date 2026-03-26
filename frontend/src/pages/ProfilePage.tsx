@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import { useQuery, useMutation, useAction } from "convex/react";
@@ -10,6 +11,17 @@ import Button from "../components/ui/Button";
 export default function ProfilePage() {
   const navigate = useNavigate();
   const user = useQuery(api.queries.users.getCurrUser);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('timemaxx_onboarding_state')
+    if (saved) {
+      const { returnTo } = JSON.parse(saved)
+      if (returnTo) {
+        localStorage.removeItem('timemaxx_onboarding_state')
+        navigate(returnTo, { replace: true })
+      }
+    }
+  }, [navigate]);
   const calendarStatus = useQuery(api.queries.calendar.getCalendarConnectionStatus);
   const deleteCalendarToken = useMutation(api.mutations.calendar.deleteCalendarToken);
   const initiateCalendarOAuth = useAction(api.actions.initiateGoogleCalendarOAuth.initiateGoogleCalendarOAuth);

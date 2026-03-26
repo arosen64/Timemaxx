@@ -66,6 +66,11 @@ describe('OnboardingPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockNavigate.mockClear()
+    Object.defineProperty(globalThis, 'localStorage', {
+      value: { getItem: vi.fn().mockReturnValue(null), setItem: vi.fn(), removeItem: vi.fn() },
+      writable: true,
+      configurable: true,
+    })
   })
 
   it('redirects to /dashboard if onboarding is already complete', async () => {
@@ -127,7 +132,7 @@ describe('OnboardingPage', () => {
 
     // Step 3: PreferencesForm should be visible
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /finish/i })).toBeInTheDocument()
+      expect(screen.getByText('Productivity Preferences')).toBeInTheDocument()
     })
   })
 
@@ -161,7 +166,11 @@ describe('OnboardingPage', () => {
     await waitFor(() => expect(screen.queryByText('Tell us about yourself')).not.toBeInTheDocument())
     await user.click(screen.getByRole('button', { name: /continue/i }))
 
-    // Step 3 — submit
+    // Step 3 — click Continue to save and advance to step 4
+    await waitFor(() => expect(screen.getByText('Productivity Preferences')).toBeInTheDocument())
+    await user.click(screen.getByRole('button', { name: /continue/i }))
+
+    // Step 4 (Calendar) — click Finish to navigate to /dashboard
     await waitFor(() => expect(screen.getByRole('button', { name: /finish/i })).toBeInTheDocument())
     await user.click(screen.getByRole('button', { name: /finish/i }))
 
@@ -182,40 +191,47 @@ describe('OnboardingPage', () => {
   })
 })
 
-describe('OnboardingPage – Google Calendar section (Step 3)', () => {
+describe('OnboardingPage – Google Calendar section (Step 4)', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockNavigate.mockClear()
+    Object.defineProperty(globalThis, 'localStorage', {
+      value: { getItem: vi.fn().mockReturnValue(null), setItem: vi.fn(), removeItem: vi.fn() },
+      writable: true,
+      configurable: true,
+    })
   })
 
-  async function advanceToStep3() {
+  async function advanceToStep4() {
     const user = userEvent.setup()
     await user.type(screen.getByPlaceholderText(/computer science/i), 'Biology')
     await user.selectOptions(document.getElementById('year-select')!, 'Sophomore')
     await user.click(screen.getByRole('button', { name: /continue/i }))
     await waitFor(() => expect(screen.queryByText('Tell us about yourself')).not.toBeInTheDocument())
     await user.click(screen.getByRole('button', { name: /continue/i }))
+    await waitFor(() => expect(screen.getByText('Productivity Preferences')).toBeInTheDocument())
+    await user.click(screen.getByRole('button', { name: /continue/i }))
     await waitFor(() => expect(screen.getByRole('button', { name: /finish/i })).toBeInTheDocument())
     return user
   }
 
-  it('shows "Connect" button on Step 3 when calendar is not connected', async () => {
+  it('shows "Connect" button on Step 4 when calendar is not connected', async () => {
     setup(false)
-    await advanceToStep3()
+    await advanceToStep4()
     expect(screen.getByRole('button', { name: /^connect$/i })).toBeInTheDocument()
     expect(screen.queryByText('Connected')).not.toBeInTheDocument()
   })
 
-  it('shows "Connected" indicator on Step 3 when calendar is already connected', async () => {
+  it('shows "Connected" indicator on Step 4 when calendar is already connected', async () => {
     setup(true)
-    await advanceToStep3()
+    await advanceToStep4()
     expect(screen.getByText('Connected')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /^connect$/i })).not.toBeInTheDocument()
   })
 
-  it('calls initiateGoogleCalendarOAuth when "Connect" is clicked on Step 3', async () => {
+  it('calls initiateGoogleCalendarOAuth when "Connect" is clicked on Step 4', async () => {
     const { mockCalendarAction } = setup(false)
-    const user = await advanceToStep3()
+    const user = await advanceToStep4()
 
     await user.click(screen.getByRole('button', { name: /^connect$/i }))
 

@@ -7392,6 +7392,582 @@
           ]
         }
       ]
+    },
+    {
+      "type": "frame",
+      "id": "4Wxmw",
+      "x": 4580,
+      "y": 3080,
+      "name": "Onboarding – Calendar",
+      "width": 1440,
+      "height": 900,
+      "fill": "$--background",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "O8xfm",
+          "name": "topbar",
+          "width": "fill_container",
+          "height": 64,
+          "fill": "$--primary",
+          "padding": [
+            0,
+            40
+          ],
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "id": "nBFF9",
+              "type": "ref",
+              "ref": "P9sB9",
+              "name": "calLogo",
+              "width": "fit_content",
+              "height": 32,
+              "x": 40,
+              "y": 16,
+              "descendants": {
+                "NZ5gH": {
+                  "x": 5,
+                  "y": 5
+                },
+                "6YpiG": {
+                  "x": 42,
+                  "y": 4.5
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "j9vl9",
+              "name": "stepIndicator",
+              "gap": 8,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "vUNy0",
+                  "name": "step1pill",
+                  "width": 32,
+                  "height": 6,
+                  "fill": "#86C8BC",
+                  "cornerRadius": 3
+                },
+                {
+                  "type": "frame",
+                  "id": "YuNBZ",
+                  "name": "step2pill",
+                  "width": 32,
+                  "height": 6,
+                  "fill": "#86C8BC",
+                  "cornerRadius": 3
+                },
+                {
+                  "type": "frame",
+                  "id": "R72RM",
+                  "name": "step3pill",
+                  "width": 32,
+                  "height": 6,
+                  "fill": "#86C8BC",
+                  "cornerRadius": 3
+                },
+                {
+                  "type": "frame",
+                  "id": "94Gik",
+                  "name": "step4pill",
+                  "width": 32,
+                  "height": 6,
+                  "fill": "#86C8BC",
+                  "cornerRadius": 3
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "oruZ1",
+              "name": "stepLabel",
+              "fill": "$--info",
+              "content": "Step 4 of 4",
+              "fontFamily": "Inter",
+              "fontSize": 13,
+              "fontWeight": "normal"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "neQJR",
+          "name": "content",
+          "width": "fill_container",
+          "height": "fill_container",
+          "layout": "vertical",
+          "padding": 48,
+          "justifyContent": "center",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "uSv8w",
+              "name": "obCard",
+              "width": 640,
+              "fill": "$--card",
+              "cornerRadius": 12,
+              "stroke": {
+                "align": "inside",
+                "thickness": 1,
+                "fill": "$--border"
+              },
+              "layout": "vertical",
+              "gap": 28,
+              "padding": 48,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "3AC9S",
+                  "name": "obCardTitle",
+                  "fill": "$--primary",
+                  "content": "Connect Google Calendar",
+                  "fontFamily": "Space Grotesk",
+                  "fontSize": 26,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "text",
+                  "id": "ul5Ak",
+                  "name": "obCardSub",
+                  "fill": "$--muted-foreground",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Optionally sync your calendar so Timemaxx can schedule around your existing events.",
+                  "lineHeight": 1.5,
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "frame",
+                  "id": "HoWgj",
+                  "name": "calCard",
+                  "width": "fill_container",
+                  "cornerRadius": 8,
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "$--border"
+                  },
+                  "layout": "vertical",
+                  "gap": 10,
+                  "padding": 16,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "pOPfX",
+                      "name": "calRow",
+                      "width": "fill_container",
+                      "justifyContent": "space_between",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "Fp1LH",
+                          "name": "calLeft",
+                          "layout": "vertical",
+                          "gap": 4,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "RTfeL",
+                              "name": "calTitle",
+                              "fill": "$--primary",
+                              "content": "Google Calendar (optional)",
+                              "fontFamily": "Space Grotesk",
+                              "fontSize": 14,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "text",
+                              "id": "VC3ve",
+                              "name": "calSub",
+                              "fill": "$--muted-foreground",
+                              "content": "Connect to schedule around your existing events",
+                              "fontFamily": "Inter",
+                              "fontSize": 13,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "id": "dN4pt",
+                          "type": "ref",
+                          "ref": "uzHQ8",
+                          "name": "calConnectBtn",
+                          "width": "fit_content",
+                          "x": 406,
+                          "y": 0,
+                          "descendants": {
+                            "zZ3E7": {
+                              "content": "Connect"
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "id": "PYE6S",
+                      "x": 0,
+                      "y": 0,
+                      "name": "calNote",
+                      "enabled": false,
+                      "fill": "$--muted-foreground",
+                      "content": "You can undo this on the Profile page.",
+                      "fontFamily": "Inter",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "lSFnr",
+                  "name": "navRow",
+                  "width": "fill_container",
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "4amkC",
+                      "type": "ref",
+                      "ref": "uzHQ8",
+                      "name": "backBtn",
+                      "width": "fit_content",
+                      "x": 0,
+                      "y": 0,
+                      "descendants": {
+                        "zZ3E7": {
+                          "content": "← Back"
+                        }
+                      }
+                    },
+                    {
+                      "id": "gqf7r",
+                      "type": "ref",
+                      "ref": "RruJv",
+                      "name": "finishBtn",
+                      "width": "fit_content",
+                      "x": 429,
+                      "y": 0,
+                      "descendants": {
+                        "AkprM": {
+                          "content": "Finish"
+                        },
+                        "TRgda": {
+                          "x": 75
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "4rneH",
+      "x": 4580,
+      "y": 4060,
+      "name": "Onboarding – Calendar (Connected)",
+      "width": 1440,
+      "height": 900,
+      "fill": "$--background",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "bleHe",
+          "name": "topbar",
+          "width": "fill_container",
+          "height": 64,
+          "fill": "$--primary",
+          "padding": [
+            0,
+            40
+          ],
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "id": "7MowB",
+              "type": "ref",
+              "ref": "P9sB9",
+              "name": "calLogo",
+              "width": "fit_content",
+              "height": 32,
+              "x": 40,
+              "y": 16,
+              "descendants": {
+                "NZ5gH": {
+                  "x": 5,
+                  "y": 5
+                },
+                "6YpiG": {
+                  "x": 42,
+                  "y": 4.5
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "s1zl5",
+              "name": "stepIndicator",
+              "gap": 8,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "JXXky",
+                  "name": "step1pill",
+                  "width": 32,
+                  "height": 6,
+                  "fill": "#86C8BC",
+                  "cornerRadius": 3
+                },
+                {
+                  "type": "frame",
+                  "id": "FxHlV",
+                  "name": "step2pill",
+                  "width": 32,
+                  "height": 6,
+                  "fill": "#86C8BC",
+                  "cornerRadius": 3
+                },
+                {
+                  "type": "frame",
+                  "id": "R2rLe",
+                  "name": "step3pill",
+                  "width": 32,
+                  "height": 6,
+                  "fill": "#86C8BC",
+                  "cornerRadius": 3
+                },
+                {
+                  "type": "frame",
+                  "id": "0u4WP",
+                  "name": "step4pill",
+                  "width": 32,
+                  "height": 6,
+                  "fill": "#86C8BC",
+                  "cornerRadius": 3
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "K4mab",
+              "name": "stepLabel",
+              "fill": "$--info",
+              "content": "Step 4 of 4",
+              "fontFamily": "Inter",
+              "fontSize": 13,
+              "fontWeight": "normal"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "AWDi9",
+          "name": "content",
+          "width": "fill_container",
+          "height": "fill_container",
+          "layout": "vertical",
+          "padding": 48,
+          "justifyContent": "center",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "9zydr",
+              "name": "obCard",
+              "width": 640,
+              "fill": "$--card",
+              "cornerRadius": 12,
+              "stroke": {
+                "align": "inside",
+                "thickness": 1,
+                "fill": "$--border"
+              },
+              "layout": "vertical",
+              "gap": 28,
+              "padding": 48,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "hmPBz",
+                  "name": "obCardTitle",
+                  "fill": "$--primary",
+                  "content": "Connect Google Calendar",
+                  "fontFamily": "Space Grotesk",
+                  "fontSize": 26,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "text",
+                  "id": "qBRLO",
+                  "name": "obCardSub",
+                  "fill": "$--muted-foreground",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Optionally sync your calendar so Timemaxx can schedule around your existing events.",
+                  "lineHeight": 1.5,
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "frame",
+                  "id": "ObURz",
+                  "name": "calCard",
+                  "width": "fill_container",
+                  "cornerRadius": 8,
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "$--border"
+                  },
+                  "layout": "vertical",
+                  "gap": 10,
+                  "padding": 16,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "thWF9",
+                      "name": "calRow",
+                      "width": "fill_container",
+                      "justifyContent": "space_between",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "4LA7z",
+                          "name": "calLeft",
+                          "layout": "vertical",
+                          "gap": 4,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "TiB5m",
+                              "name": "calTitle",
+                              "fill": "$--primary",
+                              "content": "Google Calendar (optional)",
+                              "fontFamily": "Space Grotesk",
+                              "fontSize": 14,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "text",
+                              "id": "yGHSl",
+                              "name": "calSub",
+                              "fill": "$--muted-foreground",
+                              "content": "Connect to schedule around your existing events",
+                              "fontFamily": "Inter",
+                              "fontSize": 13,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "e4Djd",
+                          "name": "connectedIndicator",
+                          "gap": 6,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon_font",
+                              "id": "FrGWx",
+                              "name": "calIcon",
+                              "width": 16,
+                              "height": 16,
+                              "iconFontName": "calendar",
+                              "iconFontFamily": "lucide",
+                              "fill": "$--accent"
+                            },
+                            {
+                              "type": "text",
+                              "id": "aABSv",
+                              "name": "connLabel",
+                              "fill": "$--accent",
+                              "content": "Connected",
+                              "fontFamily": "Space Grotesk",
+                              "fontSize": 14,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "id": "CDlOy",
+                      "name": "calNote",
+                      "fill": "$--muted-foreground",
+                      "content": "You can undo this on the Profile page.",
+                      "fontFamily": "Inter",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "BSo5T",
+                  "name": "navRow",
+                  "width": "fill_container",
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "Q3fxu",
+                      "type": "ref",
+                      "ref": "uzHQ8",
+                      "name": "backBtn",
+                      "width": "fit_content",
+                      "x": 0,
+                      "y": 0,
+                      "descendants": {
+                        "zZ3E7": {
+                          "content": "← Back"
+                        }
+                      }
+                    },
+                    {
+                      "id": "eedNo",
+                      "type": "ref",
+                      "ref": "RruJv",
+                      "name": "finishBtn",
+                      "width": "fit_content",
+                      "x": 429,
+                      "y": 0,
+                      "descendants": {
+                        "AkprM": {
+                          "content": "Finish"
+                        },
+                        "TRgda": {
+                          "x": 75
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
     }
   ],
   "variables": {
