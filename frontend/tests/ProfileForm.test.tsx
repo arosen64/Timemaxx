@@ -184,6 +184,21 @@ describe('ProfileForm', () => {
       expect(screen.queryByText('Major is required')).not.toBeInTheDocument()
       expect(screen.queryByText('Please select your year')).not.toBeInTheDocument()
     })
+
+    it('shows "Not set" for an empty year instead of the select placeholder', () => {
+      setup({ year: '' }, {}, true)
+      expect(document.getElementById('year-select')).toBeNull()
+      expect(screen.getByText('Not set')).toBeInTheDocument()
+    })
+
+    it('does not call onChange when the year select is interacted with in readOnly', async () => {
+      const user = userEvent.setup()
+      const { onChange } = setup({ year: 'Junior' }, {}, true)
+
+      await user.selectOptions(document.getElementById('year-select')!, 'Senior')
+
+      expect(onChange).not.toHaveBeenCalled()
+    })
   })
 
   describe('courses', () => {

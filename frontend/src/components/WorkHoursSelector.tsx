@@ -68,8 +68,19 @@ export default function WorkHoursSelector({ data, onChange, readOnly = false }: 
     return () => document.removeEventListener('mouseup', handleMouseUp)
   }, [])
 
-  // Sync internal slots state when data prop changes (e.g. switching into edit mode)
+  // Tracks whether the most recent data change was caused by our own onChange call.
+  // If so, skip re-initializing slots — the data is already in sync and re-initializing
+  // would cause an extra render on every cell paint in edit mode.
+  const isOwnUpdate = useRef(false)
+
+  // Sync internal slots when data changes from an external source (e.g. parent loads
+  // saved values when switching into edit mode). Skipped when the change originated
+  // from our own onChange to avoid a double-render during drag painting.
   useEffect(() => {
+    if (isOwnUpdate.current) {
+      isOwnUpdate.current = false
+      return
+    }
     setSlots(initSlots(data))
   }, [data])
 
@@ -95,6 +106,7 @@ export default function WorkHoursSelector({ data, onChange, readOnly = false }: 
       }
       const next = { ...prev, [day]: { available, blocked } }
       setSlots(next)
+      isOwnUpdate.current = true
       onChange(slotsToData(next))
     },
     [onChange]

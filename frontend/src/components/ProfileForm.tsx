@@ -136,23 +136,27 @@ export default function ProfileForm({ data, onChange, errors, readOnly = false }
         <label className="font-heading text-sm font-semibold text-navy">
           Current Year {!readOnly && <span className="text-urgent-red">*</span>}
         </label>
-        <select
-          id="year-select"
-          value={data.year}
-          onChange={readOnly ? () => {} : (e) => update('year', e.target.value)}
-          className={`rounded-lg border bg-bg-gray px-3 py-2 font-body text-sm text-navy outline-none ${
-            readOnly
-              ? 'cursor-default border-border pointer-events-none'
-              : `focus:ring-2 focus:ring-sky-blue/20 ${
-                  errors.year ? 'border-urgent-red' : 'border-border focus:border-sky-blue'
-                }`
-          }`}
-        >
-          <option value="">Select your year</option>
-          {YEARS.map((y) => (
-            <option key={y} value={y}>{y}</option>
-          ))}
-        </select>
+        {readOnly && !data.year ? (
+          <p className="font-body text-sm italic text-light-blue">Not set</p>
+        ) : (
+          <select
+            id="year-select"
+            value={data.year}
+            onChange={readOnly ? () => {} : (e) => update('year', e.target.value)}
+            className={`rounded-lg border bg-bg-gray px-3 py-2 font-body text-sm text-navy outline-none ${
+              readOnly
+                ? 'cursor-default border-border pointer-events-none'
+                : `focus:ring-2 focus:ring-sky-blue/20 ${
+                    errors.year ? 'border-urgent-red' : 'border-border focus:border-sky-blue'
+                  }`
+            }`}
+          >
+            <option value="">Select your year</option>
+            {YEARS.map((y) => (
+              <option key={y} value={y}>{y}</option>
+            ))}
+          </select>
+        )}
         {!readOnly && errors.year && <p className="font-body text-xs text-urgent-red">{errors.year}</p>}
       </div>
 
@@ -209,25 +213,29 @@ export default function ProfileForm({ data, onChange, errors, readOnly = false }
             {course.grade !== undefined ? (
               <div className="flex items-center gap-2">
                 <span className="font-body text-xs text-slate-blue">Grade:</span>
-                <select
-                  value={course.grade}
-                  onChange={readOnly ? () => {} : (e) => {
-                    const updated = data.courses.map((c, j) =>
-                      j === i ? { ...c, grade: e.target.value } : c
-                    )
-                    update('courses', updated)
-                  }}
-                  className={`rounded-lg border border-border bg-white px-2 py-1 font-body text-xs text-navy outline-none ${
-                    readOnly
-                      ? 'cursor-default pointer-events-none'
-                      : 'focus:border-sky-blue focus:ring-1 focus:ring-sky-blue/20'
-                  }`}
-                >
-                  <option value="">Select grade</option>
-                  {GRADES.map((g) => (
-                    <option key={g} value={g}>{g}</option>
-                  ))}
-                </select>
+                {readOnly && !course.grade ? (
+                  <span className="font-body text-xs italic text-light-blue">Not set</span>
+                ) : (
+                  <select
+                    value={course.grade}
+                    onChange={readOnly ? () => {} : (e) => {
+                      const updated = data.courses.map((c, j) =>
+                        j === i ? { ...c, grade: e.target.value } : c
+                      )
+                      update('courses', updated)
+                    }}
+                    className={`rounded-lg border border-border bg-white px-2 py-1 font-body text-xs text-navy outline-none ${
+                      readOnly
+                        ? 'cursor-default pointer-events-none'
+                        : 'focus:border-sky-blue focus:ring-1 focus:ring-sky-blue/20'
+                    }`}
+                  >
+                    <option value="">Select grade</option>
+                    {GRADES.map((g) => (
+                      <option key={g} value={g}>{g}</option>
+                    ))}
+                  </select>
+                )}
               </div>
             ) : (
               <div className="flex gap-2">

@@ -223,7 +223,9 @@ export default function PreferencesForm({ data, onChange, readOnly = false }: Pr
       <div>
         <h2 className="font-heading text-2xl font-bold text-navy">Productivity Preferences</h2>
         <p className="mt-1 font-body text-sm text-slate-blue">
-          Select everything that applies — this helps us schedule smarter.
+          {readOnly
+            ? 'Your saved productivity preferences.'
+            : 'Select everything that applies — this helps us schedule smarter.'}
         </p>
       </div>
 
