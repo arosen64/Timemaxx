@@ -49,10 +49,10 @@ const mockUseAction = vi.mocked(useAction)
 function setup(calendarConnected = false) {
   const saveOnboarding = makeMutationFn()
   const mockCalendarAction = makeMutationFn('https://accounts.google.com/oauth')
-  mockUseQuery.mockImplementation((query) => {
+  mockUseQuery.mockImplementation(((query: unknown) => {
     if (query === 'getCalendarConnectionStatus') return { connected: calendarConnected }
     return false
-  })
+  }) as never)
   mockUseMutation.mockReturnValue(saveOnboarding as never)
   mockUseAction.mockImplementation((action: unknown) => {
     if (action === 'initiateGoogleCalendarOAuth') return mockCalendarAction as never
