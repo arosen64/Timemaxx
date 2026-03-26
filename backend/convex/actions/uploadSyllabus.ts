@@ -53,7 +53,6 @@ For each task provide:
 - description: 1-2 sentence summary of what the task involves, inferred from the syllabus context
 - dueDate: ISO 8601 date string (e.g. "2025-04-15")
 - taskType: one of "Problem Set", "Essay", "Coding", "Exam Prep"
-- classTag: "${args.className}"
 
 Syllabus:
 ${args.fileText}`;
@@ -79,11 +78,10 @@ ${args.fileText}`;
                     dueDate: { type: Type.STRING },
                     taskType: {
                       type: Type.STRING,
-                      enum: ["Problem Set", "Essay", "Coding", "Exam Prep"],
+                      enum: [...TASK_TYPES],
                     },
-                    classTag: { type: Type.STRING },
                   },
-                  required: ["title", "description", "dueDate", "taskType", "classTag"],
+                  required: ["title", "description", "dueDate", "taskType"],
                 },
               },
             },
@@ -99,7 +97,6 @@ ${args.fileText}`;
         description: string;
         dueDate: string;
         taskType: string;
-        classTag: string;
       }> = json.tasks ?? [];
 
       const validTaskTypes = new Set<string>(TASK_TYPES);
@@ -111,7 +108,6 @@ ${args.fileText}`;
           description: t.description,
           dueDate: new Date(t.dueDate).getTime(),
           taskType: t.taskType as TaskType,
-          classTag: t.classTag,
         }));
 
       await ctx.runMutation(internal.mutations.syllabi.setSyllabusStatus, {

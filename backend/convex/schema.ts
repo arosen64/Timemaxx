@@ -48,6 +48,21 @@ export default defineSchema({
     .index("email", ["email"])
     .index("phone", ["phone"]),
 
+  // UserCourses table — per-user course enrollment records
+  userCourses: defineTable({
+    userId: v.id("users"),
+    courseCode: v.string(), //e.g. "EN.501.303 (SIS Code)"
+    title: v.string(),
+    credits: v.optional(v.number()),
+    term: v.string(),
+    grade: v.optional(v.string()),
+    studyGoal: v.optional(v.string()),
+    difficultyRating: v.optional(v.number()),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_course", ["userId", "courseCode"])
+    .index("by_user_term", ["userId", "term"]),
+
   // Tasks table
   tasks: defineTable({
     userId: v.id("users"),

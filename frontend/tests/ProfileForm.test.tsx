@@ -1,9 +1,30 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { render } from '@testing-library/react'
-import { ProfileForm } from '../src/components/onboarding'
+import ProfileForm from '../src/components/ProfileForm'
 import { ProfileData } from '../src/types'
+
+vi.mock('../../backend/convex/_generated/api', () => ({
+  api: {
+    actions: {
+      jhuCourses: {
+        getAvailableTerms: 'getAvailableTerms',
+        getAvailableSchools: 'getAvailableSchools',
+        getCoursesByTerm: 'getCoursesByTerm',
+      },
+    },
+    mutations: {
+      userCourses: { addUserCourse: 'addUserCourse', deleteUserCourse: 'deleteUserCourse' },
+    },
+  },
+}))
+
+vi.mock('convex/react', () => ({
+  useMutation: vi.fn().mockReturnValue(vi.fn().mockResolvedValue(undefined)),
+  useAction: vi.fn().mockReturnValue(vi.fn().mockResolvedValue([])),
+  useQuery: vi.fn().mockReturnValue(undefined),
+}))
 
 const DEFAULT_DATA: ProfileData = {
   major: '',
@@ -65,7 +86,7 @@ describe('ProfileForm', () => {
       const user = userEvent.setup()
       const { onChange } = setup()
 
-      await user.selectOptions(screen.getByRole('combobox'), 'Junior')
+      await user.selectOptions(document.getElementById('year-select')!, 'Junior')
 
       expect(onChange).toHaveBeenLastCalledWith(
         expect.objectContaining({ year: 'Junior' })
@@ -83,8 +104,7 @@ describe('ProfileForm', () => {
       const user = userEvent.setup()
       const { onChange } = setup()
 
-      const inputs = screen.getAllByRole('textbox')
-      // First textbox is major, tag inputs follow — find by placeholder
+      // Find by placeholder directly
       const tagInput = screen.getByPlaceholderText(/organic chemistry/i)
       await user.type(tagInput, 'Calculus{Enter}')
 
@@ -128,17 +148,6 @@ describe('ProfileForm', () => {
   })
 
   describe('courses', () => {
-    it('adds a course entry when Add course is clicked', async () => {
-      const user = userEvent.setup()
-      const { onChange } = setup()
-
-      await user.click(screen.getByRole('button', { name: /add course/i }))
-
-      expect(onChange).toHaveBeenLastCalledWith(
-        expect.objectContaining({ courses: [{ title: '', studyGoal: '' }] })
-      )
-    })
-
     it('removes a course when its × button is clicked', async () => {
       const user = userEvent.setup()
       const { onChange } = setup({
@@ -148,30 +157,12 @@ describe('ProfileForm', () => {
         ],
       })
 
-      // The first × button in the course list removes the first course
       const removeButtons = screen.getAllByRole('button', { name: '×' })
       await user.click(removeButtons[0])
 
       expect(onChange).toHaveBeenLastCalledWith(
         expect.objectContaining({
-          courses: [{ title: 'Math 201', studyGoal: 'Ace it' }],
-        })
-      )
-    })
-
-    it('updates course title when typed', async () => {
-      const user = userEvent.setup()
-      const { onChange } = setup({
-        courses: [{ title: '', studyGoal: '' }],
-      })
-
-      await user.type(screen.getByPlaceholderText(/cs 101/i), 'Bio 110')
-
-      expect(onChange).toHaveBeenLastCalledWith(
-        expect.objectContaining({
-          courses: expect.arrayContaining([
-            expect.objectContaining({ title: 'Bio 110' }),
-          ]),
+          courses: [expect.objectContaining({ title: 'Math 201' })],
         })
       )
     })
@@ -186,7 +177,7 @@ describe('ProfileForm', () => {
 
       expect(onChange).toHaveBeenLastCalledWith(
         expect.objectContaining({
-          courses: [{ title: 'CS 101', studyGoal: 'Ace it' }],
+          courses: [expect.objectContaining({ title: 'CS 101', studyGoal: 'Ace it' })],
         })
       )
     })

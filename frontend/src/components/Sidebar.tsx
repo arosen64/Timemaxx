@@ -1,9 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { useQuery } from "convex/react";
-import { api } from "../../../../backend/convex/_generated/api";
-import { DashboardIcon, TasksIcon, ScheduleIcon, UserIcon, ClassesIcon } from "../icons/icons";
-import { BrandLogo, Avatar } from '.'
-
+import { api } from "../../../backend/convex/_generated/api";
+import { BookOpenIcon, DashboardIcon, TasksIcon, CalendarIcon, UserIcon, ClassesIcon } from "./icons";
 
 export default function Sidebar() {
     const { pathname } = useLocation();
@@ -32,7 +30,12 @@ export default function Sidebar() {
             {/* Top: Logo + Nav */}
             <div className="flex flex-col gap-8">
                 {/* Logo Row */}
-                <BrandLogo size="sm" />
+                <Link to="/dashboard" className="flex items-center gap-2.5">
+                    <div className="flex items-center justify-center h-8 w-8 text-navy bg-teal rounded">
+                        <BookOpenIcon />
+                    </div>
+                    <span className="font-heading text-lg font-bold text-white">Timemaxx</span>
+                </Link>
 
                 {/* Nav Menu */}
                 <nav className="flex flex-col gap-1">
@@ -43,7 +46,7 @@ export default function Sidebar() {
                         <span className="font-heading text-sm font-normal">Tasks</span>
                     </div>
                     <div className="flex items-center h-11 w-full gap-2.5 px-3.5 text-sky-blue rounded-lg">
-                        <ScheduleIcon />
+                        <CalendarIcon color="currentColor" />
                         <span className="font-heading text-sm font-normal">Schedule</span>
                     </div>
                     {navItem("/profile", <UserIcon />, "Profile")}
@@ -51,8 +54,18 @@ export default function Sidebar() {
             </div>
 
             {/* Footer: User Info */}
-            <div className="flex items-center gap-2.5">
-                <Avatar user={user} size="sm" theme="dark" />
+            <Link to="/profile" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
+                {user === undefined ? (
+                    <div className="flex-shrink-0 h-9 w-9 bg-white/20 rounded-full animate-pulse" />
+                ) : user?.image ? (
+                    <img src={user.image} alt="Profile" referrerPolicy="no-referrer" className="flex-shrink-0 h-9 w-9 rounded-full object-cover" />
+                ) : (
+                    <div className="flex flex-shrink-0 items-center justify-center h-9 w-9 bg-sky-blue rounded-full">
+                        <span className="font-heading text-sm font-bold text-navy">
+                            {user?.name?.charAt(0).toUpperCase() ?? "?"}
+                        </span>
+                    </div>
+                )}
                 <div className="flex flex-col gap-0.5">
                     {user === undefined ? (
                         <>
@@ -66,7 +79,7 @@ export default function Sidebar() {
                         </>
                     )}
                 </div>
-            </div>
+            </Link>
         </aside>
     );
 }
