@@ -7,7 +7,6 @@ const VALID_ONBOARDING_ARGS = {
   year: "Junior",
   difficultSubjects: ["Math", "Physics"],
   enjoyedSubjects: ["History"],
-  courses: [{ title: "CS101", studyGoal: "A" }],
   workHoursGrid: [
     { day: "Monday", available: [9, 10, 11], blocked: [] },
   ],
@@ -72,14 +71,12 @@ describe("mutations/users – deleteAccount", () => {
       await ctx.db.insert("syllabi", {
         userId,
         fileName: "cs101.pdf",
-        courseName: "CS 101",
         status: "confirmed",
         createdAt: Date.now(),
       });
       await ctx.db.insert("syllabi", {
         userId,
         fileName: "math201.pdf",
-        courseName: "Math 201",
         status: "pending",
         createdAt: Date.now(),
       });
@@ -132,9 +129,38 @@ describe("mutations/users – deleteAccount", () => {
     expect(sessions).toHaveLength(0);
   });
 
-  test("only deletes data belonging to the authenticated user", async () => {
+  test("deletes all userCourses belonging to the user", async () => {
     const t = makeTestCtx();
     const { userId, withAuth } = await createTestUser(t);
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("userCourses", {
+        userId,
+        courseCode: "EN.601.421",
+        title: "EN.601.421: Object-Oriented Software Engineering",
+        term: "Spring 2026",
+        studyGoal: "Do well",
+      });
+      await ctx.db.insert("userCourses", {
+        userId,
+        courseCode: "EN.601.226",
+        title: "EN.601.226: Data Structures",
+        term: "Fall 2025",
+        grade: "A",
+      });
+    });
+
+    await withAuth.mutation(api.mutations.users.deleteAccount, {});
+
+    const userCourses = await t.run((ctx) =>
+      ctx.db.query("userCourses").withIndex("by_user", (q) => q.eq("userId", userId)).collect()
+    );
+    expect(userCourses).toHaveLength(0);
+  });
+
+  test("only deletes data belonging to the authenticated user", async () => {
+    const t = makeTestCtx();
+    const { withAuth } = await createTestUser(t);
     const { userId: otherUserId } = await createTestUser(t, { email: "other@example.com" });
 
     await t.run(async (ctx) => {
@@ -149,7 +175,6 @@ describe("mutations/users – deleteAccount", () => {
       await ctx.db.insert("syllabi", {
         userId: otherUserId,
         fileName: "other.pdf",
-        courseName: "Other Course",
         status: "confirmed",
         createdAt: Date.now(),
       });
@@ -307,7 +332,7 @@ describe("mutations/users – completeOnboarding", () => {
     expect(user!.year).toBe("Junior");
     expect(user!.difficultSubjects).toEqual(["Math", "Physics"]);
     expect(user!.enjoyedSubjects).toEqual(["History"]);
-    expect(user!.courses).toEqual([{ title: "CS101", studyGoal: "A" }]);
+
     expect(user!.focusBlockLength).toBe(50);
   });
 });

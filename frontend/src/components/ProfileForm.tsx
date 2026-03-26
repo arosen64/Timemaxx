@@ -1,8 +1,10 @@
-import { useState, KeyboardEvent } from 'react'
+import { KeyboardEvent, useState } from 'react'
+import { useMutation } from 'convex/react'
+import { api } from '../../../backend/convex/_generated/api'
+import { Id } from '../../../backend/convex/_generated/dataModel'
 import { ProfileData, Course } from '../types'
-
-const YEARS = ['Freshman', 'Sophomore', 'Junior', 'Senior', 'Graduate']
-const STUDY_GOALS = ['Just pass', 'Do well', 'Ace it']
+import CourseSelector from './CourseSelector'
+import { GRADES, STUDY_GOALS, YEARS } from '../constants'
 
 interface TagInputProps {
   tags: string[]
@@ -71,8 +73,23 @@ interface ProfileFormProps {
 }
 
 export default function ProfileForm({ data, onChange, errors }: ProfileFormProps) {
+  const deleteUserCourse = useMutation(api.mutations.userCourses.deleteUserCourse)
+
   const update = <K extends keyof ProfileData>(field: K, value: ProfileData[K]) => {
     onChange({ ...data, [field]: value })
+  }
+
+  const handleAddCourse = (course: Course) => {
+    if (data.courses.some((c) => c.title === course.title)) return
+    onChange({ ...data, courses: [...data.courses, course] })
+  }
+
+  const handleRemoveCourse = async (index: number) => {
+    const course = data.courses[index]
+    if (course.userCourseId) {
+      await deleteUserCourse({ userCourseId: course.userCourseId as Id<'userCourses'> })
+    }
+    update('courses', data.courses.filter((_, j) => j !== index))
   }
 
   return (
@@ -105,6 +122,7 @@ export default function ProfileForm({ data, onChange, errors }: ProfileFormProps
           Current Year <span className="text-urgent-red">*</span>
         </label>
         <select
+          id="year-select"
           value={data.year}
           onChange={(e) => update('year', e.target.value)}
           className={`rounded-lg border bg-bg-gray px-3 py-2 font-body text-sm text-navy outline-none focus:ring-2 focus:ring-sky-blue/20 ${
@@ -113,9 +131,7 @@ export default function ProfileForm({ data, onChange, errors }: ProfileFormProps
         >
           <option value="">Select your year</option>
           {YEARS.map((y) => (
-            <option key={y} value={y}>
-              {y}
-            </option>
+            <option key={y} value={y}>{y}</option>
           ))}
         </select>
         {errors.year && <p className="font-body text-xs text-urgent-red">{errors.year}</p>}
@@ -143,71 +159,80 @@ export default function ProfileForm({ data, onChange, errors }: ProfileFormProps
         />
       </div>
 
-      {/* Courses */}
+      {/* Courses — term + school + search */}
       <div className="flex flex-col gap-3">
-        <div>
-          <label className="font-heading text-sm font-semibold text-navy">Current Courses</label>
-          <p className="mt-0.5 font-body text-xs text-light-blue">Add each course and set your goal for it</p>
-        </div>
+        <CourseSelector onAddCourse={handleAddCourse} />
+
+        {/* Added courses list */}
         {data.courses.map((course, i) => (
-          <div key={i} className="flex flex-col gap-2 rounded-lg border border-border p-3">
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                value={course.title}
-                onChange={(e) => {
-                  const updated = data.courses.map((c, j) =>
-                    j === i ? { ...c, title: e.target.value } : c
-                  )
-                  update('courses', updated)
-                }}
-                placeholder="e.g. CS 101"
-                className="flex-1 rounded-lg border border-border bg-bg-gray px-3 py-2 font-body text-sm text-navy outline-none placeholder:text-light-blue focus:border-sky-blue focus:ring-2 focus:ring-sky-blue/20"
-              />
+          <div key={i} className="flex flex-col gap-2 rounded-lg border border-border bg-bg-gray p-3">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex flex-col gap-0.5">
+                <span className="font-body text-sm font-semibold text-navy">{course.title}</span>
+                {course.term && (
+                  <span className="inline-block w-fit rounded-full bg-navy/10 px-2 py-0.5 font-body text-xs font-medium text-navy">
+                    {course.term}
+                  </span>
+                )}
+              </div>
               <button
                 type="button"
-                onClick={() => update('courses', data.courses.filter((_, j) => j !== i))}
-                className="text-light-blue hover:text-urgent-red"
+                onClick={() => handleRemoveCourse(i)}
+                className="text-light-blue transition-colors hover:text-urgent-red"
               >
                 ×
               </button>
             </div>
-            <div className="flex gap-2">
-              {STUDY_GOALS.map((goal) => (
-                <label
-                  key={goal}
-                  className={`flex flex-1 cursor-pointer items-center justify-center rounded-lg border px-2 py-2 font-body text-xs font-medium transition-colors ${
-                    course.studyGoal === goal
-                      ? 'border-navy bg-navy/10 text-navy'
-                      : 'border-border text-slate-blue hover:border-sky-blue hover:bg-bg-gray'
-                  }`}
+            {course.grade !== undefined ? (
+              <div className="flex items-center gap-2">
+                <span className="font-body text-xs text-slate-blue">Grade:</span>
+                <select
+                  value={course.grade}
+                  onChange={(e) => {
+                    const updated = data.courses.map((c, j) =>
+                      j === i ? { ...c, grade: e.target.value } : c
+                    )
+                    update('courses', updated)
+                  }}
+                  className="rounded-lg border border-border bg-white px-2 py-1 font-body text-xs text-navy outline-none focus:border-sky-blue focus:ring-1 focus:ring-sky-blue/20"
                 >
-                  <input
-                    type="radio"
-                    name={`studyGoal-${i}`}
-                    value={goal}
-                    checked={course.studyGoal === goal}
-                    onChange={() => {
-                      const updated = data.courses.map((c, j) =>
-                        j === i ? { ...c, studyGoal: goal } : c
-                      )
-                      update('courses', updated)
-                    }}
-                    className="sr-only"
-                  />
-                  {goal}
-                </label>
-              ))}
-            </div>
+                  <option value="">Select grade</option>
+                  {GRADES.map((g) => (
+                    <option key={g} value={g}>{g}</option>
+                  ))}
+                </select>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                {STUDY_GOALS.map((goal) => (
+                  <label
+                    key={goal}
+                    className={`flex flex-1 cursor-pointer items-center justify-center rounded-lg border px-2 py-2 font-body text-xs font-medium transition-colors ${
+                      course.studyGoal === goal
+                        ? 'border-sky-blue bg-sky-blue/10 text-navy'
+                        : 'border-border text-slate-blue hover:border-sky-blue/50 hover:bg-sky-blue/5'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name={`studyGoal-${i}`}
+                      value={goal}
+                      checked={course.studyGoal === goal}
+                      onChange={() => {
+                        const updated = data.courses.map((c, j) =>
+                          j === i ? { ...c, studyGoal: goal } : c
+                        )
+                        update('courses', updated)
+                      }}
+                      className="sr-only"
+                    />
+                    {goal}
+                  </label>
+                ))}
+              </div>
+            )}
           </div>
         ))}
-        <button
-          type="button"
-          onClick={() => update('courses', [...data.courses, { title: '', studyGoal: '' }])}
-          className="flex items-center gap-1 self-start rounded-lg border border-dashed border-border px-4 py-2 font-body text-sm text-slate-blue hover:border-sky-blue hover:text-navy"
-        >
-          + Add course
-        </button>
       </div>
     </div>
   )
