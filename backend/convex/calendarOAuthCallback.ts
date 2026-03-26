@@ -43,8 +43,9 @@ export const calendarOAuthCallback = httpAction(async (ctx, request) => {
   const state = url.searchParams.get("state");
   const error = url.searchParams.get("error");
 
-  // SITE_URL is already set by the existing auth setup
-  const profileRedirect = `${process.env.SITE_URL ?? "http://localhost:5173"}/profile`;
+  // SITE_URL is already set by the existing auth setup — strip trailing slash to avoid double-slash
+  const siteUrl = (process.env.SITE_URL ?? "http://localhost:5173").replace(/\/$/, "");
+  const profileRedirect = `${siteUrl}/profile`;
 
   if (error || !code || !state) {
     return new Response(null, { status: 302, headers: { Location: profileRedirect } });
