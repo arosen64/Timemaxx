@@ -11,10 +11,16 @@ vi.mock('../../backend/convex/_generated/api', () => ({
     },
     mutations: {
       users: { completeOnboarding: 'completeOnboarding' },
+      userCourses: { addUserCourse: 'addUserCourse', deleteUserCourse: 'deleteUserCourse' },
     },
     actions: {
       initiateGoogleCalendarOAuth: {
         initiateGoogleCalendarOAuth: 'initiateGoogleCalendarOAuth',
+      },
+      jhuCourses: {
+        getAvailableTerms: 'getAvailableTerms',
+        getAvailableSchools: 'getAvailableSchools',
+        getCoursesByTerm: 'getCoursesByTerm',
       },
     },
   },
@@ -60,7 +66,7 @@ describe('OnboardingPage', () => {
   })
 
   it('redirects to /dashboard if onboarding is already complete', async () => {
-    mockUseQuery.mockImplementation(() => true)
+    mockUseQuery.mockReturnValue(true)
     mockUseMutation.mockReturnValue(makeMutationFn() as never)
     mockUseAction.mockReturnValue(makeMutationFn() as never)
 
@@ -81,7 +87,7 @@ describe('OnboardingPage', () => {
     const user = userEvent.setup()
     setup()
 
-    await user.click(screen.getByRole('button', { name: /next/i }))
+    await user.click(screen.getByRole('button', { name: /continue/i }))
 
     expect(screen.getByText('Major is required')).toBeInTheDocument()
     expect(screen.getByText('Please select your year')).toBeInTheDocument()
@@ -94,8 +100,8 @@ describe('OnboardingPage', () => {
     setup()
 
     await user.type(screen.getByPlaceholderText(/computer science/i), 'Computer Science')
-    await user.selectOptions(screen.getByRole('combobox'), 'Junior')
-    await user.click(screen.getByRole('button', { name: /next/i }))
+    await user.selectOptions(document.getElementById('year-select')!, 'Junior')
+    await user.click(screen.getByRole('button', { name: /continue/i }))
 
     await waitFor(() => {
       // Step 2 renders WorkHoursSelector — look for its heading
@@ -109,16 +115,16 @@ describe('OnboardingPage', () => {
 
     // Complete step 1
     await user.type(screen.getByPlaceholderText(/computer science/i), 'Biology')
-    await user.selectOptions(screen.getByRole('combobox'), 'Sophomore')
-    await user.click(screen.getByRole('button', { name: /next/i }))
+    await user.selectOptions(document.getElementById('year-select')!, 'Sophomore')
+    await user.click(screen.getByRole('button', { name: /continue/i }))
 
-    // Now on step 2 — click Next again
+    // Now on step 2 — click Continue again
     await waitFor(() => expect(screen.queryByText('Tell us about yourself')).not.toBeInTheDocument())
-    await user.click(screen.getByRole('button', { name: /next/i }))
+    await user.click(screen.getByRole('button', { name: /continue/i }))
 
     // Step 3: PreferencesForm should be visible
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /submit/i })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /finish/i })).toBeInTheDocument()
     })
   })
 
@@ -127,8 +133,8 @@ describe('OnboardingPage', () => {
     setup()
 
     await user.type(screen.getByPlaceholderText(/computer science/i), 'Physics')
-    await user.selectOptions(screen.getByRole('combobox'), 'Senior')
-    await user.click(screen.getByRole('button', { name: /next/i }))
+    await user.selectOptions(document.getElementById('year-select')!, 'Senior')
+    await user.click(screen.getByRole('button', { name: /continue/i }))
 
     await waitFor(() => expect(screen.queryByText('Tell us about yourself')).not.toBeInTheDocument())
 
@@ -145,16 +151,16 @@ describe('OnboardingPage', () => {
 
     // Step 1
     await user.type(screen.getByPlaceholderText(/computer science/i), 'Math')
-    await user.selectOptions(screen.getByRole('combobox'), 'Freshman')
-    await user.click(screen.getByRole('button', { name: /next/i }))
+    await user.selectOptions(document.getElementById('year-select')!, 'Freshman')
+    await user.click(screen.getByRole('button', { name: /continue/i }))
 
     // Step 2 — advance without changing hours
     await waitFor(() => expect(screen.queryByText('Tell us about yourself')).not.toBeInTheDocument())
-    await user.click(screen.getByRole('button', { name: /next/i }))
+    await user.click(screen.getByRole('button', { name: /continue/i }))
 
     // Step 3 — submit
-    await waitFor(() => expect(screen.getByRole('button', { name: /submit/i })).toBeInTheDocument())
-    await user.click(screen.getByRole('button', { name: /submit/i }))
+    await waitFor(() => expect(screen.getByRole('button', { name: /finish/i })).toBeInTheDocument())
+    await user.click(screen.getByRole('button', { name: /finish/i }))
 
     await waitFor(() => {
       expect(saveOnboarding).toHaveBeenCalledWith(
@@ -167,9 +173,9 @@ describe('OnboardingPage', () => {
     })
   })
 
-  it('Back button is disabled on Step 1', () => {
+  it('Back button is not shown on Step 1', () => {
     setup()
-    expect(screen.getByRole('button', { name: /back/i })).toBeDisabled()
+    expect(screen.queryByRole('button', { name: /back/i })).not.toBeInTheDocument()
   })
 })
 
@@ -182,11 +188,11 @@ describe('OnboardingPage – Google Calendar section (Step 3)', () => {
   async function advanceToStep3() {
     const user = userEvent.setup()
     await user.type(screen.getByPlaceholderText(/computer science/i), 'Biology')
-    await user.selectOptions(screen.getByRole('combobox'), 'Sophomore')
-    await user.click(screen.getByRole('button', { name: /next/i }))
+    await user.selectOptions(document.getElementById('year-select')!, 'Sophomore')
+    await user.click(screen.getByRole('button', { name: /continue/i }))
     await waitFor(() => expect(screen.queryByText('Tell us about yourself')).not.toBeInTheDocument())
-    await user.click(screen.getByRole('button', { name: /next/i }))
-    await waitFor(() => expect(screen.getByRole('button', { name: /submit/i })).toBeInTheDocument())
+    await user.click(screen.getByRole('button', { name: /continue/i }))
+    await waitFor(() => expect(screen.getByRole('button', { name: /finish/i })).toBeInTheDocument())
     return user
   }
 
