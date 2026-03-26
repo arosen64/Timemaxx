@@ -47,7 +47,7 @@ export default function OnboardingPage() {
   }
 
   useEffect(() => {
-    if (isOnboardingComplete === true && step < 4) navigate('/dashboard')
+    if (isOnboardingComplete === true && step === 1) navigate('/dashboard')
   }, [isOnboardingComplete, navigate, step])
 
   if (isOnboardingComplete === undefined) return null
