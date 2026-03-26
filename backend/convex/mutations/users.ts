@@ -12,7 +12,7 @@ export const completeOnboarding = mutation({
     year: v.string(),
     difficultSubjects: v.array(v.string()),
     enjoyedSubjects: v.array(v.string()),
-    courses: v.array(v.object({ title: v.string(), studyGoal: v.string() })),
+
     workHoursGrid: v.array(v.object({
       day: v.string(),
       available: v.array(v.number()),
@@ -56,6 +56,12 @@ export const deleteAccount = mutation({
       .withIndex("by_userId", (q) => q.eq("userId", userId))
       .collect();
     await Promise.all(syllabi.map((syllabus) => ctx.db.delete(syllabus._id)));
+
+    const userCourses = await ctx.db
+      .query("userCourses")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .collect();
+    await Promise.all(userCourses.map((uc) => ctx.db.delete(uc._id)));
 
     const authAccounts = await ctx.db
       .query("authAccounts")
