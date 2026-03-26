@@ -94,6 +94,7 @@ export default function DashboardPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [estimatingTasks, setEstimatingTasks] = useState<Set<Id<'tasks'>>>(new Set())
   const [submittingFeedbackTasks, setSubmittingFeedbackTasks] = useState<Set<Id<'tasks'>>>(new Set())
+  const [editingFeedbackTasks, setEditingFeedbackTasks] = useState<Set<Id<'tasks'>>>(new Set())
   const [feedbackDrafts, setFeedbackDrafts] = useState<
     Record<string, { rating?: 'up' | 'down'; hours: string; minutes: string }>
   >({})
@@ -202,6 +203,11 @@ export default function DashboardPage() {
           correctedEstimateMinutes,
         },
       })
+      setEditingFeedbackTasks((prev) => {
+        const next = new Set(prev)
+        next.delete(taskId)
+        return next
+      })
       setFeedbackErrors((prev) => {
         const { [taskId]: _omit, ...rest } = prev
         return rest
@@ -218,6 +224,36 @@ export default function DashboardPage() {
         return next
       })
     }
+  }
+
+  function startEditFeedback(task: TaskType) {
+    if (!task.estimateFeedbackRating) return
+
+    const minutesTotal = task.correctedEstimateMinutes
+    const hrs =
+      typeof minutesTotal === 'number' && Number.isFinite(minutesTotal)
+        ? String(Math.floor(minutesTotal / 60))
+        : ''
+    const mins =
+      typeof minutesTotal === 'number' && Number.isFinite(minutesTotal)
+        ? String(minutesTotal % 60)
+        : ''
+
+    setFeedbackDrafts((prev) => ({
+      ...prev,
+      [task._id]: {
+        rating: task.estimateFeedbackRating,
+        hours: hrs,
+        minutes: mins,
+      },
+    }))
+    setFeedbackErrors((prev) => {
+      if (!prev[task._id]) return prev
+      const { [task._id]: _omit, ...rest } = prev
+      return rest
+    })
+
+    setEditingFeedbackTasks((prev) => new Set(prev).add(task._id))
   }
 
   return (
@@ -355,8 +391,8 @@ export default function DashboardPage() {
                     >
                       <div className={`mt-0.5 h-10 w-1 shrink-0 rounded ${barColor}`} />
 
-                      <div className="flex min-w-0 flex-1 justify-between gap-4">
-                        <div className="flex min-w-0 flex-1 flex-col gap-1">
+                      <div className="flex justify-between flex-1 min-w-0 gap-4">
+                        <div className="flex flex-col flex-1 min-w-0 gap-1">
                           <div className="text-sm font-semibold truncate font-heading text-navy">
                             {displayTitle(task)}
                           </div>
@@ -364,7 +400,7 @@ export default function DashboardPage() {
                             Due {formatDateMMDDYYYY(task.dueDate)} · {task.taskType} · ~{formatMinutes(task.timeEstimate ?? 0)} estimated
                           </div>
                           {task.description.trim().length > 0 && (
-                            <div className="text-xs break-words text-light-blue line-clamp-2">
+                            <div className="text-xs break-words text-light-blue line-clamp-4">
                               {task.description}
                             </div>
                           )}
@@ -412,12 +448,21 @@ export default function DashboardPage() {
                           </div>
 
                           {task.timeEstimate !== undefined && (
-                            task.estimateFeedbackRating ? (
-                              <div className="w-full text-right text-[11px] text-light-blue">
-                                Feedback saved: {task.estimateFeedbackRating === 'up' ? 'helpful' : 'needs improvement'}
-                                {task.correctedEstimateMinutes !== undefined
-                                  ? ` · corrected to ${formatMinutes(task.correctedEstimateMinutes)}`
-                                  : ''}
+                            task.estimateFeedbackRating && !editingFeedbackTasks.has(task._id) ? (
+                              <div className="w-full flex flex-col items-end gap-1.5">
+                                <div className="text-right text-[11px] text-light-blue">
+                                  Feedback: {task.estimateFeedbackRating === 'up' ? 'helpful' : 'improve'}
+                                  {task.correctedEstimateMinutes !== undefined
+                                    ? ` · actual ${formatMinutes(task.correctedEstimateMinutes)}`
+                                    : ''}
+                                  <button
+                                    type="button"
+                                    onClick={() => startEditFeedback(task)}
+                                    className="ml-1 text-[11px] text-light-blue hover:underline cursor-pointer select-none"
+                                  >
+                                    (edit)
+                                  </button>
+                                </div>
                               </div>
                             ) : (
                               <div className="flex w-full flex-col items-end gap-1.5">
