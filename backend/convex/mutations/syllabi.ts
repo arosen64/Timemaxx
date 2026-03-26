@@ -11,14 +11,12 @@ export const createSyllabus = internalMutation({
   args: {
     userId: v.id("users"),
     fileName: v.string(),
-    className: v.string(),
     courseId: v.optional(v.id("userCourses")),
   },
   handler: async (ctx, args) => {
     return await ctx.db.insert("syllabi", {
       userId: args.userId,
       fileName: args.fileName,
-      courseName: args.className,
       courseId: args.courseId,
       status: "pending",
       createdAt: Date.now(),
