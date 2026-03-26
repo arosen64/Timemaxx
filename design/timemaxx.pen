@@ -593,6 +593,15 @@
                       ]
                     },
                     {
+                      "id": "dgnS6",
+                      "type": "ref",
+                      "ref": "0YQqJ",
+                      "width": "fill_container",
+                      "name": "transcriptRef",
+                      "x": 0,
+                      "y": 362
+                    },
+                    {
                       "type": "frame",
                       "id": "PBvJE",
                       "name": "sect-courses",
@@ -1012,7 +1021,7 @@
                   "name": "nextBtn",
                   "width": "fill_container",
                   "x": 48,
-                  "y": 876,
+                  "y": 1150,
                   "descendants": {
                     "AkprM": {
                       "x": 227,
@@ -2785,15 +2794,27 @@
                   "ref": "BUAHR",
                   "name": "avatarRow",
                   "width": "fill_container",
+                  "height": "fit_content",
+                  "x": 48,
+                  "y": 48,
                   "descendants": {
                     "BJBh9": {
-                      "content": "AJ"
+                      "content": "AJ",
+                      "x": 21,
+                      "y": 20.5
+                    },
+                    "Mqiqx": {
+                      "width": "fit_content",
+                      "height": "fit_content",
+                      "x": 92,
+                      "y": 10
                     },
                     "irN7Z": {
                       "content": "Alex Johnson"
                     },
                     "yyiZO": {
-                      "content": "alex@jhu.edu"
+                      "content": "alex@jhu.edu",
+                      "y": 35
                     }
                   }
                 },
@@ -2818,12 +2839,16 @@
                       "ref": "N9yiZ",
                       "name": "fieldName",
                       "width": "fill_container",
+                      "height": "fit_content",
+                      "x": 0,
+                      "y": 0,
                       "descendants": {
                         "Hz14F": {
                           "content": "Full Name"
                         },
                         "CTKgH": {
-                          "content": "Alex Johnson"
+                          "content": "Alex Johnson",
+                          "y": 21
                         }
                       }
                     },
@@ -2833,12 +2858,16 @@
                       "ref": "N9yiZ",
                       "name": "fieldEmail",
                       "width": "fill_container",
+                      "height": "fit_content",
+                      "x": 518,
+                      "y": 0,
                       "descendants": {
                         "Hz14F": {
                           "content": "Email"
                         },
                         "CTKgH": {
-                          "content": "alex@jhu.edu"
+                          "content": "alex@jhu.edu",
+                          "y": 21
                         }
                       }
                     }
@@ -2857,12 +2886,16 @@
                       "ref": "N9yiZ",
                       "name": "fieldMajor",
                       "width": "fill_container",
+                      "height": "fit_content",
+                      "x": 0,
+                      "y": 0,
                       "descendants": {
                         "Hz14F": {
                           "content": "Major"
                         },
                         "CTKgH": {
-                          "content": "Computer Science"
+                          "content": "Computer Science",
+                          "y": 21
                         }
                       }
                     },
@@ -2872,12 +2905,16 @@
                       "ref": "N9yiZ",
                       "name": "fieldYear",
                       "width": "fill_container",
+                      "height": "fit_content",
+                      "x": 518,
+                      "y": 0,
                       "descendants": {
                         "Hz14F": {
                           "content": "Year"
                         },
                         "CTKgH": {
-                          "content": "Junior"
+                          "content": "Junior",
+                          "y": 21
                         }
                       }
                     }
@@ -4038,7 +4075,70 @@
           "x": 900,
           "y": 870,
           "height": 600,
-          "name": "sidebarDisplay"
+          "name": "sidebarDisplay",
+          "descendants": {
+            "pM9zH": {
+              "width": "fill_container",
+              "height": "fit_content",
+              "x": 24,
+              "y": 32
+            },
+            "qwLOb": {
+              "width": "fit_content",
+              "height": "fit_content"
+            },
+            "qwLOb/6YpiG": {
+              "y": 4.5
+            },
+            "99Oq1": {
+              "width": "fill_container",
+              "height": "fit_content",
+              "y": 64
+            },
+            "t2ejm": {
+              "width": "fill_container"
+            },
+            "t2ejm/yUJUI": {
+              "y": 13
+            },
+            "dLWqu": {
+              "width": "fill_container"
+            },
+            "dLWqu/Xkhsc": {
+              "y": 13
+            },
+            "ipMWX": {
+              "width": "fill_container"
+            },
+            "ipMWX/Xkhsc": {
+              "y": 13
+            },
+            "78Cxh": {
+              "width": "fill_container"
+            },
+            "78Cxh/Xkhsc": {
+              "y": 13
+            },
+            "jzFAO": {
+              "width": "fit_content",
+              "height": "fit_content",
+              "x": 24,
+              "y": 532
+            },
+            "lrM5h": {
+              "x": 9.5,
+              "y": 9.5
+            },
+            "LBXyg": {
+              "width": "fit_content",
+              "height": "fit_content",
+              "x": 46,
+              "y": 2
+            },
+            "AqSvO": {
+              "y": 19
+            }
+          }
         },
         {
           "type": "text",
@@ -4058,7 +4158,24 @@
           "ref": "BUAHR",
           "name": "profileAvatarDisplay",
           "x": 60,
-          "y": 1324
+          "y": 1324,
+          "width": "fit_content",
+          "height": "fit_content",
+          "descendants": {
+            "BJBh9": {
+              "x": 28.5,
+              "y": 20.5
+            },
+            "Mqiqx": {
+              "width": "fit_content",
+              "height": "fit_content",
+              "x": 92,
+              "y": 10
+            },
+            "yyiZO": {
+              "y": 35
+            }
+          }
         },
         {
           "id": "iSbk0",
@@ -4066,7 +4183,14 @@
           "ref": "N9yiZ",
           "name": "profileFieldDisplay1",
           "x": 60,
-          "y": 1420
+          "y": 1420,
+          "width": "fit_content",
+          "height": "fit_content",
+          "descendants": {
+            "CTKgH": {
+              "y": 21
+            }
+          }
         },
         {
           "id": "IDgla",
@@ -4075,12 +4199,15 @@
           "name": "profileFieldDisplay2",
           "x": 200,
           "y": 1420,
+          "width": "fit_content",
+          "height": "fit_content",
           "descendants": {
             "Hz14F": {
               "content": "Email"
             },
             "CTKgH": {
-              "content": "jane@example.com"
+              "content": "jane@example.com",
+              "y": 21
             }
           }
         }
@@ -7435,6 +7562,145 @@
           "fontFamily": "Space Grotesk",
           "fontSize": 16,
           "fontWeight": "500"
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "0YQqJ",
+      "x": 8500,
+      "y": 0,
+      "name": "TranscriptUpload",
+      "reusable": true,
+      "width": 544,
+      "layout": "vertical",
+      "gap": 6,
+      "children": [
+        {
+          "type": "frame",
+          "id": "nngNF",
+          "name": "labelRow",
+          "width": "fill_container",
+          "gap": 6,
+          "children": [
+            {
+              "type": "text",
+              "id": "m9XP1",
+              "name": "labelTxt",
+              "fill": "$--foreground",
+              "content": "Upload Transcript",
+              "fontFamily": "Space Grotesk",
+              "fontSize": 14,
+              "fontWeight": "600"
+            },
+            {
+              "type": "text",
+              "id": "kvjX2",
+              "name": "optTxt",
+              "fill": "$--light-muted",
+              "content": "(optional)",
+              "fontFamily": "Inter",
+              "fontSize": 13
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "id": "Tq2uS",
+          "name": "helperTxt",
+          "fill": "$--muted-foreground",
+          "content": "Upload your JHU transcript to auto-fill your courses",
+          "fontFamily": "Inter",
+          "fontSize": 12,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "frame",
+          "id": "i9tKg",
+          "name": "dropZone",
+          "width": "fill_container",
+          "fill": "$--background",
+          "cornerRadius": "$--radius-m",
+          "stroke": {
+            "align": "inside",
+            "thickness": 1.5,
+            "fill": "$--border"
+          },
+          "layout": "vertical",
+          "gap": 12,
+          "padding": [
+            28,
+            0
+          ],
+          "justifyContent": "center",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "icon_font",
+              "id": "Jm88z",
+              "name": "uploadIcon",
+              "width": 32,
+              "height": 32,
+              "iconFontName": "upload",
+              "iconFontFamily": "lucide",
+              "fill": "$--info"
+            },
+            {
+              "type": "text",
+              "id": "HXbbI",
+              "name": "dropLabel",
+              "fill": "$--muted-foreground",
+              "content": "Drag & drop your transcript here",
+              "fontFamily": "Inter",
+              "fontSize": 13,
+              "fontWeight": "500"
+            },
+            {
+              "type": "text",
+              "id": "vSlxA",
+              "name": "orTxt",
+              "fill": "$--light-muted",
+              "content": "or",
+              "fontFamily": "Inter",
+              "fontSize": 12,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "frame",
+              "id": "bsiEU",
+              "name": "browseBtn",
+              "fill": "$--foreground",
+              "cornerRadius": "$--radius-m",
+              "gap": 6,
+              "padding": [
+                8,
+                16
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "8BpwU",
+                  "name": "browseLbl",
+                  "fill": "$--primary-foreground",
+                  "content": "Browse Files",
+                  "fontFamily": "Space Grotesk",
+                  "fontSize": 13,
+                  "fontWeight": "600"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "6x7s6",
+              "name": "fileHint",
+              "fill": "$--light-muted",
+              "content": "Supports PDF · Max 10 MB",
+              "fontFamily": "Inter",
+              "fontSize": 11,
+              "fontWeight": "normal"
+            }
+          ]
         }
       ]
     }

@@ -4,6 +4,7 @@ import { api } from '../../../backend/convex/_generated/api'
 import { Id } from '../../../backend/convex/_generated/dataModel'
 import { ProfileData, Course } from '../types'
 import CourseSelector from './CourseSelector'
+import TranscriptUpload from './TranscriptUpload'
 import { GRADES, STUDY_GOALS, YEARS } from '../constants'
 
 interface TagInputProps {
@@ -158,6 +159,9 @@ export default function ProfileForm({ data, onChange, errors }: ProfileFormProps
           placeholder="e.g. Linear Algebra"
         />
       </div>
+
+      {/* Transcript Upload */}
+      <TranscriptUpload onFileChange={() => {}} />
 
       {/* Courses — term + school + search */}
       <div className="flex flex-col gap-3">
