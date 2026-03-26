@@ -351,12 +351,12 @@ export default function DashboardPage() {
                   return (
                     <div
                       key={task._id}
-                      className="group flex min-w-0 flex-col gap-3 rounded-[10px] border border-border bg-white px-[18px] py-4 overflow-hidden"
+                      className="group flex min-w-0 gap-3 rounded-[10px] border border-border bg-white px-[18px] py-4 overflow-hidden"
                     >
-                      <div className="flex items-center gap-3.5">
-                        <div className={`h-10 w-1 shrink-0 rounded ${barColor}`} />
+                      <div className={`mt-0.5 h-10 w-1 shrink-0 rounded ${barColor}`} />
 
-                        <div className="flex flex-col flex-1 min-w-0 gap-1">
+                      <div className="flex min-w-0 flex-1 justify-between gap-4">
+                        <div className="flex min-w-0 flex-1 flex-col gap-1">
                           <div className="text-sm font-semibold truncate font-heading text-navy">
                             {displayTitle(task)}
                           </div>
@@ -370,131 +370,139 @@ export default function DashboardPage() {
                           )}
                         </div>
 
-                        <div className={`shrink-0 rounded px-2.5 py-1 ${badge.bg}`}>
-                          <span className={`font-heading text-[11px] font-semibold ${badge.text}`}>
-                            {badge.label}
-                          </span>
-                        </div>
-
-                        {/* Edit / Delete / Estimate buttons */}
-                        <div className="flex items-center gap-1">
-                          {task.timeEstimate === undefined && (
-                            estimatingTasks.has(task._id) ? (
-                              <div className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-blue">
-                                <SpinnerIcon color="currentColor" size={16} />
-                              </div>
-                            ) : (
-                              <button
-                                type="button"
-                                onClick={() => handleEstimateTask(task._id)}
-                                className="flex items-center justify-center w-8 h-8 transition rounded-lg text-slate-blue hover:bg-bg-gray hover:text-navy"
-                                aria-label="Estimate task time"
-                              >
-                                <SparklesIcon color="currentColor" size={16} />
-                              </button>
-                            )
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => setEditingTask(task)}
-                            className="flex items-center justify-center w-8 h-8 transition rounded-lg text-slate-blue hover:bg-bg-gray hover:text-navy"
-                            aria-label="Edit task"
-                          >
-                            <PencilIcon />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setDeletingTask(task)}
-                            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-blue hover:bg-[#FFF0EC] hover:text-[#CF4520] transition"
-                            aria-label="Delete task"
-                          >
-                            <TrashIcon />
-                          </button>
-                        </div>
-                      </div>
-
-                      {task.timeEstimate !== undefined && (
-                        task.estimateFeedbackRating ? (
-                          <div className="ml-[18px] text-[11px] text-light-blue">
-                            Feedback saved: {task.estimateFeedbackRating === 'up' ? 'helpful' : 'needs improvement'}
-                            {task.correctedEstimateMinutes !== undefined
-                              ? ` · corrected to ${formatMinutes(task.correctedEstimateMinutes)}`
-                              : ''}
-                          </div>
-                        ) : (
-                          <div className="ml-[18px] flex flex-wrap items-end gap-2 py-1">
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-[11px] text-light-blue">Time estimate helpful?</span>
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  updateFeedbackDraft(task._id, (curr) => ({ ...curr, rating: 'up' }))
-                                }
-                                className={`rounded px-2 py-1 text-xs transition ${
-                                  getFeedbackDraft(task._id).rating === 'up'
-                                    ? 'bg-sky-blue/20 text-navy'
-                                    : 'text-slate-blue hover:bg-bg-gray'
-                                }`}
-                                aria-label="Rate estimate thumbs up"
-                              >
-                                👍
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  updateFeedbackDraft(task._id, (curr) => ({ ...curr, rating: 'down' }))
-                                }
-                                className={`rounded px-2 py-1 text-xs transition ${
-                                  getFeedbackDraft(task._id).rating === 'down'
-                                    ? 'bg-sky-blue/20 text-navy'
-                                    : 'text-slate-blue hover:bg-bg-gray'
-                                }`}
-                                aria-label="Rate estimate thumbs down"
-                              >
-                                👎
-                              </button>
+                        <div className="flex w-[260px] shrink-0 flex-col items-end gap-2">
+                          <div className="flex items-center gap-2">
+                            <div className={`rounded px-2.5 py-1 ${badge.bg}`}>
+                              <span className={`font-heading text-[11px] font-semibold ${badge.text}`}>
+                                {badge.label}
+                              </span>
                             </div>
-                            {getFeedbackDraft(task._id).rating && (
-                              <>
-                                <div className="flex items-center gap-1.5">
-                                  <span className="text-[11px] text-light-blue">How long did it actually take?</span>
-                                  <input
-                                    type="number"
-                                    min={0}
-                                    placeholder="hrs"
-                                    value={getFeedbackDraft(task._id).hours}
-                                    onChange={(e) =>
-                                      updateFeedbackDraft(task._id, (curr) => ({ ...curr, hours: e.target.value }))
-                                    }
-                                    className="w-12 px-2 text-xs bg-white border rounded outline-none h-7 border-border text-navy"
-                                  />
-                                  <input
-                                    type="number"
-                                    min={0}
-                                    placeholder="mins"
-                                    value={getFeedbackDraft(task._id).minutes}
-                                    onChange={(e) =>
-                                      updateFeedbackDraft(task._id, (curr) => ({ ...curr, minutes: e.target.value }))
-                                    }
-                                    className="px-2 text-xs bg-white border rounded outline-none h-7 w-14 border-border text-navy"
-                                  />
+                            {task.timeEstimate === undefined && (
+                              estimatingTasks.has(task._id) ? (
+                                <div className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-blue">
+                                  <SpinnerIcon color="currentColor" size={16} />
                                 </div>
+                              ) : (
                                 <button
                                   type="button"
-                                  onClick={() => handleSubmitFeedback(task._id)}
-                                  disabled={submittingFeedbackTasks.has(task._id)}
-                                  className="h-7 rounded border border-border px-2.5 text-[11px] font-medium text-slate-blue transition hover:bg-bg-gray disabled:opacity-60"
+                                  onClick={() => handleEstimateTask(task._id)}
+                                  className="flex items-center justify-center w-8 h-8 transition rounded-lg text-slate-blue hover:bg-bg-gray hover:text-navy"
+                                  aria-label="Estimate task time"
                                 >
-                                  {submittingFeedbackTasks.has(task._id) ? 'Saving…' : 'Save'}
+                                  <SparklesIcon color="currentColor" size={16} />
                                 </button>
-                              </>
+                              )
                             )}
-                            {feedbackErrors[task._id] && (
-                              <div className="w-full text-[11px] text-[#CF4520]">{feedbackErrors[task._id]}</div>
-                            )}
+                            <button
+                              type="button"
+                              onClick={() => setEditingTask(task)}
+                              className="flex items-center justify-center w-8 h-8 transition rounded-lg text-slate-blue hover:bg-bg-gray hover:text-navy"
+                              aria-label="Edit task"
+                            >
+                              <PencilIcon />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setDeletingTask(task)}
+                              className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-blue hover:bg-[#FFF0EC] hover:text-[#CF4520] transition"
+                              aria-label="Delete task"
+                            >
+                              <TrashIcon />
+                            </button>
                           </div>
-                        )
-                      )}
+
+                          {task.timeEstimate !== undefined && (
+                            task.estimateFeedbackRating ? (
+                              <div className="w-full text-right text-[11px] text-light-blue">
+                                Feedback saved: {task.estimateFeedbackRating === 'up' ? 'helpful' : 'needs improvement'}
+                                {task.correctedEstimateMinutes !== undefined
+                                  ? ` · corrected to ${formatMinutes(task.correctedEstimateMinutes)}`
+                                  : ''}
+                              </div>
+                            ) : (
+                              <div className="flex w-full flex-col items-end gap-1.5">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-[11px] text-light-blue">Time estimate helpful?</span>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      updateFeedbackDraft(task._id, (curr) =>
+                                        curr.rating === 'up'
+                                          ? { ...curr, rating: undefined, hours: '', minutes: '' }
+                                          : { ...curr, rating: 'up' }
+                                      )
+                                    }
+                                    className={`rounded px-2 py-1 text-xs transition ${
+                                      getFeedbackDraft(task._id).rating === 'up'
+                                        ? 'bg-sky-blue/20 text-navy'
+                                        : 'text-slate-blue hover:bg-bg-gray'
+                                    }`}
+                                    aria-label="Rate estimate thumbs up"
+                                  >
+                                    👍
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      updateFeedbackDraft(task._id, (curr) =>
+                                        curr.rating === 'down'
+                                          ? { ...curr, rating: undefined, hours: '', minutes: '' }
+                                          : { ...curr, rating: 'down' }
+                                      )
+                                    }
+                                    className={`rounded px-2 py-1 text-xs transition ${
+                                      getFeedbackDraft(task._id).rating === 'down'
+                                        ? 'bg-sky-blue/20 text-navy'
+                                        : 'text-slate-blue hover:bg-bg-gray'
+                                    }`}
+                                    aria-label="Rate estimate thumbs down"
+                                  >
+                                    👎
+                                  </button>
+                                </div>
+                                {getFeedbackDraft(task._id).rating && (
+                                  <>
+                                    <div className="flex items-center justify-end gap-1.5">
+                                      <span className="text-[11px] text-light-blue">Actual time taken</span>
+                                      <input
+                                        type="number"
+                                        min={0}
+                                        placeholder="hrs"
+                                        value={getFeedbackDraft(task._id).hours}
+                                        onChange={(e) =>
+                                          updateFeedbackDraft(task._id, (curr) => ({ ...curr, hours: e.target.value }))
+                                        }
+                                        className="w-10 px-1.5 text-[11px] bg-white border rounded outline-none h-6 border-border text-navy"
+                                      />
+                                      <input
+                                        type="number"
+                                        min={0}
+                                        placeholder="mins"
+                                        value={getFeedbackDraft(task._id).minutes}
+                                        onChange={(e) =>
+                                          updateFeedbackDraft(task._id, (curr) => ({ ...curr, minutes: e.target.value }))
+                                        }
+                                        className="w-12 px-1.5 text-[11px] bg-white border rounded outline-none h-6 border-border text-navy"
+                                      />
+                                    </div>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleSubmitFeedback(task._id)}
+                                      disabled={submittingFeedbackTasks.has(task._id)}
+                                      className="h-7 rounded border border-border px-2.5 text-[11px] font-medium text-slate-blue transition hover:bg-bg-gray disabled:opacity-60"
+                                    >
+                                      {submittingFeedbackTasks.has(task._id) ? 'Saving…' : 'Save'}
+                                    </button>
+                                  </>
+                                )}
+                                {feedbackErrors[task._id] && (
+                                  <div className="w-full text-right text-[11px] text-[#CF4520]">{feedbackErrors[task._id]}</div>
+                                )}
+                              </div>
+                            )
+                          )}
+                        </div>
+                      </div>
                     </div>
                   )
                 })}
