@@ -62,7 +62,7 @@ function EstimationErrorModal({
           <button
             type="button"
             onClick={onClose}
-            className="w-full h-10 rounded-lg bg-navy font-heading text-sm font-semibold text-white hover:opacity-90 transition"
+            className="w-full h-10 text-sm font-semibold text-white transition rounded-lg bg-navy font-heading hover:opacity-90"
           >
             Dismiss
           </button>
@@ -257,7 +257,7 @@ export default function DashboardPage() {
         <header className="flex items-center justify-between">
           <div className="flex flex-col gap-1">
             {user === undefined ? (
-              <span className="inline-block h-9 w-72 animate-pulse rounded-md bg-navy/10" />
+              <span className="inline-block rounded-md h-9 w-72 animate-pulse bg-navy/10" />
             ) : (
               <h1 className="font-heading text-[28px] font-bold text-navy">
                 {(() => {
@@ -364,7 +364,7 @@ export default function DashboardPage() {
                             Due {formatDateMMDDYYYY(task.dueDate)} · {task.taskType} · ~{formatMinutes(task.timeEstimate ?? 0)} estimated
                           </div>
                           {task.description.trim().length > 0 && (
-                            <div className="text-xs text-light-blue break-words line-clamp-2">
+                            <div className="text-xs break-words text-light-blue line-clamp-2">
                               {task.description}
                             </div>
                           )}
@@ -380,14 +380,14 @@ export default function DashboardPage() {
                         <div className="flex items-center gap-1">
                           {task.timeEstimate === undefined && (
                             estimatingTasks.has(task._id) ? (
-                              <div className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-blue">
+                              <div className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-blue">
                                 <SpinnerIcon color="currentColor" size={16} />
                               </div>
                             ) : (
                               <button
                                 type="button"
                                 onClick={() => handleEstimateTask(task._id)}
-                                className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-blue transition hover:bg-bg-gray hover:text-navy"
+                                className="flex items-center justify-center w-8 h-8 transition rounded-lg text-slate-blue hover:bg-bg-gray hover:text-navy"
                                 aria-label="Estimate task time"
                               >
                                 <SparklesIcon color="currentColor" size={16} />
@@ -424,7 +424,7 @@ export default function DashboardPage() {
                         ) : (
                           <div className="ml-[18px] flex flex-wrap items-end gap-2 py-1">
                             <div className="flex items-center gap-1.5">
-                              <span className="text-[11px] text-light-blue">Estimate feedback:</span>
+                              <span className="text-[11px] text-light-blue">Time estimate helpful?</span>
                               <button
                                 type="button"
                                 onClick={() =>
@@ -463,7 +463,7 @@ export default function DashboardPage() {
                                 onChange={(e) =>
                                   updateFeedbackDraft(task._id, (curr) => ({ ...curr, hours: e.target.value }))
                                 }
-                                className="h-7 w-12 rounded border border-border bg-white px-2 text-xs text-navy outline-none"
+                                className="w-12 px-2 text-xs bg-white border rounded outline-none h-7 border-border text-navy"
                               />
                               <input
                                 type="number"
@@ -473,7 +473,7 @@ export default function DashboardPage() {
                                 onChange={(e) =>
                                   updateFeedbackDraft(task._id, (curr) => ({ ...curr, minutes: e.target.value }))
                                 }
-                                className="h-7 w-14 rounded border border-border bg-white px-2 text-xs text-navy outline-none"
+                                className="px-2 text-xs bg-white border rounded outline-none h-7 w-14 border-border text-navy"
                               />
                             </div>
                             <button
