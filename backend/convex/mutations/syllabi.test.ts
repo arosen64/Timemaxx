@@ -131,11 +131,6 @@ describe("mutations/syllabi – confirmSyllabusTasks", () => {
 
     const syllabus = await t.run((ctx) => ctx.db.get(syllabusId));
     expect(syllabus?.courseId).toBe(courseId);
-
-    await withAuth.mutation(api.mutations.syllabi.confirmSyllabusTasks, {
-      syllabusId,
-      tasks: [],
-    });
   });
 
   test("returns an empty array when no tasks are passed", async () => {
