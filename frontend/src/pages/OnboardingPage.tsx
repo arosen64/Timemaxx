@@ -4,12 +4,13 @@ import { useQuery, useMutation } from 'convex/react'
 import { api } from '../../../backend/convex/_generated/api'
 import { ProfileData, WorkHoursData, PreferencesData } from '../types'
 import ProfileForm from '../components/ProfileForm'
+import CoursesForm from '../components/CoursesForm'
 import WorkHoursSelector, { DEFAULT_WORK_HOURS } from '../components/WorkHoursSelector'
 import PreferencesForm, { DEFAULT_PREFERENCES } from '../components/PreferencesForm'
 import OnboardingStepShell from '../components/onboarding/OnboardingStepShell'
 import OnboardingNav from '../components/onboarding/OnboardingNav'
 
-type Step = 1 | 2 | 3
+type Step = 1 | 2 | 3 | 4
 
 const DEFAULT_PROFILE: ProfileData = {
   major: '',
@@ -77,21 +78,24 @@ export default function OnboardingPage() {
   }
 
   return (
-    <OnboardingStepShell currentStep={step} totalSteps={3} wide={step === 2 || step === 3}>
+    <OnboardingStepShell currentStep={step} totalSteps={4} wide={step === 2 || step === 3 || step === 4}>
       {step === 1 && (
         <ProfileForm data={profile} onChange={setProfile} errors={profileErrors} />
       )}
       {step === 2 && (
-        <WorkHoursSelector data={workHours} onChange={setWorkHours} />
+        <CoursesForm data={profile} onChange={setProfile} />
       )}
       {step === 3 && (
+        <WorkHoursSelector data={workHours} onChange={setWorkHours} />
+      )}
+      {step === 4 && (
         <PreferencesForm data={preferences} onChange={setPreferences} />
       )}
       <OnboardingNav
         onBack={handleBack}
-        onContinue={step < 3 ? handleNext : handleSubmit}
+        onContinue={step < 4 ? handleNext : handleSubmit}
         isFirstStep={step === 1}
-        isLastStep={step === 3}
+        isLastStep={step === 4}
         continueLabel={isSubmitting ? 'Saving...' : undefined}
         disabled={isSubmitting}
       />

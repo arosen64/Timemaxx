@@ -1,4 +1,8 @@
 import { useRef, useState } from 'react'
+import { useAction, useMutation } from 'convex/react'
+import { api } from '../../../backend/convex/_generated/api'
+import { type ParsedCourse } from '../../../backend/convex/actions/parseTranscript'
+import { type Course } from '../types'
 import Button from './ui/Button'
 
 function UploadIcon() {
@@ -43,22 +47,84 @@ function FileIcon() {
 }
 
 interface TranscriptUploadProps {
-  onFileChange: (file: File | null) => void
+  onCoursesAdded: (courses: Course[]) => void
 }
 
-export default function TranscriptUpload({ onFileChange }: TranscriptUploadProps) {
+function readFileAsBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => {
+      const dataUrl = reader.result as string
+      // Strip the data URL prefix — Gemini needs raw base64 only
+      resolve(dataUrl.split(',')[1])
+    }
+    reader.onerror = reject
+    reader.readAsDataURL(file)
+  })
+}
+
+export default function TranscriptUpload({ onCoursesAdded }: TranscriptUploadProps) {
+  const parseTranscript = useAction(api.actions.parseTranscript.parseTranscript)
+  const addUserCourse = useMutation(api.mutations.userCourses.addUserCourse)
+
   const [file, setFile] = useState<File | null>(null)
   const [dragging, setDragging] = useState(false)
+  const [parsing, setParsing] = useState(false)
+  const [summary, setSummary] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  const handleFile = (f: File) => {
+  const handleFile = async (f: File) => {
     setFile(f)
-    onFileChange(f)
+    setError(null)
+    setSummary(null)
+    setParsing(true)
+
+    try {
+      const fileBase64 = await readFileAsBase64(f)
+      const parsed: ParsedCourse[] = await parseTranscript({ fileBase64 })
+
+      // Save each parsed course to the DB, skip duplicates silently.
+      // "X" grade means in-progress — omit grade so the study goals UI shows instead.
+      const saved: Course[] = []
+      await Promise.all(
+        parsed.map(async (c) => {
+          const hasGrade = c.grade && c.grade.trim().toUpperCase() !== 'X'
+          try {
+            const userCourseId = await addUserCourse({
+              courseCode: c.courseCode,
+              title: c.title,
+              credits: c.credits,
+              term: c.term,
+              grade: hasGrade ? c.grade : undefined,
+            })
+            saved.push({
+              userCourseId,
+              courseCode: c.courseCode,
+              title: c.title,
+              credits: c.credits,
+              term: c.term,
+              grade: hasGrade ? c.grade : undefined,
+            })
+          } catch {
+            // Already exists or unauthorized — skip quietly
+          }
+        })
+      )
+
+      onCoursesAdded(saved)
+      setSummary(`${saved.length} course${saved.length !== 1 ? 's' : ''} imported from transcript`)
+    } catch {
+      setError('Failed to parse transcript. Please try again.')
+    } finally {
+      setParsing(false)
+    }
   }
 
   const handleRemove = () => {
     setFile(null)
-    onFileChange(null)
+    setError(null)
+    setSummary(null)
     if (inputRef.current) inputRef.current.value = ''
   }
 
@@ -80,18 +146,32 @@ export default function TranscriptUpload({ onFileChange }: TranscriptUploadProps
       </p>
 
       {file ? (
-        <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-bg-gray px-3 py-2.5">
-          <div className="flex items-center gap-2 text-navy">
-            <FileIcon />
-            <span className="font-body text-sm font-medium truncate">{file.name}</span>
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-bg-gray px-3 py-2.5">
+            <div className="flex items-center gap-2 min-w-0">
+              <FileIcon />
+              <span className="font-body text-sm font-medium text-navy truncate">{file.name}</span>
+              {parsing && (
+                <span className="font-body text-xs text-light-blue animate-pulse shrink-0">
+                  Parsing…
+                </span>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={handleRemove}
+              disabled={parsing}
+              className="font-body text-xs text-light-blue hover:text-urgent-red transition-colors shrink-0 disabled:opacity-40"
+            >
+              Remove
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={handleRemove}
-            className="font-body text-xs text-light-blue hover:text-urgent-red transition-colors shrink-0"
-          >
-            Remove
-          </button>
+          {summary && (
+            <p className="font-body text-xs text-teal">{summary}</p>
+          )}
+          {error && (
+            <p className="font-body text-xs text-urgent-red">{error}</p>
+          )}
         </div>
       ) : (
         <div

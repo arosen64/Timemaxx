@@ -1,11 +1,6 @@
 import { KeyboardEvent, useState } from 'react'
-import { useMutation } from 'convex/react'
-import { api } from '../../../backend/convex/_generated/api'
-import { Id } from '../../../backend/convex/_generated/dataModel'
-import { ProfileData, Course } from '../types'
-import CourseSelector from './CourseSelector'
-import TranscriptUpload from './TranscriptUpload'
-import { GRADES, STUDY_GOALS, YEARS } from '../constants'
+import { ProfileData } from '../types'
+import { YEARS } from '../constants'
 
 interface TagInputProps {
   tags: string[]
@@ -74,23 +69,8 @@ interface ProfileFormProps {
 }
 
 export default function ProfileForm({ data, onChange, errors }: ProfileFormProps) {
-  const deleteUserCourse = useMutation(api.mutations.userCourses.deleteUserCourse)
-
   const update = <K extends keyof ProfileData>(field: K, value: ProfileData[K]) => {
     onChange({ ...data, [field]: value })
-  }
-
-  const handleAddCourse = (course: Course) => {
-    if (data.courses.some((c) => c.title === course.title)) return
-    onChange({ ...data, courses: [...data.courses, course] })
-  }
-
-  const handleRemoveCourse = async (index: number) => {
-    const course = data.courses[index]
-    if (course.userCourseId) {
-      await deleteUserCourse({ userCourseId: course.userCourseId as Id<'userCourses'> })
-    }
-    update('courses', data.courses.filter((_, j) => j !== index))
   }
 
   return (
@@ -159,88 +139,6 @@ export default function ProfileForm({ data, onChange, errors }: ProfileFormProps
           placeholder="e.g. Linear Algebra"
         />
       </div>
-
-      {/* Transcript Upload */}
-      <TranscriptUpload onFileChange={() => {}} />
-
-      {/* Courses — term + school + search */}
-      <div className="flex flex-col gap-3">
-        <CourseSelector onAddCourse={handleAddCourse} />
-
-        {/* Added courses list */}
-        {data.courses.map((course, i) => (
-          <div key={i} className="flex flex-col gap-2 rounded-lg border border-border bg-bg-gray p-3">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex flex-col gap-0.5">
-                <span className="font-body text-sm font-semibold text-navy">{course.title}</span>
-                {course.term && (
-                  <span className="inline-block w-fit rounded-full bg-navy/10 px-2 py-0.5 font-body text-xs font-medium text-navy">
-                    {course.term}
-                  </span>
-                )}
-              </div>
-              <button
-                type="button"
-                onClick={() => handleRemoveCourse(i)}
-                className="text-light-blue transition-colors hover:text-urgent-red"
-              >
-                ×
-              </button>
-            </div>
-            {course.grade !== undefined ? (
-              <div className="flex items-center gap-2">
-                <span className="font-body text-xs text-slate-blue">Grade:</span>
-                <select
-                  value={course.grade}
-                  onChange={(e) => {
-                    const updated = data.courses.map((c, j) =>
-                      j === i ? { ...c, grade: e.target.value } : c
-                    )
-                    update('courses', updated)
-                  }}
-                  className="rounded-lg border border-border bg-white px-2 py-1 font-body text-xs text-navy outline-none focus:border-sky-blue focus:ring-1 focus:ring-sky-blue/20"
-                >
-                  <option value="">Select grade</option>
-                  {GRADES.map((g) => (
-                    <option key={g} value={g}>{g}</option>
-                  ))}
-                </select>
-              </div>
-            ) : (
-              <div className="flex gap-2">
-                {STUDY_GOALS.map((goal) => (
-                  <label
-                    key={goal}
-                    className={`flex flex-1 cursor-pointer items-center justify-center rounded-lg border px-2 py-2 font-body text-xs font-medium transition-colors ${
-                      course.studyGoal === goal
-                        ? 'border-sky-blue bg-sky-blue/10 text-navy'
-                        : 'border-border text-slate-blue hover:border-sky-blue/50 hover:bg-sky-blue/5'
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name={`studyGoal-${i}`}
-                      value={goal}
-                      checked={course.studyGoal === goal}
-                      onChange={() => {
-                        const updated = data.courses.map((c, j) =>
-                          j === i ? { ...c, studyGoal: goal } : c
-                        )
-                        update('courses', updated)
-                      }}
-                      className="sr-only"
-                    />
-                    {goal}
-                  </label>
-                ))}
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
     </div>
   )
 }
-
-// Exported for use in OnboardingPage default state
-export const DEFAULT_COURSE: Course = { title: '', studyGoal: '' }
