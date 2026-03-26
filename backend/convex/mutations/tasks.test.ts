@@ -65,10 +65,13 @@ describe("mutations/tasks – createTask", () => {
     const dueDate = Date.now() + 86_400_000;
 
     const types = [
-      "Problem Set",
       "Essay",
-      "Coding",
+      "Problem Set",
       "Exam Prep",
+      "Coding",
+      "Reading",
+      "Lab",
+      "Presentation",
     ] as const;
 
     for (const taskType of types) {
@@ -83,5 +86,21 @@ describe("mutations/tasks – createTask", () => {
       const task = await t.run((ctx) => ctx.db.get(taskId));
       expect(task!.taskType).toBe(taskType);
     }
+  });
+
+  test("accepts custom task types", async () => {
+    const t = makeTestCtx();
+    const { withAuth } = await createTestUser(t);
+
+    const taskId = await withAuth.mutation(api.mutations.tasks.createTask, {
+      title: "Custom type task",
+      description: "desc",
+      taskType: "Take-home Quiz",
+      dueDate: Date.now() + 86_400_000,
+    });
+
+    await t.finishAllScheduledFunctions(vi.runAllTimers);
+    const task = await t.run((ctx) => ctx.db.get(taskId));
+    expect(task!.taskType).toBe("Take-home Quiz");
   });
 });
