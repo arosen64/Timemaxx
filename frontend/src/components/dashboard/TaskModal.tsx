@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { CalendarIcon } from '../icons'
-import { type EditForm, type SchemaTaskType, TASK_TYPE_OPTIONS } from './types'
+import { type EditForm, CUSTOM_TASK_TYPE_OPTION, TASK_TYPE_OPTIONS } from './types'
 import Modal from '../ui/Modal'
 
 interface TaskModalProps {
@@ -11,7 +11,8 @@ interface TaskModalProps {
   primaryLoadingLabel: string
   initialValues: {
     taskName: string
-    selectedType: SchemaTaskType
+    selectedType: string
+    customTaskType: string
     description: string
     dueDate: string
   }
@@ -30,7 +31,8 @@ export default function TaskModal({
   onSubmit,
 }: TaskModalProps) {
   const [taskName, setTaskName] = useState(initialValues.taskName)
-  const [selectedType, setSelectedType] = useState<SchemaTaskType>(initialValues.selectedType)
+  const [selectedType, setSelectedType] = useState(initialValues.selectedType)
+  const [customTaskType, setCustomTaskType] = useState(initialValues.customTaskType)
   const [description, setDescription] = useState(initialValues.description)
   const [dueDate, setDueDate] = useState(initialValues.dueDate)
   const [submitting, setSubmitting] = useState(false)
@@ -59,7 +61,9 @@ export default function TaskModal({
 
   async function handleSubmit() {
     if (!taskName.trim()) { setError('Please enter a task name.'); return }
-    if (!TASK_TYPE_OPTIONS.includes(selectedType)) { setError('Please select a task type.'); return }
+    if (!selectedType.trim()) { setError('Please select a task type.'); return }
+    const resolvedTaskType = selectedType === CUSTOM_TASK_TYPE_OPTION ? customTaskType.trim() : selectedType
+    if (!resolvedTaskType) { setError('Please enter a task type.'); return }
     if (!description.trim()) { setError('Please enter a description.'); return }
     const trimmedDueDate = dueDate.trim()
     if (!trimmedDueDate) { setError('Please enter a due date.'); return }
@@ -71,7 +75,7 @@ export default function TaskModal({
       await onSubmit({
         title: taskName,
         description,
-        taskType: selectedType,
+        taskType: resolvedTaskType,
         dueDate: new Date(trimmedDueDate).getTime(),
       })
       onClose()
@@ -110,8 +114,8 @@ export default function TaskModal({
         {/* Task type */}
         <div className="flex w-full flex-col gap-1.5">
           <label className="font-heading text-[13px] font-semibold text-navy">Task type</label>
-          <div className="flex gap-2">
-            {TASK_TYPE_OPTIONS.map((type) => (
+          <div className="flex flex-wrap gap-2">
+            {[...TASK_TYPE_OPTIONS, CUSTOM_TASK_TYPE_OPTION].map((type) => (
               <button
                 key={type}
                 onClick={() => setSelectedType(type)}
@@ -125,6 +129,15 @@ export default function TaskModal({
               </button>
             ))}
           </div>
+          {selectedType === CUSTOM_TASK_TYPE_OPTION && (
+            <input
+              type="text"
+              value={customTaskType}
+              onChange={(e) => setCustomTaskType(e.target.value)}
+              placeholder="Enter other task type"
+              className="h-11 w-full rounded-md border border-border bg-bg-gray px-3.5 font-body text-sm text-navy outline-none placeholder:text-light-blue"
+            />
+          )}
         </div>
 
         {/* Description */}
