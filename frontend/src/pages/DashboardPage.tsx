@@ -454,36 +454,41 @@ export default function DashboardPage() {
                                 👎
                               </button>
                             </div>
-                            <div className="flex items-center gap-1">
-                              <input
-                                type="number"
-                                min={0}
-                                placeholder="hrs"
-                                value={getFeedbackDraft(task._id).hours}
-                                onChange={(e) =>
-                                  updateFeedbackDraft(task._id, (curr) => ({ ...curr, hours: e.target.value }))
-                                }
-                                className="w-12 px-2 text-xs bg-white border rounded outline-none h-7 border-border text-navy"
-                              />
-                              <input
-                                type="number"
-                                min={0}
-                                placeholder="mins"
-                                value={getFeedbackDraft(task._id).minutes}
-                                onChange={(e) =>
-                                  updateFeedbackDraft(task._id, (curr) => ({ ...curr, minutes: e.target.value }))
-                                }
-                                className="px-2 text-xs bg-white border rounded outline-none h-7 w-14 border-border text-navy"
-                              />
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => handleSubmitFeedback(task._id)}
-                              disabled={submittingFeedbackTasks.has(task._id)}
-                              className="h-7 rounded border border-border px-2.5 text-[11px] font-medium text-slate-blue transition hover:bg-bg-gray disabled:opacity-60"
-                            >
-                              {submittingFeedbackTasks.has(task._id) ? 'Saving…' : 'Save'}
-                            </button>
+                            {getFeedbackDraft(task._id).rating && (
+                              <>
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-[11px] text-light-blue">How long did it actually take?</span>
+                                  <input
+                                    type="number"
+                                    min={0}
+                                    placeholder="hrs"
+                                    value={getFeedbackDraft(task._id).hours}
+                                    onChange={(e) =>
+                                      updateFeedbackDraft(task._id, (curr) => ({ ...curr, hours: e.target.value }))
+                                    }
+                                    className="w-12 px-2 text-xs bg-white border rounded outline-none h-7 border-border text-navy"
+                                  />
+                                  <input
+                                    type="number"
+                                    min={0}
+                                    placeholder="mins"
+                                    value={getFeedbackDraft(task._id).minutes}
+                                    onChange={(e) =>
+                                      updateFeedbackDraft(task._id, (curr) => ({ ...curr, minutes: e.target.value }))
+                                    }
+                                    className="px-2 text-xs bg-white border rounded outline-none h-7 w-14 border-border text-navy"
+                                  />
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => handleSubmitFeedback(task._id)}
+                                  disabled={submittingFeedbackTasks.has(task._id)}
+                                  className="h-7 rounded border border-border px-2.5 text-[11px] font-medium text-slate-blue transition hover:bg-bg-gray disabled:opacity-60"
+                                >
+                                  {submittingFeedbackTasks.has(task._id) ? 'Saving…' : 'Save'}
+                                </button>
+                              </>
+                            )}
                             {feedbackErrors[task._id] && (
                               <div className="w-full text-[11px] text-[#CF4520]">{feedbackErrors[task._id]}</div>
                             )}
