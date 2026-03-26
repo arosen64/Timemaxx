@@ -26,7 +26,7 @@ export const uploadSyllabus = action({
   args: {
     fileName: v.string(),
     fileText: v.string(),
-    className: v.string(),
+    courseId: v.optional(v.id("userCourses")),
   },
   handler: async (ctx, args): Promise<UploadSyllabusResult> => {
     const userId = await getAuthUserId(ctx);
@@ -34,7 +34,7 @@ export const uploadSyllabus = action({
 
     const syllabusId = await ctx.runMutation(
       internal.mutations.syllabi.createSyllabus,
-      { userId, fileName: args.fileName, className: args.className }
+      { userId, fileName: args.fileName, courseId: args.courseId }
     );
 
     const apiKey = process.env.GEMINI_API_KEY;
