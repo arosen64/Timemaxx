@@ -3,12 +3,13 @@ import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '../../../backend/convex/_generated/api'
 import { ProfileData, WorkHoursData, PreferencesData } from '../types'
-import { Button } from '../components/ui'
-import { ProfileForm, WorkHoursSelector, DEFAULT_WORK_HOURS, PreferencesForm, DEFAULT_PREFERENCES } from '../components/onboarding'
+import ProfileForm from '../components/ProfileForm'
+import WorkHoursSelector, { DEFAULT_WORK_HOURS } from '../components/WorkHoursSelector'
+import PreferencesForm, { DEFAULT_PREFERENCES } from '../components/PreferencesForm'
+import OnboardingStepShell from '../components/onboarding/OnboardingStepShell'
+import OnboardingNav from '../components/onboarding/OnboardingNav'
 
 type Step = 1 | 2 | 3
-
-const STEP_LABELS = ['Profile', 'Work Hours', 'Preferences']
 
 const DEFAULT_PROFILE: ProfileData = {
   major: '',
@@ -60,7 +61,7 @@ export default function OnboardingPage() {
         year: profile.year,
         difficultSubjects: profile.difficultSubjects,
         enjoyedSubjects: profile.enjoyedSubjects,
-        courses: profile.courses,
+
         workHoursGrid: Object.entries(workHours).map(([day, slots]) => ({
           day,
           available: slots.available,
@@ -75,70 +76,25 @@ export default function OnboardingPage() {
     }
   }
 
-  const isWide = step === 2 || step === 3
-
   return (
-    <div className="flex min-h-screen flex-col items-center bg-bg-gray px-4 py-12">
-      {/* Step indicator */}
-      <div className="mb-10 flex items-center">
-        {STEP_LABELS.map((label, i) => {
-          const stepNum = (i + 1) as Step
-          const isActive = step === stepNum
-          const isComplete = step > stepNum
-          return (
-            <div key={label} className="flex items-center">
-              <div className="flex items-center gap-2">
-                <div
-                  className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold ${
-                    isComplete
-                      ? 'bg-teal text-white'
-                      : isActive
-                        ? 'bg-navy text-white'
-                        : 'bg-border text-slate-blue'
-                  }`}
-                >
-                  {isComplete ? '✓' : stepNum}
-                </div>
-                <span
-                  className={`text-sm ${isActive ? 'font-semibold text-navy' : 'text-slate-blue'}`}
-                >
-                  {label}
-                </span>
-              </div>
-              {i < STEP_LABELS.length - 1 && <div className="mx-4 h-px w-12 bg-border" />}
-            </div>
-          )
-        })}
-      </div>
-
-      {/* Form card */}
-      <div className={`w-full rounded-2xl bg-white p-8 shadow-sm ${isWide ? 'max-w-2xl' : 'max-w-lg'}`}>
-        {step === 1 && (
-          <ProfileForm data={profile} onChange={setProfile} errors={profileErrors} />
-        )}
-
-        {step === 2 && (
-          <WorkHoursSelector data={workHours} onChange={setWorkHours} />
-        )}
-
-        {step === 3 && (
-          <PreferencesForm data={preferences} onChange={setPreferences} />
-        )}
-
-        {/* Navigation */}
-        <div className="mt-8 flex justify-between">
-          <Button variant="ghost" size="nav" onClick={handleBack} disabled={step === 1 || isSubmitting}>
-            Back
-          </Button>
-          {step < 3 ? (
-            <Button size="nav" onClick={handleNext}>Next</Button>
-          ) : (
-            <Button size="nav" onClick={handleSubmit} disabled={isSubmitting}>
-              {isSubmitting ? 'Saving...' : 'Submit'}
-            </Button>
-          )}
-        </div>
-      </div>
-    </div>
+    <OnboardingStepShell currentStep={step} totalSteps={3} wide={step === 2 || step === 3}>
+      {step === 1 && (
+        <ProfileForm data={profile} onChange={setProfile} errors={profileErrors} />
+      )}
+      {step === 2 && (
+        <WorkHoursSelector data={workHours} onChange={setWorkHours} />
+      )}
+      {step === 3 && (
+        <PreferencesForm data={preferences} onChange={setPreferences} />
+      )}
+      <OnboardingNav
+        onBack={handleBack}
+        onContinue={step < 3 ? handleNext : handleSubmit}
+        isFirstStep={step === 1}
+        isLastStep={step === 3}
+        continueLabel={isSubmitting ? 'Saving...' : undefined}
+        disabled={isSubmitting}
+      />
+    </OnboardingStepShell>
   )
 }

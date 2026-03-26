@@ -1,7 +1,7 @@
 import { useMutation } from 'convex/react'
 import { api } from '../../../../backend/convex/_generated/api'
-import { TaskFormData } from '../../types'
-import TaskFormModal from './TaskFormModal'
+import { type EditForm } from './types'
+import TaskModal from './TaskModal'
 
 interface AddTaskModalProps {
   isOpen: boolean
@@ -12,7 +12,7 @@ interface AddTaskModalProps {
 export default function AddTaskModal({ isOpen, onClose, onTaskCreated }: AddTaskModalProps) {
   const createTask = useMutation(api.mutations.tasks.createTask)
 
-  async function handleSubmit(form: TaskFormData) {
+  async function handleSubmit(form: EditForm) {
     const taskId = await createTask({
       title: form.title,
       description: form.description,
@@ -23,12 +23,13 @@ export default function AddTaskModal({ isOpen, onClose, onTaskCreated }: AddTask
   }
 
   return (
-    <TaskFormModal
+    <TaskModal
       isOpen={isOpen}
-      heading="Add new task"
+      title="Add task"
       subtitle="Fill in the details below."
-      submitLabel="Add Task"
-      submittingLabel="Adding…"
+      primaryLabel="Add Task"
+      primaryLoadingLabel="Adding…"
+      initialValues={{ taskName: '', selectedType: 'Problem Set', description: '', dueDate: '' }}
       onClose={onClose}
       onSubmit={handleSubmit}
     />

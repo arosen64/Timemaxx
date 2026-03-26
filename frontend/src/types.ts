@@ -1,29 +1,14 @@
-import { Id } from '../../backend/convex/_generated/dataModel'
 
-export interface Task {
-  _id: Id<'tasks'>
-  title: string
-  description: string
-  taskType: string
-  timeEstimate?: number
-  dueDate: number
-  createdAt: number
-}
-
-export const SCHEMA_TASK_TYPES = ['Problem Set', 'Essay', 'Coding', 'Exam Prep'] as const
-export type SchemaTaskType = (typeof SCHEMA_TASK_TYPES)[number]
-export const TASK_TYPE_OPTIONS: SchemaTaskType[] = [...SCHEMA_TASK_TYPES]
-
-export interface TaskFormData {
-  title: string
-  description: string
-  taskType: SchemaTaskType
-  dueDate: number
-}
-
+//Compatible with User Courses schema in backend/convex/schema.ts
 export interface Course {
+  userCourseId?: string
+  courseCode?: string
   title: string
-  studyGoal: string
+  credits?: number
+  term?: string
+  grade?: string
+  studyGoal?: string
+  difficultyRating?: number
 }
 
 export interface ProfileData {
@@ -44,3 +29,27 @@ export interface PreferencesData {
   traits: { [category: string]: string[] }
   focusBlockLength: number | ''
 }
+
+
+// From Course Selector
+export interface JhuTerm {
+  Name: string
+  [key: string]: unknown
+}
+
+export interface JhuSchool {
+  Name: string
+  [key: string]: unknown
+}
+
+export interface JhuCourse {
+  OfferingName: string
+  Title: string
+  Credits?: string
+  [key: string]: unknown
+}
+
+export interface CourseSelectorProps {
+  onAddCourse: (course: Course) => void
+}
+
