@@ -2,7 +2,6 @@ import { mutation } from "../_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
-
 /**
  * Updates the authenticated user's onboarding information and marks onboarding as complete.
  */
@@ -20,6 +19,9 @@ export const completeOnboarding = mutation({
     })),
     productivityTraits: v.any(),
     focusBlockLength: v.number(),
+    transcriptSummary: v.optional(
+      v.array(v.object({ label: v.string(), text: v.string() }))
+    ),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);

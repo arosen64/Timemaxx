@@ -46,6 +46,7 @@ function FileIcon() {
   )
 }
 
+
 interface TranscriptUploadProps {
   onCoursesAdded: (courses: Course[]) => void
 }
@@ -55,7 +56,6 @@ function readFileAsBase64(file: File): Promise<string> {
     const reader = new FileReader()
     reader.onload = () => {
       const dataUrl = reader.result as string
-      // Strip the data URL prefix — Gemini needs raw base64 only
       resolve(dataUrl.split(',')[1])
     }
     reader.onerror = reject
@@ -84,8 +84,7 @@ export default function TranscriptUpload({ onCoursesAdded }: TranscriptUploadPro
       const fileBase64 = await readFileAsBase64(f)
       const parsed: ParsedCourse[] = await parseTranscript({ fileBase64 })
 
-      // Save each parsed course to the DB, skip duplicates silently.
-      // "X" grade means in-progress — omit grade so the study goals UI shows instead.
+      // 4. Save each parsed course, skip duplicates
       const saved: Course[] = []
       await Promise.all(
         parsed.map(async (c) => {
@@ -107,7 +106,7 @@ export default function TranscriptUpload({ onCoursesAdded }: TranscriptUploadPro
               grade: hasGrade ? c.grade : undefined,
             })
           } catch {
-            // Already exists or unauthorized — skip quietly
+            // Already exists — skip quietly
           }
         })
       )
@@ -166,12 +165,8 @@ export default function TranscriptUpload({ onCoursesAdded }: TranscriptUploadPro
               Remove
             </button>
           </div>
-          {summary && (
-            <p className="font-body text-xs text-teal">{summary}</p>
-          )}
-          {error && (
-            <p className="font-body text-xs text-urgent-red">{error}</p>
-          )}
+          {summary && <p className="font-body text-xs text-teal">{summary}</p>}
+          {error && <p className="font-body text-xs text-urgent-red">{error}</p>}
         </div>
       ) : (
         <div
