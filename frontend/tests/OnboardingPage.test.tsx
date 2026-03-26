@@ -71,7 +71,7 @@ describe('OnboardingPage', () => {
   it('redirects to /dashboard if onboarding is already complete', async () => {
     mockUseQuery.mockReturnValue(true)
     mockUseMutation.mockReturnValue(makeMutationFn() as never)
-    mockUseAction.mockReturnValue(makeMutationFn() as never)
+    mockUseAction.mockReturnValue(vi.fn().mockResolvedValue([]) as never)
 
     renderWithProviders(<OnboardingPage />)
 
