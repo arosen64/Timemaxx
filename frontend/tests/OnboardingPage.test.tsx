@@ -54,7 +54,10 @@ function setup(calendarConnected = false) {
     return false
   })
   mockUseMutation.mockReturnValue(saveOnboarding as never)
-  mockUseAction.mockReturnValue(mockCalendarAction as never)
+  mockUseAction.mockImplementation((action: unknown) => {
+    if (action === 'initiateGoogleCalendarOAuth') return mockCalendarAction as never
+    return vi.fn().mockResolvedValue([]) as never
+  })
   renderWithProviders(<OnboardingPage />)
   return { saveOnboarding, mockCalendarAction }
 }

@@ -11,6 +11,7 @@ vi.mock('../../backend/convex/_generated/api', () => ({
     },
     mutations: {
       calendar: { deleteCalendarToken: 'deleteCalendarToken' },
+      users: { deleteAccount: 'deleteAccount' },
     },
     actions: {
       initiateGoogleCalendarOAuth: {
