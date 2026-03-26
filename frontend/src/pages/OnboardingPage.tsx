@@ -68,7 +68,6 @@ export default function OnboardingPage() {
         year: profile.year,
         difficultSubjects: profile.difficultSubjects,
         enjoyedSubjects: profile.enjoyedSubjects,
-        courses: profile.courses,
         workHoursGrid: Object.entries(workHours).map(([day, slots]) => ({
           day,
           available: slots.available,
