@@ -41,7 +41,7 @@ describe("actions/uploadSyllabus - integration (real Gemini API)", () => {
 
     const result = await withAuth.action(
       api.actions.uploadSyllabus.uploadSyllabus,
-      { fileName: "syllabus.txt", fileText: fixtureText, className: "My Course" }
+      { fileName: "syllabus.txt", fileText: fixtureText }
     );
 
     console.log("\n=== Gemini extraction result ===");

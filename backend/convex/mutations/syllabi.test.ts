@@ -7,13 +7,14 @@ const FUTURE_DATE = Date.now() + 86_400_000;
 
 async function createTestSyllabus(
   t: ReturnType<typeof makeTestCtx>,
-  userId: string
+  userId: string,
+  opts: { courseId?: string } = {}
 ) {
   return await t.run((ctx) =>
     ctx.db.insert("syllabi", {
       userId: userId as never,
       fileName: "syllabus.pdf",
-      courseName: "CS 101",
+      courseId: opts.courseId as never,
       status: "confirmed",
       createdAt: Date.now(),
     })
@@ -111,6 +112,25 @@ describe("mutations/syllabi – confirmSyllabusTasks", () => {
       taskType: "Essay",
       extractedFrom: syllabusId,
     });
+  });
+
+  test("stores courseId on the syllabus when provided", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+
+    const courseId = await t.run((ctx) =>
+      ctx.db.insert("userCourses", {
+        userId: userId as never,
+        courseCode: "EN.601.226",
+        title: "Data Structures",
+        term: "Fall 2025",
+      })
+    );
+
+    const syllabusId = await createTestSyllabus(t, userId, { courseId: courseId as string });
+
+    const syllabus = await t.run((ctx) => ctx.db.get(syllabusId));
+    expect(syllabus?.courseId).toBe(courseId);
   });
 
   test("returns an empty array when no tasks are passed", async () => {
