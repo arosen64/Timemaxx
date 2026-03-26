@@ -71,11 +71,6 @@ describe('ProfilePage – Google Calendar section', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockNavigate.mockClear()
-    Object.defineProperty(globalThis, 'localStorage', {
-      value: { getItem: vi.fn().mockReturnValue(null), setItem: vi.fn(), removeItem: vi.fn() },
-      writable: true,
-      configurable: true,
-    })
   })
 
   it('renders "Connect Calendar" button when not connected', () => {

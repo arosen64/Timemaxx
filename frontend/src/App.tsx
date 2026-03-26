@@ -19,6 +19,26 @@ export default function App() {
 
   useEffect(() => {
     if (isLoading) return
+
+    // After a Google Calendar OAuth redirect, the callback lands on /profile.
+    // Check localStorage before the unauthenticated guard fires so the race
+    // condition (auth state briefly unresolved on full-page reload) cannot
+    // redirect the user to / before we have a chance to navigate back.
+    if (location.pathname === '/profile') {
+      try {
+        const saved = localStorage.getItem('timemaxx_onboarding_state')
+        if (saved) {
+          const { returnTo } = JSON.parse(saved) as { returnTo?: string }
+          if (returnTo) {
+            navigate(returnTo, { replace: true })
+            return
+          }
+        }
+      } catch {
+        // localStorage unavailable — continue with normal routing
+      }
+    }
+
     if (!isAuthenticated && PROTECTED_ROUTES.includes(location.pathname)) {
       navigate('/')
     }

@@ -66,11 +66,6 @@ describe('OnboardingPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockNavigate.mockClear()
-    Object.defineProperty(globalThis, 'localStorage', {
-      value: { getItem: vi.fn().mockReturnValue(null), setItem: vi.fn(), removeItem: vi.fn() },
-      writable: true,
-      configurable: true,
-    })
   })
 
   it('redirects to /dashboard if onboarding is already complete', async () => {
@@ -195,11 +190,6 @@ describe('OnboardingPage – Google Calendar section (Step 4)', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockNavigate.mockClear()
-    Object.defineProperty(globalThis, 'localStorage', {
-      value: { getItem: vi.fn().mockReturnValue(null), setItem: vi.fn(), removeItem: vi.fn() },
-      writable: true,
-      configurable: true,
-    })
   })
 
   async function advanceToStep4() {
