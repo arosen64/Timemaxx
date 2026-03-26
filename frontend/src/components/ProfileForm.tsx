@@ -10,9 +10,10 @@ interface TagInputProps {
   tags: string[]
   onChange: (tags: string[]) => void
   placeholder: string
+  readOnly?: boolean
 }
 
-function TagInput({ tags, onChange, placeholder }: TagInputProps) {
+function TagInput({ tags, onChange, placeholder, readOnly = false }: TagInputProps) {
   const [input, setInput] = useState('')
 
   const addTag = (value: string) => {
@@ -38,30 +39,38 @@ function TagInput({ tags, onChange, placeholder }: TagInputProps) {
 
   return (
     <div className="flex flex-wrap gap-2 rounded-lg border border-border bg-bg-gray p-2 focus-within:border-sky-blue focus-within:ring-2 focus-within:ring-sky-blue/20">
-      {tags.map((tag, i) => (
-        <span
-          key={i}
-          className="flex items-center gap-1 rounded-full bg-navy/10 px-3 py-1 font-body text-sm text-navy"
-        >
-          {tag}
-          <button
-            type="button"
-            onClick={() => removeTag(i)}
-            className="ml-1 text-navy/50 hover:text-navy"
+      {tags.length === 0 && readOnly ? (
+        <span className="font-body text-sm italic text-light-blue">None</span>
+      ) : (
+        tags.map((tag, i) => (
+          <span
+            key={i}
+            className="flex items-center gap-1 rounded-full bg-navy/10 px-3 py-1 font-body text-sm text-navy"
           >
-            ×
-          </button>
-        </span>
-      ))}
-      <input
-        type="text"
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        onKeyDown={handleKeyDown}
-        onBlur={() => addTag(input)}
-        placeholder={tags.length === 0 ? placeholder : 'Add more...'}
-        className="min-w-[140px] flex-1 bg-transparent font-body text-sm text-navy outline-none placeholder:text-light-blue"
-      />
+            {tag}
+            {!readOnly && (
+              <button
+                type="button"
+                onClick={() => removeTag(i)}
+                className="ml-1 text-navy/50 hover:text-navy"
+              >
+                ×
+              </button>
+            )}
+          </span>
+        ))
+      )}
+      {!readOnly && (
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onBlur={() => addTag(input)}
+          placeholder={tags.length === 0 ? placeholder : 'Add more...'}
+          className="min-w-[140px] flex-1 bg-transparent font-body text-sm text-navy outline-none placeholder:text-light-blue"
+        />
+      )}
     </div>
   )
 }
@@ -70,9 +79,10 @@ interface ProfileFormProps {
   data: ProfileData
   onChange: (data: ProfileData) => void
   errors: { major?: string; year?: string }
+  readOnly?: boolean
 }
 
-export default function ProfileForm({ data, onChange, errors }: ProfileFormProps) {
+export default function ProfileForm({ data, onChange, errors, readOnly = false }: ProfileFormProps) {
   const deleteUserCourse = useMutation(api.mutations.userCourses.deleteUserCourse)
 
   const update = <K extends keyof ProfileData>(field: K, value: ProfileData[K]) => {
@@ -102,31 +112,40 @@ export default function ProfileForm({ data, onChange, errors }: ProfileFormProps
       {/* Major */}
       <div className="flex flex-col gap-1">
         <label className="font-heading text-sm font-semibold text-navy">
-          Major / Field of Study <span className="text-urgent-red">*</span>
+          Major / Field of Study {!readOnly && <span className="text-urgent-red">*</span>}
         </label>
         <input
           type="text"
           value={data.major}
-          onChange={(e) => update('major', e.target.value)}
-          placeholder="e.g. Computer Science"
-          className={`rounded-lg border bg-bg-gray px-3 py-2 font-body text-sm text-navy outline-none placeholder:text-light-blue focus:ring-2 focus:ring-sky-blue/20 ${
-            errors.major ? 'border-urgent-red' : 'border-border focus:border-sky-blue'
+          readOnly={readOnly}
+          onChange={readOnly ? undefined : (e) => update('major', e.target.value)}
+          placeholder={readOnly ? undefined : 'e.g. Computer Science'}
+          className={`rounded-lg border bg-bg-gray px-3 py-2 font-body text-sm text-navy outline-none ${
+            readOnly
+              ? 'cursor-default border-border'
+              : `placeholder:text-light-blue focus:ring-2 focus:ring-sky-blue/20 ${
+                  errors.major ? 'border-urgent-red' : 'border-border focus:border-sky-blue'
+                }`
           }`}
         />
-        {errors.major && <p className="font-body text-xs text-urgent-red">{errors.major}</p>}
+        {!readOnly && errors.major && <p className="font-body text-xs text-urgent-red">{errors.major}</p>}
       </div>
 
       {/* Year */}
       <div className="flex flex-col gap-1">
         <label className="font-heading text-sm font-semibold text-navy">
-          Current Year <span className="text-urgent-red">*</span>
+          Current Year {!readOnly && <span className="text-urgent-red">*</span>}
         </label>
         <select
           id="year-select"
           value={data.year}
-          onChange={(e) => update('year', e.target.value)}
-          className={`rounded-lg border bg-bg-gray px-3 py-2 font-body text-sm text-navy outline-none focus:ring-2 focus:ring-sky-blue/20 ${
-            errors.year ? 'border-urgent-red' : 'border-border focus:border-sky-blue'
+          onChange={readOnly ? () => {} : (e) => update('year', e.target.value)}
+          className={`rounded-lg border bg-bg-gray px-3 py-2 font-body text-sm text-navy outline-none ${
+            readOnly
+              ? 'cursor-default border-border pointer-events-none'
+              : `focus:ring-2 focus:ring-sky-blue/20 ${
+                  errors.year ? 'border-urgent-red' : 'border-border focus:border-sky-blue'
+                }`
           }`}
         >
           <option value="">Select your year</option>
@@ -134,34 +153,36 @@ export default function ProfileForm({ data, onChange, errors }: ProfileFormProps
             <option key={y} value={y}>{y}</option>
           ))}
         </select>
-        {errors.year && <p className="font-body text-xs text-urgent-red">{errors.year}</p>}
+        {!readOnly && errors.year && <p className="font-body text-xs text-urgent-red">{errors.year}</p>}
       </div>
 
       {/* Difficult Subjects */}
       <div className="flex flex-col gap-1">
         <label className="font-heading text-sm font-semibold text-navy">Subjects You Find Difficult</label>
-        <p className="font-body text-xs text-light-blue">Press Enter or comma to add each subject</p>
+        {!readOnly && <p className="font-body text-xs text-light-blue">Press Enter or comma to add each subject</p>}
         <TagInput
           tags={data.difficultSubjects}
           onChange={(tags) => update('difficultSubjects', tags)}
           placeholder="e.g. Organic Chemistry"
+          readOnly={readOnly}
         />
       </div>
 
       {/* Enjoyed Subjects */}
       <div className="flex flex-col gap-1">
         <label className="font-heading text-sm font-semibold text-navy">Subjects You Enjoy</label>
-        <p className="font-body text-xs text-light-blue">Press Enter or comma to add each subject</p>
+        {!readOnly && <p className="font-body text-xs text-light-blue">Press Enter or comma to add each subject</p>}
         <TagInput
           tags={data.enjoyedSubjects}
           onChange={(tags) => update('enjoyedSubjects', tags)}
           placeholder="e.g. Linear Algebra"
+          readOnly={readOnly}
         />
       </div>
 
       {/* Courses — term + school + search */}
       <div className="flex flex-col gap-3">
-        <CourseSelector onAddCourse={handleAddCourse} />
+        {!readOnly && <CourseSelector onAddCourse={handleAddCourse} />}
 
         {/* Added courses list */}
         {data.courses.map((course, i) => (
@@ -175,26 +196,32 @@ export default function ProfileForm({ data, onChange, errors }: ProfileFormProps
                   </span>
                 )}
               </div>
-              <button
-                type="button"
-                onClick={() => handleRemoveCourse(i)}
-                className="text-light-blue transition-colors hover:text-urgent-red"
-              >
-                ×
-              </button>
+              {!readOnly && (
+                <button
+                  type="button"
+                  onClick={() => handleRemoveCourse(i)}
+                  className="text-light-blue transition-colors hover:text-urgent-red"
+                >
+                  ×
+                </button>
+              )}
             </div>
             {course.grade !== undefined ? (
               <div className="flex items-center gap-2">
                 <span className="font-body text-xs text-slate-blue">Grade:</span>
                 <select
                   value={course.grade}
-                  onChange={(e) => {
+                  onChange={readOnly ? () => {} : (e) => {
                     const updated = data.courses.map((c, j) =>
                       j === i ? { ...c, grade: e.target.value } : c
                     )
                     update('courses', updated)
                   }}
-                  className="rounded-lg border border-border bg-white px-2 py-1 font-body text-xs text-navy outline-none focus:border-sky-blue focus:ring-1 focus:ring-sky-blue/20"
+                  className={`rounded-lg border border-border bg-white px-2 py-1 font-body text-xs text-navy outline-none ${
+                    readOnly
+                      ? 'cursor-default pointer-events-none'
+                      : 'focus:border-sky-blue focus:ring-1 focus:ring-sky-blue/20'
+                  }`}
                 >
                   <option value="">Select grade</option>
                   {GRADES.map((g) => (
@@ -207,10 +234,14 @@ export default function ProfileForm({ data, onChange, errors }: ProfileFormProps
                 {STUDY_GOALS.map((goal) => (
                   <label
                     key={goal}
-                    className={`flex flex-1 cursor-pointer items-center justify-center rounded-lg border px-2 py-2 font-body text-xs font-medium transition-colors ${
+                    className={`flex flex-1 items-center justify-center rounded-lg border px-2 py-2 font-body text-xs font-medium ${
+                      readOnly ? 'cursor-default' : 'cursor-pointer transition-colors'
+                    } ${
                       course.studyGoal === goal
                         ? 'border-sky-blue bg-sky-blue/10 text-navy'
-                        : 'border-border text-slate-blue hover:border-sky-blue/50 hover:bg-sky-blue/5'
+                        : readOnly
+                          ? 'border-border text-slate-blue'
+                          : 'border-border text-slate-blue hover:border-sky-blue/50 hover:bg-sky-blue/5'
                     }`}
                   >
                     <input
@@ -218,7 +249,7 @@ export default function ProfileForm({ data, onChange, errors }: ProfileFormProps
                       name={`studyGoal-${i}`}
                       value={goal}
                       checked={course.studyGoal === goal}
-                      onChange={() => {
+                      onChange={readOnly ? () => {} : () => {
                         const updated = data.courses.map((c, j) =>
                           j === i ? { ...c, studyGoal: goal } : c
                         )
