@@ -94,7 +94,7 @@ export default function OnboardingPage() {
   }
 
   return (
-    <OnboardingStepShell currentStep={step} totalSteps={4} wide={step === 2 || step === 3}>
+    <OnboardingStepShell currentStep={step} totalSteps={4} wide={step === 2 || step === 3} tall={step === 4}>
       {step === 1 && (
         <ProfileForm data={profile} onChange={setProfile} errors={profileErrors} />
       )}
@@ -105,7 +105,7 @@ export default function OnboardingPage() {
         <PreferencesForm data={preferences} onChange={setPreferences} />
       )}
       {step === 4 && (
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-1 flex-col gap-6">
           <div className="flex flex-col gap-1">
             <h2 className="font-heading text-2xl font-bold text-navy">Connect Google Calendar</h2>
             <p className="font-body text-sm text-slate-blue">Optionally sync your calendar so Timemaxx can schedule around your existing events.</p>
