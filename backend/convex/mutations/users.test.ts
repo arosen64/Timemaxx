@@ -176,6 +176,19 @@ describe("mutations/users – updateUserSettings", () => {
     ).rejects.toThrow("Not authenticated");
   });
 
+  test("throws when focusBlockLength is zero or negative", async () => {
+    const t = makeTestCtx();
+    const { withAuth } = await createTestUser(t);
+
+    await expect(
+      withAuth.mutation(api.mutations.users.updateUserSettings, { focusBlockLength: 0 })
+    ).rejects.toThrow("focusBlockLength must be a positive number");
+
+    await expect(
+      withAuth.mutation(api.mutations.users.updateUserSettings, { focusBlockLength: -10 })
+    ).rejects.toThrow("focusBlockLength must be a positive number");
+  });
+
   test("updates a single field", async () => {
     const t = makeTestCtx();
     const { userId, withAuth } = await createTestUser(t);
@@ -215,6 +228,20 @@ describe("mutations/users – updateUserSettings", () => {
 
     const user = await t.run((ctx) => ctx.db.get(userId));
     expect(user!.workHoursGrid).toEqual(grid);
+  });
+
+  test("updates courses field", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+
+    const courses = [
+      { title: "CS101", studyGoal: "A" },
+      { title: "Math201", studyGoal: "B+" },
+    ];
+    await withAuth.mutation(api.mutations.users.updateUserSettings, { courses });
+
+    const user = await t.run((ctx) => ctx.db.get(userId));
+    expect(user!.courses).toEqual(courses);
   });
 
   test("does not affect unspecified fields", async () => {

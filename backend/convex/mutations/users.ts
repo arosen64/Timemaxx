@@ -25,6 +25,19 @@ export const updateUserSettings = mutation({
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated: must be logged in to update settings");
 
+    if (args.focusBlockLength !== undefined && args.focusBlockLength <= 0)
+      throw new Error("focusBlockLength must be a positive number");
+
+    // onboardingComplete is intentionally excluded from updatable fields here —
+    // it is only set (to true) via completeOnboarding and should not be toggled
+    // from the settings page.
+
+    // TODO: tighten validation for schema-level fields:
+    //   - year should be restricted to known values (Freshman, Sophomore, Junior, Senior, Graduate)
+    //   - major should reject purely numeric strings
+    //   - productivityTraits uses v.any() and has no shape enforcement
+    // Track this as a follow-up issue for backend input validation.
+
     await ctx.db.patch(userId, args);
   },
 });
