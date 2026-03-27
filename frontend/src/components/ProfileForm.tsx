@@ -142,10 +142,11 @@ export default function ProfileForm({ data, onChange, errors, readOnly = false }
           <select
             id="year-select"
             value={data.year}
-            onChange={readOnly ? () => {} : (e) => update('year', e.target.value)}
-            className={`rounded-lg border bg-bg-gray px-3 py-2 font-body text-sm text-navy outline-none ${
+            disabled={readOnly}
+            onChange={(e) => update('year', e.target.value)}
+            className={`rounded-lg border bg-bg-gray px-3 py-2 font-body text-sm text-navy outline-none disabled:pointer-events-none ${
               readOnly
-                ? 'cursor-default border-border pointer-events-none'
+                ? 'cursor-default border-border'
                 : `focus:ring-2 focus:ring-sky-blue/20 ${
                     errors.year ? 'border-urgent-red' : 'border-border focus:border-sky-blue'
                   }`
@@ -218,15 +219,16 @@ export default function ProfileForm({ data, onChange, errors, readOnly = false }
                 ) : (
                   <select
                     value={course.grade}
-                    onChange={readOnly ? () => {} : (e) => {
+                    disabled={readOnly}
+                    onChange={(e) => {
                       const updated = data.courses.map((c, j) =>
                         j === i ? { ...c, grade: e.target.value } : c
                       )
                       update('courses', updated)
                     }}
-                    className={`rounded-lg border border-border bg-white px-2 py-1 font-body text-xs text-navy outline-none ${
+                    className={`rounded-lg border border-border bg-white px-2 py-1 font-body text-xs text-navy outline-none disabled:pointer-events-none ${
                       readOnly
-                        ? 'cursor-default pointer-events-none'
+                        ? 'cursor-default'
                         : 'focus:border-sky-blue focus:ring-1 focus:ring-sky-blue/20'
                     }`}
                   >
@@ -257,7 +259,8 @@ export default function ProfileForm({ data, onChange, errors, readOnly = false }
                       name={`studyGoal-${i}`}
                       value={goal}
                       checked={course.studyGoal === goal}
-                      onChange={readOnly ? () => {} : () => {
+                      disabled={readOnly}
+                      onChange={() => {
                         const updated = data.courses.map((c, j) =>
                           j === i ? { ...c, studyGoal: goal } : c
                         )
