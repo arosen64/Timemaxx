@@ -98,8 +98,14 @@ export default function TranscriptUpload({ onCoursesAdded }: TranscriptUploadPro
         setPendingGoals(currentCourses.map(() => ''))
         setGoalErrors(currentCourses.map(() => ''))
       }
-    } catch {
-      setError('Failed to parse transcript. Please try again.')
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      if (message.includes('NOT_JHU_TRANSCRIPT')) {
+        setError("That doesn't look like a JHU transcript. Please upload your official Johns Hopkins transcript.")
+      } else {
+        setError('Failed to parse transcript. Please try again.')
+      }
+      setFile(null)
     } finally {
       setParsing(false)
     }
@@ -163,9 +169,11 @@ export default function TranscriptUpload({ onCoursesAdded }: TranscriptUploadPro
       <p className="font-body text-xs text-slate-blue">
         Upload your JHU transcript to auto-fill your courses
       </p>
-      <p className="font-body text-xs text-light-blue">
-        Note: AP, IB, and other external/transfer courses are not supported — please add those manually as equivalent JHU courses.
-      </p>
+      <div className="rounded-lg border border-urgent-red/40 bg-urgent-red/10 px-3 py-2">
+        <p className="font-body text-xs text-urgent-red">
+          <span className="font-semibold">Note:</span> AP, IB, and other external/transfer courses are not supported — please add those manually as equivalent JHU courses.
+        </p>
+      </div>
       <FileUpload
         accept=".pdf"
         acceptedMimeTypes={['application/pdf']}

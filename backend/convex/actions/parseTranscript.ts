@@ -37,7 +37,9 @@ export const parseTranscript = action({
           role: "user",
           parts: [
             {
-              text: `You are a JHU transcript parser. Extract every individual course row from the following Johns Hopkins University transcript text.
+              text: `You are a JHU transcript parser. First, determine whether the provided text is a Johns Hopkins University transcript. Set "isJhuTranscript" to true only if it is clearly a JHU transcript (contains JHU course codes, terms, and grades in the expected format). If the document is not a JHU transcript, set "isJhuTranscript" to false and return an empty courses array.
+
+If it is a JHU transcript, extract every individual course row.
 
 For each course provide:
 - courseCode: JHU course code combining DIV and CRSE# only, separated by a dot (e.g. "EN.601.226", "AS.110.201"). Do NOT include the DEPT column.
@@ -65,6 +67,7 @@ ${args.fileText}`,
         responseSchema: {
           type: Type.OBJECT,
           properties: {
+            isJhuTranscript: { type: Type.BOOLEAN },
             courses: {
               type: Type.ARRAY,
               items: {
@@ -80,12 +83,17 @@ ${args.fileText}`,
               },
             },
           },
-          required: ["courses"],
+          required: ["isJhuTranscript", "courses"],
         },
       },
     });
 
     const json = JSON.parse(response.text ?? "{}");
+
+    if (json.isJhuTranscript === false) {
+      throw new Error("NOT_JHU_TRANSCRIPT");
+    }
+
     const raw: ParsedCourse[] = json.courses ?? [];
 
     return raw
