@@ -8,7 +8,7 @@ import { GRADES, STUDY_GOALS, YEARS } from '../constants'
 
 interface TagInputProps {
   tags: string[]
-  onChange: (tags: string[]) => void
+  onChange?: (tags: string[]) => void
   placeholder: string
   readOnly?: boolean
 }
@@ -19,7 +19,7 @@ function TagInput({ tags, onChange, placeholder, readOnly = false }: TagInputPro
   const addTag = (value: string) => {
     const trimmed = value.trim()
     if (trimmed && !tags.includes(trimmed)) {
-      onChange([...tags, trimmed])
+      onChange?.([...tags, trimmed])
     }
     setInput('')
   }
@@ -29,12 +29,12 @@ function TagInput({ tags, onChange, placeholder, readOnly = false }: TagInputPro
       e.preventDefault()
       addTag(input)
     } else if (e.key === 'Backspace' && !input && tags.length > 0) {
-      onChange(tags.slice(0, -1))
+      onChange?.(tags.slice(0, -1))
     }
   }
 
   const removeTag = (index: number) => {
-    onChange(tags.filter((_, i) => i !== index))
+    onChange?.(tags.filter((_, i) => i !== index))
   }
 
   return (

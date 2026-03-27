@@ -117,33 +117,21 @@ function CategorySection({
         <p className="font-body text-xs text-light-blue">{description}</p>
       </div>
       <div className="flex flex-wrap gap-2">
-        {options.map((option) =>
-          readOnly ? (
-            <span
-              key={option}
-              className={`rounded-full border px-3 py-1 font-body text-sm ${
-                selected.includes(option)
-                  ? 'border-navy bg-navy text-white'
-                  : 'border-border text-slate-blue'
-              }`}
-            >
-              {option}
-            </span>
-          ) : (
-            <button
-              key={option}
-              type="button"
-              onClick={() => onToggle(option)}
-              className={`rounded-full border px-3 py-1 font-body text-sm transition-colors ${
-                selected.includes(option)
-                  ? 'border-navy bg-navy text-white'
-                  : 'border-border text-slate-blue hover:border-sky-blue hover:bg-bg-gray'
-              }`}
-            >
-              {option}
-            </button>
-          )
-        )}
+        {options.map((option) => (
+          <button
+            key={option}
+            type="button"
+            disabled={readOnly}
+            onClick={() => onToggle(option)}
+            className={`rounded-full border px-3 py-1 font-body text-sm transition-colors disabled:pointer-events-none ${
+              selected.includes(option)
+                ? 'border-navy bg-navy text-white'
+                : 'border-border text-slate-blue hover:border-sky-blue hover:bg-bg-gray'
+            }`}
+          >
+            {option}
+          </button>
+        ))}
         {/* Custom trait chips */}
         {!singleSelect && customTraits.map((trait) => (
           <span

@@ -66,10 +66,9 @@ describe('PreferencesForm', () => {
   })
 
   describe('readOnly mode', () => {
-    it('renders options as spans, not buttons', () => {
+    it('renders options as disabled buttons', () => {
       setup({}, true)
-      expect(screen.queryByRole('button', { name: 'Morning (8–11am)' })).not.toBeInTheDocument()
-      expect(screen.getByText('Morning (8–11am)')).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Morning (8–11am)' })).toBeDisabled()
     })
 
     it('does not call onChange when an option is clicked', async () => {
