@@ -3,51 +3,11 @@ import { useAction, useMutation } from 'convex/react'
 import { api } from '../../../backend/convex/_generated/api'
 import { JhuCourse, JhuSchool, JhuTerm, CourseSelectorProps } from '../types'
 import { GRADES, STUDY_GOALS } from '../constants'
+import { isPastTerm } from '../utils/termUtils'
 import Selector from './ui/Selector'
 import Button from './ui/Button'
 
-
-function getCurrentTerm(date: Date): { season: string; year: number } {
-  const month = date.getMonth() + 1 // 1-based
-  const day = date.getDate()
-  const year = date.getFullYear()
-
-  if (month < 1 || (month === 1 && day < 15)) {
-    return { season: 'Intersession', year }
-  } else if (month < 6) {
-    return { season: 'Spring', year }
-  } else if (month < 8 || (month === 8 && day < 15)) {
-    return { season: 'Summer', year }
-  } else {
-    return { season: 'Fall', year }
-  }
-}
-
-const SEASON_ORDER = ['Intersession', 'Spring', 'Summer', 'Fall'] as const
-
-function termToOrdinal(termName: string): number | null {
-  const lower = termName.toLowerCase()
-  const yearMatch = termName.match(/\d{4}/)
-  if (!yearMatch) return null
-  const year = parseInt(yearMatch[0], 10)
-  const season =
-    lower.includes('intersession') ? 'Intersession' :
-    lower.includes('spring') ? 'Spring' :
-    lower.includes('summer') ? 'Summer' :
-    lower.includes('fall') ? 'Fall' : null
-  if (!season) return null
-  return year * 10 + SEASON_ORDER.indexOf(season)
-}
-
-function isPastTerm(termName: string): boolean {
-  const current = getCurrentTerm(new Date())
-  const currentOrdinal = current.year * 10 + SEASON_ORDER.indexOf(current.season as typeof SEASON_ORDER[number])
-  const termOrdinal = termToOrdinal(termName)
-  if (termOrdinal === null) return false
-  return termOrdinal < currentOrdinal
-}
-
-export default function CourseSelector({ onAddCourse }: CourseSelectorProps) {
+export default function CourseSelector({ onAddCourse, mode = 'all' }: CourseSelectorProps) {
   const getAvailableTerms = useAction(api.actions.jhuCourses.getAvailableTerms)
   const getAvailableSchools = useAction(api.actions.jhuCourses.getAvailableSchools)
   const getCoursesByTerm = useAction(api.actions.jhuCourses.getCoursesByTerm)
@@ -77,10 +37,15 @@ export default function CourseSelector({ onAddCourse }: CourseSelectorProps) {
   useEffect(() => {
     setTermsLoading(true)
     getAvailableTerms({})
-      .then((res) => setTerms(res as JhuTerm[]))
+      .then((res) => {
+        let filtered = res as JhuTerm[]
+        if (mode === 'current') filtered = filtered.filter((t) => !isPastTerm(t.Name))
+        if (mode === 'past') filtered = filtered.filter((t) => isPastTerm(t.Name))
+        setTerms(filtered)
+      })
       .catch(() => setTerms([]))
       .finally(() => setTermsLoading(false))
-  }, [getAvailableTerms])
+  }, [getAvailableTerms, mode])
 
   useEffect(() => {
     setSchoolsLoading(true)
@@ -189,7 +154,8 @@ export default function CourseSelector({ onAddCourse }: CourseSelectorProps) {
   value={selectedTerm}
   onChange={handleTermChange}
   options={terms.map((t) => ({ label: t.Name, value: t.Name }))}
-  placeholder="Select a term"
+  placeholder={!termsLoading && terms.length === 0 ? 'No terms available' : 'Select a term'}
+  disabled={!termsLoading && terms.length === 0}
   loading={termsLoading}
   loadingText="Loading terms…"
 />

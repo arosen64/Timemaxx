@@ -48,6 +48,23 @@ export const addUserCourse = mutation({
 });
 
 /**
+ * Updates the grade for a userCourse record. Only the owning user may update their own record.
+ */
+export const updateUserCourse = mutation({
+  args: { userCourseId: v.id("userCourses"), grade: v.string() },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    const record = await ctx.db.get(args.userCourseId);
+    if (!record) throw new Error("Course record not found");
+    if (record.userId !== userId) throw new Error("Not authorized");
+
+    await ctx.db.patch(args.userCourseId, { grade: args.grade });
+  },
+});
+
+/**
  * Deletes a userCourse record. Only the owning user may delete their own record.
  */
 export const deleteUserCourse = mutation({
