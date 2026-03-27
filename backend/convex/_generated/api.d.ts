@@ -18,6 +18,7 @@ import type * as actions_uploadSyllabus from "../actions/uploadSyllabus.js";
 import type * as auth from "../auth.js";
 import type * as calendarOAuthCallback from "../calendarOAuthCallback.js";
 import type * as http from "../http.js";
+import type * as lib_gemini from "../lib/gemini.js";
 import type * as lib_syllabusTypes from "../lib/syllabusTypes.js";
 import type * as lib_taskValidators from "../lib/taskValidators.js";
 import type * as mutations_calendar from "../mutations/calendar.js";
@@ -48,6 +49,7 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   calendarOAuthCallback: typeof calendarOAuthCallback;
   http: typeof http;
+  "lib/gemini": typeof lib_gemini;
   "lib/syllabusTypes": typeof lib_syllabusTypes;
   "lib/taskValidators": typeof lib_taskValidators;
   "mutations/calendar": typeof mutations_calendar;

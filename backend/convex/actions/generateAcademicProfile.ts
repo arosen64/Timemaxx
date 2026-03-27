@@ -3,7 +3,8 @@
 import { action } from "../_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
-import { GoogleGenAI, Type } from "@google/genai";
+import { Type } from "@google/genai";
+import { callGeminiJSON } from "../lib/gemini";
 
 export interface AcademicInsight {
   label: string;
@@ -23,11 +24,6 @@ export const generateAcademicProfile = action({
   handler: async (ctx, args): Promise<AcademicInsight[]> => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Unauthenticated");
-
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) throw new Error("GEMINI_API_KEY is not set");
-
-    const genai = new GoogleGenAI({ apiKey });
 
     const courseList = args.courses
       .map(
@@ -50,10 +46,9 @@ Generate exactly 5 short, specific insights about this student's academic profil
 
 Be specific to their actual courses and grades. Be encouraging but honest. Keep each description under 40 words.`;
 
-    const response = await genai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-      config: {
+    const json = await callGeminiJSON<{ insights: AcademicInsight[] }>(
+      [{ role: "user", parts: [{ text: prompt }] }],
+      {
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
@@ -72,10 +67,8 @@ Be specific to their actual courses and grades. Be encouraging but honest. Keep 
           },
           required: ["insights"],
         },
-      },
-    });
-
-    const json = JSON.parse(response.text ?? "{}");
+      }
+    );
     return (json.insights ?? []).slice(0, 5);
   },
 });

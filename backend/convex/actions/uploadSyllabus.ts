@@ -4,7 +4,8 @@ import { action } from "../_generated/server";
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { getAuthUserId } from "@convex-dev/auth/server";
-import { GoogleGenAI, Type } from "@google/genai";
+import { Type } from "@google/genai";
+import { callGeminiJSON } from "../lib/gemini";
 import { TaskType, TASK_TYPES } from "../lib/taskValidators";
 import { UploadSyllabusResult } from "../lib/syllabusTypes";
 
@@ -36,15 +37,6 @@ export const uploadSyllabus = action({
       { userId, fileContents: args.fileContents, courseId: args.courseId }
     );
 
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      await ctx.runMutation(internal.mutations.syllabi.setSyllabusStatus, {
-        syllabusId,
-        status: "failed",
-      });
-      throw new Error("GEMINI_API_KEY is not set");
-    }
-
     const prompt = `You are an academic task extractor. Given the syllabus text below, extract every assignment, exam, project, or deliverable that has a due date.
 
 For each task provide:
@@ -57,12 +49,9 @@ Syllabus:
 ${args.fileContents}`;
 
     try {
-      const genai = new GoogleGenAI({ apiKey });
-
-      const response = await genai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: prompt,
-        config: {
+      const json = await callGeminiJSON<{ tasks: Array<{ title: string; description: string; dueDate: string; taskType: string }> }>(
+        prompt,
+        {
           responseMimeType: "application/json",
           responseSchema: {
             type: Type.OBJECT,
@@ -87,10 +76,8 @@ ${args.fileContents}`;
             required: ["tasks"],
           },
           httpOptions: { timeout: 30_000 },
-        },
-      });
-
-      const json = JSON.parse(response.text ?? "{}");
+        }
+      );
       const rawTasks: Array<{
         title: string;
         description: string;

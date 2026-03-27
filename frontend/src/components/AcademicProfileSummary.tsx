@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useAction, useQuery } from 'convex/react'
+import { useAction, useMutation, useQuery } from 'convex/react'
 import { api } from '../../../backend/convex/_generated/api'
 import { AcademicInsight, AcademicProfileSummaryProps } from '../types'
 import { ACCENTS } from '../constants'
@@ -7,12 +7,14 @@ import Button from './ui/Button'
 
 export default function AcademicProfileSummary({ profile, onChange }: AcademicProfileSummaryProps) {
   const generateProfile = useAction(api.actions.generateAcademicProfile.generateAcademicProfile)
+  const updateSettings = useMutation(api.mutations.users.updateUserSettings)
+  const currUser = useQuery(api.queries.users.getCurrUser)
   const userCourses = useQuery(api.queries.userCourses.getUserCourses)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const hasCourses = (userCourses?.length ?? 0) > 0
-  const insights = profile.transcriptSummary ?? []
+  const insights: AcademicInsight[] = currUser?.transcriptSummary ?? []
 
   const generate = async () => {
     if (!userCourses) return
@@ -26,6 +28,7 @@ export default function AcademicProfileSummary({ profile, onChange }: AcademicPr
           term: c.term,
         })),
       })
+      await updateSettings({ transcriptSummary: result as AcademicInsight[] })
       onChange({ ...profile, transcriptSummary: result as AcademicInsight[] })
     } catch {
       setError('Failed to generate your academic profile. Please try again.')
@@ -34,10 +37,12 @@ export default function AcademicProfileSummary({ profile, onChange }: AcademicPr
     }
   }
 
-  // Only auto-generate once courses are loaded and no cached summary exists
+  // Auto-generate once courses and user are loaded and no summary is stored in DB yet
   useEffect(() => {
-    if (userCourses && hasCourses && insights.length === 0) generate()
-  }, [userCourses])
+    if (userCourses && hasCourses && currUser !== undefined && !currUser?.transcriptSummary?.length) {
+      generate()
+    }
+  }, [userCourses, currUser])
 
   return (
     <div className="flex flex-col gap-6">
@@ -69,7 +74,7 @@ export default function AcademicProfileSummary({ profile, onChange }: AcademicPr
         </div>
       )}
 
-      {(loading || userCourses === undefined) && (
+      {(loading || userCourses === undefined || currUser === undefined) && insights.length === 0 && (
         <div className="flex flex-col gap-3">
           {Array.from({ length: 5 }).map((_, i) => (
             <div
@@ -79,7 +84,7 @@ export default function AcademicProfileSummary({ profile, onChange }: AcademicPr
             />
           ))}
           <p className="text-center font-body text-xs text-light-blue">
-            {userCourses === undefined ? 'Loading courses...' : 'Gemini is analyzing your transcript...'}
+            {userCourses === undefined || currUser === undefined ? 'Loading...' : 'Gemini is analyzing your transcript...'}
           </p>
         </div>
       )}
