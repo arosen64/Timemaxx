@@ -132,14 +132,6 @@ export default function WorkHoursSelector({ data, onChange, readOnly = false }: 
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <h2 className="font-heading text-2xl font-bold text-navy">Work Hours</h2>
-        <p className="mt-1 font-body text-sm text-slate-blue">
-          {readOnly
-            ? 'Your available and blocked time slots.'
-            : "Click or drag to mark when you're available to study or when you'll never work."}
-        </p>
-      </div>
 
       {/* Mode toggle (edit) / Legend (readOnly) */}
       <div className="flex flex-wrap items-center gap-3">
