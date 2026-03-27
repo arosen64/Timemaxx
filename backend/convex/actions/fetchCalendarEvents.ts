@@ -59,13 +59,13 @@ export const fetchCalendarEvents = action({
     if (!connection) return empty;
 
     let accessToken: string;
+    let calendarList: CalendarEntry[];
     try {
       accessToken = await resolveAccessToken(ctx, connection, userId, tokenSecret);
+      calendarList = await fetchCalendarList(accessToken);
     } catch {
       return { ...empty, error: true };
     }
-
-    const calendarList = await fetchCalendarList(accessToken);
 
     // No calendars selected — return list (for popup) but no events
     if (!connection.selectedCalendarIds || connection.selectedCalendarIds.length === 0) {
@@ -143,7 +143,8 @@ async function resolveAccessToken(
   userId: string,
   tokenSecret: string,
 ): Promise<string> {
-  if (Date.now() < connection.expiresAt) {
+  // Refresh 60 seconds early to avoid using a token that expires mid-request
+  if (Date.now() + 60_000 < connection.expiresAt) {
     return await decryptToken(connection.accessToken, tokenSecret);
   }
 
@@ -181,7 +182,7 @@ async function fetchCalendarList(accessToken: string): Promise<CalendarEntry[]> 
   const res = await fetch(`${GOOGLE_CALENDAR_API}/users/me/calendarList`, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
-  if (!res.ok) return [];
+  if (!res.ok) throw new Error(`Calendar list fetch failed: ${res.status}`);
   const data = await res.json() as { items?: Array<{ id: string; summary?: string }> };
   return (data.items ?? []).map((c) => ({ id: c.id, summary: c.summary ?? c.id }));
 }
