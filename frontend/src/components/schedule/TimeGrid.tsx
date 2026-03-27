@@ -1,3 +1,4 @@
+import { Fragment } from 'react'
 import type { AllDayEvent } from '../../../../backend/convex/actions/fetchCalendarEvents'
 import type { LayoutEvent } from './overlapLayout'
 import { TOTAL_SLOTS, SLOT_HEIGHT, DAYS_FULL, slotLabel, isoDateString, isToday, minutesFromMidnight } from './utils'
@@ -86,9 +87,8 @@ export default function TimeGrid({
       {/* Slot rows + absolute event overlay */}
       <div className="relative grid" style={{ gridTemplateColumns: COLS }}>
         {Array.from({ length: TOTAL_SLOTS }, (_, slot) => (
-          <>
+          <Fragment key={slot}>
             <div
-              key={`label-${slot}`}
               className="flex items-start justify-end border-b border-border/50 bg-white pr-1.5 pt-px font-body text-[10px] leading-none text-light-blue"
               style={{ height: SLOT_HEIGHT }}
             >
@@ -107,7 +107,7 @@ export default function TimeGrid({
                 />
               )
             })}
-          </>
+          </Fragment>
         ))}
 
         {/* Timed event blocks */}
