@@ -3,9 +3,9 @@
 //
 // How to use:
 //   1. Paste your syllabus text into:
-//        backend/convex/actions/__fixtures__/syllabus.txt
+//        backend/convex/tests/__fixtures__/syllabus.txt
 //   2. Pass your Gemini key inline (it lives in Convex cloud, not .env.local):
-//        GEMINI_API_KEY=your-key npm test -- --reporter=verbose backend/convex/actions/uploadSyllabus.integration.test.ts
+//        GEMINI_API_KEY=your-key npm test -- --reporter=verbose backend/convex/tests/uploadSyllabus.integration.test.ts
 // ---------------------------------------------------------------------------
 import { describe, expect, test } from "vitest";
 import { readFileSync, existsSync } from "node:fs";
@@ -31,7 +31,7 @@ describe("actions/uploadSyllabus - integration (real Gemini API)", () => {
     }
     if (!fixtureText || isPlaceholder) {
       console.log(
-        "\n[integration] Skipped: replace the placeholder in backend/convex/actions/__fixtures__/syllabus.txt with real syllabus text."
+        "\n[integration] Skipped: replace the placeholder in backend/convex/tests/__fixtures__/syllabus.txt with real syllabus text."
       );
       return;
     }
