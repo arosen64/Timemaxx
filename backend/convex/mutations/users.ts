@@ -12,6 +12,7 @@ export const updateUserSettings = mutation({
     difficultSubjects: v.optional(v.array(v.string())),
     enjoyedSubjects: v.optional(v.array(v.string())),
     courses: v.optional(v.array(v.object({ title: v.string(), studyGoal: v.string() }))),
+    transcriptSummary: v.optional(v.array(v.object({ label: v.string(), text: v.string() }))),
     workHoursGrid: v.optional(v.array(v.object({
       day: v.string(),
       available: v.array(v.number()),

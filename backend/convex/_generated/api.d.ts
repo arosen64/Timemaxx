@@ -9,6 +9,7 @@
  */
 
 import type * as actions_estimateTaskTime from "../actions/estimateTaskTime.js";
+import type * as actions_generateAcademicProfile from "../actions/generateAcademicProfile.js";
 import type * as actions_initiateGoogleCalendarOAuth from "../actions/initiateGoogleCalendarOAuth.js";
 import type * as actions_jhuCourses from "../actions/jhuCourses.js";
 import type * as actions_parseTranscript from "../actions/parseTranscript.js";
@@ -38,6 +39,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   "actions/estimateTaskTime": typeof actions_estimateTaskTime;
+  "actions/generateAcademicProfile": typeof actions_generateAcademicProfile;
   "actions/initiateGoogleCalendarOAuth": typeof actions_initiateGoogleCalendarOAuth;
   "actions/jhuCourses": typeof actions_jhuCourses;
   "actions/parseTranscript": typeof actions_parseTranscript;
