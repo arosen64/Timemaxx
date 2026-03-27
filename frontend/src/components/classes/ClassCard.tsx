@@ -6,7 +6,7 @@ import { TrashIcon, SpinnerIcon, CheckCircleIcon } from '../icons'
 import { GRADES } from '../../constants'
 import SyllabusUploadModal from './SyllabusUploadModal'
 
-export type UploadStatus = 'idle' | 'uploading' | 'success' | 'error'
+export type UploadStatus = 'idle' | 'success'
 
 interface ClassCardProps {
   id: Id<'userCourses'>
@@ -16,8 +16,6 @@ interface ClassCardProps {
   grade?: string
   isPast: boolean
   onRemove: () => Promise<void>
-  onUpload: (file: File) => Promise<number>
-  onTextSubmit: (text: string) => Promise<number>
 }
 
 export default function ClassCard({
@@ -28,8 +26,6 @@ export default function ClassCard({
   grade: initialGrade,
   isPast,
   onRemove,
-  onUpload,
-  onTextSubmit,
 }: ClassCardProps) {
   const updateUserCourse = useMutation(api.mutations.userCourses.updateUserCourse)
 
@@ -40,7 +36,6 @@ export default function ClassCard({
   // Upload state (current cards only)
   const [uploadModalOpen, setUploadModalOpen] = useState(false)
   const [uploadStatus, setUploadStatus] = useState<UploadStatus>('idle')
-  const [uploadError, setUploadError] = useState<string | null>(null)
   const [extractedCount, setExtractedCount] = useState<number | null>(null)
 
   // Grade state (past cards only)
@@ -57,27 +52,6 @@ export default function ClassCard({
       setIsRemoving(false)
       setConfirmingRemove(false)
     }
-  }
-
-  async function handleUpload(file: File) {
-    setUploadStatus('uploading')
-    setUploadError(null)
-    const count = await onUpload(file)
-    setExtractedCount(count)
-    setUploadStatus('success')
-  }
-
-  async function handleTextSubmit(text: string) {
-    setUploadStatus('uploading')
-    setUploadError(null)
-    const count = await onTextSubmit(text)
-    setExtractedCount(count)
-    setUploadStatus('success')
-  }
-
-  function handleUploadError() {
-    setUploadStatus('error')
-    setUploadError('Upload failed. Please try again.')
   }
 
   async function handleSaveGrade() {
@@ -104,22 +78,11 @@ export default function ClassCard({
         <SyllabusUploadModal
           isOpen={uploadModalOpen}
           onClose={() => setUploadModalOpen(false)}
+          courseId={id}
           courseName={title}
-          onUpload={async (file) => {
-            try {
-              await handleUpload(file)
-            } catch {
-              handleUploadError()
-              throw new Error('Upload failed')
-            }
-          }}
-          onTextSubmit={async (text) => {
-            try {
-              await handleTextSubmit(text)
-            } catch {
-              handleUploadError()
-              throw new Error('Upload failed')
-            }
+          onSuccess={(result) => {
+            setExtractedCount(result.extractedTasks.length)
+            setUploadStatus('success')
           }}
         />
       )}
@@ -208,12 +171,6 @@ export default function ClassCard({
                 Upload Syllabus
               </button>
             )}
-            {uploadStatus === 'uploading' && (
-              <div className="flex items-center gap-2 text-sm font-body text-slate-blue">
-                <SpinnerIcon size={14} />
-                <span>Processing syllabus…</span>
-              </div>
-            )}
             {uploadStatus === 'success' && (
               <div className="flex items-center gap-2 text-sm font-body text-slate-blue">
                 <CheckCircleIcon size={14} color="#86C8BC" />
@@ -227,18 +184,6 @@ export default function ClassCard({
                   className="ml-2 font-heading text-xs font-semibold text-teal hover:opacity-80 transition"
                 >
                   Upload again
-                </button>
-              </div>
-            )}
-            {uploadStatus === 'error' && (
-              <div className="flex items-center gap-2 text-sm font-body text-urgent-red">
-                <span>{uploadError}</span>
-                <button
-                  type="button"
-                  onClick={() => { setUploadStatus('idle'); setUploadError(null); setUploadModalOpen(true) }}
-                  className="ml-2 font-heading text-xs font-semibold text-teal hover:opacity-80 transition"
-                >
-                  Retry
                 </button>
               </div>
             )}

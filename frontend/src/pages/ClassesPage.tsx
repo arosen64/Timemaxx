@@ -1,8 +1,7 @@
 import { useState } from 'react'
-import { useQuery, useAction, useMutation } from 'convex/react'
+import { useQuery, useMutation } from 'convex/react'
 import { api } from '../../../backend/convex/_generated/api'
 import { Id } from '../../../backend/convex/_generated/dataModel'
-import { extractPdfText } from '../utils/pdf'
 import Sidebar from '../components/Sidebar'
 import ClassCard from '../components/classes/ClassCard'
 import CourseSelector from '../components/CourseSelector'
@@ -12,7 +11,6 @@ import { isPastTerm } from '../utils/termUtils'
 export default function ClassesPage() {
   const courses = useQuery(api.queries.userCourses.getUserCourses)
   const deleteCourse = useMutation(api.mutations.userCourses.deleteUserCourse)
-  const uploadSyllabus = useAction(api.actions.uploadSyllabus.uploadSyllabus)
 
   const [activeTab, setActiveTab] = useState<'current' | 'past'>('current')
   const [showAddForm, setShowAddForm] = useState(false)
@@ -23,33 +21,6 @@ export default function ClassesPage() {
 
   async function handleRemove(userCourseId: Id<'userCourses'>) {
     await deleteCourse({ userCourseId })
-  }
-
-  async function readFileAsText(file: File): Promise<string> {
-    if (file.type === 'application/pdf') {
-      return extractPdfText(file)
-    }
-    return file.text()
-  }
-
-  function makeUploadHandlers(course: { _id: Id<'userCourses'>; title: string }) {
-    return {
-      onUpload: async (file: File): Promise<number> => {
-        const fileContents = await readFileAsText(file)
-        const result = await uploadSyllabus({
-          fileContents,
-          courseId: course._id,
-        })
-        return result.extractedTasks.length
-      },
-      onTextSubmit: async (text: string): Promise<number> => {
-        const result = await uploadSyllabus({
-          fileContents: text,
-          courseId: course._id,
-        })
-        return result.extractedTasks.length
-      },
-    }
   }
 
   return (
@@ -156,23 +127,18 @@ export default function ClassesPage() {
           </div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-            {tabCourses.map((course) => {
-              const { onUpload, onTextSubmit } = makeUploadHandlers(course)
-              return (
-                <ClassCard
-                  key={course._id}
-                  id={course._id}
-                  courseCode={course.courseCode}
-                  title={course.title}
-                  term={course.term ?? ''}
-                  grade={course.grade}
-                  isPast={activeTab === 'past'}
-                  onRemove={() => handleRemove(course._id)}
-                  onUpload={onUpload}
-                  onTextSubmit={onTextSubmit}
-                />
-              )
-            })}
+            {tabCourses.map((course) => (
+              <ClassCard
+                key={course._id}
+                id={course._id}
+                courseCode={course.courseCode}
+                title={course.title}
+                term={course.term ?? ''}
+                grade={course.grade}
+                isPast={activeTab === 'past'}
+                onRemove={() => handleRemove(course._id)}
+              />
+            ))}
           </div>
         )}
       </main>

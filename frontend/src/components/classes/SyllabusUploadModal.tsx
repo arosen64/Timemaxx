@@ -1,28 +1,34 @@
 import { useState } from 'react'
+import { useAction } from 'convex/react'
+import { api } from '../../../../backend/convex/_generated/api'
+import { Id } from '../../../../backend/convex/_generated/dataModel'
 import Modal from '../ui/Modal'
-import FileUpload from '../ui/FileUpload'
+import { FileUpload, Toggle } from '../ui'
 import { SpinnerIcon } from '../icons'
+import { UploadSyllabusResult } from '../../types'
+import { extractPdfText } from '../../utils/pdf'
 
 type Mode = 'upload' | 'text'
 
 interface SyllabusUploadModalProps {
   isOpen: boolean
   onClose: () => void
+  courseId: Id<'userCourses'>
   /** Course name shown in the subtitle, e.g. "CS 101". */
   courseName?: string
-  /** Called with the validated File when the user confirms an upload. */
-  onUpload: (file: File) => Promise<void>
-  /** Called with the pasted/typed text when the user uses the text fallback. */
-  onTextSubmit: (text: string) => Promise<void>
+  /** Called with the result after a successful upload. */
+  onSuccess?: (result: UploadSyllabusResult) => void
 }
 
 export default function SyllabusUploadModal({
   isOpen,
   onClose,
+  courseId,
   courseName,
-  onUpload,
-  onTextSubmit,
+  onSuccess,
 }: SyllabusUploadModalProps) {
+  const uploadSyllabus = useAction(api.actions.uploadSyllabus.uploadSyllabus)
+
   const [mode, setMode] = useState<Mode>('upload')
   const [file, setFile] = useState<File | null>(null)
   const [text, setText] = useState('')
@@ -49,19 +55,24 @@ export default function SyllabusUploadModal({
     setError(null)
     try {
       setIsSubmitting(true)
+      let fileContents: string
       if (mode === 'upload') {
         if (!file) {
           setError('Please select a file to upload.')
           return
         }
-        await onUpload(file)
+        fileContents = file.type === 'application/pdf'
+          ? await extractPdfText(file)
+          : await file.text()
       } else {
         if (!text.trim()) {
           setError('Please enter some syllabus text.')
           return
         }
-        await onTextSubmit(text)
+        fileContents = text
       }
+      const result = await uploadSyllabus({ fileContents, courseId })
+      onSuccess?.(result)
       handleClose()
     } catch {
       setError('Something went wrong. Please try again.')
@@ -86,31 +97,14 @@ export default function SyllabusUploadModal({
       isPrimaryDisabled={isSubmitting}
       error={error}
     >
-      {/* Mode toggle */}
-      <div className="flex w-full gap-2">
-        <button
-          type="button"
-          onClick={() => switchMode('upload')}
-          className={`flex flex-1 items-center justify-center h-9 rounded-lg text-sm font-heading font-semibold transition border ${
-            mode === 'upload'
-              ? 'bg-navy text-white border-navy'
-              : 'bg-bg-gray text-slate-blue border-border hover:bg-border'
-          }`}
-        >
-          File Upload
-        </button>
-        <button
-          type="button"
-          onClick={() => switchMode('text')}
-          className={`flex flex-1 items-center justify-center h-9 rounded-lg text-sm font-heading font-semibold transition border ${
-            mode === 'text'
-              ? 'bg-navy text-white border-navy'
-              : 'bg-bg-gray text-slate-blue border-border hover:bg-border'
-          }`}
-        >
-          Paste Text
-        </button>
-      </div>
+      <Toggle
+        options={[
+          { value: 'upload', label: 'File Upload' },
+          { value: 'text', label: 'Paste Text' },
+        ]}
+        value={mode}
+        onChange={switchMode}
+      />
 
       {mode === 'upload' ? (
         <FileUpload
