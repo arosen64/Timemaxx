@@ -26,6 +26,7 @@ export default function AcademicProfileSummary({ profile, onChange }: AcademicPr
           title: c.title,
           grade: c.grade,
           term: c.term,
+          courseDifficulty: c.difficultyRating,
         })),
       })
       await updateSettings({ transcriptSummary: result as AcademicInsight[] })
