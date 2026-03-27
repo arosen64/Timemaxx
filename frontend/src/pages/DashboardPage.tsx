@@ -460,7 +460,7 @@ export default function DashboardPage() {
                                     onClick={() => startEditFeedback(task)}
                                     className="ml-1 text-[11px] text-light-blue hover:underline cursor-pointer select-none"
                                   >
-                                    (edit)
+                                    (<span className="text-sky-blue">edit</span>)
                                   </button>
                                 </div>
                               </div>
