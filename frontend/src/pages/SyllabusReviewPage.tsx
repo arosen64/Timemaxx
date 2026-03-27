@@ -19,8 +19,10 @@ interface SyllabusReviewPageProps {
   onDone: () => void
 }
 
+let nextTaskId = 0
+
 function makeEmptyTask(): ReviewTask {
-  return { title: '', description: '', taskType: TASK_TYPE_OPTIONS[0], dueDate: '' }
+  return { id: nextTaskId++, title: '', description: '', taskType: TASK_TYPE_OPTIONS[0], dueDate: '' }
 }
 
 export default function SyllabusReviewPage({ course, tasks: initialTasks, onCancel, onDone }: SyllabusReviewPageProps) {
@@ -28,6 +30,7 @@ export default function SyllabusReviewPage({ course, tasks: initialTasks, onCanc
 
   const [tasks, setTasks] = useState<ReviewTask[]>(() =>
     initialTasks.map((t) => ({
+      id: nextTaskId++,
       title: t.title,
       description: t.description,
       taskType: t.taskType,
@@ -108,7 +111,7 @@ export default function SyllabusReviewPage({ course, tasks: initialTasks, onCanc
         <div className="flex flex-col gap-3">
           {tasks.map((task, i) => (
             <TaskReviewCard
-              key={i}
+              key={task.id}
               task={task}
               onChange={(updated) => updateTask(i, updated)}
               onRemove={() => removeTask(i)}
