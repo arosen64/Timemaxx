@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useMutation } from 'convex/react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate, useLocation, Navigate } from 'react-router-dom'
 import { api } from '../../../backend/convex/_generated/api'
 import { Id } from '../../../backend/convex/_generated/dataModel'
 import Sidebar from '../components/Sidebar'
@@ -45,8 +45,7 @@ export default function SyllabusReviewPage() {
   const [error, setError] = useState<string | null>(null)
 
   if (!state) {
-    navigate('/classes', { replace: true })
-    return null
+    return <Navigate to="/classes" replace />
   }
 
   const { syllabusId } = state
