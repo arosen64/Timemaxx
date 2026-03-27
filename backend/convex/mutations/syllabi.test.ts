@@ -13,7 +13,7 @@ async function createTestSyllabus(
   return await t.run((ctx) =>
     ctx.db.insert("syllabi", {
       userId: userId as never,
-      fileName: "syllabus.pdf",
+      fileContents: "syllabus text",
       courseId: opts.courseId as never,
       status: "confirmed",
       createdAt: Date.now(),
