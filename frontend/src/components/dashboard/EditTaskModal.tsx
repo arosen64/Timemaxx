@@ -6,11 +6,13 @@ export default function EditModal({
   task,
   onClose,
   onSave,
+  classTagOptions,
 }: {
   isOpen: boolean
   task: TaskType | null
   onClose: () => void
   onSave: (form: EditForm) => Promise<void>
+  classTagOptions?: string[]
 }) {
   return (
     <TaskModal
@@ -30,7 +32,9 @@ export default function EditModal({
           : (task?.taskType ?? ''),
         description: task?.description ?? '',
         dueDate: task ? formatDateMMDDYYYY(task.dueDate) : '',
+        classTag: task?.classTag ?? '',
       }}
+      classTagOptions={classTagOptions}
       onClose={onClose}
       onSubmit={onSave}
     />

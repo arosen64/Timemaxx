@@ -11,6 +11,7 @@ export type TaskType = {
   estimateFeedbackSubmittedAt?: number
   dueDate: number
   createdAt: number
+  classTag?: string
 }
 
 export const BUILT_IN_TASK_TYPES = [
@@ -31,6 +32,8 @@ export type EditForm = {
   description: string
   taskType: string
   dueDate: number
+  /** Empty string clears the tag on update; omit when not supported */
+  classTag?: string
 }
 
 export const TASK_TYPE_OPTIONS: BuiltInTaskType[] = [...BUILT_IN_TASK_TYPES]

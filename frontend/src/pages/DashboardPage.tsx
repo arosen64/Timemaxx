@@ -75,6 +75,7 @@ function EstimationErrorModal({
 
 export default function DashboardPage() {
   const tasks = useQuery(api.queries.tasks.getAllTasks, {}) as TaskType[] | undefined
+  const userCourses = useQuery(api.queries.userCourses.getUserCourses)
   const updateTask = useMutation(api.mutations.tasks.updateTask)
   const deleteTask = useMutation(api.mutations.tasks.deleteTask)
   const submitEstimateFeedback = useMutation(api.mutations.timeEstimate.submitEstimateFeedback)
@@ -82,6 +83,18 @@ export default function DashboardPage() {
   const user = useQuery(api.queries.users.getCurrUser)
 
   const taskRows = useMemo(() => tasks ?? [], [tasks])
+
+  const classTagOptions = useMemo(() => {
+    if (!userCourses?.length) return []
+    const labels = new Set<string>()
+    for (const c of userCourses) {
+      const t = c.title?.trim()
+      const code = c.courseCode?.trim()
+      if (t) labels.add(t)
+      if (code) labels.add(code)
+    }
+    return [...labels].sort((a, b) => a.localeCompare(b))
+  }, [userCourses])
 
   const totalEstimatedMinutes = useMemo(
     () => taskRows.reduce((sum, t) => sum + (t.timeEstimate ?? 0), 0),
@@ -270,6 +283,7 @@ export default function DashboardPage() {
         task={editingTask}
         onClose={() => setEditingTask(null)}
         onSave={handleSaveEdit}
+        classTagOptions={classTagOptions}
       />
       <DeleteModal
         isOpen={deletingTask !== null}
@@ -281,6 +295,7 @@ export default function DashboardPage() {
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onTaskCreated={(taskId) => handleEstimateTask(taskId as Id<'tasks'>)}
+        classTagOptions={classTagOptions}
       />
 
       <Sidebar />
@@ -396,7 +411,8 @@ export default function DashboardPage() {
                             {displayTitle(task)}
                           </div>
                           <div className="text-xs text-slate-blue">
-                            Due {formatDateMMDDYYYY(task.dueDate)} · {task.taskType} · ~{formatMinutes(task.timeEstimate ?? 0)} estimated
+                            Due {formatDateMMDDYYYY(task.dueDate)}
+                            {task.classTag ? ` · ${task.classTag}` : ''} · {task.taskType} · ~{formatMinutes(task.timeEstimate ?? 0)} estimated
                           </div>
                           {task.description.trim().length > 0 && (
                             <div className="text-xs break-words text-light-blue line-clamp-4">

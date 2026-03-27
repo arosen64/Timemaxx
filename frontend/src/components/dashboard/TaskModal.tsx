@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 import { CalendarIcon } from '../icons'
 import { type EditForm, CUSTOM_TASK_TYPE_OPTION, TASK_TYPE_OPTIONS } from './types'
 import Modal from '../ui/Modal'
@@ -16,7 +16,10 @@ interface TaskModalProps {
     customTaskType: string
     description: string
     dueDate: string
+    classTag: string
   }
+  /** Course titles / codes for datalist suggestions (optional) */
+  classTagOptions?: string[]
   onClose: () => void
   onSubmit: (form: EditForm) => Promise<void>
 }
@@ -28,14 +31,17 @@ export default function TaskModal({
   primaryLabel,
   primaryLoadingLabel,
   initialValues,
+  classTagOptions = [],
   onClose,
   onSubmit,
 }: TaskModalProps) {
+  const classTagListId = useId()
   const [taskName, setTaskName] = useState(initialValues.taskName)
   const [selectedType, setSelectedType] = useState(initialValues.selectedType)
   const [customTaskType, setCustomTaskType] = useState(initialValues.customTaskType)
   const [description, setDescription] = useState(initialValues.description)
   const [dueDate, setDueDate] = useState(initialValues.dueDate)
+  const [classTag, setClassTag] = useState(initialValues.classTag)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -46,6 +52,7 @@ export default function TaskModal({
     setCustomTaskType(initialValues.customTaskType)
     setDescription(initialValues.description)
     setDueDate(initialValues.dueDate)
+    setClassTag(initialValues.classTag)
     setError(null)
     setSubmitting(false)
   }, [
@@ -55,6 +62,7 @@ export default function TaskModal({
     initialValues.customTaskType,
     initialValues.description,
     initialValues.dueDate,
+    initialValues.classTag,
   ])
 
   function isValidDueDate(value: string): boolean {
@@ -81,6 +89,7 @@ export default function TaskModal({
         description,
         taskType: resolvedTaskType,
         dueDate: new Date(trimmedDueDate).getTime(),
+        classTag: classTag.trim(),
       })
       onClose()
     } catch (e) {
@@ -141,6 +150,29 @@ export default function TaskModal({
               placeholder="Enter other task type"
               className="h-11 w-full rounded-md border border-border bg-bg-gray px-3.5 font-body text-sm text-navy outline-none placeholder:text-light-blue"
             />
+          )}
+        </div>
+
+        {/* Class tag */}
+        <div className="flex w-full flex-col gap-1.5">
+          <label className="font-heading text-[13px] font-semibold text-navy" htmlFor={classTagListId}>
+            Class tag <span className="font-normal text-light-blue">(optional)</span>
+          </label>
+          <input
+            id={classTagListId}
+            type="text"
+            value={classTag}
+            onChange={(e) => setClassTag(e.target.value)}
+            list={classTagOptions.length > 0 ? `${classTagListId}-list` : undefined}
+            placeholder="e.g. course code or class name"
+            className="h-11 w-full rounded-md border border-border bg-bg-gray px-3.5 font-body text-sm text-navy outline-none placeholder:text-light-blue"
+          />
+          {classTagOptions.length > 0 && (
+            <datalist id={`${classTagListId}-list`}>
+              {classTagOptions.map((opt) => (
+                <option key={opt} value={opt} />
+              ))}
+            </datalist>
           )}
         </div>
 

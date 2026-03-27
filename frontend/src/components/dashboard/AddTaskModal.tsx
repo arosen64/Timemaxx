@@ -7,9 +7,10 @@ interface AddTaskModalProps {
   isOpen: boolean
   onClose: () => void
   onTaskCreated?: (taskId: string) => void
+  classTagOptions?: string[]
 }
 
-export default function AddTaskModal({ isOpen, onClose, onTaskCreated }: AddTaskModalProps) {
+export default function AddTaskModal({ isOpen, onClose, onTaskCreated, classTagOptions }: AddTaskModalProps) {
   const createTask = useMutation(api.mutations.tasks.createTask)
 
   async function handleSubmit(form: EditForm) {
@@ -18,6 +19,7 @@ export default function AddTaskModal({ isOpen, onClose, onTaskCreated }: AddTask
       description: form.description,
       taskType: form.taskType,
       dueDate: form.dueDate,
+      classTag: form.classTag,
     })
     onTaskCreated?.(taskId)
   }
@@ -29,7 +31,15 @@ export default function AddTaskModal({ isOpen, onClose, onTaskCreated }: AddTask
       subtitle="Fill in the details below."
       primaryLabel="Add Task"
       primaryLoadingLabel="Adding…"
-      initialValues={{ taskName: '', selectedType: 'Essay', customTaskType: '', description: '', dueDate: '' }}
+      initialValues={{
+        taskName: '',
+        selectedType: 'Essay',
+        customTaskType: '',
+        description: '',
+        dueDate: '',
+        classTag: '',
+      }}
+      classTagOptions={classTagOptions}
       onClose={onClose}
       onSubmit={handleSubmit}
     />

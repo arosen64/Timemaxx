@@ -102,6 +102,8 @@ export default defineSchema({
     dueDate: v.number(),
     createdAt: v.number(),
     courseId: v.optional(v.id("userCourses")),
+    /** Free-text label for the course/class (optional; complements courseId) */
+    classTag: v.optional(v.string()),
   })
     .index("by_userId", ["userId"])
     .index("by_userId_createdAt", ["userId", "createdAt"]),
