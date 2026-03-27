@@ -65,6 +65,57 @@ async function upsertCalendarToken(
 }
 
 /**
+ * Updates only the access token and expiry on an existing calendarConnections record.
+ * Called by the fetchCalendarEvents action after a token refresh.
+ * Leaves refreshToken and selectedCalendarIds unchanged.
+ */
+export const updateCalendarToken = internalMutation({
+  args: {
+    userId: v.id("users"),
+    accessToken: v.string(),
+    expiresAt: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("calendarConnections")
+      .withIndex("by_userId", (q: any) => q.eq("userId", args.userId))
+      .unique();
+
+    if (existing) {
+      await ctx.db.patch(existing._id, {
+        accessToken: args.accessToken,
+        expiresAt: args.expiresAt,
+      });
+    }
+  },
+});
+
+/**
+ * Writes selectedCalendarIds to the user's calendarConnections record.
+ * Called when the user toggles calendars in the Schedule tab popup.
+ */
+export const saveSelectedCalendars = mutation({
+  args: {
+    selectedCalendarIds: v.array(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    const existing = await ctx.db
+      .query("calendarConnections")
+      .withIndex("by_userId", (q: any) => q.eq("userId", userId))
+      .unique();
+
+    if (existing) {
+      await ctx.db.patch(existing._id, {
+        selectedCalendarIds: args.selectedCalendarIds,
+      });
+    }
+  },
+});
+
+/**
  * Deletes the Google Calendar OAuth token for the authenticated user.
  */
 export const deleteCalendarToken = mutation({
