@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useAction, useMutation, useQuery } from 'convex/react'
 import { api } from '../../../backend/convex/_generated/api'
 import { AcademicInsight, AcademicProfileSummaryProps } from '../types'
@@ -16,7 +16,7 @@ export default function AcademicProfileSummary({ profile, onChange }: AcademicPr
   const hasCourses = (userCourses?.length ?? 0) > 0
   const insights: AcademicInsight[] = currUser?.transcriptSummary ?? []
 
-  const generate = async () => {
+  const generate = useCallback(async () => {
     if (!userCourses) return
     setLoading(true)
     setError(null)
@@ -36,14 +36,14 @@ export default function AcademicProfileSummary({ profile, onChange }: AcademicPr
     } finally {
       setLoading(false)
     }
-  }
+  }, [userCourses, generateProfile, updateSettings, onChange, profile])
 
   // Auto-generate once courses and user are loaded and no summary is stored in DB yet
   useEffect(() => {
     if (userCourses && hasCourses && currUser !== undefined && !currUser?.transcriptSummary?.length) {
       generate()
     }
-  }, [userCourses, currUser])
+  }, [userCourses, hasCourses, currUser, generate])
 
   return (
     <div className="flex flex-col gap-6">
