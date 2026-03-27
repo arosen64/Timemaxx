@@ -18,8 +18,7 @@ function termToSuffix(term: string): string {
 /**
  * Adds a course to the authenticated user's course list.
  * - Upserts the course into the courses table (keyed by courseCode).
- * - Rejects if the user already has this courseCode with a grade recorded
- *   (i.e. a previously completed course cannot be re-added).
+ * - Rejects if the user already has a record with this courseCode.
  */
 export const addUserCourse = mutation({
   args: {
@@ -37,17 +36,16 @@ export const addUserCourse = mutation({
 
     const courseCode = args.courseCode + termToSuffix(args.term);
 
-    // Check for existing completed record (has a grade) with same courseCode
+    // Reject if the user already has this courseCode
     const existing = await ctx.db
       .query("userCourses")
       .withIndex("by_user_course", (q) =>
         q.eq("userId", userId).eq("courseCode", courseCode)
       )
-      .collect();
+      .first();
 
-    const completedRecord = existing.find((r) => r.grade !== undefined && r.grade !== "");
-    if (completedRecord) {
-      throw new Error("COURSE_ALREADY_COMPLETED");
+    if (existing) {
+      throw new Error("COURSE_ALREADY_EXISTS");
     }
 
     // Insert the userCourse record
