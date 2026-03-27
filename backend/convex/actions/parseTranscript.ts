@@ -25,6 +25,11 @@ export const parseTranscript = action({
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Unauthenticated");
 
+    const MAX_CHARS = 100_000;
+    if (args.fileText.length > MAX_CHARS) {
+      throw new Error("TRANSCRIPT_TOO_LARGE");
+    }
+
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) throw new Error("GEMINI_API_KEY is not set");
 
@@ -104,6 +109,6 @@ ${args.fileText}`,
           c.term?.trim() &&
           c.grade?.trim()
       )
-      .map((c) => ({ ...c, courseCode: c.courseCode }));
+      .map((c) => ({ ...c }));
   },
 });

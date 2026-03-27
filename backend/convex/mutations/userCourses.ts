@@ -35,11 +35,13 @@ export const addUserCourse = mutation({
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
 
+    const courseCode = args.courseCode + termToSuffix(args.term);
+
     // Check for existing completed record (has a grade) with same courseCode
     const existing = await ctx.db
       .query("userCourses")
       .withIndex("by_user_course", (q) =>
-        q.eq("userId", userId).eq("courseCode", args.courseCode)
+        q.eq("userId", userId).eq("courseCode", courseCode)
       )
       .collect();
 
@@ -51,7 +53,7 @@ export const addUserCourse = mutation({
     // Insert the userCourse record
     return await ctx.db.insert("userCourses", {
       userId,
-      courseCode: args.courseCode + termToSuffix(args.term),
+      courseCode,
       title: args.title,
       credits: args.credits,
       term: args.term,
@@ -80,11 +82,11 @@ export const updateUserCourse = mutation({
     if (!record) throw new Error("Course record not found");
     if (record.userId !== userId) throw new Error("Not authorized");
 
-    await ctx.db.patch(args.userCourseId, {
-      grade: args.grade,
-      studyGoal: args.studyGoal,
-      difficultyRating: args.difficultyRating,
-    });
+    const patch: Record<string, unknown> = {};
+    if (args.grade !== undefined) patch.grade = args.grade;
+    if (args.studyGoal !== undefined) patch.studyGoal = args.studyGoal;
+    if (args.difficultyRating !== undefined) patch.difficultyRating = args.difficultyRating;
+    await ctx.db.patch(args.userCourseId, patch);
   },
 });
 

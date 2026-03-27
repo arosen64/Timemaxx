@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import * as pdfjsLib from 'pdfjs-dist'
 import { useAction, useMutation } from 'convex/react'
 import { api } from '../../../backend/convex/_generated/api'
 import { type ParsedCourse } from '../../../backend/convex/actions/parseTranscript'
@@ -9,26 +8,7 @@ import Modal from './ui/Modal'
 import Selector from './ui/Selector'
 import { SpinnerIcon } from './icons'
 import { STUDY_GOALS } from '../constants'
-
-pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.min.mjs',
-  import.meta.url,
-).toString()
-
-async function extractPdfText(file: File): Promise<string> {
-  const arrayBuffer = await file.arrayBuffer()
-  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise
-  const pages = await Promise.all(
-    Array.from({ length: pdf.numPages }, (_, i) =>
-      pdf.getPage(i + 1).then((page) =>
-        page.getTextContent().then((content) =>
-          content.items.map((item) => ('str' in item ? item.str : '')).join(' ')
-        )
-      )
-    )
-  )
-  return pages.join('\n')
-}
+import { extractPdfText } from '../utils/pdf'
 
 interface TranscriptUploadProps {
   onCoursesAdded: (courses: Course[]) => void
@@ -102,6 +82,8 @@ export default function TranscriptUpload({ onCoursesAdded }: TranscriptUploadPro
       const message = err instanceof Error ? err.message : String(err)
       if (message.includes('NOT_JHU_TRANSCRIPT')) {
         setError("That doesn't look like a JHU transcript. Please upload your official Johns Hopkins transcript.")
+      } else if (message.includes('TRANSCRIPT_TOO_LARGE')) {
+        setError('This PDF is too large to process. Please upload a smaller transcript file.')
       } else {
         setError('Failed to parse transcript. Please try again.')
       }
@@ -109,6 +91,17 @@ export default function TranscriptUpload({ onCoursesAdded }: TranscriptUploadPro
     } finally {
       setParsing(false)
     }
+  }
+
+  const handleGoalDismiss = () => {
+    onCoursesAdded(pendingSavedPast)
+    if (pendingSavedPast.length > 0) {
+      setSummary(`${pendingSavedPast.length} course${pendingSavedPast.length !== 1 ? 's' : ''} imported from transcript`)
+    }
+    setPendingCurrentCourses([])
+    setPendingSavedPast([])
+    setPendingGoals([])
+    setGoalErrors([])
   }
 
   const handleGoalConfirm = async () => {
@@ -171,7 +164,7 @@ export default function TranscriptUpload({ onCoursesAdded }: TranscriptUploadPro
       </p>
       <div className="rounded-lg border border-urgent-red/40 bg-urgent-red/10 px-3 py-2">
         <p className="font-body text-xs text-urgent-red">
-          <span className="font-semibold">Note:</span> AP, IB, and other external/transfer courses are not supported — please add those manually as equivalent JHU courses.
+          <span className="font-semibold">Note:</span> AP, IB, and other external/transfer courses are not supported — please add those manually as equivalent JHU courses with an equivalent grade.
         </p>
       </div>
       <FileUpload
@@ -195,8 +188,8 @@ export default function TranscriptUpload({ onCoursesAdded }: TranscriptUploadPro
 
       <Modal
         isOpen={pendingCurrentCourses.length > 0}
-        onClose={() => {}}
-        showCloseButton={false}
+        onClose={handleGoalDismiss}
+        showCloseButton={true}
         title="Set Study Goals"
         subtitle="Select a study goal for each of your current courses."
         primaryLabel="Confirm"
