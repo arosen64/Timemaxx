@@ -3,6 +3,7 @@ import { useAction, useQuery } from 'convex/react'
 import { api } from '../../../backend/convex/_generated/api'
 import { AcademicInsight, AcademicProfileSummaryProps } from '../types'
 import { ACCENTS } from '../constants'
+import Button from './ui/Button'
 
 export default function AcademicProfileSummary({ profile, onChange }: AcademicProfileSummaryProps) {
   const generateProfile = useAction(api.actions.generateAcademicProfile.generateAcademicProfile)
@@ -46,16 +47,15 @@ export default function AcademicProfileSummary({ profile, onChange }: AcademicPr
           <p className="mt-1 font-body text-sm text-slate-blue">
             A Gemini-generated summary based on your transcript.
           </p>
+          <p className="mt-1 font-body text-xs text-light-blue">
+            Tip: Rate your past courses' difficulty (1–5) in the previous step for a more accurate profile.
+          </p>
         </div>
         {hasCourses && !loading && (
           <div className="flex shrink-0 flex-col items-end gap-1">
-            <button
-              type="button"
-              onClick={generate}
-              className="rounded-lg border border-border bg-bg-gray px-3 py-1.5 font-heading text-xs font-semibold text-slate-blue transition hover:border-sky-blue hover:text-navy"
-            >
+            <Button variant="primary" onClick={generate} className="px-3 h-8 text-xs">
               Regenerate
-            </button>
+            </Button>
             <p className="font-body text-xs text-light-blue">Added more courses? Regenerate for an updated profile.</p>
           </div>
         )}
@@ -87,13 +87,9 @@ export default function AcademicProfileSummary({ profile, onChange }: AcademicPr
       {hasCourses && error && (
         <div className="flex flex-col items-center gap-3 rounded-xl border border-urgent-red/20 bg-urgent-red/5 p-6">
           <p className="font-body text-sm text-urgent-red">{error}</p>
-          <button
-            type="button"
-            onClick={generate}
-            className="rounded-lg bg-navy px-4 py-2 font-heading text-sm font-medium text-white transition hover:opacity-90"
-          >
+          <Button variant="primary" onClick={generate} className="px-4">
             Try again
-          </button>
+          </Button>
         </div>
       )}
 

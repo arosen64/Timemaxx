@@ -29,6 +29,7 @@ export const addUserCourse = mutation({
     term: v.string(),
     grade: v.optional(v.string()),
     studyGoal: v.optional(v.string()),
+    difficultyRating: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -56,6 +57,7 @@ export const addUserCourse = mutation({
       term: args.term,
       grade: args.grade,
       studyGoal: args.studyGoal,
+      difficultyRating: args.difficultyRating,
     });
   },
 });
@@ -68,6 +70,7 @@ export const updateUserCourse = mutation({
     userCourseId: v.id("userCourses"),
     grade: v.optional(v.string()),
     studyGoal: v.optional(v.string()),
+    difficultyRating: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -80,6 +83,7 @@ export const updateUserCourse = mutation({
     await ctx.db.patch(args.userCourseId, {
       grade: args.grade,
       studyGoal: args.studyGoal,
+      difficultyRating: args.difficultyRating,
     });
   },
 });

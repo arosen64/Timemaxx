@@ -5,6 +5,7 @@ import { JhuCourse, JhuSchool, JhuTerm, CourseSelectorProps } from '../types'
 import { GRADES, STUDY_GOALS } from '../constants'
 import Selector from './ui/Selector'
 import Button from './ui/Button'
+import DifficultyRating from './DifficultyRating'
 
 
 function getCurrentTerm(date: Date): { season: string; year: number } {
@@ -70,6 +71,7 @@ export default function CourseSelector({ onAddCourse }: CourseSelectorProps) {
 
   const [studyGoalInput, setStudyGoalInput] = useState('')
   const [gradeInput, setGradeInput] = useState('')
+  const [difficultyInput, setDifficultyInput] = useState(3)
   const [addError, setAddError] = useState<string | null>(null)
 
   const isCurrent = !isPastTerm(selectedTerm)
@@ -109,6 +111,7 @@ export default function CourseSelector({ onAddCourse }: CourseSelectorProps) {
     setSelectedCourse(null)
     setStudyGoalInput('')
     setGradeInput('')
+    setDifficultyInput(3)
     setAddError(null)
   }
 
@@ -157,6 +160,7 @@ export default function CourseSelector({ onAddCourse }: CourseSelectorProps) {
         term: selectedTerm,
         studyGoal: isCurrent ? studyGoalInput.trim() || undefined : undefined,
         grade: !isCurrent ? gradeInput.trim() || undefined : undefined,
+        difficultyRating: !isCurrent ? difficultyInput : undefined,
       })
       onAddCourse({
         title,
@@ -164,6 +168,7 @@ export default function CourseSelector({ onAddCourse }: CourseSelectorProps) {
         grade: !isCurrent ? gradeInput.trim() : undefined,
         term: selectedTerm,
         userCourseId,
+        difficultyRating: !isCurrent ? difficultyInput : undefined,
       })
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
@@ -183,6 +188,7 @@ export default function CourseSelector({ onAddCourse }: CourseSelectorProps) {
     setShowSuggestions(false)
     setStudyGoalInput('')
     setGradeInput('')
+    setDifficultyInput(3)
     setAddError(null)
   }
 
@@ -263,25 +269,33 @@ export default function CourseSelector({ onAddCourse }: CourseSelectorProps) {
 
       {/* Study goal or grade selector — shown once a course is selected */}
       {selectedCourse && (
-        <div className="flex gap-2">
-          <Selector
-            className="flex-1"
-            value={isCurrent ? studyGoalInput : gradeInput}
-            onChange={isCurrent ? setStudyGoalInput : setGradeInput}
-            placeholder={isCurrent ? 'Select a study goal' : 'Select your grade (optional)'}
-            options={
-              isCurrent
-                ? STUDY_GOALS.map((g) => ({ label: g, value: g }))
-                : GRADES.map((g) => ({ label: g, value: g }))
-            }
-          />
-          <Button
-            variant="primary"
-            onClick={handleAddCourse}
-            className="px-4"
-          >
-            Add
-          </Button>
+        <div className="flex flex-col gap-2">
+          <div className="flex gap-2">
+            <Selector
+              className="flex-1"
+              value={isCurrent ? studyGoalInput : gradeInput}
+              onChange={isCurrent ? setStudyGoalInput : setGradeInput}
+              placeholder={isCurrent ? 'Select a study goal' : 'Select your grade (optional)'}
+              options={
+                isCurrent
+                  ? STUDY_GOALS.map((g) => ({ label: g, value: g }))
+                  : GRADES.map((g) => ({ label: g, value: g }))
+              }
+            />
+            {isCurrent && (
+              <Button variant="primary" onClick={handleAddCourse} className="px-4">
+                Add
+              </Button>
+            )}
+          </div>
+          {!isCurrent && (
+            <div className="flex items-center gap-2">
+              <DifficultyRating value={difficultyInput} onChange={setDifficultyInput} />
+              <Button variant="primary" onClick={handleAddCourse} className="ml-auto px-4">
+                Add
+              </Button>
+            </div>
+          )}
         </div>
       )}
 
