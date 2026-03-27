@@ -3,6 +3,7 @@ import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { render } from '@testing-library/react'
 import ProfileForm from '../src/components/ProfileForm'
+import CoursesForm from '../src/components/CoursesForm'
 import { ProfileData } from '../src/types'
 
 vi.mock('../../backend/convex/_generated/api', () => ({
@@ -13,9 +14,10 @@ vi.mock('../../backend/convex/_generated/api', () => ({
         getAvailableSchools: 'getAvailableSchools',
         getCoursesByTerm: 'getCoursesByTerm',
       },
+      parseTranscript: { parseTranscript: 'parseTranscript' },
     },
     mutations: {
-      userCourses: { addUserCourse: 'addUserCourse', deleteUserCourse: 'deleteUserCourse' },
+      userCourses: { addUserCourse: 'addUserCourse', deleteUserCourse: 'deleteUserCourse', updateUserCourse: 'updateUserCourse' },
     },
   },
 }))
@@ -202,14 +204,28 @@ describe('ProfileForm', () => {
   })
 
   describe('courses', () => {
+    function setupCourses(initialCourses: ProfileData['courses']) {
+      const onChange = vi.fn()
+      const initial: ProfileData = { ...DEFAULT_DATA, courses: initialCourses }
+      function Wrapper() {
+        const [data, setData] = useState<ProfileData>(initial)
+        return (
+          <CoursesForm
+            data={data}
+            onChange={(next) => { setData(next); onChange(next) }}
+          />
+        )
+      }
+      render(<Wrapper />)
+      return { onChange }
+    }
+
     it('removes a course when its × button is clicked', async () => {
       const user = userEvent.setup()
-      const { onChange } = setup({
-        courses: [
-          { title: 'CS 101', studyGoal: 'Do well' },
-          { title: 'Math 201', studyGoal: 'Ace it' },
-        ],
-      })
+      const { onChange } = setupCourses([
+        { title: 'CS 101', studyGoal: 'Do well' },
+        { title: 'Math 201', studyGoal: 'Ace it' },
+      ])
 
       const removeButtons = screen.getAllByRole('button', { name: '×' })
       await user.click(removeButtons[0])
@@ -223,9 +239,7 @@ describe('ProfileForm', () => {
 
     it('updates study goal when a radio option is selected', async () => {
       const user = userEvent.setup()
-      const { onChange } = setup({
-        courses: [{ title: 'CS 101', studyGoal: '' }],
-      })
+      const { onChange } = setupCourses([{ title: 'CS 101', studyGoal: '' }])
 
       await user.click(screen.getByRole('radio', { name: 'Ace it' }))
 

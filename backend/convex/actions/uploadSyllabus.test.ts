@@ -158,7 +158,7 @@ describe("actions/uploadSyllabus", () => {
           title: "Bad Task",
           description: "Should be dropped.",
           dueDate: "2025-11-15",
-          taskType: "Presentation", // not in TASK_TYPES
+          taskType: "Unrecognized Type",
         },
       ])
     );
