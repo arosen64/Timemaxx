@@ -1,11 +1,9 @@
 import { useState } from 'react'
 import { useAction } from 'convex/react'
 import { api } from '../../../../backend/convex/_generated/api'
-import { Id } from '../../../../backend/convex/_generated/dataModel'
-import Modal from '../ui/Modal'
-import { FileUpload, Toggle } from '../ui'
+import { Modal, FileUpload, Toggle } from '../ui'
 import { SpinnerIcon } from '../icons'
-import { UploadSyllabusResult } from '../../types'
+import { Course, UploadSyllabusResult } from '../../types'
 import { extractPdfText } from '../../utils/pdf'
 
 type Mode = 'upload' | 'text'
@@ -13,18 +11,16 @@ type Mode = 'upload' | 'text'
 interface SyllabusUploadModalProps {
   isOpen: boolean
   onClose: () => void
-  courseId: Id<'userCourses'>
   /** Course name shown in the subtitle, e.g. "CS 101". */
-  courseName?: string
-  /** Called with the result after a successful upload. */
+  course: Course
+  /** Called with the extracted tasks after a successful upload. */
   onSuccess?: (result: UploadSyllabusResult) => void
 }
 
 export default function SyllabusUploadModal({
   isOpen,
   onClose,
-  courseId,
-  courseName,
+  course,
   onSuccess,
 }: SyllabusUploadModalProps) {
   const uploadSyllabus = useAction(api.actions.uploadSyllabus.uploadSyllabus)
@@ -51,28 +47,34 @@ export default function SyllabusUploadModal({
     onClose()
   }
 
+  async function submitToBackend(fileContents: string) {
+    const result = await uploadSyllabus({
+      fileContents,
+      courseId: course.userCourseId as Parameters<typeof uploadSyllabus>[0]['courseId'],
+    })
+    onSuccess?.(result)
+  }
+
   async function handlePrimary() {
     setError(null)
     try {
       setIsSubmitting(true)
-      let fileContents: string
       if (mode === 'upload') {
         if (!file) {
           setError('Please select a file to upload.')
           return
         }
-        fileContents = file.type === 'application/pdf'
+        const fileContents = file.type === 'application/pdf'
           ? await extractPdfText(file)
           : await file.text()
+        await submitToBackend(fileContents)
       } else {
         if (!text.trim()) {
           setError('Please enter some syllabus text.')
           return
         }
-        fileContents = text
+        await submitToBackend(text)
       }
-      const result = await uploadSyllabus({ fileContents, courseId })
-      onSuccess?.(result)
       handleClose()
     } catch {
       setError('Something went wrong. Please try again.')
@@ -81,8 +83,8 @@ export default function SyllabusUploadModal({
     }
   }
 
-  const subtitle = courseName
-    ? `Upload the syllabus for ${courseName}. Accepted formats: PDF, plain text (max 10 MB).`
+  const subtitle = course.title
+    ? `Upload the syllabus for ${course.title}. Accepted formats: PDF, plain text (max 10 MB).`
     : 'Upload a syllabus. Accepted formats: PDF, plain text (max 10 MB).'
 
   return (

@@ -78,8 +78,7 @@ export default function ClassCard({
         <SyllabusUploadModal
           isOpen={uploadModalOpen}
           onClose={() => setUploadModalOpen(false)}
-          courseId={id}
-          courseName={title}
+          course={{ userCourseId: id, title }}
           onSuccess={(result) => {
             setExtractedCount(result.extractedTasks.length)
             setUploadStatus('success')
