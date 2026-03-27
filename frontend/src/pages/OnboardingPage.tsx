@@ -4,12 +4,13 @@ import { useQuery, useMutation, useAction } from 'convex/react'
 import { api } from '../../../backend/convex/_generated/api'
 import { ProfileData, WorkHoursData, PreferencesData } from '../types'
 import ProfileForm from '../components/ProfileForm'
+import CoursesForm from '../components/CoursesForm'
 import WorkHoursSelector, { DEFAULT_WORK_HOURS } from '../components/WorkHoursSelector'
 import PreferencesForm, { DEFAULT_PREFERENCES } from '../components/PreferencesForm'
 import OnboardingStepShell from '../components/onboarding/OnboardingStepShell'
 import OnboardingNav from '../components/onboarding/OnboardingNav'
 
-type Step = 1 | 2 | 3 | 4
+type Step = 1 | 2 | 3 | 4 | 5
 
 const DEFAULT_PROFILE: ProfileData = {
   major: '',
@@ -29,7 +30,7 @@ export default function OnboardingPage() {
   const [step, setStep] = useState<Step>(() => {
     try {
       const saved = localStorage.getItem('timemaxx_onboarding_state')
-      if (saved) return 4
+      if (saved) return 5
     } catch {
       // localStorage unavailable
     }
@@ -92,7 +93,7 @@ export default function OnboardingPage() {
         productivityTraits: preferences.traits,
         focusBlockLength: Number(preferences.focusBlockLength),
       })
-      setStep(4)
+      setStep(5)
     } catch {
       // keep submitting false so user can retry
     } finally {
@@ -101,17 +102,20 @@ export default function OnboardingPage() {
   }
 
   return (
-    <OnboardingStepShell currentStep={step} totalSteps={4} wide={step === 2 || step === 3} tall={step === 4}>
+    <OnboardingStepShell currentStep={step} totalSteps={5} wide={step === 2 || step === 3 || step === 4} tall={step === 5}>
       {step === 1 && (
         <ProfileForm data={profile} onChange={setProfile} errors={profileErrors} />
       )}
       {step === 2 && (
-        <WorkHoursSelector data={workHours} onChange={setWorkHours} />
+        <CoursesForm data={profile} onChange={setProfile} />
       )}
       {step === 3 && (
-        <PreferencesForm data={preferences} onChange={setPreferences} />
+        <WorkHoursSelector data={workHours} onChange={setWorkHours} />
       )}
       {step === 4 && (
+        <PreferencesForm data={preferences} onChange={setPreferences} />
+      )}
+      {step === 5 && (
         <div className="flex flex-1 flex-col gap-6">
           <div className="flex flex-col gap-1">
             <h2 className="font-heading text-2xl font-bold text-navy">Connect Google Calendar</h2>
@@ -144,9 +148,9 @@ export default function OnboardingPage() {
 
       <OnboardingNav
         onBack={handleBack}
-        onContinue={step < 3 ? handleNext : step === 3 ? handleSaveAndContinue : () => navigate('/dashboard')}
+        onContinue={step < 4 ? handleNext : step === 4 ? handleSaveAndContinue : () => navigate('/dashboard')}
         isFirstStep={step === 1}
-        isLastStep={step === 4}
+        isLastStep={step === 5}
         continueLabel={isSubmitting ? 'Saving...' : undefined}
         disabled={isSubmitting}
       />
