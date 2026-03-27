@@ -1,3 +1,4 @@
+export type { ExtractedTask, UploadSyllabusResult } from '../../backend/convex/lib/syllabusTypes'
 
 //Compatible with User Courses schema in backend/convex/schema.ts
 export interface Course {
