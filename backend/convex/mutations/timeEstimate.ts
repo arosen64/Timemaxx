@@ -25,7 +25,7 @@ export const setTimeEstimate = internalMutation({
 
     // Fetch user to get focusBlockLength (default 60 min)
     const user = await ctx.db.get(task.userId);
-    const focusBlockLength = user?.focusBlockLength ?? 60;
+    const focusBlockLength = user?.focusBlockLength || 60;
 
     // Generate and insert study blocks
     const blockCount = Math.ceil(args.timeEstimate / focusBlockLength);
