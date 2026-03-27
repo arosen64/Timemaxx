@@ -70,13 +70,13 @@ describe("mutations/users – deleteAccount", () => {
     await t.run(async (ctx) => {
       await ctx.db.insert("syllabi", {
         userId,
-        fileName: "cs101.pdf",
+        fileContents: "cs101 syllabus text",
         status: "confirmed",
         createdAt: Date.now(),
       });
       await ctx.db.insert("syllabi", {
         userId,
-        fileName: "math201.pdf",
+        fileContents: "math201 syllabus text",
         status: "pending",
         createdAt: Date.now(),
       });
@@ -174,7 +174,7 @@ describe("mutations/users – deleteAccount", () => {
       });
       await ctx.db.insert("syllabi", {
         userId: otherUserId,
-        fileName: "other.pdf",
+        fileContents: "other syllabus text",
         status: "confirmed",
         createdAt: Date.now(),
       });
