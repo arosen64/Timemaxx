@@ -1,20 +1,21 @@
 import { KeyboardEvent, useState } from 'react'
 import { ProfileData } from '../types'
-import { YEARS } from '../constants'
+import { YEARS, GRADES, STUDY_GOALS } from '../constants'
 
 interface TagInputProps {
   tags: string[]
-  onChange: (tags: string[]) => void
+  onChange?: (tags: string[]) => void
   placeholder: string
+  readOnly?: boolean
 }
 
-function TagInput({ tags, onChange, placeholder }: TagInputProps) {
+function TagInput({ tags, onChange, placeholder, readOnly = false }: TagInputProps) {
   const [input, setInput] = useState('')
 
   const addTag = (value: string) => {
     const trimmed = value.trim()
     if (trimmed && !tags.includes(trimmed)) {
-      onChange([...tags, trimmed])
+      onChange?.([...tags, trimmed])
     }
     setInput('')
   }
@@ -24,40 +25,48 @@ function TagInput({ tags, onChange, placeholder }: TagInputProps) {
       e.preventDefault()
       addTag(input)
     } else if (e.key === 'Backspace' && !input && tags.length > 0) {
-      onChange(tags.slice(0, -1))
+      onChange?.(tags.slice(0, -1))
     }
   }
 
   const removeTag = (index: number) => {
-    onChange(tags.filter((_, i) => i !== index))
+    onChange?.(tags.filter((_, i) => i !== index))
   }
 
   return (
     <div className="flex flex-wrap gap-2 rounded-lg border border-border bg-bg-gray p-2 focus-within:border-sky-blue focus-within:ring-2 focus-within:ring-sky-blue/20">
-      {tags.map((tag, i) => (
-        <span
-          key={i}
-          className="flex items-center gap-1 rounded-full bg-navy/10 px-3 py-1 font-body text-sm text-navy"
-        >
-          {tag}
-          <button
-            type="button"
-            onClick={() => removeTag(i)}
-            className="ml-1 text-navy/50 hover:text-navy"
+      {tags.length === 0 && readOnly ? (
+        <span className="font-body text-sm italic text-light-blue">None</span>
+      ) : (
+        tags.map((tag, i) => (
+          <span
+            key={i}
+            className="flex items-center gap-1 rounded-full bg-navy/10 px-3 py-1 font-body text-sm text-navy"
           >
-            ×
-          </button>
-        </span>
-      ))}
-      <input
-        type="text"
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        onKeyDown={handleKeyDown}
-        onBlur={() => addTag(input)}
-        placeholder={tags.length === 0 ? placeholder : 'Add more...'}
-        className="min-w-[140px] flex-1 bg-transparent font-body text-sm text-navy outline-none placeholder:text-light-blue"
-      />
+            {tag}
+            {!readOnly && (
+              <button
+                type="button"
+                onClick={() => removeTag(i)}
+                className="ml-1 text-navy/50 hover:text-navy"
+              >
+                ×
+              </button>
+            )}
+          </span>
+        ))
+      )}
+      {!readOnly && (
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onBlur={() => addTag(input)}
+          placeholder={tags.length === 0 ? placeholder : 'Add more...'}
+          className="min-w-[140px] flex-1 bg-transparent font-body text-sm text-navy outline-none placeholder:text-light-blue"
+        />
+      )}
     </div>
   )
 }
@@ -66,9 +75,10 @@ interface ProfileFormProps {
   data: ProfileData
   onChange: (data: ProfileData) => void
   errors: { major?: string; year?: string }
+  readOnly?: boolean
 }
 
-export default function ProfileForm({ data, onChange, errors }: ProfileFormProps) {
+export default function ProfileForm({ data, onChange, errors, readOnly = false }: ProfileFormProps) {
   const update = <K extends keyof ProfileData>(field: K, value: ProfileData[K]) => {
     onChange({ ...data, [field]: value })
   }
@@ -83,62 +93,140 @@ export default function ProfileForm({ data, onChange, errors }: ProfileFormProps
       {/* Major */}
       <div className="flex flex-col gap-1">
         <label className="font-heading text-sm font-semibold text-navy">
-          Major / Field of Study <span className="text-urgent-red">*</span>
+          Major / Field of Study {!readOnly && <span className="text-urgent-red">*</span>}
         </label>
         <input
           type="text"
           value={data.major}
-          onChange={(e) => update('major', e.target.value)}
-          placeholder="e.g. Computer Science"
-          className={`rounded-lg border bg-bg-gray px-3 py-2 font-body text-sm text-navy outline-none placeholder:text-light-blue focus:ring-2 focus:ring-sky-blue/20 ${
-            errors.major ? 'border-urgent-red' : 'border-border focus:border-sky-blue'
+          readOnly={readOnly}
+          onChange={readOnly ? undefined : (e) => update('major', e.target.value)}
+          placeholder={readOnly ? undefined : 'e.g. Computer Science'}
+          className={`rounded-lg border bg-bg-gray px-3 py-2 font-body text-sm text-navy outline-none ${
+            readOnly
+              ? 'cursor-default border-border'
+              : `placeholder:text-light-blue focus:ring-2 focus:ring-sky-blue/20 ${
+                  errors.major ? 'border-urgent-red' : 'border-border focus:border-sky-blue'
+                }`
           }`}
         />
-        {errors.major && <p className="font-body text-xs text-urgent-red">{errors.major}</p>}
+        {!readOnly && errors.major && <p className="font-body text-xs text-urgent-red">{errors.major}</p>}
       </div>
 
       {/* Year */}
       <div className="flex flex-col gap-1">
         <label className="font-heading text-sm font-semibold text-navy">
-          Current Year <span className="text-urgent-red">*</span>
+          Current Year {!readOnly && <span className="text-urgent-red">*</span>}
         </label>
-        <select
-          id="year-select"
-          value={data.year}
-          onChange={(e) => update('year', e.target.value)}
-          className={`rounded-lg border bg-bg-gray px-3 py-2 font-body text-sm text-navy outline-none focus:ring-2 focus:ring-sky-blue/20 ${
-            errors.year ? 'border-urgent-red' : 'border-border focus:border-sky-blue'
-          }`}
-        >
-          <option value="">Select your year</option>
-          {YEARS.map((y) => (
-            <option key={y} value={y}>{y}</option>
-          ))}
-        </select>
-        {errors.year && <p className="font-body text-xs text-urgent-red">{errors.year}</p>}
+        {readOnly && !data.year ? (
+          <p className="font-body text-sm italic text-light-blue">Not set</p>
+        ) : (
+          <select
+            id="year-select"
+            value={data.year}
+            disabled={readOnly}
+            onChange={(e) => update('year', e.target.value)}
+            className={`rounded-lg border bg-bg-gray px-3 py-2 font-body text-sm text-navy outline-none disabled:pointer-events-none ${
+              readOnly
+                ? 'cursor-default border-border'
+                : `focus:ring-2 focus:ring-sky-blue/20 ${
+                    errors.year ? 'border-urgent-red' : 'border-border focus:border-sky-blue'
+                  }`
+            }`}
+          >
+            <option value="">Select your year</option>
+            {YEARS.map((y) => (
+              <option key={y} value={y}>{y}</option>
+            ))}
+          </select>
+        )}
+        {!readOnly && errors.year && <p className="font-body text-xs text-urgent-red">{errors.year}</p>}
       </div>
 
       {/* Difficult Subjects */}
       <div className="flex flex-col gap-1">
         <label className="font-heading text-sm font-semibold text-navy">Subjects You Find Difficult</label>
-        <p className="font-body text-xs text-light-blue">Press Enter or comma to add each subject</p>
+        {!readOnly && <p className="font-body text-xs text-light-blue">Press Enter or comma to add each subject</p>}
         <TagInput
           tags={data.difficultSubjects}
           onChange={(tags) => update('difficultSubjects', tags)}
           placeholder="e.g. Organic Chemistry"
+          readOnly={readOnly}
         />
       </div>
 
       {/* Enjoyed Subjects */}
       <div className="flex flex-col gap-1">
         <label className="font-heading text-sm font-semibold text-navy">Subjects You Enjoy</label>
-        <p className="font-body text-xs text-light-blue">Press Enter or comma to add each subject</p>
+        {!readOnly && <p className="font-body text-xs text-light-blue">Press Enter or comma to add each subject</p>}
         <TagInput
           tags={data.enjoyedSubjects}
           onChange={(tags) => update('enjoyedSubjects', tags)}
           placeholder="e.g. Linear Algebra"
+          readOnly={readOnly}
         />
       </div>
+
+      {/* Courses — read-only display */}
+      {readOnly && data.courses.length > 0 && (
+        <div className="flex flex-col gap-3">
+          <label className="font-heading text-sm font-semibold text-navy">Courses</label>
+          {data.courses.map((course, i) => (
+            <div key={i} className="flex flex-col gap-2 rounded-lg border border-border bg-bg-gray p-3">
+              <div className="flex flex-col gap-0.5">
+                <span className="font-body text-sm font-semibold text-navy">{course.title}</span>
+                {course.term && (
+                  <span className="inline-block w-fit rounded-full bg-navy/10 px-2 py-0.5 font-body text-xs font-medium text-navy">
+                    {course.term}
+                  </span>
+                )}
+              </div>
+              {course.grade !== undefined ? (
+                <div className="flex items-center gap-2">
+                  <span className="font-body text-xs text-slate-blue">Grade:</span>
+                  {!course.grade ? (
+                    <span className="font-body text-xs italic text-light-blue">Not set</span>
+                  ) : (
+                    <select
+                      value={course.grade}
+                      disabled
+                      className="cursor-default rounded-lg border border-border bg-white px-2 py-1 font-body text-xs text-navy outline-none disabled:pointer-events-none"
+                    >
+                      <option value="">Select grade</option>
+                      {GRADES.map((g) => (
+                        <option key={g} value={g}>{g}</option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  {STUDY_GOALS.map((goal) => (
+                    <label
+                      key={goal}
+                      className={`flex flex-1 cursor-default items-center justify-center rounded-lg border px-2 py-2 font-body text-xs font-medium ${
+                        course.studyGoal === goal
+                          ? 'border-sky-blue bg-sky-blue/10 text-navy'
+                          : 'border-border text-slate-blue'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name={`studyGoal-${i}`}
+                        value={goal}
+                        checked={course.studyGoal === goal}
+                        disabled
+                        onChange={() => {}}
+                        className="sr-only"
+                      />
+                      {goal}
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
