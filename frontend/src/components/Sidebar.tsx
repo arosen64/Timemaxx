@@ -1,7 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { useQuery } from "convex/react";
 import { api } from "../../../backend/convex/_generated/api";
-import { BookOpenIcon, DashboardIcon, TasksIcon, CalendarIcon, SlidersHorizontalIcon } from "./icons";
+import { BookOpenIcon, DashboardIcon, TasksIcon, CalendarIcon, ClassesIcon, SlidersHorizontalIcon } from "./icons";
 
 export default function Sidebar() {
     const { pathname } = useLocation();
@@ -40,6 +40,7 @@ export default function Sidebar() {
                 {/* Nav Menu */}
                 <nav className="flex flex-col gap-1">
                     {navItem("/dashboard", <DashboardIcon />, "Dashboard")}
+                    {navItem("/classes", <ClassesIcon />, "Classes")}
                     <div className="flex items-center h-11 w-full gap-2.5 px-3.5 text-sky-blue rounded-lg">
                         <TasksIcon />
                         <span className="font-heading text-sm font-normal">Tasks</span>

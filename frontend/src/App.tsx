@@ -5,11 +5,13 @@ import LandingPage from './pages/LandingPage'
 import OnboardingPage from './pages/OnboardingPage'
 import DashboardPage from './pages/DashboardPage'
 import ProfilePage from './pages/ProfilePage'
+import ClassesPage from './pages/ClassesPage'
+import SyllabusReviewPage from './pages/SyllabusReviewPage'
 import PreferencesPage from './pages/PreferencesPage'
 import { useQuery } from "convex/react";
 import { api } from "../../backend/convex/_generated/api";
 
-const PROTECTED_ROUTES = ['/onboarding', '/dashboard', '/profile', '/preferences']
+const PROTECTED_ROUTES = ['/onboarding', '/dashboard', '/profile', '/classes', '/preferences']
 
 export default function App() {
   const { isAuthenticated, isLoading } = useConvexAuth()
@@ -19,6 +21,26 @@ export default function App() {
 
   useEffect(() => {
     if (isLoading) return
+
+    // After a Google Calendar OAuth redirect, the callback lands on /profile.
+    // Check localStorage before the unauthenticated guard fires so the race
+    // condition (auth state briefly unresolved on full-page reload) cannot
+    // redirect the user to / before we have a chance to navigate back.
+    if (location.pathname === '/profile') {
+      try {
+        const saved = localStorage.getItem('timemaxx_onboarding_state')
+        if (saved) {
+          const { returnTo } = JSON.parse(saved) as { returnTo?: string }
+          if (returnTo) {
+            navigate(returnTo, { replace: true })
+            return
+          }
+        }
+      } catch {
+        // localStorage unavailable — continue with normal routing
+      }
+    }
+
     if (!isAuthenticated && PROTECTED_ROUTES.includes(location.pathname)) {
       navigate('/')
     }
@@ -39,6 +61,21 @@ export default function App() {
       <Route path="/dashboard" element={<DashboardPage />} />
       <Route path="/profile" element={<ProfilePage />} />
       <Route path="/preferences" element={<PreferencesPage />} />
+      <Route path="/classes" element={<ClassesPage />} />
+
+      {/**FOR TESTING ONLY */}
+      <Route path="/syllabus-review" element={
+        <SyllabusReviewPage
+          course={{ title: 'Data Structures', courseCode: 'EN.601.226', term: 'Fall 2025' }}
+          tasks={[
+            { title: 'Problem Set 1', description: 'Solve exercises 1-10 from chapter 3.', dueDate: new Date('2025-09-15').getTime(), taskType: 'Problem Set' },
+            { title: 'Midterm Exam', description: 'Covers all topics from weeks 1-7.', dueDate: new Date('2025-10-20').getTime(), taskType: 'Exam Prep' },
+            { title: 'Final Project', description: 'Build a full-stack application.', dueDate: new Date('2025-12-10').getTime(), taskType: 'Coding' },
+          ]}
+          onDone={() => {}}
+          onCancel={() => {}}
+        />
+      } />
     </Routes>
   )
 }

@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { CalendarIcon } from '../icons'
-import { type EditForm, type SchemaTaskType, TASK_TYPE_OPTIONS } from './types'
+import { type EditForm, CUSTOM_TASK_TYPE_OPTION, TASK_TYPE_OPTIONS } from './types'
 import Modal from '../ui/Modal'
+import { validateDueDate } from '../../validators'
 
 interface TaskModalProps {
   isOpen?: boolean
@@ -11,7 +12,8 @@ interface TaskModalProps {
   primaryLoadingLabel: string
   initialValues: {
     taskName: string
-    selectedType: SchemaTaskType
+    selectedType: string
+    customTaskType: string
     description: string
     dueDate: string
   }
@@ -30,40 +32,46 @@ export default function TaskModal({
   onSubmit,
 }: TaskModalProps) {
   const [taskName, setTaskName] = useState(initialValues.taskName)
-  const [selectedType, setSelectedType] = useState<SchemaTaskType>(initialValues.selectedType)
+  const [selectedType, setSelectedType] = useState(initialValues.selectedType)
+  const [customTaskType, setCustomTaskType] = useState(initialValues.customTaskType)
   const [description, setDescription] = useState(initialValues.description)
   const [dueDate, setDueDate] = useState(initialValues.dueDate)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  function validateDueDate(value: string): boolean {
-    const match = value.match(/^(\d{1,2})\s*\/\s*(\d{1,2})\s*\/\s*(\d{4})$/)
-    if (!match) {
-      setError('Please enter a valid date in MM/DD/YYYY format.')
-      return false
-    }
-    const [, month, day, year] = match.map(Number)
-    const date = new Date(year, month - 1, day)
-    if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
-      setError('Please enter a valid date in MM/DD/YYYY format.')
-      return false
-    }
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    if (date < today) {
-      setError('Due date cannot be in the past.')
-      return false
-    }
+  useEffect(() => {
+    if (!isOpen) return
+    setTaskName(initialValues.taskName)
+    setSelectedType(initialValues.selectedType)
+    setCustomTaskType(initialValues.customTaskType)
+    setDescription(initialValues.description)
+    setDueDate(initialValues.dueDate)
+    setError(null)
+    setSubmitting(false)
+  }, [
+    isOpen,
+    initialValues.taskName,
+    initialValues.selectedType,
+    initialValues.customTaskType,
+    initialValues.description,
+    initialValues.dueDate,
+  ])
+
+  function isValidDueDate(value: string): boolean {
+    const err = validateDueDate(value)
+    if (err) { setError(err); return false }
     return true
   }
 
   async function handleSubmit() {
     if (!taskName.trim()) { setError('Please enter a task name.'); return }
-    if (!TASK_TYPE_OPTIONS.includes(selectedType)) { setError('Please select a task type.'); return }
+    if (!selectedType.trim()) { setError('Please select a task type.'); return }
+    const resolvedTaskType = selectedType === CUSTOM_TASK_TYPE_OPTION ? customTaskType.trim() : selectedType
+    if (!resolvedTaskType) { setError('Please enter a task type.'); return }
     if (!description.trim()) { setError('Please enter a description.'); return }
     const trimmedDueDate = dueDate.trim()
     if (!trimmedDueDate) { setError('Please enter a due date.'); return }
-    if (!validateDueDate(trimmedDueDate)) return
+    if (!isValidDueDate(trimmedDueDate)) return
 
     setSubmitting(true)
     setError(null)
@@ -71,7 +79,7 @@ export default function TaskModal({
       await onSubmit({
         title: taskName,
         description,
-        taskType: selectedType,
+        taskType: resolvedTaskType,
         dueDate: new Date(trimmedDueDate).getTime(),
       })
       onClose()
@@ -110,8 +118,8 @@ export default function TaskModal({
         {/* Task type */}
         <div className="flex w-full flex-col gap-1.5">
           <label className="font-heading text-[13px] font-semibold text-navy">Task type</label>
-          <div className="flex gap-2">
-            {TASK_TYPE_OPTIONS.map((type) => (
+          <div className="flex flex-wrap gap-2">
+            {[...TASK_TYPE_OPTIONS, CUSTOM_TASK_TYPE_OPTION].map((type) => (
               <button
                 key={type}
                 onClick={() => setSelectedType(type)}
@@ -125,6 +133,15 @@ export default function TaskModal({
               </button>
             ))}
           </div>
+          {selectedType === CUSTOM_TASK_TYPE_OPTION && (
+            <input
+              type="text"
+              value={customTaskType}
+              onChange={(e) => setCustomTaskType(e.target.value)}
+              placeholder="Enter other task type"
+              className="h-11 w-full rounded-md border border-border bg-bg-gray px-3.5 font-body text-sm text-navy outline-none placeholder:text-light-blue"
+            />
+          )}
         </div>
 
         {/* Description */}
@@ -146,7 +163,7 @@ export default function TaskModal({
               type="text"
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}
-              onBlur={() => { if (dueDate) validateDueDate(dueDate) }}
+              onBlur={() => { if (dueDate) isValidDueDate(dueDate) }}
               onFocus={() => setError(null)}
               placeholder="MM / DD / YYYY"
               className="flex-1 border-none bg-transparent font-body text-sm text-navy outline-none placeholder:text-light-blue"

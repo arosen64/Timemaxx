@@ -1,4 +1,4 @@
-import { type TaskType, type EditForm, type SchemaTaskType, TASK_TYPE_OPTIONS, formatDateMMDDYYYY } from './types'
+import { type TaskType, type EditForm, TASK_TYPE_OPTIONS, CUSTOM_TASK_TYPE_OPTION, formatDateMMDDYYYY } from './types'
 import TaskModal from './TaskModal'
 
 export default function EditModal({
@@ -22,9 +22,12 @@ export default function EditModal({
       primaryLoadingLabel="Saving…"
       initialValues={{
         taskName: task?.title ?? '',
-        selectedType: (task && TASK_TYPE_OPTIONS.includes(task.taskType as SchemaTaskType)
+        selectedType: task && TASK_TYPE_OPTIONS.includes(task.taskType as (typeof TASK_TYPE_OPTIONS)[number])
           ? task.taskType
-          : 'Problem Set') as SchemaTaskType,
+          : CUSTOM_TASK_TYPE_OPTION,
+        customTaskType: task && TASK_TYPE_OPTIONS.includes(task.taskType as (typeof TASK_TYPE_OPTIONS)[number])
+          ? ''
+          : (task?.taskType ?? ''),
         description: task?.description ?? '',
         dueDate: task ? formatDateMMDDYYYY(task.dueDate) : '',
       }}

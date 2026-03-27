@@ -7,7 +7,6 @@ const VALID_ONBOARDING_ARGS = {
   year: "Junior",
   difficultSubjects: ["Math", "Physics"],
   enjoyedSubjects: ["History"],
-  courses: [{ title: "CS101", studyGoal: "A" }],
   workHoursGrid: [
     { day: "Monday", available: [9, 10, 11], blocked: [] },
   ],
@@ -71,15 +70,13 @@ describe("mutations/users – deleteAccount", () => {
     await t.run(async (ctx) => {
       await ctx.db.insert("syllabi", {
         userId,
-        fileName: "cs101.pdf",
-        courseName: "CS 101",
+        fileContents: "cs101 syllabus text",
         status: "confirmed",
         createdAt: Date.now(),
       });
       await ctx.db.insert("syllabi", {
         userId,
-        fileName: "math201.pdf",
-        courseName: "Math 201",
+        fileContents: "math201 syllabus text",
         status: "pending",
         createdAt: Date.now(),
       });
@@ -132,9 +129,38 @@ describe("mutations/users – deleteAccount", () => {
     expect(sessions).toHaveLength(0);
   });
 
-  test("only deletes data belonging to the authenticated user", async () => {
+  test("deletes all userCourses belonging to the user", async () => {
     const t = makeTestCtx();
     const { userId, withAuth } = await createTestUser(t);
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("userCourses", {
+        userId,
+        courseCode: "EN.601.421",
+        title: "EN.601.421: Object-Oriented Software Engineering",
+        term: "Spring 2026",
+        studyGoal: "Do well",
+      });
+      await ctx.db.insert("userCourses", {
+        userId,
+        courseCode: "EN.601.226",
+        title: "EN.601.226: Data Structures",
+        term: "Fall 2025",
+        grade: "A",
+      });
+    });
+
+    await withAuth.mutation(api.mutations.users.deleteAccount, {});
+
+    const userCourses = await t.run((ctx) =>
+      ctx.db.query("userCourses").withIndex("by_user", (q) => q.eq("userId", userId)).collect()
+    );
+    expect(userCourses).toHaveLength(0);
+  });
+
+  test("only deletes data belonging to the authenticated user", async () => {
+    const t = makeTestCtx();
+    const { withAuth } = await createTestUser(t);
     const { userId: otherUserId } = await createTestUser(t, { email: "other@example.com" });
 
     await t.run(async (ctx) => {
@@ -148,8 +174,7 @@ describe("mutations/users – deleteAccount", () => {
       });
       await ctx.db.insert("syllabi", {
         userId: otherUserId,
-        fileName: "other.pdf",
-        courseName: "Other Course",
+        fileContents: "other syllabus text",
         status: "confirmed",
         createdAt: Date.now(),
       });
@@ -165,6 +190,98 @@ describe("mutations/users – deleteAccount", () => {
     );
     expect(otherTasks).toHaveLength(1);
     expect(otherSyllabi).toHaveLength(1);
+  });
+});
+
+describe("mutations/users – updateUserSettings", () => {
+  test("throws when unauthenticated", async () => {
+    const t = makeTestCtx();
+    await expect(
+      t.mutation(api.mutations.users.updateUserSettings, { focusBlockLength: 45 })
+    ).rejects.toThrow("Not authenticated");
+  });
+
+  test("throws when focusBlockLength is zero or negative", async () => {
+    const t = makeTestCtx();
+    const { withAuth } = await createTestUser(t);
+
+    await expect(
+      withAuth.mutation(api.mutations.users.updateUserSettings, { focusBlockLength: 0 })
+    ).rejects.toThrow("focusBlockLength must be a positive number");
+
+    await expect(
+      withAuth.mutation(api.mutations.users.updateUserSettings, { focusBlockLength: -10 })
+    ).rejects.toThrow("focusBlockLength must be a positive number");
+  });
+
+  test("updates a single field", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+
+    await withAuth.mutation(api.mutations.users.updateUserSettings, {
+      focusBlockLength: 45,
+    });
+
+    const user = await t.run((ctx) => ctx.db.get(userId));
+    expect(user!.focusBlockLength).toBe(45);
+  });
+
+  test("updates multiple fields at once", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+
+    await withAuth.mutation(api.mutations.users.updateUserSettings, {
+      major: "Biology",
+      year: "Senior",
+      focusBlockLength: 60,
+    });
+
+    const user = await t.run((ctx) => ctx.db.get(userId));
+    expect(user!.major).toBe("Biology");
+    expect(user!.year).toBe("Senior");
+    expect(user!.focusBlockLength).toBe(60);
+  });
+
+  test("updates workHoursGrid", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+
+    const grid = [{ day: "Monday", available: [9, 10], blocked: [8] }];
+    await withAuth.mutation(api.mutations.users.updateUserSettings, {
+      workHoursGrid: grid,
+    });
+
+    const user = await t.run((ctx) => ctx.db.get(userId));
+    expect(user!.workHoursGrid).toEqual(grid);
+  });
+
+  test("updates courses field", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+
+    const courses = [
+      { title: "CS101", studyGoal: "A" },
+      { title: "Math201", studyGoal: "B+" },
+    ];
+    await withAuth.mutation(api.mutations.users.updateUserSettings, { courses });
+
+    const user = await t.run((ctx) => ctx.db.get(userId));
+    expect(user!.courses).toEqual(courses);
+  });
+
+  test("does not affect unspecified fields", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+
+    await withAuth.mutation(api.mutations.users.completeOnboarding, VALID_ONBOARDING_ARGS);
+    await withAuth.mutation(api.mutations.users.updateUserSettings, {
+      focusBlockLength: 30,
+    });
+
+    const user = await t.run((ctx) => ctx.db.get(userId));
+    expect(user!.major).toBe("Computer Science");
+    expect(user!.year).toBe("Junior");
+    expect(user!.focusBlockLength).toBe(30);
   });
 });
 
@@ -215,7 +332,7 @@ describe("mutations/users – completeOnboarding", () => {
     expect(user!.year).toBe("Junior");
     expect(user!.difficultSubjects).toEqual(["Math", "Physics"]);
     expect(user!.enjoyedSubjects).toEqual(["History"]);
-    expect(user!.courses).toEqual([{ title: "CS101", studyGoal: "A" }]);
+
     expect(user!.focusBlockLength).toBe(50);
   });
 });

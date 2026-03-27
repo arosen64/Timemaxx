@@ -1,9 +1,32 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { render } from '@testing-library/react'
 import ProfileForm from '../src/components/ProfileForm'
+import CoursesForm from '../src/components/CoursesForm'
 import { ProfileData } from '../src/types'
+
+vi.mock('../../backend/convex/_generated/api', () => ({
+  api: {
+    actions: {
+      jhuCourses: {
+        getAvailableTerms: 'getAvailableTerms',
+        getAvailableSchools: 'getAvailableSchools',
+        getCoursesByTerm: 'getCoursesByTerm',
+      },
+      parseTranscript: { parseTranscript: 'parseTranscript' },
+    },
+    mutations: {
+      userCourses: { addUserCourse: 'addUserCourse', deleteUserCourse: 'deleteUserCourse', updateUserCourse: 'updateUserCourse' },
+    },
+  },
+}))
+
+vi.mock('convex/react', () => ({
+  useMutation: vi.fn().mockReturnValue(vi.fn().mockResolvedValue(undefined)),
+  useAction: vi.fn().mockReturnValue(vi.fn().mockResolvedValue([])),
+  useQuery: vi.fn().mockReturnValue(undefined),
+}))
 
 const DEFAULT_DATA: ProfileData = {
   major: '',
@@ -17,7 +40,7 @@ const DEFAULT_DATA: ProfileData = {
  * Renders ProfileForm inside a stateful wrapper so controlled inputs
  * actually update as the user types. The onChange spy is called on every change.
  */
-function setup(overrides: Partial<ProfileData> = {}, errors = {}) {
+function setup(overrides: Partial<ProfileData> = {}, errors = {}, readOnly = false) {
   const onChange = vi.fn()
   const initial = { ...DEFAULT_DATA, ...overrides }
 
@@ -28,6 +51,7 @@ function setup(overrides: Partial<ProfileData> = {}, errors = {}) {
         data={data}
         onChange={(next) => { setData(next); onChange(next) }}
         errors={errors}
+        readOnly={readOnly}
       />
     )
   }
@@ -65,7 +89,7 @@ describe('ProfileForm', () => {
       const user = userEvent.setup()
       const { onChange } = setup()
 
-      await user.selectOptions(screen.getByRole('combobox'), 'Junior')
+      await user.selectOptions(document.getElementById('year-select')!, 'Junior')
 
       expect(onChange).toHaveBeenLastCalledWith(
         expect.objectContaining({ year: 'Junior' })
@@ -83,8 +107,7 @@ describe('ProfileForm', () => {
       const user = userEvent.setup()
       const { onChange } = setup()
 
-      const inputs = screen.getAllByRole('textbox')
-      // First textbox is major, tag inputs follow — find by placeholder
+      // Find by placeholder directly
       const tagInput = screen.getByPlaceholderText(/organic chemistry/i)
       await user.type(tagInput, 'Calculus{Enter}')
 
@@ -127,66 +150,102 @@ describe('ProfileForm', () => {
     })
   })
 
-  describe('courses', () => {
-    it('adds a course entry when Add course is clicked', async () => {
-      const user = userEvent.setup()
-      const { onChange } = setup()
-
-      await user.click(screen.getByRole('button', { name: /add course/i }))
-
-      expect(onChange).toHaveBeenLastCalledWith(
-        expect.objectContaining({ courses: [{ title: '', studyGoal: '' }] })
-      )
+  describe('readOnly mode', () => {
+    it('renders the major value in a non-editable input', () => {
+      setup({ major: 'Biology' }, {}, true)
+      const input = screen.getByDisplayValue('Biology')
+      expect(input).toHaveAttribute('readonly')
     })
+
+    it('hides hint text for tag inputs', () => {
+      setup({}, {}, true)
+      expect(screen.queryByText(/press enter or comma/i)).not.toBeInTheDocument()
+    })
+
+    it('renders existing tags without remove buttons', () => {
+      setup({ difficultSubjects: ['Calculus', 'Physics'] }, {}, true)
+      expect(screen.getByText('Calculus')).toBeInTheDocument()
+      const calculusTag = screen.getByText('Calculus').closest('span')!
+      expect(within(calculusTag).queryByRole('button')).not.toBeInTheDocument()
+    })
+
+    it('shows "None" when a tag list is empty', () => {
+      setup({ difficultSubjects: [] }, {}, true)
+      // "None" appears for both difficult and enjoyed subjects
+      expect(screen.getAllByText('None').length).toBeGreaterThanOrEqual(1)
+    })
+
+    it('does not render the course remove button', () => {
+      setup({ courses: [{ title: 'CS 101', studyGoal: 'Do well' }] }, {}, true)
+      expect(screen.getByText('CS 101')).toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: '×' })).not.toBeInTheDocument()
+    })
+
+    it('does not show error messages even when errors are provided', () => {
+      setup({}, { major: 'Major is required', year: 'Please select your year' }, true)
+      expect(screen.queryByText('Major is required')).not.toBeInTheDocument()
+      expect(screen.queryByText('Please select your year')).not.toBeInTheDocument()
+    })
+
+    it('shows "Not set" for an empty year instead of the select placeholder', () => {
+      setup({ year: '' }, {}, true)
+      expect(document.getElementById('year-select')).toBeNull()
+      expect(screen.getByText('Not set')).toBeInTheDocument()
+    })
+
+    it('does not call onChange when the year select is interacted with in readOnly', async () => {
+      const user = userEvent.setup()
+      const { onChange } = setup({ year: 'Junior' }, {}, true)
+
+      await user.selectOptions(document.getElementById('year-select')!, 'Senior')
+
+      expect(onChange).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('courses', () => {
+    function setupCourses(initialCourses: ProfileData['courses']) {
+      const onChange = vi.fn()
+      const initial: ProfileData = { ...DEFAULT_DATA, courses: initialCourses }
+      function Wrapper() {
+        const [data, setData] = useState<ProfileData>(initial)
+        return (
+          <CoursesForm
+            data={data}
+            onChange={(next) => { setData(next); onChange(next) }}
+          />
+        )
+      }
+      render(<Wrapper />)
+      return { onChange }
+    }
 
     it('removes a course when its × button is clicked', async () => {
       const user = userEvent.setup()
-      const { onChange } = setup({
-        courses: [
-          { title: 'CS 101', studyGoal: 'Do well' },
-          { title: 'Math 201', studyGoal: 'Ace it' },
-        ],
-      })
+      const { onChange } = setupCourses([
+        { title: 'CS 101', studyGoal: 'Do well' },
+        { title: 'Math 201', studyGoal: 'Ace it' },
+      ])
 
-      // The first × button in the course list removes the first course
       const removeButtons = screen.getAllByRole('button', { name: '×' })
       await user.click(removeButtons[0])
 
       expect(onChange).toHaveBeenLastCalledWith(
         expect.objectContaining({
-          courses: [{ title: 'Math 201', studyGoal: 'Ace it' }],
-        })
-      )
-    })
-
-    it('updates course title when typed', async () => {
-      const user = userEvent.setup()
-      const { onChange } = setup({
-        courses: [{ title: '', studyGoal: '' }],
-      })
-
-      await user.type(screen.getByPlaceholderText(/cs 101/i), 'Bio 110')
-
-      expect(onChange).toHaveBeenLastCalledWith(
-        expect.objectContaining({
-          courses: expect.arrayContaining([
-            expect.objectContaining({ title: 'Bio 110' }),
-          ]),
+          courses: [expect.objectContaining({ title: 'Math 201' })],
         })
       )
     })
 
     it('updates study goal when a radio option is selected', async () => {
       const user = userEvent.setup()
-      const { onChange } = setup({
-        courses: [{ title: 'CS 101', studyGoal: '' }],
-      })
+      const { onChange } = setupCourses([{ title: 'CS 101', studyGoal: '' }])
 
       await user.click(screen.getByRole('radio', { name: 'Ace it' }))
 
       expect(onChange).toHaveBeenLastCalledWith(
         expect.objectContaining({
-          courses: [{ title: 'CS 101', studyGoal: 'Ace it' }],
+          courses: [expect.objectContaining({ title: 'CS 101', studyGoal: 'Ace it' })],
         })
       )
     })

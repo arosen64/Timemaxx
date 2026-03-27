@@ -6,21 +6,34 @@ export type TaskType = {
   description: string
   taskType: string
   timeEstimate?: number
+  estimateFeedbackRating?: 'up' | 'down'
+  correctedEstimateMinutes?: number
+  estimateFeedbackSubmittedAt?: number
   dueDate: number
   createdAt: number
 }
 
-export const SCHEMA_TASK_TYPES = ['Problem Set', 'Essay', 'Coding', 'Exam Prep'] as const
-export type SchemaTaskType = (typeof SCHEMA_TASK_TYPES)[number]
+export const BUILT_IN_TASK_TYPES = [
+  'Essay',
+  'Problem Set',
+  'Exam Prep',
+  'Coding',
+  'Reading',
+  'Lab',
+  'Presentation',
+] as const
+export type BuiltInTaskType = (typeof BUILT_IN_TASK_TYPES)[number]
+export type SchemaTaskType = BuiltInTaskType
+export const CUSTOM_TASK_TYPE_OPTION = 'Other'
 
 export type EditForm = {
   title: string
   description: string
-  taskType: SchemaTaskType
+  taskType: string
   dueDate: number
 }
 
-export const TASK_TYPE_OPTIONS: SchemaTaskType[] = [...SCHEMA_TASK_TYPES]
+export const TASK_TYPE_OPTIONS: BuiltInTaskType[] = [...BUILT_IN_TASK_TYPES]
 
 export function formatDateMMDDYYYY(ms: number) {
   const d = new Date(ms)
