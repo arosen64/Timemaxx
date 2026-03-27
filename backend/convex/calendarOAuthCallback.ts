@@ -1,33 +1,6 @@
 import { httpAction } from "./_generated/server";
 import { internal } from "./_generated/api";
-
-/**
- * Encrypts plaintext using AES-256-GCM via the Web Crypto API.
- * Returns a base64 string: iv (12 bytes) + ciphertext+authTag.
- * Key is derived from a 64-char hex string (openssl rand -hex 32).
- * Uses Web Crypto (crypto.subtle) so no "use node" is required.
- */
-async function encryptToken(plaintext: string, hexSecret: string): Promise<string> {
-  const keyBytes = hexSecret.padEnd(64, "0").slice(0, 64).match(/.{2}/g)!
-    .map((b) => parseInt(b, 16));
-  const key = await crypto.subtle.importKey(
-    "raw",
-    new Uint8Array(keyBytes),
-    { name: "AES-GCM", length: 256 },
-    false,
-    ["encrypt"],
-  );
-  const iv = crypto.getRandomValues(new Uint8Array(12));
-  const encrypted = await crypto.subtle.encrypt(
-    { name: "AES-GCM", iv },
-    key,
-    new TextEncoder().encode(plaintext),
-  );
-  const result = new Uint8Array(12 + encrypted.byteLength);
-  result.set(iv, 0);
-  result.set(new Uint8Array(encrypted), 12);
-  return btoa(String.fromCharCode(...result));
-}
+import { encryptToken } from "./lib/calendarCrypto";
 
 /**
  * Convex HTTP action that handles the Google Calendar OAuth callback.

@@ -6,12 +6,13 @@ import { taskTypeValidator } from "./lib/taskValidators";
 export default defineSchema({
   ...authTables,
 
-  // Stores encrypted Google Calendar OAuth tokens per user
-  calendarTokens: defineTable({
+  // Stores encrypted Google Calendar OAuth tokens and calendar preferences per user
+  calendarConnections: defineTable({
     userId: v.id("users"),
     accessToken: v.string(),
     refreshToken: v.string(),
     expiresAt: v.number(),
+    selectedCalendarIds: v.optional(v.array(v.string())),
   }).index("by_userId", ["userId"]),
 
   // Short-lived state tokens used to identify users during the OAuth callback

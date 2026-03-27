@@ -27,7 +27,7 @@ describe("queries/calendar – getCalendarConnectionStatus", () => {
     const { userId, withAuth } = await createTestUser(t);
 
     await t.run((ctx) =>
-      ctx.db.insert("calendarTokens", {
+      ctx.db.insert("calendarConnections", {
         userId,
         accessToken: "enc-acc",
         refreshToken: "enc-ref",
@@ -49,7 +49,7 @@ describe("queries/calendar – getCalendarConnectionStatus", () => {
     const { withAuth: user2Auth } = await createTestUser(t, { email: "other@example.com" });
 
     await t.run((ctx) =>
-      ctx.db.insert("calendarTokens", {
+      ctx.db.insert("calendarConnections", {
         userId: user1Id,
         accessToken: "enc-acc",
         refreshToken: "enc-ref",
