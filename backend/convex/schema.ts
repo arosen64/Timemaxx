@@ -90,7 +90,7 @@ export default defineSchema({
     estimateFeedbackSubmittedAt: v.optional(v.number()),
     dueDate: v.number(),
     createdAt: v.number(),
-    extractedFrom: v.optional(v.id("syllabi")),
+    courseId: v.optional(v.id("userCourses")),
   })
     .index("by_userId", ["userId"])
     .index("by_userId_createdAt", ["userId", "createdAt"]),
