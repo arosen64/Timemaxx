@@ -8,7 +8,7 @@ async function seedTask(
   userId: string,
   overrides: {
     title?: string;
-    taskType?: "Problem Set" | "Essay" | "Coding" | "Exam Prep";
+    taskType?: string;
     dueDate?: number;
     createdAt?: number;
   } = {}

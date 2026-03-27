@@ -52,7 +52,7 @@ For each task provide:
 - title: short name of the assignment or exam
 - description: 1-2 sentence summary of what the task involves, inferred from the syllabus context
 - dueDate: ISO 8601 date string (e.g. "2025-04-15")
-- taskType: one of "Problem Set", "Essay", "Coding", "Exam Prep"
+- taskType: one of "Essay", "Problem Set", "Exam Prep", "Coding", "Reading", "Lab", "Presentation"
 
 Syllabus:
 ${args.fileText}`;
