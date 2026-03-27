@@ -45,10 +45,7 @@ export default function Sidebar() {
                         <TasksIcon />
                         <span className="font-heading text-sm font-normal">Tasks</span>
                     </div>
-                    <div className="flex items-center h-11 w-full gap-2.5 px-3.5 text-sky-blue rounded-lg">
-                        <CalendarIcon color="currentColor" />
-                        <span className="font-heading text-sm font-normal">Schedule</span>
-                    </div>
+                    {navItem("/schedule", <CalendarIcon color="currentColor" />, "Schedule")}
                     {navItem("/profile", <UserIcon />, "Profile")}
                 </nav>
             </div>
