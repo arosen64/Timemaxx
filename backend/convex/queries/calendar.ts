@@ -20,6 +20,20 @@ export const getCalendarConnectionStatus = query({
 });
 
 /**
+ * Returns the full calendarConnections record for a given userId — called from
+ * fetchCalendarEvents action which needs the encrypted tokens and selectedCalendarIds.
+ */
+export const getCalendarConnectionForUser = internalQuery({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("calendarConnections")
+      .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+      .unique();
+  },
+});
+
+/**
  * Looks up a calendar OAuth state record by its state string — called from the HTTP callback.
  */
 export const getCalendarOAuthState = internalQuery({
