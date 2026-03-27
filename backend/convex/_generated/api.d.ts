@@ -9,6 +9,8 @@
  */
 
 import type * as actions_estimateTaskTime from "../actions/estimateTaskTime.js";
+import type * as actions_fetchCalendarEvents from "../actions/fetchCalendarEvents.js";
+import type * as actions_generateAcademicProfile from "../actions/generateAcademicProfile.js";
 import type * as actions_initiateGoogleCalendarOAuth from "../actions/initiateGoogleCalendarOAuth.js";
 import type * as actions_jhuCourses from "../actions/jhuCourses.js";
 import type * as actions_parseTranscript from "../actions/parseTranscript.js";
@@ -17,6 +19,8 @@ import type * as actions_uploadSyllabus from "../actions/uploadSyllabus.js";
 import type * as auth from "../auth.js";
 import type * as calendarOAuthCallback from "../calendarOAuthCallback.js";
 import type * as http from "../http.js";
+import type * as lib_calendarCrypto from "../lib/calendarCrypto.js";
+import type * as lib_gemini from "../lib/gemini.js";
 import type * as lib_syllabusTypes from "../lib/syllabusTypes.js";
 import type * as lib_taskValidators from "../lib/taskValidators.js";
 import type * as mutations_calendar from "../mutations/calendar.js";
@@ -38,6 +42,8 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   "actions/estimateTaskTime": typeof actions_estimateTaskTime;
+  "actions/fetchCalendarEvents": typeof actions_fetchCalendarEvents;
+  "actions/generateAcademicProfile": typeof actions_generateAcademicProfile;
   "actions/initiateGoogleCalendarOAuth": typeof actions_initiateGoogleCalendarOAuth;
   "actions/jhuCourses": typeof actions_jhuCourses;
   "actions/parseTranscript": typeof actions_parseTranscript;
@@ -46,6 +52,8 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   calendarOAuthCallback: typeof calendarOAuthCallback;
   http: typeof http;
+  "lib/calendarCrypto": typeof lib_calendarCrypto;
+  "lib/gemini": typeof lib_gemini;
   "lib/syllabusTypes": typeof lib_syllabusTypes;
   "lib/taskValidators": typeof lib_taskValidators;
   "mutations/calendar": typeof mutations_calendar;

@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { useMutation } from 'convex/react'
+import { useNavigate } from 'react-router-dom'
 import { api } from '../../../../backend/convex/_generated/api'
 import { Id } from '../../../../backend/convex/_generated/dataModel'
-import { TrashIcon, SpinnerIcon, CheckCircleIcon } from '../icons'
+import { TrashIcon, SpinnerIcon } from '../icons'
 import { GRADES } from '../../constants'
 import SyllabusUploadModal from './SyllabusUploadModal'
 
-export type UploadStatus = 'idle' | 'success'
 
 interface ClassCardProps {
   id: Id<'userCourses'>
@@ -27,6 +27,7 @@ export default function ClassCard({
   isPast,
   onRemove,
 }: ClassCardProps) {
+  const navigate = useNavigate()
   const updateUserCourse = useMutation(api.mutations.userCourses.updateUserCourse)
 
   // Remove state
@@ -35,8 +36,6 @@ export default function ClassCard({
 
   // Upload state (current cards only)
   const [uploadModalOpen, setUploadModalOpen] = useState(false)
-  const [uploadStatus, setUploadStatus] = useState<UploadStatus>('idle')
-  const [extractedCount, setExtractedCount] = useState<number | null>(null)
 
   // Grade state (past cards only)
   const [gradeValue, setGradeValue] = useState(initialGrade ?? '')
@@ -80,8 +79,13 @@ export default function ClassCard({
           onClose={() => setUploadModalOpen(false)}
           course={{ userCourseId: id, title }}
           onSuccess={(result) => {
-            setExtractedCount(result.extractedTasks.length)
-            setUploadStatus('success')
+            navigate('/syllabus-review', {
+              state: {
+                syllabusId: result.syllabusId,
+                extractedTasks: result.extractedTasks,
+                course: { userCourseId: id, title },
+              },
+            })
           }}
         />
       )}
@@ -161,31 +165,13 @@ export default function ClassCard({
           </div>
         ) : (
           <div className="flex items-center justify-between gap-4">
-            {uploadStatus === 'idle' && (
-              <button
-                type="button"
-                onClick={() => setUploadModalOpen(true)}
-                className="font-heading text-sm font-semibold text-teal hover:opacity-80 transition"
-              >
-                Upload Syllabus
-              </button>
-            )}
-            {uploadStatus === 'success' && (
-              <div className="flex items-center gap-2 text-sm font-body text-slate-blue">
-                <CheckCircleIcon size={14} color="#86C8BC" />
-                <span>
-                  Syllabus uploaded
-                  {extractedCount !== null && ` · ${extractedCount} task${extractedCount !== 1 ? 's' : ''} extracted`}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => { setUploadStatus('idle'); setExtractedCount(null) }}
-                  className="ml-2 font-heading text-xs font-semibold text-teal hover:opacity-80 transition"
-                >
-                  Upload again
-                </button>
-              </div>
-            )}
+            <button
+              type="button"
+              onClick={() => setUploadModalOpen(true)}
+              className="font-heading text-sm font-semibold text-teal hover:opacity-80 transition"
+            >
+              Upload Syllabus
+            </button>
           </div>
         )}
       </div>

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useMutation } from 'convex/react'
+import { useNavigate, useLocation, Navigate } from 'react-router-dom'
 import { api } from '../../../backend/convex/_generated/api'
 import { Id } from '../../../backend/convex/_generated/dataModel'
 import Sidebar from '../components/Sidebar'
@@ -9,14 +10,12 @@ import TaskReviewCard from '../components/syllabus/TaskReviewCard'
 import { TASK_TYPE_OPTIONS } from '../components/dashboard/types'
 import { type ReviewTask } from '../components/syllabus/types'
 import { formDateToMs, msToFormDate, validateDueDate } from '../validators'
-import { type Course } from '../types'
-import { type ExtractedTask } from '../../../backend/convex/lib/syllabusTypes'
+import { type Course, type ExtractedTask } from '../types'
 
-interface SyllabusReviewPageProps {
+interface ReviewLocationState {
+  syllabusId: Id<'syllabi'>
+  extractedTasks: ExtractedTask[]
   course: Course
-  tasks: ExtractedTask[]
-  onCancel: () => void
-  onDone: () => void
 }
 
 let nextTaskId = 0
@@ -25,20 +24,31 @@ function makeEmptyTask(): ReviewTask {
   return { id: nextTaskId++, title: '', description: '', taskType: TASK_TYPE_OPTIONS[0], dueDate: '' }
 }
 
-export default function SyllabusReviewPage({ course, tasks: initialTasks, onCancel, onDone }: SyllabusReviewPageProps) {
-  const createTask = useMutation(api.mutations.tasks.createTask)
+export default function SyllabusReviewPage() {
+  const navigate = useNavigate()
+  const location = useLocation()
+  const state = location.state as ReviewLocationState | null
 
-  const [tasks, setTasks] = useState<ReviewTask[]>(() =>
-    initialTasks.map((t) => ({
+  const confirmSyllabusTasks = useMutation(api.mutations.syllabi.confirmSyllabusTasks)
+
+  const [tasks, setTasks] = useState<ReviewTask[]>(() => {
+    const initialTasks = state?.extractedTasks ?? []
+    return initialTasks.map((t) => ({
       id: nextTaskId++,
       title: t.title,
       description: t.description,
       taskType: t.taskType,
       dueDate: msToFormDate(t.dueDate),
     }))
-  )
+  })
   const [isConfirming, setIsConfirming] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  if (!state) {
+    return <Navigate to="/classes" replace />
+  }
+
+  const { syllabusId } = state
 
   function updateTask(index: number, updated: ReviewTask) {
     setTasks((prev) => prev.map((t, i) => (i === index ? updated : t)))
@@ -71,15 +81,8 @@ export default function SyllabusReviewPage({ course, tasks: initialTasks, onCanc
 
     setIsConfirming(true)
     try {
-      await Promise.all(
-        toSave.map((task) =>
-          createTask({
-            ...task,
-            courseId: course.userCourseId as Id<'userCourses'> | undefined,
-          })
-        )
-      )
-      onDone()
+      await confirmSyllabusTasks({ syllabusId, tasks: toSave })
+      navigate('/classes')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Something went wrong. Please try again.')
     } finally {
@@ -97,7 +100,7 @@ export default function SyllabusReviewPage({ course, tasks: initialTasks, onCanc
           <div className="flex flex-col gap-1">
             <h1 className="font-heading text-2xl font-bold text-navy">Review Extracted Tasks</h1>
             <p className="max-w-xl font-body text-sm text-slate-blue">
-              {`Review tasks extracted from your ${course.title} syllabus. Edit or remove any task before confirming.`}
+              {`Review tasks extracted from your ${state.course.title} syllabus. Edit or remove any task before confirming.`}
             </p>
           </div>
           <span className="flex items-center gap-1.5 rounded-lg bg-success-light px-3 py-1.5 font-body text-[13px] font-semibold text-success">
@@ -117,7 +120,6 @@ export default function SyllabusReviewPage({ course, tasks: initialTasks, onCanc
             />
           ))}
 
-          {/* Add task row */}
           <Button
             variant="primary"
             onClick={addTask}
@@ -138,7 +140,7 @@ export default function SyllabusReviewPage({ course, tasks: initialTasks, onCanc
             {`${tasks.length} ${tasks.length === 1 ? 'task' : 'tasks'} will be added to your dashboard`}
           </span>
           <div className="flex gap-2.5">
-            <Button variant="destructive" onClick={onCancel} className="px-6">
+            <Button variant="destructive" onClick={() => navigate('/classes')} className="px-6">
               Cancel
             </Button>
             <Button

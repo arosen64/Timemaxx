@@ -87,6 +87,8 @@ export const confirmSyllabusTasks = mutation({
       )
     );
 
+    await ctx.db.patch(args.syllabusId, { status: "confirmed" });
+
     return taskIds;
   },
 });

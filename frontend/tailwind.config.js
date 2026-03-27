@@ -24,6 +24,8 @@ export default {
         'dark-red': '#A6192E',
         success: '#008767',
         'success-light': '#E6F5F0',
+        'info-bg': '#EBF5FF',
+        'info-emphasis': '#0077D8',
       },
       spacing: {
         '4.5': '1.125rem',
