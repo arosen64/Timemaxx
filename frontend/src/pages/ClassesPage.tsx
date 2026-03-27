@@ -99,7 +99,7 @@ export default function ClassesPage() {
         </div>
 
         {/* Course list / empty state */}
-        {courses === undefined ? (
+        {courses === undefined || courseMetadata === undefined ? (
           <div className="flex flex-col gap-4">
             {[1, 2, 3].map((i) => (
               <div key={i} className="h-36 rounded-xl border border-border bg-white animate-pulse" />
