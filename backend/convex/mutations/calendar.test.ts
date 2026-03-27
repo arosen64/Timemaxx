@@ -26,7 +26,7 @@ describe("mutations/calendar – storeCalendarToken", () => {
 
     const token = await t.run((ctx) =>
       ctx.db
-        .query("calendarTokens")
+        .query("calendarConnections")
         .withIndex("by_userId", (q) => q.eq("userId", userId))
         .unique()
     );
@@ -54,7 +54,7 @@ describe("mutations/calendar – storeCalendarToken", () => {
 
     const tokens = await t.run((ctx) =>
       ctx.db
-        .query("calendarTokens")
+        .query("calendarConnections")
         .withIndex("by_userId", (q) => q.eq("userId", userId))
         .collect()
     );
@@ -87,7 +87,7 @@ describe("mutations/calendar – deleteCalendarToken", () => {
 
     const token = await t.run((ctx) =>
       ctx.db
-        .query("calendarTokens")
+        .query("calendarConnections")
         .withIndex("by_userId", (q) => q.eq("userId", userId))
         .unique()
     );

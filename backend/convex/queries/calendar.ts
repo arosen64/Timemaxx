@@ -11,7 +11,7 @@ export const getCalendarConnectionStatus = query({
     if (!userId) throw new Error("Not authenticated");
 
     const token = await ctx.db
-      .query("calendarTokens")
+      .query("calendarConnections")
       .withIndex("by_userId", (q) => q.eq("userId", userId))
       .unique();
 

@@ -44,7 +44,7 @@ async function upsertCalendarToken(
   }
 ) {
   const existing = await ctx.db
-    .query("calendarTokens")
+    .query("calendarConnections")
     .withIndex("by_userId", (q: any) => q.eq("userId", args.userId))
     .unique();
 
@@ -55,7 +55,7 @@ async function upsertCalendarToken(
       expiresAt: args.expiresAt,
     });
   } else {
-    await ctx.db.insert("calendarTokens", {
+    await ctx.db.insert("calendarConnections", {
       userId: args.userId,
       accessToken: args.accessToken,
       refreshToken: args.refreshToken,
@@ -73,7 +73,7 @@ export const deleteCalendarToken = mutation({
     if (!userId) throw new Error("Not authenticated");
 
     const existing = await ctx.db
-      .query("calendarTokens")
+      .query("calendarConnections")
       .withIndex("by_userId", (q: any) => q.eq("userId", userId))
       .unique();
 
