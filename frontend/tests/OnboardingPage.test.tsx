@@ -7,8 +7,16 @@ vi.mock('../../backend/convex/_generated/api', () => ({
   api: {
     queries: {
       users: { isOnboardingComplete: 'isOnboardingComplete' },
+      calendar: { getCalendarConnectionStatus: 'getCalendarConnectionStatus' },
+    },
+    mutations: {
+      users: { completeOnboarding: 'completeOnboarding' },
+      userCourses: { addUserCourse: 'addUserCourse', deleteUserCourse: 'deleteUserCourse', updateUserCourse: 'updateUserCourse' },
     },
     actions: {
+      initiateGoogleCalendarOAuth: {
+        initiateGoogleCalendarOAuth: 'initiateGoogleCalendarOAuth',
+      },
       jhuCourses: {
         getAvailableTerms: 'getAvailableTerms',
         getAvailableSchools: 'getAvailableSchools',
@@ -16,17 +24,13 @@ vi.mock('../../backend/convex/_generated/api', () => ({
       },
       parseTranscript: { parseTranscript: 'parseTranscript' },
     },
-    mutations: {
-      users: { completeOnboarding: 'completeOnboarding' },
-      userCourses: { addUserCourse: 'addUserCourse', deleteUserCourse: 'deleteUserCourse', updateUserCourse: 'updateUserCourse' },
-    },
   },
 }))
 
 vi.mock('convex/react', () => ({
   useQuery: vi.fn(),
   useMutation: vi.fn(),
-  useAction: vi.fn().mockReturnValue(vi.fn().mockResolvedValue([])),
+  useAction: vi.fn(),
 }))
 
 // Mock useNavigate so we can assert redirects without a real router history
@@ -36,18 +40,27 @@ vi.mock('react-router-dom', async (importOriginal) => {
   return { ...actual, useNavigate: () => mockNavigate }
 })
 
-import { useQuery, useMutation } from 'convex/react'
+import { useQuery, useMutation, useAction } from 'convex/react'
 
 const mockUseQuery = vi.mocked(useQuery)
 const mockUseMutation = vi.mocked(useMutation)
+const mockUseAction = vi.mocked(useAction)
 
 /** Renders OnboardingPage with onboarding not yet complete */
-function setup() {
+function setup(calendarConnected = false) {
   const saveOnboarding = makeMutationFn()
-  mockUseQuery.mockReturnValue(false)
+  const mockCalendarAction = makeMutationFn('https://accounts.google.com/oauth')
+  mockUseQuery.mockImplementation(((query: unknown) => {
+    if (query === 'getCalendarConnectionStatus') return { connected: calendarConnected }
+    return false
+  }) as never)
   mockUseMutation.mockReturnValue(saveOnboarding as never)
+  mockUseAction.mockImplementation((action: unknown) => {
+    if (action === 'initiateGoogleCalendarOAuth') return mockCalendarAction as never
+    return vi.fn().mockResolvedValue([]) as never
+  })
   renderWithProviders(<OnboardingPage />)
-  return { saveOnboarding }
+  return { saveOnboarding, mockCalendarAction }
 }
 
 describe('OnboardingPage', () => {
@@ -59,6 +72,7 @@ describe('OnboardingPage', () => {
   it('redirects to /dashboard if onboarding is already complete', async () => {
     mockUseQuery.mockReturnValue(true)
     mockUseMutation.mockReturnValue(makeMutationFn() as never)
+    mockUseAction.mockReturnValue(vi.fn().mockResolvedValue([]) as never)
 
     renderWithProviders(<OnboardingPage />)
 
@@ -116,9 +130,9 @@ describe('OnboardingPage', () => {
     await waitFor(() => screen.getByRole('button', { name: /continue/i }))
     await user.click(screen.getByRole('button', { name: /continue/i }))
 
-    // Step 4: PreferencesForm should be visible with Finish button
+    // Step 4: PreferencesForm should be visible
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /finish/i })).toBeInTheDocument()
+      expect(screen.getByText('Productivity Preferences')).toBeInTheDocument()
     })
   })
 
@@ -156,7 +170,11 @@ describe('OnboardingPage', () => {
     await waitFor(() => screen.getByRole('button', { name: /continue/i }))
     await user.click(screen.getByRole('button', { name: /continue/i }))
 
-    // Step 4 (PreferencesForm) — submit
+    // Step 4 (PreferencesForm) — advance
+    await waitFor(() => expect(screen.getByText('Productivity Preferences')).toBeInTheDocument())
+    await user.click(screen.getByRole('button', { name: /continue/i }))
+
+    // Step 5 (Calendar) — click Finish to navigate to /dashboard
     await waitFor(() => expect(screen.getByRole('button', { name: /finish/i })).toBeInTheDocument())
     await user.click(screen.getByRole('button', { name: /finish/i }))
 
@@ -174,5 +192,54 @@ describe('OnboardingPage', () => {
   it('Back button is not shown on Step 1', () => {
     setup()
     expect(screen.queryByRole('button', { name: /back/i })).not.toBeInTheDocument()
+  })
+})
+
+describe('OnboardingPage – Google Calendar section (Step 4)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockNavigate.mockClear()
+  })
+
+  async function advanceToStep4() {
+    const user = userEvent.setup()
+    await user.type(screen.getByPlaceholderText(/computer science/i), 'Biology')
+    await user.selectOptions(document.getElementById('year-select')!, 'Sophomore')
+    await user.click(screen.getByRole('button', { name: /continue/i }))
+    // Step 2 (CoursesForm)
+    await waitFor(() => expect(screen.queryByText('Tell us about yourself')).not.toBeInTheDocument())
+    await user.click(screen.getByRole('button', { name: /continue/i }))
+    // Step 3 (WorkHours)
+    await waitFor(() => screen.getByRole('button', { name: /continue/i }))
+    await user.click(screen.getByRole('button', { name: /continue/i }))
+    // Step 4 (Preferences)
+    await waitFor(() => expect(screen.getByText('Productivity Preferences')).toBeInTheDocument())
+    await user.click(screen.getByRole('button', { name: /continue/i }))
+    // Step 5 (Calendar)
+    await waitFor(() => expect(screen.getByRole('button', { name: /finish/i })).toBeInTheDocument())
+    return user
+  }
+
+  it('shows "Connect" button on Step 4 when calendar is not connected', async () => {
+    setup(false)
+    await advanceToStep4()
+    expect(screen.getByRole('button', { name: /^connect$/i })).toBeInTheDocument()
+    expect(screen.queryByText('Connected')).not.toBeInTheDocument()
+  })
+
+  it('shows "Connected" indicator on Step 4 when calendar is already connected', async () => {
+    setup(true)
+    await advanceToStep4()
+    expect(screen.getByText('Connected')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^connect$/i })).not.toBeInTheDocument()
+  })
+
+  it('calls initiateGoogleCalendarOAuth when "Connect" is clicked on Step 4', async () => {
+    const { mockCalendarAction } = setup(false)
+    const user = await advanceToStep4()
+
+    await user.click(screen.getByRole('button', { name: /^connect$/i }))
+
+    await waitFor(() => expect(mockCalendarAction).toHaveBeenCalledWith({}))
   })
 })

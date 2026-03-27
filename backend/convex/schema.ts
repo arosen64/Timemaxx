@@ -6,6 +6,21 @@ import { taskTypeValidator } from "./lib/taskValidators";
 export default defineSchema({
   ...authTables,
 
+  // Stores encrypted Google Calendar OAuth tokens per user
+  calendarTokens: defineTable({
+    userId: v.id("users"),
+    accessToken: v.string(),
+    refreshToken: v.string(),
+    expiresAt: v.number(),
+  }).index("by_userId", ["userId"]),
+
+  // Short-lived state tokens used to identify users during the OAuth callback
+  calendarOAuthStates: defineTable({
+    userId: v.id("users"),
+    state: v.string(),
+    expiresAt: v.number(),
+  }).index("by_state", ["state"]),
+
   // Users table
   users: defineTable({
     // Auth fields
@@ -71,9 +86,12 @@ export default defineSchema({
     description: v.string(),
     taskType: taskTypeValidator,
     timeEstimate: v.optional(v.number()),
+    estimateFeedbackRating: v.optional(v.union(v.literal("up"), v.literal("down"))),
+    correctedEstimateMinutes: v.optional(v.number()),
+    estimateFeedbackSubmittedAt: v.optional(v.number()),
     dueDate: v.number(),
     createdAt: v.number(),
-    extractedFrom: v.optional(v.id("syllabi")),
+    courseId: v.optional(v.id("userCourses")),
   })
     .index("by_userId", ["userId"])
     .index("by_userId_createdAt", ["userId", "createdAt"]),
@@ -81,7 +99,7 @@ export default defineSchema({
   // Syllabi table — tracks uploaded syllabus files and their processing status
   syllabi: defineTable({
     userId: v.id("users"),
-    fileName: v.string(),
+    fileContents: v.string(),
     courseId: v.optional(v.id("userCourses")),
     status: v.union(
       v.literal("pending"),
