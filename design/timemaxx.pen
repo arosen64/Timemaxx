@@ -6,7 +6,7 @@
       "id": "OEz3F",
       "x": 0,
       "y": 0,
-      "name": "Landing \u2013 Login",
+      "name": "Landing – Login",
       "width": 1440,
       "height": 900,
       "fill": "#FFFFFF",
@@ -280,7 +280,7 @@
       "id": "n4C6P",
       "x": 1520,
       "y": 0,
-      "name": "Onboarding \u2013 Survey",
+      "name": "Onboarding – Survey",
       "width": 1440,
       "height": 900,
       "fill": "#F5F7FA",
@@ -784,7 +784,7 @@
                       "id": "QXyDx",
                       "name": "headerSub",
                       "fill": "#4E6A8C",
-                      "content": "Thursday, February 26 \u00b7 3 tasks due this week",
+                      "content": "Thursday, February 26 · 3 tasks due this week",
                       "fontFamily": "Inter",
                       "fontSize": 14,
                       "fontWeight": "normal"
@@ -980,7 +980,7 @@
                           "content": "Calculus Problem Set 5"
                         },
                         "ks9wy": {
-                          "content": "Due tomorrow \u00b7 ~2.5 hrs estimated",
+                          "content": "Due tomorrow · ~2.5 hrs estimated",
                           "y": 22
                         },
                         "fwllh": {
@@ -1020,7 +1020,7 @@
                           "content": "History Essay: Industrial Revolution"
                         },
                         "ks9wy": {
-                          "content": "Due in 3 days \u00b7 ~4 hrs estimated",
+                          "content": "Due in 3 days · ~4 hrs estimated",
                           "y": 22
                         },
                         "fwllh": {
@@ -1066,7 +1066,7 @@
                           "content": "Chemistry Lab Report"
                         },
                         "ks9wy": {
-                          "content": "Due in 5 days \u00b7 ~3 hrs estimated",
+                          "content": "Due in 5 days · ~3 hrs estimated",
                           "y": 22
                         },
                         "fwllh": {
@@ -1118,7 +1118,7 @@
                       "y": 36,
                       "descendants": {
                         "5gvFR": {
-                          "content": "9:00 AM \u2013 10:30 AM",
+                          "content": "9:00 AM – 10:30 AM",
                           "x": 18,
                           "y": 16
                         },
@@ -1128,7 +1128,7 @@
                           "y": 35
                         },
                         "HkeGx": {
-                          "content": "1.5 hrs \u00b7 Focus block",
+                          "content": "1.5 hrs · Focus block",
                           "x": 18,
                           "y": 58
                         }
@@ -1145,7 +1145,7 @@
                       "y": 141,
                       "descendants": {
                         "ephls": {
-                          "content": "2:00 PM \u2013 3:00 PM",
+                          "content": "2:00 PM – 3:00 PM",
                           "x": 18,
                           "y": 16
                         },
@@ -1155,7 +1155,7 @@
                           "y": 35
                         },
                         "G8o9F": {
-                          "content": "1 hr \u00b7 Focus block",
+                          "content": "1 hr · Focus block",
                           "x": 18,
                           "y": 58
                         }
@@ -1172,7 +1172,7 @@
                       "y": 246,
                       "descendants": {
                         "ephls": {
-                          "content": "6:00 PM \u2013 7:00 PM",
+                          "content": "6:00 PM – 7:00 PM",
                           "x": 18,
                           "y": 16
                         },
@@ -1182,7 +1182,7 @@
                           "y": 35
                         },
                         "G8o9F": {
-                          "content": "1 hr \u00b7 Focus block",
+                          "content": "1 hr · Focus block",
                           "x": 18,
                           "y": 58
                         }
@@ -1221,7 +1221,7 @@
       "id": "5HNBG",
       "x": 4560,
       "y": 0,
-      "name": "Dashboard \u2013 Add Task",
+      "name": "Dashboard – Add Task",
       "width": 1440,
       "height": 900,
       "fill": "#F5F7FA",
@@ -1372,7 +1372,7 @@
                       "id": "UtfBW",
                       "name": "headerSub",
                       "fill": "#4E6A8C",
-                      "content": "Thursday, February 26 \u00b7 3 tasks due this week",
+                      "content": "Thursday, February 26 · 3 tasks due this week",
                       "fontFamily": "Inter",
                       "fontSize": 14,
                       "fontWeight": "normal"
@@ -1568,7 +1568,7 @@
                           "content": "Calculus Problem Set 5"
                         },
                         "ks9wy": {
-                          "content": "Due tomorrow \u00b7 ~2.5 hrs estimated",
+                          "content": "Due tomorrow · ~2.5 hrs estimated",
                           "y": 22
                         },
                         "fwllh": {
@@ -1608,7 +1608,7 @@
                           "content": "History Essay: Industrial Revolution"
                         },
                         "ks9wy": {
-                          "content": "Due in 3 days \u00b7 ~4 hrs estimated",
+                          "content": "Due in 3 days · ~4 hrs estimated",
                           "y": 22
                         },
                         "fwllh": {
@@ -1654,7 +1654,7 @@
                           "content": "Chemistry Lab Report"
                         },
                         "ks9wy": {
-                          "content": "Due in 5 days \u00b7 ~3 hrs estimated",
+                          "content": "Due in 5 days · ~3 hrs estimated",
                           "y": 22
                         },
                         "fwllh": {
@@ -1706,7 +1706,7 @@
                       "y": 36,
                       "descendants": {
                         "5gvFR": {
-                          "content": "9:00 AM \u2013 10:30 AM",
+                          "content": "9:00 AM – 10:30 AM",
                           "x": 18,
                           "y": 16
                         },
@@ -1716,7 +1716,7 @@
                           "y": 35
                         },
                         "HkeGx": {
-                          "content": "1.5 hrs \u00b7 Focus block",
+                          "content": "1.5 hrs · Focus block",
                           "x": 18,
                           "y": 58
                         }
@@ -1733,7 +1733,7 @@
                       "y": 141,
                       "descendants": {
                         "ephls": {
-                          "content": "2:00 PM \u2013 3:00 PM",
+                          "content": "2:00 PM – 3:00 PM",
                           "x": 18,
                           "y": 16
                         },
@@ -1743,7 +1743,7 @@
                           "y": 35
                         },
                         "G8o9F": {
-                          "content": "1 hr \u00b7 Focus block",
+                          "content": "1 hr · Focus block",
                           "x": 18,
                           "y": 58
                         }
@@ -1760,7 +1760,7 @@
                       "y": 246,
                       "descendants": {
                         "ephls": {
-                          "content": "6:00 PM \u2013 7:00 PM",
+                          "content": "6:00 PM – 7:00 PM",
                           "x": 18,
                           "y": 16
                         },
@@ -1770,7 +1770,7 @@
                           "y": 35
                         },
                         "G8o9F": {
-                          "content": "1 hr \u00b7 Focus block",
+                          "content": "1 hr · Focus block",
                           "x": 18,
                           "y": 58
                         }
@@ -1865,7 +1865,7 @@
                   "id": "0AFmk",
                   "name": "closeBtnIcon",
                   "fill": "#8FA6C2",
-                  "content": "\u00d7",
+                  "content": "×",
                   "fontFamily": "Inter",
                   "fontSize": 18,
                   "fontWeight": "normal"
@@ -2613,9 +2613,9 @@
       "id": "l5Xts",
       "x": 0,
       "y": 1200,
-      "name": "\u2699 Design System",
+      "name": "⚙ Design System",
       "width": 2400,
-      "height": 1800,
+      "height": 2200,
       "fill": "#1A1A2E",
       "layout": "none",
       "children": [
@@ -2638,7 +2638,7 @@
           "y": 0,
           "name": "dsSub",
           "fill": "#68ACE5",
-          "content": "Colors \u00b7 Typography \u00b7 Components",
+          "content": "Colors · Typography · Components",
           "fontFamily": "Inter",
           "fontSize": 14,
           "fontWeight": "normal"
@@ -2923,7 +2923,7 @@
               "id": "1yfev",
               "name": "typoH1",
               "fill": "#FFFFFF",
-              "content": "Page Heading \u2014 Space Grotesk 28 Bold",
+              "content": "Page Heading — Space Grotesk 28 Bold",
               "fontFamily": "Space Grotesk",
               "fontSize": 28,
               "fontWeight": "700"
@@ -2933,7 +2933,7 @@
               "id": "I88Fa",
               "name": "typoH2",
               "fill": "#FFFFFF",
-              "content": "Section Heading \u2014 Space Grotesk 18 SemiBold",
+              "content": "Section Heading — Space Grotesk 18 SemiBold",
               "fontFamily": "Space Grotesk",
               "fontSize": 18,
               "fontWeight": "600"
@@ -2943,7 +2943,7 @@
               "id": "8xJkR",
               "name": "typoBody",
               "fill": "#68ACE5",
-              "content": "Body text \u2014 Inter 14 Regular. Used for descriptions and meta information.",
+              "content": "Body text — Inter 14 Regular. Used for descriptions and meta information.",
               "fontFamily": "Inter",
               "fontSize": 14,
               "fontWeight": "normal"
@@ -2953,7 +2953,7 @@
               "id": "oNAps",
               "name": "typoSm",
               "fill": "#8FA6C2",
-              "content": "Small / Label \u2014 Inter 12 SemiBold. Used for card labels and badges.",
+              "content": "Small / Label — Inter 12 SemiBold. Used for card labels and badges.",
               "fontFamily": "Inter",
               "fontSize": 12,
               "fontWeight": "600"
@@ -3394,7 +3394,7 @@
                   "content": "Calculus Problem Set 5"
                 },
                 "ks9wy": {
-                  "content": "Due tomorrow \u00b7 ~2.5 hrs estimated",
+                  "content": "Due tomorrow · ~2.5 hrs estimated",
                   "y": 22
                 },
                 "fwllh": {
@@ -3512,7 +3512,7 @@
               "y": 0,
               "descendants": {
                 "5gvFR": {
-                  "content": "9:00 AM \u2013 10:30 AM",
+                  "content": "9:00 AM – 10:30 AM",
                   "x": 18,
                   "y": 16
                 },
@@ -3522,7 +3522,7 @@
                   "y": 35
                 },
                 "HkeGx": {
-                  "content": "1.5 hrs \u00b7 Focus block",
+                  "content": "1.5 hrs · Focus block",
                   "x": 18,
                   "y": 58
                 }
@@ -3539,7 +3539,7 @@
               "y": 0,
               "descendants": {
                 "ephls": {
-                  "content": "2:00 PM \u2013 3:00 PM",
+                  "content": "2:00 PM – 3:00 PM",
                   "x": 18,
                   "y": 16
                 },
@@ -3549,7 +3549,7 @@
                   "y": 35
                 },
                 "G8o9F": {
-                  "content": "1 hr \u00b7 Focus block",
+                  "content": "1 hr · Focus block",
                   "x": 18,
                   "y": 58
                 }
@@ -3799,6 +3799,45 @@
               "y": 21
             }
           }
+        },
+        {
+          "type": "text",
+          "id": "LXV53",
+          "x": 60,
+          "y": 1540,
+          "name": "classCardsLabel",
+          "fill": "#FFFFFF",
+          "content": "Class Cards",
+          "fontFamily": "Space Grotesk",
+          "fontSize": 13,
+          "fontWeight": "600"
+        },
+        {
+          "id": "xQaty",
+          "type": "ref",
+          "ref": "5mAcQ",
+          "name": "dsCardNS",
+          "x": 60,
+          "y": 1564,
+          "width": 280
+        },
+        {
+          "id": "BEagJ",
+          "type": "ref",
+          "ref": "9dQt0",
+          "name": "dsCardHS",
+          "x": 356,
+          "y": 1564,
+          "width": 280
+        },
+        {
+          "id": "GDTXK",
+          "type": "ref",
+          "ref": "ik6t3",
+          "name": "dsCardPast",
+          "x": 652,
+          "y": 1564,
+          "width": 280
         }
       ]
     },
@@ -4155,7 +4194,7 @@
               "id": "WXZeW",
               "name": "placeholder",
               "fill": "$--light-muted",
-              "content": "Enter value\u2026",
+              "content": "Enter value…",
               "fontFamily": "Inter",
               "fontSize": 14,
               "fontWeight": "normal"
@@ -4353,7 +4392,7 @@
               "id": "ks9wy",
               "name": "meta",
               "fill": "$--muted-foreground",
-              "content": "Due tomorrow \u00b7 ~2.5 hrs estimated",
+              "content": "Due tomorrow · ~2.5 hrs estimated",
               "fontFamily": "Inter",
               "fontSize": 12,
               "fontWeight": "normal"
@@ -4530,7 +4569,7 @@
           "id": "5gvFR",
           "name": "time",
           "fill": "$--info",
-          "content": "9:00 AM \u2013 10:30 AM",
+          "content": "9:00 AM – 10:30 AM",
           "fontFamily": "Inter",
           "fontSize": 11,
           "fontWeight": "600"
@@ -4550,7 +4589,7 @@
           "id": "HkeGx",
           "name": "duration",
           "fill": "$--info",
-          "content": "1.5 hrs \u00b7 Focus block",
+          "content": "1.5 hrs · Focus block",
           "fontFamily": "Inter",
           "fontSize": 12,
           "fontWeight": "normal"
@@ -4583,7 +4622,7 @@
           "id": "ephls",
           "name": "time",
           "fill": "$--muted-foreground",
-          "content": "2:00 PM \u2013 3:00 PM",
+          "content": "2:00 PM – 3:00 PM",
           "fontFamily": "Inter",
           "fontSize": 11,
           "fontWeight": "600"
@@ -4603,7 +4642,7 @@
           "id": "G8o9F",
           "name": "duration",
           "fill": "$--muted-foreground",
-          "content": "1 hr \u00b7 Focus block",
+          "content": "1 hr · Focus block",
           "fontFamily": "Inter",
           "fontSize": 12,
           "fontWeight": "normal"
@@ -4928,7 +4967,7 @@
       "id": "nYr17",
       "x": 1520,
       "y": 3080,
-      "name": "Onboarding \u2013 Work Hours",
+      "name": "Onboarding – Work Hours",
       "width": 1440,
       "height": 900,
       "fill": "$--background",
@@ -5641,7 +5680,7 @@
                       "y": 0,
                       "descendants": {
                         "zZ3E7": {
-                          "content": "\u2190 Back",
+                          "content": "← Back",
                           "x": 24,
                           "y": 15
                         }
@@ -5678,7 +5717,7 @@
       "id": "3SIDN",
       "x": 3040,
       "y": 3080,
-      "name": "Onboarding \u2013 Preferences",
+      "name": "Onboarding – Preferences",
       "width": 1440,
       "height": 900,
       "fill": "$--background",
@@ -5809,7 +5848,7 @@
                   "fill": "$--muted-foreground",
                   "textGrowth": "fixed-width",
                   "width": "fill_container",
-                  "content": "Select everything that applies \u2014 this helps us schedule smarter.",
+                  "content": "Select everything that applies — this helps us schedule smarter.",
                   "lineHeight": 1.5,
                   "fontFamily": "Inter",
                   "fontSize": 14,
@@ -5827,7 +5866,7 @@
                       "type": "text",
                       "id": "PNbmH",
                       "fill": "$--primary",
-                      "content": "\ud83d\udd50 Time of Day",
+                      "content": "🕐 Time of Day",
                       "fontFamily": "Space Grotesk",
                       "fontSize": 13,
                       "fontWeight": "600"
@@ -5878,7 +5917,7 @@
                                   "type": "text",
                                   "id": "aMdJO",
                                   "fill": "$--muted-foreground",
-                                  "content": "Early Morning (5\u20138am)",
+                                  "content": "Early Morning (5–8am)",
                                   "fontFamily": "Inter",
                                   "fontSize": 13,
                                   "fontWeight": "normal"
@@ -5900,7 +5939,7 @@
                                   "type": "text",
                                   "id": "2HRdj",
                                   "fill": "$--primary-foreground",
-                                  "content": "Morning (8\u201311am)",
+                                  "content": "Morning (8–11am)",
                                   "fontFamily": "Inter",
                                   "fontSize": 13,
                                   "fontWeight": "normal"
@@ -5927,7 +5966,7 @@
                                   "type": "text",
                                   "id": "IuD8a",
                                   "fill": "$--muted-foreground",
-                                  "content": "Midday (11am\u20132pm)",
+                                  "content": "Midday (11am–2pm)",
                                   "fontFamily": "Inter",
                                   "fontSize": 13,
                                   "fontWeight": "normal"
@@ -5954,7 +5993,7 @@
                                   "type": "text",
                                   "id": "PcQjS",
                                   "fill": "$--muted-foreground",
-                                  "content": "Afternoon (2\u20135pm)",
+                                  "content": "Afternoon (2–5pm)",
                                   "fontFamily": "Inter",
                                   "fontSize": 13,
                                   "fontWeight": "normal"
@@ -5985,7 +6024,7 @@
                                   "type": "text",
                                   "id": "s6tu2",
                                   "fill": "$--primary-foreground",
-                                  "content": "Evening (5\u20138pm)",
+                                  "content": "Evening (5–8pm)",
                                   "fontFamily": "Inter",
                                   "fontSize": 13,
                                   "fontWeight": "normal"
@@ -6012,7 +6051,7 @@
                                   "type": "text",
                                   "id": "ecUfD",
                                   "fill": "$--muted-foreground",
-                                  "content": "Night (8\u201311pm)",
+                                  "content": "Night (8–11pm)",
                                   "fontFamily": "Inter",
                                   "fontSize": 13,
                                   "fontWeight": "normal"
@@ -6092,7 +6131,7 @@
                       "type": "text",
                       "id": "POKIF",
                       "fill": "$--primary",
-                      "content": "\ud83d\udcc5 Day of Week",
+                      "content": "📅 Day of Week",
                       "fontFamily": "Space Grotesk",
                       "fontSize": 13,
                       "fontWeight": "600"
@@ -6357,7 +6396,7 @@
                       "type": "text",
                       "id": "2kZuQ",
                       "fill": "$--primary",
-                      "content": "\u26a1 Work Session Style",
+                      "content": "⚡ Work Session Style",
                       "fontFamily": "Space Grotesk",
                       "fontSize": 13,
                       "fontWeight": "600"
@@ -6403,7 +6442,7 @@
                                   "type": "text",
                                   "id": "ZrsxP",
                                   "fill": "$--primary-foreground",
-                                  "content": "Short bursts (25\u201330 min)",
+                                  "content": "Short bursts (25–30 min)",
                                   "fontFamily": "Inter",
                                   "fontSize": 13,
                                   "fontWeight": "normal"
@@ -6430,7 +6469,7 @@
                                   "type": "text",
                                   "id": "kb8rn",
                                   "fill": "$--muted-foreground",
-                                  "content": "Medium sessions (45\u201360 min)",
+                                  "content": "Medium sessions (45–60 min)",
                                   "fontFamily": "Inter",
                                   "fontSize": 13,
                                   "fontWeight": "normal"
@@ -6546,7 +6585,7 @@
                       "type": "text",
                       "id": "jwnju",
                       "fill": "$--primary",
-                      "content": "\u23f0 Deadline Behavior",
+                      "content": "⏰ Deadline Behavior",
                       "fontFamily": "Space Grotesk",
                       "fontSize": 13,
                       "fontWeight": "600"
@@ -6661,7 +6700,7 @@
                       "type": "text",
                       "id": "tG9Mu",
                       "fill": "$--primary",
-                      "content": "\ud83d\udd04 Break Preferences",
+                      "content": "🔄 Break Preferences",
                       "fontFamily": "Space Grotesk",
                       "fontSize": 13,
                       "fontWeight": "600"
@@ -6712,7 +6751,7 @@
                                   "type": "text",
                                   "id": "NCUq0",
                                   "fill": "$--muted-foreground",
-                                  "content": "Frequent short breaks (every 25\u201330 min)",
+                                  "content": "Frequent short breaks (every 25–30 min)",
                                   "fontFamily": "Inter",
                                   "fontSize": 13,
                                   "fontWeight": "normal"
@@ -6822,7 +6861,7 @@
                       "type": "text",
                       "id": "KtfSS",
                       "fill": "$--primary",
-                      "content": "\ud83d\udcda Subject/Task Switching",
+                      "content": "📚 Subject/Task Switching",
                       "fontFamily": "Space Grotesk",
                       "fontSize": 13,
                       "fontWeight": "600"
@@ -7029,7 +7068,7 @@
                       "y": 0,
                       "descendants": {
                         "zZ3E7": {
-                          "content": "\u2190 Back",
+                          "content": "← Back",
                           "x": 24,
                           "y": 15
                         }
@@ -7285,7 +7324,7 @@
               "id": "6x7s6",
               "name": "fileHint",
               "fill": "$--light-muted",
-              "content": "Supports PDF \u00b7 Max 10 MB",
+              "content": "Supports PDF · Max 10 MB",
               "fontFamily": "Inter",
               "fontSize": 11,
               "fontWeight": "normal"
@@ -7299,7 +7338,7 @@
       "id": "REKca",
       "x": 3040,
       "y": 0,
-      "name": "Onboarding \u2013 Your Classes",
+      "name": "Onboarding – Your Classes",
       "width": 1440,
       "height": 900,
       "fill": "$--background",
@@ -7702,7 +7741,7 @@
                       "type": "text",
                       "id": "lfrPG",
                       "fill": "$--light-muted",
-                      "content": "Type to search courses\u2026",
+                      "content": "Type to search courses…",
                       "fontFamily": "Inter",
                       "fontSize": 13,
                       "fontWeight": "normal"
@@ -7738,7 +7777,7 @@
       "id": "ectTo",
       "x": 3040,
       "y": 1500,
-      "name": "Classes \u2013 Syllabus Upload",
+      "name": "Classes – Syllabus Upload",
       "width": 1440,
       "height": 900,
       "fill": "$--background",
@@ -7796,7 +7835,7 @@
                       "id": "ibFrC",
                       "name": "closeTxt",
                       "fill": "$--light-muted",
-                      "content": "\u00d7",
+                      "content": "×",
                       "fontFamily": "Inter",
                       "fontSize": 18,
                       "fontWeight": "normal"
@@ -7940,7 +7979,7 @@
                   "id": "HPrnn",
                   "name": "hintTxt",
                   "fill": "$--light-muted",
-                  "content": "PDF or .txt \u00b7 max 10 MB",
+                  "content": "PDF or .txt · max 10 MB",
                   "fontFamily": "Inter",
                   "fontSize": 12,
                   "fontWeight": "normal"
@@ -7998,7 +8037,7 @@
       "id": "nxWM7",
       "x": 4560,
       "y": 3080,
-      "name": "Onboarding \u2013 Calendar",
+      "name": "Onboarding – Calendar",
       "width": 1440,
       "height": 900,
       "fill": "$--background",
@@ -8271,7 +8310,7 @@
                       "y": 0,
                       "descendants": {
                         "zZ3E7": {
-                          "content": "\u2190 Back",
+                          "content": "← Back",
                           "x": 24,
                           "y": 15
                         }
@@ -8306,7 +8345,7 @@
       "id": "O9zz1",
       "x": 6080,
       "y": 3080,
-      "name": "Onboarding \u2013 Academic Profile",
+      "name": "Onboarding – Academic Profile",
       "width": 1440,
       "height": 900,
       "fill": "$--background",
@@ -8492,7 +8531,7 @@
                           "fill": "$--light-muted",
                           "textGrowth": "fixed-width",
                           "width": 400,
-                          "content": "Tip: Rate your past courses' difficulty (1\u20135) in the previous step for a more accurate profile.",
+                          "content": "Tip: Rate your past courses' difficulty (1–5) in the previous step for a more accurate profile.",
                           "fontFamily": "Inter",
                           "fontSize": 12,
                           "fontWeight": "normal"
@@ -8596,7 +8635,7 @@
                               "fill": "$--primary",
                               "textGrowth": "fixed-width",
                               "width": "fill_container",
-                              "content": "Strong performance in quantitative courses \u2014 consistent high grades in Math and CS suggest analytical aptitude.",
+                              "content": "Strong performance in quantitative courses — consistent high grades in Math and CS suggest analytical aptitude.",
                               "fontFamily": "Inter",
                               "fontSize": 13,
                               "fontWeight": "normal"
@@ -8643,7 +8682,7 @@
                               "fill": "$--primary",
                               "textGrowth": "fixed-width",
                               "width": "fill_container",
-                              "content": "Writing-intensive courses show lower grades \u2014 consider office hours or writing center support.",
+                              "content": "Writing-intensive courses show lower grades — consider office hours or writing center support.",
                               "fontFamily": "Inter",
                               "fontSize": 13,
                               "fontWeight": "normal"
@@ -8690,7 +8729,7 @@
                               "fill": "$--primary",
                               "textGrowth": "fixed-width",
                               "width": "fill_container",
-                              "content": "GPA trending upward \u2014 your most recent semester shows improvement across multiple subjects.",
+                              "content": "GPA trending upward — your most recent semester shows improvement across multiple subjects.",
                               "fontFamily": "Inter",
                               "fontSize": 13,
                               "fontWeight": "normal"
@@ -8813,7 +8852,7 @@
                       "y": 0,
                       "descendants": {
                         "zZ3E7": {
-                          "content": "\u2190 Back",
+                          "content": "← Back",
                           "x": 24,
                           "y": 15
                         }
@@ -9147,7 +9186,7 @@
               "id": "En9Pb",
               "name": "removeBtn",
               "fill": "$--light-muted",
-              "content": "\u00d7",
+              "content": "×",
               "fontFamily": "Inter",
               "fontSize": 18,
               "fontWeight": "normal"
@@ -9253,7 +9292,7 @@
       "id": "eQ4FL",
       "x": 9292,
       "y": -9,
-      "name": "Preferences \u2013 Editing",
+      "name": "Preferences – Editing",
       "width": 1440,
       "fill": "$--background",
       "children": [
@@ -9788,7 +9827,7 @@
                                       "type": "text",
                                       "id": "KOldb",
                                       "fill": "$--light-muted",
-                                      "content": "\u00d7",
+                                      "content": "×",
                                       "fontFamily": "Inter",
                                       "fontSize": 16,
                                       "fontWeight": "normal"
@@ -10736,7 +10775,7 @@
                           "fill": "$--muted-foreground",
                           "textGrowth": "fixed-width",
                           "width": "fill_container",
-                          "content": "Select everything that applies \u2014 this helps us schedule smarter.",
+                          "content": "Select everything that applies — this helps us schedule smarter.",
                           "lineHeight": 1.5,
                           "fontFamily": "Inter",
                           "fontSize": 14,
@@ -10754,7 +10793,7 @@
                               "type": "text",
                               "id": "dsZNB",
                               "fill": "$--primary",
-                              "content": "\ud83d\udd50 Time of Day",
+                              "content": "🕐 Time of Day",
                               "fontFamily": "Space Grotesk",
                               "fontSize": 13,
                               "fontWeight": "600"
@@ -10805,7 +10844,7 @@
                                           "type": "text",
                                           "id": "PqRZM",
                                           "fill": "$--muted-foreground",
-                                          "content": "Early Morning (5\u20138am)",
+                                          "content": "Early Morning (5–8am)",
                                           "fontFamily": "Inter",
                                           "fontSize": 13,
                                           "fontWeight": "normal"
@@ -10827,7 +10866,7 @@
                                           "type": "text",
                                           "id": "nJnRz",
                                           "fill": "$--primary-foreground",
-                                          "content": "Morning (8\u201311am)",
+                                          "content": "Morning (8–11am)",
                                           "fontFamily": "Inter",
                                           "fontSize": 13,
                                           "fontWeight": "normal"
@@ -10854,7 +10893,7 @@
                                           "type": "text",
                                           "id": "vdKt3",
                                           "fill": "$--muted-foreground",
-                                          "content": "Midday (11am\u20132pm)",
+                                          "content": "Midday (11am–2pm)",
                                           "fontFamily": "Inter",
                                           "fontSize": 13,
                                           "fontWeight": "normal"
@@ -10881,7 +10920,7 @@
                                           "type": "text",
                                           "id": "E0b7K",
                                           "fill": "$--muted-foreground",
-                                          "content": "Afternoon (2\u20135pm)",
+                                          "content": "Afternoon (2–5pm)",
                                           "fontFamily": "Inter",
                                           "fontSize": 13,
                                           "fontWeight": "normal"
@@ -10912,7 +10951,7 @@
                                           "type": "text",
                                           "id": "THBJL",
                                           "fill": "$--primary-foreground",
-                                          "content": "Evening (5\u20138pm)",
+                                          "content": "Evening (5–8pm)",
                                           "fontFamily": "Inter",
                                           "fontSize": 13,
                                           "fontWeight": "normal"
@@ -10939,7 +10978,7 @@
                                           "type": "text",
                                           "id": "WTFVB",
                                           "fill": "$--muted-foreground",
-                                          "content": "Night (8\u201311pm)",
+                                          "content": "Night (8–11pm)",
                                           "fontFamily": "Inter",
                                           "fontSize": 13,
                                           "fontWeight": "normal"
@@ -11019,7 +11058,7 @@
                               "type": "text",
                               "id": "DxyqR",
                               "fill": "$--primary",
-                              "content": "\ud83d\udcc5 Day of Week",
+                              "content": "📅 Day of Week",
                               "fontFamily": "Space Grotesk",
                               "fontSize": 13,
                               "fontWeight": "600"
@@ -11284,7 +11323,7 @@
                               "type": "text",
                               "id": "CcHyN",
                               "fill": "$--primary",
-                              "content": "\u26a1 Work Session Style",
+                              "content": "⚡ Work Session Style",
                               "fontFamily": "Space Grotesk",
                               "fontSize": 13,
                               "fontWeight": "600"
@@ -11330,7 +11369,7 @@
                                           "type": "text",
                                           "id": "oxhVz",
                                           "fill": "$--primary-foreground",
-                                          "content": "Short bursts (25\u201330 min)",
+                                          "content": "Short bursts (25–30 min)",
                                           "fontFamily": "Inter",
                                           "fontSize": 13,
                                           "fontWeight": "normal"
@@ -11357,7 +11396,7 @@
                                           "type": "text",
                                           "id": "lx8j8",
                                           "fill": "$--muted-foreground",
-                                          "content": "Medium sessions (45\u201360 min)",
+                                          "content": "Medium sessions (45–60 min)",
                                           "fontFamily": "Inter",
                                           "fontSize": 13,
                                           "fontWeight": "normal"
@@ -11473,7 +11512,7 @@
                               "type": "text",
                               "id": "WkXnk",
                               "fill": "$--primary",
-                              "content": "\u23f0 Deadline Behavior",
+                              "content": "⏰ Deadline Behavior",
                               "fontFamily": "Space Grotesk",
                               "fontSize": 13,
                               "fontWeight": "600"
@@ -11588,7 +11627,7 @@
                               "type": "text",
                               "id": "ImdHD",
                               "fill": "$--primary",
-                              "content": "\ud83d\udd04 Break Preferences",
+                              "content": "🔄 Break Preferences",
                               "fontFamily": "Space Grotesk",
                               "fontSize": 13,
                               "fontWeight": "600"
@@ -11639,7 +11678,7 @@
                                           "type": "text",
                                           "id": "RA65V",
                                           "fill": "$--muted-foreground",
-                                          "content": "Frequent short breaks (every 25\u201330 min)",
+                                          "content": "Frequent short breaks (every 25–30 min)",
                                           "fontFamily": "Inter",
                                           "fontSize": 13,
                                           "fontWeight": "normal"
@@ -11749,7 +11788,7 @@
                               "type": "text",
                               "id": "mSxhd",
                               "fill": "$--primary",
-                              "content": "\ud83d\udcda Subject/Task Switching",
+                              "content": "📚 Subject/Task Switching",
                               "fontFamily": "Space Grotesk",
                               "fontSize": 13,
                               "fontWeight": "600"
@@ -11954,7 +11993,7 @@
       "id": "yfO48",
       "x": 11057,
       "y": -9,
-      "name": "Preferences \u2013 Default",
+      "name": "Preferences – Default",
       "width": 1440,
       "fill": "$--background",
       "children": [
@@ -12437,7 +12476,7 @@
                               "id": "yt0FR",
                               "name": "val5",
                               "fill": "$--primary",
-                              "content": "CS 374 \u2013 Algorithms, CHEM 232",
+                              "content": "CS 374 – Algorithms, CHEM 232",
                               "fontFamily": "Inter",
                               "fontSize": 14,
                               "fontWeight": "normal"
@@ -13211,7 +13250,7 @@
                               "id": "fUp4F",
                               "name": "row1label",
                               "fill": "$--primary",
-                              "content": "\ud83d\udd50 Time of Day",
+                              "content": "🕐 Time of Day",
                               "fontFamily": "Space Grotesk",
                               "fontSize": 13,
                               "fontWeight": "600"
@@ -13286,7 +13325,7 @@
                               "id": "k8shA",
                               "name": "row2label",
                               "fill": "$--primary",
-                              "content": "\ud83d\udcc5 Day of Week",
+                              "content": "📅 Day of Week",
                               "fontFamily": "Space Grotesk",
                               "fontSize": 13,
                               "fontWeight": "600"
@@ -13384,7 +13423,7 @@
                               "id": "qKdpt",
                               "name": "row3label",
                               "fill": "$--primary",
-                              "content": "\u26a1 Work Session Style",
+                              "content": "⚡ Work Session Style",
                               "fontFamily": "Space Grotesk",
                               "fontSize": 13,
                               "fontWeight": "600"
@@ -13436,7 +13475,7 @@
                               "id": "vrOKU",
                               "name": "row4label",
                               "fill": "$--primary",
-                              "content": "\u23f0 Deadline Behavior",
+                              "content": "⏰ Deadline Behavior",
                               "fontFamily": "Space Grotesk",
                               "fontSize": 13,
                               "fontWeight": "600"
@@ -13488,7 +13527,7 @@
                               "id": "crc5V",
                               "name": "row5label",
                               "fill": "$--primary",
-                              "content": "\ud83d\udd04 Break Preferences",
+                              "content": "🔄 Break Preferences",
                               "fontFamily": "Space Grotesk",
                               "fontSize": 13,
                               "fontWeight": "600"
@@ -13540,7 +13579,7 @@
                               "id": "HuZXv",
                               "name": "row6label",
                               "fill": "$--primary",
-                              "content": "\ud83d\udcda Subject/Task Switching",
+                              "content": "📚 Subject/Task Switching",
                               "fontFamily": "Space Grotesk",
                               "fontSize": 13,
                               "fontWeight": "600"
@@ -13771,7 +13810,7 @@
       "id": "ltG2L",
       "x": 1520,
       "y": 3080,
-      "name": "Onboarding \u2013 Work Hours",
+      "name": "Onboarding – Work Hours",
       "width": 1440,
       "height": 900,
       "fill": "$--background",
@@ -14531,7 +14570,9 @@
                       "y": 0,
                       "descendants": {
                         "zZ3E7": {
-                          "content": "\u2190 Back"
+                          "content": "← Back",
+                          "x": 24,
+                          "y": 15
                         }
                       }
                     },
@@ -14542,7 +14583,17 @@
                       "width": "fit_content",
                       "name": "nextBtn",
                       "x": 486,
-                      "y": 0
+                      "y": 0,
+                      "descendants": {
+                        "AkprM": {
+                          "x": 24,
+                          "y": 14.5
+                        },
+                        "TRgda": {
+                          "x": 98,
+                          "y": 16
+                        }
+                      }
                     }
                   ]
                 }
@@ -14557,7 +14608,7 @@
       "id": "mgLOQ",
       "x": 3040,
       "y": 3080,
-      "name": "Onboarding \u2013 Preferences",
+      "name": "Onboarding – Preferences",
       "width": 1440,
       "height": 900,
       "fill": "$--background",
@@ -14689,7 +14740,7 @@
                   "fill": "$--muted-foreground",
                   "textGrowth": "fixed-width",
                   "width": "fill_container",
-                  "content": "Select everything that applies \u2014 this helps us schedule smarter.",
+                  "content": "Select everything that applies — this helps us schedule smarter.",
                   "lineHeight": 1.5,
                   "fontFamily": "Inter",
                   "fontSize": 14,
@@ -14708,7 +14759,7 @@
                       "id": "KBHlD",
                       "name": "todTitle",
                       "fill": "$--primary",
-                      "content": "\ud83d\udd50 Time of Day",
+                      "content": "🕐 Time of Day",
                       "fontFamily": "Space Grotesk",
                       "fontSize": 13,
                       "fontWeight": "600"
@@ -14761,7 +14812,7 @@
                                   "id": "IZhIc",
                                   "name": "todC1t",
                                   "fill": "$--muted-foreground",
-                                  "content": "Early Morning (5\u20138am)",
+                                  "content": "Early Morning (5–8am)",
                                   "fontFamily": "Inter",
                                   "fontSize": 13,
                                   "fontWeight": "normal"
@@ -14789,7 +14840,7 @@
                                   "id": "QcopD",
                                   "name": "todC2t",
                                   "fill": "$--muted-foreground",
-                                  "content": "Morning (8\u201311am)",
+                                  "content": "Morning (8–11am)",
                                   "fontFamily": "Inter",
                                   "fontSize": 13,
                                   "fontWeight": "normal"
@@ -14817,7 +14868,7 @@
                                   "id": "VmxqD",
                                   "name": "todC3t",
                                   "fill": "$--muted-foreground",
-                                  "content": "Midday (11am\u20132pm)",
+                                  "content": "Midday (11am–2pm)",
                                   "fontFamily": "Inter",
                                   "fontSize": 13,
                                   "fontWeight": "normal"
@@ -14840,7 +14891,7 @@
                                   "id": "AlLVB",
                                   "name": "todC4t",
                                   "fill": "$--primary-foreground",
-                                  "content": "Afternoon (2\u20135pm)",
+                                  "content": "Afternoon (2–5pm)",
                                   "fontFamily": "Inter",
                                   "fontSize": 13,
                                   "fontWeight": "normal"
@@ -14877,7 +14928,7 @@
                                   "id": "HlT3a",
                                   "name": "todC5t",
                                   "fill": "$--muted-foreground",
-                                  "content": "Evening (5\u20138pm)",
+                                  "content": "Evening (5–8pm)",
                                   "fontFamily": "Inter",
                                   "fontSize": 13,
                                   "fontWeight": "normal"
@@ -14905,7 +14956,7 @@
                                   "id": "cWXNA",
                                   "name": "todC6t",
                                   "fill": "$--muted-foreground",
-                                  "content": "Night (8\u201311pm)",
+                                  "content": "Night (8–11pm)",
                                   "fontFamily": "Inter",
                                   "fontSize": 13,
                                   "fontWeight": "normal"
@@ -14988,7 +15039,7 @@
                       "id": "YSblU",
                       "name": "dowTitle",
                       "fill": "$--primary",
-                      "content": "\ud83d\udcc5 Day of Week",
+                      "content": "📅 Day of Week",
                       "fontFamily": "Space Grotesk",
                       "fontSize": 13,
                       "fontWeight": "600"
@@ -15268,7 +15319,7 @@
                       "id": "UhAeT",
                       "name": "stTitle",
                       "fill": "$--primary",
-                      "content": "\u26a1 Work Session Style",
+                      "content": "⚡ Work Session Style",
                       "fontFamily": "Space Grotesk",
                       "fontSize": 13,
                       "fontWeight": "600"
@@ -15321,7 +15372,7 @@
                                   "id": "HYfIk",
                                   "name": "stC1t",
                                   "fill": "$--muted-foreground",
-                                  "content": "Short bursts (25\u201330 min)",
+                                  "content": "Short bursts (25–30 min)",
                                   "fontFamily": "Inter",
                                   "fontSize": 13,
                                   "fontWeight": "normal"
@@ -15344,7 +15395,7 @@
                                   "id": "K4oZB",
                                   "name": "stC2t",
                                   "fill": "$--primary-foreground",
-                                  "content": "Medium sessions (45\u201360 min)",
+                                  "content": "Medium sessions (45–60 min)",
                                   "fontFamily": "Inter",
                                   "fontSize": 13,
                                   "fontWeight": "normal"
@@ -15464,7 +15515,7 @@
                       "id": "NYfyj",
                       "name": "dlTitle",
                       "fill": "$--primary",
-                      "content": "\u23f0 Deadline Behavior",
+                      "content": "⏰ Deadline Behavior",
                       "fontFamily": "Space Grotesk",
                       "fontSize": 13,
                       "fontWeight": "600"
@@ -15584,7 +15635,7 @@
                       "id": "lpgd5",
                       "name": "bpTitle",
                       "fill": "$--primary",
-                      "content": "\ud83d\udd04 Break Preferences",
+                      "content": "🔄 Break Preferences",
                       "fontFamily": "Space Grotesk",
                       "fontSize": 13,
                       "fontWeight": "600"
@@ -15637,7 +15688,7 @@
                                   "id": "odN86",
                                   "name": "bpC1t",
                                   "fill": "$--muted-foreground",
-                                  "content": "Frequent short breaks (every 25\u201330 min)",
+                                  "content": "Frequent short breaks (every 25–30 min)",
                                   "fontFamily": "Inter",
                                   "fontSize": 13,
                                   "fontWeight": "normal"
@@ -15751,7 +15802,7 @@
                       "id": "sHKMy",
                       "name": "swTitle",
                       "fill": "$--primary",
-                      "content": "\ud83d\udcda Subject/Task Switching",
+                      "content": "📚 Subject/Task Switching",
                       "fontFamily": "Space Grotesk",
                       "fontSize": 13,
                       "fontWeight": "600"
@@ -15964,7 +16015,9 @@
                       "y": 0,
                       "descendants": {
                         "zZ3E7": {
-                          "content": "\u2190 Back"
+                          "content": "← Back",
+                          "x": 24,
+                          "y": 15
                         }
                       }
                     },
@@ -15978,10 +16031,13 @@
                       "y": 0,
                       "descendants": {
                         "AkprM": {
-                          "content": "Finish"
+                          "content": "Finish",
+                          "x": 24,
+                          "y": 14.5
                         },
                         "TRgda": {
-                          "x": 75
+                          "x": 75,
+                          "y": 16
                         }
                       }
                     }
@@ -15998,7 +16054,7 @@
       "id": "4Wxmw",
       "x": 4580,
       "y": 3080,
-      "name": "Onboarding \u2013 Calendar",
+      "name": "Onboarding – Calendar",
       "width": 1440,
       "height": 900,
       "fill": "$--background",
@@ -16221,7 +16277,9 @@
                           "y": 0,
                           "descendants": {
                             "zZ3E7": {
-                              "content": "Connect"
+                              "content": "Connect",
+                              "x": 24,
+                              "y": 15
                             }
                           }
                         }
@@ -16247,7 +16305,9 @@
                       "y": 0,
                       "descendants": {
                         "zZ3E7": {
-                          "content": "\u2190 Back"
+                          "content": "← Back",
+                          "x": 24,
+                          "y": 15
                         }
                       }
                     },
@@ -16261,10 +16321,13 @@
                       "y": 0,
                       "descendants": {
                         "AkprM": {
-                          "content": "Finish"
+                          "content": "Finish",
+                          "x": 24,
+                          "y": 14.5
                         },
                         "TRgda": {
-                          "x": 75
+                          "x": 75,
+                          "y": 16
                         }
                       }
                     }
@@ -16281,7 +16344,7 @@
       "id": "4rneH",
       "x": 4580,
       "y": 4060,
-      "name": "Onboarding \u2013 Calendar (Connected)",
+      "name": "Onboarding – Calendar (Connected)",
       "width": 1440,
       "height": 900,
       "fill": "$--background",
@@ -16541,7 +16604,9 @@
                       "y": 0,
                       "descendants": {
                         "zZ3E7": {
-                          "content": "\u2190 Back"
+                          "content": "← Back",
+                          "x": 24,
+                          "y": 15
                         }
                       }
                     },
@@ -16555,10 +16620,13 @@
                       "y": 0,
                       "descendants": {
                         "AkprM": {
-                          "content": "Finish"
+                          "content": "Finish",
+                          "x": 24,
+                          "y": 14.5
                         },
                         "TRgda": {
-                          "x": 75
+                          "x": 75,
+                          "y": 16
                         }
                       }
                     }
@@ -16575,7 +16643,7 @@
       "id": "f3Dhq",
       "x": 3040,
       "y": 1500,
-      "name": "Classes \u2013 Syllabus Upload",
+      "name": "Classes – Syllabus Upload",
       "width": 1440,
       "height": 900,
       "fill": "$--background",
@@ -16633,7 +16701,7 @@
                       "id": "nNYhR",
                       "name": "closeBtnText",
                       "fill": "$--light-muted",
-                      "content": "\u00d7",
+                      "content": "×",
                       "fontFamily": "Inter",
                       "fontSize": 18,
                       "fontWeight": "normal"
@@ -16777,7 +16845,7 @@
                   "id": "1DYs7",
                   "name": "dropZoneHint",
                   "fill": "$--light-muted",
-                  "content": "PDF or .txt \u00b7 max 10 MB",
+                  "content": "PDF or .txt · max 10 MB",
                   "fontFamily": "Inter",
                   "fontSize": 12,
                   "fontWeight": "normal"
@@ -16802,7 +16870,8 @@
                   "descendants": {
                     "zZ3E7": {
                       "content": "Cancel",
-                      "x": 80
+                      "x": 80,
+                      "y": 15
                     }
                   }
                 },
@@ -16818,7 +16887,8 @@
                   "descendants": {
                     "vxzyR": {
                       "content": "Upload",
-                      "x": 79
+                      "x": 79,
+                      "y": 13
                     }
                   }
                 }
@@ -16869,7 +16939,7 @@
           "id": "i0Cfb",
           "name": "time",
           "fill": "$--info",
-          "content": "9:00 \u2013 9:30 AM",
+          "content": "9:00 – 9:30 AM",
           "fontFamily": "Inter",
           "fontSize": 10,
           "fontWeight": "normal"
@@ -16956,6 +17026,24 @@
           "x": 0,
           "y": 0,
           "descendants": {
+            "pM9zH": {
+              "width": "fill_container",
+              "height": "fit_content",
+              "x": 24,
+              "y": 32
+            },
+            "qwLOb": {
+              "width": "fit_content",
+              "height": "fit_content"
+            },
+            "qwLOb/6YpiG": {
+              "y": 4.5
+            },
+            "99Oq1": {
+              "width": "fill_container",
+              "height": "fit_content",
+              "y": 64
+            },
             "t2ejm": {
               "id": "QSKIL",
               "type": "ref",
@@ -16975,6 +17063,12 @@
                   "y": 13
                 }
               }
+            },
+            "dLWqu": {
+              "width": "fill_container"
+            },
+            "dLWqu/Xkhsc": {
+              "y": 13
             },
             "ipMWX": {
               "id": "iWrwj",
@@ -16996,8 +17090,30 @@
                 }
               }
             },
+            "78Cxh": {
+              "width": "fill_container"
+            },
+            "78Cxh/Xkhsc": {
+              "y": 13
+            },
             "jzFAO": {
-              "y": 832
+              "y": 832,
+              "width": "fit_content",
+              "height": "fit_content",
+              "x": 24
+            },
+            "lrM5h": {
+              "x": 9.5,
+              "y": 9.5
+            },
+            "LBXyg": {
+              "width": "fit_content",
+              "height": "fit_content",
+              "x": 46,
+              "y": 2
+            },
+            "AqSvO": {
+              "y": 19
             }
           }
         },
@@ -17081,7 +17197,7 @@
                       "id": "FrNJZ",
                       "name": "weekLabel",
                       "fill": "$--primary",
-                      "content": "Mon, Mar 24 \u2013 Sun, Mar 30",
+                      "content": "Mon, Mar 24 – Sun, Mar 30",
                       "fontFamily": "Inter",
                       "fontSize": 14,
                       "fontWeight": "500"
@@ -17126,10 +17242,14 @@
                   "y": 14,
                   "descendants": {
                     "hXb93": {
-                      "iconFontName": "calendar"
+                      "iconFontName": "calendar",
+                      "x": 20,
+                      "y": 14
                     },
                     "RxGN2": {
-                      "content": "Calendars"
+                      "content": "Calendars",
+                      "x": 44,
+                      "y": 13
                     }
                   }
                 }
@@ -17745,10 +17865,14 @@
                               "descendants": {
                                 "h9nsR": {
                                   "width": "fill_container",
-                                  "content": "Team Standup"
+                                  "content": "Team Standup",
+                                  "x": 6,
+                                  "y": 4
                                 },
                                 "i0Cfb": {
-                                  "content": "9:00 \u2013 10:00 AM"
+                                  "content": "9:00 – 10:00 AM",
+                                  "x": 6,
+                                  "y": 19
                                 }
                               }
                             }
@@ -17977,14 +18101,19 @@
               "y": 0,
               "descendants": {
                 "deTci": {
-                  "fill": "#4285F4"
+                  "fill": "#4285F4",
+                  "x": 16,
+                  "y": 17
                 },
                 "nbzkM": {
                   "width": "fill_container",
-                  "content": "My Calendar"
+                  "content": "My Calendar",
+                  "x": 36,
+                  "y": 13.5
                 },
                 "N8Nhr": {
-                  "x": 268
+                  "x": 268,
+                  "y": 12
                 }
               }
             },
@@ -17998,15 +18127,20 @@
               "y": 44,
               "descendants": {
                 "deTci": {
-                  "fill": "#0F9D58"
+                  "fill": "#0F9D58",
+                  "x": 16,
+                  "y": 17
                 },
                 "nbzkM": {
                   "width": "fill_container",
-                  "content": "Work"
+                  "content": "Work",
+                  "x": 36,
+                  "y": 13.5
                 },
                 "N8Nhr": {
                   "x": 268,
-                  "fill": "$--border"
+                  "fill": "$--border",
+                  "y": 12
                 },
                 "zrc0Y": {
                   "x": 2
@@ -18023,15 +18157,20 @@
               "y": 88,
               "descendants": {
                 "deTci": {
-                  "fill": "#F4B400"
+                  "fill": "#F4B400",
+                  "x": 16,
+                  "y": 17
                 },
                 "nbzkM": {
                   "width": "fill_container",
-                  "content": "Holidays in US"
+                  "content": "Holidays in US",
+                  "x": 36,
+                  "y": 13.5
                 },
                 "N8Nhr": {
                   "x": 268,
-                  "fill": "$--border"
+                  "fill": "$--border",
+                  "y": 12
                 },
                 "zrc0Y": {
                   "x": 2
@@ -18082,6 +18221,849 @@
                   "fontFamily": "Space Grotesk",
                   "fontSize": 14,
                   "fontWeight": "600"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "5mAcQ",
+      "x": 12800,
+      "y": 0,
+      "name": "ClassCard/Current/NoSyllabus",
+      "reusable": true,
+      "width": 280,
+      "fill": "$--card",
+      "cornerRadius": "$--radius-l",
+      "stroke": {
+        "align": "inside",
+        "thickness": 1,
+        "fill": "$--border"
+      },
+      "layout": "vertical",
+      "gap": 16,
+      "padding": 24,
+      "children": [
+        {
+          "type": "frame",
+          "id": "4cJVg",
+          "name": "headerRow",
+          "width": "fill_container",
+          "justifyContent": "space_between",
+          "children": [
+            {
+              "type": "frame",
+              "id": "ErIoN",
+              "name": "cardInfo",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 2,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "iOblH",
+                  "name": "courseCode",
+                  "fill": "$--muted-foreground",
+                  "content": "CS 101",
+                  "fontFamily": "Space Grotesk",
+                  "fontSize": 11,
+                  "fontWeight": "600",
+                  "letterSpacing": 0.5
+                },
+                {
+                  "type": "text",
+                  "id": "rsPJ3",
+                  "name": "title",
+                  "fill": "$--primary",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Intro to Programming",
+                  "fontFamily": "Space Grotesk",
+                  "fontSize": 15,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "text",
+                  "id": "EROXE",
+                  "name": "term",
+                  "fill": "$--info",
+                  "content": "Fall 2025",
+                  "fontFamily": "Inter",
+                  "fontSize": 12,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "zcsHY",
+              "name": "trashBtn",
+              "width": 32,
+              "height": 32,
+              "cornerRadius": 6,
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "LfAhB",
+                  "name": "trashIcon",
+                  "width": 15,
+                  "height": 15,
+                  "iconFontName": "trash-2",
+                  "iconFontFamily": "lucide",
+                  "fill": "$--light-muted"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "LqaBN",
+          "name": "divider",
+          "width": "fill_container",
+          "height": 1,
+          "fill": "$--border"
+        },
+        {
+          "type": "text",
+          "id": "n0XK6",
+          "name": "uploadBtn",
+          "fill": "$--accent",
+          "content": "Upload Syllabus",
+          "fontFamily": "Space Grotesk",
+          "fontSize": 13,
+          "fontWeight": "600"
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "9dQt0",
+      "x": 12800,
+      "y": 220,
+      "name": "ClassCard/Current/HasSyllabus",
+      "reusable": true,
+      "width": 280,
+      "fill": "$--card",
+      "cornerRadius": "$--radius-l",
+      "stroke": {
+        "align": "inside",
+        "thickness": 1,
+        "fill": "$--border"
+      },
+      "layout": "vertical",
+      "gap": 16,
+      "padding": 24,
+      "children": [
+        {
+          "type": "frame",
+          "id": "cZzkB",
+          "name": "headerRow",
+          "width": "fill_container",
+          "justifyContent": "space_between",
+          "children": [
+            {
+              "type": "frame",
+              "id": "XOYe7",
+              "name": "cardInfo",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 2,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "ktaP3",
+                  "name": "courseCode",
+                  "fill": "$--muted-foreground",
+                  "content": "CS 101",
+                  "fontFamily": "Space Grotesk",
+                  "fontSize": 11,
+                  "fontWeight": "600",
+                  "letterSpacing": 0.5
+                },
+                {
+                  "type": "text",
+                  "id": "eHYJb",
+                  "name": "title",
+                  "fill": "$--primary",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Intro to Programming",
+                  "fontFamily": "Space Grotesk",
+                  "fontSize": 15,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "text",
+                  "id": "6SUfJ",
+                  "name": "term",
+                  "fill": "$--info",
+                  "content": "Fall 2025",
+                  "fontFamily": "Inter",
+                  "fontSize": 12,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "8I345",
+              "name": "trashBtn",
+              "width": 32,
+              "height": 32,
+              "cornerRadius": 6,
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "MSYvJ",
+                  "name": "trashIcon",
+                  "width": 15,
+                  "height": 15,
+                  "iconFontName": "trash-2",
+                  "iconFontFamily": "lucide",
+                  "fill": "$--light-muted"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "S6ksI",
+          "name": "divider",
+          "width": "fill_container",
+          "height": 1,
+          "fill": "$--border"
+        },
+        {
+          "type": "frame",
+          "id": "A20zr",
+          "name": "bottomRow",
+          "width": "fill_container",
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "qaDbo",
+              "name": "taskCount",
+              "gap": 6,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "gqWlf",
+                  "name": "checkIcon",
+                  "width": 14,
+                  "height": 14,
+                  "iconFontName": "circle-check",
+                  "iconFontFamily": "lucide",
+                  "fill": "$--success"
+                },
+                {
+                  "type": "text",
+                  "id": "35iX7",
+                  "name": "taskCountText",
+                  "fill": "$--success",
+                  "content": "12 tasks confirmed",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "500"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "hqJ9x",
+              "name": "reuploadBtn",
+              "height": 28,
+              "cornerRadius": "$--radius-m",
+              "stroke": {
+                "align": "inside",
+                "thickness": 1,
+                "fill": "$--border"
+              },
+              "padding": [
+                0,
+                10
+              ],
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "xpaok",
+                  "name": "label",
+                  "fill": "$--muted-foreground",
+                  "content": "Re-upload",
+                  "fontFamily": "Space Grotesk",
+                  "fontSize": 12,
+                  "fontWeight": "600"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "ik6t3",
+      "x": 12800,
+      "y": 440,
+      "name": "ClassCard/Past",
+      "reusable": true,
+      "width": 280,
+      "fill": "$--card",
+      "cornerRadius": "$--radius-l",
+      "stroke": {
+        "align": "inside",
+        "thickness": 1,
+        "fill": "$--border"
+      },
+      "layout": "vertical",
+      "gap": 16,
+      "padding": 24,
+      "children": [
+        {
+          "type": "frame",
+          "id": "46Ddy",
+          "name": "headerRow",
+          "width": "fill_container",
+          "justifyContent": "space_between",
+          "children": [
+            {
+              "type": "frame",
+              "id": "c3Qm1",
+              "name": "cardInfo",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 2,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "HJOVk",
+                  "name": "courseCode",
+                  "fill": "$--muted-foreground",
+                  "content": "HIST 201",
+                  "fontFamily": "Space Grotesk",
+                  "fontSize": 11,
+                  "fontWeight": "600",
+                  "letterSpacing": 0.5
+                },
+                {
+                  "type": "text",
+                  "id": "bl87u",
+                  "name": "title",
+                  "fill": "$--primary",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "World History",
+                  "fontFamily": "Space Grotesk",
+                  "fontSize": 15,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "text",
+                  "id": "Gwf2y",
+                  "name": "term",
+                  "fill": "$--info",
+                  "content": "Spring 2025",
+                  "fontFamily": "Inter",
+                  "fontSize": 12,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "NGdqE",
+              "name": "trashBtn",
+              "width": 32,
+              "height": 32,
+              "cornerRadius": 6,
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "OttKe",
+                  "name": "trashIcon",
+                  "width": 15,
+                  "height": 15,
+                  "iconFontName": "trash-2",
+                  "iconFontFamily": "lucide",
+                  "fill": "$--light-muted"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "NsNSM",
+          "name": "divider",
+          "width": "fill_container",
+          "height": 1,
+          "fill": "$--border"
+        },
+        {
+          "type": "frame",
+          "id": "pqEJN",
+          "name": "gradeRow",
+          "width": "fill_container",
+          "gap": 8,
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "Z0S1g",
+              "name": "gradeSelect",
+              "width": "fill_container",
+              "height": 32,
+              "fill": "$--background",
+              "cornerRadius": "$--radius-m",
+              "stroke": {
+                "align": "inside",
+                "thickness": 1,
+                "fill": "$--border"
+              },
+              "padding": [
+                0,
+                12
+              ],
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "1semH",
+                  "name": "placeholder",
+                  "fill": "$--light-muted",
+                  "content": "Select grade…",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "icon_font",
+                  "id": "Fz3x0",
+                  "name": "chevron",
+                  "width": 14,
+                  "height": 14,
+                  "iconFontName": "chevron-down",
+                  "iconFontFamily": "lucide",
+                  "fill": "$--light-muted"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "FDglz",
+              "name": "saveBtn",
+              "height": 32,
+              "fill": "$--primary",
+              "cornerRadius": "$--radius-m",
+              "padding": [
+                0,
+                12
+              ],
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "fcjcj",
+                  "name": "label",
+                  "fill": "$--primary-foreground",
+                  "content": "Save",
+                  "fontFamily": "Space Grotesk",
+                  "fontSize": 12,
+                  "fontWeight": "600"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "AIU8n",
+      "x": 1520,
+      "y": 5060,
+      "name": "Classes",
+      "width": 1440,
+      "height": 900,
+      "fill": "$--background",
+      "children": [
+        {
+          "id": "8du1o",
+          "type": "ref",
+          "ref": "GeaRV",
+          "height": "fill_container",
+          "name": "clsSide",
+          "x": 0,
+          "y": 0,
+          "descendants": {
+            "t2ejm": {
+              "id": "1d4GB",
+              "type": "ref",
+              "ref": "Dfji9",
+              "width": "fill_container",
+              "name": "navDash",
+              "x": 0,
+              "y": 0,
+              "descendants": {
+                "j0EVc": {
+                  "iconFontName": "layout-dashboard",
+                  "x": 14,
+                  "y": 14
+                },
+                "Xkhsc": {
+                  "content": "Dashboard",
+                  "x": 40,
+                  "y": 13
+                }
+              }
+            },
+            "78Cxh": {
+              "id": "OWNwd",
+              "type": "ref",
+              "ref": "IrWsh",
+              "width": "fill_container",
+              "name": "navClasses",
+              "x": 0,
+              "y": 144,
+              "descendants": {
+                "r853k": {
+                  "iconFontName": "layers",
+                  "x": 14,
+                  "y": 14
+                },
+                "yUJUI": {
+                  "content": "Classes",
+                  "x": 40,
+                  "y": 13
+                }
+              }
+            },
+            "jzFAO": {
+              "y": 832
+            }
+          }
+        },
+        {
+          "type": "frame",
+          "id": "s24nY",
+          "name": "main",
+          "width": "fill_container",
+          "height": "fill_container",
+          "layout": "vertical",
+          "gap": 32,
+          "padding": 40,
+          "children": [
+            {
+              "type": "frame",
+              "id": "ez6yU",
+              "name": "pageHeader",
+              "width": "fill_container",
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "kzniS",
+                  "name": "headerText",
+                  "layout": "vertical",
+                  "gap": 4,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "y6wuW",
+                      "name": "title",
+                      "fill": "$--primary",
+                      "content": "Classes",
+                      "fontFamily": "Space Grotesk",
+                      "fontSize": 28,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "text",
+                      "id": "ec8aP",
+                      "name": "subtitle",
+                      "fill": "$--muted-foreground",
+                      "content": "Manage your classes and syllabi",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "id": "t0G0q",
+                  "type": "ref",
+                  "ref": "tIwJu",
+                  "width": "fit_content",
+                  "x": 970,
+                  "y": 6.5,
+                  "descendants": {
+                    "hXb93": {
+                      "iconFontName": "plus"
+                    },
+                    "RxGN2": {
+                      "content": "Add Class"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "YjmzZ",
+              "name": "tabBar",
+              "width": "fill_container",
+              "stroke": {
+                "align": "inside",
+                "thickness": {
+                  "bottom": 1
+                },
+                "fill": "$--border"
+              },
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "dv9Ei",
+                  "name": "currentTab",
+                  "height": 40,
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": {
+                      "bottom": 2
+                    },
+                    "fill": "$--primary"
+                  },
+                  "gap": 6,
+                  "padding": [
+                    0,
+                    16
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "c3jlY",
+                      "name": "label",
+                      "fill": "$--primary",
+                      "content": "Current",
+                      "fontFamily": "Space Grotesk",
+                      "fontSize": 14,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "9RzBU",
+                      "name": "badge",
+                      "fill": "$--primary",
+                      "cornerRadius": 999,
+                      "padding": [
+                        2,
+                        6
+                      ],
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "ATvN4",
+                          "name": "count",
+                          "fill": "$--primary-foreground",
+                          "content": "2",
+                          "fontFamily": "Inter",
+                          "fontSize": 12,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "snvzV",
+                  "name": "pastTab",
+                  "height": 40,
+                  "gap": 6,
+                  "padding": [
+                    0,
+                    16
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "QK9FH",
+                      "name": "label",
+                      "fill": "$--muted-foreground",
+                      "content": "Past",
+                      "fontFamily": "Space Grotesk",
+                      "fontSize": 14,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "GiLO4",
+                      "name": "badge",
+                      "fill": "$--background",
+                      "cornerRadius": 999,
+                      "padding": [
+                        2,
+                        6
+                      ],
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "pit1o",
+                          "name": "count",
+                          "fill": "$--muted-foreground",
+                          "content": "1",
+                          "fontFamily": "Inter",
+                          "fontSize": 12,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "y24xC",
+              "name": "cardGrid",
+              "width": "fill_container",
+              "gap": 16,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "XImwI",
+                  "name": "col1",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "children": [
+                    {
+                      "id": "JTExj",
+                      "type": "ref",
+                      "ref": "5mAcQ",
+                      "width": "fill_container",
+                      "x": 0,
+                      "descendants": {
+                        "4cJVg": {
+                          "width": "fill_container"
+                        },
+                        "ErIoN": {
+                          "width": "fill_container"
+                        },
+                        "rsPJ3": {
+                          "width": "fill_container"
+                        },
+                        "zcsHY": {
+                          "x": 276
+                        },
+                        "LqaBN": {
+                          "width": "fill_container"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "VcgZQ",
+                  "name": "col2",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "children": [
+                    {
+                      "id": "9ljwj",
+                      "type": "ref",
+                      "ref": "9dQt0",
+                      "width": "fill_container",
+                      "x": 0,
+                      "y": 0,
+                      "descendants": {
+                        "cZzkB": {
+                          "width": "fill_container"
+                        },
+                        "XOYe7": {
+                          "width": "fill_container"
+                        },
+                        "eHYJb": {
+                          "width": "fill_container"
+                        },
+                        "8I345": {
+                          "x": 276
+                        },
+                        "S6ksI": {
+                          "width": "fill_container"
+                        },
+                        "A20zr": {
+                          "width": "fill_container"
+                        },
+                        "hqJ9x": {
+                          "x": 228
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "rhsPH",
+                  "name": "col3",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "children": [
+                    {
+                      "id": "UNSft",
+                      "type": "ref",
+                      "ref": "5mAcQ",
+                      "width": "fill_container",
+                      "x": 0,
+                      "descendants": {
+                        "4cJVg": {
+                          "width": "fill_container"
+                        },
+                        "ErIoN": {
+                          "width": "fill_container"
+                        },
+                        "iOblH": {
+                          "content": "CS 226"
+                        },
+                        "rsPJ3": {
+                          "content": "Algorithms & Data Structures",
+                          "width": "fill_container"
+                        },
+                        "EROXE": {
+                          "content": "Fall 2025"
+                        },
+                        "zcsHY": {
+                          "x": 276
+                        },
+                        "LqaBN": {
+                          "width": "fill_container"
+                        }
+                      }
+                    }
+                  ]
                 }
               ]
             }
