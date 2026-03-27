@@ -57,15 +57,7 @@ export const getTask = query({
 export const getAllTasks = query({
   args: {
     sortOrder: v.optional(v.union(v.literal("asc"), v.literal("desc"))),
-    taskType: v.optional(
-      v.union(
-        v.literal("Problem Set"),
-        v.literal("Essay"),
-        v.literal("Coding"),
-        v.literal("Exam Prep"),
-        v.literal("Thesis")
-      )
-    ),
+    taskType: v.optional(v.string()),
   },
 
   handler: async (ctx, args) => {
@@ -93,15 +85,7 @@ export const getTasksPaginated = query({
   args: {
     paginationOpts: paginationOptsValidator,
     sortOrder: v.optional(v.union(v.literal("asc"), v.literal("desc"))),
-    taskType: v.optional(
-      v.union(
-        v.literal("Problem Set"),
-        v.literal("Essay"),
-        v.literal("Coding"),
-        v.literal("Exam Prep"),
-        v.literal("Thesis")
-      )
-    ),
+    taskType: v.optional(v.string()),
   },
 
   handler: async (ctx, args) => {

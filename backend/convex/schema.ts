@@ -60,6 +60,7 @@ export default defineSchema({
     ),
 
     productivityTraits: v.optional(v.any()),
+
   })
     .index("email", ["email"])
     .index("phone", ["phone"]),
