@@ -46,8 +46,8 @@ export const setSyllabusStatus = internalMutation({
  * Saves user-confirmed tasks extracted from a syllabus to the tasks table.
  *
  * Called after the user reviews the output of uploadSyllabus and approves
- * the extracted task list. Each task is linked back to the source syllabus
- * via extractedFrom so the origin can always be traced.
+ * the extracted task list. Each task is tagged with the courseId from the
+ * source syllabus so it appears under the correct course.
  *
  * Returns the IDs of all inserted tasks.
  */
@@ -81,7 +81,7 @@ export const confirmSyllabusTasks = mutation({
           description: task.description,
           dueDate: task.dueDate,
           taskType: task.taskType,
-          extractedFrom: args.syllabusId,
+          courseId: syllabus.courseId,
           createdAt: now,
         })
       )
