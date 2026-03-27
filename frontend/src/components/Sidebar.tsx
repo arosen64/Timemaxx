@@ -1,7 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { useQuery } from "convex/react";
 import { api } from "../../../backend/convex/_generated/api";
-import { BookOpenIcon, DashboardIcon, TasksIcon, CalendarIcon, UserIcon, ClassesIcon } from "./icons";
+import { BookOpenIcon, DashboardIcon, TasksIcon, CalendarIcon, ClassesIcon, SlidersHorizontalIcon } from "./icons";
 
 export default function Sidebar() {
     const { pathname } = useLocation();
@@ -49,7 +49,7 @@ export default function Sidebar() {
                         <CalendarIcon color="currentColor" />
                         <span className="font-heading text-sm font-normal">Schedule</span>
                     </div>
-                    {navItem("/profile", <UserIcon />, "Profile")}
+                    {navItem("/preferences", <SlidersHorizontalIcon />, "Preferences")}
                 </nav>
             </div>
 

@@ -40,7 +40,7 @@ const DEFAULT_DATA: ProfileData = {
  * Renders ProfileForm inside a stateful wrapper so controlled inputs
  * actually update as the user types. The onChange spy is called on every change.
  */
-function setup(overrides: Partial<ProfileData> = {}, errors = {}) {
+function setup(overrides: Partial<ProfileData> = {}, errors = {}, readOnly = false) {
   const onChange = vi.fn()
   const initial = { ...DEFAULT_DATA, ...overrides }
 
@@ -51,6 +51,7 @@ function setup(overrides: Partial<ProfileData> = {}, errors = {}) {
         data={data}
         onChange={(next) => { setData(next); onChange(next) }}
         errors={errors}
+        readOnly={readOnly}
       />
     )
   }
@@ -146,6 +147,59 @@ describe('ProfileForm', () => {
       expect(onChange).toHaveBeenLastCalledWith(
         expect.objectContaining({ enjoyedSubjects: ['Statistics'] })
       )
+    })
+  })
+
+  describe('readOnly mode', () => {
+    it('renders the major value in a non-editable input', () => {
+      setup({ major: 'Biology' }, {}, true)
+      const input = screen.getByDisplayValue('Biology')
+      expect(input).toHaveAttribute('readonly')
+    })
+
+    it('hides hint text for tag inputs', () => {
+      setup({}, {}, true)
+      expect(screen.queryByText(/press enter or comma/i)).not.toBeInTheDocument()
+    })
+
+    it('renders existing tags without remove buttons', () => {
+      setup({ difficultSubjects: ['Calculus', 'Physics'] }, {}, true)
+      expect(screen.getByText('Calculus')).toBeInTheDocument()
+      const calculusTag = screen.getByText('Calculus').closest('span')!
+      expect(within(calculusTag).queryByRole('button')).not.toBeInTheDocument()
+    })
+
+    it('shows "None" when a tag list is empty', () => {
+      setup({ difficultSubjects: [] }, {}, true)
+      // "None" appears for both difficult and enjoyed subjects
+      expect(screen.getAllByText('None').length).toBeGreaterThanOrEqual(1)
+    })
+
+    it('does not render the course remove button', () => {
+      setup({ courses: [{ title: 'CS 101', studyGoal: 'Do well' }] }, {}, true)
+      expect(screen.getByText('CS 101')).toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: '×' })).not.toBeInTheDocument()
+    })
+
+    it('does not show error messages even when errors are provided', () => {
+      setup({}, { major: 'Major is required', year: 'Please select your year' }, true)
+      expect(screen.queryByText('Major is required')).not.toBeInTheDocument()
+      expect(screen.queryByText('Please select your year')).not.toBeInTheDocument()
+    })
+
+    it('shows "Not set" for an empty year instead of the select placeholder', () => {
+      setup({ year: '' }, {}, true)
+      expect(document.getElementById('year-select')).toBeNull()
+      expect(screen.getByText('Not set')).toBeInTheDocument()
+    })
+
+    it('does not call onChange when the year select is interacted with in readOnly', async () => {
+      const user = userEvent.setup()
+      const { onChange } = setup({ year: 'Junior' }, {}, true)
+
+      await user.selectOptions(document.getElementById('year-select')!, 'Senior')
+
+      expect(onChange).not.toHaveBeenCalled()
     })
   })
 

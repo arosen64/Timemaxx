@@ -29,7 +29,7 @@ export default function AddTaskModal({ isOpen, onClose, onTaskCreated }: AddTask
       subtitle="Fill in the details below."
       primaryLabel="Add Task"
       primaryLoadingLabel="Adding…"
-      initialValues={{ taskName: '', selectedType: 'Problem Set', description: '', dueDate: '' }}
+      initialValues={{ taskName: '', selectedType: 'Essay', customTaskType: '', description: '', dueDate: '' }}
       onClose={onClose}
       onSubmit={handleSubmit}
     />

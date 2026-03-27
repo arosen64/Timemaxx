@@ -64,5 +64,6 @@ export interface JhuCourse {
 
 export interface CourseSelectorProps {
   onAddCourse: (course: Course) => void
+  mode?: 'current' | 'past' | 'all'
 }
 

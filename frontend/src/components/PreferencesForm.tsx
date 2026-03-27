@@ -77,6 +77,7 @@ interface CategorySectionProps {
   onToggle: (option: string) => void
   onAddCustom: (value: string) => void
   singleSelect?: boolean
+  readOnly?: boolean
 }
 
 function CategorySection({
@@ -87,6 +88,7 @@ function CategorySection({
   onToggle,
   onAddCustom,
   singleSelect = false,
+  readOnly = false,
 }: CategorySectionProps) {
   const [customInput, setCustomInput] = useState('')
 
@@ -119,8 +121,9 @@ function CategorySection({
           <button
             key={option}
             type="button"
+            disabled={readOnly}
             onClick={() => onToggle(option)}
-            className={`rounded-full border px-3 py-1 font-body text-sm transition-colors ${
+            className={`rounded-full border px-3 py-1 font-body text-sm transition-colors disabled:pointer-events-none ${
               selected.includes(option)
                 ? 'border-navy bg-navy text-white'
                 : 'border-border text-slate-blue hover:border-sky-blue hover:bg-bg-gray'
@@ -136,18 +139,20 @@ function CategorySection({
             className="flex items-center gap-1 rounded-full border border-navy bg-navy px-3 py-1 font-body text-sm text-white"
           >
             {trait}
-            <button
-              type="button"
-              onClick={() => onToggle(trait)}
-              className="ml-0.5 opacity-70 hover:opacity-100"
-            >
-              ×
-            </button>
+            {!readOnly && (
+              <button
+                type="button"
+                onClick={() => onToggle(trait)}
+                className="ml-0.5 opacity-70 hover:opacity-100"
+              >
+                ×
+              </button>
+            )}
           </span>
         ))}
       </div>
       {/* Custom trait input */}
-      {!singleSelect && (
+      {!singleSelect && !readOnly && (
         <div className="flex gap-2">
           <input
             type="text"
@@ -180,9 +185,10 @@ export const DEFAULT_PREFERENCES: PreferencesData = {
 interface PreferencesFormProps {
   data: PreferencesData
   onChange: (data: PreferencesData) => void
+  readOnly?: boolean
 }
 
-export default function PreferencesForm({ data, onChange }: PreferencesFormProps) {
+export default function PreferencesForm({ data, onChange, readOnly = false }: PreferencesFormProps) {
   const getSelected = (key: string): string[] => data.traits[key] ?? []
 
   const handleToggle = (key: string, option: string, singleSelect: boolean) => {
@@ -202,12 +208,6 @@ export default function PreferencesForm({ data, onChange }: PreferencesFormProps
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h2 className="font-heading text-2xl font-bold text-navy">Productivity Preferences</h2>
-        <p className="mt-1 font-body text-sm text-slate-blue">
-          Select everything that applies — this helps us schedule smarter.
-        </p>
-      </div>
 
       {CATEGORIES.map((cat) => (
         <CategorySection
@@ -219,6 +219,7 @@ export default function PreferencesForm({ data, onChange }: PreferencesFormProps
           onToggle={(option) => handleToggle(cat.key, option, cat.singleSelect ?? false)}
           onAddCustom={(value) => handleAddCustom(cat.key, value)}
           singleSelect={cat.singleSelect}
+          readOnly={readOnly}
         />
       ))}
 
@@ -233,14 +234,19 @@ export default function PreferencesForm({ data, onChange }: PreferencesFormProps
           min={5}
           max={480}
           value={data.focusBlockLength}
-          onChange={(e) =>
+          readOnly={readOnly}
+          onChange={readOnly ? undefined : (e) =>
             onChange({
               ...data,
               focusBlockLength: e.target.value === '' ? '' : Number(e.target.value),
             })
           }
-          placeholder="e.g. 45"
-          className="w-32 rounded-lg border border-border bg-bg-gray px-3 py-2 font-body text-sm text-navy outline-none placeholder:text-light-blue focus:border-sky-blue focus:ring-2 focus:ring-sky-blue/20"
+          placeholder={readOnly ? undefined : 'e.g. 45'}
+          className={`w-32 rounded-lg border border-border bg-bg-gray px-3 py-2 font-body text-sm text-navy outline-none ${
+            readOnly
+              ? 'cursor-default'
+              : 'placeholder:text-light-blue focus:border-sky-blue focus:ring-2 focus:ring-sky-blue/20'
+          }`}
         />
       </div>
     </div>

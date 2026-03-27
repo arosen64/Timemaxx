@@ -105,7 +105,13 @@ export default function OnboardingPage() {
   return (
     <OnboardingStepShell currentStep={step} totalSteps={6} wide={step === 2 || step === 3 || step === 4 || step === 5} tall={step === 6}>
       {step === 1 && (
-        <ProfileForm data={profile} onChange={setProfile} errors={profileErrors} />
+        <div className="flex flex-col gap-6">
+          <div>
+            <h2 className="font-heading text-2xl font-bold text-navy">Tell us about yourself</h2>
+            <p className="mt-1 font-body text-sm text-slate-blue">This helps us personalize your study plan.</p>
+          </div>
+          <ProfileForm data={profile} onChange={setProfile} errors={profileErrors} />
+        </div>
       )}
       {step === 2 && (
         <CoursesForm data={profile} onChange={setProfile} />
@@ -114,10 +120,22 @@ export default function OnboardingPage() {
         <AcademicProfileSummary profile={profile} onChange={setProfile} />
       )}
       {step === 4 && (
-        <WorkHoursSelector data={workHours} onChange={setWorkHours} />
+        <div className="flex flex-col gap-4">
+          <div>
+            <h2 className="font-heading text-2xl font-bold text-navy">Work Hours</h2>
+            <p className="mt-1 font-body text-sm text-slate-blue">Click or drag to mark when you're available to study or when you'll never work.</p>
+          </div>
+          <WorkHoursSelector data={workHours} onChange={setWorkHours} />
+        </div>
       )}
       {step === 5 && (
-        <PreferencesForm data={preferences} onChange={setPreferences} />
+        <div className="flex flex-col gap-6">
+          <div>
+            <h2 className="font-heading text-2xl font-bold text-navy">Productivity Preferences</h2>
+            <p className="mt-1 font-body text-sm text-slate-blue">Select everything that applies — this helps us schedule smarter.</p>
+          </div>
+          <PreferencesForm data={preferences} onChange={setPreferences} />
+        </div>
       )}
       {step === 6 && (
         <div className="flex flex-1 flex-col gap-6">
