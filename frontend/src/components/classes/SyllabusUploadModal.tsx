@@ -17,7 +17,6 @@ interface SyllabusUploadModalProps {
   onSuccess?: (result: UploadSyllabusResult) => void
 }
 
-
 export default function SyllabusUploadModal({
   isOpen,
   onClose,
@@ -97,6 +96,7 @@ export default function SyllabusUploadModal({
       primaryLabel="Upload"
       primaryLoadingLabel="Uploading…"
       onPrimary={handlePrimary}
+      isPrimaryDisabled={isSubmitting}
       error={error}
     >
       <Toggle
