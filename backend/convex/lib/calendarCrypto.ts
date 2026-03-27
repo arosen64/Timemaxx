@@ -7,10 +7,12 @@
  * Ciphertext format: base64(iv[12 bytes] + ciphertext+authTag).
  */
 
-function hexKeyToBytes(hexSecret: string): Uint8Array {
-  return new Uint8Array(
-    hexSecret.padEnd(64, "0").slice(0, 64).match(/.{2}/g)!.map((b) => parseInt(b, 16))
-  );
+function hexKeyToBytes(hexSecret: string): Uint8Array<ArrayBuffer> {
+  const bytes = hexSecret.padEnd(64, "0").slice(0, 64).match(/.{2}/g)!.map((b) => parseInt(b, 16));
+  const buffer = new ArrayBuffer(bytes.length);
+  const view = new Uint8Array(buffer);
+  view.set(bytes);
+  return view;
 }
 
 export async function encryptToken(plaintext: string, hexSecret: string): Promise<string> {
@@ -19,7 +21,7 @@ export async function encryptToken(plaintext: string, hexSecret: string): Promis
     hexKeyToBytes(hexSecret),
     { name: "AES-GCM", length: 256 },
     false,
-    ["encrypt"],
+    ["encrypt"] as KeyUsage[],
   );
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const encrypted = await crypto.subtle.encrypt(
