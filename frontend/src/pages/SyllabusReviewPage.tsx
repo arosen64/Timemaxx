@@ -100,7 +100,7 @@ export default function SyllabusReviewPage({ course, tasks: initialTasks, onCanc
               {`Review tasks extracted from your ${course.title} syllabus. Edit or remove any task before confirming.`}
             </p>
           </div>
-          <span className="flex items-center gap-1.5 rounded-lg bg-[#E6F5F0] px-3 py-1.5 font-body text-[13px] font-semibold text-[#008767]">
+          <span className="flex items-center gap-1.5 rounded-lg bg-success-light px-3 py-1.5 font-body text-[13px] font-semibold text-success">
             <CheckCircleIcon />
             {tasks.length} {tasks.length === 1 ? 'task' : 'tasks'} ready to confirm
           </span>

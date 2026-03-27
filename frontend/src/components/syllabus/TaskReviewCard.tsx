@@ -14,7 +14,7 @@ export default function TaskReviewCard({ task, onChange, onRemove }: TaskReviewC
   }
 
   return (
-    <div className="flex items-start gap-3.5 rounded-[10px] border border-border bg-white p-[16px_18px]">
+    <div className="flex items-start gap-3.5 rounded-[10px] border border-border bg-white py-4 px-4.5">
       <div className="mt-1 w-1 shrink-0 self-stretch rounded-sm bg-sky-blue" />
 
       <div className="flex min-w-0 flex-1 flex-col gap-2.5">
@@ -31,7 +31,7 @@ export default function TaskReviewCard({ task, onChange, onRemove }: TaskReviewC
             type="button"
             onClick={onRemove}
             aria-label="Remove task"
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-[#FFF0EC] transition-colors hover:bg-urgent-red/20"
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-urgent-red-light transition-colors hover:bg-urgent-red/20"
           >
             <XIcon />
           </button>
