@@ -5,6 +5,7 @@ interface OnboardingStepShellProps {
   currentStep: number
   totalSteps: number
   wide?: boolean
+  tall?: boolean
   children: ReactNode
 }
 
@@ -12,6 +13,7 @@ export default function OnboardingStepShell({
   currentStep,
   totalSteps,
   wide = false,
+  tall = false,
   children,
 }: OnboardingStepShellProps) {
   return (
@@ -46,11 +48,11 @@ export default function OnboardingStepShell({
         </span>
       </header>
 
-      <div className="flex flex-1 flex-col items-center justify-center px-4 py-12">
+      <div className={`flex flex-1 flex-col items-center px-4 py-12 ${tall ? '' : 'justify-center'}`}>
         <div
-          className={`w-full rounded-xl border border-border bg-white p-12 ${
-            wide ? 'max-w-2xl' : 'max-w-xl'
-          }`}
+          className={`flex w-full flex-col rounded-xl border border-border bg-white p-12 ${
+            wide || tall ? 'max-w-2xl' : 'max-w-xl'
+          } ${tall ? 'flex-1' : ''}`}
         >
           {children}
         </div>
