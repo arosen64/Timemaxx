@@ -164,7 +164,7 @@ export default function TranscriptUpload({ onCoursesAdded }: TranscriptUploadPro
       </p>
       <div className="rounded-lg border border-urgent-red/40 bg-urgent-red/10 px-3 py-2">
         <p className="font-body text-xs text-urgent-red">
-          <span className="font-semibold">Note:</span> AP, IB, and other external/transfer courses are not supported — please add those manually as equivalent JHU courses.
+          <span className="font-semibold">Note:</span> AP, IB, and other external/transfer courses are not supported — please add those manually as equivalent JHU courses with an equivalent grade.
         </p>
       </div>
       <FileUpload
