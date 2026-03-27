@@ -13,6 +13,7 @@ export const createTask = mutation({
     description: v.string(),
     taskType: taskTypeValidator,
     dueDate: v.number(),
+    courseId: v.optional(v.id("userCourses")),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -39,6 +40,7 @@ export const createTask = mutation({
       description: args.description,
       taskType: args.taskType,
       dueDate: args.dueDate,
+      courseId: args.courseId,
       timeEstimate: undefined, // populated asynchronously by estimateTaskTime action
       createdAt: Date.now(),
     });
@@ -55,6 +57,7 @@ export const updateTask = mutation({
     description: v.string(),
     taskType: taskTypeValidator,
     dueDate: v.number(),
+    courseId: v.optional(v.id("userCourses")),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
