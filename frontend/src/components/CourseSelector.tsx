@@ -268,7 +268,7 @@ export default function CourseSelector({ onAddCourse }: CourseSelectorProps) {
             className="flex-1"
             value={isCurrent ? studyGoalInput : gradeInput}
             onChange={isCurrent ? setStudyGoalInput : setGradeInput}
-            placeholder={isCurrent ? 'Select a study goal' : 'Select your grade (optional)'}
+            placeholder={isCurrent ? 'Select a study goal' : 'Select your grade'}
             options={
               isCurrent
                 ? STUDY_GOALS.map((g) => ({ label: g, value: g }))

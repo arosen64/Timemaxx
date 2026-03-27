@@ -26,7 +26,7 @@ export default function CoursesForm({ data, onChange }: CoursesFormProps) {
   }
 
   const handleAddCourse = (course: Course) => {
-    if (data.courses.some((c) => c.title === course.title)) return
+    if (data.courses.some((c) => c.title === course.title && c.term === course.term)) return
     onChange({ ...data, courses: [...data.courses, course] })
     setPage(0)
   }
