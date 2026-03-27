@@ -14,10 +14,11 @@ vi.mock('../../backend/convex/_generated/api', () => ({
         getAvailableSchools: 'getAvailableSchools',
         getCoursesByTerm: 'getCoursesByTerm',
       },
+      parseTranscript: { parseTranscript: 'parseTranscript' },
     },
     mutations: {
       users: { completeOnboarding: 'completeOnboarding' },
-      userCourses: { addUserCourse: 'addUserCourse', deleteUserCourse: 'deleteUserCourse' },
+      userCourses: { addUserCourse: 'addUserCourse', deleteUserCourse: 'deleteUserCourse', updateUserCourse: 'updateUserCourse' },
     },
   },
 }))
@@ -98,7 +99,7 @@ describe('OnboardingPage', () => {
     })
   })
 
-  it('advances to Step 3 from Step 2', async () => {
+  it('advances to Step 4 from Step 3', async () => {
     const user = userEvent.setup()
     setup()
 
@@ -107,11 +108,15 @@ describe('OnboardingPage', () => {
     await user.selectOptions(document.getElementById('year-select')!, 'Sophomore')
     await user.click(screen.getByRole('button', { name: /continue/i }))
 
-    // Now on step 2 — click Next again
+    // Step 2 (CoursesForm) — advance
     await waitFor(() => expect(screen.queryByText('Tell us about yourself')).not.toBeInTheDocument())
     await user.click(screen.getByRole('button', { name: /continue/i }))
 
-    // Step 3: PreferencesForm should be visible
+    // Step 3 (WorkHoursSelector) — advance
+    await waitFor(() => screen.getByRole('button', { name: /continue/i }))
+    await user.click(screen.getByRole('button', { name: /continue/i }))
+
+    // Step 4: PreferencesForm should be visible with Finish button
     await waitFor(() => {
       expect(screen.getByRole('button', { name: /finish/i })).toBeInTheDocument()
     })
@@ -143,11 +148,15 @@ describe('OnboardingPage', () => {
     await user.selectOptions(document.getElementById('year-select')!, 'Freshman')
     await user.click(screen.getByRole('button', { name: /continue/i }))
 
-    // Step 2 — advance without changing hours
+    // Step 2 (CoursesForm) — advance
     await waitFor(() => expect(screen.queryByText('Tell us about yourself')).not.toBeInTheDocument())
     await user.click(screen.getByRole('button', { name: /continue/i }))
 
-    // Step 3 — submit
+    // Step 3 (WorkHoursSelector) — advance
+    await waitFor(() => screen.getByRole('button', { name: /continue/i }))
+    await user.click(screen.getByRole('button', { name: /continue/i }))
+
+    // Step 4 (PreferencesForm) — submit
     await waitFor(() => expect(screen.getByRole('button', { name: /finish/i })).toBeInTheDocument())
     await user.click(screen.getByRole('button', { name: /finish/i }))
 
