@@ -98,7 +98,7 @@ export default defineSchema({
   // Syllabi table — tracks uploaded syllabus files and their processing status
   syllabi: defineTable({
     userId: v.id("users"),
-    fileName: v.string(),
+    fileContents: v.string(),
     courseId: v.optional(v.id("userCourses")),
     status: v.union(
       v.literal("pending"),

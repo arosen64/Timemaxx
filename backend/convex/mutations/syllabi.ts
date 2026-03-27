@@ -10,13 +10,13 @@ import { taskTypeValidator } from "../lib/taskValidators";
 export const createSyllabus = internalMutation({
   args: {
     userId: v.id("users"),
-    fileName: v.string(),
+    fileContents: v.string(),
     courseId: v.optional(v.id("userCourses")),
   },
   handler: async (ctx, args) => {
     return await ctx.db.insert("syllabi", {
       userId: args.userId,
-      fileName: args.fileName,
+      fileContents: args.fileContents,
       courseId: args.courseId,
       status: "pending",
       createdAt: Date.now(),
