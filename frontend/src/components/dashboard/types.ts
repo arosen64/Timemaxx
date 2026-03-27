@@ -6,11 +6,14 @@ export type TaskType = {
   description: string
   taskType: string
   timeEstimate?: number
+  estimateFeedbackRating?: 'up' | 'down'
+  correctedEstimateMinutes?: number
+  estimateFeedbackSubmittedAt?: number
   dueDate: number
   createdAt: number
 }
 
-export const SCHEMA_TASK_TYPES = ['Problem Set', 'Essay', 'Coding', 'Exam Prep'] as const
+export const SCHEMA_TASK_TYPES = ['Problem Set', 'Essay', 'Coding', 'Exam Prep', 'Thesis'] as const
 export type SchemaTaskType = (typeof SCHEMA_TASK_TYPES)[number]
 
 export type EditForm = {

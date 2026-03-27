@@ -6,7 +6,7 @@
       "id": "OEz3F",
       "x": 0,
       "y": 0,
-      "name": "Landing – Login",
+      "name": "Landing \u2013 Login",
       "width": 1440,
       "height": 900,
       "fill": "#FFFFFF",
@@ -280,7 +280,7 @@
       "id": "n4C6P",
       "x": 1520,
       "y": 0,
-      "name": "Onboarding – Survey",
+      "name": "Onboarding \u2013 Survey",
       "width": 1440,
       "height": 900,
       "fill": "#F5F7FA",
@@ -598,44 +598,238 @@
                       "name": "sect-courses",
                       "width": "fill_container",
                       "layout": "vertical",
-                      "gap": 12,
+                      "gap": 8,
                       "children": [
                         {
                           "type": "frame",
-                          "id": "gGiaC",
-                          "name": "coursesHeader",
+                          "id": "JmEVk",
+                          "name": "hdr",
                           "width": "fill_container",
                           "layout": "vertical",
                           "gap": 2,
                           "children": [
                             {
                               "type": "text",
-                              "id": "IIGUP",
-                              "fill": "$--primary",
-                              "content": "Current Courses",
+                              "id": "qfpCt",
+                              "fill": "$--foreground",
+                              "content": "Courses",
                               "fontFamily": "Space Grotesk",
                               "fontSize": 13,
                               "fontWeight": "600"
                             },
                             {
                               "type": "text",
-                              "id": "QJcxJ",
+                              "id": "60jlp",
                               "fill": "$--light-muted",
-                              "textGrowth": "fixed-width",
-                              "width": "fill_container",
-                              "content": "Add each course and set your goal for it",
+                              "content": "Select a term and school, then search for courses",
                               "fontFamily": "Inter",
-                              "fontSize": 10,
+                              "fontSize": 11,
                               "fontWeight": "normal"
                             }
                           ]
                         },
                         {
                           "type": "frame",
-                          "id": "tDXFB",
-                          "name": "courseItem",
+                          "id": "iKcb6",
+                          "name": "termSel",
                           "width": "fill_container",
-                          "cornerRadius": 8,
+                          "height": 38,
+                          "fill": "$--background",
+                          "cornerRadius": "$--radius-m",
+                          "stroke": {
+                            "align": "inside",
+                            "thickness": 1,
+                            "fill": "$--border"
+                          },
+                          "padding": [
+                            0,
+                            12
+                          ],
+                          "justifyContent": "space_between",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "ivm0g",
+                              "fill": "$--light-muted",
+                              "content": "Select a term",
+                              "fontFamily": "Inter",
+                              "fontSize": 13,
+                              "fontWeight": "normal"
+                            },
+                            {
+                              "type": "icon_font",
+                              "id": "SeNvM",
+                              "layoutPosition": "absolute",
+                              "x": 516,
+                              "y": 12,
+                              "width": 14,
+                              "height": 14,
+                              "iconFontName": "chevron-down",
+                              "iconFontFamily": "lucide",
+                              "fill": "$--light-muted"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "3H8OI",
+                          "name": "school",
+                          "width": "fill_container",
+                          "height": 38,
+                          "fill": "$--background",
+                          "cornerRadius": "$--radius-m",
+                          "stroke": {
+                            "align": "inside",
+                            "thickness": 1,
+                            "fill": "$--border"
+                          },
+                          "padding": [
+                            0,
+                            12
+                          ],
+                          "justifyContent": "space_between",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "k348h",
+                              "fill": "$--light-muted",
+                              "content": "Select a school",
+                              "fontFamily": "Inter",
+                              "fontSize": 13,
+                              "fontWeight": "normal"
+                            },
+                            {
+                              "type": "icon_font",
+                              "id": "7Ajxy",
+                              "width": 14,
+                              "height": 14,
+                              "iconFontName": "chevron-down",
+                              "iconFontFamily": "lucide",
+                              "fill": "$--light-muted"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "g5a9W",
+                          "name": "srch",
+                          "width": "fill_container",
+                          "height": 38,
+                          "fill": "$--background",
+                          "cornerRadius": "$--radius-m",
+                          "stroke": {
+                            "align": "inside",
+                            "thickness": 1,
+                            "fill": "$--border"
+                          },
+                          "padding": [
+                            0,
+                            12
+                          ],
+                          "justifyContent": "space_between",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "qPzbx",
+                              "fill": "$--light-muted",
+                              "content": "Type to search courses\u2026",
+                              "fontFamily": "Inter",
+                              "fontSize": 13,
+                              "fontWeight": "normal"
+                            },
+                            {
+                              "type": "icon_font",
+                              "id": "7d1Nq",
+                              "width": 14,
+                              "height": 14,
+                              "iconFontName": "search",
+                              "iconFontFamily": "lucide",
+                              "fill": "$--light-muted"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "rWk5N",
+                          "name": "goalRow",
+                          "width": "fill_container",
+                          "height": 38,
+                          "gap": 8,
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "llhbP",
+                              "name": "goalSel",
+                              "width": "fill_container",
+                              "height": 38,
+                              "fill": "$--background",
+                              "cornerRadius": "$--radius-m",
+                              "stroke": {
+                                "align": "inside",
+                                "thickness": 1,
+                                "fill": "$--border"
+                              },
+                              "padding": [
+                                0,
+                                12
+                              ],
+                              "justifyContent": "space_between",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "Yvxmh",
+                                  "fill": "$--light-muted",
+                                  "content": "Select a study goal (optional)",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "normal"
+                                },
+                                {
+                                  "type": "icon_font",
+                                  "id": "4xnxA",
+                                  "width": 14,
+                                  "height": 14,
+                                  "iconFontName": "chevron-down",
+                                  "iconFontFamily": "lucide",
+                                  "fill": "$--light-muted"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "6Z4qa",
+                              "name": "addBtn",
+                              "width": 60,
+                              "height": 38,
+                              "fill": "$--primary",
+                              "cornerRadius": "$--radius-m",
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "lypC9",
+                                  "fill": "$--primary-foreground",
+                                  "content": "Add",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "500"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "pTImC",
+                          "name": "courseCard",
+                          "width": "fill_container",
+                          "fill": "$--background",
+                          "cornerRadius": "$--radius-m",
                           "stroke": {
                             "align": "inside",
                             "thickness": 1,
@@ -647,20 +841,79 @@
                           "children": [
                             {
                               "type": "frame",
-                              "id": "P4Tfg",
-                              "name": "inputRow",
+                              "id": "60GJM",
+                              "name": "cardTop",
                               "width": "fill_container",
-                              "gap": 8,
+                              "justifyContent": "space_between",
                               "alignItems": "center",
                               "children": [
                                 {
                                   "type": "frame",
-                                  "id": "aUiT0",
-                                  "name": "courseInput",
+                                  "id": "hEvI8",
+                                  "name": "cardLeft",
+                                  "layout": "vertical",
+                                  "gap": 4,
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "sx5Dk",
+                                      "fill": "$--foreground",
+                                      "content": "EN.601.421: Object-Oriented Software Engineering",
+                                      "fontFamily": "Inter",
+                                      "fontSize": 13,
+                                      "fontWeight": "600"
+                                    },
+                                    {
+                                      "type": "frame",
+                                      "id": "KTX4e",
+                                      "name": "termBadge",
+                                      "height": 20,
+                                      "fill": "#002D7220",
+                                      "cornerRadius": 10,
+                                      "padding": [
+                                        0,
+                                        8
+                                      ],
+                                      "alignItems": "center",
+                                      "children": [
+                                        {
+                                          "type": "text",
+                                          "id": "EqDme",
+                                          "fill": "$--foreground",
+                                          "content": "Spring 2026",
+                                          "fontFamily": "Inter",
+                                          "fontSize": 11,
+                                          "fontWeight": "500"
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "icon_font",
+                                  "id": "xMZ5d",
+                                  "width": 14,
+                                  "height": 14,
+                                  "iconFontName": "x",
+                                  "iconFontFamily": "lucide",
+                                  "fill": "$--light-muted"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "F8iRA",
+                              "name": "goalRow2",
+                              "width": "fill_container",
+                              "gap": 8,
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "99ncX",
                                   "width": "fill_container",
-                                  "height": 36,
+                                  "height": 32,
                                   "fill": "$--background",
-                                  "cornerRadius": 8,
+                                  "cornerRadius": "$--radius-m",
                                   "stroke": {
                                     "align": "inside",
                                     "thickness": 1,
@@ -668,147 +921,83 @@
                                   },
                                   "padding": [
                                     0,
-                                    12
+                                    8
                                   ],
+                                  "justifyContent": "center",
                                   "alignItems": "center",
                                   "children": [
                                     {
                                       "type": "text",
-                                      "id": "HLarE",
-                                      "fill": "$--primary",
-                                      "content": "CS 101",
+                                      "id": "wwTB2",
+                                      "fill": "$--muted-foreground",
+                                      "content": "Just pass",
                                       "fontFamily": "Inter",
-                                      "fontSize": 13,
+                                      "fontSize": 12,
                                       "fontWeight": "normal"
                                     }
                                   ]
                                 },
                                 {
-                                  "type": "text",
-                                  "id": "6hN6O",
-                                  "fill": "$--light-muted",
-                                  "content": "×",
-                                  "fontFamily": "Inter",
-                                  "fontSize": 16,
-                                  "fontWeight": "normal"
-                                }
-                              ]
-                            },
-                            {
-                              "type": "frame",
-                              "id": "rKwac",
-                              "name": "goalsRow",
-                              "width": "fill_container",
-                              "gap": 8,
-                              "children": [
-                                {
                                   "type": "frame",
-                                  "id": "nMiCG",
-                                  "name": "g1",
+                                  "id": "vMAPR",
                                   "width": "fill_container",
                                   "height": 32,
-                                  "cornerRadius": 8,
+                                  "fill": "$--info-bg",
+                                  "cornerRadius": "$--radius-m",
                                   "stroke": {
                                     "align": "inside",
                                     "thickness": 1,
-                                    "fill": "$--border"
+                                    "fill": "$--info"
                                   },
+                                  "padding": [
+                                    0,
+                                    8
+                                  ],
                                   "justifyContent": "center",
                                   "alignItems": "center",
                                   "children": [
                                     {
                                       "type": "text",
-                                      "id": "WBrLh",
-                                      "fill": "$--muted-foreground",
-                                      "content": "Just pass",
-                                      "fontFamily": "Inter",
-                                      "fontSize": 11,
-                                      "fontWeight": "500"
-                                    }
-                                  ]
-                                },
-                                {
-                                  "type": "frame",
-                                  "id": "8whlZ",
-                                  "name": "g2",
-                                  "width": "fill_container",
-                                  "height": 32,
-                                  "fill": "#E8EDF5",
-                                  "cornerRadius": 8,
-                                  "stroke": {
-                                    "align": "inside",
-                                    "thickness": 1,
-                                    "fill": "$--primary"
-                                  },
-                                  "justifyContent": "center",
-                                  "alignItems": "center",
-                                  "children": [
-                                    {
-                                      "type": "text",
-                                      "id": "F2ojH",
-                                      "fill": "$--primary",
+                                      "id": "JoGKi",
+                                      "fill": "$--foreground",
                                       "content": "Do well",
                                       "fontFamily": "Inter",
-                                      "fontSize": 11,
+                                      "fontSize": 12,
                                       "fontWeight": "500"
                                     }
                                   ]
                                 },
                                 {
                                   "type": "frame",
-                                  "id": "kWcMz",
-                                  "name": "g3",
+                                  "id": "ptH5a",
                                   "width": "fill_container",
                                   "height": 32,
-                                  "cornerRadius": 8,
+                                  "fill": "$--background",
+                                  "cornerRadius": "$--radius-m",
                                   "stroke": {
                                     "align": "inside",
                                     "thickness": 1,
                                     "fill": "$--border"
                                   },
+                                  "padding": [
+                                    0,
+                                    8
+                                  ],
                                   "justifyContent": "center",
                                   "alignItems": "center",
                                   "children": [
                                     {
                                       "type": "text",
-                                      "id": "WQx9w",
+                                      "id": "09p3Q",
                                       "fill": "$--muted-foreground",
                                       "content": "Ace it",
                                       "fontFamily": "Inter",
-                                      "fontSize": 11,
-                                      "fontWeight": "500"
+                                      "fontSize": 12,
+                                      "fontWeight": "normal"
                                     }
                                   ]
                                 }
                               ]
-                            }
-                          ]
-                        },
-                        {
-                          "type": "frame",
-                          "id": "qexQB",
-                          "name": "addCourseBtn",
-                          "cornerRadius": 8,
-                          "stroke": {
-                            "align": "outside",
-                            "thickness": 1,
-                            "fill": "$--border"
-                          },
-                          "gap": 4,
-                          "padding": [
-                            8,
-                            16
-                          ],
-                          "alignItems": "center",
-                          "children": [
-                            {
-                              "type": "text",
-                              "id": "QZevW",
-                              "fill": "$--muted-foreground",
-                              "content": "+ Add course",
-                              "fontFamily": "Inter",
-                              "fontSize": 13,
-                              "fontWeight": "normal"
                             }
                           ]
                         }
@@ -823,7 +1012,7 @@
                   "name": "nextBtn",
                   "width": "fill_container",
                   "x": 48,
-                  "y": 735,
+                  "y": 876,
                   "descendants": {
                     "AkprM": {
                       "x": 227,
@@ -997,7 +1186,7 @@
                       "id": "QXyDx",
                       "name": "headerSub",
                       "fill": "#4E6A8C",
-                      "content": "Thursday, February 26 · 3 tasks due this week",
+                      "content": "Thursday, February 26 \u00b7 3 tasks due this week",
                       "fontFamily": "Inter",
                       "fontSize": 14,
                       "fontWeight": "normal"
@@ -1193,7 +1382,7 @@
                           "content": "Calculus Problem Set 5"
                         },
                         "ks9wy": {
-                          "content": "Due tomorrow · ~2.5 hrs estimated",
+                          "content": "Due tomorrow \u00b7 ~2.5 hrs estimated",
                           "y": 22
                         },
                         "fwllh": {
@@ -1233,7 +1422,7 @@
                           "content": "History Essay: Industrial Revolution"
                         },
                         "ks9wy": {
-                          "content": "Due in 3 days · ~4 hrs estimated",
+                          "content": "Due in 3 days \u00b7 ~4 hrs estimated",
                           "y": 22
                         },
                         "fwllh": {
@@ -1279,7 +1468,7 @@
                           "content": "Chemistry Lab Report"
                         },
                         "ks9wy": {
-                          "content": "Due in 5 days · ~3 hrs estimated",
+                          "content": "Due in 5 days \u00b7 ~3 hrs estimated",
                           "y": 22
                         },
                         "fwllh": {
@@ -1331,7 +1520,7 @@
                       "y": 36,
                       "descendants": {
                         "5gvFR": {
-                          "content": "9:00 AM – 10:30 AM",
+                          "content": "9:00 AM \u2013 10:30 AM",
                           "x": 18,
                           "y": 16
                         },
@@ -1341,7 +1530,7 @@
                           "y": 35
                         },
                         "HkeGx": {
-                          "content": "1.5 hrs · Focus block",
+                          "content": "1.5 hrs \u00b7 Focus block",
                           "x": 18,
                           "y": 58
                         }
@@ -1358,7 +1547,7 @@
                       "y": 141,
                       "descendants": {
                         "ephls": {
-                          "content": "2:00 PM – 3:00 PM",
+                          "content": "2:00 PM \u2013 3:00 PM",
                           "x": 18,
                           "y": 16
                         },
@@ -1368,7 +1557,7 @@
                           "y": 35
                         },
                         "G8o9F": {
-                          "content": "1 hr · Focus block",
+                          "content": "1 hr \u00b7 Focus block",
                           "x": 18,
                           "y": 58
                         }
@@ -1385,7 +1574,7 @@
                       "y": 246,
                       "descendants": {
                         "ephls": {
-                          "content": "6:00 PM – 7:00 PM",
+                          "content": "6:00 PM \u2013 7:00 PM",
                           "x": 18,
                           "y": 16
                         },
@@ -1395,7 +1584,7 @@
                           "y": 35
                         },
                         "G8o9F": {
-                          "content": "1 hr · Focus block",
+                          "content": "1 hr \u00b7 Focus block",
                           "x": 18,
                           "y": 58
                         }
@@ -1434,7 +1623,7 @@
       "id": "5HNBG",
       "x": 4560,
       "y": 0,
-      "name": "Dashboard – Add Task",
+      "name": "Dashboard \u2013 Add Task",
       "width": 1440,
       "height": 900,
       "fill": "#F5F7FA",
@@ -1585,7 +1774,7 @@
                       "id": "UtfBW",
                       "name": "headerSub",
                       "fill": "#4E6A8C",
-                      "content": "Thursday, February 26 · 3 tasks due this week",
+                      "content": "Thursday, February 26 \u00b7 3 tasks due this week",
                       "fontFamily": "Inter",
                       "fontSize": 14,
                       "fontWeight": "normal"
@@ -1781,7 +1970,7 @@
                           "content": "Calculus Problem Set 5"
                         },
                         "ks9wy": {
-                          "content": "Due tomorrow · ~2.5 hrs estimated",
+                          "content": "Due tomorrow \u00b7 ~2.5 hrs estimated",
                           "y": 22
                         },
                         "fwllh": {
@@ -1821,7 +2010,7 @@
                           "content": "History Essay: Industrial Revolution"
                         },
                         "ks9wy": {
-                          "content": "Due in 3 days · ~4 hrs estimated",
+                          "content": "Due in 3 days \u00b7 ~4 hrs estimated",
                           "y": 22
                         },
                         "fwllh": {
@@ -1867,7 +2056,7 @@
                           "content": "Chemistry Lab Report"
                         },
                         "ks9wy": {
-                          "content": "Due in 5 days · ~3 hrs estimated",
+                          "content": "Due in 5 days \u00b7 ~3 hrs estimated",
                           "y": 22
                         },
                         "fwllh": {
@@ -1919,7 +2108,7 @@
                       "y": 36,
                       "descendants": {
                         "5gvFR": {
-                          "content": "9:00 AM – 10:30 AM",
+                          "content": "9:00 AM \u2013 10:30 AM",
                           "x": 18,
                           "y": 16
                         },
@@ -1929,7 +2118,7 @@
                           "y": 35
                         },
                         "HkeGx": {
-                          "content": "1.5 hrs · Focus block",
+                          "content": "1.5 hrs \u00b7 Focus block",
                           "x": 18,
                           "y": 58
                         }
@@ -1946,7 +2135,7 @@
                       "y": 141,
                       "descendants": {
                         "ephls": {
-                          "content": "2:00 PM – 3:00 PM",
+                          "content": "2:00 PM \u2013 3:00 PM",
                           "x": 18,
                           "y": 16
                         },
@@ -1956,7 +2145,7 @@
                           "y": 35
                         },
                         "G8o9F": {
-                          "content": "1 hr · Focus block",
+                          "content": "1 hr \u00b7 Focus block",
                           "x": 18,
                           "y": 58
                         }
@@ -1973,7 +2162,7 @@
                       "y": 246,
                       "descendants": {
                         "ephls": {
-                          "content": "6:00 PM – 7:00 PM",
+                          "content": "6:00 PM \u2013 7:00 PM",
                           "x": 18,
                           "y": 16
                         },
@@ -1983,7 +2172,7 @@
                           "y": 35
                         },
                         "G8o9F": {
-                          "content": "1 hr · Focus block",
+                          "content": "1 hr \u00b7 Focus block",
                           "x": 18,
                           "y": 58
                         }
@@ -2078,7 +2267,7 @@
                   "id": "0AFmk",
                   "name": "closeBtnIcon",
                   "fill": "#8FA6C2",
-                  "content": "×",
+                  "content": "\u00d7",
                   "fontFamily": "Inter",
                   "fontSize": 18,
                   "fontWeight": "normal"
@@ -2591,66 +2780,22 @@
               "padding": 48,
               "children": [
                 {
-                  "type": "frame",
-                  "id": "bqLSI",
+                  "id": "1mbpZ",
+                  "type": "ref",
+                  "ref": "BUAHR",
                   "name": "avatarRow",
                   "width": "fill_container",
-                  "gap": 20,
-                  "alignItems": "center",
-                  "children": [
-                    {
-                      "type": "frame",
-                      "id": "2UnGy",
-                      "name": "avatarLarge",
-                      "width": 72,
-                      "height": 72,
-                      "fill": "#68ACE5",
-                      "cornerRadius": 36,
-                      "justifyContent": "center",
-                      "alignItems": "center",
-                      "children": [
-                        {
-                          "type": "text",
-                          "id": "gryMV",
-                          "name": "avatarLetter",
-                          "fill": "#002D72",
-                          "content": "AJ",
-                          "fontFamily": "Space Grotesk",
-                          "fontSize": 24,
-                          "fontWeight": "700"
-                        }
-                      ]
+                  "descendants": {
+                    "BJBh9": {
+                      "content": "AJ"
                     },
-                    {
-                      "type": "frame",
-                      "id": "waRZd",
-                      "name": "avatarInfo",
-                      "layout": "vertical",
-                      "gap": 4,
-                      "children": [
-                        {
-                          "type": "text",
-                          "id": "ONIIE",
-                          "name": "avatarName",
-                          "fill": "#002D72",
-                          "content": "Alex Johnson",
-                          "fontFamily": "Space Grotesk",
-                          "fontSize": 22,
-                          "fontWeight": "700"
-                        },
-                        {
-                          "type": "text",
-                          "id": "QfSb1",
-                          "name": "avatarEmail",
-                          "fill": "#4E6A8C",
-                          "content": "alex@jhu.edu",
-                          "fontFamily": "Inter",
-                          "fontSize": 14,
-                          "fontWeight": "normal"
-                        }
-                      ]
+                    "irN7Z": {
+                      "content": "Alex Johnson"
+                    },
+                    "yyiZO": {
+                      "content": "alex@jhu.edu"
                     }
-                  ]
+                  }
                 },
                 {
                   "type": "frame",
@@ -2668,64 +2813,34 @@
                   "gap": 32,
                   "children": [
                     {
-                      "type": "frame",
-                      "id": "BYX1f",
+                      "id": "INcdv",
+                      "type": "ref",
+                      "ref": "N9yiZ",
                       "name": "fieldName",
                       "width": "fill_container",
-                      "layout": "vertical",
-                      "gap": 6,
-                      "children": [
-                        {
-                          "type": "text",
-                          "id": "lTOu8",
-                          "name": "field1Label",
-                          "fill": "#4E6A8C",
-                          "content": "Full Name",
-                          "fontFamily": "Inter",
-                          "fontSize": 12,
-                          "fontWeight": "600"
+                      "descendants": {
+                        "Hz14F": {
+                          "content": "Full Name"
                         },
-                        {
-                          "type": "text",
-                          "id": "u1uyI",
-                          "name": "field1Value",
-                          "fill": "#002D72",
-                          "content": "Alex Johnson",
-                          "fontFamily": "Space Grotesk",
-                          "fontSize": 16,
-                          "fontWeight": "500"
+                        "CTKgH": {
+                          "content": "Alex Johnson"
                         }
-                      ]
+                      }
                     },
                     {
-                      "type": "frame",
-                      "id": "WpRPv",
+                      "id": "jzaYk",
+                      "type": "ref",
+                      "ref": "N9yiZ",
                       "name": "fieldEmail",
                       "width": "fill_container",
-                      "layout": "vertical",
-                      "gap": 6,
-                      "children": [
-                        {
-                          "type": "text",
-                          "id": "eoMXh",
-                          "name": "field2Label",
-                          "fill": "#4E6A8C",
-                          "content": "Email",
-                          "fontFamily": "Inter",
-                          "fontSize": 12,
-                          "fontWeight": "600"
+                      "descendants": {
+                        "Hz14F": {
+                          "content": "Email"
                         },
-                        {
-                          "type": "text",
-                          "id": "29r7B",
-                          "name": "field2Value",
-                          "fill": "#002D72",
-                          "content": "alex@jhu.edu",
-                          "fontFamily": "Space Grotesk",
-                          "fontSize": 16,
-                          "fontWeight": "500"
+                        "CTKgH": {
+                          "content": "alex@jhu.edu"
                         }
-                      ]
+                      }
                     }
                   ]
                 },
@@ -2737,65 +2852,34 @@
                   "gap": 32,
                   "children": [
                     {
-                      "type": "frame",
-                      "id": "63znS",
-                      "name": "fieldSchool",
+                      "id": "oMBkd",
+                      "type": "ref",
+                      "ref": "N9yiZ",
+                      "name": "fieldMajor",
                       "width": "fill_container",
-                      "layout": "vertical",
-                      "gap": 6,
-                      "children": [
-                        {
-                          "type": "text",
-                          "id": "7YdH6",
-                          "name": "field3Label",
-                          "fill": "#4E6A8C",
-                          "content": "Major",
-                          "fontFamily": "Inter",
-                          "fontSize": 12,
-                          "fontWeight": "600"
+                      "descendants": {
+                        "Hz14F": {
+                          "content": "Major"
                         },
-                        {
-                          "type": "text",
-                          "id": "mkSkz",
-                          "name": "field3Value",
-                          "rotation": -0.30706672592217493,
-                          "fill": "#002D72",
-                          "content": "Computer Science",
-                          "fontFamily": "Space Grotesk",
-                          "fontSize": 16,
-                          "fontWeight": "500"
+                        "CTKgH": {
+                          "content": "Computer Science"
                         }
-                      ]
+                      }
                     },
                     {
-                      "type": "frame",
-                      "id": "UEC9s",
+                      "id": "BhU9t",
+                      "type": "ref",
+                      "ref": "N9yiZ",
                       "name": "fieldYear",
                       "width": "fill_container",
-                      "layout": "vertical",
-                      "gap": 6,
-                      "children": [
-                        {
-                          "type": "text",
-                          "id": "4QZBS",
-                          "name": "field4Label",
-                          "fill": "#4E6A8C",
-                          "content": "Year",
-                          "fontFamily": "Inter",
-                          "fontSize": 12,
-                          "fontWeight": "600"
+                      "descendants": {
+                        "Hz14F": {
+                          "content": "Year"
                         },
-                        {
-                          "type": "text",
-                          "id": "V0sKt",
-                          "name": "field4Value",
-                          "fill": "#002D72",
-                          "content": "Junior",
-                          "fontFamily": "Space Grotesk",
-                          "fontSize": 16,
-                          "fontWeight": "500"
+                        "CTKgH": {
+                          "content": "Junior"
                         }
-                      ]
+                      }
                     }
                   ]
                 },
@@ -2903,7 +2987,7 @@
       "id": "l5Xts",
       "x": 0,
       "y": 1200,
-      "name": "⚙ Design System",
+      "name": "\u2699 Design System",
       "width": 2400,
       "height": 1800,
       "fill": "#1A1A2E",
@@ -2928,7 +3012,7 @@
           "y": 0,
           "name": "dsSub",
           "fill": "#68ACE5",
-          "content": "Colors · Typography · Components",
+          "content": "Colors \u00b7 Typography \u00b7 Components",
           "fontFamily": "Inter",
           "fontSize": 14,
           "fontWeight": "normal"
@@ -3213,7 +3297,7 @@
               "id": "1yfev",
               "name": "typoH1",
               "fill": "#FFFFFF",
-              "content": "Page Heading — Space Grotesk 28 Bold",
+              "content": "Page Heading \u2014 Space Grotesk 28 Bold",
               "fontFamily": "Space Grotesk",
               "fontSize": 28,
               "fontWeight": "700"
@@ -3223,7 +3307,7 @@
               "id": "I88Fa",
               "name": "typoH2",
               "fill": "#FFFFFF",
-              "content": "Section Heading — Space Grotesk 18 SemiBold",
+              "content": "Section Heading \u2014 Space Grotesk 18 SemiBold",
               "fontFamily": "Space Grotesk",
               "fontSize": 18,
               "fontWeight": "600"
@@ -3233,7 +3317,7 @@
               "id": "8xJkR",
               "name": "typoBody",
               "fill": "#68ACE5",
-              "content": "Body text — Inter 14 Regular. Used for descriptions and meta information.",
+              "content": "Body text \u2014 Inter 14 Regular. Used for descriptions and meta information.",
               "fontFamily": "Inter",
               "fontSize": 14,
               "fontWeight": "normal"
@@ -3243,7 +3327,7 @@
               "id": "oNAps",
               "name": "typoSm",
               "fill": "#8FA6C2",
-              "content": "Small / Label — Inter 12 SemiBold. Used for card labels and badges.",
+              "content": "Small / Label \u2014 Inter 12 SemiBold. Used for card labels and badges.",
               "fontFamily": "Inter",
               "fontSize": 12,
               "fontWeight": "600"
@@ -3684,7 +3768,7 @@
                   "content": "Calculus Problem Set 5"
                 },
                 "ks9wy": {
-                  "content": "Due tomorrow · ~2.5 hrs estimated",
+                  "content": "Due tomorrow \u00b7 ~2.5 hrs estimated",
                   "y": 22
                 },
                 "fwllh": {
@@ -3802,7 +3886,7 @@
               "y": 0,
               "descendants": {
                 "5gvFR": {
-                  "content": "9:00 AM – 10:30 AM",
+                  "content": "9:00 AM \u2013 10:30 AM",
                   "x": 18,
                   "y": 16
                 },
@@ -3812,7 +3896,7 @@
                   "y": 35
                 },
                 "HkeGx": {
-                  "content": "1.5 hrs · Focus block",
+                  "content": "1.5 hrs \u00b7 Focus block",
                   "x": 18,
                   "y": 58
                 }
@@ -3829,7 +3913,7 @@
               "y": 0,
               "descendants": {
                 "ephls": {
-                  "content": "2:00 PM – 3:00 PM",
+                  "content": "2:00 PM \u2013 3:00 PM",
                   "x": 18,
                   "y": 16
                 },
@@ -3839,7 +3923,7 @@
                   "y": 35
                 },
                 "G8o9F": {
-                  "content": "1 hr · Focus block",
+                  "content": "1 hr \u00b7 Focus block",
                   "x": 18,
                   "y": 58
                 }
@@ -3954,102 +4038,49 @@
           "x": 900,
           "y": 870,
           "height": 600,
-          "name": "sidebarDisplay",
+          "name": "sidebarDisplay"
+        },
+        {
+          "type": "text",
+          "id": "ysxA6",
+          "x": 60,
+          "y": 1300,
+          "name": "profileLabel",
+          "fill": "#FFFFFF",
+          "content": "Profile Components",
+          "fontFamily": "Space Grotesk",
+          "fontSize": 13,
+          "fontWeight": "600"
+        },
+        {
+          "id": "CLS5g",
+          "type": "ref",
+          "ref": "BUAHR",
+          "name": "profileAvatarDisplay",
+          "x": 60,
+          "y": 1324
+        },
+        {
+          "id": "iSbk0",
+          "type": "ref",
+          "ref": "N9yiZ",
+          "name": "profileFieldDisplay1",
+          "x": 60,
+          "y": 1420
+        },
+        {
+          "id": "IDgla",
+          "type": "ref",
+          "ref": "N9yiZ",
+          "name": "profileFieldDisplay2",
+          "x": 200,
+          "y": 1420,
           "descendants": {
-            "pM9zH": {
-              "width": "fill_container",
-              "height": "fit_content",
-              "x": 24,
-              "y": 32
+            "Hz14F": {
+              "content": "Email"
             },
-            "qwLOb": {
-              "width": "fit_content",
-              "height": "fit_content",
-              "x": 0
-            },
-            "qwLOb/NZ5gH": {
-              "x": 5,
-              "y": 5
-            },
-            "qwLOb/6YpiG": {
-              "x": 42,
-              "y": 4.5
-            },
-            "99Oq1": {
-              "width": "fill_container",
-              "height": "fit_content",
-              "y": 64
-            },
-            "t2ejm": {
-              "width": "fill_container",
-              "x": 0,
-              "y": 0
-            },
-            "t2ejm/r853k": {
-              "x": 14,
-              "y": 14
-            },
-            "t2ejm/yUJUI": {
-              "x": 40,
-              "y": 13
-            },
-            "dLWqu": {
-              "width": "fill_container",
-              "x": 0,
-              "y": 48
-            },
-            "dLWqu/j0EVc": {
-              "x": 14,
-              "y": 14
-            },
-            "dLWqu/Xkhsc": {
-              "x": 40,
-              "y": 13
-            },
-            "ipMWX": {
-              "width": "fill_container",
-              "x": 0,
-              "y": 96
-            },
-            "ipMWX/j0EVc": {
-              "x": 14,
-              "y": 14
-            },
-            "ipMWX/Xkhsc": {
-              "x": 40,
-              "y": 13
-            },
-            "78Cxh": {
-              "width": "fill_container",
-              "x": 0,
-              "y": 144
-            },
-            "78Cxh/j0EVc": {
-              "x": 14,
-              "y": 14
-            },
-            "78Cxh/Xkhsc": {
-              "x": 40,
-              "y": 13
-            },
-            "jzFAO": {
-              "width": "fit_content",
-              "height": "fit_content",
-              "x": 24,
-              "y": 532
-            },
-            "lrM5h": {
-              "x": 9.5,
-              "y": 9.5
-            },
-            "LBXyg": {
-              "width": "fit_content",
-              "height": "fit_content",
-              "x": 46,
-              "y": 2
-            },
-            "AqSvO": {
-              "y": 19
+            "CTKgH": {
+              "content": "jane@example.com"
             }
           }
         }
@@ -4408,7 +4439,7 @@
               "id": "WXZeW",
               "name": "placeholder",
               "fill": "$--light-muted",
-              "content": "Enter value…",
+              "content": "Enter value\u2026",
               "fontFamily": "Inter",
               "fontSize": 14,
               "fontWeight": "normal"
@@ -4606,7 +4637,7 @@
               "id": "ks9wy",
               "name": "meta",
               "fill": "$--muted-foreground",
-              "content": "Due tomorrow · ~2.5 hrs estimated",
+              "content": "Due tomorrow \u00b7 ~2.5 hrs estimated",
               "fontFamily": "Inter",
               "fontSize": 12,
               "fontWeight": "normal"
@@ -4783,7 +4814,7 @@
           "id": "5gvFR",
           "name": "time",
           "fill": "$--info",
-          "content": "9:00 AM – 10:30 AM",
+          "content": "9:00 AM \u2013 10:30 AM",
           "fontFamily": "Inter",
           "fontSize": 11,
           "fontWeight": "600"
@@ -4803,7 +4834,7 @@
           "id": "HkeGx",
           "name": "duration",
           "fill": "$--info",
-          "content": "1.5 hrs · Focus block",
+          "content": "1.5 hrs \u00b7 Focus block",
           "fontFamily": "Inter",
           "fontSize": 12,
           "fontWeight": "normal"
@@ -4836,7 +4867,7 @@
           "id": "ephls",
           "name": "time",
           "fill": "$--muted-foreground",
-          "content": "2:00 PM – 3:00 PM",
+          "content": "2:00 PM \u2013 3:00 PM",
           "fontFamily": "Inter",
           "fontSize": 11,
           "fontWeight": "600"
@@ -4856,7 +4887,7 @@
           "id": "G8o9F",
           "name": "duration",
           "fill": "$--muted-foreground",
-          "content": "1 hr · Focus block",
+          "content": "1 hr \u00b7 Focus block",
           "fontFamily": "Inter",
           "fontSize": 12,
           "fontWeight": "normal"
@@ -5181,7 +5212,7 @@
       "id": "nYr17",
       "x": 1520,
       "y": 3080,
-      "name": "Onboarding – Work Hours",
+      "name": "Onboarding \u2013 Work Hours",
       "width": 1440,
       "height": 900,
       "fill": "$--background",
@@ -5208,7 +5239,17 @@
               "height": 32,
               "width": "fit_content",
               "x": 40,
-              "y": 16
+              "y": 16,
+              "descendants": {
+                "NZ5gH": {
+                  "x": 5,
+                  "y": 5
+                },
+                "6YpiG": {
+                  "x": 42,
+                  "y": 4.5
+                }
+              }
             },
             {
               "type": "frame",
@@ -5884,7 +5925,9 @@
                       "y": 0,
                       "descendants": {
                         "zZ3E7": {
-                          "content": "← Back"
+                          "content": "\u2190 Back",
+                          "x": 24,
+                          "y": 15
                         }
                       }
                     },
@@ -5893,7 +5936,18 @@
                       "type": "ref",
                       "ref": "RruJv",
                       "x": 486,
-                      "y": 0
+                      "y": 0,
+                      "width": "fit_content",
+                      "descendants": {
+                        "AkprM": {
+                          "x": 24,
+                          "y": 14.5
+                        },
+                        "TRgda": {
+                          "x": 98,
+                          "y": 16
+                        }
+                      }
                     }
                   ]
                 }
@@ -5908,7 +5962,7 @@
       "id": "3SIDN",
       "x": 3040,
       "y": 3080,
-      "name": "Onboarding – Preferences",
+      "name": "Onboarding \u2013 Preferences",
       "width": 1440,
       "height": 900,
       "fill": "$--background",
@@ -5935,7 +5989,17 @@
               "height": 32,
               "width": "fit_content",
               "x": 40,
-              "y": 16
+              "y": 16,
+              "descendants": {
+                "NZ5gH": {
+                  "x": 5,
+                  "y": 5
+                },
+                "6YpiG": {
+                  "x": 42,
+                  "y": 4.5
+                }
+              }
             },
             {
               "type": "frame",
@@ -6029,7 +6093,7 @@
                   "fill": "$--muted-foreground",
                   "textGrowth": "fixed-width",
                   "width": "fill_container",
-                  "content": "Select everything that applies — this helps us schedule smarter.",
+                  "content": "Select everything that applies \u2014 this helps us schedule smarter.",
                   "lineHeight": 1.5,
                   "fontFamily": "Inter",
                   "fontSize": 14,
@@ -6047,7 +6111,7 @@
                       "type": "text",
                       "id": "PNbmH",
                       "fill": "$--primary",
-                      "content": "🕐 Time of Day",
+                      "content": "\ud83d\udd50 Time of Day",
                       "fontFamily": "Space Grotesk",
                       "fontSize": 13,
                       "fontWeight": "600"
@@ -6098,7 +6162,7 @@
                                   "type": "text",
                                   "id": "aMdJO",
                                   "fill": "$--muted-foreground",
-                                  "content": "Early Morning (5–8am)",
+                                  "content": "Early Morning (5\u20138am)",
                                   "fontFamily": "Inter",
                                   "fontSize": 13,
                                   "fontWeight": "normal"
@@ -6120,7 +6184,7 @@
                                   "type": "text",
                                   "id": "2HRdj",
                                   "fill": "$--primary-foreground",
-                                  "content": "Morning (8–11am)",
+                                  "content": "Morning (8\u201311am)",
                                   "fontFamily": "Inter",
                                   "fontSize": 13,
                                   "fontWeight": "normal"
@@ -6147,7 +6211,7 @@
                                   "type": "text",
                                   "id": "IuD8a",
                                   "fill": "$--muted-foreground",
-                                  "content": "Midday (11am–2pm)",
+                                  "content": "Midday (11am\u20132pm)",
                                   "fontFamily": "Inter",
                                   "fontSize": 13,
                                   "fontWeight": "normal"
@@ -6174,7 +6238,7 @@
                                   "type": "text",
                                   "id": "PcQjS",
                                   "fill": "$--muted-foreground",
-                                  "content": "Afternoon (2–5pm)",
+                                  "content": "Afternoon (2\u20135pm)",
                                   "fontFamily": "Inter",
                                   "fontSize": 13,
                                   "fontWeight": "normal"
@@ -6205,7 +6269,7 @@
                                   "type": "text",
                                   "id": "s6tu2",
                                   "fill": "$--primary-foreground",
-                                  "content": "Evening (5–8pm)",
+                                  "content": "Evening (5\u20138pm)",
                                   "fontFamily": "Inter",
                                   "fontSize": 13,
                                   "fontWeight": "normal"
@@ -6232,7 +6296,7 @@
                                   "type": "text",
                                   "id": "ecUfD",
                                   "fill": "$--muted-foreground",
-                                  "content": "Night (8–11pm)",
+                                  "content": "Night (8\u201311pm)",
                                   "fontFamily": "Inter",
                                   "fontSize": 13,
                                   "fontWeight": "normal"
@@ -6312,7 +6376,7 @@
                       "type": "text",
                       "id": "POKIF",
                       "fill": "$--primary",
-                      "content": "📅 Day of Week",
+                      "content": "\ud83d\udcc5 Day of Week",
                       "fontFamily": "Space Grotesk",
                       "fontSize": 13,
                       "fontWeight": "600"
@@ -6577,7 +6641,7 @@
                       "type": "text",
                       "id": "2kZuQ",
                       "fill": "$--primary",
-                      "content": "⚡ Work Session Style",
+                      "content": "\u26a1 Work Session Style",
                       "fontFamily": "Space Grotesk",
                       "fontSize": 13,
                       "fontWeight": "600"
@@ -6623,7 +6687,7 @@
                                   "type": "text",
                                   "id": "ZrsxP",
                                   "fill": "$--primary-foreground",
-                                  "content": "Short bursts (25–30 min)",
+                                  "content": "Short bursts (25\u201330 min)",
                                   "fontFamily": "Inter",
                                   "fontSize": 13,
                                   "fontWeight": "normal"
@@ -6650,7 +6714,7 @@
                                   "type": "text",
                                   "id": "kb8rn",
                                   "fill": "$--muted-foreground",
-                                  "content": "Medium sessions (45–60 min)",
+                                  "content": "Medium sessions (45\u201360 min)",
                                   "fontFamily": "Inter",
                                   "fontSize": 13,
                                   "fontWeight": "normal"
@@ -6766,7 +6830,7 @@
                       "type": "text",
                       "id": "jwnju",
                       "fill": "$--primary",
-                      "content": "⏰ Deadline Behavior",
+                      "content": "\u23f0 Deadline Behavior",
                       "fontFamily": "Space Grotesk",
                       "fontSize": 13,
                       "fontWeight": "600"
@@ -6881,7 +6945,7 @@
                       "type": "text",
                       "id": "tG9Mu",
                       "fill": "$--primary",
-                      "content": "🔄 Break Preferences",
+                      "content": "\ud83d\udd04 Break Preferences",
                       "fontFamily": "Space Grotesk",
                       "fontSize": 13,
                       "fontWeight": "600"
@@ -6932,7 +6996,7 @@
                                   "type": "text",
                                   "id": "NCUq0",
                                   "fill": "$--muted-foreground",
-                                  "content": "Frequent short breaks (every 25–30 min)",
+                                  "content": "Frequent short breaks (every 25\u201330 min)",
                                   "fontFamily": "Inter",
                                   "fontSize": 13,
                                   "fontWeight": "normal"
@@ -7042,7 +7106,7 @@
                       "type": "text",
                       "id": "KtfSS",
                       "fill": "$--primary",
-                      "content": "📚 Subject/Task Switching",
+                      "content": "\ud83d\udcda Subject/Task Switching",
                       "fontFamily": "Space Grotesk",
                       "fontSize": 13,
                       "fontWeight": "600"
@@ -7249,7 +7313,9 @@
                       "y": 0,
                       "descendants": {
                         "zZ3E7": {
-                          "content": "← Back"
+                          "content": "\u2190 Back",
+                          "x": 24,
+                          "y": 15
                         }
                       }
                     },
@@ -7262,11 +7328,360 @@
                       "y": 2,
                       "descendants": {
                         "vxzyR": {
-                          "content": "Finish"
+                          "content": "Finish",
+                          "x": 20,
+                          "y": 13
                         }
                       }
                     }
                   ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "BUAHR",
+      "x": 8100,
+      "y": 1500,
+      "name": "ProfileAvatar",
+      "reusable": true,
+      "gap": 20,
+      "alignItems": "center",
+      "children": [
+        {
+          "type": "frame",
+          "id": "tt1gY",
+          "name": "avatarCircle",
+          "width": 72,
+          "height": 72,
+          "fill": "$--info",
+          "cornerRadius": 36,
+          "justifyContent": "center",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "BJBh9",
+              "name": "letter",
+              "fill": "$--primary",
+              "content": "J",
+              "fontFamily": "Space Grotesk",
+              "fontSize": 24,
+              "fontWeight": "700"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "Mqiqx",
+          "name": "info",
+          "layout": "vertical",
+          "gap": 4,
+          "children": [
+            {
+              "type": "text",
+              "id": "irN7Z",
+              "name": "name",
+              "fill": "$--primary",
+              "content": "Jane Smith",
+              "fontFamily": "Space Grotesk",
+              "fontSize": 24,
+              "fontWeight": "700"
+            },
+            {
+              "type": "text",
+              "id": "yyiZO",
+              "name": "email",
+              "fill": "$--muted-foreground",
+              "content": "jane@example.com",
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "N9yiZ",
+      "x": 8100,
+      "y": 1650,
+      "name": "ProfileField",
+      "reusable": true,
+      "layout": "vertical",
+      "gap": 6,
+      "children": [
+        {
+          "type": "text",
+          "id": "Hz14F",
+          "name": "label",
+          "fill": "$--muted-foreground",
+          "content": "Full Name",
+          "fontFamily": "Inter",
+          "fontSize": 12,
+          "fontWeight": "600"
+        },
+        {
+          "type": "text",
+          "id": "CTKgH",
+          "name": "value",
+          "fill": "$--primary",
+          "content": "Jane Smith",
+          "fontFamily": "Space Grotesk",
+          "fontSize": 16,
+          "fontWeight": "500"
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "RXNpo",
+      "x": 3040,
+      "y": 1500,
+      "name": "Classes \u2013 Syllabus Upload",
+      "width": 1440,
+      "height": 900,
+      "fill": "$--background",
+      "layout": "none",
+      "children": [
+        {
+          "type": "frame",
+          "id": "LZ5gS",
+          "x": 460,
+          "y": 190,
+          "name": "Syllabus Upload Modal",
+          "width": 520,
+          "fill": "$--card",
+          "cornerRadius": 12,
+          "stroke": {
+            "align": "inside",
+            "thickness": 1,
+            "fill": "$--border"
+          },
+          "layout": "vertical",
+          "gap": 24,
+          "padding": 48,
+          "children": [
+            {
+              "type": "frame",
+              "id": "vbxj1",
+              "name": "header",
+              "width": "fill_container",
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "WzBSI",
+                  "name": "title",
+                  "fill": "$--primary",
+                  "content": "Upload Syllabus",
+                  "fontFamily": "Space Grotesk",
+                  "fontSize": 26,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "frame",
+                  "id": "qQ5S9",
+                  "name": "closeBtn",
+                  "width": 28,
+                  "height": 28,
+                  "fill": "$--background",
+                  "cornerRadius": 6,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "oEHl5",
+                      "fill": "$--light-muted",
+                      "content": "\u00d7",
+                      "fontFamily": "Inter",
+                      "fontSize": 18,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "V7jql",
+              "name": "subtitle",
+              "fill": "$--muted-foreground",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Upload a syllabus for your course. Accepted: PDF, plain text (max 10 MB).",
+              "lineHeight": 1.5,
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "frame",
+              "id": "y9bnF",
+              "name": "modeToggle",
+              "width": "fill_container",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "HLElf",
+                  "name": "fileUploadTab",
+                  "width": "fill_container",
+                  "height": 36,
+                  "fill": "$--primary",
+                  "cornerRadius": "$--radius-m",
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "AUUUq",
+                      "fill": "$--primary-foreground",
+                      "content": "File Upload",
+                      "fontFamily": "Space Grotesk",
+                      "fontSize": 13,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "TlKFP",
+                  "name": "pasteTextTab",
+                  "width": "fill_container",
+                  "height": 36,
+                  "fill": "$--background",
+                  "cornerRadius": "$--radius-m",
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "$--border"
+                  },
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "P7wVx",
+                      "fill": "$--muted-foreground",
+                      "content": "Paste Text",
+                      "fontFamily": "Space Grotesk",
+                      "fontSize": 13,
+                      "fontWeight": "600"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "xGrGD",
+              "name": "dropZone",
+              "width": "fill_container",
+              "height": 140,
+              "fill": "$--background",
+              "cornerRadius": 12,
+              "stroke": {
+                "align": "inside",
+                "thickness": 2,
+                "fill": "$--border"
+              },
+              "layout": "vertical",
+              "gap": 8,
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "Dkwb9",
+                  "width": 28,
+                  "height": 28,
+                  "iconFontName": "upload-cloud",
+                  "iconFontFamily": "feather",
+                  "fill": "$--light-muted"
+                },
+                {
+                  "type": "frame",
+                  "id": "v0fQq",
+                  "name": "dragRow",
+                  "gap": 4,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "fxLSs",
+                      "fill": "$--muted-foreground",
+                      "content": "Drag & drop or ",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "RCjnq",
+                      "fill": "$--accent",
+                      "content": "browse",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "oZyqu",
+                  "fill": "$--light-muted",
+                  "content": "PDF or .txt \u00b7 max 10 MB",
+                  "fontFamily": "Inter",
+                  "fontSize": 12,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "0jqju",
+              "name": "btnRow",
+              "width": "fill_container",
+              "gap": 12,
+              "children": [
+                {
+                  "id": "cEcJS",
+                  "type": "ref",
+                  "ref": "uzHQ8",
+                  "width": "fill_container",
+                  "name": "cancelBtn",
+                  "x": 0,
+                  "y": 0,
+                  "descendants": {
+                    "zZ3E7": {
+                      "x": 80,
+                      "content": "Cancel"
+                    }
+                  }
+                },
+                {
+                  "id": "9PkHe",
+                  "type": "ref",
+                  "ref": "Xdrqk",
+                  "width": "fill_container",
+                  "height": 44,
+                  "name": "uploadBtn",
+                  "x": 218,
+                  "y": 0,
+                  "descendants": {
+                    "vxzyR": {
+                      "x": 79,
+                      "content": "Upload"
+                    }
+                  }
                 }
               ]
             }

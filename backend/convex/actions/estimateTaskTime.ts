@@ -19,6 +19,10 @@ export const estimateTaskTime = internalAction({
     const user = await ctx.runQuery(internal.queries.users.getUserInternal, {
       userId: task.userId,
     });
+    const priorEstimateFeedback = await ctx.runQuery(
+      internal.queries.tasks.getEstimateFeedbackContextInternal,
+      { userId: task.userId }
+    );
 
     // Build prompt
     const userContext = [
@@ -32,6 +36,20 @@ export const estimateTaskTime = internalAction({
       .filter(Boolean)
       .join("\n");
 
+    const feedbackContext =
+      priorEstimateFeedback.length > 0
+        ? [
+            "Past estimate feedback from this same student (learn from this):",
+            ...priorEstimateFeedback.map((entry) => {
+              const corrected =
+                entry.correctedEstimateMinutes !== undefined
+                  ? `, corrected to ${entry.correctedEstimateMinutes} minutes`
+                  : "";
+              return `- ${entry.taskType}: "${entry.title}" -> estimated ${entry.estimatedMinutes} minutes, feedback ${entry.rating}${corrected}`;
+            }),
+          ].join("\n")
+        : "";
+
     const prompt = `You are a study time estimator. Given the task details and student profile below, estimate how many minutes it will take the student to complete the task.
 
 Task title: ${task.title}
@@ -39,6 +57,7 @@ Task type: ${task.taskType}
 Task description: ${task.description}
 
 ${userContext ? `Student profile:\n${userContext}` : ""}
+${feedbackContext ? `\n${feedbackContext}` : ""}
 
 Respond with the estimated number of minutes as a single integer.`;
 
