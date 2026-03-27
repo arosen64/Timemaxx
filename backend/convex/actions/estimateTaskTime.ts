@@ -3,7 +3,8 @@
 import { internalAction } from "../_generated/server";
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
-import { GoogleGenAI, Type } from "@google/genai";
+import { Type } from "@google/genai";
+import { callGeminiJSON } from "../lib/gemini";
 
 export const estimateTaskTime = internalAction({
   args: {
@@ -71,23 +72,16 @@ Respond with the estimated number of minutes as a single integer.`;
     }
 
     try {
-      const genai = new GoogleGenAI({ apiKey });
-      const response = await genai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: prompt,
-        config: {
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              estimatedMinutes: { type: Type.INTEGER },
-            },
-            required: ["estimatedMinutes"],
+      const json = await callGeminiJSON<{ estimatedMinutes: number }>(prompt, {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            estimatedMinutes: { type: Type.INTEGER },
           },
+          required: ["estimatedMinutes"],
         },
       });
-
-      const json = JSON.parse(response.text ?? "{}");
       const estimatedMinutes = json.estimatedMinutes;
 
       if (typeof estimatedMinutes === "number") {
