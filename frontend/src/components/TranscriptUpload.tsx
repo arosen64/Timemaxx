@@ -5,7 +5,10 @@ import { api } from '../../../backend/convex/_generated/api'
 import { type ParsedCourse } from '../../../backend/convex/actions/parseTranscript'
 import { type Course } from '../types'
 import FileUpload from './ui/FileUpload'
+import Modal from './ui/Modal'
+import Selector from './ui/Selector'
 import { SpinnerIcon } from './icons'
+import { STUDY_GOALS } from '../constants'
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
   'pdfjs-dist/build/pdf.worker.min.mjs',
@@ -40,6 +43,13 @@ export default function TranscriptUpload({ onCoursesAdded }: TranscriptUploadPro
   const [summary, setSummary] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
+  // Modal state for current courses needing a study goal
+  const [pendingCurrentCourses, setPendingCurrentCourses] = useState<ParsedCourse[]>([])
+  const [pendingSavedPast, setPendingSavedPast] = useState<Course[]>([])
+  const [pendingGoals, setPendingGoals] = useState<string[]>([])
+  const [savingGoals, setSavingGoals] = useState(false)
+  const [goalErrors, setGoalErrors] = useState<string[]>([])
+
   const handleFile = async (f: File) => {
     setFile(f)
     setError(null)
@@ -50,25 +60,28 @@ export default function TranscriptUpload({ onCoursesAdded }: TranscriptUploadPro
       const fileText = await extractPdfText(f)
       const parsed: ParsedCourse[] = await parseTranscript({ fileText })
 
-      const saved: Course[] = []
+      const pastCourses = parsed.filter((c) => c.grade && c.grade.trim().toUpperCase() !== 'X')
+      const currentCourses = parsed.filter((c) => !c.grade || c.grade.trim().toUpperCase() === 'X')
+
+      // Save past courses immediately
+      const savedPast: Course[] = []
       await Promise.all(
-        parsed.map(async (c) => {
-          const hasGrade = c.grade && c.grade.trim().toUpperCase() !== 'X'
+        pastCourses.map(async (c) => {
           try {
             const userCourseId = await addUserCourse({
               courseCode: c.courseCode,
               title: c.title,
               credits: c.credits,
               term: c.term,
-              grade: hasGrade ? c.grade : undefined,
+              grade: c.grade,
             })
-            saved.push({
+            savedPast.push({
               userCourseId,
               courseCode: c.courseCode,
               title: c.title,
               credits: c.credits,
               term: c.term,
-              grade: hasGrade ? c.grade : undefined,
+              grade: c.grade,
             })
           } catch {
             // Already exists — skip quietly
@@ -76,13 +89,63 @@ export default function TranscriptUpload({ onCoursesAdded }: TranscriptUploadPro
         })
       )
 
-      onCoursesAdded(saved)
-      setSummary(`${saved.length} course${saved.length !== 1 ? 's' : ''} imported from transcript`)
+      if (currentCourses.length === 0) {
+        onCoursesAdded(savedPast)
+        setSummary(`${savedPast.length} course${savedPast.length !== 1 ? 's' : ''} imported from transcript`)
+      } else {
+        setPendingSavedPast(savedPast)
+        setPendingCurrentCourses(currentCourses)
+        setPendingGoals(currentCourses.map(() => ''))
+        setGoalErrors(currentCourses.map(() => ''))
+      }
     } catch {
       setError('Failed to parse transcript. Please try again.')
     } finally {
       setParsing(false)
     }
+  }
+
+  const handleGoalConfirm = async () => {
+    const errors = pendingGoals.map((g) => (g.trim() ? '' : 'Please select a study goal.'))
+    if (errors.some(Boolean)) {
+      setGoalErrors(errors)
+      return
+    }
+
+    setSavingGoals(true)
+    const savedCurrent: Course[] = []
+    await Promise.all(
+      pendingCurrentCourses.map(async (c, i) => {
+        try {
+          const userCourseId = await addUserCourse({
+            courseCode: c.courseCode,
+            title: c.title,
+            credits: c.credits,
+            term: c.term,
+            studyGoal: pendingGoals[i],
+          })
+          savedCurrent.push({
+            userCourseId,
+            courseCode: c.courseCode,
+            title: c.title,
+            credits: c.credits,
+            term: c.term,
+            studyGoal: pendingGoals[i],
+          })
+        } catch {
+          // Already exists — skip quietly
+        }
+      })
+    )
+
+    const allSaved = [...pendingSavedPast, ...savedCurrent]
+    onCoursesAdded(allSaved)
+    setSummary(`${allSaved.length} course${allSaved.length !== 1 ? 's' : ''} imported from transcript`)
+    setPendingCurrentCourses([])
+    setPendingSavedPast([])
+    setPendingGoals([])
+    setGoalErrors([])
+    setSavingGoals(false)
   }
 
   const handleRemove = () => {
@@ -99,6 +162,9 @@ export default function TranscriptUpload({ onCoursesAdded }: TranscriptUploadPro
       </div>
       <p className="font-body text-xs text-slate-blue">
         Upload your JHU transcript to auto-fill your courses
+      </p>
+      <p className="font-body text-xs text-light-blue">
+        Note: AP, IB, and other external/transfer courses are not supported — please add those manually as equivalent JHU courses.
       </p>
       <FileUpload
         accept=".pdf"
@@ -118,6 +184,49 @@ export default function TranscriptUpload({ onCoursesAdded }: TranscriptUploadPro
       )}
       {summary && <p className="font-body text-xs text-teal">{summary}</p>}
       {error && <p className="font-body text-xs text-urgent-red">{error}</p>}
+
+      <Modal
+        isOpen={pendingCurrentCourses.length > 0}
+        onClose={() => {}}
+        showCloseButton={false}
+        title="Set Study Goals"
+        subtitle="Select a study goal for each of your current courses."
+        primaryLabel="Confirm"
+        primaryLoadingLabel="Saving…"
+        onPrimary={handleGoalConfirm}
+        isPrimaryDisabled={savingGoals}
+      >
+        <div className="flex max-h-64 flex-col gap-4 overflow-y-auto">
+          {pendingCurrentCourses.map((course, i) => (
+            <div key={i} className="flex flex-col gap-1.5">
+              <span className="font-body text-sm font-semibold text-navy">{course.title}</span>
+              {course.term && (
+                <span className="inline-block w-fit rounded-full bg-navy/10 px-2 py-0.5 font-body text-xs font-medium text-navy">
+                  {course.term}
+                </span>
+              )}
+              <Selector
+                value={pendingGoals[i]}
+                onChange={(val) => {
+                  const updated = [...pendingGoals]
+                  updated[i] = val
+                  setPendingGoals(updated)
+                  if (val) {
+                    const updatedErrors = [...goalErrors]
+                    updatedErrors[i] = ''
+                    setGoalErrors(updatedErrors)
+                  }
+                }}
+                placeholder="Select a study goal"
+                options={STUDY_GOALS.map((g) => ({ label: g, value: g }))}
+              />
+              {goalErrors[i] && (
+                <p className="font-body text-xs text-urgent-red">{goalErrors[i]}</p>
+              )}
+            </div>
+          ))}
+        </div>
+      </Modal>
     </div>
   )
 }

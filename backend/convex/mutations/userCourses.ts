@@ -2,6 +2,19 @@ import { mutation } from "../_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
+function termToSuffix(term: string): string {
+  const parts = term.trim().split(" ");
+  if (parts.length < 2) return "";
+  const season = parts[0].toLowerCase();
+  const yy = parts[parts.length - 1].slice(-2);
+  const code =
+    season === "spring" ? "SP" :
+    season === "summer" ? "SU" :
+    season === "fall" ? "FA" :
+    season === "intersession" ? "IN" : "";
+  return code ? `.${code}${yy}` : "";
+}
+
 /**
  * Adds a course to the authenticated user's course list.
  * - Upserts the course into the courses table (keyed by courseCode).
@@ -37,7 +50,7 @@ export const addUserCourse = mutation({
     // Insert the userCourse record
     return await ctx.db.insert("userCourses", {
       userId,
-      courseCode: args.courseCode,
+      courseCode: args.courseCode + termToSuffix(args.term),
       title: args.title,
       credits: args.credits,
       term: args.term,

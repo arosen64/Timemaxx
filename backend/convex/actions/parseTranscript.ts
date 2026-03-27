@@ -6,7 +6,7 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { GoogleGenAI, Type } from "@google/genai";
 
 export interface ParsedCourse {
-  courseCode: string; // e.g. "EN.CSCI.601.226"
+  courseCode: string; // e.g. "EN.601.226.FA22"
   title: string;
   credits: number;
   term: string; // e.g. "Fall 2022"
@@ -46,7 +46,13 @@ For each course provide:
 - term: semester and year as "Season YYYY" (e.g. "Fall 2022", "Spring 2023") — no major name suffix
 - grade: letter grade as shown (e.g. "A", "A+", "A-", "B+", "S", "NG", "X")
 
-Only return actual course rows. Skip summary rows (TERM GPA, CUM GPA, totals, Dean's List). Skip rows with no course code or grade.
+Only return actual JHU course rows. Skip the following:
+- Summary rows (TERM GPA, CUM GPA, totals, Dean's List)
+- Rows with no course code or grade
+- Advanced Placement (AP) Examination courses (sections labeled "Advanced Placement Examination")
+- International Baccalaureate (IB) courses (sections labeled "International Baccalaureate")
+- Any other pre-college or external curriculum courses (CLEP, dual enrollment, Cambridge A-Level, etc.)
+- Transfer courses from other institutions (sections labeled with a university name other than Johns Hopkins, e.g. "Suny Binghamton", "Univ North Dakota Grand Forks")
 
 Transcript text:
 ${args.fileText}`,
@@ -82,12 +88,14 @@ ${args.fileText}`,
     const json = JSON.parse(response.text ?? "{}");
     const raw: ParsedCourse[] = json.courses ?? [];
 
-    return raw.filter(
-      (c) =>
-        c.courseCode?.trim() &&
-        c.title?.trim() &&
-        c.term?.trim() &&
-        c.grade?.trim()
-    );
+    return raw
+      .filter(
+        (c) =>
+          c.courseCode?.trim() &&
+          c.title?.trim() &&
+          c.term?.trim() &&
+          c.grade?.trim()
+      )
+      .map((c) => ({ ...c, courseCode: c.courseCode }));
   },
 });
