@@ -11,7 +11,7 @@ import PreferencesPage from './pages/PreferencesPage'
 import { useQuery } from "convex/react";
 import { api } from "../../backend/convex/_generated/api";
 
-const PROTECTED_ROUTES = ['/onboarding', '/dashboard', '/profile', '/classes', '/preferences']
+const PROTECTED_ROUTES = ['/onboarding', '/dashboard', '/profile', '/classes', '/syllabus-review', '/preferences']
 
 export default function App() {
   const { isAuthenticated, isLoading } = useConvexAuth()
@@ -63,19 +63,7 @@ export default function App() {
       <Route path="/preferences" element={<PreferencesPage />} />
       <Route path="/classes" element={<ClassesPage />} />
 
-      {/**FOR TESTING ONLY */}
-      <Route path="/syllabus-review" element={
-        <SyllabusReviewPage
-          course={{ title: 'Data Structures', courseCode: 'EN.601.226', term: 'Fall 2025' }}
-          tasks={[
-            { title: 'Problem Set 1', description: 'Solve exercises 1-10 from chapter 3.', dueDate: new Date('2025-09-15').getTime(), taskType: 'Problem Set' },
-            { title: 'Midterm Exam', description: 'Covers all topics from weeks 1-7.', dueDate: new Date('2025-10-20').getTime(), taskType: 'Exam Prep' },
-            { title: 'Final Project', description: 'Build a full-stack application.', dueDate: new Date('2025-12-10').getTime(), taskType: 'Coding' },
-          ]}
-          onDone={() => {}}
-          onCancel={() => {}}
-        />
-      } />
+      <Route path="/syllabus-review" element={<SyllabusReviewPage />} />
     </Routes>
   )
 }
