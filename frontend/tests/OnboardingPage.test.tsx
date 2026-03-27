@@ -11,7 +11,7 @@ vi.mock('../../backend/convex/_generated/api', () => ({
     },
     mutations: {
       users: { completeOnboarding: 'completeOnboarding' },
-      userCourses: { addUserCourse: 'addUserCourse', deleteUserCourse: 'deleteUserCourse' },
+      userCourses: { addUserCourse: 'addUserCourse', deleteUserCourse: 'deleteUserCourse', updateUserCourse: 'updateUserCourse' },
     },
     actions: {
       initiateGoogleCalendarOAuth: {
@@ -22,6 +22,7 @@ vi.mock('../../backend/convex/_generated/api', () => ({
         getAvailableSchools: 'getAvailableSchools',
         getCoursesByTerm: 'getCoursesByTerm',
       },
+      parseTranscript: { parseTranscript: 'parseTranscript' },
     },
   },
 }))
@@ -112,7 +113,7 @@ describe('OnboardingPage', () => {
     })
   })
 
-  it('advances to Step 3 from Step 2', async () => {
+  it('advances to Step 4 from Step 3', async () => {
     const user = userEvent.setup()
     setup()
 
@@ -121,11 +122,15 @@ describe('OnboardingPage', () => {
     await user.selectOptions(document.getElementById('year-select')!, 'Sophomore')
     await user.click(screen.getByRole('button', { name: /continue/i }))
 
-    // Now on step 2 — click Continue again
+    // Step 2 (CoursesForm) — advance
     await waitFor(() => expect(screen.queryByText('Tell us about yourself')).not.toBeInTheDocument())
     await user.click(screen.getByRole('button', { name: /continue/i }))
 
-    // Step 3: PreferencesForm should be visible
+    // Step 3 (WorkHoursSelector) — advance
+    await waitFor(() => screen.getByRole('button', { name: /continue/i }))
+    await user.click(screen.getByRole('button', { name: /continue/i }))
+
+    // Step 4: PreferencesForm should be visible
     await waitFor(() => {
       expect(screen.getByText('Productivity Preferences')).toBeInTheDocument()
     })
@@ -157,15 +162,19 @@ describe('OnboardingPage', () => {
     await user.selectOptions(document.getElementById('year-select')!, 'Freshman')
     await user.click(screen.getByRole('button', { name: /continue/i }))
 
-    // Step 2 — advance without changing hours
+    // Step 2 (CoursesForm) — advance
     await waitFor(() => expect(screen.queryByText('Tell us about yourself')).not.toBeInTheDocument())
     await user.click(screen.getByRole('button', { name: /continue/i }))
 
-    // Step 3 — click Continue to save and advance to step 4
+    // Step 3 (WorkHoursSelector) — advance
+    await waitFor(() => screen.getByRole('button', { name: /continue/i }))
+    await user.click(screen.getByRole('button', { name: /continue/i }))
+
+    // Step 4 (PreferencesForm) — advance
     await waitFor(() => expect(screen.getByText('Productivity Preferences')).toBeInTheDocument())
     await user.click(screen.getByRole('button', { name: /continue/i }))
 
-    // Step 4 (Calendar) — click Finish to navigate to /dashboard
+    // Step 5 (Calendar) — click Finish to navigate to /dashboard
     await waitFor(() => expect(screen.getByRole('button', { name: /finish/i })).toBeInTheDocument())
     await user.click(screen.getByRole('button', { name: /finish/i }))
 
@@ -197,10 +206,16 @@ describe('OnboardingPage – Google Calendar section (Step 4)', () => {
     await user.type(screen.getByPlaceholderText(/computer science/i), 'Biology')
     await user.selectOptions(document.getElementById('year-select')!, 'Sophomore')
     await user.click(screen.getByRole('button', { name: /continue/i }))
+    // Step 2 (CoursesForm)
     await waitFor(() => expect(screen.queryByText('Tell us about yourself')).not.toBeInTheDocument())
     await user.click(screen.getByRole('button', { name: /continue/i }))
+    // Step 3 (WorkHours)
+    await waitFor(() => screen.getByRole('button', { name: /continue/i }))
+    await user.click(screen.getByRole('button', { name: /continue/i }))
+    // Step 4 (Preferences)
     await waitFor(() => expect(screen.getByText('Productivity Preferences')).toBeInTheDocument())
     await user.click(screen.getByRole('button', { name: /continue/i }))
+    // Step 5 (Calendar)
     await waitFor(() => expect(screen.getByRole('button', { name: /finish/i })).toBeInTheDocument())
     return user
   }

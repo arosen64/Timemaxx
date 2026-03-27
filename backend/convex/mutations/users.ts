@@ -2,7 +2,6 @@ import { mutation } from "../_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
-
 /**
  * Partially updates the authenticated user's settings (work hours, focus block length, study profile).
  */
