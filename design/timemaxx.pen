@@ -7969,6 +7969,264 @@
           ]
         }
       ]
+    },
+    {
+      "type": "frame",
+      "id": "f3Dhq",
+      "x": 3040,
+      "y": 1500,
+      "name": "Classes – Syllabus Upload",
+      "width": 1440,
+      "height": 900,
+      "fill": "$--background",
+      "layout": "none",
+      "children": [
+        {
+          "type": "frame",
+          "id": "M6gde",
+          "x": 460,
+          "y": 190,
+          "name": "Syllabus Upload Modal",
+          "width": 520,
+          "fill": "$--card",
+          "cornerRadius": 12,
+          "stroke": {
+            "align": "inside",
+            "thickness": 1,
+            "fill": "$--border"
+          },
+          "layout": "vertical",
+          "gap": 24,
+          "padding": 48,
+          "children": [
+            {
+              "type": "frame",
+              "id": "mCBbn",
+              "name": "header",
+              "width": "fill_container",
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "ilPJr",
+                  "name": "title",
+                  "fill": "$--primary",
+                  "content": "Upload Syllabus",
+                  "fontFamily": "Space Grotesk",
+                  "fontSize": 26,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "frame",
+                  "id": "NZae6",
+                  "name": "closeBtn",
+                  "width": 28,
+                  "height": 28,
+                  "fill": "$--background",
+                  "cornerRadius": 6,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "nNYhR",
+                      "name": "closeBtnText",
+                      "fill": "$--light-muted",
+                      "content": "×",
+                      "fontFamily": "Inter",
+                      "fontSize": 18,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "IQ5Cq",
+              "name": "subtitle",
+              "fill": "$--muted-foreground",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Upload a syllabus for your course. Accepted: PDF, plain text (max 10 MB).",
+              "lineHeight": 1.5,
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "frame",
+              "id": "5sjYz",
+              "name": "modeToggle",
+              "width": "fill_container",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "J7WPS",
+                  "name": "fileUploadTab",
+                  "width": "fill_container",
+                  "height": 36,
+                  "fill": "$--primary",
+                  "cornerRadius": "$--radius-m",
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "clqx1",
+                      "name": "fileUploadTabText",
+                      "fill": "$--primary-foreground",
+                      "content": "File Upload",
+                      "fontFamily": "Space Grotesk",
+                      "fontSize": 13,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "5QeJ9",
+                  "name": "pasteTextTab",
+                  "width": "fill_container",
+                  "height": 36,
+                  "fill": "$--background",
+                  "cornerRadius": "$--radius-m",
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "$--border"
+                  },
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "VaLcg",
+                      "name": "pasteTextTabText",
+                      "fill": "$--muted-foreground",
+                      "content": "Paste Text",
+                      "fontFamily": "Space Grotesk",
+                      "fontSize": 13,
+                      "fontWeight": "600"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "0cWV4",
+              "name": "dropZone",
+              "width": "fill_container",
+              "height": 140,
+              "fill": "$--background",
+              "cornerRadius": 12,
+              "stroke": {
+                "align": "inside",
+                "thickness": 2,
+                "fill": "$--border"
+              },
+              "layout": "vertical",
+              "gap": 8,
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "H43d2",
+                  "name": "uploadIcon",
+                  "width": 28,
+                  "height": 28,
+                  "iconFontName": "upload-cloud",
+                  "iconFontFamily": "feather",
+                  "fill": "$--light-muted"
+                },
+                {
+                  "type": "frame",
+                  "id": "5eFIT",
+                  "name": "dragRow",
+                  "gap": 4,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "b4a2D",
+                      "name": "dragText",
+                      "fill": "$--muted-foreground",
+                      "content": "Drag & drop or ",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "P5SbH",
+                      "name": "browseText",
+                      "fill": "$--accent",
+                      "content": "browse",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "1DYs7",
+                  "name": "dropZoneHint",
+                  "fill": "$--light-muted",
+                  "content": "PDF or .txt · max 10 MB",
+                  "fontFamily": "Inter",
+                  "fontSize": 12,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "WewhZ",
+              "name": "btnRow",
+              "width": "fill_container",
+              "gap": 12,
+              "children": [
+                {
+                  "id": "rvLCO",
+                  "type": "ref",
+                  "ref": "uzHQ8",
+                  "name": "cancelBtn",
+                  "width": "fill_container",
+                  "x": 0,
+                  "y": 0,
+                  "descendants": {
+                    "zZ3E7": {
+                      "content": "Cancel",
+                      "x": 80
+                    }
+                  }
+                },
+                {
+                  "id": "Kg1PH",
+                  "type": "ref",
+                  "ref": "Xdrqk",
+                  "name": "uploadBtn",
+                  "width": "fill_container",
+                  "height": 44,
+                  "x": 218,
+                  "y": 0,
+                  "descendants": {
+                    "vxzyR": {
+                      "content": "Upload",
+                      "x": 79
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
     }
   ],
   "variables": {
