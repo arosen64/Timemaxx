@@ -7,13 +7,14 @@ const FUTURE_DATE = Date.now() + 86_400_000;
 
 async function createTestSyllabus(
   t: ReturnType<typeof makeTestCtx>,
-  userId: string
+  userId: string,
+  opts: { courseId?: string } = {}
 ) {
   return await t.run((ctx) =>
     ctx.db.insert("syllabi", {
       userId: userId as never,
-      fileName: "syllabus.pdf",
-      courseName: "CS 101",
+      fileContents: "syllabus text",
+      courseId: opts.courseId as never,
       status: "confirmed",
       createdAt: Date.now(),
     })
@@ -103,14 +104,31 @@ describe("mutations/syllabi – confirmSyllabusTasks", () => {
       title: "Problem Set 1",
       description: "Solve exercises 1-10.",
       taskType: "Problem Set",
-      extractedFrom: syllabusId,
     });
     expect(tasks[1]).toMatchObject({
       userId,
       title: "Midterm Essay",
       taskType: "Essay",
-      extractedFrom: syllabusId,
     });
+  });
+
+  test("stores courseId on the syllabus when provided", async () => {
+    const t = makeTestCtx();
+    const { userId } = await createTestUser(t);
+
+    const courseId = await t.run((ctx) =>
+      ctx.db.insert("userCourses", {
+        userId: userId as never,
+        courseCode: "EN.601.226",
+        title: "Data Structures",
+        term: "Fall 2025",
+      })
+    );
+
+    const syllabusId = await createTestSyllabus(t, userId, { courseId: courseId as string });
+
+    const syllabus = await t.run((ctx) => ctx.db.get(syllabusId));
+    expect(syllabus?.courseId).toBe(courseId);
   });
 
   test("returns an empty array when no tasks are passed", async () => {
@@ -126,10 +144,20 @@ describe("mutations/syllabi – confirmSyllabusTasks", () => {
     expect(taskIds).toEqual([]);
   });
 
-  test("sets extractedFrom to the source syllabusId on every task", async () => {
+  test("sets courseId from the syllabus on every inserted task", async () => {
     const t = makeTestCtx();
     const { userId, withAuth } = await createTestUser(t);
-    const syllabusId = await createTestSyllabus(t, userId);
+
+    const courseId = await t.run((ctx) =>
+      ctx.db.insert("userCourses", {
+        userId: userId as never,
+        courseCode: "EN.601.226",
+        title: "Data Structures",
+        term: "Fall 2025",
+      })
+    );
+
+    const syllabusId = await createTestSyllabus(t, userId, { courseId: courseId as string });
 
     const taskIds = await withAuth.mutation(
       api.mutations.syllabi.confirmSyllabusTasks,
@@ -157,7 +185,7 @@ describe("mutations/syllabi – confirmSyllabusTasks", () => {
     );
 
     for (const task of tasks) {
-      expect(task?.extractedFrom).toEqual(syllabusId);
+      expect(task?.courseId).toEqual(courseId);
     }
   });
 

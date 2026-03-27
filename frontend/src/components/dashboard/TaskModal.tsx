@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { CalendarIcon } from '../icons'
 import { type EditForm, type SchemaTaskType, TASK_TYPE_OPTIONS } from './types'
 import Modal from '../ui/Modal'
+import { validateDueDate } from '../../validators'
 
 interface TaskModalProps {
   isOpen?: boolean
@@ -36,24 +37,9 @@ export default function TaskModal({
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  function validateDueDate(value: string): boolean {
-    const match = value.match(/^(\d{1,2})\s*\/\s*(\d{1,2})\s*\/\s*(\d{4})$/)
-    if (!match) {
-      setError('Please enter a valid date in MM/DD/YYYY format.')
-      return false
-    }
-    const [, month, day, year] = match.map(Number)
-    const date = new Date(year, month - 1, day)
-    if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
-      setError('Please enter a valid date in MM/DD/YYYY format.')
-      return false
-    }
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    if (date < today) {
-      setError('Due date cannot be in the past.')
-      return false
-    }
+  function isValidDueDate(value: string): boolean {
+    const error = validateDueDate(value)
+    if (error) { setError(error); return false }
     return true
   }
 
@@ -63,7 +49,7 @@ export default function TaskModal({
     if (!description.trim()) { setError('Please enter a description.'); return }
     const trimmedDueDate = dueDate.trim()
     if (!trimmedDueDate) { setError('Please enter a due date.'); return }
-    if (!validateDueDate(trimmedDueDate)) return
+    if (!isValidDueDate(trimmedDueDate)) return
 
     setSubmitting(true)
     setError(null)
@@ -146,7 +132,7 @@ export default function TaskModal({
               type="text"
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}
-              onBlur={() => { if (dueDate) validateDueDate(dueDate) }}
+              onBlur={() => { if (dueDate) isValidDueDate(dueDate) }}
               onFocus={() => setError(null)}
               placeholder="MM / DD / YYYY"
               className="flex-1 border-none bg-transparent font-body text-sm text-navy outline-none placeholder:text-light-blue"

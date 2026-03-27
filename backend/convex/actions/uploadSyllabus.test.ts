@@ -53,9 +53,7 @@ describe("actions/uploadSyllabus", () => {
 
     await expect(
       t.action(api.actions.uploadSyllabus.uploadSyllabus, {
-        fileName: "syllabus.pdf",
-        fileText: SYLLABUS_TEXT,
-        className: "CS 101",
+        fileContents: SYLLABUS_TEXT,
       })
     ).rejects.toThrow("Unauthenticated");
   });
@@ -67,9 +65,7 @@ describe("actions/uploadSyllabus", () => {
 
     await expect(
       withAuth.action(api.actions.uploadSyllabus.uploadSyllabus, {
-        fileName: "syllabus.pdf",
-        fileText: SYLLABUS_TEXT,
-        className: "CS 101",
+        fileContents: SYLLABUS_TEXT,
       })
     ).rejects.toThrow("GEMINI_API_KEY is not set");
   });
@@ -81,9 +77,7 @@ describe("actions/uploadSyllabus", () => {
 
     await expect(
       withAuth.action(api.actions.uploadSyllabus.uploadSyllabus, {
-        fileName: "syllabus.pdf",
-        fileText: SYLLABUS_TEXT,
-        className: "CS 101",
+        fileContents: SYLLABUS_TEXT,
       })
     ).rejects.toThrow();
 
@@ -115,7 +109,7 @@ describe("actions/uploadSyllabus", () => {
 
     const result = await withAuth.action(
       api.actions.uploadSyllabus.uploadSyllabus,
-      { fileName: "syllabus.pdf", fileText: SYLLABUS_TEXT, className: "CS 101" }
+      { fileContents: SYLLABUS_TEXT }
     );
 
     expect(result.syllabusId).toBeDefined();
@@ -145,7 +139,7 @@ describe("actions/uploadSyllabus", () => {
 
     const { extractedTasks } = await withAuth.action(
       api.actions.uploadSyllabus.uploadSyllabus,
-      { fileName: "s.pdf", fileText: SYLLABUS_TEXT, className: "CS 101" }
+      { fileContents: SYLLABUS_TEXT }
     );
 
     expect(extractedTasks[0].dueDate).toBe(new Date("2025-12-10").getTime());
@@ -174,7 +168,7 @@ describe("actions/uploadSyllabus", () => {
 
     const { extractedTasks } = await withAuth.action(
       api.actions.uploadSyllabus.uploadSyllabus,
-      { fileName: "s.pdf", fileText: SYLLABUS_TEXT, className: "CS 101" }
+      { fileContents: SYLLABUS_TEXT }
     );
 
     expect(extractedTasks).toHaveLength(1);
@@ -189,7 +183,7 @@ describe("actions/uploadSyllabus", () => {
 
     const { syllabusId } = await withAuth.action(
       api.actions.uploadSyllabus.uploadSyllabus,
-      { fileName: "s.pdf", fileText: SYLLABUS_TEXT, className: "CS 101" }
+      { fileContents: SYLLABUS_TEXT }
     );
 
     const syllabus = await t.run((ctx) => ctx.db.get(syllabusId));
@@ -204,9 +198,7 @@ describe("actions/uploadSyllabus", () => {
 
     await expect(
       withAuth.action(api.actions.uploadSyllabus.uploadSyllabus, {
-        fileName: "s.pdf",
-        fileText: SYLLABUS_TEXT,
-        className: "CS 101",
+        fileContents: SYLLABUS_TEXT,
       })
     ).rejects.toThrow("Gemini unavailable");
 
@@ -222,13 +214,13 @@ describe("actions/uploadSyllabus", () => {
 
     const { extractedTasks } = await withAuth.action(
       api.actions.uploadSyllabus.uploadSyllabus,
-      { fileName: "s.pdf", fileText: "No assignments here.", className: "CS 101" }
+      { fileContents: "No assignments here." }
     );
 
     expect(extractedTasks).toEqual([]);
   });
 
-  test("stores the correct courseName and fileName on the created syllabus row", async () => {
+  test("stores the correct fileContents on the created syllabus row", async () => {
     mockGenerateContent.mockResolvedValueOnce(makeGeminiResponse([]));
 
     const t = makeTestCtx();
@@ -236,16 +228,11 @@ describe("actions/uploadSyllabus", () => {
 
     const { syllabusId } = await withAuth.action(
       api.actions.uploadSyllabus.uploadSyllabus,
-      {
-        fileName: "spring2025.pdf",
-        fileText: SYLLABUS_TEXT,
-        className: "Algorithms",
-      }
+      { fileContents: SYLLABUS_TEXT }
     );
 
     const syllabus = await t.run((ctx) => ctx.db.get(syllabusId));
-    expect(syllabus?.fileName).toBe("spring2025.pdf");
-    expect(syllabus?.courseName).toBe("Algorithms");
+    expect(syllabus?.fileContents).toBe(SYLLABUS_TEXT);
   });
 });
 
