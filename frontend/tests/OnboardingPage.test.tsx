@@ -8,6 +8,7 @@ vi.mock('../../backend/convex/_generated/api', () => ({
     queries: {
       users: { isOnboardingComplete: 'isOnboardingComplete' },
       calendar: { getCalendarConnectionStatus: 'getCalendarConnectionStatus' },
+      userCourses: { getUserCourses: 'getUserCourses' },
     },
     mutations: {
       users: { completeOnboarding: 'completeOnboarding' },
@@ -23,6 +24,7 @@ vi.mock('../../backend/convex/_generated/api', () => ({
         getCoursesByTerm: 'getCoursesByTerm',
       },
       parseTranscript: { parseTranscript: 'parseTranscript' },
+      generateAcademicProfile: { generateAcademicProfile: 'generateAcademicProfile' },
     },
   },
 }))
@@ -52,6 +54,7 @@ function setup(calendarConnected = false) {
   const mockCalendarAction = makeMutationFn('https://accounts.google.com/oauth')
   mockUseQuery.mockImplementation(((query: unknown) => {
     if (query === 'getCalendarConnectionStatus') return { connected: calendarConnected }
+    if (query === 'getUserCourses') return []
     return false
   }) as never)
   mockUseMutation.mockReturnValue(saveOnboarding as never)
@@ -126,11 +129,15 @@ describe('OnboardingPage', () => {
     await waitFor(() => expect(screen.queryByText('Tell us about yourself')).not.toBeInTheDocument())
     await user.click(screen.getByRole('button', { name: /continue/i }))
 
-    // Step 3 (WorkHoursSelector) — advance
+    // Step 3 (Academic Profile) — advance
     await waitFor(() => screen.getByRole('button', { name: /continue/i }))
     await user.click(screen.getByRole('button', { name: /continue/i }))
 
-    // Step 4: PreferencesForm should be visible
+    // Step 4 (WorkHoursSelector) — advance
+    await waitFor(() => screen.getByRole('button', { name: /continue/i }))
+    await user.click(screen.getByRole('button', { name: /continue/i }))
+
+    // Step 5: PreferencesForm should be visible
     await waitFor(() => {
       expect(screen.getByText('Productivity Preferences')).toBeInTheDocument()
     })
@@ -166,15 +173,19 @@ describe('OnboardingPage', () => {
     await waitFor(() => expect(screen.queryByText('Tell us about yourself')).not.toBeInTheDocument())
     await user.click(screen.getByRole('button', { name: /continue/i }))
 
-    // Step 3 (WorkHoursSelector) — advance
+    // Step 3 (Academic Profile) — advance
     await waitFor(() => screen.getByRole('button', { name: /continue/i }))
     await user.click(screen.getByRole('button', { name: /continue/i }))
 
-    // Step 4 (PreferencesForm) — advance
+    // Step 4 (WorkHoursSelector) — advance
+    await waitFor(() => screen.getByRole('button', { name: /continue/i }))
+    await user.click(screen.getByRole('button', { name: /continue/i }))
+
+    // Step 5 (PreferencesForm) — advance
     await waitFor(() => expect(screen.getByText('Productivity Preferences')).toBeInTheDocument())
     await user.click(screen.getByRole('button', { name: /continue/i }))
 
-    // Step 5 (Calendar) — click Finish to navigate to /dashboard
+    // Step 6 (Calendar) — click Finish to navigate to /dashboard
     await waitFor(() => expect(screen.getByRole('button', { name: /finish/i })).toBeInTheDocument())
     await user.click(screen.getByRole('button', { name: /finish/i }))
 
@@ -209,13 +220,16 @@ describe('OnboardingPage – Google Calendar section (Step 4)', () => {
     // Step 2 (CoursesForm)
     await waitFor(() => expect(screen.queryByText('Tell us about yourself')).not.toBeInTheDocument())
     await user.click(screen.getByRole('button', { name: /continue/i }))
-    // Step 3 (WorkHours)
+    // Step 3 (Academic Profile)
     await waitFor(() => screen.getByRole('button', { name: /continue/i }))
     await user.click(screen.getByRole('button', { name: /continue/i }))
-    // Step 4 (Preferences)
+    // Step 4 (WorkHours)
+    await waitFor(() => screen.getByRole('button', { name: /continue/i }))
+    await user.click(screen.getByRole('button', { name: /continue/i }))
+    // Step 5 (Preferences)
     await waitFor(() => expect(screen.getByText('Productivity Preferences')).toBeInTheDocument())
     await user.click(screen.getByRole('button', { name: /continue/i }))
-    // Step 5 (Calendar)
+    // Step 6 (Calendar)
     await waitFor(() => expect(screen.getByRole('button', { name: /finish/i })).toBeInTheDocument())
     return user
   }
