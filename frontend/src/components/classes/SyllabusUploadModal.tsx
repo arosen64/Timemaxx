@@ -67,10 +67,9 @@ export default function SyllabusUploadModal({
     onClose()
   }
 
-  async function submitToBackend(fileText: string, fileName: string) {
+  async function submitToBackend(fileContents: string) {
     const result = await uploadSyllabus({
-      fileName,
-      fileText,
+      fileContents,
       courseId: course.userCourseId as Parameters<typeof uploadSyllabus>[0]['courseId'],
     })
     onSuccess?.(result)
@@ -85,16 +84,16 @@ export default function SyllabusUploadModal({
           setError('Please select a file to upload.')
           return
         }
-        const fileText = file.type === 'application/pdf'
+        const fileContents = file.type === 'application/pdf'
           ? await extractPdfText(file)
           : await file.text()
-        await submitToBackend(fileText, file.name)
+        await submitToBackend(fileContents)
       } else {
         if (!text.trim()) {
           setError('Please enter some syllabus text.')
           return
         }
-        await submitToBackend(text, 'pasted-syllabus.txt')
+        await submitToBackend(text)
       }
       handleClose()
     } catch {
