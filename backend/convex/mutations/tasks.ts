@@ -71,6 +71,7 @@ export const updateTask = mutation({
       description: args.description,
       taskType: args.taskType,
       dueDate: args.dueDate,
+      courseId: args.courseId,
       timeEstimate: undefined,
     });
   },
