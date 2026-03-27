@@ -10,8 +10,14 @@ interface ButtonProps {
   className?: string
 }
 
+const variantStyles = {
+  primary: 'bg-navy text-white',
+  destructive: 'bg-urgent-red text-white',
+  secondary: 'border border-border bg-bg-gray text-slate-blue hover:border-navy/30',
+}
+
 export default function Button({ variant, children, onClick, icon, iconPosition = 'left', disabled, className }: ButtonProps) {
-  const variantClass = variant === 'primary' ? 'bg-navy text-white' : variant === 'destructive' ? 'bg-urgent-red text-white' : 'border border-border bg-bg-gray text-slate-blue hover:border-navy/30'
+  const variantClass = variantStyles[variant]
 
   return (
     <button
