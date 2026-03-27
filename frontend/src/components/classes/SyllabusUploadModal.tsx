@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import Modal from '../ui/Modal'
-import FileUpload from './FileUpload'
+import FileUpload from '../ui/FileUpload'
 import { SpinnerIcon } from '../icons'
 
 type Mode = 'upload' | 'text'

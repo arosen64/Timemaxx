@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import { useQuery, useAction } from 'convex/react'
+import { useQuery, useAction, useMutation } from 'convex/react'
 import { api } from '../../../backend/convex/_generated/api'
 import { Id } from '../../../backend/convex/_generated/dataModel'
-import { useMutation } from 'convex/react'
+import { extractPdfText } from '../utils/pdf'
 import Sidebar from '../components/Sidebar'
 import ClassCard from '../components/classes/ClassCard'
 import CourseSelector from '../components/CourseSelector'
@@ -26,13 +26,8 @@ export default function ClassesPage() {
   }
 
   async function readFileAsText(file: File): Promise<string> {
-    if (file.type === 'text/plain') {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader()
-        reader.onload = () => resolve(reader.result as string)
-        reader.onerror = () => reject(new Error('Failed to read file'))
-        reader.readAsText(file)
-      })
+    if (file.type === 'application/pdf') {
+      return extractPdfText(file)
     }
     return file.text()
   }

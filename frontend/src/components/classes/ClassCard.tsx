@@ -9,7 +9,7 @@ import SyllabusUploadModal from './SyllabusUploadModal'
 export type UploadStatus = 'idle' | 'uploading' | 'success' | 'error'
 
 interface ClassCardProps {
-  id: string
+  id: Id<'userCourses'>
   courseCode: string
   title: string
   term: string
@@ -88,7 +88,7 @@ export default function ClassCard({
     setGradeError(null)
     setIsSavingGrade(true)
     try {
-      await updateUserCourse({ userCourseId: id as Id<'userCourses'>, grade: gradeValue })
+      await updateUserCourse({ userCourseId: id, grade: gradeValue })
       setGradeSaved(true)
       setTimeout(() => setGradeSaved(false), 2000)
     } catch {
