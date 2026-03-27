@@ -7,10 +7,11 @@ import DashboardPage from './pages/DashboardPage'
 import ProfilePage from './pages/ProfilePage'
 import ClassesPage from './pages/ClassesPage'
 import SyllabusReviewPage from './pages/SyllabusReviewPage'
+import PreferencesPage from './pages/PreferencesPage'
 import { useQuery } from "convex/react";
 import { api } from "../../backend/convex/_generated/api";
 
-const PROTECTED_ROUTES = ['/onboarding', '/dashboard', '/profile', '/classes', '/syllabus-review']
+const PROTECTED_ROUTES = ['/onboarding', '/dashboard', '/profile', '/classes', '/syllabus-review', '/preferences']
 
 export default function App() {
   const { isAuthenticated, isLoading } = useConvexAuth()
@@ -59,6 +60,7 @@ export default function App() {
       <Route path="/onboarding" element={<OnboardingPage />} />
       <Route path="/dashboard" element={<DashboardPage />} />
       <Route path="/profile" element={<ProfilePage />} />
+      <Route path="/preferences" element={<PreferencesPage />} />
       <Route path="/classes" element={<ClassesPage />} />
 
       <Route path="/syllabus-review" element={<SyllabusReviewPage />} />

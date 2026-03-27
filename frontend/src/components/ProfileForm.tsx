@@ -85,11 +85,6 @@ export default function ProfileForm({ data, onChange, errors, readOnly = false }
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h2 className="font-heading text-2xl font-bold text-navy">Tell us about yourself</h2>
-        <p className="mt-1 font-body text-sm text-slate-blue">This helps us personalize your study plan.</p>
-      </div>
-
       {/* Major */}
       <div className="flex flex-col gap-1">
         <label className="font-heading text-sm font-semibold text-navy">
