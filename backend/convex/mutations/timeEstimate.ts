@@ -9,6 +9,40 @@ export const setTimeEstimate = internalMutation({
   },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.taskId, { timeEstimate: args.timeEstimate });
+
+    // Delete existing study blocks for this task
+    const existingBlocks = await ctx.db
+      .query("studyBlocks")
+      .withIndex("by_taskId", (q) => q.eq("taskId", args.taskId))
+      .collect();
+    for (const block of existingBlocks) {
+      await ctx.db.delete(block._id);
+    }
+
+    // Fetch the task to get userId and title
+    const task = await ctx.db.get(args.taskId);
+    if (!task) return;
+
+    // Fetch user to get focusBlockLength (default 60 min)
+    const user = await ctx.db.get(task.userId);
+    const focusBlockLength = user?.focusBlockLength ?? 60;
+
+    // Generate and insert study blocks
+    const blockCount = Math.ceil(args.timeEstimate / focusBlockLength);
+    for (let i = 0; i < blockCount; i++) {
+      const isLastBlock = i === blockCount - 1;
+      const remainder = args.timeEstimate % focusBlockLength;
+      const studyBlockLength =
+        isLastBlock && remainder !== 0 ? remainder : focusBlockLength;
+
+      await ctx.db.insert("studyBlocks", {
+        taskId: args.taskId,
+        title: task.title,
+        startTime: undefined,
+        studyBlockLength,
+        uniqueId: crypto.randomUUID(),
+      });
+    }
   },
 });
 
