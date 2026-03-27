@@ -12,14 +12,13 @@ function formatMinutes(minutes: number) {
   return `${Math.round(minutes)} mins`
 }
 
-const BAR_COLORS = ['bg-[#CF4520]', 'bg-sky-blue', 'bg-[#008767]']
+const BAR_COLORS = ['bg-urgent-red', 'bg-sky-blue', 'bg-[#008767]']
 
 const BADGE_MAP: Record<string, { bg: string; text: string; label: string }> = {
-  urgent: { bg: 'bg-[#FFF0EC]', text: 'text-[#CF4520]', label: 'Urgent' },
+  urgent: { bg: 'bg-[#FFF0EC]', text: 'text-urgent-red', label: 'Urgent' },
   inprogress: { bg: 'bg-[#EBF5FF]', text: 'text-[#0077D8]', label: 'In Progress' },
   default: { bg: 'bg-[#E6F5F0]', text: 'text-[#008767]', label: 'Not Started' },
 }
-
 
 // ─── Estimation Error Helpers ─────────────────────────────────────────────────
 
@@ -566,8 +565,8 @@ export default function DashboardPage() {
             </div>
 
             {[
-              { time: '2:00 PM – 3:00 PM', task: 'History Essay', dur: '1 hr · Focus block' },
-              { time: '6:00 PM – 7:00 PM', task: 'Chemistry Lab Report', dur: '1 hr · Focus block' },
+              { time: '2:00 PM – 3:00 PM',  task: 'History Essay',        dur: '1 hr · Focus block' },
+              { time: '6:00 PM – 7:00 PM',  task: 'Chemistry Lab Report', dur: '1 hr · Focus block' },
             ].map(({ time, task, dur }) => (
               <div key={time} className="flex flex-col gap-1.5 rounded-[10px] border border-border bg-white p-[18px]">
                 <span className="text-[11px] font-semibold text-slate-blue">{time}</span>
