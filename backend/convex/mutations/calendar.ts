@@ -107,11 +107,10 @@ export const saveSelectedCalendars = mutation({
       .withIndex("by_userId", (q: any) => q.eq("userId", userId))
       .unique();
 
-    if (existing) {
-      await ctx.db.patch(existing._id, {
-        selectedCalendarIds: args.selectedCalendarIds,
-      });
-    }
+    if (!existing) throw new Error("No calendar connected");
+    await ctx.db.patch(existing._id, {
+      selectedCalendarIds: args.selectedCalendarIds,
+    });
   },
 });
 

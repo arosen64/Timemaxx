@@ -8,7 +8,10 @@
  */
 
 function hexKeyToBytes(hexSecret: string): Uint8Array<ArrayBuffer> {
-  const bytes = hexSecret.padEnd(64, "0").slice(0, 64).match(/.{2}/g)!.map((b) => parseInt(b, 16));
+  if (!/^[0-9a-fA-F]{64}$/.test(hexSecret)) {
+    throw new Error("CALENDAR_TOKEN_SECRET must be exactly 64 hex characters");
+  }
+  const bytes = hexSecret.match(/.{2}/g)!.map((b) => parseInt(b, 16));
   const buffer = new ArrayBuffer(bytes.length);
   const view = new Uint8Array(buffer);
   view.set(bytes);

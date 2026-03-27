@@ -1,5 +1,6 @@
 "use node";
-import { action } from "../_generated/server";
+import { action, type ActionCtx } from "../_generated/server";
+import type { Id } from "../_generated/dataModel";
 import { internal } from "../_generated/api";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
@@ -133,14 +134,14 @@ export const fetchCalendarEvents = action({
  * Throws on refresh failure so the caller can return an error flag.
  */
 async function resolveAccessToken(
-  ctx: any,
+  ctx: ActionCtx,
   connection: {
-    userId: string;
+    userId: Id<"users">;
     accessToken: string;
     refreshToken: string;
     expiresAt: number;
   },
-  userId: string,
+  userId: Id<"users">,
   tokenSecret: string,
 ): Promise<string> {
   // Refresh 60 seconds early to avoid using a token that expires mid-request
