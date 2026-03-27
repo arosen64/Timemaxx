@@ -7325,7 +7325,17 @@
               "width": 131,
               "height": 32,
               "x": 40,
-              "y": 16
+              "y": 16,
+              "descendants": {
+                "NZ5gH": {
+                  "x": 5,
+                  "y": 5
+                },
+                "6YpiG": {
+                  "x": 42,
+                  "y": 4.5
+                }
+              }
             },
             {
               "type": "frame",
@@ -7453,7 +7463,51 @@
                   "ref": "0YQqJ",
                   "width": "fill_container",
                   "x": 48,
-                  "y": 129
+                  "y": 129,
+                  "height": "fit_content",
+                  "descendants": {
+                    "nngNF": {
+                      "width": "fill_container",
+                      "height": "fit_content"
+                    },
+                    "kvjX2": {
+                      "x": 126
+                    },
+                    "Tq2uS": {
+                      "y": 24
+                    },
+                    "i9tKg": {
+                      "width": "fill_container",
+                      "height": "fit_content",
+                      "y": 45
+                    },
+                    "Jm88z": {
+                      "x": 256,
+                      "y": 28
+                    },
+                    "HXbbI": {
+                      "x": 171.5,
+                      "y": 72
+                    },
+                    "vSlxA": {
+                      "x": 266,
+                      "y": 100
+                    },
+                    "bsiEU": {
+                      "width": "fit_content",
+                      "height": "fit_content",
+                      "x": 217,
+                      "y": 127
+                    },
+                    "8BpwU": {
+                      "x": 16,
+                      "y": 8
+                    },
+                    "6x7s6": {
+                      "x": 203,
+                      "y": 172
+                    }
+                  }
                 },
                 {
                   "type": "frame",
@@ -7664,10 +7718,270 @@
                   "y": 607,
                   "descendants": {
                     "AkprM": {
-                      "x": 227
+                      "x": 227,
+                      "y": 14.5
                     },
                     "TRgda": {
-                      "x": 301
+                      "x": 301,
+                      "y": 16
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "ectTo",
+      "x": 3040,
+      "y": 1500,
+      "name": "Classes – Syllabus Upload",
+      "width": 1440,
+      "height": 900,
+      "fill": "$--background",
+      "layout": "none",
+      "children": [
+        {
+          "type": "frame",
+          "id": "XDJsn",
+          "x": 460,
+          "y": 190,
+          "name": "Syllabus Upload Modal",
+          "width": 520,
+          "fill": "$--card",
+          "cornerRadius": 12,
+          "stroke": {
+            "align": "inside",
+            "thickness": 1,
+            "fill": "$--border"
+          },
+          "layout": "vertical",
+          "gap": 24,
+          "padding": 48,
+          "children": [
+            {
+              "type": "frame",
+              "id": "cxXF1",
+              "name": "header",
+              "width": "fill_container",
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "b0HqA",
+                  "name": "title",
+                  "fill": "$--primary",
+                  "content": "Upload Syllabus",
+                  "fontFamily": "Space Grotesk",
+                  "fontSize": 26,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "frame",
+                  "id": "oa0bR",
+                  "name": "closeBtn",
+                  "width": 28,
+                  "height": 28,
+                  "fill": "$--background",
+                  "cornerRadius": 6,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "ibFrC",
+                      "name": "closeTxt",
+                      "fill": "$--light-muted",
+                      "content": "×",
+                      "fontFamily": "Inter",
+                      "fontSize": 18,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "HAh9E",
+              "name": "subtitle",
+              "fill": "$--muted-foreground",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Upload a syllabus for your course. Accepted: PDF, plain text (max 10 MB).",
+              "lineHeight": 1.5,
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "frame",
+              "id": "k98mu",
+              "name": "modeToggle",
+              "width": "fill_container",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "5OfA3",
+                  "name": "fileUploadTab",
+                  "width": "fill_container",
+                  "height": 36,
+                  "fill": "$--primary",
+                  "cornerRadius": "$--radius-m",
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "4oZGB",
+                      "name": "fileTabLbl",
+                      "fill": "$--primary-foreground",
+                      "content": "File Upload",
+                      "fontFamily": "Space Grotesk",
+                      "fontSize": 13,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "qm2Em",
+                  "name": "pasteTextTab",
+                  "width": "fill_container",
+                  "height": 36,
+                  "fill": "$--background",
+                  "cornerRadius": "$--radius-m",
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "$--border"
+                  },
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "d0OT2",
+                      "name": "pasteTabLbl",
+                      "fill": "$--muted-foreground",
+                      "content": "Paste Text",
+                      "fontFamily": "Space Grotesk",
+                      "fontSize": 13,
+                      "fontWeight": "600"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "qusmp",
+              "name": "dropZone",
+              "width": "fill_container",
+              "height": 140,
+              "fill": "$--background",
+              "cornerRadius": 12,
+              "stroke": {
+                "align": "inside",
+                "thickness": 2,
+                "fill": "$--border"
+              },
+              "layout": "vertical",
+              "gap": 8,
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "YG6os",
+                  "name": "uploadIcon",
+                  "width": 28,
+                  "height": 28,
+                  "iconFontName": "upload-cloud",
+                  "iconFontFamily": "feather",
+                  "fill": "$--light-muted"
+                },
+                {
+                  "type": "frame",
+                  "id": "fntb3",
+                  "name": "dragRow",
+                  "gap": 4,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "o8nR6",
+                      "name": "dragTxt",
+                      "fill": "$--muted-foreground",
+                      "content": "Drag & drop or ",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "FkAN7",
+                      "name": "browseTxt",
+                      "fill": "$--accent",
+                      "content": "browse",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "HPrnn",
+                  "name": "hintTxt",
+                  "fill": "$--light-muted",
+                  "content": "PDF or .txt · max 10 MB",
+                  "fontFamily": "Inter",
+                  "fontSize": 12,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "Kia5q",
+              "name": "btnRow",
+              "width": "fill_container",
+              "gap": 12,
+              "children": [
+                {
+                  "id": "CvAEJ",
+                  "type": "ref",
+                  "ref": "uzHQ8",
+                  "name": "cancelBtn",
+                  "width": "fill_container",
+                  "x": 0,
+                  "y": 0,
+                  "descendants": {
+                    "zZ3E7": {
+                      "content": "Cancel",
+                      "x": 80
+                    }
+                  }
+                },
+                {
+                  "id": "UWfA4",
+                  "type": "ref",
+                  "ref": "Xdrqk",
+                  "name": "uploadBtn",
+                  "width": "fill_container",
+                  "height": 44,
+                  "x": 218,
+                  "y": 0,
+                  "descendants": {
+                    "vxzyR": {
+                      "content": "Upload",
+                      "x": 79
                     }
                   }
                 }
