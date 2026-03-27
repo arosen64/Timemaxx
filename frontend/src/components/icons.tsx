@@ -190,3 +190,38 @@ export function ClassesIcon({ color = 'currentColor', size = 16 }: { color?: str
     </IconBase>
   )
 }
+
+export function CheckCircleIcon({ color = 'currentColor', size = 16 }: { color?: string; size?: number }) {
+  return (
+    <IconBase color={color} size={size}>
+      <circle cx="12" cy="12" r="10" />
+      <path d="M9 12l2 2 4-4" />
+    </IconBase>
+  )
+}
+
+export function InfoIcon({ color = 'currentColor', size = 16 }: { color?: string; size?: number }) {
+  return (
+    <IconBase color={color} size={size}>
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 16v-4M12 8h.01" />
+    </IconBase>
+  )
+}
+
+export function RetryIcon({ color = 'currentColor', size = 16 }: { color?: string; size?: number }) {
+  return (
+    <IconBase color={color} size={size}>
+      <path d="M1 4v6h6M23 20v-6h-6" />
+      <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15" />
+    </IconBase>
+  )
+}
+
+export function XIcon({ color = '#CF4520', size = 14 }: { color?: string; size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 14 14" fill="none" aria-hidden="true" style={{ flexShrink: 0 }}>
+      <path d="M1 1l12 12M13 1L1 13" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  )
+}

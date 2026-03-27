@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { CalendarIcon } from '../icons'
 import { type EditForm, CUSTOM_TASK_TYPE_OPTION, TASK_TYPE_OPTIONS } from './types'
 import Modal from '../ui/Modal'
+import { validateDueDate } from '../../validators'
 
 interface TaskModalProps {
   isOpen?: boolean
@@ -85,7 +86,7 @@ export default function TaskModal({
     if (!description.trim()) { setError('Please enter a description.'); return }
     const trimmedDueDate = dueDate.trim()
     if (!trimmedDueDate) { setError('Please enter a due date.'); return }
-    if (!validateDueDate(trimmedDueDate)) return
+    if (!isValidDueDate(trimmedDueDate)) return
 
     setSubmitting(true)
     setError(null)
@@ -177,7 +178,7 @@ export default function TaskModal({
               type="text"
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}
-              onBlur={() => { if (dueDate) validateDueDate(dueDate) }}
+              onBlur={() => { if (dueDate) isValidDueDate(dueDate) }}
               onFocus={() => setError(null)}
               placeholder="MM / DD / YYYY"
               className="flex-1 border-none bg-transparent font-body text-sm text-navy outline-none placeholder:text-light-blue"
