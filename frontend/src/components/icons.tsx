@@ -151,6 +151,25 @@ export function LogoutIcon({ color = 'currentColor', size = 16 }: { color?: stri
   )
 }
 
+export function UploadIcon({ color = 'currentColor', size = 28 }: { color?: string; size?: number }) {
+  return (
+    <IconBase color={color} size={size}>
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <polyline points="17 8 12 3 7 8" />
+      <line x1="12" y1="3" x2="12" y2="15" />
+    </IconBase>
+  )
+}
+
+export function FileIcon({ color = 'currentColor', size = 18 }: { color?: string; size?: number }) {
+  return (
+    <IconBase color={color} size={size}>
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <polyline points="14 2 14 8 20 8" />
+    </IconBase>
+  )
+}
+
 // GoogleIcon uses official brand colors and cannot use currentColor.
 export function GoogleIcon() {
   return (
@@ -160,5 +179,14 @@ export function GoogleIcon() {
       <path fill="#FBBC05" d="M3.964 10.707A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z" />
       <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.961L3.964 7.293C4.672 5.163 6.656 3.58 9 3.58z" />
     </svg>
+  )
+}
+
+export function ClassesIcon({ color = 'currentColor', size = 16 }: { color?: string; size?: number }) {
+  return (
+    <IconBase color={color} size={size}>
+      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+    </IconBase>
   )
 }

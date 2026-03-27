@@ -71,14 +71,12 @@ describe("mutations/users – deleteAccount", () => {
       await ctx.db.insert("syllabi", {
         userId,
         fileName: "cs101.pdf",
-        courseName: "CS 101",
         status: "confirmed",
         createdAt: Date.now(),
       });
       await ctx.db.insert("syllabi", {
         userId,
         fileName: "math201.pdf",
-        courseName: "Math 201",
         status: "pending",
         createdAt: Date.now(),
       });
@@ -177,7 +175,6 @@ describe("mutations/users – deleteAccount", () => {
       await ctx.db.insert("syllabi", {
         userId: otherUserId,
         fileName: "other.pdf",
-        courseName: "Other Course",
         status: "confirmed",
         createdAt: Date.now(),
       });
@@ -193,6 +190,98 @@ describe("mutations/users – deleteAccount", () => {
     );
     expect(otherTasks).toHaveLength(1);
     expect(otherSyllabi).toHaveLength(1);
+  });
+});
+
+describe("mutations/users – updateUserSettings", () => {
+  test("throws when unauthenticated", async () => {
+    const t = makeTestCtx();
+    await expect(
+      t.mutation(api.mutations.users.updateUserSettings, { focusBlockLength: 45 })
+    ).rejects.toThrow("Not authenticated");
+  });
+
+  test("throws when focusBlockLength is zero or negative", async () => {
+    const t = makeTestCtx();
+    const { withAuth } = await createTestUser(t);
+
+    await expect(
+      withAuth.mutation(api.mutations.users.updateUserSettings, { focusBlockLength: 0 })
+    ).rejects.toThrow("focusBlockLength must be a positive number");
+
+    await expect(
+      withAuth.mutation(api.mutations.users.updateUserSettings, { focusBlockLength: -10 })
+    ).rejects.toThrow("focusBlockLength must be a positive number");
+  });
+
+  test("updates a single field", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+
+    await withAuth.mutation(api.mutations.users.updateUserSettings, {
+      focusBlockLength: 45,
+    });
+
+    const user = await t.run((ctx) => ctx.db.get(userId));
+    expect(user!.focusBlockLength).toBe(45);
+  });
+
+  test("updates multiple fields at once", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+
+    await withAuth.mutation(api.mutations.users.updateUserSettings, {
+      major: "Biology",
+      year: "Senior",
+      focusBlockLength: 60,
+    });
+
+    const user = await t.run((ctx) => ctx.db.get(userId));
+    expect(user!.major).toBe("Biology");
+    expect(user!.year).toBe("Senior");
+    expect(user!.focusBlockLength).toBe(60);
+  });
+
+  test("updates workHoursGrid", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+
+    const grid = [{ day: "Monday", available: [9, 10], blocked: [8] }];
+    await withAuth.mutation(api.mutations.users.updateUserSettings, {
+      workHoursGrid: grid,
+    });
+
+    const user = await t.run((ctx) => ctx.db.get(userId));
+    expect(user!.workHoursGrid).toEqual(grid);
+  });
+
+  test("updates courses field", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+
+    const courses = [
+      { title: "CS101", studyGoal: "A" },
+      { title: "Math201", studyGoal: "B+" },
+    ];
+    await withAuth.mutation(api.mutations.users.updateUserSettings, { courses });
+
+    const user = await t.run((ctx) => ctx.db.get(userId));
+    expect(user!.courses).toEqual(courses);
+  });
+
+  test("does not affect unspecified fields", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+
+    await withAuth.mutation(api.mutations.users.completeOnboarding, VALID_ONBOARDING_ARGS);
+    await withAuth.mutation(api.mutations.users.updateUserSettings, {
+      focusBlockLength: 30,
+    });
+
+    const user = await t.run((ctx) => ctx.db.get(userId));
+    expect(user!.major).toBe("Computer Science");
+    expect(user!.year).toBe("Junior");
+    expect(user!.focusBlockLength).toBe(30);
   });
 });
 
