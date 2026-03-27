@@ -1,19 +1,18 @@
 import { v } from "convex/values";
 
 /**
- * Single source of truth for all valid task types.
- * Used to build the Convex validator, the TypeScript type, and runtime checks.
+ * Suggested built-in task types for UI selection.
  */
 export const TASK_TYPES = [
   "Problem Set",
   "Essay",
   "Coding",
   "Exam Prep",
+  "Thesis",
 ] as const;
 
 /** TypeScript union type for taskType. */
 export type TaskType = (typeof TASK_TYPES)[number];
 
-/** Convex validator for the taskType field, shared across schema, mutations, and actions. */
-const taskTypeLiterals = TASK_TYPES.map((t) => v.literal(t));
-export const taskTypeValidator = v.union(...taskTypeLiterals);
+/** Backend accepts any non-empty task type string to support legacy/custom data. */
+export const taskTypeValidator = v.string();

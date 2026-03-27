@@ -10,13 +10,13 @@ import { taskTypeValidator } from "../lib/taskValidators";
 export const createSyllabus = internalMutation({
   args: {
     userId: v.id("users"),
-    fileName: v.string(),
+    fileContents: v.string(),
     courseId: v.optional(v.id("userCourses")),
   },
   handler: async (ctx, args) => {
     return await ctx.db.insert("syllabi", {
       userId: args.userId,
-      fileName: args.fileName,
+      fileContents: args.fileContents,
       courseId: args.courseId,
       status: "pending",
       createdAt: Date.now(),
@@ -46,8 +46,8 @@ export const setSyllabusStatus = internalMutation({
  * Saves user-confirmed tasks extracted from a syllabus to the tasks table.
  *
  * Called after the user reviews the output of uploadSyllabus and approves
- * the extracted task list. Each task is linked back to the source syllabus
- * via extractedFrom so the origin can always be traced.
+ * the extracted task list. Each task is tagged with the courseId from the
+ * source syllabus so it appears under the correct course.
  *
  * Returns the IDs of all inserted tasks.
  */
@@ -81,7 +81,7 @@ export const confirmSyllabusTasks = mutation({
           description: task.description,
           dueDate: task.dueDate,
           taskType: task.taskType,
-          extractedFrom: args.syllabusId,
+          courseId: syllabus.courseId,
           createdAt: now,
         })
       )

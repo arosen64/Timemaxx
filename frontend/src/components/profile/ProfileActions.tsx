@@ -3,7 +3,7 @@ import { useAuthActions } from '@convex-dev/auth/react'
 import { useMutation } from 'convex/react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../../../../backend/convex/_generated/api'
-import { LogoutIcon, TrashIcon } from '../icons/icons'
+import { LogoutIcon, TrashIcon } from '../icons'
 import DeleteAccountModal from './DeleteAccountModal'
 import Button from '../ui/Button'
 
