@@ -7561,8 +7561,21 @@
                   "padding": 16,
                   "children": [
                     {
+                      "type": "text",
+                      "id": "PYE6S",
+                      "x": 0,
+                      "y": 0,
+                      "name": "calNote",
+                      "enabled": false,
+                      "fill": "$--muted-foreground",
+                      "content": "You can undo this on the Profile page.",
+                      "fontFamily": "Inter",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    },
+                    {
                       "type": "frame",
-                      "id": "pOPfX",
+                      "id": "Mf60v",
                       "name": "calRow",
                       "width": "fill_container",
                       "justifyContent": "space_between",
@@ -7570,14 +7583,15 @@
                       "children": [
                         {
                           "type": "frame",
-                          "id": "Fp1LH",
+                          "id": "2As9H",
                           "name": "calLeft",
+                          "width": "fill_container",
                           "layout": "vertical",
                           "gap": 4,
                           "children": [
                             {
                               "type": "text",
-                              "id": "RTfeL",
+                              "id": "qJduF",
                               "name": "calTitle",
                               "fill": "$--primary",
                               "content": "Google Calendar (optional)",
@@ -7587,7 +7601,7 @@
                             },
                             {
                               "type": "text",
-                              "id": "VC3ve",
+                              "id": "wAQm3",
                               "name": "calSub",
                               "fill": "$--muted-foreground",
                               "content": "Connect to schedule around your existing events",
@@ -7598,7 +7612,7 @@
                           ]
                         },
                         {
-                          "id": "dN4pt",
+                          "id": "qIU63",
                           "type": "ref",
                           "ref": "uzHQ8",
                           "name": "calConnectBtn",
@@ -7612,19 +7626,6 @@
                           }
                         }
                       ]
-                    },
-                    {
-                      "type": "text",
-                      "id": "PYE6S",
-                      "x": 0,
-                      "y": 0,
-                      "name": "calNote",
-                      "enabled": false,
-                      "fill": "$--muted-foreground",
-                      "content": "You can undo this on the Profile page.",
-                      "fontFamily": "Inter",
-                      "fontSize": 12,
-                      "fontWeight": "normal"
                     }
                   ]
                 },

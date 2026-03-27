@@ -117,28 +117,26 @@ export default function OnboardingPage() {
             <h2 className="font-heading text-2xl font-bold text-navy">Connect Google Calendar</h2>
             <p className="font-body text-sm text-slate-blue">Optionally sync your calendar so Timemaxx can schedule around your existing events.</p>
           </div>
-          <div className="flex flex-col gap-2 rounded-lg border border-border p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex flex-col gap-1">
-                <span className="font-heading text-sm font-semibold text-navy">Google Calendar (optional)</span>
-                <span className="font-body text-xs text-slate-blue">Connect to schedule around your existing events</span>
-              </div>
-              {calendarStatus?.connected ? (
+          <div className="flex flex-col items-center gap-3 rounded-lg border border-border p-4">
+            <div className="flex flex-col items-center gap-1 text-center">
+              <span className="font-heading text-sm font-semibold text-navy">Google Calendar (optional)</span>
+              <span className="font-body text-xs text-slate-blue">Connect to schedule around your existing events</span>
+            </div>
+            {calendarStatus?.connected ? (
+              <div className="flex flex-col items-center gap-1">
                 <span className="flex items-center gap-1.5 font-heading text-sm font-semibold text-teal">
                   <CalendarIcon />
                   Connected
                 </span>
-              ) : (
-                <button
-                  onClick={handleConnectCalendar}
-                  className="flex items-center justify-center h-10 px-5 font-heading text-sm font-semibold text-navy bg-white border border-border rounded-lg transition hover:opacity-90"
-                >
-                  Connect
-                </button>
-              )}
-            </div>
-            {calendarStatus?.connected && (
-              <span className="font-body text-xs text-slate-blue">You can undo this on the Profile page.</span>
+                <span className="font-body text-xs text-slate-blue">You can undo this on the Profile page.</span>
+              </div>
+            ) : (
+              <button
+                onClick={handleConnectCalendar}
+                className="flex items-center justify-center h-10 px-5 font-heading text-sm font-semibold text-navy bg-white border border-border rounded-lg transition hover:opacity-90"
+              >
+                Connect
+              </button>
             )}
           </div>
         </div>
