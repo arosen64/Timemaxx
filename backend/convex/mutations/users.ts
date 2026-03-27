@@ -2,6 +2,44 @@ import { mutation } from "../_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
+/**
+ * Partially updates the authenticated user's settings (work hours, focus block length, study profile).
+ */
+export const updateUserSettings = mutation({
+  args: {
+    major: v.optional(v.string()),
+    year: v.optional(v.string()),
+    difficultSubjects: v.optional(v.array(v.string())),
+    enjoyedSubjects: v.optional(v.array(v.string())),
+    courses: v.optional(v.array(v.object({ title: v.string(), studyGoal: v.string() }))),
+    workHoursGrid: v.optional(v.array(v.object({
+      day: v.string(),
+      available: v.array(v.number()),
+      blocked: v.array(v.number()),
+    }))),
+    productivityTraits: v.optional(v.any()),
+    focusBlockLength: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated: must be logged in to update settings");
+
+    if (args.focusBlockLength !== undefined && args.focusBlockLength <= 0)
+      throw new Error("focusBlockLength must be a positive number");
+
+    // onboardingComplete is intentionally excluded from updatable fields here —
+    // it is only set (to true) via completeOnboarding and should not be toggled
+    // from the settings page.
+
+    // TODO: tighten validation for schema-level fields:
+    //   - year should be restricted to known values (Freshman, Sophomore, Junior, Senior, Graduate)
+    //   - major should reject purely numeric strings
+    //   - productivityTraits uses v.any() and has no shape enforcement
+    // Track this as a follow-up issue for backend input validation.
+
+    await ctx.db.patch(userId, args);
+  },
+});
 
 /**
  * Updates the authenticated user's onboarding information and marks onboarding as complete.

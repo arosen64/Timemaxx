@@ -24,9 +24,8 @@ import { UploadSyllabusResult } from "../lib/syllabusTypes";
  */
 export const uploadSyllabus = action({
   args: {
-    fileName: v.string(),
-    fileText: v.string(),
-    className: v.string(),
+    fileContents: v.string(),
+    courseId: v.optional(v.id("userCourses")),
   },
   handler: async (ctx, args): Promise<UploadSyllabusResult> => {
     const userId = await getAuthUserId(ctx);
@@ -34,7 +33,7 @@ export const uploadSyllabus = action({
 
     const syllabusId = await ctx.runMutation(
       internal.mutations.syllabi.createSyllabus,
-      { userId, fileName: args.fileName, className: args.className }
+      { userId, fileContents: args.fileContents, courseId: args.courseId }
     );
 
     const apiKey = process.env.GEMINI_API_KEY;
@@ -55,7 +54,7 @@ For each task provide:
 - taskType: one of "Essay", "Problem Set", "Exam Prep", "Coding", "Reading", "Lab", "Presentation"
 
 Syllabus:
-${args.fileText}`;
+${args.fileContents}`;
 
     try {
       const genai = new GoogleGenAI({ apiKey });

@@ -6,6 +6,9 @@ export type TaskType = {
   description: string
   taskType: string
   timeEstimate?: number
+  estimateFeedbackRating?: 'up' | 'down'
+  correctedEstimateMinutes?: number
+  estimateFeedbackSubmittedAt?: number
   dueDate: number
   createdAt: number
 }
@@ -20,6 +23,7 @@ export const BUILT_IN_TASK_TYPES = [
   'Presentation',
 ] as const
 export type BuiltInTaskType = (typeof BUILT_IN_TASK_TYPES)[number]
+export type SchemaTaskType = BuiltInTaskType
 export const CUSTOM_TASK_TYPE_OPTION = 'Other'
 
 export type EditForm = {

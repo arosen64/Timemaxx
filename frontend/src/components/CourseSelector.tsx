@@ -102,6 +102,14 @@ export default function CourseSelector({ onAddCourse, mode = 'all' }: CourseSele
 
   const handleAddCourse = async () => {
     if (!selectedCourse) return
+    if (isCurrent && !studyGoalInput.trim()) {
+      setAddError('Please select a study goal.')
+      return
+    }
+    if (!isCurrent && !gradeInput.trim()) {
+      setAddError('Please select a grade.')
+      return
+    }
     const courseCode = selectedCourse.OfferingName
     const title = `${selectedCourse.OfferingName}: ${selectedCourse.Title}`
     const credits = selectedCourse.Credits ? parseFloat(selectedCourse.Credits) : undefined
@@ -222,27 +230,17 @@ export default function CourseSelector({ onAddCourse, mode = 'all' }: CourseSele
       {/* Study goal or grade selector — shown once a course is selected */}
       {selectedCourse && (
         <div className="flex gap-2">
-          <select
+          <Selector
+            className="flex-1"
             value={isCurrent ? studyGoalInput : gradeInput}
-            onChange={(e) => isCurrent ? setStudyGoalInput(e.target.value) : setGradeInput(e.target.value)}
-            className="flex-1 rounded-lg border border-border bg-bg-gray px-3 py-2 font-body text-sm text-navy outline-none focus:border-sky-blue focus:ring-2 focus:ring-sky-blue/20"
-          >
-            {isCurrent ? (
-              <>
-                <option value="">Select a study goal (optional)</option>
-                {STUDY_GOALS.map((g) => (
-                  <option key={g} value={g}>{g}</option>
-                ))}
-              </>
-            ) : (
-              <>
-                <option value="">Select your grade (optional)</option>
-                {GRADES.map((g) => (
-                  <option key={g} value={g}>{g}</option>
-                ))}
-              </>
-            )}
-          </select>
+            onChange={isCurrent ? setStudyGoalInput : setGradeInput}
+            placeholder={isCurrent ? 'Select a study goal' : 'Select your grade'}
+            options={
+              isCurrent
+                ? STUDY_GOALS.map((g) => ({ label: g, value: g }))
+                : GRADES.map((g) => ({ label: g, value: g }))
+            }
+          />
           <Button
             variant="primary"
             onClick={handleAddCourse}

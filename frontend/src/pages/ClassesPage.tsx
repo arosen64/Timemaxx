@@ -40,19 +40,17 @@ export default function ClassesPage() {
   function makeUploadHandlers(course: { _id: Id<'userCourses'>; title: string }) {
     return {
       onUpload: async (file: File): Promise<number> => {
-        const fileText = await readFileAsText(file)
+        const fileContents = await readFileAsText(file)
         const result = await uploadSyllabus({
-          fileName: file.name,
-          fileText,
-          className: course.title,
+          fileContents,
+          courseId: course._id,
         })
         return result.extractedTasks.length
       },
       onTextSubmit: async (text: string): Promise<number> => {
         const result = await uploadSyllabus({
-          fileName: 'pasted-text.txt',
-          fileText: text,
-          className: course.title,
+          fileContents: text,
+          courseId: course._id,
         })
         return result.extractedTasks.length
       },

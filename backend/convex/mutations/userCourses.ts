@@ -2,6 +2,19 @@ import { mutation } from "../_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
+function termToSuffix(term: string): string {
+  const parts = term.trim().split(" ");
+  if (parts.length < 2) return "";
+  const season = parts[0].toLowerCase();
+  const yy = parts[parts.length - 1].slice(-2);
+  const code =
+    season === "spring" ? "SP" :
+    season === "summer" ? "SU" :
+    season === "fall" ? "FA" :
+    season === "intersession" ? "IN" : "";
+  return code ? `.${code}${yy}` : "";
+}
+
 /**
  * Adds a course to the authenticated user's course list.
  * - Upserts the course into the courses table (keyed by courseCode).
@@ -21,11 +34,13 @@ export const addUserCourse = mutation({
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
 
+    const courseCode = args.courseCode + termToSuffix(args.term);
+
     // Check for existing completed record (has a grade) with same courseCode
     const existing = await ctx.db
       .query("userCourses")
       .withIndex("by_user_course", (q) =>
-        q.eq("userId", userId).eq("courseCode", args.courseCode)
+        q.eq("userId", userId).eq("courseCode", courseCode)
       )
       .collect();
 
@@ -37,7 +52,7 @@ export const addUserCourse = mutation({
     // Insert the userCourse record
     return await ctx.db.insert("userCourses", {
       userId,
-      courseCode: args.courseCode,
+      courseCode,
       title: args.title,
       credits: args.credits,
       term: args.term,
@@ -48,10 +63,14 @@ export const addUserCourse = mutation({
 });
 
 /**
- * Updates the grade for a userCourse record. Only the owning user may update their own record.
+ * Updates the grade or studyGoal on an existing userCourse record.
  */
 export const updateUserCourse = mutation({
-  args: { userCourseId: v.id("userCourses"), grade: v.string() },
+  args: {
+    userCourseId: v.id("userCourses"),
+    grade: v.optional(v.string()),
+    studyGoal: v.optional(v.string()),
+  },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
@@ -60,7 +79,10 @@ export const updateUserCourse = mutation({
     if (!record) throw new Error("Course record not found");
     if (record.userId !== userId) throw new Error("Not authorized");
 
-    await ctx.db.patch(args.userCourseId, { grade: args.grade });
+    const patch: Record<string, unknown> = {};
+    if (args.grade !== undefined) patch.grade = args.grade;
+    if (args.studyGoal !== undefined) patch.studyGoal = args.studyGoal;
+    await ctx.db.patch(args.userCourseId, patch);
   },
 });
 
