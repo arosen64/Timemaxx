@@ -84,7 +84,7 @@ export default defineSchema({
   syllabi: defineTable({
     userId: v.id("users"),
     fileName: v.string(),
-    courseName: v.string(),
+    courseId: v.optional(v.id("userCourses")),
     status: v.union(
       v.literal("pending"),
       v.literal("confirmed"),
