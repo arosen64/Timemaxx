@@ -88,6 +88,15 @@ export const deleteTask = mutation({
     const task = await ctx.db.get(args.taskId);
     if (!task || task.userId !== userId) throw new Error("Task not found");
 
+    const studyBlocks = await ctx.db
+      .query("studyBlocks")
+      .withIndex("by_taskId", (q) => q.eq("taskId", args.taskId))
+      .collect();
+
+    for (const block of studyBlocks) {
+      await ctx.db.delete(block._id);
+    }
+
     await ctx.db.delete(args.taskId);
   },
 });

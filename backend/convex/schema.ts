@@ -106,6 +106,15 @@ export default defineSchema({
     .index("by_userId", ["userId"])
     .index("by_userId_createdAt", ["userId", "createdAt"]),
 
+  // StudyBlocks table — stores scheduled time chunks assigned to tasks
+  studyBlocks: defineTable({
+    taskId: v.id("tasks"),
+    title: v.string(),
+    startTime: v.optional(v.number()),
+    studyBlockLength: v.number(),
+    uniqueId: v.string(),
+  }).index("by_taskId", ["taskId"]),
+
   // Syllabi table — tracks uploaded syllabus files and their processing status
   syllabi: defineTable({
     userId: v.id("users"),
