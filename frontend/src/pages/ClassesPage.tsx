@@ -7,6 +7,7 @@ import ClassCard from '../components/classes/ClassCard'
 import CourseSelector from '../components/CourseSelector'
 import { PlusIcon } from '../components/icons'
 import { isPastTerm } from '../utils/termUtils'
+import Button from '../components/ui/Button'
 
 export default function ClassesPage() {
   const courses = useQuery(api.queries.userCourses.getUserCourses)
@@ -34,14 +35,14 @@ export default function ClassesPage() {
             <h1 className="font-heading text-3xl font-bold text-navy">Classes</h1>
             <p className="font-body text-sm text-slate-blue">Manage your classes and syllabi</p>
           </div>
-          <button
-            type="button"
+          <Button
+            variant="primary"
+            icon={<PlusIcon size={15} />}
             onClick={() => setShowAddForm((v) => !v)}
-            className="flex items-center gap-2 h-10 px-4 rounded-lg bg-navy font-heading text-sm font-semibold text-white hover:opacity-90 transition"
+            className="h-10 px-4"
           >
-            <PlusIcon size={15} />
             Add Class
-          </button>
+          </Button>
         </div>
 
         {/* Add Course Panel */}
@@ -116,14 +117,14 @@ export default function ClassesPage() {
                 </p>
               </>
             )}
-            <button
-              type="button"
+            <Button
+              variant="primary"
+              icon={<PlusIcon size={15} />}
               onClick={() => setShowAddForm(true)}
-              className="mt-2 flex items-center gap-2 h-10 px-4 rounded-lg bg-navy font-heading text-sm font-semibold text-white hover:opacity-90 transition"
+              className="mt-2 h-10 px-4"
             >
-              <PlusIcon size={15} />
               Add Class
-            </button>
+            </Button>
           </div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
