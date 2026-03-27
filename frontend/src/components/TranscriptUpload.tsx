@@ -1,66 +1,34 @@
-import { useRef, useState } from 'react'
+import { useState } from 'react'
+import * as pdfjsLib from 'pdfjs-dist'
 import { useAction, useMutation } from 'convex/react'
 import { api } from '../../../backend/convex/_generated/api'
 import { type ParsedCourse } from '../../../backend/convex/actions/parseTranscript'
 import { type Course } from '../types'
-import Button from './ui/Button'
+import FileUpload from './ui/FileUpload'
+import { SpinnerIcon } from './icons'
 
-function UploadIcon() {
-  return (
-    <svg
-      width={32}
-      height={32}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      className="text-sky-blue"
-    >
-      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-      <polyline points="17 8 12 3 7 8" />
-      <line x1="12" y1="3" x2="12" y2="15" />
-    </svg>
+pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.min.mjs',
+  import.meta.url,
+).toString()
+
+async function extractPdfText(file: File): Promise<string> {
+  const arrayBuffer = await file.arrayBuffer()
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise
+  const pages = await Promise.all(
+    Array.from({ length: pdf.numPages }, (_, i) =>
+      pdf.getPage(i + 1).then((page) =>
+        page.getTextContent().then((content) =>
+          content.items.map((item) => ('str' in item ? item.str : '')).join(' ')
+        )
+      )
+    )
   )
+  return pages.join('\n')
 }
-
-function FileIcon() {
-  return (
-    <svg
-      width={16}
-      height={16}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      style={{ flexShrink: 0 }}
-    >
-      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-      <polyline points="14 2 14 8 20 8" />
-    </svg>
-  )
-}
-
 
 interface TranscriptUploadProps {
   onCoursesAdded: (courses: Course[]) => void
-}
-
-function readFileAsBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => {
-      const dataUrl = reader.result as string
-      resolve(dataUrl.split(',')[1])
-    }
-    reader.onerror = reject
-    reader.readAsDataURL(file)
-  })
 }
 
 export default function TranscriptUpload({ onCoursesAdded }: TranscriptUploadProps) {
@@ -68,11 +36,9 @@ export default function TranscriptUpload({ onCoursesAdded }: TranscriptUploadPro
   const addUserCourse = useMutation(api.mutations.userCourses.addUserCourse)
 
   const [file, setFile] = useState<File | null>(null)
-  const [dragging, setDragging] = useState(false)
   const [parsing, setParsing] = useState(false)
   const [summary, setSummary] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
 
   const handleFile = async (f: File) => {
     setFile(f)
@@ -81,10 +47,9 @@ export default function TranscriptUpload({ onCoursesAdded }: TranscriptUploadPro
     setParsing(true)
 
     try {
-      const fileBase64 = await readFileAsBase64(f)
-      const parsed: ParsedCourse[] = await parseTranscript({ fileBase64 })
+      const fileText = await extractPdfText(f)
+      const parsed: ParsedCourse[] = await parseTranscript({ fileText })
 
-      // 4. Save each parsed course, skip duplicates
       const saved: Course[] = []
       await Promise.all(
         parsed.map(async (c) => {
@@ -124,14 +89,6 @@ export default function TranscriptUpload({ onCoursesAdded }: TranscriptUploadPro
     setFile(null)
     setError(null)
     setSummary(null)
-    if (inputRef.current) inputRef.current.value = ''
-  }
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault()
-    setDragging(false)
-    const dropped = e.dataTransfer.files[0]
-    if (dropped) handleFile(dropped)
   }
 
   return (
@@ -143,67 +100,24 @@ export default function TranscriptUpload({ onCoursesAdded }: TranscriptUploadPro
       <p className="font-body text-xs text-slate-blue">
         Upload your JHU transcript to auto-fill your courses
       </p>
-
-      {file ? (
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-bg-gray px-3 py-2.5">
-            <div className="flex items-center gap-2 min-w-0">
-              <FileIcon />
-              <span className="font-body text-sm font-medium text-navy truncate">{file.name}</span>
-              {parsing && (
-                <span className="font-body text-xs text-light-blue animate-pulse shrink-0">
-                  Parsing…
-                </span>
-              )}
-            </div>
-            <button
-              type="button"
-              onClick={handleRemove}
-              disabled={parsing}
-              className="font-body text-xs text-light-blue hover:text-urgent-red transition-colors shrink-0 disabled:opacity-40"
-            >
-              Remove
-            </button>
-          </div>
-          {summary && <p className="font-body text-xs text-teal">{summary}</p>}
-          {error && <p className="font-body text-xs text-urgent-red">{error}</p>}
-        </div>
-      ) : (
-        <div
-          onDragOver={(e) => { e.preventDefault(); setDragging(true) }}
-          onDragLeave={() => setDragging(false)}
-          onDrop={handleDrop}
-          className={`flex flex-col items-center gap-3 rounded-lg border-2 border-dashed px-6 py-8 transition-colors ${
-            dragging ? 'border-sky-blue bg-sky-blue/5' : 'border-border bg-bg-gray'
-          }`}
-        >
-          <UploadIcon />
-          <div className="flex flex-col items-center gap-1">
-            <p className="font-body text-sm font-medium text-slate-blue">
-              Drag &amp; drop your transcript here
-            </p>
-            <p className="font-body text-xs text-light-blue">or</p>
-          </div>
-          <Button
-            variant="primary"
-            onClick={() => inputRef.current?.click()}
-            className="px-5"
-          >
-            Browse Files
-          </Button>
-          <p className="font-body text-xs text-light-blue">Supports PDF · Max 10 MB</p>
-          <input
-            ref={inputRef}
-            type="file"
-            accept=".pdf"
-            className="sr-only"
-            onChange={(e) => {
-              const f = e.target.files?.[0]
-              if (f) handleFile(f)
-            }}
-          />
+      <FileUpload
+        accept=".pdf"
+        acceptedMimeTypes={['application/pdf']}
+        maxBytes={10 * 1024 * 1024}
+        hint="PDF · max 10 MB"
+        file={file}
+        onFile={handleFile}
+        onError={(msg) => { setError(msg); setFile(null) }}
+        onRemove={handleRemove}
+      />
+      {parsing && (
+        <div className="flex items-center gap-2 font-body text-xs text-slate-blue">
+          <SpinnerIcon size={12} />
+          <span>Parsing transcript…</span>
         </div>
       )}
+      {summary && <p className="font-body text-xs text-teal">{summary}</p>}
+      {error && <p className="font-body text-xs text-urgent-red">{error}</p>}
     </div>
   )
 }

@@ -9,7 +9,6 @@
  */
 
 import type * as actions_estimateTaskTime from "../actions/estimateTaskTime.js";
-import type * as actions_generateAcademicProfile from "../actions/generateAcademicProfile.js";
 import type * as actions_jhuCourses from "../actions/jhuCourses.js";
 import type * as actions_parseTranscript from "../actions/parseTranscript.js";
 import type * as actions_requestEstimateTaskTime from "../actions/requestEstimateTaskTime.js";
@@ -35,7 +34,6 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   "actions/estimateTaskTime": typeof actions_estimateTaskTime;
-  "actions/generateAcademicProfile": typeof actions_generateAcademicProfile;
   "actions/jhuCourses": typeof actions_jhuCourses;
   "actions/parseTranscript": typeof actions_parseTranscript;
   "actions/requestEstimateTaskTime": typeof actions_requestEstimateTaskTime;

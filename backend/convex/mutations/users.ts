@@ -58,9 +58,6 @@ export const completeOnboarding = mutation({
     })),
     productivityTraits: v.any(),
     focusBlockLength: v.number(),
-    transcriptSummary: v.optional(
-      v.array(v.object({ label: v.string(), text: v.string() }))
-    ),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);

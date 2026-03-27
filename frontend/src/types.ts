@@ -12,18 +12,12 @@ export interface Course {
   difficultyRating?: number
 }
 
-export interface AcademicInsight {
-  label: string
-  text: string
-}
-
 export interface ProfileData {
   major: string
   year: string
   difficultSubjects: string[]
   enjoyedSubjects: string[]
   courses: Course[]
-  transcriptSummary?: AcademicInsight[]
 }
 
 // Shape defined in issue #22

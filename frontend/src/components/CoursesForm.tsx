@@ -5,6 +5,7 @@ import { Id } from '../../../backend/convex/_generated/dataModel'
 import { ProfileData, Course } from '../types'
 import CourseSelector from './CourseSelector'
 import TranscriptUpload from './TranscriptUpload'
+import Button from './ui/Button'
 import { GRADES, STUDY_GOALS } from '../constants'
 
 const PAGE_SIZE = 4
@@ -181,25 +182,25 @@ export default function CoursesForm({ data, onChange }: CoursesFormProps) {
 
             {totalPages > 1 && (
               <div className="flex items-center justify-between">
-                <button
-                  type="button"
+                <Button
+                  variant="primary"
                   onClick={() => setPage((p) => p - 1)}
                   disabled={page === 0}
-                  className="rounded-lg border border-border px-3 py-1.5 font-body text-xs text-slate-blue transition hover:bg-bg-gray disabled:cursor-not-allowed disabled:opacity-40"
+                  className="px-4 h-8 text-xs"
                 >
                   ← Prev
-                </button>
+                </Button>
                 <span className="font-body text-xs text-light-blue">
                   {page + 1} / {totalPages}
                 </span>
-                <button
-                  type="button"
+                <Button
+                  variant="primary"
                   onClick={() => setPage((p) => p + 1)}
                   disabled={page >= totalPages - 1}
-                  className="rounded-lg border border-border px-3 py-1.5 font-body text-xs text-slate-blue transition hover:bg-bg-gray disabled:cursor-not-allowed disabled:opacity-40"
+                  className="px-4 h-8 text-xs"
                 >
                   Next →
-                </button>
+                </Button>
               </div>
             )}
           </>

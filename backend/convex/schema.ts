@@ -45,14 +45,6 @@ export default defineSchema({
 
     productivityTraits: v.optional(v.any()),
 
-    transcriptSummary: v.optional(
-      v.array(
-        v.object({
-          label: v.string(),
-          text: v.string(),
-        })
-      )
-    ),
   })
     .index("email", ["email"])
     .index("phone", ["phone"]),

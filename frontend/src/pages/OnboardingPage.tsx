@@ -5,13 +5,12 @@ import { api } from '../../../backend/convex/_generated/api'
 import { ProfileData, WorkHoursData, PreferencesData } from '../types'
 import ProfileForm from '../components/ProfileForm'
 import CoursesForm from '../components/CoursesForm'
-import AcademicProfileSummary from '../components/AcademicProfileSummary'
 import WorkHoursSelector, { DEFAULT_WORK_HOURS } from '../components/WorkHoursSelector'
 import PreferencesForm, { DEFAULT_PREFERENCES } from '../components/PreferencesForm'
 import OnboardingStepShell from '../components/onboarding/OnboardingStepShell'
 import OnboardingNav from '../components/onboarding/OnboardingNav'
 
-type Step = 1 | 2 | 3 | 4 | 5
+type Step = 1 | 2 | 3 | 4
 
 const DEFAULT_PROFILE: ProfileData = {
   major: '',
@@ -71,7 +70,6 @@ export default function OnboardingPage() {
         })),
         productivityTraits: preferences.traits,
         focusBlockLength: Number(preferences.focusBlockLength),
-        transcriptSummary: profile.transcriptSummary,
       })
       navigate('/dashboard')
     } catch {
@@ -79,10 +77,10 @@ export default function OnboardingPage() {
     }
   }
 
-  const isWide = step === 2 || step === 3 || step === 4 || step === 5
+  const isWide = step === 2 || step === 3 || step === 4
 
   return (
-    <OnboardingStepShell currentStep={step} totalSteps={5} wide={isWide}>
+    <OnboardingStepShell currentStep={step} totalSteps={4} wide={isWide}>
       {step === 1 && (
         <ProfileForm data={profile} onChange={setProfile} errors={profileErrors} />
       )}
@@ -90,19 +88,16 @@ export default function OnboardingPage() {
         <CoursesForm data={profile} onChange={setProfile} />
       )}
       {step === 3 && (
-        <AcademicProfileSummary profile={profile} onChange={setProfile} />
-      )}
-      {step === 4 && (
         <WorkHoursSelector data={workHours} onChange={setWorkHours} />
       )}
-      {step === 5 && (
+      {step === 4 && (
         <PreferencesForm data={preferences} onChange={setPreferences} />
       )}
       <OnboardingNav
         onBack={handleBack}
-        onContinue={step < 5 ? handleNext : handleSubmit}
+        onContinue={step < 4 ? handleNext : handleSubmit}
         isFirstStep={step === 1}
-        isLastStep={step === 5}
+        isLastStep={step === 4}
         continueLabel={isSubmitting ? 'Saving...' : undefined}
         disabled={isSubmitting}
       />
