@@ -23,6 +23,7 @@ export const BUILT_IN_TASK_TYPES = [
   'Presentation',
 ] as const
 export type BuiltInTaskType = (typeof BUILT_IN_TASK_TYPES)[number]
+export type SchemaTaskType = BuiltInTaskType
 export const CUSTOM_TASK_TYPE_OPTION = 'Other'
 
 export type EditForm = {
