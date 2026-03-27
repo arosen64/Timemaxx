@@ -61,12 +61,11 @@ export default function SyllabusReviewPage({ course, tasks: initialTasks, onCanc
         setError('One or more tasks is missing a title.')
         return
       }
-      const err = validateDueDate(t.dueDate)
-      const ms = formDateToMs(t.dueDate)
-      if (ms === null || err) {
+      if (validateDueDate(t.dueDate)) {
         setError(`"${t.title || 'Unnamed task'}" has an invalid due date. Use MM/DD/YYYY.`)
         return
       }
+      const ms = formDateToMs(t.dueDate)!
       toSave.push({ title: t.title.trim(), description: t.description, taskType: t.taskType, dueDate: ms })
     }
 
