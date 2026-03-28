@@ -190,13 +190,13 @@ export default function ScheduleTab() {
       const neededSlots = Math.ceil(block.studyBlockLength / 30)
 
       for (let slot = 0; slot <= 48 - neededSlots; slot++) {
-        // Must not be unavailable (blocked)
-        if (row?.blocked.includes(slot)) continue
-
-        // Must not overlap any event or other block
+        // Must not overlap any blocked or event/block slot for the full duration
         let conflict = false
         for (let s = slot; s < slot + neededSlots; s++) {
-          if (dayEventSlots.has(s) || dayBlockSlots.has(s)) { conflict = true; break }
+          if (row?.blocked.includes(s) || dayEventSlots.has(s) || dayBlockSlots.has(s)) {
+            conflict = true
+            break
+          }
         }
         if (conflict) continue
 
