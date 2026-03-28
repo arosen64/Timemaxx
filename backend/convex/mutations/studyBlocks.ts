@@ -169,6 +169,7 @@ export const editStudyBlockTime = mutation({
 
     await ctx.db.patch(args.studyBlockId, {
       startTime: args.startTime ?? undefined,
+      isConflicted: false,
     });
   },
 });
