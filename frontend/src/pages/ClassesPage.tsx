@@ -5,6 +5,7 @@ import { Id } from '../../../backend/convex/_generated/dataModel'
 import Sidebar from '../components/Sidebar'
 import ClassCard from '../components/classes/ClassCard'
 import CourseSelector from '../components/CourseSelector'
+import TranscriptUpload from '../components/TranscriptUpload'
 import { PlusIcon } from '../components/icons'
 import { isPastTerm } from '../utils/termUtils'
 import Button from '../components/ui/Button'
@@ -20,6 +21,7 @@ export default function ClassesPage() {
 
   const [activeTab, setActiveTab] = useState<'current' | 'past'>('current')
   const [showAddForm, setShowAddForm] = useState(false)
+  const [importModalOpen, setImportModalOpen] = useState(false)
 
   const currentCourses = courses?.filter((c) => !isPastTerm(c.term ?? '')) ?? []
   const pastCourses = courses?.filter((c) => isPastTerm(c.term ?? '')) ?? []
@@ -40,15 +42,51 @@ export default function ClassesPage() {
             <h1 className="font-heading text-3xl font-bold text-navy">Classes</h1>
             <p className="font-body text-sm text-slate-blue">Manage your classes and syllabi</p>
           </div>
-          <Button
-            variant="primary"
-            icon={<PlusIcon size={15} />}
-            onClick={() => setShowAddForm((v) => !v)}
-            className="h-10 px-4"
-          >
-            Add Class
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="secondary"
+              onClick={() => setImportModalOpen(true)}
+              className="h-10 px-4"
+            >
+              Import Transcript
+            </Button>
+            <Button
+              variant="primary"
+              icon={<PlusIcon size={15} />}
+              onClick={() => setShowAddForm((v) => !v)}
+              className="h-10 px-4"
+            >
+              Add Class
+            </Button>
+          </div>
         </div>
+
+        {importModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={() => setImportModalOpen(false)}>
+            <div className="absolute inset-0 bg-navy/30" />
+            <div
+              className="relative z-10 w-[520px] rounded-xl border border-border bg-white p-12"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="mb-6 flex items-center justify-between">
+                <span className="font-heading text-[26px] font-bold text-navy">Import Transcript</span>
+                <button
+                  type="button"
+                  onClick={() => setImportModalOpen(false)}
+                  aria-label="Close modal"
+                  className="flex items-center justify-center h-7 w-7 rounded-md bg-bg-gray font-body text-lg text-light-blue"
+                >
+                  &times;
+                </button>
+              </div>
+              <TranscriptUpload
+                onCoursesAdded={(courses) => {
+                  if (courses.length > 0) setImportModalOpen(false)
+                }}
+              />
+            </div>
+          </div>
+        )}
 
         {/* Add Course Panel */}
         {showAddForm && (
