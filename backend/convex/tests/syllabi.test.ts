@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { api } from "../_generated/api";
 import { makeTestCtx, createTestUser } from "../../convex-tests/helpers";
 import { TASK_TYPES } from "../lib/taskValidators";
+import { buildClassTag } from "../lib/classTagUtils";
 
 const FUTURE_DATE = Date.now() + 86_400_000;
 
@@ -196,9 +197,38 @@ describe("mutations/syllabi – confirmSyllabusTasks", () => {
       Promise.all(taskIds.map((id) => ctx.db.get(id)))
     );
 
+    const expectedTag = buildClassTag("EN.601.226", "Data Structures");
     for (const task of tasks) {
       expect(task?.courseId).toEqual(courseId);
+      expect(task?.classTag).toBe(expectedTag);
     }
+  });
+
+  test("does not set classTag when the syllabus has no course", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+    const syllabusId = await createTestSyllabus(t, userId);
+
+    const [taskId] = await withAuth.mutation(
+      api.mutations.syllabi.confirmSyllabusTasks,
+      {
+        syllabusId,
+        tasks: [
+          {
+            title: "Reading 1",
+            description: "Read chapter 1.",
+            dueDate: FUTURE_DATE,
+            taskType: "Reading",
+          },
+        ],
+      }
+    );
+
+    await t.finishAllScheduledFunctions(vi.runAllTimers.bind(vi));
+
+    const task = await t.run((ctx) => ctx.db.get(taskId));
+    expect(task?.courseId).toBeUndefined();
+    expect(task?.classTag).toBeUndefined();
   });
 
   test("accepts all valid task types", async () => {

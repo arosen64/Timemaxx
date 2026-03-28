@@ -1,22 +1,17 @@
-import { useQuery, useMutation } from 'convex/react'
+import { useMutation } from 'convex/react'
 import { api } from '../../../../backend/convex/_generated/api'
-import { type EditForm } from './types'
+import { type ClassTagCourseOption, type EditForm } from './types'
 import TaskModal from './TaskModal'
-import { isPastTerm } from '../../utils/termUtils'
 
 interface AddTaskModalProps {
   isOpen: boolean
   onClose: () => void
   onTaskCreated?: (taskId: string) => void
+  classTagCourses?: ClassTagCourseOption[]
 }
 
-export default function AddTaskModal({ isOpen, onClose, onTaskCreated }: AddTaskModalProps) {
+export default function AddTaskModal({ isOpen, onClose, onTaskCreated, classTagCourses }: AddTaskModalProps) {
   const createTask = useMutation(api.mutations.tasks.createTask)
-  const allCourses = useQuery(api.queries.userCourses.getUserCourses)
-
-  const courses = (allCourses ?? [])
-    .filter((c) => !isPastTerm(c.term ?? ''))
-    .map((c) => ({ id: c._id, label: c.title }))
 
   async function handleSubmit(form: EditForm) {
     const taskId = await createTask({
@@ -24,7 +19,8 @@ export default function AddTaskModal({ isOpen, onClose, onTaskCreated }: AddTask
       description: form.description,
       taskType: form.taskType,
       dueDate: form.dueDate,
-      courseId: form.courseId,
+      ...(form.courseId !== undefined ? { courseId: form.courseId } : {}),
+      classTag: form.classTag,
     })
     onTaskCreated?.(taskId)
   }
@@ -36,8 +32,15 @@ export default function AddTaskModal({ isOpen, onClose, onTaskCreated }: AddTask
       subtitle="Fill in the details below."
       primaryLabel="Add Task"
       primaryLoadingLabel="Adding…"
-      initialValues={{ taskName: '', selectedType: 'Essay', customTaskType: '', description: '', dueDate: '' }}
-      courses={courses}
+      initialValues={{
+        taskName: '',
+        selectedType: 'Essay',
+        customTaskType: '',
+        description: '',
+        dueDate: '',
+        classTag: '',
+      }}
+      classTagCourses={classTagCourses}
       onClose={onClose}
       onSubmit={handleSubmit}
     />
