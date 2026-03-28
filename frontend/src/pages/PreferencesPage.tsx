@@ -6,6 +6,7 @@ import { ChevronDownIcon } from "../components/icons";
 import ProfileForm from "../components/ProfileForm";
 import WorkHoursSelector, { DEFAULT_WORK_HOURS } from "../components/WorkHoursSelector";
 import PreferencesForm from "../components/PreferencesForm";
+import AcademicProfileSummary from "../components/AcademicProfileSummary";
 import { ProfileData, WorkHoursData, PreferencesData } from "../types";
 
 function dbToWorkHours(
@@ -156,8 +157,13 @@ export default function PreferencesPage() {
             Manage your study preferences and availability
           </p>
         </div>
-
+        
         <div className="flex flex-col gap-4">
+          {/* Academic Profile Summary */}
+          <div className="bg-white border border-border rounded-xl px-6 py-5">
+            <AcademicProfileSummary profile={profileData} onChange={() => {}} />
+          </div>
+
           {/* About You */}
           <div className="bg-white border border-border rounded-xl overflow-hidden">
             <div
