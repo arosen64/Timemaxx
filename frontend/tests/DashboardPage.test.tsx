@@ -8,6 +8,7 @@ vi.mock('../../backend/convex/_generated/api', () => ({
     queries: {
       users: { getCurrUser: 'getCurrUser' },
       tasks: { getAllTasks: 'getAllTasks' },
+      userCourses: { getUserCourses: 'getUserCourses' },
     },
     mutations: {
       tasks: { updateTask: 'updateTask', deleteTask: 'deleteTask' },
@@ -70,6 +71,7 @@ const MOCK_TASKS = [
 function setup(tasks = MOCK_TASKS, user = MOCK_USER) {
   mockUseQuery.mockImplementation((query) => {
     if (query === 'getAllTasks') return tasks
+    if (query === 'getUserCourses') return []
     return user
   })
   mockUseMutation.mockReturnValue(makeMutationFn() as never)
@@ -102,6 +104,7 @@ describe('DashboardPage', () => {
   it('shows loading state when tasks are undefined', () => {
     mockUseQuery.mockImplementation((query) => {
       if (query === 'getAllTasks') return undefined
+      if (query === 'getUserCourses') return []
       return MOCK_USER
     })
     mockUseMutation.mockReturnValue(makeMutationFn() as never)
@@ -139,6 +142,7 @@ describe('DashboardPage', () => {
     const tasksWithoutEstimate = MOCK_TASKS.map((t) => ({ ...t, timeEstimate: undefined }))
     mockUseQuery.mockImplementation((query: string) => {
       if (query === 'getAllTasks') return tasksWithoutEstimate
+      if (query === 'getUserCourses') return []
       return MOCK_USER
     })
     mockUseMutation.mockReturnValue(makeMutationFn() as never)
@@ -164,6 +168,7 @@ describe('DashboardPage', () => {
     const tasksWithoutEstimate = MOCK_TASKS.map((t) => ({ ...t, timeEstimate: undefined }))
     mockUseQuery.mockImplementation((query: string) => {
       if (query === 'getAllTasks') return tasksWithoutEstimate
+      if (query === 'getUserCourses') return []
       return MOCK_USER
     })
     mockUseMutation.mockReturnValue(makeMutationFn() as never)
@@ -187,6 +192,7 @@ describe('DashboardPage', () => {
     const tasksWithoutEstimate = MOCK_TASKS.map((t) => ({ ...t, timeEstimate: undefined }))
     mockUseQuery.mockImplementation((query: string) => {
       if (query === 'getAllTasks') return tasksWithoutEstimate
+      if (query === 'getUserCourses') return []
       return MOCK_USER
     })
     mockUseMutation.mockReturnValue(makeMutationFn() as never)
