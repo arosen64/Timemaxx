@@ -38,15 +38,16 @@ gh pr merge <number> --merge --delete-branch
 
 ```plaintext
 master
-  └── feature-branch (created by feature owner)
-        ├── contributor-1-branch → PR into feature-branch
-        └── contributor-2-branch → PR into feature-branch
+  └── dev
+        └── feature-branch (created by feature owner)
+              ├── contributor-1-branch → PR into feature-branch
+              └── contributor-2-branch → PR into feature-branch
 ```
 
 ### Create the feature branch
 
 ```bash
-git checkout master
+git checkout dev
 git pull
 git checkout -b <owner>/<type>/issue-<number>-<description>
 git push -u origin <owner>/<type>/issue-<number>-<description>
@@ -60,14 +61,14 @@ git pull
 git checkout -b <author>/<type>/issue-<number>-<description>
 ```
 
-### PR for sub-branch (targets feature branch, not master)
+### PR for sub-branch (targets feature branch, not dev)
 
 ```bash
 gh pr create --base <feature-branch> --title "Title" --body "Closes #N (partial)"
 ```
 
-### Final PR to master
+### Final PR to dev
 
 ```bash
-gh pr create --base master --title "Feature title" --body "Closes #N"
+gh pr create --base dev --title "Feature title" --body "Closes #N"
 ```
