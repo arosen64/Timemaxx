@@ -761,23 +761,20 @@
               "x": 40,
               "y": 13
             },
-            "ipMWX": {
+            "CsmwL": {
               "width": "fill_container",
-              "x": 0,
-              "y": 96
+              "y": 144
             },
-            "ipMWX/j0EVc": {
-              "x": 14,
-              "y": 14
+            "CsmwL/b9JOw": {
+              "width": "fill_container"
             },
-            "ipMWX/Xkhsc": {
-              "x": 40,
-              "y": 13
+            "CsmwL/SkVpR": {
+              "x": 190
             },
             "78Cxh": {
               "width": "fill_container",
               "x": 0,
-              "y": 144
+              "y": 96
             },
             "78Cxh/j0EVc": {
               "x": 14,
@@ -1349,23 +1346,20 @@
               "x": 40,
               "y": 13
             },
-            "ipMWX": {
+            "CsmwL": {
               "width": "fill_container",
-              "x": 0,
-              "y": 96
+              "y": 144
             },
-            "ipMWX/j0EVc": {
-              "x": 14,
-              "y": 14
+            "CsmwL/b9JOw": {
+              "width": "fill_container"
             },
-            "ipMWX/Xkhsc": {
-              "x": 40,
-              "y": 13
+            "CsmwL/SkVpR": {
+              "x": 190
             },
             "78Cxh": {
               "width": "fill_container",
               "x": 0,
-              "y": 144
+              "y": 96
             },
             "78Cxh/j0EVc": {
               "x": 14,
@@ -2329,18 +2323,15 @@
               "x": 40,
               "y": 13
             },
-            "ipMWX": {
+            "CsmwL": {
               "width": "fill_container",
-              "x": 0,
-              "y": 96
+              "y": 144
             },
-            "ipMWX/j0EVc": {
-              "x": 14,
-              "y": 14
+            "CsmwL/b9JOw": {
+              "width": "fill_container"
             },
-            "ipMWX/Xkhsc": {
-              "x": 40,
-              "y": 13
+            "CsmwL/SkVpR": {
+              "x": 190
             },
             "78Cxh": {
               "id": "YsS8l",
@@ -2349,7 +2340,7 @@
               "name": "navProfile",
               "width": "fill_container",
               "x": 0,
-              "y": 144,
+              "y": 96,
               "descendants": {
                 "r853k": {
                   "iconFontName": "user",
@@ -3845,23 +3836,20 @@
               "x": 40,
               "y": 13
             },
-            "ipMWX": {
+            "CsmwL": {
               "width": "fill_container",
-              "x": 0,
-              "y": 96
+              "y": 144
             },
-            "ipMWX/j0EVc": {
-              "x": 14,
-              "y": 14
+            "CsmwL/b9JOw": {
+              "width": "fill_container"
             },
-            "ipMWX/Xkhsc": {
-              "x": 40,
-              "y": 13
+            "CsmwL/SkVpR": {
+              "x": 190
             },
             "78Cxh": {
               "width": "fill_container",
               "x": 0,
-              "y": 144
+              "y": 96
             },
             "78Cxh/j0EVc": {
               "x": 14,
@@ -4953,23 +4941,25 @@
                   }
                 },
                 {
-                  "id": "ipMWX",
+                  "id": "CsmwL",
                   "type": "ref",
-                  "ref": "Dfji9",
+                  "ref": "CRNxo",
                   "name": "navSched",
                   "width": "fill_container",
                   "x": 0,
-                  "y": 96,
+                  "y": 144,
                   "descendants": {
-                    "j0EVc": {
-                      "iconFontName": "calendar",
-                      "x": 14,
-                      "y": 14
+                    "LcMND": {
+                      "iconFontName": "calendar"
                     },
-                    "Xkhsc": {
-                      "content": "Schedule",
-                      "x": 40,
-                      "y": 13
+                    "RN0HO": {
+                      "content": "Schedule"
+                    },
+                    "b9JOw": {
+                      "width": "fill_container"
+                    },
+                    "SkVpR": {
+                      "x": 190
                     }
                   }
                 },
@@ -4980,7 +4970,7 @@
                   "name": "navProfile",
                   "width": "fill_container",
                   "x": 0,
-                  "y": 144,
+                  "y": 96,
                   "descendants": {
                     "j0EVc": {
                       "iconFontName": "user",
@@ -8509,25 +8499,18 @@
                 }
               }
             },
-            "ipMWX": {
-              "id": "iWrwj",
-              "type": "ref",
-              "ref": "IrWsh",
+            "CsmwL": {
               "width": "fill_container",
-              "x": 0,
-              "y": 96,
-              "descendants": {
-                "r853k": {
-                  "iconFontName": "calendar",
-                  "x": 14,
-                  "y": 14
-                },
-                "yUJUI": {
-                  "content": "Schedule",
-                  "x": 40,
-                  "y": 13
-                }
-              }
+              "y": 144
+            },
+            "CsmwL/b9JOw": {
+              "width": "fill_container"
+            },
+            "CsmwL/SkVpR": {
+              "x": 190
+            },
+            "78Cxh": {
+              "y": 96
             },
             "jzFAO": {
               "y": 832
@@ -9765,6 +9748,59 @@
               ]
             }
           ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "CRNxo",
+      "x": 7700,
+      "y": 860,
+      "name": "NavItem/Default/Badge",
+      "reusable": true,
+      "height": 44,
+      "cornerRadius": "$--radius-m",
+      "gap": 10,
+      "padding": [
+        0,
+        14
+      ],
+      "alignItems": "center",
+      "children": [
+        {
+          "type": "icon_font",
+          "id": "LcMND",
+          "name": "icon",
+          "width": 16,
+          "height": 16,
+          "iconFontName": "square",
+          "iconFontFamily": "lucide",
+          "fill": "$--info"
+        },
+        {
+          "type": "text",
+          "id": "RN0HO",
+          "name": "label",
+          "fill": "$--info",
+          "content": "Tasks",
+          "fontFamily": "Space Grotesk",
+          "fontSize": 14,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "frame",
+          "id": "b9JOw",
+          "name": "spacer",
+          "width": "fill_container",
+          "height": 1
+        },
+        {
+          "type": "ellipse",
+          "id": "SkVpR",
+          "name": "dot",
+          "fill": "$--destructive",
+          "width": 8,
+          "height": 8
         }
       ]
     }
