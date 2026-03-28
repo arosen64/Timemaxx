@@ -11,7 +11,7 @@ import {
   type ClassTagCourseOption,
   type TaskType,
   type EditForm,
-  formatDateMMDDYYYY,
+  formatDueDateTimeDisplay,
   displayTitle,
 } from '../components/dashboard'
 import { isCurrentTerm } from '../utils/termUtils'
@@ -428,7 +428,7 @@ export default function DashboardPage() {
                             {displayTitle(task)}
                           </div>
                           <div className="text-xs text-slate-blue">
-                            Due {formatDateMMDDYYYY(task.dueDate)}
+                            Due {formatDueDateTimeDisplay(task.dueDate)}
                             {task.classTag ? ` · ${formatClassTagForDisplay(task.classTag)}` : ''} · {task.taskType} · ~{formatMinutes(task.timeEstimate ?? 0)} estimated
                           </div>
                           {task.description.trim().length > 0 && (

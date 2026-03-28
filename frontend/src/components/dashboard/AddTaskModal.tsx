@@ -1,5 +1,6 @@
 import { useMutation } from 'convex/react'
 import { api } from '../../../../backend/convex/_generated/api'
+import { DEFAULT_DUE_TIME } from '../../validators'
 import { type ClassTagCourseOption, type EditForm } from './types'
 import TaskModal from './TaskModal'
 
@@ -38,6 +39,7 @@ export default function AddTaskModal({ isOpen, onClose, onTaskCreated, classTagC
         customTaskType: '',
         description: '',
         dueDate: '',
+        dueTime: DEFAULT_DUE_TIME,
         classTag: '',
       }}
       classTagCourses={classTagCourses}

@@ -1,3 +1,4 @@
+import { DEFAULT_DUE_TIME, msToTimeInputValue } from '../../validators'
 import {
   type ClassTagCourseOption,
   type TaskType,
@@ -39,6 +40,7 @@ export default function EditModal({
           : (task?.taskType ?? ''),
         description: task?.description ?? '',
         dueDate: task ? formatDateMMDDYYYY(task.dueDate) : '',
+        dueTime: task ? msToTimeInputValue(task.dueDate) : DEFAULT_DUE_TIME,
         classTag: task?.classTag ?? '',
       }}
       classTagCourses={classTagCourses}
