@@ -11,7 +11,12 @@ import Button from '../components/ui/Button'
 
 export default function ClassesPage() {
   const courses = useQuery(api.queries.userCourses.getUserCourses)
+  const courseMetadata = useQuery(api.queries.userCourses.getCourseMetadata)
   const deleteCourse = useMutation(api.mutations.userCourses.deleteUserCourse)
+
+  const metadataMap = new Map(
+    (courseMetadata ?? []).map((m) => [m.courseId, { hasSyllabus: m.hasSyllabus, taskCount: m.taskCount }])
+  )
 
   const [activeTab, setActiveTab] = useState<'current' | 'past'>('current')
   const [showAddForm, setShowAddForm] = useState(false)
@@ -94,7 +99,7 @@ export default function ClassesPage() {
         </div>
 
         {/* Course list / empty state */}
-        {courses === undefined ? (
+        {courses === undefined || courseMetadata === undefined ? (
           <div className="flex flex-col gap-4">
             {[1, 2, 3].map((i) => (
               <div key={i} className="h-36 rounded-xl border border-border bg-white animate-pulse" />
@@ -137,6 +142,8 @@ export default function ClassesPage() {
                 term={course.term ?? ''}
                 grade={course.grade}
                 isPast={activeTab === 'past'}
+                hasSyllabus={metadataMap.get(course._id)?.hasSyllabus ?? false}
+                taskCount={metadataMap.get(course._id)?.taskCount ?? 0}
                 onRemove={() => handleRemove(course._id)}
               />
             ))}
