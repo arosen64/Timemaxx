@@ -282,4 +282,37 @@ describe("mutations/syllabi – confirmSyllabusTasks", () => {
     const task = await t.run((ctx) => ctx.db.get(taskIds[0]));
     expect(task?.userId).toEqual(userId);
   });
+
+  test("schedules time estimation for each confirmed task", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+    const syllabusId = await createTestSyllabus(t, userId);
+
+    await withAuth.mutation(api.mutations.syllabi.confirmSyllabusTasks, {
+      syllabusId,
+      tasks: [
+        {
+          title: "Task A",
+          description: "Description A",
+          dueDate: FUTURE_DATE,
+          taskType: "Essay",
+        },
+        {
+          title: "Task B",
+          description: "Description B",
+          dueDate: FUTURE_DATE,
+          taskType: "Problem Set",
+        },
+      ],
+    });
+
+    const scheduled = await t.run((ctx) =>
+      ctx.db.system.query("_scheduled_functions").collect()
+    );
+
+    expect(scheduled).toHaveLength(2);
+    expect(scheduled.every((fn) => fn.name.includes("estimateTaskTime"))).toBe(true);
+
+    await t.finishAllScheduledFunctions(vi.runAllTimers.bind(vi));
+  });
 });
