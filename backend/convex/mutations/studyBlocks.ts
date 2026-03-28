@@ -1,6 +1,63 @@
-import { mutation } from "../_generated/server";
+import { internalMutation, mutation } from "../_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { internal } from "../_generated/api";
+import type { Id } from "../_generated/dataModel";
+
+type WorkHoursRow = { day: string; available: number[]; blocked: number[] }
+type TimedEventArg = { id: string; summary: string; start: string; end: string; calendarId: string }
+
+const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+
+function isBlockConflicted(
+  block: { startTime: string; studyBlockLength: number },
+  task: { dueDate: number },
+  timedEvents: TimedEventArg[],
+  workHoursGrid: WorkHoursRow[],
+): boolean {
+  const startMs = new Date(block.startTime).getTime()
+  const endMs = startMs + block.studyBlockLength * 60 * 1000
+
+  // 1. Due date violation
+  if (startMs >= task.dueDate || endMs > task.dueDate) return true
+
+  // 2. Calendar event overlap
+  for (const event of timedEvents) {
+    const eventStart = new Date(event.start).getTime()
+    const eventEnd = new Date(event.end).getTime()
+    if (startMs < eventEnd && eventStart < endMs) return true
+  }
+
+  // 3. Unavailable slot overlap (workHoursGrid blocked slots are local-time-based)
+  const startDate = new Date(block.startTime)
+  const dayName = DAYS[startDate.getDay()]
+  const row = workHoursGrid.find((r) => r.day === dayName)
+  if (row) {
+    const startMins = startDate.getHours() * 60 + startDate.getMinutes()
+    const endMins = startMins + block.studyBlockLength
+    for (const slotIdx of row.blocked) {
+      const slotStartMins = slotIdx * 30
+      const slotEndMins = slotStartMins + 30
+      if (startMins < slotEndMins && slotStartMins < endMins) return true
+    }
+  }
+
+  return false
+}
+
+const timedEventValidator = v.object({
+  id: v.string(),
+  summary: v.string(),
+  start: v.string(),
+  end: v.string(),
+  calendarId: v.string(),
+})
+
+const workHoursRowValidator = v.object({
+  day: v.string(),
+  available: v.array(v.number()),
+  blocked: v.array(v.number()),
+})
 
 const studyBlockArgs = {
   taskId: v.id("tasks"),
@@ -99,6 +156,86 @@ export const editStudyBlockTime = mutation({
 
     await ctx.db.patch(args.studyBlockId, {
       startTime: args.startTime ?? undefined,
+    });
+  },
+});
+
+export const setConflictStatus = internalMutation({
+  args: {
+    studyBlockId: v.id("studyBlocks"),
+    isConflicted: v.boolean(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.studyBlockId, { isConflicted: args.isConflicted });
+  },
+});
+
+export const setStudyBlockTime = internalMutation({
+  args: {
+    studyBlockId: v.id("studyBlocks"),
+    startTime: v.union(v.string(), v.null()),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.studyBlockId, {
+      startTime: args.startTime ?? undefined,
+    });
+  },
+});
+
+export const detectConflicts = internalMutation({
+  args: {
+    userId: v.id("users"),
+    timedEvents: v.array(timedEventValidator),
+    workHoursGrid: v.array(workHoursRowValidator),
+  },
+  handler: async (ctx, args) => {
+    const tasks = await ctx.db
+      .query("tasks")
+      .withIndex("by_userId", (q) => q.eq("userId", args.userId as Id<"users">))
+      .collect();
+
+    for (const task of tasks) {
+      const blocks = await ctx.db
+        .query("studyBlocks")
+        .withIndex("by_taskId", (q) => q.eq("taskId", task._id))
+        .collect();
+
+      for (const block of blocks) {
+        if (!block.startTime) {
+          if (block.isConflicted) {
+            await ctx.db.patch(block._id, { isConflicted: false });
+          }
+          continue;
+        }
+
+        const conflicted = isBlockConflicted(
+          { startTime: block.startTime, studyBlockLength: block.studyBlockLength },
+          { dueDate: task.dueDate },
+          args.timedEvents,
+          args.workHoursGrid,
+        );
+
+        if ((block.isConflicted ?? false) !== conflicted) {
+          await ctx.db.patch(block._id, { isConflicted: conflicted });
+        }
+      }
+    }
+  },
+});
+
+export const runDetectConflicts = mutation({
+  args: {
+    timedEvents: v.array(timedEventValidator),
+    workHoursGrid: v.optional(v.array(workHoursRowValidator)),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Unauthenticated");
+
+    await ctx.runMutation(internal.mutations.studyBlocks.detectConflicts, {
+      userId,
+      timedEvents: args.timedEvents,
+      workHoursGrid: args.workHoursGrid ?? [],
     });
   },
 });
