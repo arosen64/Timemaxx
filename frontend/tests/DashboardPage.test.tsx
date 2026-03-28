@@ -22,7 +22,7 @@ vi.mock('../../backend/convex/_generated/api', () => ({
 }))
 
 // Sidebar is out of scope for dashboard behavioral tests
-vi.mock('../src/components/sidebar', () => ({ default: () => <div data-testid="sidebar" /> }))
+vi.mock('../src/components/Sidebar', () => ({ default: () => <div data-testid="sidebar" /> }))
 
 // AddTaskModal is tested separately; mock it here so dashboard tests stay focused
 vi.mock('../src/components/dashboard/AddTaskModal', () => ({
