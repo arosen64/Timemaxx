@@ -59,7 +59,7 @@ Closes #<issue-number>
 ## Key Rules
 
 - Always include `Closes #<number>` or `Fixes #<number>` in the PR body
-- Target the `master` branch (or parent feature branch for sub-branches)
+- Target the `dev` branch (or parent feature branch for sub-branches)
 - Request at least one teammate as reviewer
 - Use **merge commits only** — never squash or rebase
 - Delete the branch after merging
@@ -68,13 +68,13 @@ Closes #<issue-number>
 
 When multiple people are actively coding the **same feature** in parallel:
 
-1. Feature owner creates a feature branch from `master`
+1. Feature owner creates a feature branch from `dev`
 2. Each contributor creates a sub-branch off the feature branch
-3. Contributors open PRs targeting the feature branch (not master)
+3. Contributors open PRs targeting the feature branch (not dev)
 4. Feature owner reviews and merges contributor PRs
 5. Each contributor is responsible for resolving conflicts in their own PR
-6. When complete, feature owner PRs the feature branch into `master`
+6. When complete, feature owner PRs the feature branch into `dev`
 
-If only one person is implementing a feature, skip this — PR directly to `master`.
+If only one person is implementing a feature, skip this — PR directly to `dev`.
 
 See [reference.md](reference.md) for the git commands.
