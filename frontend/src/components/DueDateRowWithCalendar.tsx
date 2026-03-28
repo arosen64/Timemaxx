@@ -39,7 +39,7 @@ export default function DueDateRowWithCalendar({
 
   const textClass = isModal
     ? 'min-w-0 flex-1 border-none bg-transparent font-body text-sm text-navy outline-none placeholder:text-light-blue'
-    : 'w-28 min-w-0 border-none bg-transparent font-body text-[13px] text-navy outline-none placeholder:text-light-blue'
+    : 'w-28 min-w-0 border-none bg-transparent font-body text-sm text-navy outline-none placeholder:text-light-blue'
 
   const anchor = (
     <DueDateCalendarAnchor
