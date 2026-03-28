@@ -98,7 +98,7 @@ export default function ScheduleTab() {
   const timedEventsByDay = useMemo(() => {
     const map: Record<string, TimedEvent[]> = {}
     for (const e of calendarData?.timedEvents ?? []) {
-      ;(map[e.start.slice(0, 10)] ??= []).push(e)
+      ;(map[isoDateString(new Date(e.start))] ??= []).push(e)
     }
     return map
   }, [calendarData])
@@ -168,7 +168,7 @@ export default function ScheduleTab() {
       // Events for this day
       const dayEventSlots = new Set<number>()
       for (const e of timedEvents) {
-        if (!e.start.startsWith(dateStr)) continue
+        if (isoDateString(new Date(e.start)) !== dateStr) continue
         const startMins = minutesFromMidnight(new Date(e.start))
         const endMins = minutesFromMidnight(new Date(e.end))
         const startSlot = Math.floor(startMins / 30)
