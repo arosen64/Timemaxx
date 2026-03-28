@@ -4,6 +4,7 @@ import { api } from '../../../backend/convex/_generated/api'
 import { Id } from '../../../backend/convex/_generated/dataModel'
 import Sidebar from '../components/Sidebar'
 import { PlusIcon, PencilIcon, TrashIcon, SpinnerIcon, SparklesIcon } from '../components/icons'
+import Button from '../components/ui/Button'
 import {
   AddTaskModal,
   EditModal,
@@ -282,14 +283,14 @@ export default function DashboardPage() {
               · {taskRows.length} task{taskRows.length !== 1 ? 's' : ''} due this week
             </p>
           </div>
-          <button
-            type="button"
+          <Button
+            variant="primary"
+            icon={<PlusIcon color="#86C8BC" />}
             onClick={() => setIsAddModalOpen(true)}
-            className="flex items-center gap-2 px-5 text-sm font-semibold text-white transition rounded-lg h-11 bg-navy font-heading hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-sky-blue focus:ring-offset-2"
+            className="px-5 focus:outline-none focus:ring-2 focus:ring-sky-blue focus:ring-offset-2"
           >
-            <PlusIcon color="#86C8BC" />
             Add Task
-          </button>
+          </Button>
         </header>
 
         {/* Stats Row */}
