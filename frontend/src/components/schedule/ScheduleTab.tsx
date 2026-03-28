@@ -327,7 +327,7 @@ export default function ScheduleTab() {
           <button
             type="button"
             onClick={() => setSelectorOpen((o) => !o)}
-            className="flex items-center gap-2 rounded-lg bg-navy px-4 h-9 font-heading text-sm font-semibold text-white transition hover:opacity-90"
+            className={`flex items-center gap-2 rounded-lg px-4 h-9 font-heading text-sm font-semibold text-white transition hover:opacity-90 ${hasIndicator ? 'bg-info-bg text-navy' : 'bg-navy'}`}
             aria-label="Select calendars"
           >
             <CalendarIcon color="#86C8BC" size={14} />
