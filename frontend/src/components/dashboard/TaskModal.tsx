@@ -1,8 +1,17 @@
-import { useEffect, useId, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { CalendarIcon } from '../icons'
 import { type ClassTagCourseOption, type EditForm, CUSTOM_TASK_TYPE_OPTION, TASK_TYPE_OPTIONS } from './types'
 import Modal from '../ui/Modal'
+import Selector from '../ui/Selector'
 import { validateDueDate } from '../../validators'
+
+const EMPTY_CLASS_TAG_COURSES: ClassTagCourseOption[] = []
+
+function allowedClassTagValue(raw: string, courses: ClassTagCourseOption[]): string {
+  if (!raw.trim()) return ''
+  const allowed = new Set(courses.map((c) => `${c.courseCode}: ${c.title}`))
+  return allowed.has(raw.trim()) ? raw.trim() : ''
+}
 
 interface TaskModalProps {
   isOpen?: boolean
@@ -18,7 +27,7 @@ interface TaskModalProps {
     dueDate: string
     classTag: string
   }
-  /** Current-term classes for the course-style combobox (optional) */
+  /** Current-term classes; class tag may only be empty or one of these (optional field) */
   classTagCourses?: ClassTagCourseOption[]
   onClose: () => void
   onSubmit: (form: EditForm) => Promise<void>
@@ -31,32 +40,30 @@ export default function TaskModal({
   primaryLabel,
   primaryLoadingLabel,
   initialValues,
-  classTagCourses = [],
+  classTagCourses,
   onClose,
   onSubmit,
 }: TaskModalProps) {
-  const classTagInputId = useId()
-  const classTagRef = useRef<HTMLDivElement>(null)
+  const courses = classTagCourses ?? EMPTY_CLASS_TAG_COURSES
   const [taskName, setTaskName] = useState(initialValues.taskName)
   const [selectedType, setSelectedType] = useState(initialValues.selectedType)
   const [customTaskType, setCustomTaskType] = useState(initialValues.customTaskType)
   const [description, setDescription] = useState(initialValues.description)
   const [dueDate, setDueDate] = useState(initialValues.dueDate)
-  const [classTag, setClassTag] = useState(initialValues.classTag)
-  const [showClassSuggestions, setShowClassSuggestions] = useState(false)
+  const [classTag, setClassTag] = useState(() =>
+    allowedClassTagValue(initialValues.classTag, courses)
+  )
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const filteredClassCourses =
-    classTagCourses.length === 0
-      ? []
-      : classTag.trim().length === 0
-        ? classTagCourses.slice(0, 50)
-        : classTagCourses
-            .filter((c) =>
-              `${c.courseCode} ${c.title}`.toLowerCase().includes(classTag.toLowerCase())
-            )
-            .slice(0, 50)
+  const classTagSelectOptions = useMemo(
+    () =>
+      courses.map((c) => ({
+        label: `${c.courseCode}: ${c.title}`,
+        value: `${c.courseCode}: ${c.title}`,
+      })),
+    [courses]
+  )
 
   useEffect(() => {
     if (!isOpen) return
@@ -65,8 +72,7 @@ export default function TaskModal({
     setCustomTaskType(initialValues.customTaskType)
     setDescription(initialValues.description)
     setDueDate(initialValues.dueDate)
-    setClassTag(initialValues.classTag)
-    setShowClassSuggestions(false)
+    setClassTag(allowedClassTagValue(initialValues.classTag, courses))
     setError(null)
     setSubmitting(false)
   }, [
@@ -77,17 +83,8 @@ export default function TaskModal({
     initialValues.description,
     initialValues.dueDate,
     initialValues.classTag,
+    courses,
   ])
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (classTagRef.current && !classTagRef.current.contains(e.target as Node)) {
-        setShowClassSuggestions(false)
-      }
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [])
 
   function isValidDueDate(value: string): boolean {
     const err = validateDueDate(value)
@@ -113,7 +110,7 @@ export default function TaskModal({
         description,
         taskType: resolvedTaskType,
         dueDate: new Date(trimmedDueDate).getTime(),
-        classTag: classTag.trim(),
+        classTag: allowedClassTagValue(classTag, courses),
       })
       onClose()
     } catch (e) {
@@ -177,53 +174,33 @@ export default function TaskModal({
           )}
         </div>
 
-        {/* Class tag — same combobox pattern as CourseSelector on Classes page */}
+        {/* Class tag — native select like term/school on Classes page; only empty or a listed class */}
         <div className="flex w-full flex-col gap-1.5">
           <div>
-            <label className="font-heading text-[13px] font-semibold text-navy" htmlFor={classTagInputId}>
+            <label className="font-heading text-[13px] font-semibold text-navy">
               Class tag <span className="font-normal text-light-blue">(optional)</span>
             </label>
-            {classTagCourses.length > 0 && (
-              <p className="mt-0.5 font-body text-xs text-light-blue">Search your current classes or type your own</p>
+            {courses.length > 0 ? (
+              <p className="mt-0.5 font-body text-xs text-light-blue">Choose one of your current classes, or leave blank</p>
+            ) : (
+              <p className="mt-0.5 font-body text-xs text-light-blue">
+                Add classes for the current term on the Classes page to tag tasks
+              </p>
             )}
           </div>
-          <div ref={classTagRef} className="relative">
-            <input
-              id={classTagInputId}
-              type="text"
+          {courses.length > 0 ? (
+            <Selector
+              className="w-full"
               value={classTag}
-              onChange={(e) => {
-                setClassTag(e.target.value)
-                setShowClassSuggestions(true)
-              }}
-              onFocus={() => setShowClassSuggestions(true)}
-              placeholder={
-                classTagCourses.length > 0 ? 'Type to search courses…' : 'e.g. course code or class name'
-              }
-              className="w-full rounded-lg border border-border bg-bg-gray px-3 py-2 font-body text-sm text-navy outline-none placeholder:text-light-blue focus:border-sky-blue focus:ring-2 focus:ring-sky-blue/20"
+              onChange={setClassTag}
+              options={classTagSelectOptions}
+              placeholder="Select a class (optional)"
             />
-            {showClassSuggestions && classTagCourses.length > 0 && (
-              <ul className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-lg border border-border bg-white shadow-lg">
-                {filteredClassCourses.length > 0 ? (
-                  filteredClassCourses.map((c) => (
-                    <li
-                      key={`${c.courseCode}-${c.title}`}
-                      onMouseDown={() => {
-                        setClassTag(`${c.courseCode}: ${c.title}`)
-                        setShowClassSuggestions(false)
-                      }}
-                      className="cursor-pointer px-3 py-2 font-body text-sm hover:bg-sky-blue/10"
-                    >
-                      <span className="font-semibold text-navy">{c.courseCode}</span>
-                      <span className="ml-2 text-slate-blue">{c.title}</span>
-                    </li>
-                  ))
-                ) : (
-                  <li className="px-3 py-2 font-body text-sm text-light-blue select-none">No courses found</li>
-                )}
-              </ul>
-            )}
-          </div>
+          ) : (
+            <div className="rounded-lg border border-border bg-bg-gray px-3 py-2 font-body text-sm text-light-blue">
+              No current-term classes
+            </div>
+          )}
         </div>
 
         {/* Description */}
