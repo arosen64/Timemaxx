@@ -128,5 +128,7 @@ export default defineSchema({
       v.literal("failed"),
     ),
     createdAt: v.number(),
-  }).index("by_userId", ["userId"]),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_courseId", ["courseId"]),
 });

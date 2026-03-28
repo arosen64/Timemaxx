@@ -32,6 +32,12 @@ export const uploadSyllabus = action({
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Unauthenticated");
 
+    if (args.courseId) {
+      await ctx.runMutation(internal.mutations.syllabi.deleteSyllabiForCourse, {
+        courseId: args.courseId,
+      });
+    }
+
     const syllabusId = await ctx.runMutation(
       internal.mutations.syllabi.createSyllabus,
       { userId, fileContents: args.fileContents, courseId: args.courseId }
