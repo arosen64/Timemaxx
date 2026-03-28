@@ -2,6 +2,7 @@
 
 import { action } from "../_generated/server";
 import { v } from "convex/values";
+import { Id } from "../_generated/dataModel";
 import { internal } from "../_generated/api";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { Type } from "@google/genai";
@@ -44,7 +45,7 @@ export const uploadSyllabus = action({
       }
     }
 
-    let syllabusId: string;
+    let syllabusId: Id<"syllabi">;
     try {
       syllabusId = await ctx.runMutation(
         internal.mutations.syllabi.createSyllabus,
