@@ -23,7 +23,7 @@ async function seedTask(
 async function seedStudyBlock(
   t: ReturnType<typeof makeTestCtx>,
   taskId: string,
-  overrides: { title?: string; startTime?: number; studyBlockLength?: number; uniqueId?: string } = {}
+  overrides: { title?: string; startTime?: string; studyBlockLength?: number } = {}
 ) {
   return t.run((ctx) =>
     ctx.db.insert("studyBlocks", {
@@ -31,7 +31,6 @@ async function seedStudyBlock(
       title: overrides.title ?? "Block 1",
       startTime: overrides.startTime,
       studyBlockLength: overrides.studyBlockLength ?? 60,
-      uniqueId: overrides.uniqueId ?? "uid-1",
     })
   );
 }
@@ -49,7 +48,6 @@ describe("mutations/studyBlocks – createStudyBlock", () => {
         taskId,
         title: "Block",
         studyBlockLength: 60,
-        uniqueId: "uid-1",
       })
     ).rejects.toThrow("Unauthenticated");
   });
@@ -65,7 +63,6 @@ describe("mutations/studyBlocks – createStudyBlock", () => {
         taskId,
         title: "Block",
         studyBlockLength: 60,
-        uniqueId: "uid-1",
       })
     ).rejects.toThrow("Unauthorized");
   });
@@ -79,7 +76,6 @@ describe("mutations/studyBlocks – createStudyBlock", () => {
       taskId,
       title: "Study session",
       studyBlockLength: 90,
-      uniqueId: "uid-1",
     });
 
     const block = await t.run((ctx) => ctx.db.get(blockId));
@@ -93,13 +89,12 @@ describe("mutations/studyBlocks – createStudyBlock", () => {
     const t = makeTestCtx();
     const { userId, withAuth } = await createTestUser(t);
     const taskId = await seedTask(t, userId);
-    const start = Date.now() + 3600_000;
+    const start = new Date(Date.now() + 3600_000).toISOString();
 
     const blockId = await withAuth.mutation(api.mutations.studyBlocks.createStudyBlock, {
       taskId,
       title: "Scheduled block",
       studyBlockLength: 60,
-      uniqueId: "uid-2",
       startTime: start,
     });
 
@@ -119,7 +114,7 @@ describe("mutations/studyBlocks – createTaskBlocks", () => {
     await expect(
       t.mutation(api.mutations.studyBlocks.createTaskBlocks, {
         taskId,
-        blocks: [{ title: "B1", studyBlockLength: 60, uniqueId: "uid-1" }],
+        blocks: [{ title: "B1", studyBlockLength: 60 }],
       })
     ).rejects.toThrow("Unauthenticated");
   });
@@ -132,8 +127,8 @@ describe("mutations/studyBlocks – createTaskBlocks", () => {
     await withAuth.mutation(api.mutations.studyBlocks.createTaskBlocks, {
       taskId,
       blocks: [
-        { title: "Block A", studyBlockLength: 60, uniqueId: "uid-a" },
-        { title: "Block B", studyBlockLength: 45, uniqueId: "uid-b" },
+        { title: "Block A", studyBlockLength: 60 },
+        { title: "Block B", studyBlockLength: 45 },
       ],
     });
 
@@ -152,7 +147,7 @@ describe("mutations/studyBlocks – createTaskBlocks", () => {
 
     await withAuth.mutation(api.mutations.studyBlocks.createTaskBlocks, {
       taskId,
-      blocks: [{ title: "New block", studyBlockLength: 60, uniqueId: "uid-new" }],
+      blocks: [{ title: "New block", studyBlockLength: 60 }],
     });
 
     const blocks = await t.run((ctx) => ctx.db.query("studyBlocks").collect());
@@ -211,7 +206,7 @@ describe("mutations/studyBlocks – editStudyBlockTime", () => {
     await expect(
       t.mutation(api.mutations.studyBlocks.editStudyBlockTime, {
         studyBlockId,
-        startTime: Date.now() + 3600_000,
+        startTime: new Date(Date.now() + 3600_000).toISOString(),
       })
     ).rejects.toThrow("Unauthenticated");
   });
@@ -226,7 +221,7 @@ describe("mutations/studyBlocks – editStudyBlockTime", () => {
     await expect(
       otherAuth.mutation(api.mutations.studyBlocks.editStudyBlockTime, {
         studyBlockId,
-        startTime: Date.now() + 3600_000,
+        startTime: new Date(Date.now() + 3600_000).toISOString(),
       })
     ).rejects.toThrow("Unauthorized");
   });
@@ -236,7 +231,7 @@ describe("mutations/studyBlocks – editStudyBlockTime", () => {
     const { userId, withAuth } = await createTestUser(t);
     const taskId = await seedTask(t, userId);
     const studyBlockId = await seedStudyBlock(t, taskId);
-    const newStart = Date.now() + 7200_000;
+    const newStart = new Date(Date.now() + 7200_000).toISOString();
 
     await withAuth.mutation(api.mutations.studyBlocks.editStudyBlockTime, {
       studyBlockId,
@@ -251,7 +246,7 @@ describe("mutations/studyBlocks – editStudyBlockTime", () => {
     const t = makeTestCtx();
     const { userId, withAuth } = await createTestUser(t);
     const taskId = await seedTask(t, userId);
-    const studyBlockId = await seedStudyBlock(t, taskId, { startTime: Date.now() + 3600_000 });
+    const studyBlockId = await seedStudyBlock(t, taskId, { startTime: new Date(Date.now() + 3600_000).toISOString() });
 
     await withAuth.mutation(api.mutations.studyBlocks.editStudyBlockTime, {
       studyBlockId,

@@ -3,7 +3,7 @@ import { useMutation } from 'convex/react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../../../../backend/convex/_generated/api'
 import { Id } from '../../../../backend/convex/_generated/dataModel'
-import { TrashIcon, SpinnerIcon } from '../icons'
+import { TrashIcon, SpinnerIcon, CheckCircleIcon } from '../icons'
 import { GRADES } from '../../constants'
 import SyllabusUploadModal from './SyllabusUploadModal'
 
@@ -15,6 +15,8 @@ interface ClassCardProps {
   term: string
   grade?: string
   isPast: boolean
+  hasSyllabus: boolean
+  taskCount: number
   onRemove: () => Promise<void>
 }
 
@@ -25,6 +27,8 @@ export default function ClassCard({
   term,
   grade: initialGrade,
   isPast,
+  hasSyllabus,
+  taskCount,
   onRemove,
 }: ClassCardProps) {
   const navigate = useNavigate()
@@ -162,6 +166,20 @@ export default function ClassCard({
             {gradeError && (
               <p className="font-body text-xs text-urgent-red">{gradeError}</p>
             )}
+          </div>
+        ) : hasSyllabus ? (
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5 text-success">
+              <CheckCircleIcon size={14} />
+              <span className="font-body text-sm font-medium">{taskCount} tasks confirmed</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setUploadModalOpen(true)}
+              className="h-7 px-2.5 rounded-lg border border-border font-heading text-xs font-semibold text-slate-blue hover:opacity-80 transition"
+            >
+              Re-upload
+            </button>
           </div>
         ) : (
           <div className="flex items-center justify-between gap-4">

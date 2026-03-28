@@ -110,9 +110,8 @@ export default defineSchema({
   studyBlocks: defineTable({
     taskId: v.id("tasks"),
     title: v.string(),
-    startTime: v.optional(v.number()),
+    startTime: v.optional(v.string()),
     studyBlockLength: v.number(),
-    uniqueId: v.string(),
   }).index("by_taskId", ["taskId"]),
 
   // Syllabi table — tracks uploaded syllabus files and their processing status
