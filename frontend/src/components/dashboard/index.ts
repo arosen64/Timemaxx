@@ -3,7 +3,7 @@ export { default as AddTaskModal } from './AddTaskModal'
 export { default as EditModal } from './EditTaskModal'
 export { default as DeleteModal } from './DeleteTaskModal'
 export { default as UpcomingSchedulePanel } from './UpcomingSchedulePanel'
-export { default as EstimationErrorModal, parseEstimationError } from './EstimationErrorModal'
+export { default as EstimationErrorModal } from './EstimationErrorModal'
 export { default as StatCard } from './StatCard'
 export { default as ScheduleBlock } from './ScheduleBlock'
 export { default as TaskCard } from './TaskCard'
@@ -17,6 +17,7 @@ export {
   formatDueDateTimeDisplay,
   displayTitle,
   formatMinutes,
+  parseEstimationError,
   BAR_COLORS,
   BADGE_MAP,
 } from './types'
