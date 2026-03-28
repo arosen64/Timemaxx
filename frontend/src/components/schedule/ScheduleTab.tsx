@@ -140,7 +140,7 @@ export default function ScheduleTab() {
   const studyBlocksByDay = useMemo(() => {
     const map: Record<string, StudyBlockOnGrid[]> = {}
     for (const b of scheduledBlocks) {
-      const dateStr = b.startTime.slice(0, 10)
+      const dateStr = isoDateString(new Date(b.startTime))
       ;(map[dateStr] ??= []).push(b)
     }
     return map
@@ -201,7 +201,7 @@ export default function ScheduleTab() {
         if (conflict) continue
 
         // Must be before task due date
-        const slotStartMs = date.getTime() + slot * 30 * 60 * 1000
+        const slotStartMs = new Date(`${dateStr}T00:00:00`).getTime() + slot * 30 * 60 * 1000
         if (slotStartMs >= block.taskDueDate) continue
 
         slots.add(`${dateStr}:${slot}`)
@@ -224,12 +224,14 @@ export default function ScheduleTab() {
   }, [])
 
   const handleSlotClick = useCallback(async (dateStr: string, slot: number) => {
-    if (!assigningBlockId) return
+    const activeId = assigningBlockId ?? draggingBlockId
+    if (!activeId) return
     const slotStartMs = new Date(`${dateStr}T00:00:00`).getTime() + slot * 30 * 60 * 1000
     const isoStart = new Date(slotStartMs).toISOString()
-    await editStudyBlockTimeMutation({ studyBlockId: assigningBlockId, startTime: isoStart })
+    await editStudyBlockTimeMutation({ studyBlockId: activeId, startTime: isoStart })
     setAssigningBlockId(null)
-  }, [assigningBlockId, editStudyBlockTimeMutation])
+    setDraggingBlockId(null)
+  }, [assigningBlockId, draggingBlockId, editStudyBlockTimeMutation])
 
   const handleDrop = useCallback(async (dateStr: string, slot: number) => {
     if (!draggingBlockId) return
