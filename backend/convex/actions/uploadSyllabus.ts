@@ -33,15 +33,28 @@ export const uploadSyllabus = action({
     if (!userId) throw new Error("Unauthenticated");
 
     if (args.courseId) {
-      await ctx.runMutation(internal.mutations.syllabi.deleteSyllabiForCourse, {
-        courseId: args.courseId,
-      });
+      try {
+        await ctx.runMutation(internal.mutations.syllabi.deleteSyllabiForCourse, {
+          courseId: args.courseId,
+        });
+      } catch (err) {
+        throw new Error(
+          `Reupload aborted: could not clear existing syllabus records. ${err instanceof Error ? err.message : String(err)}`
+        );
+      }
     }
 
-    const syllabusId = await ctx.runMutation(
-      internal.mutations.syllabi.createSyllabus,
-      { userId, fileContents: args.fileContents, courseId: args.courseId }
-    );
+    let syllabusId: string;
+    try {
+      syllabusId = await ctx.runMutation(
+        internal.mutations.syllabi.createSyllabus,
+        { userId, fileContents: args.fileContents, courseId: args.courseId }
+      );
+    } catch (err) {
+      throw new Error(
+        `Reupload aborted: could not create syllabus record. ${err instanceof Error ? err.message : String(err)}`
+      );
+    }
 
     const prompt = `You are an academic task extractor. Given the syllabus text below, extract every assignment, exam, project, or deliverable that has a due date.
 

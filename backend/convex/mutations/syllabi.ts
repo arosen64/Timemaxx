@@ -39,7 +39,13 @@ export const deleteSyllabiForCourse = internalMutation({
       .query("syllabi")
       .withIndex("by_courseId", (q) => q.eq("courseId", args.courseId))
       .collect();
-    await Promise.all(existing.map((s) => ctx.db.delete(s._id)));
+    const results = await Promise.allSettled(existing.map((s) => ctx.db.delete(s._id)));
+    const failed = results.filter((r) => r.status === "rejected");
+    if (failed.length > 0) {
+      throw new Error(
+        `Failed to delete ${failed.length} of ${existing.length} existing syllabus record(s) for course ${args.courseId}`
+      );
+    }
   },
 });
 
