@@ -24,6 +24,8 @@ export default function TaskCard({
   onEdit,
   onDelete,
 }: TaskCardProps) {
+  const iconBtnCls = 'flex items-center justify-center w-8 h-8 transition rounded-lg text-slate-blue hover:bg-bg-gray hover:text-navy'
+
   return (
     <div className="group flex min-w-0 gap-3 rounded-[10px] border border-border bg-white px-[18px] py-4 overflow-hidden">
       <div className={`mt-0.5 h-10 w-1 shrink-0 rounded ${barColor}`} />
@@ -60,7 +62,7 @@ export default function TaskCard({
                 <button
                   type="button"
                   onClick={onEstimate}
-                  className="flex items-center justify-center w-8 h-8 transition rounded-lg text-slate-blue hover:bg-bg-gray hover:text-navy"
+                  className={iconBtnCls}
                   aria-label="Estimate task time"
                 >
                   <SparklesIcon color="currentColor" size={16} />
@@ -70,7 +72,7 @@ export default function TaskCard({
             <button
               type="button"
               onClick={onEdit}
-              className="flex items-center justify-center w-8 h-8 transition rounded-lg text-slate-blue hover:bg-bg-gray hover:text-navy"
+              className={iconBtnCls}
               aria-label="Edit task"
             >
               <PencilIcon />
