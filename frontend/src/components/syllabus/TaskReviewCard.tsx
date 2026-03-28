@@ -1,6 +1,15 @@
+import { useMemo, useRef } from 'react'
 import { CalendarIcon, XIcon } from '../icons'
 import TaskTypePills from './TaskTypePills'
 import { type ReviewTask } from './types'
+import {
+  msToFormDate,
+  msToDateInputValue,
+  parseDueDateInput,
+  parseIsoDatePickerValue,
+  startOfTodayMs,
+  todayDateInputMin,
+} from '../../validators'
 
 interface TaskReviewCardProps {
   task: ReviewTask
@@ -9,8 +18,44 @@ interface TaskReviewCardProps {
 }
 
 export default function TaskReviewCard({ task, onChange, onRemove }: TaskReviewCardProps) {
+  const datePickerRef = useRef<HTMLInputElement>(null)
+
+  const datePickerValue = useMemo(() => {
+    const ms = parseDueDateInput(task.dueDate)
+    return ms !== null ? msToDateInputValue(ms) : ''
+  }, [task.dueDate])
+
+  const datePickerMin = useMemo(() => {
+    const ms = parseDueDateInput(task.dueDate)
+    if (ms !== null && ms < startOfTodayMs()) return undefined
+    return todayDateInputMin()
+  }, [task.dueDate])
+
   function update(fields: Partial<Omit<ReviewTask, 'id'>>) {
     onChange({ ...task, ...fields })
+  }
+
+  function openNativeDatePicker() {
+    const el = datePickerRef.current
+    if (!el) return
+    const picker = el as HTMLInputElement & { showPicker?: () => void }
+    picker.showPicker?.() ?? el.click()
+  }
+
+  function handleDueDateBlur() {
+    const t = task.dueDate.trim()
+    if (!t) return
+    const ms = parseDueDateInput(t)
+    if (ms !== null) {
+      update({ dueDate: msToFormDate(ms) })
+    }
+  }
+
+  function handleNativeDateChange(iso: string) {
+    if (!iso) return
+    const ms = parseIsoDatePickerValue(iso)
+    if (ms === null) return
+    update({ dueDate: msToFormDate(ms) })
   }
 
   return (
@@ -39,14 +84,36 @@ export default function TaskReviewCard({ task, onChange, onRemove }: TaskReviewC
 
         {/* Bottom row: due date + type pills */}
         <div className="flex flex-wrap items-center gap-2.5">
-          <div className="flex h-8 items-center gap-1.5 rounded-md border border-border bg-bg-gray px-2.5">
-            <CalendarIcon size={14} />
+          <div className="flex h-8 min-w-0 items-center gap-1.5 rounded-md border border-border bg-bg-gray px-2.5">
+            <div className="relative inline-flex shrink-0">
+              <input
+                ref={datePickerRef}
+                type="date"
+                className="pointer-events-none absolute bottom-full left-1/2 z-10 h-px w-px min-w-px -translate-x-1/2 opacity-0"
+                tabIndex={-1}
+                aria-hidden
+                value={datePickerValue}
+                {...(datePickerMin !== undefined ? { min: datePickerMin } : {})}
+                onChange={(e) => handleNativeDateChange(e.target.value)}
+              />
+              <button
+                type="button"
+                onClick={openNativeDatePicker}
+                className="relative z-20 flex cursor-pointer items-center justify-center rounded p-0.5 text-light-blue outline-none hover:text-navy focus-visible:ring-2 focus-visible:ring-navy/30"
+                aria-label="Open calendar"
+              >
+                <CalendarIcon size={14} />
+              </button>
+            </div>
             <input
+              id={`syllabus-review-due-${task.id}`}
               type="text"
               value={task.dueDate}
               onChange={(e) => update({ dueDate: e.target.value })}
+              onBlur={handleDueDateBlur}
               placeholder="MM / DD / YYYY"
-              className="w-28 border-none bg-transparent font-body text-[13px] text-navy outline-none placeholder:text-light-blue"
+              autoComplete="off"
+              className="w-28 min-w-0 border-none bg-transparent font-body text-[13px] text-navy outline-none placeholder:text-light-blue"
             />
           </div>
           <TaskTypePills value={task.taskType} onChange={(taskType) => update({ taskType })} />
