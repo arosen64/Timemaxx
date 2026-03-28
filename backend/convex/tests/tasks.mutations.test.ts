@@ -71,8 +71,8 @@ describe("mutations/tasks – deleteTask", () => {
     const t = makeTestCtx();
     const { userId, withAuth } = await createTestUser(t);
     const taskId = await seedTask(t, userId);
-    await seedStudyBlock(t, taskId, "uid-1");
-    await seedStudyBlock(t, taskId, "uid-2");
+    await seedStudyBlock(t, taskId);
+    await seedStudyBlock(t, taskId);
 
     await withAuth.mutation(api.mutations.tasks.deleteTask, { taskId });
 
