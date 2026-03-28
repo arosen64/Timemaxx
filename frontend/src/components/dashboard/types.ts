@@ -71,3 +71,17 @@ export function displayTitle(task: Pick<TaskType, 'title' | 'description'>) {
   const d = task.description.trim()
   return d.length > 0 ? d : 'Untitled task'
 }
+
+export function formatMinutes(minutes: number) {
+  if (!Number.isFinite(minutes) || minutes <= 0) return '—'
+  if (minutes === 1) return '1 min'
+  return `${Math.round(minutes)} mins`
+}
+
+export const BAR_COLORS = ['bg-urgent-red', 'bg-sky-blue', 'bg-[#008767]']
+
+export const BADGE_MAP: Record<string, { bg: string; text: string; label: string }> = {
+  urgent: { bg: 'bg-urgent-red-light', text: 'text-urgent-red', label: 'Urgent' },
+  inprogress: { bg: 'bg-info-bg', text: 'text-info-emphasis', label: 'In Progress' },
+  default: { bg: 'bg-success-light', text: 'text-success', label: 'Not Started' },
+}

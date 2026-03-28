@@ -2,6 +2,8 @@ export { default as TaskModal } from './TaskModal'
 export { default as AddTaskModal } from './AddTaskModal'
 export { default as EditModal } from './EditTaskModal'
 export { default as DeleteModal } from './DeleteTaskModal'
+export { default as UpcomingSchedulePanel } from './UpcomingSchedulePanel'
+export { default as EstimationErrorModal, parseEstimationError } from './EstimationErrorModal'
 export type { TaskType, EditForm, BuiltInTaskType, ClassTagCourseOption } from './types'
 export {
   BUILT_IN_TASK_TYPES,
@@ -10,4 +12,7 @@ export {
   formatDateMMDDYYYY,
   formatDueDateTimeDisplay,
   displayTitle,
+  formatMinutes,
+  BAR_COLORS,
+  BADGE_MAP,
 } from './types'

@@ -3,144 +3,25 @@ import { useQuery, useMutation, useAction } from 'convex/react'
 import { api } from '../../../backend/convex/_generated/api'
 import { Id } from '../../../backend/convex/_generated/dataModel'
 import Sidebar from '../components/Sidebar'
-import { PlusIcon, PencilIcon, TrashIcon, WarningIcon, SpinnerIcon, SparklesIcon } from '../components/icons'
+import { PlusIcon, PencilIcon, TrashIcon, SpinnerIcon, SparklesIcon } from '../components/icons'
 import {
   AddTaskModal,
   EditModal,
   DeleteModal,
+  UpcomingSchedulePanel,
+  EstimationErrorModal,
+  parseEstimationError,
   type ClassTagCourseOption,
   type TaskType,
   type EditForm,
   formatDueDateTimeDisplay,
-  formatDateMMDDYYYY,
   displayTitle,
+  formatMinutes,
+  BAR_COLORS,
+  BADGE_MAP,
 } from '../components/dashboard'
 import { isCurrentTerm } from '../utils/termUtils'
 import { buildClassTag, formatClassTagForDisplay } from '../utils/classTagUtils'
-
-type UpcomingBlock = {
-  _id: string
-  title: string
-  startTime: string
-  studyBlockLength: number
-  taskTitle: string
-  taskDueDate: number
-}
-
-function UpcomingSchedulePanel() {
-  const upcomingBlocks = useQuery(api.queries.studyBlocks.getUpcomingStudyBlocks) as UpcomingBlock[] | undefined
-
-  return (
-    <aside className="flex w-[300px] shrink-0 flex-col gap-4">
-      <h2 className="text-base font-bold font-heading text-navy">Today's Schedule</h2>
-
-      {upcomingBlocks === undefined ? (
-        <div className="rounded-[10px] border border-border bg-white p-5 text-sm text-slate-blue">
-          Loading…
-        </div>
-      ) : upcomingBlocks.length === 0 ? (
-        <div className="flex flex-col gap-1.5 rounded-[10px] border border-border bg-white p-[18px]">
-          <span className="font-heading text-[13px] font-semibold text-navy">No blocks in the next 24 hours</span>
-          <span className="text-xs text-slate-blue">Head to the Schedule tab to assign study blocks.</span>
-        </div>
-      ) : (
-        upcomingBlocks.map((block, i) => {
-          const startDt = new Date(block.startTime)
-          const endDt = new Date(startDt.getTime() + block.studyBlockLength * 60 * 1000)
-          const timeRange = `${startDt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} – ${endDt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`
-          const isFirst = i === 0
-
-          return (
-            <div
-              key={block._id}
-              className={`flex flex-col gap-1.5 rounded-[10px] p-[18px] ${isFirst ? 'bg-navy' : 'border border-border bg-white'}`}
-            >
-              <span className={`text-[11px] font-semibold ${isFirst ? 'text-sky-blue' : 'text-slate-blue'}`}>
-                {timeRange}
-              </span>
-              <span className={`font-heading text-[13px] font-semibold ${isFirst ? 'text-white' : 'text-navy'}`}>
-                {block.title}
-              </span>
-              <span className={`text-xs ${isFirst ? 'text-sky-blue' : 'text-slate-blue'}`}>
-                {block.studyBlockLength} min · Due {formatDateMMDDYYYY(block.taskDueDate)}
-              </span>
-            </div>
-          )
-        })
-      )}
-
-      <div className="flex items-center gap-2 rounded-lg border border-border bg-bg-gray px-3.5 py-3">
-        <SparklesIcon color="#68ACE5" size={14} />
-        <span className="text-[11px] text-slate-blue">Powered by Google Gemini</span>
-      </div>
-    </aside>
-  )
-}
-
-function formatMinutes(minutes: number) {
-  if (!Number.isFinite(minutes) || minutes <= 0) return '—'
-  if (minutes === 1) return '1 min'
-  return `${Math.round(minutes)} mins`
-}
-
-const BAR_COLORS = ['bg-urgent-red', 'bg-sky-blue', 'bg-[#008767]']
-
-const BADGE_MAP: Record<string, { bg: string; text: string; label: string }> = {
-  urgent: { bg: 'bg-[#FFF0EC]', text: 'text-urgent-red', label: 'Urgent' },
-  inprogress: { bg: 'bg-[#EBF5FF]', text: 'text-[#0077D8]', label: 'In Progress' },
-  default: { bg: 'bg-[#E6F5F0]', text: 'text-[#008767]', label: 'Not Started' },
-}
-
-// ─── Estimation Error Helpers ─────────────────────────────────────────────────
-
-function parseEstimationError(err: unknown): string {
-  const raw = err instanceof Error ? err.message : String(err)
-  const jsonMatch = raw.match(/(\{.+\})/s)
-  if (jsonMatch) {
-    try {
-      const parsed = JSON.parse(jsonMatch[1])
-      const inner = parsed?.error
-      if (inner?.code && inner?.message) {
-        return `Error ${inner.code}: ${inner.message}`
-      }
-    } catch {
-      // not valid JSON — fall through
-    }
-  }
-  return 'Failed to estimate task time. Please try again.'
-}
-
-// ─── Estimation Error Modal ───────────────────────────────────────────────────
-
-function EstimationErrorModal({
-  message,
-  onClose,
-}: {
-  message: string
-  onClose: () => void
-}) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-navy/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-sm p-8 bg-white border shadow-xl rounded-xl border-border">
-        <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-[#FFF0EC]">
-          <WarningIcon />
-        </div>
-        <h2 className="mt-4 text-lg font-bold font-heading text-navy">Estimation Failed</h2>
-        <p className="mt-2 text-sm leading-relaxed text-slate-blue">{message}</p>
-        <div className="mt-8">
-          <button
-            type="button"
-            onClick={onClose}
-            className="w-full h-10 text-sm font-semibold text-white transition rounded-lg bg-navy font-heading hover:opacity-90"
-          >
-            Dismiss
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 
