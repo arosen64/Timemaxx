@@ -12,7 +12,7 @@ import PreferencesPage from './pages/PreferencesPage'
 import { useQuery } from "convex/react";
 import { api } from "../../backend/convex/_generated/api";
 
-const PROTECTED_ROUTES = ['/onboarding', '/dashboard', '/schedule', '/profile', '/classes', '/syllabus-review', '/preferences']
+const PUBLIC_ROUTES = ['/']
 
 export default function App() {
   const { isAuthenticated, isLoading } = useConvexAuth()
@@ -42,7 +42,7 @@ export default function App() {
       }
     }
 
-    if (!isAuthenticated && PROTECTED_ROUTES.includes(location.pathname)) {
+    if (!isAuthenticated && !PUBLIC_ROUTES.includes(location.pathname)) {
       navigate('/')
     }
     if (isAuthenticated && location.pathname === '/') {
