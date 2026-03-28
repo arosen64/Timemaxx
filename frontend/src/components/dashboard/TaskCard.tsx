@@ -96,18 +96,7 @@ export default function TaskCard({
           </div>
 
           {task.timeEstimate !== undefined && (
-            <TaskFeedbackForm
-              task={task}
-              draft={feedback.draft}
-              error={feedback.error}
-              isSubmitting={feedback.isSubmitting}
-              isEditing={feedback.isEditing}
-              onToggleRating={feedback.onToggleRating}
-              onHoursChange={feedback.onHoursChange}
-              onMinutesChange={feedback.onMinutesChange}
-              onSubmit={feedback.onSubmit}
-              onStartEdit={feedback.onStartEdit}
-            />
+            <TaskFeedbackForm task={task} {...feedback} />
           )}
         </div>
       </div>
