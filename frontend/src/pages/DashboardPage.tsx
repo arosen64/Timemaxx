@@ -5,6 +5,7 @@ import { Id } from '../../../backend/convex/_generated/dataModel'
 import Sidebar from '../components/Sidebar'
 import { PlusIcon, PencilIcon, TrashIcon, WarningIcon, SpinnerIcon, SparklesIcon } from '../components/icons'
 import { AddTaskModal, EditModal, DeleteModal, type TaskType, type EditForm, formatDateMMDDYYYY, displayTitle } from '../components/dashboard'
+import { isCurrentTerm } from '../utils/termUtils'
 
 function formatMinutes(minutes: number) {
   if (!Number.isFinite(minutes) || minutes <= 0) return '—'
@@ -88,10 +89,11 @@ export default function DashboardPage() {
     if (!userCourses?.length) return []
     const labels = new Set<string>()
     for (const c of userCourses) {
-      const t = c.title?.trim()
+      if (!isCurrentTerm(c.term ?? '')) continue
       const code = c.courseCode?.trim()
-      if (t) labels.add(t)
-      if (code) labels.add(code)
+      const title = c.title?.trim()
+      if (!code || !title) continue
+      labels.add(`${code} ${title}`)
     }
     return [...labels].sort((a, b) => a.localeCompare(b))
   }, [userCourses])
