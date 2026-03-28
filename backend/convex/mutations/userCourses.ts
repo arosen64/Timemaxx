@@ -1,6 +1,7 @@
 import { mutation } from "../_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { buildClassTag, legacyNaiveClassTag } from "../lib/classTagUtils";
 
 function termToSuffix(term: string): string {
   const parts = term.trim().split(" ");
@@ -18,8 +19,7 @@ function termToSuffix(term: string): string {
 /**
  * Adds a course to the authenticated user's course list.
  * - Upserts the course into the courses table (keyed by courseCode).
- * - Rejects if the user already has this courseCode with a grade recorded
- *   (i.e. a previously completed course cannot be re-added).
+ * - Rejects if the user already has a record with this courseCode.
  */
 export const addUserCourse = mutation({
   args: {
@@ -29,6 +29,7 @@ export const addUserCourse = mutation({
     term: v.string(),
     grade: v.optional(v.string()),
     studyGoal: v.optional(v.string()),
+    difficultyRating: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -36,17 +37,16 @@ export const addUserCourse = mutation({
 
     const courseCode = args.courseCode + termToSuffix(args.term);
 
-    // Check for existing completed record (has a grade) with same courseCode
+    // Reject if the user already has this courseCode
     const existing = await ctx.db
       .query("userCourses")
       .withIndex("by_user_course", (q) =>
         q.eq("userId", userId).eq("courseCode", courseCode)
       )
-      .collect();
+      .first();
 
-    const completedRecord = existing.find((r) => r.grade !== undefined && r.grade !== "");
-    if (completedRecord) {
-      throw new Error("COURSE_ALREADY_COMPLETED");
+    if (existing) {
+      throw new Error("COURSE_ALREADY_EXISTS");
     }
 
     // Insert the userCourse record
@@ -58,6 +58,7 @@ export const addUserCourse = mutation({
       term: args.term,
       grade: args.grade,
       studyGoal: args.studyGoal,
+      difficultyRating: args.difficultyRating,
     });
   },
 });
@@ -70,6 +71,7 @@ export const updateUserCourse = mutation({
     userCourseId: v.id("userCourses"),
     grade: v.optional(v.string()),
     studyGoal: v.optional(v.string()),
+    difficultyRating: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -82,12 +84,16 @@ export const updateUserCourse = mutation({
     const patch: Record<string, unknown> = {};
     if (args.grade !== undefined) patch.grade = args.grade;
     if (args.studyGoal !== undefined) patch.studyGoal = args.studyGoal;
+    if (args.difficultyRating !== undefined) patch.difficultyRating = args.difficultyRating;
     await ctx.db.patch(args.userCourseId, patch);
   },
 });
 
 /**
  * Deletes a userCourse record. Only the owning user may delete their own record.
+ * Also removes tasks linked to this course (and their study blocks): by `courseId`
+ * (e.g. syllabus imports) or by `classTag` matching the canonical deduped tag or the
+ * older naive `${courseCode}: ${title}` string, and clears syllabus rows for this course.
  */
 export const deleteUserCourse = mutation({
   args: { userCourseId: v.id("userCourses") },
@@ -98,6 +104,46 @@ export const deleteUserCourse = mutation({
     const record = await ctx.db.get(args.userCourseId);
     if (!record) throw new Error("Course record not found");
     if (record.userId !== userId) throw new Error("Not authorized");
+
+    // Dashboard tasks store `classTag` built with buildClassTag (deduped). Older rows used
+    // `${courseCode}: ${title}` and duplicated the catalog when title already had OfferingName.
+    const canonicalClassTag = buildClassTag(record.courseCode, record.title);
+    const legacyNaiveTag = legacyNaiveClassTag(record.courseCode, record.title);
+
+    const tasks = await ctx.db
+      .query("tasks")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .collect();
+
+    for (const task of tasks) {
+      const matchesByCourseId = task.courseId === args.userCourseId;
+      const tag = task.classTag?.trim();
+      const matchesByClassTag =
+        tag === canonicalClassTag || tag === legacyNaiveTag;
+      if (!matchesByCourseId && !matchesByClassTag) continue;
+
+      const studyBlocks = await ctx.db
+        .query("studyBlocks")
+        .withIndex("by_taskId", (q) => q.eq("taskId", task._id))
+        .collect();
+
+      for (const block of studyBlocks) {
+        await ctx.db.delete(block._id);
+      }
+
+      await ctx.db.delete(task._id);
+    }
+
+    const syllabi = await ctx.db
+      .query("syllabi")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .collect();
+
+    for (const syllabus of syllabi) {
+      if (syllabus.courseId === args.userCourseId) {
+        await ctx.db.patch(syllabus._id, { courseId: undefined });
+      }
+    }
 
     await ctx.db.delete(args.userCourseId);
   },

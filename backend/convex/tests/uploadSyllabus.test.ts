@@ -59,7 +59,7 @@ describe("actions/uploadSyllabus", () => {
   });
 
   test("throws when GEMINI_API_KEY is not set", async () => {
-    vi.unstubAllEnvs(); // clear the key set in beforeEach
+    vi.stubEnv("GEMINI_API_KEY", ""); // ensure key is absent regardless of shell environment
     const t = makeTestCtx();
     const { withAuth } = await createTestUser(t);
 
@@ -71,7 +71,7 @@ describe("actions/uploadSyllabus", () => {
   });
 
   test("marks the syllabus as failed when GEMINI_API_KEY is missing", async () => {
-    vi.unstubAllEnvs();
+    vi.stubEnv("GEMINI_API_KEY", ""); // ensure key is absent regardless of shell environment
     const t = makeTestCtx();
     const { withAuth } = await createTestUser(t);
 

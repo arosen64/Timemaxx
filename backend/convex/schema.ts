@@ -6,12 +6,13 @@ import { taskTypeValidator } from "./lib/taskValidators";
 export default defineSchema({
   ...authTables,
 
-  // Stores encrypted Google Calendar OAuth tokens per user
-  calendarTokens: defineTable({
+  // Stores encrypted Google Calendar OAuth tokens and calendar preferences per user
+  calendarConnections: defineTable({
     userId: v.id("users"),
     accessToken: v.string(),
     refreshToken: v.string(),
     expiresAt: v.number(),
+    selectedCalendarIds: v.optional(v.array(v.string())),
   }).index("by_userId", ["userId"]),
 
   // Short-lived state tokens used to identify users during the OAuth callback
@@ -60,6 +61,15 @@ export default defineSchema({
 
     productivityTraits: v.optional(v.any()),
 
+    transcriptSummary: v.optional(
+      v.array(
+        v.object({
+          label: v.string(),
+          text: v.string(),
+        })
+      )
+    ),
+
   })
     .index("email", ["email"])
     .index("phone", ["phone"]),
@@ -92,9 +102,19 @@ export default defineSchema({
     dueDate: v.number(),
     createdAt: v.number(),
     courseId: v.optional(v.id("userCourses")),
+    /** Free-text label for the course/class (optional; complements courseId) */
+    classTag: v.optional(v.string()),
   })
     .index("by_userId", ["userId"])
     .index("by_userId_createdAt", ["userId", "createdAt"]),
+
+  // StudyBlocks table — stores scheduled time chunks assigned to tasks
+  studyBlocks: defineTable({
+    taskId: v.id("tasks"),
+    title: v.string(),
+    startTime: v.optional(v.string()),
+    studyBlockLength: v.number(),
+  }).index("by_taskId", ["taskId"]),
 
   // Syllabi table — tracks uploaded syllabus files and their processing status
   syllabi: defineTable({

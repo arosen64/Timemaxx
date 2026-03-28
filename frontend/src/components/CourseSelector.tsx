@@ -6,6 +6,7 @@ import { GRADES, STUDY_GOALS } from '../constants'
 import { isPastTerm } from '../utils/termUtils'
 import Selector from './ui/Selector'
 import Button from './ui/Button'
+import DifficultyRating from './DifficultyRating'
 
 export default function CourseSelector({ onAddCourse, mode = 'all' }: CourseSelectorProps) {
   const getAvailableTerms = useAction(api.actions.jhuCourses.getAvailableTerms)
@@ -30,6 +31,7 @@ export default function CourseSelector({ onAddCourse, mode = 'all' }: CourseSele
 
   const [studyGoalInput, setStudyGoalInput] = useState('')
   const [gradeInput, setGradeInput] = useState('')
+  const [difficultyInput, setDifficultyInput] = useState(3)
   const [addError, setAddError] = useState<string | null>(null)
 
   const isCurrent = !isPastTerm(selectedTerm)
@@ -74,6 +76,7 @@ export default function CourseSelector({ onAddCourse, mode = 'all' }: CourseSele
     setSelectedCourse(null)
     setStudyGoalInput('')
     setGradeInput('')
+    setDifficultyInput(3)
     setAddError(null)
   }
 
@@ -91,10 +94,17 @@ export default function CourseSelector({ onAddCourse, mode = 'all' }: CourseSele
       .finally(() => setCoursesLoading(false))
   }
 
+  const seenCodes = new Set<string>()
+  const uniqueCourses = termCourses.filter((c) => {
+    if (seenCodes.has(c.OfferingName)) return false
+    seenCodes.add(c.OfferingName)
+    return true
+  })
+
   const filteredCourses =
     courseSearch.trim().length === 0
-      ? termCourses.slice(0, 50)
-      : termCourses
+      ? uniqueCourses.slice(0, 50)
+      : uniqueCourses
           .filter((c) =>
             `${c.OfferingName} ${c.Title}`.toLowerCase().includes(courseSearch.toLowerCase())
           )
@@ -122,6 +132,7 @@ export default function CourseSelector({ onAddCourse, mode = 'all' }: CourseSele
         term: selectedTerm,
         studyGoal: isCurrent ? studyGoalInput.trim() || undefined : undefined,
         grade: !isCurrent ? gradeInput.trim() || undefined : undefined,
+        difficultyRating: !isCurrent ? difficultyInput : undefined,
       })
       onAddCourse({
         title,
@@ -129,11 +140,12 @@ export default function CourseSelector({ onAddCourse, mode = 'all' }: CourseSele
         grade: !isCurrent ? gradeInput.trim() : undefined,
         term: selectedTerm,
         userCourseId,
+        difficultyRating: !isCurrent ? difficultyInput : undefined,
       })
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
-      if (message.includes('COURSE_ALREADY_COMPLETED')) {
-        setAddError('You have already completed this course.')
+      if (message.includes('COURSE_ALREADY_EXISTS')) {
+        setAddError('You have already added this course.')
       } else if (message.includes('Unauthenticated') || message.includes('Not authenticated')) {
         setAddError('You must be signed in to add courses.')
       } else {
@@ -148,6 +160,7 @@ export default function CourseSelector({ onAddCourse, mode = 'all' }: CourseSele
     setShowSuggestions(false)
     setStudyGoalInput('')
     setGradeInput('')
+    setDifficultyInput(3)
     setAddError(null)
   }
 
@@ -229,25 +242,33 @@ export default function CourseSelector({ onAddCourse, mode = 'all' }: CourseSele
 
       {/* Study goal or grade selector — shown once a course is selected */}
       {selectedCourse && (
-        <div className="flex gap-2">
-          <Selector
-            className="flex-1"
-            value={isCurrent ? studyGoalInput : gradeInput}
-            onChange={isCurrent ? setStudyGoalInput : setGradeInput}
-            placeholder={isCurrent ? 'Select a study goal' : 'Select your grade'}
-            options={
-              isCurrent
-                ? STUDY_GOALS.map((g) => ({ label: g, value: g }))
-                : GRADES.map((g) => ({ label: g, value: g }))
-            }
-          />
-          <Button
-            variant="primary"
-            onClick={handleAddCourse}
-            className="px-4"
-          >
-            Add
-          </Button>
+        <div className="flex flex-col gap-2">
+          <div className="flex gap-2">
+            <Selector
+              className="flex-1"
+              value={isCurrent ? studyGoalInput : gradeInput}
+              onChange={isCurrent ? setStudyGoalInput : setGradeInput}
+              placeholder={isCurrent ? 'Select a study goal' : 'Select your grade'}
+              options={
+                isCurrent
+                  ? STUDY_GOALS.map((g) => ({ label: g, value: g }))
+                  : GRADES.map((g) => ({ label: g, value: g }))
+              }
+            />
+            {isCurrent && (
+              <Button variant="primary" onClick={handleAddCourse} className="px-4">
+                Add
+              </Button>
+            )}
+          </div>
+          {!isCurrent && (
+            <div className="flex items-center gap-2">
+              <DifficultyRating value={difficultyInput} onChange={setDifficultyInput} />
+              <Button variant="primary" onClick={handleAddCourse} className="ml-auto px-4">
+                Add
+              </Button>
+            </div>
+          )}
         </div>
       )}
 

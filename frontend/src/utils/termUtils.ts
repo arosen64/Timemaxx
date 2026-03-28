@@ -30,10 +30,21 @@ export function termToOrdinal(termName: string): number | null {
   return year * 10 + SEASON_ORDER.indexOf(season)
 }
 
-export function isPastTerm(termName: string): boolean {
-  const current = getCurrentTerm(new Date())
-  const currentOrdinal = current.year * 10 + SEASON_ORDER.indexOf(current.season as typeof SEASON_ORDER[number])
+export function getCurrentTermOrdinal(date: Date): number {
+  const { season, year } = getCurrentTerm(date)
+  const idx = SEASON_ORDER.indexOf(season as (typeof SEASON_ORDER)[number])
+  return year * 10 + (idx === -1 ? 0 : idx)
+}
+
+/** True when the term string matches the calendar current term (season + year). */
+export function isCurrentTerm(termName: string, date = new Date()): boolean {
   const termOrdinal = termToOrdinal(termName)
   if (termOrdinal === null) return false
-  return termOrdinal < currentOrdinal
+  return termOrdinal === getCurrentTermOrdinal(date)
+}
+
+export function isPastTerm(termName: string): boolean {
+  const termOrdinal = termToOrdinal(termName)
+  if (termOrdinal === null) return false
+  return termOrdinal < getCurrentTermOrdinal(new Date())
 }

@@ -3,7 +3,8 @@
 import { action } from "../_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
-import { GoogleGenAI, Type } from "@google/genai";
+import { Type } from "@google/genai";
+import { callGeminiJSON } from "../lib/gemini";
 
 export interface ParsedCourse {
   courseCode: string; // e.g. "EN.601.226.FA22"
@@ -30,14 +31,8 @@ export const parseTranscript = action({
       throw new Error("TRANSCRIPT_TOO_LARGE");
     }
 
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) throw new Error("GEMINI_API_KEY is not set");
-
-    const genai = new GoogleGenAI({ apiKey });
-
-    const response = await genai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: [
+    const json = await callGeminiJSON<{ isJhuTranscript: boolean; courses: ParsedCourse[] }>(
+      [
         {
           role: "user",
           parts: [
@@ -67,7 +62,7 @@ ${args.fileText}`,
           ],
         },
       ],
-      config: {
+      {
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
@@ -90,10 +85,8 @@ ${args.fileText}`,
           },
           required: ["isJhuTranscript", "courses"],
         },
-      },
-    });
-
-    const json = JSON.parse(response.text ?? "{}");
+      }
+    );
 
     if (json.isJhuTranscript === false) {
       throw new Error("NOT_JHU_TRANSCRIPT");

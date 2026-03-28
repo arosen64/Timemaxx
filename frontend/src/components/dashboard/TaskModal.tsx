@@ -1,8 +1,29 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { CalendarIcon } from '../icons'
-import { type EditForm, CUSTOM_TASK_TYPE_OPTION, TASK_TYPE_OPTIONS } from './types'
+import { type ClassTagCourseOption, type EditForm, CUSTOM_TASK_TYPE_OPTION, TASK_TYPE_OPTIONS } from './types'
 import Modal from '../ui/Modal'
+import Selector from '../ui/Selector'
 import { validateDueDate } from '../../validators'
+import { legacyNaiveClassTag } from '../../utils/classTagUtils'
+
+const EMPTY_CLASS_TAG_COURSES: ClassTagCourseOption[] = []
+
+/** Map legacy duplicate-prefix tags to canonical `classTag` so the select value matches. */
+function migrateClassTagToCanonical(raw: string, courses: ClassTagCourseOption[]): string {
+  const t = raw.trim()
+  if (!t) return ''
+  for (const c of courses) {
+    if (t === c.classTag) return c.classTag
+    if (t === legacyNaiveClassTag(c.courseCode, c.title)) return c.classTag
+  }
+  return ''
+}
+
+function allowedClassTagValue(raw: string, courses: ClassTagCourseOption[]): string {
+  const canonical = migrateClassTagToCanonical(raw, courses)
+  const allowed = new Set(courses.map((c) => c.classTag))
+  return allowed.has(canonical) ? canonical : ''
+}
 
 interface TaskModalProps {
   isOpen?: boolean
@@ -16,7 +37,10 @@ interface TaskModalProps {
     customTaskType: string
     description: string
     dueDate: string
+    classTag: string
   }
+  /** Current-term classes; class tag may only be empty or one of these (optional field) */
+  classTagCourses?: ClassTagCourseOption[]
   onClose: () => void
   onSubmit: (form: EditForm) => Promise<void>
 }
@@ -28,16 +52,30 @@ export default function TaskModal({
   primaryLabel,
   primaryLoadingLabel,
   initialValues,
+  classTagCourses,
   onClose,
   onSubmit,
 }: TaskModalProps) {
+  const courses = classTagCourses ?? EMPTY_CLASS_TAG_COURSES
   const [taskName, setTaskName] = useState(initialValues.taskName)
   const [selectedType, setSelectedType] = useState(initialValues.selectedType)
   const [customTaskType, setCustomTaskType] = useState(initialValues.customTaskType)
   const [description, setDescription] = useState(initialValues.description)
   const [dueDate, setDueDate] = useState(initialValues.dueDate)
+  const [classTag, setClassTag] = useState(() =>
+    allowedClassTagValue(initialValues.classTag, courses)
+  )
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const classTagSelectOptions = useMemo(
+    () =>
+      courses.map((c) => ({
+        label: c.classTag,
+        value: c.classTag,
+      })),
+    [courses]
+  )
 
   useEffect(() => {
     if (!isOpen) return
@@ -46,6 +84,7 @@ export default function TaskModal({
     setCustomTaskType(initialValues.customTaskType)
     setDescription(initialValues.description)
     setDueDate(initialValues.dueDate)
+    setClassTag(allowedClassTagValue(initialValues.classTag, courses))
     setError(null)
     setSubmitting(false)
   }, [
@@ -55,6 +94,8 @@ export default function TaskModal({
     initialValues.customTaskType,
     initialValues.description,
     initialValues.dueDate,
+    initialValues.classTag,
+    courses,
   ])
 
   function isValidDueDate(value: string): boolean {
@@ -76,11 +117,15 @@ export default function TaskModal({
     setSubmitting(true)
     setError(null)
     try {
+      const resolvedClassTag = allowedClassTagValue(classTag, courses)
+      const courseId = courses.find((c) => c.classTag === resolvedClassTag)?.courseId
       await onSubmit({
         title: taskName,
         description,
         taskType: resolvedTaskType,
         dueDate: new Date(trimmedDueDate).getTime(),
+        ...(courseId !== undefined ? { courseId } : {}),
+        classTag: resolvedClassTag,
       })
       onClose()
     } catch (e) {
@@ -141,6 +186,35 @@ export default function TaskModal({
               placeholder="Enter other task type"
               className="h-11 w-full rounded-md border border-border bg-bg-gray px-3.5 font-body text-sm text-navy outline-none placeholder:text-light-blue"
             />
+          )}
+        </div>
+
+        {/* Class tag — native select like term/school on Classes page; only empty or a listed class */}
+        <div className="flex w-full flex-col gap-1.5">
+          <div>
+            <label className="font-heading text-[13px] font-semibold text-navy">
+              Class tag <span className="font-normal text-light-blue">(optional)</span>
+            </label>
+            {courses.length > 0 ? (
+              <p className="mt-0.5 font-body text-xs text-light-blue">Choose one of your current classes, or leave blank</p>
+            ) : (
+              <p className="mt-0.5 font-body text-xs text-light-blue">
+                Add classes for the current term on the Classes page to tag tasks
+              </p>
+            )}
+          </div>
+          {courses.length > 0 ? (
+            <Selector
+              className="w-full"
+              value={classTag}
+              onChange={setClassTag}
+              options={classTagSelectOptions}
+              placeholder="Select a class (optional)"
+            />
+          ) : (
+            <div className="rounded-lg border border-border bg-bg-gray px-3 py-2 font-body text-sm text-light-blue">
+              No current-term classes
+            </div>
           )}
         </div>
 

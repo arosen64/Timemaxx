@@ -3,6 +3,12 @@ import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { taskTypeValidator } from "../lib/taskValidators";
 
+function normalizeClassTag(value: string | undefined): string | undefined {
+  if (value === undefined) return undefined;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+}
+
 /**
  * Creates a new task for the authenticated user with timeEstimate left unset.
  * Time estimation is handled separately (e.g. via a Gemini action) after creation.
@@ -14,6 +20,7 @@ export const createTask = mutation({
     taskType: taskTypeValidator,
     dueDate: v.number(),
     courseId: v.optional(v.id("userCourses")),
+    classTag: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -41,6 +48,7 @@ export const createTask = mutation({
       taskType: args.taskType,
       dueDate: args.dueDate,
       courseId: args.courseId,
+      classTag: normalizeClassTag(args.classTag),
       timeEstimate: undefined, // populated asynchronously by estimateTaskTime action
       createdAt: Date.now(),
     });
@@ -58,6 +66,7 @@ export const updateTask = mutation({
     taskType: taskTypeValidator,
     dueDate: v.number(),
     courseId: v.optional(v.id("userCourses")),
+    classTag: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -72,6 +81,9 @@ export const updateTask = mutation({
       taskType: args.taskType,
       dueDate: args.dueDate,
       courseId: args.courseId,
+      ...(args.classTag !== undefined
+        ? { classTag: normalizeClassTag(args.classTag) }
+        : {}),
       timeEstimate: undefined,
     });
   },
@@ -87,6 +99,15 @@ export const deleteTask = mutation({
 
     const task = await ctx.db.get(args.taskId);
     if (!task || task.userId !== userId) throw new Error("Task not found");
+
+    const studyBlocks = await ctx.db
+      .query("studyBlocks")
+      .withIndex("by_taskId", (q) => q.eq("taskId", args.taskId))
+      .collect();
+
+    for (const block of studyBlocks) {
+      await ctx.db.delete(block._id);
+    }
 
     await ctx.db.delete(args.taskId);
   },

@@ -11,6 +11,7 @@ export type TaskType = {
   estimateFeedbackSubmittedAt?: number
   dueDate: number
   createdAt: number
+  classTag?: string
 }
 
 export const BUILT_IN_TASK_TYPES = [
@@ -26,11 +27,24 @@ export type BuiltInTaskType = (typeof BUILT_IN_TASK_TYPES)[number]
 export type SchemaTaskType = BuiltInTaskType
 export const CUSTOM_TASK_TYPE_OPTION = 'Other'
 
+/** Current-term class row for the class-tag combobox (matches Classes page course search). */
+export type ClassTagCourseOption = {
+  courseId: Id<'userCourses'>
+  courseCode: string
+  title: string
+  /** Canonical stored task tag (dedupes catalog when title already includes OfferingName). */
+  classTag: string
+}
+
 export type EditForm = {
   title: string
   description: string
   taskType: string
   dueDate: number
+  /** Set when a class tag is chosen; omit or undefined when untagged */
+  courseId?: Id<'userCourses'>
+  /** Empty string clears the tag on update; omit when not supported */
+  classTag?: string
 }
 
 export const TASK_TYPE_OPTIONS: BuiltInTaskType[] = [...BUILT_IN_TASK_TYPES]

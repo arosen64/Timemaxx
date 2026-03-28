@@ -3,8 +3,8 @@ import { useMutation } from 'convex/react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../../../../backend/convex/_generated/api'
 import { Id } from '../../../../backend/convex/_generated/dataModel'
-import { TrashIcon, SpinnerIcon } from '../icons'
-import { GRADES } from '../../constants'
+import { TrashIcon, SpinnerIcon, CheckCircleIcon } from '../icons'
+import { GRADES, REMOVE_CLASS_TASKS_WARNING } from '../../constants'
 import SyllabusUploadModal from './SyllabusUploadModal'
 
 
@@ -15,6 +15,8 @@ interface ClassCardProps {
   term: string
   grade?: string
   isPast: boolean
+  hasSyllabus: boolean
+  taskCount: number
   onRemove: () => Promise<void>
 }
 
@@ -25,6 +27,8 @@ export default function ClassCard({
   term,
   grade: initialGrade,
   isPast,
+  hasSyllabus,
+  taskCount,
   onRemove,
 }: ClassCardProps) {
   const navigate = useNavigate()
@@ -113,7 +117,7 @@ export default function ClassCard({
             </button>
           ) : (
             <div className="flex shrink-0 items-center gap-2">
-              <span className="font-body text-xs text-slate-blue whitespace-nowrap">Remove?</span>
+              <span className="font-body text-xs font-semibold text-navy whitespace-nowrap">Remove?</span>
               <button
                 type="button"
                 onClick={handleConfirmRemove}
@@ -132,6 +136,20 @@ export default function ClassCard({
             </div>
           )}
         </div>
+
+        {confirmingRemove && (
+          <div
+            role="alert"
+            className="rounded-lg border border-amber-200 bg-amber-50/80 px-3 py-2 font-body text-xs leading-relaxed text-navy"
+          >
+            {REMOVE_CLASS_TASKS_WARNING}
+            {taskCount > 0 && (
+              <span className="mt-1 block font-medium text-amber-900">
+                This class has {taskCount} linked task{taskCount === 1 ? '' : 's'} on your dashboard.
+              </span>
+            )}
+          </div>
+        )}
 
         {/* Divider */}
         <div className="h-px w-full bg-border" />
@@ -162,6 +180,20 @@ export default function ClassCard({
             {gradeError && (
               <p className="font-body text-xs text-urgent-red">{gradeError}</p>
             )}
+          </div>
+        ) : hasSyllabus ? (
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5 text-success">
+              <CheckCircleIcon size={14} />
+              <span className="font-body text-sm font-medium">{taskCount} tasks confirmed</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setUploadModalOpen(true)}
+              className="h-7 px-2.5 rounded-lg border border-border font-heading text-xs font-semibold text-slate-blue hover:opacity-80 transition"
+            >
+              Re-upload
+            </button>
           </div>
         ) : (
           <div className="flex items-center justify-between gap-4">
