@@ -302,24 +302,26 @@ export default function TaskModal({
               autoComplete="off"
               className="min-w-0 flex-1 border-none bg-transparent font-body text-sm text-navy outline-none placeholder:text-light-blue"
             />
-            <input
-              ref={datePickerRef}
-              type="date"
-              className="pointer-events-none absolute h-0 w-0 opacity-0"
-              tabIndex={-1}
-              aria-hidden
-              value={datePickerValue}
-              {...(datePickerMin !== undefined ? { min: datePickerMin } : {})}
-              onChange={(e) => handleNativeDateChange(e.target.value)}
-            />
-            <button
-              type="button"
-              onClick={openNativeDatePicker}
-              className="ml-2 shrink-0 cursor-pointer rounded p-1 text-light-blue outline-none hover:text-navy focus-visible:ring-2 focus-visible:ring-navy/30"
-              aria-label="Open calendar"
-            >
-              <CalendarIcon />
-            </button>
+            <div className="relative ml-2 inline-flex shrink-0">
+              <input
+                ref={datePickerRef}
+                type="date"
+                className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-0 h-px w-px min-w-px -translate-x-1/2 opacity-0"
+                tabIndex={-1}
+                aria-hidden
+                value={datePickerValue}
+                {...(datePickerMin !== undefined ? { min: datePickerMin } : {})}
+                onChange={(e) => handleNativeDateChange(e.target.value)}
+              />
+              <button
+                type="button"
+                onClick={openNativeDatePicker}
+                className="relative z-20 cursor-pointer rounded p-1 text-light-blue outline-none hover:text-navy focus-visible:ring-2 focus-visible:ring-navy/30"
+                aria-label="Open calendar"
+              >
+                <CalendarIcon />
+              </button>
+            </div>
           </div>
         </div>
       </div>
