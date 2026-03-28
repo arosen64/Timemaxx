@@ -111,12 +111,12 @@ export default function SyllabusReviewPage() {
     <div className="flex h-screen bg-bg-gray">
       <Sidebar />
 
-      <main className="flex min-h-0 flex-1 flex-col gap-7 overflow-y-auto p-10">
+      <main className="flex flex-col flex-1 min-h-0 p-10 overflow-y-auto gap-7">
         {/* Page header */}
         <div className="flex items-start justify-between">
           <div className="flex flex-col gap-1">
-            <h1 className="font-heading text-2xl font-bold text-navy">Review Extracted Tasks</h1>
-            <p className="max-w-xl font-body text-sm text-slate-blue">
+            <h1 className="text-2xl font-bold font-heading text-navy">Review Extracted Tasks</h1>
+            <p className="max-w-xl text-sm font-body text-slate-blue">
               {`Review tasks extracted from your ${state.course.title} syllabus. Edit or remove any task before confirming.`}
             </p>
           </div>
@@ -148,10 +148,10 @@ export default function SyllabusReviewPage() {
         </div>
 
         {/* Validation error */}
-        {error && <p className="font-body text-sm text-urgent-red">{error}</p>}
+        {error && <p className="text-sm font-body text-urgent-red">{error}</p>}
 
         {/* Action bar */}
-        <div className="mt-auto flex items-center justify-between rounded-lg border border-border bg-white px-5 py-4">
+        <div className="flex items-center justify-between px-5 py-4 mt-auto bg-white border rounded-lg border-border">
           <span className="flex items-center gap-1.5 font-body text-[13px] text-slate-blue">
             <InfoIcon />
             {`${tasks.length} ${tasks.length === 1 ? 'task' : 'tasks'} will be added to your dashboard`}
