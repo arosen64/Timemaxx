@@ -6,13 +6,12 @@ const studyBlockArgs = {
   taskId: v.id("tasks"),
   title: v.string(),
   studyBlockLength: v.number(),
-  uniqueId: v.string(),
 };
 
 export const createStudyBlock = mutation({
   args: {
     ...studyBlockArgs,
-    startTime: v.optional(v.number()),
+    startTime: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -26,7 +25,6 @@ export const createStudyBlock = mutation({
       title: args.title,
       startTime: args.startTime,
       studyBlockLength: args.studyBlockLength,
-      uniqueId: args.uniqueId,
     });
   },
 });
@@ -38,7 +36,6 @@ export const createTaskBlocks = mutation({
       v.object({
         title: v.string(),
         studyBlockLength: v.number(),
-        uniqueId: v.string(),
       })
     ),
   },
@@ -62,7 +59,6 @@ export const createTaskBlocks = mutation({
         title: block.title,
         startTime: undefined,
         studyBlockLength: block.studyBlockLength,
-        uniqueId: block.uniqueId,
       });
     }
   },
@@ -89,7 +85,7 @@ export const deleteStudyBlock = mutation({
 export const editStudyBlockTime = mutation({
   args: {
     studyBlockId: v.id("studyBlocks"),
-    startTime: v.union(v.number(), v.null()),
+    startTime: v.union(v.string(), v.null()),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);

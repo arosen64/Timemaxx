@@ -21,14 +21,12 @@ async function seedTask(
 async function seedStudyBlock(
   t: ReturnType<typeof makeTestCtx>,
   taskId: string,
-  uniqueId = "uid-1"
 ) {
   return t.run((ctx) =>
     ctx.db.insert("studyBlocks", {
       taskId: taskId as any,
       title: "Block",
       studyBlockLength: 60,
-      uniqueId,
     })
   );
 }
@@ -73,8 +71,8 @@ describe("mutations/tasks – deleteTask", () => {
     const t = makeTestCtx();
     const { userId, withAuth } = await createTestUser(t);
     const taskId = await seedTask(t, userId);
-    await seedStudyBlock(t, taskId, "uid-1");
-    await seedStudyBlock(t, taskId, "uid-2");
+    await seedStudyBlock(t, taskId);
+    await seedStudyBlock(t, taskId);
 
     await withAuth.mutation(api.mutations.tasks.deleteTask, { taskId });
 
@@ -90,13 +88,13 @@ describe("mutations/tasks – deleteTask", () => {
     const { userId, withAuth } = await createTestUser(t);
     const taskId1 = await seedTask(t, userId);
     const taskId2 = await seedTask(t, userId);
-    await seedStudyBlock(t, taskId1, "uid-1");
-    await seedStudyBlock(t, taskId2, "uid-2");
+    await seedStudyBlock(t, taskId1);
+    await seedStudyBlock(t, taskId2);
 
     await withAuth.mutation(api.mutations.tasks.deleteTask, { taskId: taskId1 });
 
     const blocks = await t.run((ctx) => ctx.db.query("studyBlocks").collect());
     expect(blocks).toHaveLength(1);
-    expect(blocks[0].uniqueId).toBe("uid-2");
+    expect(blocks[0].taskId).toBe(taskId2);
   });
 });

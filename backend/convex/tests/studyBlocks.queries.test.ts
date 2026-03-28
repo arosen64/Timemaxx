@@ -21,7 +21,7 @@ async function seedTask(
 async function seedStudyBlock(
   t: ReturnType<typeof makeTestCtx>,
   taskId: string,
-  overrides: { title?: string; startTime?: number; studyBlockLength?: number; uniqueId?: string } = {}
+  overrides: { title?: string; startTime?: string; studyBlockLength?: number } = {}
 ) {
   return t.run((ctx) =>
     ctx.db.insert("studyBlocks", {
@@ -29,7 +29,6 @@ async function seedStudyBlock(
       title: overrides.title ?? "Block 1",
       startTime: overrides.startTime,
       studyBlockLength: overrides.studyBlockLength ?? 60,
-      uniqueId: overrides.uniqueId ?? "uid-1",
     })
   );
 }
@@ -50,8 +49,8 @@ describe("queries/studyBlocks – getStudyBlocksByTask", () => {
     const t = makeTestCtx();
     const { userId } = await createTestUser(t);
     const taskId = await seedTask(t, userId);
-    await seedStudyBlock(t, taskId, { title: "Block A", uniqueId: "uid-a" });
-    await seedStudyBlock(t, taskId, { title: "Block B", uniqueId: "uid-b" });
+    await seedStudyBlock(t, taskId, { title: "Block A" });
+    await seedStudyBlock(t, taskId, { title: "Block B" });
 
     const result = await t.query(api.queries.studyBlocks.getStudyBlocksByTask, { taskId });
     expect(result).toHaveLength(2);
@@ -65,8 +64,8 @@ describe("queries/studyBlocks – getStudyBlocksByTask", () => {
     const { userId } = await createTestUser(t);
     const taskId1 = await seedTask(t, userId);
     const taskId2 = await seedTask(t, userId);
-    await seedStudyBlock(t, taskId1, { title: "Task 1 block", uniqueId: "uid-1" });
-    await seedStudyBlock(t, taskId2, { title: "Task 2 block", uniqueId: "uid-2" });
+    await seedStudyBlock(t, taskId1, { title: "Task 1 block" });
+    await seedStudyBlock(t, taskId2, { title: "Task 2 block" });
 
     const result = await t.query(api.queries.studyBlocks.getStudyBlocksByTask, { taskId: taskId1 });
     expect(result).toHaveLength(1);
