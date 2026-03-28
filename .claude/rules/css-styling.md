@@ -1,5 +1,9 @@
 # Frontend CSS Styling Conventions
 
+## Design Source of Truth: timemaxx.pen
+
+Before applying any styles, check `timemaxx.pen` for the component's design. All colors, spacing, typography, and layout must match what is defined there. If the component does not exist in `timemaxx.pen`, ask the developer to create it there before writing any code.
+
 ## TailwindCSS First
 
 Always prefer TailwindCSS utility classes over custom CSS. The project uses Tailwind via `@tailwind base/components/utilities` in `index.css`.

@@ -1,5 +1,18 @@
 # Design Modularization Rules
 
+## UI Workflow: timemaxx.pen First
+
+**Before writing any React UI component or styling:**
+
+1. Open `timemaxx.pen` and check whether the component already exists there.
+2. If it exists — implement the React component to match it exactly (tokens, layout, variants).
+3. If it does **not** exist — do not proceed with React code. Tell the developer:
+   > "This component doesn't exist in `timemaxx.pen` yet. Please create it there first, then I can generate the React component from it."
+
+This rule applies to all UI work: new components, updated styling, new page sections, and new variants of existing components.
+
+---
+
 ## .pen File Conventions
 
 ### Design Tokens
