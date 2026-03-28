@@ -117,12 +117,15 @@ export default function TaskModal({
     setSubmitting(true)
     setError(null)
     try {
+      const resolvedClassTag = allowedClassTagValue(classTag, courses)
+      const courseId = courses.find((c) => c.classTag === resolvedClassTag)?.courseId
       await onSubmit({
         title: taskName,
         description,
         taskType: resolvedTaskType,
         dueDate: new Date(trimmedDueDate).getTime(),
-        classTag: allowedClassTagValue(classTag, courses),
+        ...(courseId !== undefined ? { courseId } : {}),
+        classTag: resolvedClassTag,
       })
       onClose()
     } catch (e) {

@@ -29,6 +29,7 @@ export const CUSTOM_TASK_TYPE_OPTION = 'Other'
 
 /** Current-term class row for the class-tag combobox (matches Classes page course search). */
 export type ClassTagCourseOption = {
+  courseId: Id<'userCourses'>
   courseCode: string
   title: string
   /** Canonical stored task tag (dedupes catalog when title already includes OfferingName). */
@@ -40,6 +41,8 @@ export type EditForm = {
   description: string
   taskType: string
   dueDate: number
+  /** Set when a class tag is chosen; omit or undefined when untagged */
+  courseId?: Id<'userCourses'>
   /** Empty string clears the tag on update; omit when not supported */
   classTag?: string
 }

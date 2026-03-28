@@ -103,7 +103,12 @@ export default function DashboardPage() {
       const courseCode = c.courseCode?.trim()
       const title = c.title?.trim()
       if (!courseCode || !title) continue
-      rows.push({ courseCode, title, classTag: buildClassTag(courseCode, title) })
+      rows.push({
+        courseId: c._id,
+        courseCode,
+        title,
+        classTag: buildClassTag(courseCode, title),
+      })
     }
     return rows.sort((a, b) => a.courseCode.localeCompare(b.courseCode))
   }, [userCourses])

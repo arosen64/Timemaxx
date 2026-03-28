@@ -19,6 +19,7 @@ export default function AddTaskModal({ isOpen, onClose, onTaskCreated, classTagC
       description: form.description,
       taskType: form.taskType,
       dueDate: form.dueDate,
+      ...(form.courseId !== undefined ? { courseId: form.courseId } : {}),
       classTag: form.classTag,
     })
     onTaskCreated?.(taskId)
