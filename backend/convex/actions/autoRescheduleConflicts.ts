@@ -128,16 +128,23 @@ export const autoRescheduleConflicts = action({
         // Find the earliest valid start within this free slot
         let candidateStart = freeSlot.startMs;
 
-        // Apply gap constraints from all placed blocks
-        for (const placed of placedRanges) {
-          if (placed.endMs <= candidateStart) continue;
-          if (placed.startMs >= candidateStart + blockDurationMs) continue;
+        // Apply gap constraints from all placed blocks.
+        // Re-scan after each push so a later block in the list can't create a
+        // new overlap that was missed in the single-pass order.
+        let adjusted = true;
+        while (adjusted) {
+          adjusted = false;
+          for (const range of placedRanges) {
+            if (range.endMs <= candidateStart) continue;
+            if (range.startMs >= candidateStart + blockDurationMs) continue;
 
-          // Overlap or too-close: push candidateStart forward
-          const sameTask = placed.taskId === block.taskId;
-          const requiredGapMs = sameTask ? 60 * 60 * 1000 : 15 * 60 * 1000;
-          if (placed.endMs + requiredGapMs > candidateStart) {
-            candidateStart = Math.max(candidateStart, placed.endMs + requiredGapMs);
+            // Overlap or too-close: push candidateStart forward
+            const sameTask = range.taskId === block.taskId;
+            const requiredGapMs = sameTask ? 60 * 60 * 1000 : 15 * 60 * 1000;
+            if (range.endMs + requiredGapMs > candidateStart) {
+              candidateStart = Math.max(candidateStart, range.endMs + requiredGapMs);
+              adjusted = true;
+            }
           }
         }
 

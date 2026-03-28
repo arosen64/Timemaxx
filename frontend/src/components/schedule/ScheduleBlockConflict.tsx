@@ -24,14 +24,14 @@ export default function ScheduleBlockConflict({
   return (
     <div className="relative flex flex-col gap-1 rounded border border-urgent-red-light bg-white px-2 py-1.5 shadow-sm overflow-hidden">
       {/* Red conflict badge */}
-      <span className="absolute right-1.5 top-1.5 rounded px-1.5 py-0.5 bg-[#FFF0EC] font-heading text-[9px] font-semibold text-urgent-red leading-none">
+      <span className="absolute right-1.5 top-1.5 rounded px-1.5 py-0.5 bg-urgent-red-light font-heading text-xs font-semibold text-urgent-red leading-none">
         Conflict
       </span>
 
-      <span className="block truncate pr-12 font-heading text-[11px] font-semibold leading-tight text-navy">
+      <span className="block truncate pr-12 font-heading text-xs font-semibold leading-tight text-navy">
         {title}
       </span>
-      <span className="block font-body text-[9px] text-slate-blue">
+      <span className="block font-body text-xs text-slate-blue">
         {timeLabel} · {studyBlockLength} min
       </span>
 
@@ -39,7 +39,7 @@ export default function ScheduleBlockConflict({
         <button
           type="button"
           onClick={() => onMove(studyBlockId)}
-          className="flex-1 h-5 rounded border border-border bg-white font-heading text-[9px] font-semibold text-slate-blue transition hover:bg-bg-gray"
+          className="flex-1 h-5 rounded border border-border bg-white font-heading text-xs font-semibold text-slate-blue transition hover:bg-bg-gray"
         >
           Move
         </button>
