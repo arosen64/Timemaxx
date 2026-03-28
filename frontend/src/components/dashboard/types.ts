@@ -78,7 +78,9 @@ export function formatMinutes(minutes: number) {
   return `${Math.round(minutes)} mins`
 }
 
-export const BAR_COLORS = ['bg-urgent-red', 'bg-sky-blue', 'bg-[#008767]']
+export type FeedbackDraft = { rating?: 'up' | 'down'; hours: string; minutes: string }
+
+export const BAR_COLORS = ['bg-urgent-red', 'bg-sky-blue', 'bg-success']
 
 export const BADGE_MAP: Record<string, { bg: string; text: string; label: string }> = {
   urgent: { bg: 'bg-urgent-red-light', text: 'text-urgent-red', label: 'Urgent' },
