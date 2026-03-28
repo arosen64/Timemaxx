@@ -27,6 +27,29 @@ export const createSyllabus = internalMutation({
 });
 
 /**
+ * Internal mutation called by the uploadSyllabus action to delete all existing
+ * syllabus records for a given courseId before inserting a new one on reupload.
+ */
+export const deleteSyllabiForCourse = internalMutation({
+  args: {
+    courseId: v.id("userCourses"),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("syllabi")
+      .withIndex("by_courseId", (q) => q.eq("courseId", args.courseId))
+      .collect();
+    const results = await Promise.allSettled(existing.map((s) => ctx.db.delete(s._id)));
+    const failed = results.filter((r) => r.status === "rejected");
+    if (failed.length > 0) {
+      throw new Error(
+        `Failed to delete ${failed.length} of ${existing.length} existing syllabus record(s) for course ${args.courseId}`
+      );
+    }
+  },
+});
+
+/**
  * Internal mutation called by the uploadSyllabus action to update the
  * processing status of a syllabus row ("confirmed" on success, "failed" on error).
  */
