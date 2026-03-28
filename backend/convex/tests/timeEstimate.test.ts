@@ -146,7 +146,7 @@ describe("mutations/timeEstimate – setTimeEstimate auto-generates study blocks
     expect(blocks[0].studyBlockLength).toBe(45);
   });
 
-  test("each generated block has a unique uniqueId", async () => {
+  test("each generated block has a unique _id", async () => {
     const t = makeTestCtx();
     const { userId } = await createTestUser(t);
     const taskId = await seedTask(t, userId, { focusBlockLength: 30 });
@@ -163,7 +163,7 @@ describe("mutations/timeEstimate – setTimeEstimate auto-generates study blocks
         .collect()
     );
 
-    const ids = blocks.map((b) => b.uniqueId);
+    const ids = blocks.map((b) => b._id);
     const uniqueIds = new Set(ids);
     expect(uniqueIds.size).toBe(ids.length);
   });

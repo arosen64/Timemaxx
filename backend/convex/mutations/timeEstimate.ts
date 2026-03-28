@@ -40,7 +40,6 @@ export const setTimeEstimate = internalMutation({
         title: task.title,
         startTime: undefined,
         studyBlockLength,
-        uniqueId: crypto.randomUUID(),
       });
     }
   },
