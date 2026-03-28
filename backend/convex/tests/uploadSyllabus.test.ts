@@ -19,12 +19,17 @@ vi.mock("@google/genai", () => ({
   },
 }));
 
+/** Returns an ISO 8601 date string (YYYY-MM-DD) for N days from now. */
+function futureDateISO(daysFromNow: number): string {
+  return new Date(Date.now() + daysFromNow * 86_400_000).toISOString().slice(0, 10);
+}
+
 const SYLLABUS_TEXT = `
 CS 101 – Introduction to Computer Science
-Assignment 1: Problem Set due 2025-09-15
-Midterm Exam: due 2025-10-20
-Final Project (coding): due 2025-12-10
-Essay on algorithms: due 2025-11-05
+Assignment 1: Problem Set due ${futureDateISO(30)}
+Midterm Exam: due ${futureDateISO(60)}
+Final Project (coding): due ${futureDateISO(90)}
+Essay on algorithms: due ${futureDateISO(75)}
 `;
 
 function makeGeminiResponse(
@@ -92,13 +97,13 @@ describe("actions/uploadSyllabus", () => {
         {
           title: "Problem Set 1",
           description: "Solve exercises 1-10 from chapter 3.",
-          dueDate: "2025-09-15",
+          dueDate: futureDateISO(30),
           taskType: "Problem Set",
         },
         {
           title: "Midterm Exam",
           description: "Covers all topics from weeks 1-7.",
-          dueDate: "2025-10-20",
+          dueDate: futureDateISO(60),
           taskType: "Exam Prep",
         },
       ])
@@ -123,12 +128,13 @@ describe("actions/uploadSyllabus", () => {
   });
 
   test("converts ISO dueDate strings to millisecond timestamps", async () => {
+    const dateStr = futureDateISO(90);
     mockGenerateContent.mockResolvedValueOnce(
       makeGeminiResponse([
         {
           title: "Final Project",
           description: "Build a full-stack application.",
-          dueDate: "2025-12-10",
+          dueDate: dateStr,
           taskType: "Coding",
         },
       ])
@@ -142,7 +148,7 @@ describe("actions/uploadSyllabus", () => {
       { fileContents: SYLLABUS_TEXT }
     );
 
-    expect(extractedTasks[0].dueDate).toBe(new Date("2025-12-10").getTime());
+    expect(extractedTasks[0].dueDate).toBe(new Date(dateStr).getTime());
   });
 
   test("filters out tasks with an unrecognised taskType", async () => {
@@ -151,13 +157,13 @@ describe("actions/uploadSyllabus", () => {
         {
           title: "Valid Task",
           description: "Should be kept.",
-          dueDate: "2025-11-01",
+          dueDate: futureDateISO(45),
           taskType: "Essay",
         },
         {
           title: "Bad Task",
           description: "Should be dropped.",
-          dueDate: "2025-11-15",
+          dueDate: futureDateISO(60),
           taskType: "Unrecognized Type",
         },
       ])
@@ -173,6 +179,37 @@ describe("actions/uploadSyllabus", () => {
 
     expect(extractedTasks).toHaveLength(1);
     expect(extractedTasks[0].title).toBe("Valid Task");
+  });
+
+  test("filters out tasks with a past due date", async () => {
+    const pastDate = new Date(Date.now() - 86_400_000).toISOString().slice(0, 10);
+    mockGenerateContent.mockResolvedValueOnce(
+      makeGeminiResponse([
+        {
+          title: "Past Task",
+          description: "Should be dropped because it is overdue.",
+          dueDate: pastDate,
+          taskType: "Essay",
+        },
+        {
+          title: "Future Task",
+          description: "Should be kept.",
+          dueDate: futureDateISO(30),
+          taskType: "Essay",
+        },
+      ])
+    );
+
+    const t = makeTestCtx();
+    const { withAuth } = await createTestUser(t);
+
+    const { extractedTasks } = await withAuth.action(
+      api.actions.uploadSyllabus.uploadSyllabus,
+      { fileContents: SYLLABUS_TEXT }
+    );
+
+    expect(extractedTasks).toHaveLength(1);
+    expect(extractedTasks[0].title).toBe("Future Task");
   });
 
   test("marks syllabus as confirmed after successful extraction", async () => {

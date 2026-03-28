@@ -87,6 +87,7 @@ ${args.fileContents}`;
 
       const validTaskTypes = new Set<string>(TASK_TYPES);
 
+      const now = Date.now();
       const extractedTasks = rawTasks
         .filter((t) => validTaskTypes.has(t.taskType))
         .map((t) => ({
@@ -94,7 +95,8 @@ ${args.fileContents}`;
           description: t.description,
           dueDate: new Date(t.dueDate).getTime(),
           taskType: t.taskType as TaskType,
-        }));
+        }))
+        .filter((t) => t.dueDate > now);
 
       await ctx.runMutation(internal.mutations.syllabi.setSyllabusStatus, {
         syllabusId,
