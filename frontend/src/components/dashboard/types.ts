@@ -71,3 +71,36 @@ export function displayTitle(task: Pick<TaskType, 'title' | 'description'>) {
   const d = task.description.trim()
   return d.length > 0 ? d : 'Untitled task'
 }
+
+export function formatMinutes(minutes: number) {
+  if (!Number.isFinite(minutes) || minutes <= 0) return '—'
+  if (minutes === 1) return '1 min'
+  return `${Math.round(minutes)} mins`
+}
+
+export type FeedbackDraft = { rating?: 'up' | 'down'; hours: string; minutes: string }
+
+export function parseEstimationError(err: unknown): string {
+  const raw = err instanceof Error ? err.message : String(err)
+  const jsonMatch = raw.match(/(\{.+\})/s)
+  if (jsonMatch) {
+    try {
+      const parsed = JSON.parse(jsonMatch[1])
+      const inner = parsed?.error
+      if (inner?.code && inner?.message) {
+        return `Error ${inner.code}: ${inner.message}`
+      }
+    } catch {
+      // not valid JSON — fall through
+    }
+  }
+  return 'Failed to estimate task time. Please try again.'
+}
+
+export const BAR_COLORS = ['bg-urgent-red', 'bg-sky-blue', 'bg-success']
+
+export const BADGE_MAP: Record<string, { bg: string; text: string; label: string }> = {
+  urgent: { bg: 'bg-urgent-red-light', text: 'text-urgent-red', label: 'Urgent' },
+  inprogress: { bg: 'bg-info-bg', text: 'text-info-emphasis', label: 'In Progress' },
+  default: { bg: 'bg-success-light', text: 'text-success', label: 'Not Started' },
+}
