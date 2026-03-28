@@ -2,6 +2,7 @@ import { internalMutation, mutation } from "../_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { taskTypeValidator } from "../lib/taskValidators";
+import { buildClassTag } from "../lib/classTagUtils";
 import { internal } from "../_generated/api";
 
 /**
@@ -48,7 +49,9 @@ export const setSyllabusStatus = internalMutation({
  *
  * Called after the user reviews the output of uploadSyllabus and approves
  * the extracted task list. Each task is tagged with the courseId from the
- * source syllabus so it appears under the correct course.
+ * source syllabus so it appears under the correct course. When the syllabus has
+ * a course, `classTag` is set to the canonical tag for that course (same as
+ * dashboard task creation).
  *
  * Returns the IDs of all inserted tasks.
  */
@@ -73,6 +76,15 @@ export const confirmSyllabusTasks = mutation({
       throw new Error("Syllabus not found");
     }
 
+    let classTag: string | undefined;
+    if (syllabus.courseId) {
+      const course = await ctx.db.get(syllabus.courseId);
+      if (course && course.userId === userId) {
+        const tag = buildClassTag(course.courseCode, course.title).trim();
+        if (tag.length > 0) classTag = tag;
+      }
+    }
+
     const now = Date.now();
     const taskIds = await Promise.all(
       args.tasks.map((task) =>
@@ -83,6 +95,7 @@ export const confirmSyllabusTasks = mutation({
           dueDate: task.dueDate,
           taskType: task.taskType,
           courseId: syllabus.courseId,
+          ...(classTag !== undefined ? { classTag } : {}),
           createdAt: now,
         })
       )
