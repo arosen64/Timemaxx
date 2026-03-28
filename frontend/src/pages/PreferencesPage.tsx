@@ -125,7 +125,7 @@ export default function PreferencesPage() {
           <button
             onClick={cancelEdit}
             disabled={isSaving}
-            className="px-4 py-1.5 font-heading text-sm font-semibold text-slate-blue border border-border rounded-lg hover:bg-bg-gray transition-colors disabled:opacity-50"
+            className="px-4 py-1.5 font-heading text-sm font-semibold text-navy border border-border rounded-lg hover:bg-bg-gray transition-colors disabled:opacity-50"
           >
             Cancel
           </button>

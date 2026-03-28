@@ -3,7 +3,7 @@ import { useQuery, useAction, useMutation } from 'convex/react'
 import { api } from '../../../../backend/convex/_generated/api'
 import type { Id } from '../../../../backend/convex/_generated/dataModel'
 import type { CalendarEntry, TimedEvent, AllDayEvent } from '../../../../backend/convex/actions/fetchCalendarEvents'
-import { CalendarIcon, SpinnerIcon, WarningIcon } from '../icons'
+import { CalendarIcon, SpinnerIcon, WarningIcon, ChevronLeftIcon, ChevronRightIcon } from '../icons'
 import TimeGrid, { type StudyBlockOnGrid } from './TimeGrid'
 import CalendarSelectorPopup from './CalendarSelectorPopup'
 import { computeOverlapLayout } from './overlapLayout'
@@ -292,8 +292,10 @@ export default function ScheduleTab() {
         }
       }}
     >
-      {/* Week navigation + calendar selector button */}
-      <div className="flex items-center justify-between mb-4">
+      {/* Page header: title + week nav + calendar selector */}
+      <div className="flex items-center justify-between mb-4 rounded-xl bg-white border border-border px-6 py-4">
+        <h1 className="font-heading text-xl font-bold text-navy">Schedule</h1>
+
         <div className="flex items-center gap-2">
           <button
             type="button"
@@ -302,9 +304,9 @@ export default function ScheduleTab() {
             className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-white text-slate-blue transition hover:bg-bg-gray disabled:cursor-not-allowed disabled:opacity-40"
             aria-label="Previous week"
           >
-            ‹
+            <ChevronLeftIcon size={14} />
           </button>
-          <span className="min-w-[130px] text-center font-heading text-sm font-semibold text-navy">
+          <span className="min-w-[148px] text-center font-body text-sm font-medium text-navy">
             {days[0].toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
             {' – '}
             {days[6].toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
@@ -316,28 +318,26 @@ export default function ScheduleTab() {
             className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-white text-slate-blue transition hover:bg-bg-gray disabled:cursor-not-allowed disabled:opacity-40"
             aria-label="Next week"
           >
-            ›
+            <ChevronRightIcon size={14} />
           </button>
           {isFetchingEvents && <SpinnerIcon color="#4E6A8C" size={14} />}
         </div>
 
-        {calendarConnected && (
+        {calendarConnected ? (
           <button
             type="button"
             onClick={() => setSelectorOpen((o) => !o)}
-            className={`relative flex items-center gap-2 rounded-lg border px-3 h-8 font-heading text-sm font-semibold transition ${
-              hasIndicator
-                ? 'border-sky-blue bg-info-bg text-info-emphasis'
-                : 'border-border bg-white text-slate-blue hover:bg-bg-gray'
-            }`}
+            className="flex items-center gap-2 rounded-lg bg-navy px-4 h-9 font-heading text-sm font-semibold text-white transition hover:opacity-90"
             aria-label="Select calendars"
           >
-            <CalendarIcon color="currentColor" size={14} />
+            <CalendarIcon color="#86C8BC" size={14} />
             Calendars
             {hasIndicator && (
               <span className="flex h-2 w-2 rounded-full bg-sky-blue" aria-hidden="true" />
             )}
           </button>
+        ) : (
+          <div className="w-[110px]" />
         )}
       </div>
 

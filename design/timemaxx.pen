@@ -763,7 +763,7 @@
             },
             "CsmwL": {
               "width": "fill_container",
-              "y": 144
+              "y": 96
             },
             "CsmwL/b9JOw": {
               "width": "fill_container"
@@ -774,7 +774,7 @@
             "78Cxh": {
               "width": "fill_container",
               "x": 0,
-              "y": 96
+              "y": 144
             },
             "78Cxh/j0EVc": {
               "x": 14,
@@ -1348,7 +1348,7 @@
             },
             "CsmwL": {
               "width": "fill_container",
-              "y": 144
+              "y": 96
             },
             "CsmwL/b9JOw": {
               "width": "fill_container"
@@ -1359,7 +1359,7 @@
             "78Cxh": {
               "width": "fill_container",
               "x": 0,
-              "y": 96
+              "y": 144
             },
             "78Cxh/j0EVc": {
               "x": 14,
@@ -2325,7 +2325,7 @@
             },
             "CsmwL": {
               "width": "fill_container",
-              "y": 144
+              "y": 96
             },
             "CsmwL/b9JOw": {
               "width": "fill_container"
@@ -2340,7 +2340,7 @@
               "name": "navProfile",
               "width": "fill_container",
               "x": 0,
-              "y": 96,
+              "y": 144,
               "descendants": {
                 "r853k": {
                   "iconFontName": "user",
@@ -3838,7 +3838,7 @@
             },
             "CsmwL": {
               "width": "fill_container",
-              "y": 144
+              "y": 96
             },
             "CsmwL/b9JOw": {
               "width": "fill_container"
@@ -3849,7 +3849,7 @@
             "78Cxh": {
               "width": "fill_container",
               "x": 0,
-              "y": 96
+              "y": 144
             },
             "78Cxh/j0EVc": {
               "x": 14,
@@ -4947,7 +4947,7 @@
                   "name": "navSched",
                   "width": "fill_container",
                   "x": 0,
-                  "y": 144,
+                  "y": 96,
                   "descendants": {
                     "LcMND": {
                       "iconFontName": "calendar"
@@ -4970,7 +4970,7 @@
                   "name": "navProfile",
                   "width": "fill_container",
                   "x": 0,
-                  "y": 96,
+                  "y": 144,
                   "descendants": {
                     "j0EVc": {
                       "iconFontName": "user",
@@ -8501,7 +8501,7 @@
             },
             "CsmwL": {
               "width": "fill_container",
-              "y": 144
+              "y": 96
             },
             "CsmwL/b9JOw": {
               "width": "fill_container"
@@ -8510,7 +8510,7 @@
               "x": 190
             },
             "78Cxh": {
-              "y": 96
+              "y": 144
             },
             "jzFAO": {
               "y": 832
@@ -9801,6 +9801,269 @@
           "fill": "$--destructive",
           "width": 8,
           "height": 8
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "FVjZI",
+      "x": 8500,
+      "y": 1070,
+      "name": "PrefsSection",
+      "reusable": true,
+      "width": 860,
+      "height": 72,
+      "padding": [
+        0,
+        24
+      ],
+      "justifyContent": "space_between",
+      "alignItems": "center",
+      "children": [
+        {
+          "type": "frame",
+          "id": "mcpfd",
+          "name": "meta",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 3,
+          "children": [
+            {
+              "type": "text",
+              "id": "chT9e",
+              "name": "title",
+              "fill": "$--primary",
+              "content": "Section Title",
+              "fontFamily": "Space Grotesk",
+              "fontSize": 16,
+              "fontWeight": "700"
+            },
+            {
+              "type": "text",
+              "id": "StcBm",
+              "name": "description",
+              "fill": "$--muted-foreground",
+              "content": "Section description text",
+              "fontFamily": "Inter",
+              "fontSize": 12,
+              "fontWeight": "normal"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "T7f9R",
+          "name": "right",
+          "gap": 12,
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "icon_font",
+              "id": "hna6P",
+              "name": "chevron",
+              "width": 20,
+              "height": 20,
+              "iconFontName": "chevron-down",
+              "iconFontFamily": "lucide",
+              "fill": "$--primary"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "aNMUG",
+      "x": 0,
+      "y": 6060,
+      "name": "Preferences",
+      "width": 1440,
+      "height": 900,
+      "fill": "$--background",
+      "children": [
+        {
+          "id": "BxgPd",
+          "type": "ref",
+          "ref": "GeaRV",
+          "name": "sidebarRef",
+          "height": "fill_container",
+          "x": 0,
+          "y": 0,
+          "descendants": {
+            "jzFAO": {
+              "y": 832
+            }
+          }
+        },
+        {
+          "type": "frame",
+          "id": "qS7ue",
+          "name": "main",
+          "width": "fill_container",
+          "height": "fill_container",
+          "fill": "$--background",
+          "layout": "vertical",
+          "gap": 24,
+          "padding": 40,
+          "children": [
+            {
+              "type": "frame",
+              "id": "ycnRH",
+              "name": "pageHeader",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 4,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "kx6zz",
+                  "name": "title",
+                  "fill": "$--primary",
+                  "content": "Preferences",
+                  "fontFamily": "Space Grotesk",
+                  "fontSize": 28,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "text",
+                  "id": "EMFXY",
+                  "name": "subtitle",
+                  "fill": "$--muted-foreground",
+                  "content": "Manage your study preferences and availability",
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "4G7Hw",
+              "name": "sections",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 16,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "P7Ayh",
+                  "name": "aboutYou",
+                  "width": "fill_container",
+                  "fill": "$--card",
+                  "cornerRadius": "$--radius-m",
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "$--border"
+                  },
+                  "layout": "vertical",
+                  "children": [
+                    {
+                      "id": "9uuie",
+                      "type": "ref",
+                      "ref": "FVjZI",
+                      "name": "header",
+                      "width": "fill_container",
+                      "x": 0,
+                      "y": 0,
+                      "descendants": {
+                        "mcpfd": {
+                          "width": "fill_container"
+                        },
+                        "chT9e": {
+                          "content": "About You"
+                        },
+                        "StcBm": {
+                          "content": "Your academic background and courses"
+                        },
+                        "T7f9R": {
+                          "x": 1056
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "dqWUd",
+                  "name": "workHours",
+                  "width": "fill_container",
+                  "fill": "$--card",
+                  "cornerRadius": "$--radius-m",
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "$--border"
+                  },
+                  "layout": "vertical",
+                  "children": [
+                    {
+                      "id": "tTAjQ",
+                      "type": "ref",
+                      "ref": "FVjZI",
+                      "name": "header",
+                      "width": "fill_container",
+                      "x": 0,
+                      "y": 0,
+                      "descendants": {
+                        "mcpfd": {
+                          "width": "fill_container"
+                        },
+                        "chT9e": {
+                          "content": "Work Hours"
+                        },
+                        "StcBm": {
+                          "content": "When you're available to study each week"
+                        },
+                        "T7f9R": {
+                          "x": 1056
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "abB1P",
+                  "name": "productivity",
+                  "width": "fill_container",
+                  "fill": "$--card",
+                  "cornerRadius": "$--radius-m",
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "$--border"
+                  },
+                  "layout": "vertical",
+                  "children": [
+                    {
+                      "id": "TOlSJ",
+                      "type": "ref",
+                      "ref": "FVjZI",
+                      "name": "header",
+                      "width": "fill_container",
+                      "x": 0,
+                      "y": 0,
+                      "descendants": {
+                        "mcpfd": {
+                          "width": "fill_container"
+                        },
+                        "chT9e": {
+                          "content": "Productivity Preferences"
+                        },
+                        "StcBm": {
+                          "content": "How you like to structure your study sessions"
+                        },
+                        "T7f9R": {
+                          "x": 1056
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
         }
       ]
     }
