@@ -1,9 +1,17 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { CalendarIcon } from '../icons'
 import { type ClassTagCourseOption, type EditForm, CUSTOM_TASK_TYPE_OPTION, TASK_TYPE_OPTIONS } from './types'
 import Modal from '../ui/Modal'
 import Selector from '../ui/Selector'
-import { validateDueDate } from '../../validators'
+import {
+  msToFormDate,
+  msToDateInputValue,
+  parseDueDateInput,
+  parseIsoDatePickerValue,
+  startOfTodayMs,
+  todayDateInputMin,
+  validateDueDate,
+} from '../../validators'
 import { legacyNaiveClassTag } from '../../utils/classTagUtils'
 
 const EMPTY_CLASS_TAG_COURSES: ClassTagCourseOption[] = []
@@ -67,6 +75,19 @@ export default function TaskModal({
   )
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const datePickerRef = useRef<HTMLInputElement>(null)
+
+  const datePickerValue = useMemo(() => {
+    const ms = parseDueDateInput(dueDate)
+    return ms !== null ? msToDateInputValue(ms) : ''
+  }, [dueDate])
+
+  /** Omit `min` when the shown date is already in the past so the controlled picker stays valid. */
+  const datePickerMin = useMemo(() => {
+    const ms = parseDueDateInput(dueDate)
+    if (ms !== null && ms < startOfTodayMs()) return undefined
+    return todayDateInputMin()
+  }, [dueDate])
 
   const classTagSelectOptions = useMemo(
     () =>
@@ -100,8 +121,42 @@ export default function TaskModal({
 
   function isValidDueDate(value: string): boolean {
     const err = validateDueDate(value)
-    if (err) { setError(err); return false }
+    if (err) {
+      setError(err)
+      return false
+    }
     return true
+  }
+
+  function openNativeDatePicker() {
+    const el = datePickerRef.current
+    if (!el) return
+    const picker = el as HTMLInputElement & { showPicker?: () => void }
+    picker.showPicker?.() ?? el.click()
+  }
+
+  function handleDueDateBlur() {
+    const t = dueDate.trim()
+    if (!t) return
+    const ms = parseDueDateInput(t)
+    if (ms !== null) {
+      const normalized = msToFormDate(ms)
+      setDueDate(normalized)
+      const err = validateDueDate(normalized)
+      setError(err)
+    } else {
+      isValidDueDate(t)
+    }
+  }
+
+  function handleNativeDateChange(iso: string) {
+    if (!iso) return
+    const ms = parseIsoDatePickerValue(iso)
+    if (ms === null) return
+    const display = msToFormDate(ms)
+    setDueDate(display)
+    const err = validateDueDate(display)
+    setError(err)
   }
 
   async function handleSubmit() {
@@ -119,11 +174,12 @@ export default function TaskModal({
     try {
       const resolvedClassTag = allowedClassTagValue(classTag, courses)
       const courseId = courses.find((c) => c.classTag === resolvedClassTag)?.courseId
+      const dueMs = parseDueDateInput(trimmedDueDate)!
       await onSubmit({
         title: taskName,
         description,
         taskType: resolvedTaskType,
-        dueDate: new Date(trimmedDueDate).getTime(),
+        dueDate: dueMs,
         ...(courseId !== undefined ? { courseId } : {}),
         classTag: resolvedClassTag,
       })
@@ -229,20 +285,41 @@ export default function TaskModal({
           />
         </div>
 
-        {/* Due date */}
+        {/* Due date — text + native calendar via icon */}
         <div className="flex w-full flex-col gap-1.5">
-          <label className="font-heading text-[13px] font-semibold text-navy">Due date</label>
-          <div className="flex h-11 items-center justify-between rounded-md border border-border bg-bg-gray px-3.5">
+          <label className="font-heading text-[13px] font-semibold text-navy" htmlFor="task-due-date">
+            Due date
+          </label>
+          <div className="relative flex h-11 items-center justify-between rounded-md border border-border bg-bg-gray px-3.5">
             <input
+              id="task-due-date"
               type="text"
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}
-              onBlur={() => { if (dueDate) isValidDueDate(dueDate) }}
+              onBlur={handleDueDateBlur}
               onFocus={() => setError(null)}
-              placeholder="MM / DD / YYYY"
-              className="flex-1 border-none bg-transparent font-body text-sm text-navy outline-none placeholder:text-light-blue"
+              placeholder="MM/DD/YYYY"
+              autoComplete="off"
+              className="min-w-0 flex-1 border-none bg-transparent font-body text-sm text-navy outline-none placeholder:text-light-blue"
             />
-            <CalendarIcon />
+            <input
+              ref={datePickerRef}
+              type="date"
+              className="pointer-events-none absolute h-0 w-0 opacity-0"
+              tabIndex={-1}
+              aria-hidden
+              value={datePickerValue}
+              {...(datePickerMin !== undefined ? { min: datePickerMin } : {})}
+              onChange={(e) => handleNativeDateChange(e.target.value)}
+            />
+            <button
+              type="button"
+              onClick={openNativeDatePicker}
+              className="ml-2 shrink-0 cursor-pointer rounded p-1 text-light-blue outline-none hover:text-navy focus-visible:ring-2 focus-visible:ring-navy/30"
+              aria-label="Open calendar"
+            >
+              <CalendarIcon />
+            </button>
           </div>
         </div>
       </div>
