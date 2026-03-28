@@ -6,7 +6,10 @@ import PreferencesPage from '../src/pages/PreferencesPage'
 vi.mock('../../backend/convex/_generated/api', () => ({
   api: {
     queries: { users: { getCurrUser: 'getCurrUser' } },
-    mutations: { users: { updateUserSettings: 'updateUserSettings' } },
+    mutations: {
+      users: { updateUserSettings: 'updateUserSettings' },
+      studyBlocks: { runDetectConflicts: 'runDetectConflicts' },
+    },
   },
 }))
 

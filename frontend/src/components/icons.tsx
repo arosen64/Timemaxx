@@ -100,6 +100,22 @@ export function ChevronDownIcon({ color = 'currentColor', size = 16 }: { color?:
   )
 }
 
+export function ChevronLeftIcon({ color = 'currentColor', size = 16 }: { color?: string; size?: number }) {
+  return (
+    <IconBase color={color} size={size}>
+      <polyline points="15 18 9 12 15 6" />
+    </IconBase>
+  )
+}
+
+export function ChevronRightIcon({ color = 'currentColor', size = 16 }: { color?: string; size?: number }) {
+  return (
+    <IconBase color={color} size={size}>
+      <polyline points="9 18 15 12 9 6" />
+    </IconBase>
+  )
+}
+
 export function TrashIcon({ color = 'currentColor', size = 16 }: { color?: string; size?: number }) {
   return (
     <IconBase color={color} size={size}>

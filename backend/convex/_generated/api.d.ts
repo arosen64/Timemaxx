@@ -8,9 +8,11 @@
  * @module
  */
 
+import type * as actions_autoRescheduleConflicts from "../actions/autoRescheduleConflicts.js";
 import type * as actions_estimateTaskTime from "../actions/estimateTaskTime.js";
 import type * as actions_fetchCalendarEvents from "../actions/fetchCalendarEvents.js";
 import type * as actions_generateAcademicProfile from "../actions/generateAcademicProfile.js";
+import type * as actions_getCalendarAvailability from "../actions/getCalendarAvailability.js";
 import type * as actions_initiateGoogleCalendarOAuth from "../actions/initiateGoogleCalendarOAuth.js";
 import type * as actions_jhuCourses from "../actions/jhuCourses.js";
 import type * as actions_parseTranscript from "../actions/parseTranscript.js";
@@ -44,9 +46,11 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  "actions/autoRescheduleConflicts": typeof actions_autoRescheduleConflicts;
   "actions/estimateTaskTime": typeof actions_estimateTaskTime;
   "actions/fetchCalendarEvents": typeof actions_fetchCalendarEvents;
   "actions/generateAcademicProfile": typeof actions_generateAcademicProfile;
+  "actions/getCalendarAvailability": typeof actions_getCalendarAvailability;
   "actions/initiateGoogleCalendarOAuth": typeof actions_initiateGoogleCalendarOAuth;
   "actions/jhuCourses": typeof actions_jhuCourses;
   "actions/parseTranscript": typeof actions_parseTranscript;

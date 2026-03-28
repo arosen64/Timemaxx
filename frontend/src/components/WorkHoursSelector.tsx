@@ -153,7 +153,7 @@ export default function WorkHoursSelector({ data, onChange, readOnly = false }: 
                 onClick={() => setPaintMode('available')}
                 className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 font-body text-sm font-medium transition-colors ${
                   paintMode === 'available'
-                    ? 'border-teal bg-success-tint text-navy'
+                    ? 'border-teal bg-teal/10 text-navy'
                     : 'border-border text-slate-blue hover:border-teal'
                 }`}
               >

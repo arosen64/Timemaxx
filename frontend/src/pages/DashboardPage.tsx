@@ -12,10 +12,70 @@ import {
   type TaskType,
   type EditForm,
   formatDueDateTimeDisplay,
+  formatDateMMDDYYYY,
   displayTitle,
 } from '../components/dashboard'
 import { isCurrentTerm } from '../utils/termUtils'
 import { buildClassTag, formatClassTagForDisplay } from '../utils/classTagUtils'
+
+type UpcomingBlock = {
+  _id: string
+  title: string
+  startTime: string
+  studyBlockLength: number
+  taskTitle: string
+  taskDueDate: number
+}
+
+function UpcomingSchedulePanel() {
+  const upcomingBlocks = useQuery(api.queries.studyBlocks.getUpcomingStudyBlocks) as UpcomingBlock[] | undefined
+
+  return (
+    <aside className="flex w-[300px] shrink-0 flex-col gap-4">
+      <h2 className="text-base font-bold font-heading text-navy">Today's Schedule</h2>
+
+      {upcomingBlocks === undefined ? (
+        <div className="rounded-[10px] border border-border bg-white p-5 text-sm text-slate-blue">
+          Loading…
+        </div>
+      ) : upcomingBlocks.length === 0 ? (
+        <div className="flex flex-col gap-1.5 rounded-[10px] border border-border bg-white p-[18px]">
+          <span className="font-heading text-[13px] font-semibold text-navy">No blocks in the next 24 hours</span>
+          <span className="text-xs text-slate-blue">Head to the Schedule tab to assign study blocks.</span>
+        </div>
+      ) : (
+        upcomingBlocks.map((block, i) => {
+          const startDt = new Date(block.startTime)
+          const endDt = new Date(startDt.getTime() + block.studyBlockLength * 60 * 1000)
+          const timeRange = `${startDt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} – ${endDt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`
+          const isFirst = i === 0
+
+          return (
+            <div
+              key={block._id}
+              className={`flex flex-col gap-1.5 rounded-[10px] p-[18px] ${isFirst ? 'bg-navy' : 'border border-border bg-white'}`}
+            >
+              <span className={`text-[11px] font-semibold ${isFirst ? 'text-sky-blue' : 'text-slate-blue'}`}>
+                {timeRange}
+              </span>
+              <span className={`font-heading text-[13px] font-semibold ${isFirst ? 'text-white' : 'text-navy'}`}>
+                {block.title}
+              </span>
+              <span className={`text-xs ${isFirst ? 'text-sky-blue' : 'text-slate-blue'}`}>
+                {block.studyBlockLength} min · Due {formatDateMMDDYYYY(block.taskDueDate)}
+              </span>
+            </div>
+          )
+        })
+      )}
+
+      <div className="flex items-center gap-2 rounded-lg border border-border bg-bg-gray px-3.5 py-3">
+        <SparklesIcon color="#68ACE5" size={14} />
+        <span className="text-[11px] text-slate-blue">Powered by Google Gemini</span>
+      </div>
+    </aside>
+  )
+}
 
 function formatMinutes(minutes: number) {
   if (!Number.isFinite(minutes) || minutes <= 0) return '—'
@@ -588,31 +648,7 @@ export default function DashboardPage() {
           </section>
 
           {/* Schedule Column */}
-          <aside className="flex w-[300px] shrink-0 flex-col gap-4">
-            <h2 className="text-base font-bold font-heading text-navy">Today's Schedule</h2>
-
-            <div className="flex flex-col gap-1.5 rounded-[10px] bg-navy p-[18px]">
-              <span className="text-[11px] font-semibold text-sky-blue">9:00 AM – 10:30 AM</span>
-              <span className="font-heading text-[13px] font-semibold text-white">Calculus Problem Set 5</span>
-              <span className="text-xs text-sky-blue">1.5 hrs · Focus block</span>
-            </div>
-
-            {[
-              { time: '2:00 PM – 3:00 PM',  task: 'History Essay',        dur: '1 hr · Focus block' },
-              { time: '6:00 PM – 7:00 PM',  task: 'Chemistry Lab Report', dur: '1 hr · Focus block' },
-            ].map(({ time, task, dur }) => (
-              <div key={time} className="flex flex-col gap-1.5 rounded-[10px] border border-border bg-white p-[18px]">
-                <span className="text-[11px] font-semibold text-slate-blue">{time}</span>
-                <span className="font-heading text-[13px] font-semibold text-navy">{task}</span>
-                <span className="text-xs text-slate-blue">{dur}</span>
-              </div>
-            ))}
-
-            <div className="flex items-center gap-2 rounded-lg border border-border bg-bg-gray px-3.5 py-3">
-              <SparklesIcon color="#68ACE5" size={14} />
-              <span className="text-[11px] text-slate-blue">Powered by Google Gemini</span>
-            </div>
-          </aside>
+          <UpcomingSchedulePanel />
         </div>
       </main>
     </div>
