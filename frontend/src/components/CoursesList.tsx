@@ -6,7 +6,7 @@ import { Course } from '../types'
 import DifficultyRating from './DifficultyRating'
 import Button from './ui/Button'
 import Selector from './ui/Selector'
-import { GRADES, STUDY_GOALS } from '../constants'
+import { GRADES, STUDY_GOALS, REMOVE_CLASS_TASKS_WARNING } from '../constants'
 
 const PAGE_SIZE = 4
 
@@ -24,6 +24,10 @@ export default function CoursesList({ courses, onCoursesChange }: CoursesListPro
   const handleRemove = async (index: number) => {
     const course = courses[index]
     if (course.userCourseId) {
+      const ok = window.confirm(
+        `${REMOVE_CLASS_TASKS_WARNING}\n\nRemove "${course.title}" from your courses?`
+      )
+      if (!ok) return
       await deleteUserCourse({ userCourseId: course.userCourseId as Id<'userCourses'> })
     }
     const next = courses.filter((_, j) => j !== index)

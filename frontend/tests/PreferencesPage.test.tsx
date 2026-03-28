@@ -34,6 +34,12 @@ vi.mock('../src/components/PreferencesForm', () => ({
   ),
 }))
 
+vi.mock('../src/components/AcademicProfileSummary', () => ({
+  default: ({ profile }: { profile: { major: string } }) => (
+    <div data-testid="academic-profile-summary" data-major={profile.major} />
+  ),
+}))
+
 vi.mock('convex/react', () => ({
   useQuery: vi.fn(),
   useMutation: vi.fn(),
@@ -66,6 +72,25 @@ function setup(user = MOCK_USER) {
 describe('PreferencesPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+  })
+
+  // ── Academic Profile Summary ───────────────────────────────────────────────
+
+  it('renders academic profile summary without expanding any section', () => {
+    setup()
+    expect(screen.getByTestId('academic-profile-summary')).toBeInTheDocument()
+  })
+
+  it('passes user profile data to AcademicProfileSummary', () => {
+    setup()
+    expect(screen.getByTestId('academic-profile-summary')).toHaveAttribute('data-major', 'Computer Science')
+  })
+
+  it('academic profile summary is visible even while a section is open', async () => {
+    const user = userEvent.setup()
+    setup()
+    await user.click(screen.getByText('About You'))
+    expect(screen.getByTestId('academic-profile-summary')).toBeInTheDocument()
   })
 
   // ── Rendering ──────────────────────────────────────────────────────────────

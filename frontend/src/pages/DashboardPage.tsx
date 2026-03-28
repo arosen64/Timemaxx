@@ -4,7 +4,18 @@ import { api } from '../../../backend/convex/_generated/api'
 import { Id } from '../../../backend/convex/_generated/dataModel'
 import Sidebar from '../components/Sidebar'
 import { PlusIcon, PencilIcon, TrashIcon, WarningIcon, SpinnerIcon, SparklesIcon } from '../components/icons'
-import { AddTaskModal, EditModal, DeleteModal, type TaskType, type EditForm, formatDateMMDDYYYY, displayTitle } from '../components/dashboard'
+import {
+  AddTaskModal,
+  EditModal,
+  DeleteModal,
+  type ClassTagCourseOption,
+  type TaskType,
+  type EditForm,
+  formatDueDateTimeDisplay,
+  displayTitle,
+} from '../components/dashboard'
+import { isCurrentTerm } from '../utils/termUtils'
+import { buildClassTag, formatClassTagForDisplay } from '../utils/classTagUtils'
 
 type UpcomingBlock = {
   _id: string
@@ -134,6 +145,7 @@ function EstimationErrorModal({
 
 export default function DashboardPage() {
   const tasks = useQuery(api.queries.tasks.getAllTasks, {}) as TaskType[] | undefined
+  const userCourses = useQuery(api.queries.userCourses.getUserCourses)
   const updateTask = useMutation(api.mutations.tasks.updateTask)
   const deleteTask = useMutation(api.mutations.tasks.deleteTask)
   const submitEstimateFeedback = useMutation(api.mutations.timeEstimate.submitEstimateFeedback)
@@ -141,6 +153,24 @@ export default function DashboardPage() {
   const user = useQuery(api.queries.users.getCurrUser)
 
   const taskRows = useMemo(() => tasks ?? [], [tasks])
+
+  const classTagCourses = useMemo((): ClassTagCourseOption[] => {
+    if (!userCourses?.length) return []
+    const rows: ClassTagCourseOption[] = []
+    for (const c of userCourses) {
+      if (!isCurrentTerm(c.term ?? '')) continue
+      const courseCode = c.courseCode?.trim()
+      const title = c.title?.trim()
+      if (!courseCode || !title) continue
+      rows.push({
+        courseId: c._id,
+        courseCode,
+        title,
+        classTag: buildClassTag(courseCode, title),
+      })
+    }
+    return rows.sort((a, b) => a.courseCode.localeCompare(b.courseCode))
+  }, [userCourses])
 
   const totalEstimatedMinutes = useMemo(
     () => taskRows.reduce((sum, t) => sum + (t.timeEstimate ?? 0), 0),
@@ -329,6 +359,7 @@ export default function DashboardPage() {
         task={editingTask}
         onClose={() => setEditingTask(null)}
         onSave={handleSaveEdit}
+        classTagCourses={classTagCourses}
       />
       <DeleteModal
         isOpen={deletingTask !== null}
@@ -340,6 +371,7 @@ export default function DashboardPage() {
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onTaskCreated={(taskId) => handleEstimateTask(taskId as Id<'tasks'>)}
+        classTagCourses={classTagCourses}
       />
 
       <Sidebar />
@@ -455,7 +487,8 @@ export default function DashboardPage() {
                             {displayTitle(task)}
                           </div>
                           <div className="text-xs text-slate-blue">
-                            Due {formatDateMMDDYYYY(task.dueDate)} · {task.taskType} · ~{formatMinutes(task.timeEstimate ?? 0)} estimated
+                            Due {formatDueDateTimeDisplay(task.dueDate)}
+                            {task.classTag ? ` · ${formatClassTagForDisplay(task.classTag)}` : ''} · {task.taskType} · ~{formatMinutes(task.timeEstimate ?? 0)} estimated
                           </div>
                           {task.description.trim().length > 0 && (
                             <div className="text-xs break-words text-light-blue line-clamp-4">

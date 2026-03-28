@@ -9,6 +9,7 @@ vi.mock('../../backend/convex/_generated/api', () => ({
       users: { getCurrUser: 'getCurrUser' },
       tasks: { getAllTasks: 'getAllTasks' },
       studyBlocks: { getUpcomingStudyBlocks: 'getUpcomingStudyBlocks' },
+      userCourses: { getUserCourses: 'getUserCourses' },
     },
     mutations: {
       tasks: { updateTask: 'updateTask', deleteTask: 'deleteTask' },

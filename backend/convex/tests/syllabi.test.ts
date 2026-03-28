@@ -1,7 +1,8 @@
-import { describe, expect, test } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { api } from "../_generated/api";
 import { makeTestCtx, createTestUser } from "../../convex-tests/helpers";
 import { TASK_TYPES } from "../lib/taskValidators";
+import { buildClassTag } from "../lib/classTagUtils";
 
 const FUTURE_DATE = Date.now() + 86_400_000;
 
@@ -22,6 +23,14 @@ async function createTestSyllabus(
 }
 
 describe("mutations/syllabi – confirmSyllabusTasks", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   test("throws when unauthenticated", async () => {
     const t = makeTestCtx();
     const { userId } = await createTestUser(t);
@@ -92,6 +101,8 @@ describe("mutations/syllabi – confirmSyllabusTasks", () => {
         ],
       }
     );
+
+    await t.finishAllScheduledFunctions(vi.runAllTimers.bind(vi));
 
     expect(taskIds).toHaveLength(2);
 
@@ -180,13 +191,44 @@ describe("mutations/syllabi – confirmSyllabusTasks", () => {
       }
     );
 
+    await t.finishAllScheduledFunctions(vi.runAllTimers.bind(vi));
+
     const tasks = await t.run((ctx) =>
       Promise.all(taskIds.map((id) => ctx.db.get(id)))
     );
 
+    const expectedTag = buildClassTag("EN.601.226", "Data Structures");
     for (const task of tasks) {
       expect(task?.courseId).toEqual(courseId);
+      expect(task?.classTag).toBe(expectedTag);
     }
+  });
+
+  test("does not set classTag when the syllabus has no course", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+    const syllabusId = await createTestSyllabus(t, userId);
+
+    const [taskId] = await withAuth.mutation(
+      api.mutations.syllabi.confirmSyllabusTasks,
+      {
+        syllabusId,
+        tasks: [
+          {
+            title: "Reading 1",
+            description: "Read chapter 1.",
+            dueDate: FUTURE_DATE,
+            taskType: "Reading",
+          },
+        ],
+      }
+    );
+
+    await t.finishAllScheduledFunctions(vi.runAllTimers.bind(vi));
+
+    const task = await t.run((ctx) => ctx.db.get(taskId));
+    expect(task?.courseId).toBeUndefined();
+    expect(task?.classTag).toBeUndefined();
   });
 
   test("accepts all valid task types", async () => {
@@ -205,6 +247,8 @@ describe("mutations/syllabi – confirmSyllabusTasks", () => {
       api.mutations.syllabi.confirmSyllabusTasks,
       { syllabusId, tasks }
     );
+
+    await t.finishAllScheduledFunctions(vi.runAllTimers.bind(vi));
 
     expect(taskIds).toHaveLength(TASK_TYPES.length);
 
@@ -237,6 +281,8 @@ describe("mutations/syllabi – confirmSyllabusTasks", () => {
       }
     );
 
+    await t.finishAllScheduledFunctions(vi.runAllTimers.bind(vi));
+
     const task = await t.run((ctx) => ctx.db.get(taskId));
     expect(task?.dueDate).toEqual(specificDate);
   });
@@ -261,7 +307,42 @@ describe("mutations/syllabi – confirmSyllabusTasks", () => {
       }
     );
 
+    await t.finishAllScheduledFunctions(vi.runAllTimers.bind(vi));
+
     const task = await t.run((ctx) => ctx.db.get(taskIds[0]));
     expect(task?.userId).toEqual(userId);
+  });
+
+  test("schedules time estimation for each confirmed task", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+    const syllabusId = await createTestSyllabus(t, userId);
+
+    await withAuth.mutation(api.mutations.syllabi.confirmSyllabusTasks, {
+      syllabusId,
+      tasks: [
+        {
+          title: "Task A",
+          description: "Description A",
+          dueDate: FUTURE_DATE,
+          taskType: "Essay",
+        },
+        {
+          title: "Task B",
+          description: "Description B",
+          dueDate: FUTURE_DATE,
+          taskType: "Problem Set",
+        },
+      ],
+    });
+
+    const scheduled = await t.run((ctx) =>
+      ctx.db.system.query("_scheduled_functions").collect()
+    );
+
+    expect(scheduled).toHaveLength(2);
+    expect(scheduled.every((fn) => fn.name.includes("estimateTaskTime"))).toBe(true);
+
+    await t.finishAllScheduledFunctions(vi.runAllTimers.bind(vi));
   });
 });

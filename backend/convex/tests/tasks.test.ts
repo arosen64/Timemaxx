@@ -103,4 +103,38 @@ describe("mutations/tasks – createTask", () => {
     const task = await t.run((ctx) => ctx.db.get(taskId));
     expect(task!.taskType).toBe("Take-home Quiz");
   });
+
+  test("stores optional classTag when provided", async () => {
+    const t = makeTestCtx();
+    const { withAuth } = await createTestUser(t);
+
+    const taskId = await withAuth.mutation(api.mutations.tasks.createTask, {
+      title: "Tagged task",
+      description: "desc",
+      taskType: "Essay",
+      dueDate: Date.now() + 86_400_000,
+      classTag: "EN.601.220",
+    });
+
+    await t.finishAllScheduledFunctions(vi.runAllTimers);
+    const task = await t.run((ctx) => ctx.db.get(taskId));
+    expect(task!.classTag).toBe("EN.601.220");
+  });
+
+  test("omits classTag when whitespace-only", async () => {
+    const t = makeTestCtx();
+    const { withAuth } = await createTestUser(t);
+
+    const taskId = await withAuth.mutation(api.mutations.tasks.createTask, {
+      title: "No tag task",
+      description: "desc",
+      taskType: "Essay",
+      dueDate: Date.now() + 86_400_000,
+      classTag: "   ",
+    });
+
+    await t.finishAllScheduledFunctions(vi.runAllTimers);
+    const task = await t.run((ctx) => ctx.db.get(taskId));
+    expect(task!.classTag).toBeUndefined();
+  });
 });
