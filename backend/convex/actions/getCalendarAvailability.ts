@@ -5,16 +5,6 @@ type WorkHoursRow = { day: string; available: number[]; blocked: number[] }
 type TimedEvent = { id: string; summary: string; start: string; end: string; calendarId: string }
 export type FreeBlock = { startISO: string; endISO: string; isPreferred: boolean }
 
-const DAYS_MAP: Record<number, string> = {
-  0: "Sunday",
-  1: "Monday",
-  2: "Tuesday",
-  3: "Wednesday",
-  4: "Thursday",
-  5: "Friday",
-  6: "Saturday",
-}
-
 function getLocalDateStr(date: Date, timezone: string): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: timezone }).format(date)
 }
@@ -32,19 +22,10 @@ function getLocalTimeParts(dt: Date, timezone: string): { hour: number; minute: 
 }
 
 function getLocalDayOfWeek(dt: Date, timezone: string): string {
-  const dayNum = parseInt(
-    new Intl.DateTimeFormat("en-US", { timeZone: timezone, weekday: "short" })
-      .formatToParts(dt)
-      .find((p) => p.type === "weekday")
-      ?.value ?? "0",
-    10,
-  )
-  // Use a different approach — format as numeric weekday
-  const numericDay = new Intl.DateTimeFormat("en-US", {
+  return new Intl.DateTimeFormat("en-US", {
     timeZone: timezone,
     weekday: "long",
   }).format(dt)
-  return numericDay // "Monday", "Tuesday", etc.
 }
 
 /**
