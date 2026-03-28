@@ -137,8 +137,8 @@ export default function CourseSelector({ onAddCourse, mode = 'all' }: CourseSele
       })
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
-      if (message.includes('COURSE_ALREADY_COMPLETED')) {
-        setAddError('You have already completed this course.')
+      if (message.includes('COURSE_ALREADY_EXISTS')) {
+        setAddError('You have already added this course.')
       } else if (message.includes('Unauthenticated') || message.includes('Not authenticated')) {
         setAddError('You must be signed in to add courses.')
       } else {
