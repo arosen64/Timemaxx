@@ -37,7 +37,7 @@ export const createTask = mutation({
       throw new Error("Description cannot be empty");
     }
     if (args.dueDate <= now) {
-      throw new Error("Due date must be in the future");
+      throw new Error("That due date and time are in the past. Choose a later deadline.");
     }
 
     // Insert the new task with timeEstimate left as undefined for now

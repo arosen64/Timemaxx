@@ -11,6 +11,8 @@ import {
   startOfTodayMs,
   todayDateInputMin,
   validateDueDate,
+  validateDueDateAndTime,
+  combineDateMsWithTime,
 } from '../../validators'
 import { legacyNaiveClassTag } from '../../utils/classTagUtils'
 
@@ -45,6 +47,7 @@ interface TaskModalProps {
     customTaskType: string
     description: string
     dueDate: string
+    dueTime: string
     classTag: string
   }
   /** Current-term classes; class tag may only be empty or one of these (optional field) */
@@ -70,6 +73,7 @@ export default function TaskModal({
   const [customTaskType, setCustomTaskType] = useState(initialValues.customTaskType)
   const [description, setDescription] = useState(initialValues.description)
   const [dueDate, setDueDate] = useState(initialValues.dueDate)
+  const [dueTime, setDueTime] = useState(initialValues.dueTime)
   const [classTag, setClassTag] = useState(() =>
     allowedClassTagValue(initialValues.classTag, courses)
   )
@@ -105,6 +109,7 @@ export default function TaskModal({
     setCustomTaskType(initialValues.customTaskType)
     setDescription(initialValues.description)
     setDueDate(initialValues.dueDate)
+    setDueTime(initialValues.dueTime)
     setClassTag(allowedClassTagValue(initialValues.classTag, courses))
     setError(null)
     setSubmitting(false)
@@ -115,12 +120,22 @@ export default function TaskModal({
     initialValues.customTaskType,
     initialValues.description,
     initialValues.dueDate,
+    initialValues.dueTime,
     initialValues.classTag,
     courses,
   ])
 
   function isValidDueDate(value: string): boolean {
     const err = validateDueDate(value)
+    if (err) {
+      setError(err)
+      return false
+    }
+    return true
+  }
+
+  function isValidDueDateTime(dateStr: string, timeStr: string): boolean {
+    const err = validateDueDateAndTime(dateStr, timeStr)
     if (err) {
       setError(err)
       return false
@@ -167,14 +182,15 @@ export default function TaskModal({
     if (!description.trim()) { setError('Please enter a description.'); return }
     const trimmedDueDate = dueDate.trim()
     if (!trimmedDueDate) { setError('Please enter a due date.'); return }
-    if (!isValidDueDate(trimmedDueDate)) return
+    if (!isValidDueDateTime(trimmedDueDate, dueTime)) return
 
     setSubmitting(true)
     setError(null)
     try {
       const resolvedClassTag = allowedClassTagValue(classTag, courses)
       const courseId = courses.find((c) => c.classTag === resolvedClassTag)?.courseId
-      const dueMs = parseDueDateInput(trimmedDueDate)!
+      const dateMidnight = parseDueDateInput(trimmedDueDate)!
+      const dueMs = combineDateMsWithTime(dateMidnight, dueTime)!
       await onSubmit({
         title: taskName,
         description,
@@ -285,42 +301,62 @@ export default function TaskModal({
           />
         </div>
 
-        {/* Due date — text + native calendar via icon */}
+        {/* Due date & time — default time 11:59 PM for new tasks */}
         <div className="flex w-full flex-col gap-1.5">
-          <label className="font-heading text-[13px] font-semibold text-navy" htmlFor="task-due-date">
-            Due date
-          </label>
-          <div className="relative flex h-11 items-center justify-between rounded-md border border-border bg-bg-gray px-3.5">
-            <input
-              id="task-due-date"
-              type="text"
-              value={dueDate}
-              onChange={(e) => setDueDate(e.target.value)}
-              onBlur={handleDueDateBlur}
-              onFocus={() => setError(null)}
-              placeholder="MM/DD/YYYY"
-              autoComplete="off"
-              className="min-w-0 flex-1 border-none bg-transparent font-body text-sm text-navy outline-none placeholder:text-light-blue"
-            />
-            <div className="relative ml-2 inline-flex shrink-0">
+          <div className="font-heading text-[13px] font-semibold text-navy">Due date & time</div>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+            <div className="min-w-0 flex-1">
+              <label className="mb-1 block font-body text-xs font-medium text-slate-blue" htmlFor="task-due-date">
+                Date
+              </label>
+              <div className="relative flex h-11 items-center justify-between rounded-md border border-border bg-bg-gray px-3.5">
+                <input
+                  id="task-due-date"
+                  type="text"
+                  value={dueDate}
+                  onChange={(e) => setDueDate(e.target.value)}
+                  onBlur={handleDueDateBlur}
+                  onFocus={() => setError(null)}
+                  placeholder="MM/DD/YYYY"
+                  autoComplete="off"
+                  className="min-w-0 flex-1 border-none bg-transparent font-body text-sm text-navy outline-none placeholder:text-light-blue"
+                />
+                <div className="relative ml-2 inline-flex shrink-0">
+                  <input
+                    ref={datePickerRef}
+                    type="date"
+                    className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-0 h-px w-px min-w-px -translate-x-1/2 opacity-0"
+                    tabIndex={-1}
+                    aria-hidden
+                    value={datePickerValue}
+                    {...(datePickerMin !== undefined ? { min: datePickerMin } : {})}
+                    onChange={(e) => handleNativeDateChange(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    onClick={openNativeDatePicker}
+                    className="relative z-20 cursor-pointer rounded p-1 text-light-blue outline-none hover:text-navy focus-visible:ring-2 focus-visible:ring-navy/30"
+                    aria-label="Open calendar"
+                  >
+                    <CalendarIcon />
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div className="shrink-0 sm:w-[9.5rem]">
+              <label className="mb-1 block font-body text-xs font-medium text-slate-blue" htmlFor="task-due-time">
+                Time
+              </label>
               <input
-                ref={datePickerRef}
-                type="date"
-                className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-0 h-px w-px min-w-px -translate-x-1/2 opacity-0"
-                tabIndex={-1}
-                aria-hidden
-                value={datePickerValue}
-                {...(datePickerMin !== undefined ? { min: datePickerMin } : {})}
-                onChange={(e) => handleNativeDateChange(e.target.value)}
+                id="task-due-time"
+                type="time"
+                value={dueTime}
+                onChange={(e) => {
+                  setDueTime(e.target.value)
+                  setError(null)
+                }}
+                className="h-11 w-full rounded-md border border-border bg-bg-gray px-3 font-body text-sm text-navy outline-none focus:border-sky-blue"
               />
-              <button
-                type="button"
-                onClick={openNativeDatePicker}
-                className="relative z-20 cursor-pointer rounded p-1 text-light-blue outline-none hover:text-navy focus-visible:ring-2 focus-visible:ring-navy/30"
-                aria-label="Open calendar"
-              >
-                <CalendarIcon />
-              </button>
             </div>
           </div>
         </div>

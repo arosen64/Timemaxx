@@ -57,6 +57,14 @@ export function formatDateMMDDYYYY(ms: number) {
   return `${mm}/${dd}/${yyyy}`
 }
 
+export function formatDueDateTimeDisplay(ms: number) {
+  const time = new Date(ms).toLocaleTimeString(undefined, {
+    hour: 'numeric',
+    minute: '2-digit',
+  })
+  return `${formatDateMMDDYYYY(ms)} · ${time}`
+}
+
 export function displayTitle(task: Pick<TaskType, 'title' | 'description'>) {
   const t = task.title.trim()
   if (t.length > 0) return t

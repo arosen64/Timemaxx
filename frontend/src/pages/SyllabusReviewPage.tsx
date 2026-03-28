@@ -9,7 +9,14 @@ import Button from '../components/ui/Button'
 import TaskReviewCard from '../components/syllabus/TaskReviewCard'
 import { TASK_TYPE_OPTIONS } from '../components/dashboard/types'
 import { type ReviewTask } from '../components/syllabus/types'
-import { formDateToMs, msToFormDate, validateDueDate } from '../validators'
+import {
+  combineDateMsWithTime,
+  DEFAULT_DUE_TIME,
+  formDateToMs,
+  msToFormDate,
+  msToTimeInputValue,
+  validateDueDateAndTime,
+} from '../validators'
 import { type Course, type ExtractedTask } from '../types'
 
 interface ReviewLocationState {
@@ -21,7 +28,14 @@ interface ReviewLocationState {
 let nextTaskId = 0
 
 function makeEmptyTask(): ReviewTask {
-  return { id: nextTaskId++, title: '', description: '', taskType: TASK_TYPE_OPTIONS[0], dueDate: '' }
+  return {
+    id: nextTaskId++,
+    title: '',
+    description: '',
+    taskType: TASK_TYPE_OPTIONS[0],
+    dueDate: '',
+    dueTime: DEFAULT_DUE_TIME,
+  }
 }
 
 export default function SyllabusReviewPage() {
@@ -39,6 +53,7 @@ export default function SyllabusReviewPage() {
       description: t.description,
       taskType: t.taskType,
       dueDate: msToFormDate(t.dueDate),
+      dueTime: msToTimeInputValue(t.dueDate),
     }))
   })
   const [isConfirming, setIsConfirming] = useState(false)
@@ -71,11 +86,13 @@ export default function SyllabusReviewPage() {
         setError('One or more tasks is missing a title.')
         return
       }
-      if (validateDueDate(t.dueDate)) {
-        setError(`"${t.title || 'Unnamed task'}" has an invalid due date. Use MM/DD/YYYY.`)
+      const validationError = validateDueDateAndTime(t.dueDate, t.dueTime)
+      if (validationError) {
+        setError(`"${t.title || 'Unnamed task'}": ${validationError}`)
         return
       }
-      const ms = formDateToMs(t.dueDate)!
+      const dateMs = formDateToMs(t.dueDate)!
+      const ms = combineDateMsWithTime(dateMs, t.dueTime)!
       toSave.push({ title: t.title.trim(), description: t.description, taskType: t.taskType, dueDate: ms })
     }
 
