@@ -3,7 +3,7 @@ import { action } from "../_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { api, internal } from "../_generated/api";
-import { computeFreeBlocks, type FreeBlock } from "./getCalendarAvailability";
+import { computeFreeBlocks } from "./getCalendarAvailability";
 import type { Id } from "../_generated/dataModel";
 
 type StudyBlockWithTask = {
@@ -105,15 +105,22 @@ export const autoRescheduleConflicts = action({
       placedRanges.push({ startMs, endMs, taskId: b.taskId });
     }
 
-    // Sort free blocks: preferred first, then by start time
-    const sortedFreeBlocks: Array<FreeBlock & { startMs: number; endMs: number }> = [
-      ...freeBlocks.filter((fb) => fb.isPreferred),
-      ...freeBlocks.filter((fb) => !fb.isPreferred),
-    ].map((fb) => ({
-      ...fb,
-      startMs: new Date(fb.startISO).getTime(),
-      endMs: new Date(fb.endISO).getTime(),
-    }));
+    // Capture current time once for all past-slot comparisons
+    const nowMs = Date.now();
+
+    // Sort free blocks: preferred first, then by start time.
+    // Filter out slots already fully elapsed; trim slots that are partially elapsed.
+    const sortedFreeBlocks = filterPastFreeBlocks(
+      [
+        ...freeBlocks.filter((fb) => fb.isPreferred),
+        ...freeBlocks.filter((fb) => !fb.isPreferred),
+      ].map((fb) => ({
+        ...fb,
+        startMs: new Date(fb.startISO).getTime(),
+        endMs: new Date(fb.endISO).getTime(),
+      })),
+      nowMs,
+    );
 
     let unplacedCount = 0;
 
@@ -147,6 +154,9 @@ export const autoRescheduleConflicts = action({
             }
           }
         }
+
+        // Safety net: gap adjustments may push candidateStart into the past
+        candidateStart = Math.max(candidateStart, nowMs);
 
         // Check if candidate fits within the free slot
         if (candidateStart + blockDurationMs > freeSlot.endMs) continue;
@@ -199,4 +209,27 @@ export const autoRescheduleConflicts = action({
 
 function toDateStr(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+/**
+ * Filters and trims a list of free blocks so that no block starts or ends in
+ * the past relative to `nowMs`.
+ *
+ * - Blocks whose `endMs` <= `nowMs` are discarded entirely.
+ * - Blocks whose `startMs` < `nowMs` have their start clamped to `nowMs`.
+ *
+ * Exported for unit testing.
+ */
+export function filterPastFreeBlocks<T extends { startMs: number; endMs: number; startISO: string }>(
+  blocks: T[],
+  nowMs: number,
+): T[] {
+  return blocks
+    .filter((b) => b.endMs > nowMs)
+    .map((b) => {
+      if (b.startMs < nowMs) {
+        return { ...b, startMs: nowMs, startISO: new Date(nowMs).toISOString() };
+      }
+      return b;
+    });
 }
