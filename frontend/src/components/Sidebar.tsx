@@ -6,13 +6,15 @@ import { BookOpenIcon, DashboardIcon, CalendarIcon, ClassesIcon, SlidersHorizont
 export default function Sidebar() {
     const { pathname } = useLocation();
     const user = useQuery(api.queries.users.getCurrUser);
+    const allStudyBlocks = useQuery(api.queries.studyBlocks.getAllStudyBlocksWithTasks);
+    const hasConflicts = (allStudyBlocks ?? []).some((b: { isConflicted?: boolean }) => b.isConflicted);
 
-    const navItem = (to: string, icon: React.ReactNode, label: string) => {
+    const navItem = (to: string, icon: React.ReactNode, label: string, badge?: boolean) => {
         const active = pathname === to;
         return (
             <Link
                 to={to}
-                className={`flex items-center h-11 w-full gap-2.5 px-3.5 rounded-lg ${active
+                className={`relative flex items-center h-11 w-full gap-2.5 px-3.5 rounded-lg ${active
                         ? "text-navy bg-white"
                         : "text-sky-blue hover:bg-white/10"
                     }`}
@@ -21,6 +23,9 @@ export default function Sidebar() {
                 <span className={`font-heading text-sm ${active ? "font-semibold" : "font-normal"}`}>
                     {label}
                 </span>
+                {badge && (
+                    <span className="ml-auto flex h-2 w-2 rounded-full bg-urgent-red" />
+                )}
             </Link>
         );
     };
@@ -41,7 +46,7 @@ export default function Sidebar() {
                 <nav className="flex flex-col gap-1">
                     {navItem("/dashboard", <DashboardIcon />, "Dashboard")}
                     {navItem("/classes", <ClassesIcon />, "Classes")}
-                    {navItem("/schedule", <CalendarIcon color="currentColor" />, "Schedule")}
+                    {navItem("/schedule", <CalendarIcon color="currentColor" />, "Schedule", hasConflicts)}
                     {navItem("/preferences", <SlidersHorizontalIcon />, "Preferences")}
                 </nav>
             </div>
