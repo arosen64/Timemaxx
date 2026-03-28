@@ -1,6 +1,6 @@
 import { type TaskType, type FeedbackDraft, formatMinutes } from './types'
 
-type TaskFeedbackFormProps = {
+export type TaskFeedbackFormProps = {
   task: Pick<TaskType, 'estimateFeedbackRating' | 'correctedEstimateMinutes'>
   draft: FeedbackDraft
   error?: string

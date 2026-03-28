@@ -1,24 +1,14 @@
 import { PencilIcon, TrashIcon, SpinnerIcon, SparklesIcon } from '../icons'
-import { type TaskType, type FeedbackDraft, formatDueDateTimeDisplay, displayTitle, formatMinutes } from './types'
+import { type TaskType, formatDueDateTimeDisplay, displayTitle, formatMinutes } from './types'
 import { formatClassTagForDisplay } from '../../utils/classTagUtils'
-import TaskFeedbackForm from './TaskFeedbackForm'
+import TaskFeedbackForm, { type TaskFeedbackFormProps } from './TaskFeedbackForm'
 
 type TaskCardProps = {
   task: TaskType
   barColor: string
   badge: { bg: string; text: string; label: string }
   isEstimating: boolean
-  feedback: {
-    draft: FeedbackDraft
-    error?: string
-    isSubmitting: boolean
-    isEditing: boolean
-    onToggleRating: (value: 'up' | 'down') => void
-    onHoursChange: (value: string) => void
-    onMinutesChange: (value: string) => void
-    onSubmit: () => void
-    onStartEdit: () => void
-  }
+  feedback: Omit<TaskFeedbackFormProps, 'task'>
   onEstimate: () => void
   onEdit: () => void
   onDelete: () => void
