@@ -3819,7 +3819,43 @@
           "name": "dsCardNS",
           "x": 60,
           "y": 1564,
-          "width": 280
+          "width": 280,
+          "height": "fit_content",
+          "descendants": {
+            "4cJVg": {
+              "width": "fill_container",
+              "height": "fit_content",
+              "x": 24,
+              "y": 24
+            },
+            "ErIoN": {
+              "width": "fill_container",
+              "height": "fit_content"
+            },
+            "rsPJ3": {
+              "width": "fill_container",
+              "y": 16
+            },
+            "EROXE": {
+              "y": 37
+            },
+            "zcsHY": {
+              "x": 200
+            },
+            "LfAhB": {
+              "x": 8.5,
+              "y": 8.5
+            },
+            "LqaBN": {
+              "width": "fill_container",
+              "x": 24,
+              "y": 92
+            },
+            "n0XK6": {
+              "x": 24,
+              "y": 109
+            }
+          }
         },
         {
           "id": "BEagJ",
@@ -3828,7 +3864,64 @@
           "name": "dsCardHS",
           "x": 356,
           "y": 1564,
-          "width": 280
+          "width": 280,
+          "height": "fit_content",
+          "descendants": {
+            "cZzkB": {
+              "width": "fill_container",
+              "height": "fit_content",
+              "x": 24,
+              "y": 24
+            },
+            "XOYe7": {
+              "width": "fill_container",
+              "height": "fit_content"
+            },
+            "eHYJb": {
+              "width": "fill_container",
+              "y": 16
+            },
+            "6SUfJ": {
+              "y": 37
+            },
+            "8I345": {
+              "x": 200
+            },
+            "MSYvJ": {
+              "x": 8.5,
+              "y": 8.5
+            },
+            "S6ksI": {
+              "width": "fill_container",
+              "x": 24,
+              "y": 92
+            },
+            "A20zr": {
+              "width": "fill_container",
+              "height": "fit_content",
+              "x": 24,
+              "y": 109
+            },
+            "qaDbo": {
+              "width": "fit_content",
+              "height": "fit_content",
+              "y": 6
+            },
+            "gqWlf": {
+              "y": 1
+            },
+            "35iX7": {
+              "x": 20
+            },
+            "hqJ9x": {
+              "width": "fit_content",
+              "x": 152
+            },
+            "xpaok": {
+              "x": 10,
+              "y": 6.5
+            }
+          }
         },
         {
           "id": "GDTXK",
@@ -3837,7 +3930,64 @@
           "name": "dsCardPast",
           "x": 652,
           "y": 1564,
-          "width": 280
+          "width": 280,
+          "height": "fit_content",
+          "descendants": {
+            "46Ddy": {
+              "width": "fill_container",
+              "height": "fit_content",
+              "x": 24,
+              "y": 24
+            },
+            "c3Qm1": {
+              "width": "fill_container",
+              "height": "fit_content"
+            },
+            "bl87u": {
+              "width": "fill_container",
+              "y": 16
+            },
+            "Gwf2y": {
+              "y": 37
+            },
+            "NGdqE": {
+              "x": 200
+            },
+            "OttKe": {
+              "x": 8.5,
+              "y": 8.5
+            },
+            "NsNSM": {
+              "width": "fill_container",
+              "x": 24,
+              "y": 92
+            },
+            "pqEJN": {
+              "width": "fill_container",
+              "height": "fit_content",
+              "x": 24,
+              "y": 109
+            },
+            "Z0S1g": {
+              "width": "fill_container"
+            },
+            "1semH": {
+              "x": 12,
+              "y": 8
+            },
+            "Fz3x0": {
+              "x": 146,
+              "y": 9
+            },
+            "FDglz": {
+              "width": "fit_content",
+              "x": 180
+            },
+            "fcjcj": {
+              "x": 12,
+              "y": 8.5
+            }
+          }
         }
       ]
     },
@@ -9378,7 +9528,7 @@
               }
             },
             "jzFAO": {
-              "y": 2273,
+              "y": 2813,
               "width": "fit_content",
               "height": "fit_content",
               "x": 24
@@ -9445,6 +9595,374 @@
               "layout": "vertical",
               "gap": 24,
               "children": [
+                {
+                  "type": "frame",
+                  "id": "2WqJ2",
+                  "name": "academicProfileSection",
+                  "width": "fill_container",
+                  "fill": "$--card",
+                  "cornerRadius": 12,
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "$--border"
+                  },
+                  "layout": "vertical",
+                  "gap": 16,
+                  "padding": 24,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "WNeYR",
+                      "name": "hdrRow",
+                      "width": "fill_container",
+                      "gap": 16,
+                      "justifyContent": "space_between",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "UN8mG",
+                          "name": "hdrLeft",
+                          "width": "fill_container",
+                          "layout": "vertical",
+                          "gap": 6,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "cRMEt",
+                              "name": "hdrTitle",
+                              "fill": "$--primary",
+                              "content": "Academic Profile",
+                              "fontFamily": "Space Grotesk",
+                              "fontSize": 18,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "text",
+                              "id": "K0Ban",
+                              "name": "hdrSub",
+                              "fill": "$--muted-foreground",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "A Gemini-generated summary based on your transcript.",
+                              "fontFamily": "Inter",
+                              "fontSize": 14,
+                              "fontWeight": "normal"
+                            },
+                            {
+                              "type": "text",
+                              "id": "RqvQj",
+                              "name": "hdrTip",
+                              "fill": "$--light-muted",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "Tip: Rate your past courses' difficulty (1–5) in the previous step for a more accurate profile.",
+                              "fontFamily": "Inter",
+                              "fontSize": 12,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "fDyNI",
+                          "name": "hdrRight",
+                          "layout": "vertical",
+                          "gap": 4,
+                          "alignItems": "end",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "7mn6f",
+                              "name": "regenBtn",
+                              "height": 32,
+                              "fill": "$--background",
+                              "cornerRadius": 8,
+                              "stroke": {
+                                "align": "inside",
+                                "thickness": 1,
+                                "fill": "$--border"
+                              },
+                              "padding": [
+                                0,
+                                12
+                              ],
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "bg2dl",
+                                  "name": "regenLabel",
+                                  "fill": "$--muted-foreground",
+                                  "content": "Regenerate",
+                                  "fontFamily": "Space Grotesk",
+                                  "fontSize": 12,
+                                  "fontWeight": "600"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "id": "nkgU5",
+                              "name": "regenHelper",
+                              "fill": "$--light-muted",
+                              "content": "Added more courses? Regenerate.",
+                              "fontFamily": "Inter",
+                              "fontSize": 11,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "l4UfQ",
+                      "name": "insights",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 10,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "9Dwob",
+                          "name": "c1",
+                          "width": "fill_container",
+                          "fill": "#E6F5F0",
+                          "cornerRadius": 10,
+                          "stroke": {
+                            "align": "inside",
+                            "thickness": 1,
+                            "fill": "#86C8BC"
+                          },
+                          "gap": 12,
+                          "padding": 16,
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "8PwnL",
+                              "name": "c1b",
+                              "width": "fill_container",
+                              "layout": "vertical",
+                              "gap": 4,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "xg5nM",
+                                  "fill": "#008767",
+                                  "content": "Strengths",
+                                  "fontFamily": "Space Grotesk",
+                                  "fontSize": 13,
+                                  "fontWeight": "600"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "1iKct",
+                                  "fill": "$--primary",
+                                  "textGrowth": "fixed-width",
+                                  "width": "fill_container",
+                                  "content": "Strong performance in quantitative courses — consistent high grades in Math and CS suggest analytical aptitude.",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "MyHJj",
+                          "name": "c2",
+                          "width": "fill_container",
+                          "fill": "#FFF0EC",
+                          "cornerRadius": 10,
+                          "stroke": {
+                            "align": "inside",
+                            "thickness": 1,
+                            "fill": "#CF4520"
+                          },
+                          "gap": 12,
+                          "padding": 16,
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "ECi6O",
+                              "name": "c2b",
+                              "width": "fill_container",
+                              "layout": "vertical",
+                              "gap": 4,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "5cjAt",
+                                  "fill": "#CF4520",
+                                  "content": "Room for Growth",
+                                  "fontFamily": "Space Grotesk",
+                                  "fontSize": 13,
+                                  "fontWeight": "600"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "VAohT",
+                                  "fill": "$--primary",
+                                  "textGrowth": "fixed-width",
+                                  "width": "fill_container",
+                                  "content": "Writing-intensive courses show lower grades — consider office hours or writing center support.",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "ttTlP",
+                          "name": "c3",
+                          "width": "fill_container",
+                          "fill": "#EBF5FF",
+                          "cornerRadius": 10,
+                          "stroke": {
+                            "align": "inside",
+                            "thickness": 1,
+                            "fill": "#68ACE5"
+                          },
+                          "gap": 12,
+                          "padding": 16,
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "z0ENF",
+                              "name": "c3b",
+                              "width": "fill_container",
+                              "layout": "vertical",
+                              "gap": 4,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "GXU02",
+                                  "fill": "#0077D8",
+                                  "content": "Trend",
+                                  "fontFamily": "Space Grotesk",
+                                  "fontSize": 13,
+                                  "fontWeight": "600"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "p5eiI",
+                                  "fill": "$--primary",
+                                  "textGrowth": "fixed-width",
+                                  "width": "fill_container",
+                                  "content": "GPA trending upward — your most recent semester shows improvement across multiple subjects.",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "xqGq2",
+                          "name": "c4",
+                          "width": "fill_container",
+                          "fill": "#E8ECF5",
+                          "cornerRadius": 10,
+                          "stroke": {
+                            "align": "inside",
+                            "thickness": 1,
+                            "fill": "#002D72"
+                          },
+                          "gap": 12,
+                          "padding": 16,
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "YeigO",
+                              "name": "c4b",
+                              "width": "fill_container",
+                              "layout": "vertical",
+                              "gap": 4,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "xZbch",
+                                  "fill": "$--primary",
+                                  "content": "Patterns",
+                                  "fontFamily": "Space Grotesk",
+                                  "fontSize": 13,
+                                  "fontWeight": "600"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "TAcMO",
+                                  "fill": "$--primary",
+                                  "textGrowth": "fixed-width",
+                                  "width": "fill_container",
+                                  "content": "You tend to perform better in lab and project-based courses compared to lecture-heavy ones.",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "hfHan",
+                          "name": "c5",
+                          "width": "fill_container",
+                          "fill": "#F0F2F7",
+                          "cornerRadius": 10,
+                          "stroke": {
+                            "align": "inside",
+                            "thickness": 1,
+                            "fill": "#4E6A8C"
+                          },
+                          "gap": 12,
+                          "padding": 16,
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "csrtD",
+                              "name": "c5b",
+                              "width": "fill_container",
+                              "layout": "vertical",
+                              "gap": 4,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "Rfnci",
+                                  "fill": "$--muted-foreground",
+                                  "content": "Recommendations",
+                                  "fontFamily": "Space Grotesk",
+                                  "fontSize": 13,
+                                  "fontWeight": "600"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "Qm86V",
+                                  "fill": "$--primary",
+                                  "textGrowth": "fixed-width",
+                                  "width": "fill_container",
+                                  "content": "Prioritize study sessions for high-difficulty courses early in the week when energy is highest.",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
                 {
                   "type": "frame",
                   "id": "Ix5Ec",
@@ -12081,7 +12599,7 @@
               }
             },
             "jzFAO": {
-              "y": 1270,
+              "y": 1800,
               "width": "fit_content",
               "height": "fit_content",
               "x": 24
@@ -12148,6 +12666,376 @@
               "layout": "vertical",
               "gap": 24,
               "children": [
+                {
+                  "type": "frame",
+                  "id": "MwN40",
+                  "name": "academicProfileSection",
+                  "width": "fill_container",
+                  "fill": "$--card",
+                  "cornerRadius": 12,
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "$--border"
+                  },
+                  "layout": "vertical",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "GSKkI",
+                      "name": "apHeader",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 16,
+                      "padding": 24,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "u15wz",
+                          "name": "apHeaderRow",
+                          "width": "fill_container",
+                          "justifyContent": "space_between",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "YqYUR",
+                              "name": "apLeft",
+                              "width": "fill_container",
+                              "layout": "vertical",
+                              "gap": 6,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "omQOj",
+                                  "name": "apTitle",
+                                  "fill": "$--primary",
+                                  "content": "Academic Profile",
+                                  "fontFamily": "$--font-primary",
+                                  "fontSize": 18,
+                                  "fontWeight": "700"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "ZL1ZE",
+                                  "name": "apSubtitle",
+                                  "fill": "$--muted-foreground",
+                                  "textGrowth": "fixed-width",
+                                  "width": "fill_container",
+                                  "content": "A Gemini-generated summary based on your transcript.",
+                                  "fontFamily": "$--font-secondary",
+                                  "fontSize": 14,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "SodVr",
+                              "name": "apRight",
+                              "layout": "vertical",
+                              "gap": 4,
+                              "alignItems": "end",
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "s8Sgg",
+                                  "name": "regenBtn",
+                                  "height": 32,
+                                  "fill": "$--background",
+                                  "cornerRadius": 8,
+                                  "stroke": {
+                                    "align": "inside",
+                                    "thickness": 1,
+                                    "fill": "$--border"
+                                  },
+                                  "padding": [
+                                    0,
+                                    12
+                                  ],
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "n6VvN",
+                                      "name": "regenTxt",
+                                      "fill": "$--muted-foreground",
+                                      "content": "Regenerate",
+                                      "fontFamily": "$--font-primary",
+                                      "fontSize": 12,
+                                      "fontWeight": "600"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "CAU29",
+                                  "name": "helperTxt",
+                                  "fill": "$--light-muted",
+                                  "content": "Added more courses? Regenerate.",
+                                  "fontFamily": "$--font-secondary",
+                                  "fontSize": 11,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "Ds4Jl",
+                      "name": "insightsCopy",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 10,
+                      "padding": [
+                        0,
+                        24,
+                        24,
+                        24
+                      ],
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "wnyRk",
+                          "name": "c1",
+                          "width": "fill_container",
+                          "fill": "#E6F5F0",
+                          "cornerRadius": 10,
+                          "stroke": {
+                            "align": "inside",
+                            "thickness": 1,
+                            "fill": "#86C8BC"
+                          },
+                          "gap": 12,
+                          "padding": 16,
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "0517W",
+                              "name": "c1b",
+                              "width": "fill_container",
+                              "layout": "vertical",
+                              "gap": 4,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "tEteY",
+                                  "fill": "#008767",
+                                  "content": "Strengths",
+                                  "fontFamily": "Space Grotesk",
+                                  "fontSize": 13,
+                                  "fontWeight": "600"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "jPOOF",
+                                  "fill": "$--primary",
+                                  "textGrowth": "fixed-width",
+                                  "width": "fill_container",
+                                  "content": "Strong performance in quantitative courses — consistent high grades in Math and CS suggest analytical aptitude.",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "BJ5IL",
+                          "name": "c2",
+                          "width": "fill_container",
+                          "fill": "#FFF0EC",
+                          "cornerRadius": 10,
+                          "stroke": {
+                            "align": "inside",
+                            "thickness": 1,
+                            "fill": "#CF4520"
+                          },
+                          "gap": 12,
+                          "padding": 16,
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "PcENY",
+                              "name": "c2b",
+                              "width": "fill_container",
+                              "layout": "vertical",
+                              "gap": 4,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "WPIeg",
+                                  "fill": "#CF4520",
+                                  "content": "Room for Growth",
+                                  "fontFamily": "Space Grotesk",
+                                  "fontSize": 13,
+                                  "fontWeight": "600"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "Lm08S",
+                                  "fill": "$--primary",
+                                  "textGrowth": "fixed-width",
+                                  "width": "fill_container",
+                                  "content": "Writing-intensive courses show lower grades — consider office hours or writing center support.",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "5Pg9j",
+                          "name": "c3",
+                          "width": "fill_container",
+                          "fill": "#EBF5FF",
+                          "cornerRadius": 10,
+                          "stroke": {
+                            "align": "inside",
+                            "thickness": 1,
+                            "fill": "#68ACE5"
+                          },
+                          "gap": 12,
+                          "padding": 16,
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "nEf7K",
+                              "name": "c3b",
+                              "width": "fill_container",
+                              "layout": "vertical",
+                              "gap": 4,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "00CyX",
+                                  "fill": "#0077D8",
+                                  "content": "Trend",
+                                  "fontFamily": "Space Grotesk",
+                                  "fontSize": 13,
+                                  "fontWeight": "600"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "BdaBy",
+                                  "fill": "$--primary",
+                                  "textGrowth": "fixed-width",
+                                  "width": "fill_container",
+                                  "content": "GPA trending upward — your most recent semester shows improvement across multiple subjects.",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "ELYPT",
+                          "name": "c4",
+                          "width": "fill_container",
+                          "fill": "#E8ECF5",
+                          "cornerRadius": 10,
+                          "stroke": {
+                            "align": "inside",
+                            "thickness": 1,
+                            "fill": "#002D72"
+                          },
+                          "gap": 12,
+                          "padding": 16,
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "VE9ZB",
+                              "name": "c4b",
+                              "width": "fill_container",
+                              "layout": "vertical",
+                              "gap": 4,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "7aA9n",
+                                  "fill": "$--primary",
+                                  "content": "Patterns",
+                                  "fontFamily": "Space Grotesk",
+                                  "fontSize": 13,
+                                  "fontWeight": "600"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "tORy7",
+                                  "fill": "$--primary",
+                                  "textGrowth": "fixed-width",
+                                  "width": "fill_container",
+                                  "content": "You tend to perform better in lab and project-based courses compared to lecture-heavy ones.",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "KHpU4",
+                          "name": "c5",
+                          "width": "fill_container",
+                          "fill": "#F0F2F7",
+                          "cornerRadius": 10,
+                          "stroke": {
+                            "align": "inside",
+                            "thickness": 1,
+                            "fill": "#4E6A8C"
+                          },
+                          "gap": 12,
+                          "padding": 16,
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "JG0hx",
+                              "name": "c5b",
+                              "width": "fill_container",
+                              "layout": "vertical",
+                              "gap": 4,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "Cvfwz",
+                                  "fill": "$--muted-foreground",
+                                  "content": "Recommendations",
+                                  "fontFamily": "Space Grotesk",
+                                  "fontSize": 13,
+                                  "fontWeight": "600"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "kOa9N",
+                                  "fill": "$--primary",
+                                  "textGrowth": "fixed-width",
+                                  "width": "fill_container",
+                                  "content": "Prioritize study sessions for high-difficulty courses early in the week when energy is highest.",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
                 {
                   "type": "frame",
                   "id": "ECpyd",
@@ -18713,6 +19601,24 @@
           "x": 0,
           "y": 0,
           "descendants": {
+            "pM9zH": {
+              "width": "fill_container",
+              "height": "fit_content",
+              "x": 24,
+              "y": 32
+            },
+            "qwLOb": {
+              "width": "fit_content",
+              "height": "fit_content"
+            },
+            "qwLOb/6YpiG": {
+              "y": 4.5
+            },
+            "99Oq1": {
+              "width": "fill_container",
+              "height": "fit_content",
+              "y": 64
+            },
             "t2ejm": {
               "id": "1d4GB",
               "type": "ref",
@@ -18733,6 +19639,18 @@
                   "y": 13
                 }
               }
+            },
+            "dLWqu": {
+              "width": "fill_container"
+            },
+            "dLWqu/Xkhsc": {
+              "y": 13
+            },
+            "ipMWX": {
+              "width": "fill_container"
+            },
+            "ipMWX/Xkhsc": {
+              "y": 13
             },
             "78Cxh": {
               "id": "OWNwd",
@@ -18756,7 +19674,23 @@
               }
             },
             "jzFAO": {
-              "y": 832
+              "y": 832,
+              "width": "fit_content",
+              "height": "fit_content",
+              "x": 24
+            },
+            "lrM5h": {
+              "x": 9.5,
+              "y": 9.5
+            },
+            "LBXyg": {
+              "width": "fit_content",
+              "height": "fit_content",
+              "x": 46,
+              "y": 2
+            },
+            "AqSvO": {
+              "y": 19
             }
           }
         },
@@ -18816,10 +19750,14 @@
                   "y": 6.5,
                   "descendants": {
                     "hXb93": {
-                      "iconFontName": "plus"
+                      "iconFontName": "plus",
+                      "x": 20,
+                      "y": 14
                     },
                     "RxGN2": {
-                      "content": "Add Class"
+                      "content": "Add Class",
+                      "x": 44,
+                      "y": 13
                     }
                   }
                 }
@@ -18965,21 +19903,40 @@
                       "ref": "5mAcQ",
                       "width": "fill_container",
                       "x": 0,
+                      "height": "fit_content",
                       "descendants": {
                         "4cJVg": {
-                          "width": "fill_container"
+                          "width": "fill_container",
+                          "height": "fit_content",
+                          "x": 24,
+                          "y": 24
                         },
                         "ErIoN": {
-                          "width": "fill_container"
+                          "width": "fill_container",
+                          "height": "fit_content"
                         },
                         "rsPJ3": {
-                          "width": "fill_container"
+                          "width": "fill_container",
+                          "y": 16
+                        },
+                        "EROXE": {
+                          "y": 37
                         },
                         "zcsHY": {
                           "x": 276
                         },
+                        "LfAhB": {
+                          "x": 8.5,
+                          "y": 8.5
+                        },
                         "LqaBN": {
-                          "width": "fill_container"
+                          "width": "fill_container",
+                          "x": 24,
+                          "y": 92
+                        },
+                        "n0XK6": {
+                          "x": 24,
+                          "y": 109
                         }
                       }
                     }
@@ -18999,27 +19956,61 @@
                       "width": "fill_container",
                       "x": 0,
                       "y": 0,
+                      "height": "fit_content",
                       "descendants": {
                         "cZzkB": {
-                          "width": "fill_container"
+                          "width": "fill_container",
+                          "height": "fit_content",
+                          "x": 24,
+                          "y": 24
                         },
                         "XOYe7": {
-                          "width": "fill_container"
+                          "width": "fill_container",
+                          "height": "fit_content"
                         },
                         "eHYJb": {
-                          "width": "fill_container"
+                          "width": "fill_container",
+                          "y": 16
+                        },
+                        "6SUfJ": {
+                          "y": 37
                         },
                         "8I345": {
                           "x": 276
                         },
+                        "MSYvJ": {
+                          "x": 8.5,
+                          "y": 8.5
+                        },
                         "S6ksI": {
-                          "width": "fill_container"
+                          "width": "fill_container",
+                          "x": 24,
+                          "y": 92
                         },
                         "A20zr": {
-                          "width": "fill_container"
+                          "width": "fill_container",
+                          "height": "fit_content",
+                          "x": 24,
+                          "y": 109
+                        },
+                        "qaDbo": {
+                          "width": "fit_content",
+                          "height": "fit_content",
+                          "y": 6
+                        },
+                        "gqWlf": {
+                          "y": 1
+                        },
+                        "35iX7": {
+                          "x": 20
                         },
                         "hqJ9x": {
-                          "x": 228
+                          "x": 228,
+                          "width": "fit_content"
+                        },
+                        "xpaok": {
+                          "x": 10,
+                          "y": 6.5
                         }
                       }
                     }
@@ -19038,28 +20029,45 @@
                       "ref": "5mAcQ",
                       "width": "fill_container",
                       "x": 0,
+                      "height": "fit_content",
                       "descendants": {
                         "4cJVg": {
-                          "width": "fill_container"
+                          "width": "fill_container",
+                          "height": "fit_content",
+                          "x": 24,
+                          "y": 24
                         },
                         "ErIoN": {
-                          "width": "fill_container"
+                          "width": "fill_container",
+                          "height": "fit_content"
                         },
                         "iOblH": {
                           "content": "CS 226"
                         },
                         "rsPJ3": {
                           "content": "Algorithms & Data Structures",
-                          "width": "fill_container"
+                          "width": "fill_container",
+                          "y": 16
                         },
                         "EROXE": {
-                          "content": "Fall 2025"
+                          "content": "Fall 2025",
+                          "y": 37
                         },
                         "zcsHY": {
                           "x": 276
                         },
+                        "LfAhB": {
+                          "x": 8.5,
+                          "y": 8.5
+                        },
                         "LqaBN": {
-                          "width": "fill_container"
+                          "width": "fill_container",
+                          "x": 24,
+                          "y": 92
+                        },
+                        "n0XK6": {
+                          "x": 24,
+                          "y": 109
                         }
                       }
                     }
