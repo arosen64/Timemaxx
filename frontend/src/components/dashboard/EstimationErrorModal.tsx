@@ -21,14 +21,17 @@ function parseEstimationError(err: unknown): string {
 export { parseEstimationError }
 
 export default function EstimationErrorModal({
+  isOpen,
   message,
   onClose,
 }: {
+  isOpen: boolean
   message: string
   onClose: () => void
 }) {
   return (
     <Modal
+      isOpen={isOpen}
       title="Estimation Failed"
       icon={<WarningIcon />}
       onClose={onClose}

@@ -231,12 +231,11 @@ export default function DashboardPage() {
     <div className="flex h-screen overflow-hidden bg-bg-gray font-body text-slate-blue">
 
       {/* Modals */}
-      {estimationError && (
-        <EstimationErrorModal
-          message={estimationError}
-          onClose={() => setEstimationError(null)}
-        />
-      )}
+      <EstimationErrorModal
+        isOpen={estimationError !== null}
+        message={estimationError ?? ''}
+        onClose={() => setEstimationError(null)}
+      />
       <EditModal
         isOpen={editingTask !== null}
         task={editingTask}
