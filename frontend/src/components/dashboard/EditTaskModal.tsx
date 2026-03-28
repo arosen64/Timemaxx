@@ -1,4 +1,11 @@
-import { type TaskType, type EditForm, TASK_TYPE_OPTIONS, CUSTOM_TASK_TYPE_OPTION, formatDateMMDDYYYY } from './types'
+import {
+  type ClassTagCourseOption,
+  type TaskType,
+  type EditForm,
+  TASK_TYPE_OPTIONS,
+  CUSTOM_TASK_TYPE_OPTION,
+  formatDateMMDDYYYY,
+} from './types'
 import TaskModal from './TaskModal'
 
 export default function EditModal({
@@ -6,13 +13,13 @@ export default function EditModal({
   task,
   onClose,
   onSave,
-  classTagOptions,
+  classTagCourses,
 }: {
   isOpen: boolean
   task: TaskType | null
   onClose: () => void
   onSave: (form: EditForm) => Promise<void>
-  classTagOptions?: string[]
+  classTagCourses?: ClassTagCourseOption[]
 }) {
   return (
     <TaskModal
@@ -34,7 +41,7 @@ export default function EditModal({
         dueDate: task ? formatDateMMDDYYYY(task.dueDate) : '',
         classTag: task?.classTag ?? '',
       }}
-      classTagOptions={classTagOptions}
+      classTagCourses={classTagCourses}
       onClose={onClose}
       onSubmit={onSave}
     />

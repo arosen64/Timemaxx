@@ -1,16 +1,16 @@
 import { useMutation } from 'convex/react'
 import { api } from '../../../../backend/convex/_generated/api'
-import { type EditForm } from './types'
+import { type ClassTagCourseOption, type EditForm } from './types'
 import TaskModal from './TaskModal'
 
 interface AddTaskModalProps {
   isOpen: boolean
   onClose: () => void
   onTaskCreated?: (taskId: string) => void
-  classTagOptions?: string[]
+  classTagCourses?: ClassTagCourseOption[]
 }
 
-export default function AddTaskModal({ isOpen, onClose, onTaskCreated, classTagOptions }: AddTaskModalProps) {
+export default function AddTaskModal({ isOpen, onClose, onTaskCreated, classTagCourses }: AddTaskModalProps) {
   const createTask = useMutation(api.mutations.tasks.createTask)
 
   async function handleSubmit(form: EditForm) {
@@ -39,7 +39,7 @@ export default function AddTaskModal({ isOpen, onClose, onTaskCreated, classTagO
         dueDate: '',
         classTag: '',
       }}
-      classTagOptions={classTagOptions}
+      classTagCourses={classTagCourses}
       onClose={onClose}
       onSubmit={handleSubmit}
     />

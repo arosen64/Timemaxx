@@ -4,7 +4,16 @@ import { api } from '../../../backend/convex/_generated/api'
 import { Id } from '../../../backend/convex/_generated/dataModel'
 import Sidebar from '../components/Sidebar'
 import { PlusIcon, PencilIcon, TrashIcon, WarningIcon, SpinnerIcon, SparklesIcon } from '../components/icons'
-import { AddTaskModal, EditModal, DeleteModal, type TaskType, type EditForm, formatDateMMDDYYYY, displayTitle } from '../components/dashboard'
+import {
+  AddTaskModal,
+  EditModal,
+  DeleteModal,
+  type ClassTagCourseOption,
+  type TaskType,
+  type EditForm,
+  formatDateMMDDYYYY,
+  displayTitle,
+} from '../components/dashboard'
 import { isCurrentTerm } from '../utils/termUtils'
 
 function formatMinutes(minutes: number) {
@@ -85,17 +94,17 @@ export default function DashboardPage() {
 
   const taskRows = useMemo(() => tasks ?? [], [tasks])
 
-  const classTagOptions = useMemo(() => {
+  const classTagCourses = useMemo((): ClassTagCourseOption[] => {
     if (!userCourses?.length) return []
-    const labels = new Set<string>()
+    const rows: ClassTagCourseOption[] = []
     for (const c of userCourses) {
       if (!isCurrentTerm(c.term ?? '')) continue
-      const code = c.courseCode?.trim()
+      const courseCode = c.courseCode?.trim()
       const title = c.title?.trim()
-      if (!code || !title) continue
-      labels.add(`${code} ${title}`)
+      if (!courseCode || !title) continue
+      rows.push({ courseCode, title })
     }
-    return [...labels].sort((a, b) => a.localeCompare(b))
+    return rows.sort((a, b) => a.courseCode.localeCompare(b.courseCode))
   }, [userCourses])
 
   const totalEstimatedMinutes = useMemo(
@@ -285,7 +294,7 @@ export default function DashboardPage() {
         task={editingTask}
         onClose={() => setEditingTask(null)}
         onSave={handleSaveEdit}
-        classTagOptions={classTagOptions}
+        classTagCourses={classTagCourses}
       />
       <DeleteModal
         isOpen={deletingTask !== null}
@@ -297,7 +306,7 @@ export default function DashboardPage() {
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onTaskCreated={(taskId) => handleEstimateTask(taskId as Id<'tasks'>)}
-        classTagOptions={classTagOptions}
+        classTagCourses={classTagCourses}
       />
 
       <Sidebar />

@@ -27,6 +27,12 @@ export type BuiltInTaskType = (typeof BUILT_IN_TASK_TYPES)[number]
 export type SchemaTaskType = BuiltInTaskType
 export const CUSTOM_TASK_TYPE_OPTION = 'Other'
 
+/** Current-term class row for the class-tag combobox (matches Classes page course search). */
+export type ClassTagCourseOption = {
+  courseCode: string
+  title: string
+}
+
 export type EditForm = {
   title: string
   description: string

@@ -1,6 +1,6 @@
-import { useEffect, useId, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { CalendarIcon } from '../icons'
-import { type EditForm, CUSTOM_TASK_TYPE_OPTION, TASK_TYPE_OPTIONS } from './types'
+import { type ClassTagCourseOption, type EditForm, CUSTOM_TASK_TYPE_OPTION, TASK_TYPE_OPTIONS } from './types'
 import Modal from '../ui/Modal'
 import { validateDueDate } from '../../validators'
 
@@ -18,8 +18,8 @@ interface TaskModalProps {
     dueDate: string
     classTag: string
   }
-  /** Course titles / codes for datalist suggestions (optional) */
-  classTagOptions?: string[]
+  /** Current-term classes for the course-style combobox (optional) */
+  classTagCourses?: ClassTagCourseOption[]
   onClose: () => void
   onSubmit: (form: EditForm) => Promise<void>
 }
@@ -31,19 +31,32 @@ export default function TaskModal({
   primaryLabel,
   primaryLoadingLabel,
   initialValues,
-  classTagOptions = [],
+  classTagCourses = [],
   onClose,
   onSubmit,
 }: TaskModalProps) {
-  const classTagListId = useId()
+  const classTagInputId = useId()
+  const classTagRef = useRef<HTMLDivElement>(null)
   const [taskName, setTaskName] = useState(initialValues.taskName)
   const [selectedType, setSelectedType] = useState(initialValues.selectedType)
   const [customTaskType, setCustomTaskType] = useState(initialValues.customTaskType)
   const [description, setDescription] = useState(initialValues.description)
   const [dueDate, setDueDate] = useState(initialValues.dueDate)
   const [classTag, setClassTag] = useState(initialValues.classTag)
+  const [showClassSuggestions, setShowClassSuggestions] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const filteredClassCourses =
+    classTagCourses.length === 0
+      ? []
+      : classTag.trim().length === 0
+        ? classTagCourses.slice(0, 50)
+        : classTagCourses
+            .filter((c) =>
+              `${c.courseCode} ${c.title}`.toLowerCase().includes(classTag.toLowerCase())
+            )
+            .slice(0, 50)
 
   useEffect(() => {
     if (!isOpen) return
@@ -53,6 +66,7 @@ export default function TaskModal({
     setDescription(initialValues.description)
     setDueDate(initialValues.dueDate)
     setClassTag(initialValues.classTag)
+    setShowClassSuggestions(false)
     setError(null)
     setSubmitting(false)
   }, [
@@ -64,6 +78,16 @@ export default function TaskModal({
     initialValues.dueDate,
     initialValues.classTag,
   ])
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (classTagRef.current && !classTagRef.current.contains(e.target as Node)) {
+        setShowClassSuggestions(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
 
   function isValidDueDate(value: string): boolean {
     const err = validateDueDate(value)
@@ -153,27 +177,53 @@ export default function TaskModal({
           )}
         </div>
 
-        {/* Class tag */}
+        {/* Class tag — same combobox pattern as CourseSelector on Classes page */}
         <div className="flex w-full flex-col gap-1.5">
-          <label className="font-heading text-[13px] font-semibold text-navy" htmlFor={classTagListId}>
-            Class tag <span className="font-normal text-light-blue">(optional)</span>
-          </label>
-          <input
-            id={classTagListId}
-            type="text"
-            value={classTag}
-            onChange={(e) => setClassTag(e.target.value)}
-            list={classTagOptions.length > 0 ? `${classTagListId}-list` : undefined}
-            placeholder="e.g. course code or class name"
-            className="h-11 w-full rounded-md border border-border bg-bg-gray px-3.5 font-body text-sm text-navy outline-none placeholder:text-light-blue"
-          />
-          {classTagOptions.length > 0 && (
-            <datalist id={`${classTagListId}-list`}>
-              {classTagOptions.map((opt) => (
-                <option key={opt} value={opt} />
-              ))}
-            </datalist>
-          )}
+          <div>
+            <label className="font-heading text-[13px] font-semibold text-navy" htmlFor={classTagInputId}>
+              Class tag <span className="font-normal text-light-blue">(optional)</span>
+            </label>
+            {classTagCourses.length > 0 && (
+              <p className="mt-0.5 font-body text-xs text-light-blue">Search your current classes or type your own</p>
+            )}
+          </div>
+          <div ref={classTagRef} className="relative">
+            <input
+              id={classTagInputId}
+              type="text"
+              value={classTag}
+              onChange={(e) => {
+                setClassTag(e.target.value)
+                setShowClassSuggestions(true)
+              }}
+              onFocus={() => setShowClassSuggestions(true)}
+              placeholder={
+                classTagCourses.length > 0 ? 'Type to search courses…' : 'e.g. course code or class name'
+              }
+              className="w-full rounded-lg border border-border bg-bg-gray px-3 py-2 font-body text-sm text-navy outline-none placeholder:text-light-blue focus:border-sky-blue focus:ring-2 focus:ring-sky-blue/20"
+            />
+            {showClassSuggestions && classTagCourses.length > 0 && (
+              <ul className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-lg border border-border bg-white shadow-lg">
+                {filteredClassCourses.length > 0 ? (
+                  filteredClassCourses.map((c) => (
+                    <li
+                      key={`${c.courseCode}-${c.title}`}
+                      onMouseDown={() => {
+                        setClassTag(`${c.courseCode}: ${c.title}`)
+                        setShowClassSuggestions(false)
+                      }}
+                      className="cursor-pointer px-3 py-2 font-body text-sm hover:bg-sky-blue/10"
+                    >
+                      <span className="font-semibold text-navy">{c.courseCode}</span>
+                      <span className="ml-2 text-slate-blue">{c.title}</span>
+                    </li>
+                  ))
+                ) : (
+                  <li className="px-3 py-2 font-body text-sm text-light-blue select-none">No courses found</li>
+                )}
+              </ul>
+            )}
+          </div>
         </div>
 
         {/* Description */}
