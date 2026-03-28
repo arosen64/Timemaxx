@@ -2,6 +2,7 @@ import { internalMutation, mutation } from "../_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { taskTypeValidator } from "../lib/taskValidators";
+import { internal } from "../_generated/api";
 
 /**
  * Internal mutation called by the uploadSyllabus action to create a syllabi
@@ -88,6 +89,10 @@ export const confirmSyllabusTasks = mutation({
     );
 
     await ctx.db.patch(args.syllabusId, { status: "confirmed" });
+
+    for (const taskId of taskIds) {
+      await ctx.scheduler.runAfter(0, internal.actions.estimateTaskTime.estimateTaskTime, { taskId });
+    }
 
     return taskIds;
   },
