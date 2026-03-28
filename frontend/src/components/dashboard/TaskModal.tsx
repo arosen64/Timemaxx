@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { CalendarIcon } from '../icons'
 import { type ClassTagCourseOption, type EditForm, CUSTOM_TASK_TYPE_OPTION, TASK_TYPE_OPTIONS } from './types'
+import DueDateRowWithCalendar from '../DueDateRowWithCalendar'
+import DueTimeField from '../DueTimeField'
 import Modal from '../ui/Modal'
 import Selector from '../ui/Selector'
 import {
@@ -141,13 +142,6 @@ export default function TaskModal({
       return false
     }
     return true
-  }
-
-  function openNativeDatePicker() {
-    const el = datePickerRef.current
-    if (!el) return
-    const picker = el as HTMLInputElement & { showPicker?: () => void }
-    picker.showPicker?.() ?? el.click()
   }
 
   function handleDueDateBlur() {
@@ -309,55 +303,29 @@ export default function TaskModal({
               <label className="mb-1 block font-body text-xs font-medium text-slate-blue" htmlFor="task-due-date">
                 Date
               </label>
-              <div className="relative flex h-11 items-center justify-between rounded-md border border-border bg-bg-gray px-3.5">
-                <input
-                  id="task-due-date"
-                  type="text"
-                  value={dueDate}
-                  onChange={(e) => setDueDate(e.target.value)}
-                  onBlur={handleDueDateBlur}
-                  onFocus={() => setError(null)}
-                  placeholder="MM/DD/YYYY"
-                  autoComplete="off"
-                  className="min-w-0 flex-1 border-none bg-transparent font-body text-sm text-navy outline-none placeholder:text-light-blue"
-                />
-                <div className="relative ml-2 inline-flex shrink-0">
-                  <input
-                    ref={datePickerRef}
-                    type="date"
-                    className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-0 h-px w-px min-w-px -translate-x-1/2 opacity-0"
-                    tabIndex={-1}
-                    aria-hidden
-                    value={datePickerValue}
-                    {...(datePickerMin !== undefined ? { min: datePickerMin } : {})}
-                    onChange={(e) => handleNativeDateChange(e.target.value)}
-                  />
-                  <button
-                    type="button"
-                    onClick={openNativeDatePicker}
-                    className="relative z-20 cursor-pointer rounded p-1 text-light-blue outline-none hover:text-navy focus-visible:ring-2 focus-visible:ring-navy/30"
-                    aria-label="Open calendar"
-                  >
-                    <CalendarIcon />
-                  </button>
-                </div>
-              </div>
-            </div>
-            <div className="shrink-0 sm:w-[9.5rem]">
-              <label className="mb-1 block font-body text-xs font-medium text-slate-blue" htmlFor="task-due-time">
-                Time
-              </label>
-              <input
-                id="task-due-time"
-                type="time"
-                value={dueTime}
-                onChange={(e) => {
-                  setDueTime(e.target.value)
-                  setError(null)
-                }}
-                className="h-11 w-full rounded-md border border-border bg-bg-gray px-3 font-body text-sm text-navy outline-none focus:border-sky-blue"
+              <DueDateRowWithCalendar
+                variant="modal"
+                calendarPosition="end"
+                datePickerRef={datePickerRef}
+                textInputId="task-due-date"
+                dateTextValue={dueDate}
+                onDateTextChange={setDueDate}
+                onDateTextBlur={handleDueDateBlur}
+                onDateTextFocus={() => setError(null)}
+                placeholder="MM/DD/YYYY"
+                datePickerValue={datePickerValue}
+                {...(datePickerMin !== undefined ? { datePickerMin } : {})}
+                onIsoChange={handleNativeDateChange}
               />
             </div>
+            <DueTimeField
+              variant="modal"
+              id="task-due-time"
+              label="Time"
+              value={dueTime}
+              onChange={setDueTime}
+              onValueChange={() => setError(null)}
+            />
           </div>
         </div>
       </div>

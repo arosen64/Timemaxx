@@ -1,5 +1,7 @@
 import { useMemo, useRef } from 'react'
-import { CalendarIcon, XIcon } from '../icons'
+import DueDateRowWithCalendar from '../DueDateRowWithCalendar'
+import DueTimeField from '../DueTimeField'
+import { XIcon } from '../icons'
 import TaskTypePills from './TaskTypePills'
 import { type ReviewTask } from './types'
 import {
@@ -33,13 +35,6 @@ export default function TaskReviewCard({ task, onChange, onRemove }: TaskReviewC
 
   function update(fields: Partial<Omit<ReviewTask, 'id'>>) {
     onChange({ ...task, ...fields })
-  }
-
-  function openNativeDatePicker() {
-    const el = datePickerRef.current
-    if (!el) return
-    const picker = el as HTMLInputElement & { showPicker?: () => void }
-    picker.showPicker?.() ?? el.click()
   }
 
   function handleDueDateBlur() {
@@ -86,54 +81,27 @@ export default function TaskReviewCard({ task, onChange, onRemove }: TaskReviewC
         <div className="flex flex-wrap items-end gap-2.5">
           <div className="flex min-w-0 flex-col gap-1">
             <span className="font-body text-[11px] font-medium text-slate-blue">Date</span>
-            <div className="flex h-8 min-w-0 items-center gap-1.5 rounded-md border border-border bg-bg-gray px-2.5">
-              <div className="relative inline-flex shrink-0">
-                <input
-                  ref={datePickerRef}
-                  type="date"
-                  className="pointer-events-none absolute bottom-full left-1/2 z-10 h-px w-px min-w-px -translate-x-1/2 opacity-0"
-                  tabIndex={-1}
-                  aria-hidden
-                  value={datePickerValue}
-                  {...(datePickerMin !== undefined ? { min: datePickerMin } : {})}
-                  onChange={(e) => handleNativeDateChange(e.target.value)}
-                />
-                <button
-                  type="button"
-                  onClick={openNativeDatePicker}
-                  className="relative z-20 flex cursor-pointer items-center justify-center rounded p-0.5 text-light-blue outline-none hover:text-navy focus-visible:ring-2 focus-visible:ring-navy/30"
-                  aria-label="Open calendar"
-                >
-                  <CalendarIcon size={14} />
-                </button>
-              </div>
-              <input
-                id={`syllabus-review-due-${task.id}`}
-                type="text"
-                value={task.dueDate}
-                onChange={(e) => update({ dueDate: e.target.value })}
-                onBlur={handleDueDateBlur}
-                placeholder="MM / DD / YYYY"
-                autoComplete="off"
-                className="w-28 min-w-0 border-none bg-transparent font-body text-[13px] text-navy outline-none placeholder:text-light-blue"
-              />
-            </div>
-          </div>
-          <div className="flex min-w-0 flex-col gap-1">
-            <label
-              className="font-body text-[11px] font-medium text-slate-blue"
-              htmlFor={`syllabus-review-time-${task.id}`}
-            >
-              Time
-            </label>
-            <input
-              id={`syllabus-review-time-${task.id}`}
-              type="time"
-              value={task.dueTime}
-              onChange={(e) => update({ dueTime: e.target.value })}
-              className="h-8 w-[7.25rem] rounded-md border border-border bg-bg-gray px-2 font-body text-[13px] text-navy outline-none focus:border-sky-blue"
+            <DueDateRowWithCalendar
+              variant="compact"
+              calendarPosition="start"
+              datePickerRef={datePickerRef}
+              textInputId={`syllabus-review-due-${task.id}`}
+              dateTextValue={task.dueDate}
+              onDateTextChange={(v) => update({ dueDate: v })}
+              onDateTextBlur={handleDueDateBlur}
+              placeholder="MM / DD / YYYY"
+              datePickerValue={datePickerValue}
+              {...(datePickerMin !== undefined ? { datePickerMin } : {})}
+              onIsoChange={handleNativeDateChange}
             />
           </div>
+          <DueTimeField
+            variant="compact"
+            id={`syllabus-review-time-${task.id}`}
+            label="Time"
+            value={task.dueTime}
+            onChange={(v) => update({ dueTime: v })}
+          />
           <div className="flex min-w-0 items-center pb-0.5">
             <TaskTypePills value={task.taskType} onChange={(taskType) => update({ taskType })} />
           </div>
