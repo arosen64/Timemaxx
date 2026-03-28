@@ -87,7 +87,7 @@ export default function PreferencesPage() {
         }));
         await updateSettings({ workHoursGrid: newGrid });
         // 3.3: Trigger conflict detection after work hours change
-        await runDetectConflicts({ timedEvents: [], workHoursGrid: newGrid }).catch(() => {});
+        await runDetectConflicts({ timedEvents: [], workHoursGrid: newGrid, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone }).catch(() => {});
       } else if (editingSection === "productivity" && preferencesDraft) {
         await updateSettings({
           productivityTraits: preferencesDraft.traits,

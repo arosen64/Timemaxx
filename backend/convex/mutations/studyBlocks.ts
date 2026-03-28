@@ -7,13 +7,28 @@ import type { Id } from "../_generated/dataModel";
 type WorkHoursRow = { day: string; available: number[]; blocked: number[] }
 type TimedEventArg = { id: string; summary: string; start: string; end: string; calendarId: string }
 
-const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+
+function getLocalTimeInfo(isoString: string, timezone: string): { dayName: string; minutesFromMidnight: number } {
+  const dt = new Date(isoString)
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: timezone,
+    weekday: "long",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(dt)
+  const dayName = parts.find((p) => p.type === "weekday")?.value ?? ""
+  const hour = parseInt(parts.find((p) => p.type === "hour")?.value ?? "0", 10)
+  const minute = parseInt(parts.find((p) => p.type === "minute")?.value ?? "0", 10)
+  return { dayName, minutesFromMidnight: (hour === 24 ? 0 : hour) * 60 + minute }
+}
 
 function isBlockConflicted(
   block: { startTime: string; studyBlockLength: number },
   task: { dueDate: number },
   timedEvents: TimedEventArg[],
   workHoursGrid: WorkHoursRow[],
+  timezone: string,
 ): boolean {
   const startMs = new Date(block.startTime).getTime()
   const endMs = startMs + block.studyBlockLength * 60 * 1000
@@ -28,12 +43,10 @@ function isBlockConflicted(
     if (startMs < eventEnd && eventStart < endMs) return true
   }
 
-  // 3. Unavailable slot overlap (workHoursGrid blocked slots are local-time-based)
-  const startDate = new Date(block.startTime)
-  const dayName = DAYS[startDate.getDay()]
+  // 3. Unavailable slot overlap — use Intl to get local day/time since Convex runs in UTC
+  const { dayName, minutesFromMidnight: startMins } = getLocalTimeInfo(block.startTime, timezone)
   const row = workHoursGrid.find((r) => r.day === dayName)
   if (row) {
-    const startMins = startDate.getHours() * 60 + startDate.getMinutes()
     const endMins = startMins + block.studyBlockLength
     for (const slotIdx of row.blocked) {
       const slotStartMins = slotIdx * 30
@@ -187,6 +200,7 @@ export const detectConflicts = internalMutation({
     userId: v.id("users"),
     timedEvents: v.array(timedEventValidator),
     workHoursGrid: v.array(workHoursRowValidator),
+    timezone: v.string(),
   },
   handler: async (ctx, args) => {
     const tasks = await ctx.db
@@ -213,6 +227,7 @@ export const detectConflicts = internalMutation({
           { dueDate: task.dueDate },
           args.timedEvents,
           args.workHoursGrid,
+          args.timezone,
         );
 
         if ((block.isConflicted ?? false) !== conflicted) {
@@ -227,6 +242,7 @@ export const runDetectConflicts = mutation({
   args: {
     timedEvents: v.array(timedEventValidator),
     workHoursGrid: v.optional(v.array(workHoursRowValidator)),
+    timezone: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -236,6 +252,7 @@ export const runDetectConflicts = mutation({
       userId,
       timedEvents: args.timedEvents,
       workHoursGrid: args.workHoursGrid ?? [],
+      timezone: args.timezone ?? "UTC",
     });
   },
 });

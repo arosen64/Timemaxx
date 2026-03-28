@@ -83,6 +83,7 @@ export default function ScheduleTab() {
     runDetectConflictsMutation({
       timedEvents: calendarData?.timedEvents ?? [],
       workHoursGrid: workHoursGrid ?? [],
+      timezone,
     }).catch(() => {})
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [calendarData?.timedEvents, workHoursGrid])
@@ -224,7 +225,7 @@ export default function ScheduleTab() {
 
   const handleSlotClick = useCallback(async (dateStr: string, slot: number) => {
     if (!assigningBlockId) return
-    const slotStartMs = new Date(dateStr).getTime() + slot * 30 * 60 * 1000
+    const slotStartMs = new Date(`${dateStr}T00:00:00`).getTime() + slot * 30 * 60 * 1000
     const isoStart = new Date(slotStartMs).toISOString()
     await editStudyBlockTimeMutation({ studyBlockId: assigningBlockId, startTime: isoStart })
     setAssigningBlockId(null)
@@ -232,7 +233,7 @@ export default function ScheduleTab() {
 
   const handleDrop = useCallback(async (dateStr: string, slot: number) => {
     if (!draggingBlockId) return
-    const slotStartMs = new Date(dateStr).getTime() + slot * 30 * 60 * 1000
+    const slotStartMs = new Date(`${dateStr}T00:00:00`).getTime() + slot * 30 * 60 * 1000
     const isoStart = new Date(slotStartMs).toISOString()
     await editStudyBlockTimeMutation({ studyBlockId: draggingBlockId, startTime: isoStart })
     setDraggingBlockId(null)
@@ -272,6 +273,7 @@ export default function ScheduleTab() {
     await runDetectConflictsMutation({
       timedEvents: data.timedEvents,
       workHoursGrid: workHoursGrid ?? [],
+      timezone,
     }).catch(() => {})
   }
 

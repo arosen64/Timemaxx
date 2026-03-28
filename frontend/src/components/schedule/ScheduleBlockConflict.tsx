@@ -1,4 +1,5 @@
 import type { Id } from '../../../../backend/convex/_generated/dataModel'
+import { RetryIcon } from '../icons'
 
 interface ScheduleBlockConflictProps {
   title: string
@@ -45,9 +46,10 @@ export default function ScheduleBlockConflict({
         <button
           type="button"
           onClick={onAutoReschedule}
-          className="flex-1 h-5 rounded bg-navy font-heading text-[9px] font-semibold text-white transition hover:opacity-90"
+          title="Auto-reschedule"
+          className="flex h-5 w-6 shrink-0 items-center justify-center rounded bg-navy text-white transition hover:opacity-90"
         >
-          Auto-reschedule
+          <RetryIcon color="currentColor" size={10} />
         </button>
       </div>
     </div>
