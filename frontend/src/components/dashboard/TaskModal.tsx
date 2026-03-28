@@ -4,13 +4,25 @@ import { type ClassTagCourseOption, type EditForm, CUSTOM_TASK_TYPE_OPTION, TASK
 import Modal from '../ui/Modal'
 import Selector from '../ui/Selector'
 import { validateDueDate } from '../../validators'
+import { legacyNaiveClassTag } from '../../utils/classTagUtils'
 
 const EMPTY_CLASS_TAG_COURSES: ClassTagCourseOption[] = []
 
+/** Map legacy duplicate-prefix tags to canonical `classTag` so the select value matches. */
+function migrateClassTagToCanonical(raw: string, courses: ClassTagCourseOption[]): string {
+  const t = raw.trim()
+  if (!t) return ''
+  for (const c of courses) {
+    if (t === c.classTag) return c.classTag
+    if (t === legacyNaiveClassTag(c.courseCode, c.title)) return c.classTag
+  }
+  return ''
+}
+
 function allowedClassTagValue(raw: string, courses: ClassTagCourseOption[]): string {
-  if (!raw.trim()) return ''
-  const allowed = new Set(courses.map((c) => `${c.courseCode}: ${c.title}`))
-  return allowed.has(raw.trim()) ? raw.trim() : ''
+  const canonical = migrateClassTagToCanonical(raw, courses)
+  const allowed = new Set(courses.map((c) => c.classTag))
+  return allowed.has(canonical) ? canonical : ''
 }
 
 interface TaskModalProps {
@@ -59,8 +71,8 @@ export default function TaskModal({
   const classTagSelectOptions = useMemo(
     () =>
       courses.map((c) => ({
-        label: `${c.courseCode}: ${c.title}`,
-        value: `${c.courseCode}: ${c.title}`,
+        label: c.classTag,
+        value: c.classTag,
       })),
     [courses]
   )

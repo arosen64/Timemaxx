@@ -31,6 +31,8 @@ export const CUSTOM_TASK_TYPE_OPTION = 'Other'
 export type ClassTagCourseOption = {
   courseCode: string
   title: string
+  /** Canonical stored task tag (dedupes catalog when title already includes OfferingName). */
+  classTag: string
 }
 
 export type EditForm = {

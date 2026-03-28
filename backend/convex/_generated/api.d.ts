@@ -20,6 +20,7 @@ import type * as auth from "../auth.js";
 import type * as calendarOAuthCallback from "../calendarOAuthCallback.js";
 import type * as http from "../http.js";
 import type * as lib_calendarCrypto from "../lib/calendarCrypto.js";
+import type * as lib_classTagUtils from "../lib/classTagUtils.js";
 import type * as lib_gemini from "../lib/gemini.js";
 import type * as lib_syllabusTypes from "../lib/syllabusTypes.js";
 import type * as lib_taskValidators from "../lib/taskValidators.js";
@@ -55,6 +56,7 @@ declare const fullApi: ApiFromModules<{
   calendarOAuthCallback: typeof calendarOAuthCallback;
   http: typeof http;
   "lib/calendarCrypto": typeof lib_calendarCrypto;
+  "lib/classTagUtils": typeof lib_classTagUtils;
   "lib/gemini": typeof lib_gemini;
   "lib/syllabusTypes": typeof lib_syllabusTypes;
   "lib/taskValidators": typeof lib_taskValidators;

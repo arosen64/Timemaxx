@@ -15,6 +15,7 @@ import {
   displayTitle,
 } from '../components/dashboard'
 import { isCurrentTerm } from '../utils/termUtils'
+import { buildClassTag, formatClassTagForDisplay } from '../utils/classTagUtils'
 
 function formatMinutes(minutes: number) {
   if (!Number.isFinite(minutes) || minutes <= 0) return '—'
@@ -102,7 +103,7 @@ export default function DashboardPage() {
       const courseCode = c.courseCode?.trim()
       const title = c.title?.trim()
       if (!courseCode || !title) continue
-      rows.push({ courseCode, title })
+      rows.push({ courseCode, title, classTag: buildClassTag(courseCode, title) })
     }
     return rows.sort((a, b) => a.courseCode.localeCompare(b.courseCode))
   }, [userCourses])
@@ -423,7 +424,7 @@ export default function DashboardPage() {
                           </div>
                           <div className="text-xs text-slate-blue">
                             Due {formatDateMMDDYYYY(task.dueDate)}
-                            {task.classTag ? ` · ${task.classTag}` : ''} · {task.taskType} · ~{formatMinutes(task.timeEstimate ?? 0)} estimated
+                            {task.classTag ? ` · ${formatClassTagForDisplay(task.classTag)}` : ''} · {task.taskType} · ~{formatMinutes(task.timeEstimate ?? 0)} estimated
                           </div>
                           {task.description.trim().length > 0 && (
                             <div className="text-xs break-words text-light-blue line-clamp-4">
