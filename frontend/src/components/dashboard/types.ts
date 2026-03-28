@@ -11,6 +11,7 @@ export type TaskType = {
   estimateFeedbackSubmittedAt?: number
   dueDate: number
   createdAt: number
+  courseId?: Id<'userCourses'>
 }
 
 export const BUILT_IN_TASK_TYPES = [
@@ -31,6 +32,7 @@ export type EditForm = {
   description: string
   taskType: string
   dueDate: number
+  courseId?: Id<'userCourses'>
 }
 
 export const TASK_TYPE_OPTIONS: BuiltInTaskType[] = [...BUILT_IN_TASK_TYPES]

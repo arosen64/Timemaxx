@@ -3,6 +3,12 @@ import { CalendarIcon } from '../icons'
 import { type EditForm, CUSTOM_TASK_TYPE_OPTION, TASK_TYPE_OPTIONS } from './types'
 import Modal from '../ui/Modal'
 import { validateDueDate } from '../../validators'
+import { Id } from '../../../../backend/convex/_generated/dataModel'
+
+interface CourseOption {
+  id: Id<'userCourses'>
+  label: string
+}
 
 interface TaskModalProps {
   isOpen?: boolean
@@ -16,7 +22,9 @@ interface TaskModalProps {
     customTaskType: string
     description: string
     dueDate: string
+    courseId?: Id<'userCourses'>
   }
+  courses?: CourseOption[]
   onClose: () => void
   onSubmit: (form: EditForm) => Promise<void>
 }
@@ -28,6 +36,7 @@ export default function TaskModal({
   primaryLabel,
   primaryLoadingLabel,
   initialValues,
+  courses,
   onClose,
   onSubmit,
 }: TaskModalProps) {
@@ -36,6 +45,7 @@ export default function TaskModal({
   const [customTaskType, setCustomTaskType] = useState(initialValues.customTaskType)
   const [description, setDescription] = useState(initialValues.description)
   const [dueDate, setDueDate] = useState(initialValues.dueDate)
+  const [courseId, setCourseId] = useState<Id<'userCourses'> | undefined>(initialValues.courseId)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -46,6 +56,7 @@ export default function TaskModal({
     setCustomTaskType(initialValues.customTaskType)
     setDescription(initialValues.description)
     setDueDate(initialValues.dueDate)
+    setCourseId(initialValues.courseId)
     setError(null)
     setSubmitting(false)
   }, [
@@ -55,6 +66,7 @@ export default function TaskModal({
     initialValues.customTaskType,
     initialValues.description,
     initialValues.dueDate,
+    initialValues.courseId,
   ])
 
   function isValidDueDate(value: string): boolean {
@@ -81,6 +93,7 @@ export default function TaskModal({
         description,
         taskType: resolvedTaskType,
         dueDate: new Date(trimmedDueDate).getTime(),
+        courseId,
       })
       onClose()
     } catch (e) {
@@ -171,6 +184,25 @@ export default function TaskModal({
             <CalendarIcon />
           </div>
         </div>
+
+        {/* Course (optional, only shown if user has current courses) */}
+        {courses && courses.length > 0 && (
+          <div className="flex w-full flex-col gap-1.5">
+            <label className="font-heading text-[13px] font-semibold text-navy">
+              Course <span className="font-normal text-light-blue">(optional)</span>
+            </label>
+            <select
+              value={courseId ?? ''}
+              onChange={(e) => setCourseId(e.target.value ? e.target.value as Id<'userCourses'> : undefined)}
+              className="h-11 w-full rounded-md border border-border bg-bg-gray px-3.5 font-body text-sm text-navy outline-none focus:border-teal focus:ring-1 focus:ring-teal transition"
+            >
+              <option value="">No course</option>
+              {courses.map((c) => (
+                <option key={c.id} value={c.id}>{c.label}</option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
     </Modal>
   )
