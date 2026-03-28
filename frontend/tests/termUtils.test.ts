@@ -1,0 +1,30 @@
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { isPastTerm } from '../src/utils/termUtils'
+
+describe('isPastTerm', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('returns true for a past year', () => {
+    expect(isPastTerm('Fall 2020')).toBe(true)
+  })
+
+  it('returns true for a past season in the same year', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2024-10-01'))
+    expect(isPastTerm('Spring 2024')).toBe(true)
+  })
+
+  it('returns false for a far future term', () => {
+    expect(isPastTerm('Fall 2099')).toBe(false)
+  })
+
+  it('returns false for an empty string', () => {
+    expect(isPastTerm('')).toBe(false)
+  })
+
+  it('returns false for an unrecognized format', () => {
+    expect(isPastTerm('Unknown Term')).toBe(false)
+  })
+})
