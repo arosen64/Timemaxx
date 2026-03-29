@@ -58,7 +58,7 @@ export const addUserCourse = mutation({
       term: args.term,
       grade: args.grade,
       studyGoal: args.studyGoal,
-      difficultyRating: args.difficultyRating,
+      difficultyRating: args.difficultyRating ?? 3,
     });
   },
 });
