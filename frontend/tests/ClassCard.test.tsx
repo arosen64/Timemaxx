@@ -31,7 +31,6 @@ const defaultProps = {
   title: 'Intro to CS',
   term: 'Spring 2026',
   grade: undefined as string | undefined,
-  studyGoal: undefined as string | undefined,
   isPast: false,
   hasSyllabus: false,
   taskCount: 0,
@@ -175,6 +174,41 @@ describe('ClassCard', () => {
       setup({ isPast: true })
       await user.click(screen.getByRole('button', { name: /^save$/i }))
       expect(screen.getByText('Please select a grade before saving.')).toBeInTheDocument()
+    })
+  })
+
+  describe('past course grade blur revert', () => {
+    it('reverts grade to original value on blur without saving', async () => {
+      const user = userEvent.setup()
+      setup({ isPast: true, grade: 'B' })
+      const select = screen.getByRole('combobox')
+      await user.selectOptions(select, 'A')
+      expect(select).toHaveValue('A')
+      await user.click(document.body)
+      expect(select).toHaveValue('B')
+    })
+
+    it('does not revert grade after a successful save', async () => {
+      const user = userEvent.setup()
+      const updateUserCourse = makeMutationFn()
+      mockUseMutation.mockReturnValue(updateUserCourse as never)
+      renderWithProviders(<ClassCard {...defaultProps} isPast={true} grade="B" />)
+      const select = screen.getByRole('combobox')
+      await user.selectOptions(select, 'A')
+      await user.click(screen.getByRole('button', { name: /^save$/i }))
+      await user.click(document.body)
+      expect(select).toHaveValue('A')
+    })
+
+    it('clears error on blur', async () => {
+      const user = userEvent.setup()
+      setup({ isPast: true })
+      await user.click(screen.getByRole('button', { name: /^save$/i }))
+      expect(screen.getByText('Please select a grade before saving.')).toBeInTheDocument()
+      // Re-focus the select, then blur it by clicking away
+      await user.click(screen.getByRole('combobox'))
+      await user.click(document.body)
+      expect(screen.queryByText('Please select a grade before saving.')).not.toBeInTheDocument()
     })
   })
 })
