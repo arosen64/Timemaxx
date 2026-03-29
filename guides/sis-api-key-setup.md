@@ -29,3 +29,14 @@ Confirm `SIS_API_KEY` appears in the output.
 
 - Each developer needs to set this key in their own Convex dev deployment
 - Do not commit keys into `README.md`, source code, or tracked config files
+
+## Production CD setup (one-time)
+
+For production deploys, store the SIS key in GitHub Actions and let CD write it to production Convex:
+
+1. In GitHub, go to **Settings -> Secrets and variables -> Actions -> New repository secret**
+2. Add:
+   - Name: `SIS_API_KEY`
+   - Value: `<your production SIS API key>`
+
+The CD workflow sets `SIS_API_KEY` in Convex on deploy.
