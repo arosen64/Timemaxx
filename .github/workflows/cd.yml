@@ -2,7 +2,7 @@ name: CD
 
 on:
   push:
-    branches: [master]
+    branches: [master, cicd]
 
 permissions:
   contents: read
@@ -40,6 +40,19 @@ jobs:
       # Set SITE_URL so Convex Auth redirects back to the deployed frontend after OAuth
       - name: Set Convex SITE_URL
         run: npx convex env set SITE_URL ${{ secrets.SITE_URL }}
+        env:
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
+
+      # Set a stable production calendar token secret.
+      # Do NOT generate a new random secret on each deploy.
+      - name: Set Convex CALENDAR_TOKEN_SECRET
+        run: npx convex env set CALENDAR_TOKEN_SECRET ${{ secrets.CALENDAR_TOKEN_SECRET }}
+        env:
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
+
+      # Set the production SIS API key from GitHub secrets.
+      - name: Set Convex JHU_SIS_API_KEY
+        run: npx convex env set JHU_SIS_API_KEY ${{ secrets.JHU_SIS_API_KEY }}
         env:
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
 

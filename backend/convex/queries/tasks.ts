@@ -11,6 +11,32 @@ export const getTaskInternal = internalQuery({
   },
 });
 
+export const getEstimateFeedbackContextInternal = internalQuery({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const tasks = await ctx.db
+      .query("tasks")
+      .withIndex("by_userId_createdAt", (q) => q.eq("userId", args.userId))
+      .order("desc")
+      .take(25);
+
+    return tasks
+      .filter(
+        (t) =>
+          t.timeEstimate !== undefined &&
+          t.estimateFeedbackRating !== undefined
+      )
+      .slice(0, 10)
+      .map((t) => ({
+        title: t.title,
+        taskType: t.taskType,
+        estimatedMinutes: t.timeEstimate as number,
+        rating: t.estimateFeedbackRating as "up" | "down",
+        correctedEstimateMinutes: t.correctedEstimateMinutes,
+      }));
+  },
+});
+
 // Get a single task by ID
 export const getTask = query({
   args: {
@@ -31,14 +57,7 @@ export const getTask = query({
 export const getAllTasks = query({
   args: {
     sortOrder: v.optional(v.union(v.literal("asc"), v.literal("desc"))),
-    taskType: v.optional(
-      v.union(
-        v.literal("Problem Set"),
-        v.literal("Essay"),
-        v.literal("Coding"),
-        v.literal("Exam Prep")
-      )
-    ),
+    taskType: v.optional(v.string()),
   },
 
   handler: async (ctx, args) => {
@@ -66,14 +85,7 @@ export const getTasksPaginated = query({
   args: {
     paginationOpts: paginationOptsValidator,
     sortOrder: v.optional(v.union(v.literal("asc"), v.literal("desc"))),
-    taskType: v.optional(
-      v.union(
-        v.literal("Problem Set"),
-        v.literal("Essay"),
-        v.literal("Coding"),
-        v.literal("Exam Prep")
-      )
-    ),
+    taskType: v.optional(v.string()),
   },
 
   handler: async (ctx, args) => {

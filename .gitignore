@@ -1,6 +1,9 @@
 # Dependencies
 node_modules
 
+# Test coverage (HTML + lcov)
+coverage
+
 # Build output
 dist
 dist-ssr

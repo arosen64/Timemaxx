@@ -48,9 +48,10 @@ export const DEFAULT_WORK_HOURS: WorkHoursData = Object.fromEntries(
 interface WorkHoursSelectorProps {
   data: WorkHoursData
   onChange: (data: WorkHoursData) => void
+  readOnly?: boolean
 }
 
-export default function WorkHoursSelector({ data, onChange }: WorkHoursSelectorProps) {
+export default function WorkHoursSelector({ data, onChange, readOnly = false }: WorkHoursSelectorProps) {
   const [paintMode, setPaintMode] = useState<PaintMode>('available')
   const [slots, setSlots] = useState(() => initSlots(data))
   const dragRef = useRef<{ active: boolean; action: DragAction; mode: PaintMode }>({
@@ -66,6 +67,22 @@ export default function WorkHoursSelector({ data, onChange }: WorkHoursSelectorP
     document.addEventListener('mouseup', handleMouseUp)
     return () => document.removeEventListener('mouseup', handleMouseUp)
   }, [])
+
+  // Tracks whether the most recent data change was caused by our own onChange call.
+  // If so, skip re-initializing slots — the data is already in sync and re-initializing
+  // would cause an extra render on every cell paint in edit mode.
+  const isOwnUpdate = useRef(false)
+
+  // Sync internal slots when data changes from an external source (e.g. parent loads
+  // saved values when switching into edit mode). Skipped when the change originated
+  // from our own onChange to avoid a double-render during drag painting.
+  useEffect(() => {
+    if (isOwnUpdate.current) {
+      isOwnUpdate.current = false
+      return
+    }
+    setSlots(initSlots(data))
+  }, [data])
 
   const slotsRef = useRef(slots)
   slotsRef.current = slots
@@ -89,6 +106,7 @@ export default function WorkHoursSelector({ data, onChange }: WorkHoursSelectorP
       }
       const next = { ...prev, [day]: { available, blocked } }
       setSlots(next)
+      isOwnUpdate.current = true
       onChange(slotsToData(next))
     },
     [onChange]
@@ -107,62 +125,69 @@ export default function WorkHoursSelector({ data, onChange }: WorkHoursSelectorP
   }
 
   const getCellClass = (day: string, slot: number): string => {
-    if (slots[day].available.has(slot)) return 'bg-green-300 hover:bg-green-400'
-    if (slots[day].blocked.has(slot)) return 'bg-slate-600 hover:bg-slate-500'
-    return 'bg-white hover:bg-gray-100'
+    if (slots[day].available.has(slot)) return readOnly ? 'bg-teal/40' : 'bg-teal/40 hover:bg-teal/60'
+    if (slots[day].blocked.has(slot)) return readOnly ? 'bg-slate-blue' : 'bg-slate-blue hover:bg-slate-blue/80'
+    return readOnly ? 'bg-white' : 'bg-white hover:bg-bg-gray'
   }
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <h2 className="text-xl font-semibold text-gray-900">Work Hours</h2>
-        <p className="mt-1 text-sm text-gray-500">
-          Click or drag to mark when you're available to study or when you'll never work.
-        </p>
-      </div>
 
-      {/* Mode toggle */}
+      {/* Mode toggle (edit) / Legend (readOnly) */}
       <div className="flex flex-wrap items-center gap-3">
-        <span className="text-sm font-medium text-gray-600">Drawing:</span>
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => setPaintMode('available')}
-            className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors ${
-              paintMode === 'available'
-                ? 'border-green-500 bg-green-50 text-green-700'
-                : 'border-gray-200 text-gray-500 hover:border-gray-300'
-            }`}
-          >
-            <span className="inline-block h-3 w-3 rounded-sm bg-green-300" />
-            Available
-          </button>
-          <button
-            type="button"
-            onClick={() => setPaintMode('blocked')}
-            className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors ${
-              paintMode === 'blocked'
-                ? 'border-slate-500 bg-slate-50 text-slate-700'
-                : 'border-gray-200 text-gray-500 hover:border-gray-300'
-            }`}
-          >
-            <span className="inline-block h-3 w-3 rounded-sm bg-slate-600" />
-            Never work
-          </button>
-        </div>
-        <span className="ml-auto text-xs text-gray-400">Click a painted cell to erase it</span>
+        {readOnly ? (
+          <>
+            <span className="flex items-center gap-1.5 font-body text-sm text-slate-blue">
+              <span className="inline-block h-3 w-3 rounded-sm bg-teal/40" /> Available
+            </span>
+            <span className="flex items-center gap-1.5 font-body text-sm text-slate-blue">
+              <span className="inline-block h-3 w-3 rounded-sm bg-slate-blue" /> Never work
+            </span>
+          </>
+        ) : (
+          <>
+            <span className="font-heading text-sm font-semibold text-navy">Drawing:</span>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setPaintMode('available')}
+                className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 font-body text-sm font-medium transition-colors ${
+                  paintMode === 'available'
+                    ? 'border-teal bg-teal/10 text-navy'
+                    : 'border-border text-slate-blue hover:border-teal'
+                }`}
+              >
+                <span className="inline-block h-3 w-3 rounded-sm bg-teal" />
+                Available
+              </button>
+              <button
+                type="button"
+                onClick={() => setPaintMode('blocked')}
+                className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 font-body text-sm font-medium transition-colors ${
+                  paintMode === 'blocked'
+                    ? 'border-slate-blue bg-slate-blue/10 text-navy'
+                    : 'border-border text-slate-blue hover:border-slate-blue'
+                }`}
+              >
+                <span className="inline-block h-3 w-3 rounded-sm bg-slate-blue" />
+                Never work
+              </button>
+            </div>
+            <span className="ml-auto font-body text-xs text-light-blue">Click a painted cell to erase it</span>
+          </>
+        )}
       </div>
 
       {/* Grid */}
-      <div className="select-none overflow-hidden rounded-xl border border-gray-200">
+      <div className="select-none overflow-hidden rounded-xl border border-border">
         {/* Sticky day header */}
         <div
-          className="grid border-b border-gray-200 bg-gray-50"
+          className="grid border-b border-border bg-bg-gray"
           style={{ gridTemplateColumns: '2.5rem repeat(7, 1fr)' }}
         >
           <div />
           {DAYS_SHORT.map((day) => (
-            <div key={day} className="py-2 text-center text-xs font-semibold text-gray-600">
+            <div key={day} className="py-2 text-center font-body text-xs font-semibold text-slate-blue">
               {day}
             </div>
           ))}
@@ -174,19 +199,21 @@ export default function WorkHoursSelector({ data, onChange }: WorkHoursSelectorP
             {Array.from({ length: TOTAL_SLOTS }, (_, slot) => (
               <Fragment key={slot}>
                 {/* Time label every 2 hours */}
-                <div className="flex h-4 items-start justify-end pr-1.5 pt-px text-[10px] leading-none text-gray-400">
+                <div className="flex h-4 items-start justify-end pr-1.5 pt-px font-body text-[10px] leading-none text-light-blue">
                   {slot % 2 === 0 ? slotToLabel(slot) : ''}
                 </div>
                 {/* One cell per day */}
                 {DAYS_FULL.map((day) => (
                   <div
                     key={day}
-                    className={`h-4 cursor-crosshair border-b border-r border-gray-100 transition-colors ${getCellClass(day, slot)}`}
-                    onMouseDown={(e) => {
+                    className={`h-4 border-b border-r border-border/50 transition-colors ${
+                      readOnly ? 'cursor-default' : 'cursor-crosshair'
+                    } ${getCellClass(day, slot)}`}
+                    onMouseDown={readOnly ? undefined : (e) => {
                       e.preventDefault()
                       handleMouseDown(day, slot)
                     }}
-                    onMouseEnter={() => handleMouseEnter(day, slot)}
+                    onMouseEnter={readOnly ? undefined : () => handleMouseEnter(day, slot)}
                   />
                 ))}
               </Fragment>

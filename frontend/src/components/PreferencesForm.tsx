@@ -37,6 +37,7 @@ const CATEGORIES = [
     key: 'deadlineBehavior',
     label: '⏰ Deadline Behavior',
     description: 'How deadlines affect your work',
+    singleSelect: true,
     options: [
       'I work best well in advance',
       'I need the pressure of a deadline',
@@ -47,6 +48,7 @@ const CATEGORIES = [
     key: 'breakPreferences',
     label: '🔄 Break Preferences',
     description: 'How you like to take breaks',
+    singleSelect: true,
     options: [
       'Frequent short breaks (every 25–30 min)',
       'Occasional medium breaks (every hour)',
@@ -58,6 +60,7 @@ const CATEGORIES = [
     key: 'subjectSwitching',
     label: '📚 Subject/Task Switching',
     description: 'How you prefer to switch between topics',
+    singleSelect: true,
     options: [
       'I prefer focusing on one subject per session',
       'I like switching between subjects',
@@ -73,6 +76,8 @@ interface CategorySectionProps {
   selected: string[]
   onToggle: (option: string) => void
   onAddCustom: (value: string) => void
+  singleSelect?: boolean
+  readOnly?: boolean
 }
 
 function CategorySection({
@@ -82,6 +87,8 @@ function CategorySection({
   selected,
   onToggle,
   onAddCustom,
+  singleSelect = false,
+  readOnly = false,
 }: CategorySectionProps) {
   const [customInput, setCustomInput] = useState('')
 
@@ -106,61 +113,66 @@ function CategorySection({
   return (
     <div className="flex flex-col gap-2">
       <div>
-        <p className="text-sm font-semibold text-gray-800">{label}</p>
-        <p className="text-xs text-gray-400">{description}</p>
+        <p className="font-heading text-sm font-semibold text-navy">{label}</p>
+        <p className="font-body text-xs text-light-blue">{description}</p>
       </div>
       <div className="flex flex-wrap gap-2">
         {options.map((option) => (
           <button
             key={option}
             type="button"
+            disabled={readOnly}
             onClick={() => onToggle(option)}
-            className={`rounded-full border px-3 py-1 text-sm transition-colors ${
+            className={`rounded-full border px-3 py-1 font-body text-sm transition-colors disabled:pointer-events-none ${
               selected.includes(option)
-                ? 'border-blue-500 bg-blue-600 text-white'
-                : 'border-gray-300 text-gray-600 hover:border-blue-400 hover:bg-blue-50'
+                ? 'border-navy bg-navy text-white'
+                : 'border-border text-slate-blue hover:border-sky-blue hover:bg-bg-gray'
             }`}
           >
             {option}
           </button>
         ))}
         {/* Custom trait chips */}
-        {customTraits.map((trait) => (
+        {!singleSelect && customTraits.map((trait) => (
           <span
             key={trait}
-            className="flex items-center gap-1 rounded-full border border-blue-500 bg-blue-600 px-3 py-1 text-sm text-white"
+            className="flex items-center gap-1 rounded-full border border-navy bg-navy px-3 py-1 font-body text-sm text-white"
           >
             {trait}
-            <button
-              type="button"
-              onClick={() => onToggle(trait)}
-              className="ml-0.5 opacity-70 hover:opacity-100"
-            >
-              ×
-            </button>
+            {!readOnly && (
+              <button
+                type="button"
+                onClick={() => onToggle(trait)}
+                className="ml-0.5 opacity-70 hover:opacity-100"
+              >
+                ×
+              </button>
+            )}
           </span>
         ))}
       </div>
       {/* Custom trait input */}
-      <div className="flex gap-2">
-        <input
-          type="text"
-          value={customInput}
-          onChange={(e) => setCustomInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Add custom..."
-          className="rounded-lg border border-dashed border-gray-300 px-3 py-1 text-sm outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400"
-        />
-        {customInput.trim() && (
-          <button
-            type="button"
-            onClick={handleAddCustom}
-            className="rounded-lg bg-blue-50 px-3 py-1 text-sm text-blue-600 hover:bg-blue-100"
-          >
-            Add
-          </button>
-        )}
-      </div>
+      {!singleSelect && !readOnly && (
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={customInput}
+            onChange={(e) => setCustomInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Add notes..."
+            className="rounded-lg border border-dashed border-border bg-bg-gray px-3 py-1 font-body text-sm text-navy outline-none placeholder:text-light-blue focus:border-sky-blue focus:ring-1 focus:ring-sky-blue/20"
+          />
+          {customInput.trim() && (
+            <button
+              type="button"
+              onClick={handleAddCustom}
+              className="rounded-lg bg-navy/10 px-3 py-1 font-body text-sm text-navy hover:bg-navy/20"
+            >
+              Add
+            </button>
+          )}
+        </div>
+      )}
     </div>
   )
 }
@@ -173,16 +185,19 @@ export const DEFAULT_PREFERENCES: PreferencesData = {
 interface PreferencesFormProps {
   data: PreferencesData
   onChange: (data: PreferencesData) => void
+  readOnly?: boolean
 }
 
-export default function PreferencesForm({ data, onChange }: PreferencesFormProps) {
+export default function PreferencesForm({ data, onChange, readOnly = false }: PreferencesFormProps) {
   const getSelected = (key: string): string[] => data.traits[key] ?? []
 
-  const handleToggle = (key: string, option: string) => {
+  const handleToggle = (key: string, option: string, singleSelect: boolean) => {
     const current = getSelected(key)
-    const updated = current.includes(option)
-      ? current.filter((o) => o !== option)
-      : [...current, option]
+    const updated = singleSelect
+      ? current.includes(option) ? [] : [option]
+      : current.includes(option)
+        ? current.filter((o) => o !== option)
+        : [...current, option]
     onChange({ ...data, traits: { ...data.traits, [key]: updated } })
   }
 
@@ -193,12 +208,6 @@ export default function PreferencesForm({ data, onChange }: PreferencesFormProps
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h2 className="text-xl font-semibold text-gray-900">Productivity Preferences</h2>
-        <p className="mt-1 text-sm text-gray-500">
-          Select everything that applies — this helps us schedule smarter.
-        </p>
-      </div>
 
       {CATEGORIES.map((cat) => (
         <CategorySection
@@ -207,30 +216,37 @@ export default function PreferencesForm({ data, onChange }: PreferencesFormProps
           description={cat.description}
           options={cat.options}
           selected={getSelected(cat.key)}
-          onToggle={(option) => handleToggle(cat.key, option)}
+          onToggle={(option) => handleToggle(cat.key, option, cat.singleSelect ?? false)}
           onAddCustom={(value) => handleAddCustom(cat.key, value)}
+          singleSelect={cat.singleSelect}
+          readOnly={readOnly}
         />
       ))}
 
       {/* Focus block length */}
-      <div className="flex flex-col gap-1 border-t border-gray-100 pt-4">
-        <label className="text-sm font-semibold text-gray-800">
+      <div className="flex flex-col gap-1 border-t border-border pt-4">
+        <label className="font-heading text-sm font-semibold text-navy">
           Focus Block Length (minutes)
         </label>
-        <p className="text-xs text-gray-400">How long is your ideal uninterrupted study session?</p>
+        <p className="font-body text-xs text-light-blue">How long is your ideal uninterrupted study session?</p>
         <input
           type="number"
           min={5}
           max={480}
           value={data.focusBlockLength}
-          onChange={(e) =>
+          readOnly={readOnly}
+          onChange={readOnly ? undefined : (e) =>
             onChange({
               ...data,
               focusBlockLength: e.target.value === '' ? '' : Number(e.target.value),
             })
           }
-          placeholder="e.g. 45"
-          className="w-32 rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+          placeholder={readOnly ? undefined : 'e.g. 45'}
+          className={`w-32 rounded-lg border border-border bg-bg-gray px-3 py-2 font-body text-sm text-navy outline-none ${
+            readOnly
+              ? 'cursor-default'
+              : 'placeholder:text-light-blue focus:border-sky-blue focus:ring-2 focus:ring-sky-blue/20'
+          }`}
         />
       </div>
     </div>

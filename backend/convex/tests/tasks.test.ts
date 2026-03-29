@@ -65,10 +65,13 @@ describe("mutations/tasks – createTask", () => {
     const dueDate = Date.now() + 86_400_000;
 
     const types = [
-      "Problem Set",
       "Essay",
-      "Coding",
+      "Problem Set",
       "Exam Prep",
+      "Coding",
+      "Reading",
+      "Lab",
+      "Presentation",
     ] as const;
 
     for (const taskType of types) {
@@ -83,5 +86,55 @@ describe("mutations/tasks – createTask", () => {
       const task = await t.run((ctx) => ctx.db.get(taskId));
       expect(task!.taskType).toBe(taskType);
     }
+  });
+
+  test("accepts custom task types", async () => {
+    const t = makeTestCtx();
+    const { withAuth } = await createTestUser(t);
+
+    const taskId = await withAuth.mutation(api.mutations.tasks.createTask, {
+      title: "Custom type task",
+      description: "desc",
+      taskType: "Take-home Quiz",
+      dueDate: Date.now() + 86_400_000,
+    });
+
+    await t.finishAllScheduledFunctions(vi.runAllTimers);
+    const task = await t.run((ctx) => ctx.db.get(taskId));
+    expect(task!.taskType).toBe("Take-home Quiz");
+  });
+
+  test("stores optional classTag when provided", async () => {
+    const t = makeTestCtx();
+    const { withAuth } = await createTestUser(t);
+
+    const taskId = await withAuth.mutation(api.mutations.tasks.createTask, {
+      title: "Tagged task",
+      description: "desc",
+      taskType: "Essay",
+      dueDate: Date.now() + 86_400_000,
+      classTag: "EN.601.220",
+    });
+
+    await t.finishAllScheduledFunctions(vi.runAllTimers);
+    const task = await t.run((ctx) => ctx.db.get(taskId));
+    expect(task!.classTag).toBe("EN.601.220");
+  });
+
+  test("omits classTag when whitespace-only", async () => {
+    const t = makeTestCtx();
+    const { withAuth } = await createTestUser(t);
+
+    const taskId = await withAuth.mutation(api.mutations.tasks.createTask, {
+      title: "No tag task",
+      description: "desc",
+      taskType: "Essay",
+      dueDate: Date.now() + 86_400_000,
+      classTag: "   ",
+    });
+
+    await t.finishAllScheduledFunctions(vi.runAllTimers);
+    const task = await t.run((ctx) => ctx.db.get(taskId));
+    expect(task!.classTag).toBeUndefined();
   });
 });

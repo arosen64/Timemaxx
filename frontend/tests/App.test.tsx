@@ -7,6 +7,10 @@ vi.mock('../src/pages/LandingPage', () => ({ default: () => <div>Landing Page</d
 vi.mock('../src/pages/OnboardingPage', () => ({ default: () => <div>Onboarding Page</div> }))
 vi.mock('../src/pages/DashboardPage', () => ({ default: () => <div>Dashboard Page</div> }))
 vi.mock('../src/pages/ProfilePage', () => ({ default: () => <div>Profile Page</div> }))
+vi.mock('../src/pages/SchedulePage', () => ({ default: () => <div>Schedule Page</div> }))
+vi.mock('../src/pages/PreferencesPage', () => ({ default: () => <div>Preferences Page</div> }))
+vi.mock('../src/pages/ClassesPage', () => ({ default: () => <div>Classes Page</div> }))
+vi.mock('../src/pages/SyllabusReviewPage', () => ({ default: () => <div>Syllabus Review Page</div> }))
 
 vi.mock('../../backend/convex/_generated/api', () => ({
   api: {
@@ -105,6 +109,50 @@ describe('App routing', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Profile Page')).toBeInTheDocument()
+    })
+  })
+
+  it('redirects unauthenticated users away from /schedule to landing', async () => {
+    mockUseConvexAuth.mockReturnValue({ isAuthenticated: false, isLoading: false })
+    mockUseQuery.mockReturnValue(undefined)
+
+    renderWithProviders(<App />, { initialEntries: ['/schedule'] })
+
+    await waitFor(() => {
+      expect(screen.getByText('Landing Page')).toBeInTheDocument()
+    })
+  })
+
+  it('redirects unauthenticated users away from /preferences to landing', async () => {
+    mockUseConvexAuth.mockReturnValue({ isAuthenticated: false, isLoading: false })
+    mockUseQuery.mockReturnValue(undefined)
+
+    renderWithProviders(<App />, { initialEntries: ['/preferences'] })
+
+    await waitFor(() => {
+      expect(screen.getByText('Landing Page')).toBeInTheDocument()
+    })
+  })
+
+  it('redirects unauthenticated users away from /classes to landing', async () => {
+    mockUseConvexAuth.mockReturnValue({ isAuthenticated: false, isLoading: false })
+    mockUseQuery.mockReturnValue(undefined)
+
+    renderWithProviders(<App />, { initialEntries: ['/classes'] })
+
+    await waitFor(() => {
+      expect(screen.getByText('Landing Page')).toBeInTheDocument()
+    })
+  })
+
+  it('redirects unauthenticated users away from /syllabus-review to landing', async () => {
+    mockUseConvexAuth.mockReturnValue({ isAuthenticated: false, isLoading: false })
+    mockUseQuery.mockReturnValue(undefined)
+
+    renderWithProviders(<App />, { initialEntries: ['/syllabus-review'] })
+
+    await waitFor(() => {
+      expect(screen.getByText('Landing Page')).toBeInTheDocument()
     })
   })
 
