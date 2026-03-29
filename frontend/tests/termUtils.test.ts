@@ -27,4 +27,18 @@ describe('isPastTerm', () => {
   it('returns false for an unrecognized format', () => {
     expect(isPastTerm('Unknown Term')).toBe(false)
   })
+
+  it('returns true for a past Summer term', () => {
+    expect(isPastTerm('Summer 2020')).toBe(true)
+  })
+
+  it('returns true for a past Intersession term', () => {
+    expect(isPastTerm('Intersession 2020')).toBe(true)
+  })
+
+  it('returns false for the current term', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2024-10-01')) // Fall 2024
+    expect(isPastTerm('Fall 2024')).toBe(false)
+  })
 })

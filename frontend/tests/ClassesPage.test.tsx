@@ -184,4 +184,22 @@ describe('ClassesPage', () => {
     await user.click(screen.getByRole('button', { name: /import transcript/i }))
     expect(screen.getByTestId('transcript-upload')).toBeInTheDocument()
   })
+
+  it('closes transcript overlay when onCoursesAdded is called with courses', async () => {
+    const user = userEvent.setup()
+    setup()
+    await user.click(screen.getByRole('button', { name: /import transcript/i }))
+    await user.click(screen.getByRole('button', { name: /finish upload/i }))
+    expect(screen.queryByTestId('transcript-upload')).not.toBeInTheDocument()
+  })
+
+  it('empty-state Add Class button opens CourseSelector panel', async () => {
+    const user = userEvent.setup()
+    setup([])
+    // The empty state renders its own Add Class button
+    const addButtons = screen.getAllByRole('button', { name: /add class/i })
+    // Click the one inside the empty state (the second button — header button is first)
+    await user.click(addButtons[addButtons.length - 1])
+    expect(screen.getByTestId('course-selector')).toBeInTheDocument()
+  })
 })

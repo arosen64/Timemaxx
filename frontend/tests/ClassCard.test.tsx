@@ -113,5 +113,47 @@ describe('ClassCard', () => {
       await user.click(screen.getByRole('button', { name: /^yes$/i }))
       expect(onRemove).toHaveBeenCalledTimes(1)
     })
+
+    it('shows task count warning when taskCount > 0 and confirmation is showing', async () => {
+      const user = userEvent.setup()
+      setup({ taskCount: 2 })
+      await user.click(screen.getByRole('button', { name: /remove intro to cs/i }))
+      expect(screen.getByText(/2 linked task/i)).toBeInTheDocument()
+    })
+  })
+
+  describe('syllabus upload modal', () => {
+    it('opens modal when Upload Syllabus is clicked', async () => {
+      const user = userEvent.setup()
+      setup()
+      await user.click(screen.getByRole('button', { name: /upload syllabus/i }))
+      expect(screen.getByTestId('syllabus-upload-modal')).toBeInTheDocument()
+    })
+
+    it('opens modal when Re-upload is clicked', async () => {
+      const user = userEvent.setup()
+      setup({ hasSyllabus: true, taskCount: 3 })
+      await user.click(screen.getByRole('button', { name: /re-upload/i }))
+      expect(screen.getByTestId('syllabus-upload-modal')).toBeInTheDocument()
+    })
+  })
+
+  describe('past course grade save', () => {
+    it('calls updateUserCourse with selected grade when Save is clicked', async () => {
+      const user = userEvent.setup()
+      const updateUserCourse = makeMutationFn()
+      mockUseMutation.mockReturnValue(updateUserCourse as never)
+      renderWithProviders(<ClassCard {...defaultProps} isPast={true} />)
+      await user.selectOptions(screen.getByRole('combobox'), 'A')
+      await user.click(screen.getByRole('button', { name: /^save$/i }))
+      expect(updateUserCourse).toHaveBeenCalledWith(expect.objectContaining({ grade: 'A' }))
+    })
+
+    it('shows validation error when Save is clicked without selecting a grade', async () => {
+      const user = userEvent.setup()
+      setup({ isPast: true })
+      await user.click(screen.getByRole('button', { name: /^save$/i }))
+      expect(screen.getByText('Please select a grade before saving.')).toBeInTheDocument()
+    })
   })
 })
