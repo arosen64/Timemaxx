@@ -68,6 +68,7 @@ export default function ClassesPage() {
           title="Import Transcript"
           primaryLabel="Close"
           onPrimary={() => setImportModalOpen(false)}
+          showCancelButton={false}
         >
           <TranscriptUpload
             onCoursesAdded={(courses) => {

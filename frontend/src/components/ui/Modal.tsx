@@ -18,6 +18,8 @@ interface ModalProps {
   primaryVariant?: 'default' | 'destructive'
   /** Whether to show the × close button in the header. Defaults to true. */
   showCloseButton?: boolean
+  /** Whether to show the Cancel button in the footer. Defaults to true. */
+  showCancelButton?: boolean
   /** 'sm' uses a narrower card with smaller padding and buttons (for confirm dialogs). */
   size?: 'default' | 'sm'
   /** 'blur' uses a heavier, blurred backdrop (for confirm dialogs). */
@@ -38,6 +40,7 @@ export default function Modal({
   isPrimaryDisabled = false,
   primaryVariant = 'default',
   showCloseButton = true,
+  showCancelButton = true,
   size = 'default',
   backdrop = 'default',
 }: ModalProps) {
@@ -102,15 +105,17 @@ export default function Modal({
 
         {/* Button Row */}
         <div className="flex w-full gap-3">
-          <button
-            type="button"
-            onClick={onClose}
-            className={`flex flex-1 cursor-pointer items-center justify-center rounded-lg border border-border bg-bg-gray font-heading font-semibold text-slate-blue transition hover:bg-bg-gray ${
-              isSm ? 'h-10 text-sm' : 'h-12 text-[15px]'
-            }`}
-          >
-            Cancel
-          </button>
+          {showCancelButton && (
+            <button
+              type="button"
+              onClick={onClose}
+              className={`flex flex-1 cursor-pointer items-center justify-center rounded-lg border border-border bg-bg-gray font-heading font-semibold text-slate-blue transition hover:bg-bg-gray ${
+                isSm ? 'h-10 text-sm' : 'h-12 text-[15px]'
+              }`}
+            >
+              Cancel
+            </button>
+          )}
           <button
             type="button"
             onClick={onPrimary}

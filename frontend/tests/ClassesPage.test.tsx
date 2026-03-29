@@ -210,14 +210,14 @@ describe('ClassesPage', () => {
     expect(screen.getByRole('dialog')).toBeInTheDocument()
   })
 
-  it('modal closes when the Cancel button is clicked', async () => {
+  it('modal closes when the Close button is clicked', async () => {
     const user = userEvent.setup()
     setup()
 
     await user.click(screen.getByRole('button', { name: /import transcript/i }))
     expect(screen.getByRole('dialog')).toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: /cancel/i }))
+    await user.click(screen.getByRole('button', { name: /^close$/i }))
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
