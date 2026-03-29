@@ -3,144 +3,25 @@ import { useQuery, useMutation, useAction } from 'convex/react'
 import { api } from '../../../backend/convex/_generated/api'
 import { Id } from '../../../backend/convex/_generated/dataModel'
 import Sidebar from '../components/Sidebar'
-import { PlusIcon, PencilIcon, TrashIcon, WarningIcon, SpinnerIcon, SparklesIcon } from '../components/icons'
+import { PlusIcon, SparklesIcon } from '../components/icons'
+import Button from '../components/ui/Button'
 import {
   AddTaskModal,
   EditModal,
   DeleteModal,
+  UpcomingSchedulePanel,
+  EstimationErrorModal,
+  StatCard,
+  TaskCard,
+  parseEstimationError,
   type ClassTagCourseOption,
   type TaskType,
   type EditForm,
-  formatDueDateTimeDisplay,
-  formatDateMMDDYYYY,
-  displayTitle,
+  BAR_COLORS,
+  BADGE_MAP,
 } from '../components/dashboard'
 import { isCurrentTerm } from '../utils/termUtils'
-import { buildClassTag, formatClassTagForDisplay } from '../utils/classTagUtils'
-
-type UpcomingBlock = {
-  _id: string
-  title: string
-  startTime: string
-  studyBlockLength: number
-  taskTitle: string
-  taskDueDate: number
-}
-
-function UpcomingSchedulePanel() {
-  const upcomingBlocks = useQuery(api.queries.studyBlocks.getUpcomingStudyBlocks) as UpcomingBlock[] | undefined
-
-  return (
-    <aside className="flex w-[300px] shrink-0 flex-col gap-4">
-      <h2 className="text-base font-bold font-heading text-navy">Today's Schedule</h2>
-
-      {upcomingBlocks === undefined ? (
-        <div className="rounded-[10px] border border-border bg-white p-5 text-sm text-slate-blue">
-          Loading…
-        </div>
-      ) : upcomingBlocks.length === 0 ? (
-        <div className="flex flex-col gap-1.5 rounded-[10px] border border-border bg-white p-[18px]">
-          <span className="font-heading text-[13px] font-semibold text-navy">No blocks in the next 24 hours</span>
-          <span className="text-xs text-slate-blue">Head to the Schedule tab to assign study blocks.</span>
-        </div>
-      ) : (
-        upcomingBlocks.map((block, i) => {
-          const startDt = new Date(block.startTime)
-          const endDt = new Date(startDt.getTime() + block.studyBlockLength * 60 * 1000)
-          const timeRange = `${startDt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} – ${endDt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`
-          const isFirst = i === 0
-
-          return (
-            <div
-              key={block._id}
-              className={`flex flex-col gap-1.5 rounded-[10px] p-[18px] ${isFirst ? 'bg-navy' : 'border border-border bg-white'}`}
-            >
-              <span className={`text-[11px] font-semibold ${isFirst ? 'text-sky-blue' : 'text-slate-blue'}`}>
-                {timeRange}
-              </span>
-              <span className={`font-heading text-[13px] font-semibold ${isFirst ? 'text-white' : 'text-navy'}`}>
-                {block.title}
-              </span>
-              <span className={`text-xs ${isFirst ? 'text-sky-blue' : 'text-slate-blue'}`}>
-                {block.studyBlockLength} min · Due {formatDateMMDDYYYY(block.taskDueDate)}
-              </span>
-            </div>
-          )
-        })
-      )}
-
-      <div className="flex items-center gap-2 rounded-lg border border-border bg-bg-gray px-3.5 py-3">
-        <SparklesIcon color="#68ACE5" size={14} />
-        <span className="text-[11px] text-slate-blue">Powered by Google Gemini</span>
-      </div>
-    </aside>
-  )
-}
-
-function formatMinutes(minutes: number) {
-  if (!Number.isFinite(minutes) || minutes <= 0) return '—'
-  if (minutes === 1) return '1 min'
-  return `${Math.round(minutes)} mins`
-}
-
-const BAR_COLORS = ['bg-urgent-red', 'bg-sky-blue', 'bg-[#008767]']
-
-const BADGE_MAP: Record<string, { bg: string; text: string; label: string }> = {
-  urgent: { bg: 'bg-[#FFF0EC]', text: 'text-urgent-red', label: 'Urgent' },
-  inprogress: { bg: 'bg-[#EBF5FF]', text: 'text-[#0077D8]', label: 'In Progress' },
-  default: { bg: 'bg-[#E6F5F0]', text: 'text-[#008767]', label: 'Not Started' },
-}
-
-// ─── Estimation Error Helpers ─────────────────────────────────────────────────
-
-function parseEstimationError(err: unknown): string {
-  const raw = err instanceof Error ? err.message : String(err)
-  const jsonMatch = raw.match(/(\{.+\})/s)
-  if (jsonMatch) {
-    try {
-      const parsed = JSON.parse(jsonMatch[1])
-      const inner = parsed?.error
-      if (inner?.code && inner?.message) {
-        return `Error ${inner.code}: ${inner.message}`
-      }
-    } catch {
-      // not valid JSON — fall through
-    }
-  }
-  return 'Failed to estimate task time. Please try again.'
-}
-
-// ─── Estimation Error Modal ───────────────────────────────────────────────────
-
-function EstimationErrorModal({
-  message,
-  onClose,
-}: {
-  message: string
-  onClose: () => void
-}) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-navy/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-sm p-8 bg-white border shadow-xl rounded-xl border-border">
-        <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-[#FFF0EC]">
-          <WarningIcon />
-        </div>
-        <h2 className="mt-4 text-lg font-bold font-heading text-navy">Estimation Failed</h2>
-        <p className="mt-2 text-sm leading-relaxed text-slate-blue">{message}</p>
-        <div className="mt-8">
-          <button
-            type="button"
-            onClick={onClose}
-            className="w-full h-10 text-sm font-semibold text-white transition rounded-lg bg-navy font-heading hover:opacity-90"
-          >
-            Dismiss
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
+import { buildClassTag } from '../utils/classTagUtils'
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 
@@ -349,12 +230,11 @@ export default function DashboardPage() {
     <div className="flex h-screen overflow-hidden bg-bg-gray font-body text-slate-blue">
 
       {/* Modals */}
-      {estimationError && (
-        <EstimationErrorModal
-          message={estimationError}
-          onClose={() => setEstimationError(null)}
-        />
-      )}
+      <EstimationErrorModal
+        isOpen={estimationError !== null}
+        message={estimationError ?? ''}
+        onClose={() => setEstimationError(null)}
+      />
       <EditModal
         isOpen={editingTask !== null}
         task={editingTask}
@@ -401,46 +281,34 @@ export default function DashboardPage() {
               · {taskRows.length} task{taskRows.length !== 1 ? 's' : ''} due this week
             </p>
           </div>
-          <button
-            type="button"
+          <Button
+            variant="primary"
+            icon={<PlusIcon color="#86C8BC" />}
             onClick={() => setIsAddModalOpen(true)}
-            className="flex items-center gap-2 px-5 text-sm font-semibold text-white transition rounded-lg h-11 bg-navy font-heading hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-sky-blue focus:ring-offset-2"
+            className="px-5 focus:outline-none focus:ring-2 focus:ring-sky-blue focus:ring-offset-2"
           >
-            <PlusIcon color="#86C8BC" />
             Add Task
-          </button>
+          </Button>
         </header>
 
         {/* Stats Row */}
         <div className="flex gap-4">
-          <div className="flex flex-1 flex-col gap-2 rounded-[10px] border border-border bg-white p-5">
-            <span className="text-xs font-semibold text-slate-blue">Tasks This Week</span>
-            <span className="font-heading text-[36px] font-bold leading-none text-navy">{taskRows.length}</span>
-            <div className="flex items-center gap-1">
-              <div className="h-2 w-2 shrink-0 rounded-full bg-[#008767]" />
-              <span className="text-xs text-[#008767]">0 completed</span>
-            </div>
-          </div>
-
-          <div className="flex flex-1 flex-col gap-2 rounded-[10px] border border-border bg-white p-5">
-            <span className="text-xs font-semibold text-slate-blue">Estimated Minutes</span>
-            <span className="font-heading text-[36px] font-bold leading-none text-navy">
-              {totalEstimatedMinutes > 0 ? Math.round(totalEstimatedMinutes) : '—'}
-            </span>
-            <div className="flex items-center gap-1">
-              <div className="w-2 h-2 rounded-full shrink-0 bg-sky-blue" />
-              <span className="text-xs text-sky-blue">AI estimated</span>
-            </div>
-          </div>
-
-          <div className="flex flex-1 flex-col gap-2 rounded-[10px] bg-navy p-5">
-            <span className="text-xs font-semibold text-sky-blue">Study Streak</span>
-            <span className="font-heading text-[36px] font-bold leading-none text-teal">7</span>
-            <div className="flex items-center gap-1">
-              <div className="w-2 h-2 rounded-full shrink-0 bg-teal" />
-              <span className="text-xs text-white">days in a row</span>
-            </div>
-          </div>
+          <StatCard
+            label="Tasks This Week"
+            value={taskRows.length}
+            indicator={{ dotClass: 'bg-success', text: '0 completed', textClass: 'text-success' }}
+          />
+          <StatCard
+            label="Estimated Minutes"
+            value={totalEstimatedMinutes > 0 ? Math.round(totalEstimatedMinutes) : '—'}
+            indicator={{ dotClass: 'bg-sky-blue', text: 'AI estimated', textClass: 'text-sky-blue' }}
+          />
+          <StatCard
+            label="Study Streak"
+            value={7}
+            indicator={{ dotClass: 'bg-teal', text: 'days in a row', textClass: 'text-white' }}
+            variant="dark"
+          />
         </div>
 
         {/* Columns */}
@@ -470,179 +338,33 @@ export default function DashboardPage() {
               </div>
             ) : (
               <div className="flex flex-col gap-3">
-                {taskRows.map((task, i) => {
-                  const barColor = BAR_COLORS[i % BAR_COLORS.length]
-                  const key = task.taskType?.toLowerCase().replace(/\s+/g, '') ?? ''
-                  const badge = BADGE_MAP[key] ?? BADGE_MAP.default
-
-                  return (
-                    <div
-                      key={task._id}
-                      className="group flex min-w-0 gap-3 rounded-[10px] border border-border bg-white px-[18px] py-4 overflow-hidden"
-                    >
-                      <div className={`mt-0.5 h-10 w-1 shrink-0 rounded ${barColor}`} />
-
-                      <div className="flex justify-between flex-1 min-w-0 gap-4">
-                        <div className="flex flex-col flex-1 min-w-0 gap-1">
-                          <div className="text-sm font-semibold truncate font-heading text-navy">
-                            {displayTitle(task)}
-                          </div>
-                          <div className="text-xs text-slate-blue">
-                            Due {formatDueDateTimeDisplay(task.dueDate)}
-                            {task.classTag ? ` · ${formatClassTagForDisplay(task.classTag)}` : ''} · {task.taskType} · ~{formatMinutes(task.timeEstimate ?? 0)} estimated
-                          </div>
-                          {task.description.trim().length > 0 && (
-                            <div className="text-xs break-words text-light-blue line-clamp-4">
-                              {task.description}
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="flex w-[260px] shrink-0 flex-col items-end gap-2">
-                          <div className="flex items-center gap-2">
-                            <div className={`rounded px-2.5 py-1 ${badge.bg}`}>
-                              <span className={`font-heading text-[11px] font-semibold ${badge.text}`}>
-                                {badge.label}
-                              </span>
-                            </div>
-                            {task.timeEstimate === undefined && (
-                              estimatingTasks.has(task._id) ? (
-                                <div className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-blue">
-                                  <SpinnerIcon color="currentColor" size={16} />
-                                </div>
-                              ) : (
-                                <button
-                                  type="button"
-                                  onClick={() => handleEstimateTask(task._id)}
-                                  className="flex items-center justify-center w-8 h-8 transition rounded-lg text-slate-blue hover:bg-bg-gray hover:text-navy"
-                                  aria-label="Estimate task time"
-                                >
-                                  <SparklesIcon color="currentColor" size={16} />
-                                </button>
-                              )
-                            )}
-                            <button
-                              type="button"
-                              onClick={() => setEditingTask(task)}
-                              className="flex items-center justify-center w-8 h-8 transition rounded-lg text-slate-blue hover:bg-bg-gray hover:text-navy"
-                              aria-label="Edit task"
-                            >
-                              <PencilIcon />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setDeletingTask(task)}
-                              className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-blue hover:bg-[#FFF0EC] hover:text-[#CF4520] transition"
-                              aria-label="Delete task"
-                            >
-                              <TrashIcon />
-                            </button>
-                          </div>
-
-                          {task.timeEstimate !== undefined && (
-                            task.estimateFeedbackRating && !editingFeedbackTasks.has(task._id) ? (
-                              <div className="w-full flex flex-col items-end gap-1.5">
-                                <div className="text-right text-[11px] text-light-blue">
-                                  Feedback: {task.estimateFeedbackRating === 'up' ? 'helpful' : 'improve'}
-                                  {task.correctedEstimateMinutes !== undefined
-                                    ? ` · actual ${formatMinutes(task.correctedEstimateMinutes)}`
-                                    : ''}
-                                  <button
-                                    type="button"
-                                    onClick={() => startEditFeedback(task)}
-                                    className="ml-1 text-[11px] text-light-blue hover:underline cursor-pointer select-none"
-                                  >
-                                    (<span className="text-sky-blue">edit</span>)
-                                  </button>
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="flex w-full flex-col items-end gap-1.5">
-                                <div className="flex items-center gap-1.5">
-                                  <span className="text-[11px] text-light-blue">Time estimate helpful?</span>
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      updateFeedbackDraft(task._id, (curr) =>
-                                        curr.rating === 'up'
-                                          ? { ...curr, rating: undefined, hours: '', minutes: '' }
-                                          : { ...curr, rating: 'up' }
-                                      )
-                                    }
-                                    className={`rounded px-2 py-1 text-xs transition ${
-                                      getFeedbackDraft(task._id).rating === 'up'
-                                        ? 'bg-sky-blue/20 text-navy'
-                                        : 'text-slate-blue hover:bg-bg-gray'
-                                    }`}
-                                    aria-label="Rate estimate thumbs up"
-                                  >
-                                    👍
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      updateFeedbackDraft(task._id, (curr) =>
-                                        curr.rating === 'down'
-                                          ? { ...curr, rating: undefined, hours: '', minutes: '' }
-                                          : { ...curr, rating: 'down' }
-                                      )
-                                    }
-                                    className={`rounded px-2 py-1 text-xs transition ${
-                                      getFeedbackDraft(task._id).rating === 'down'
-                                        ? 'bg-sky-blue/20 text-navy'
-                                        : 'text-slate-blue hover:bg-bg-gray'
-                                    }`}
-                                    aria-label="Rate estimate thumbs down"
-                                  >
-                                    👎
-                                  </button>
-                                </div>
-                                {getFeedbackDraft(task._id).rating && (
-                                  <>
-                                    <div className="flex items-center justify-end gap-1.5">
-                                      <span className="text-[11px] text-light-blue">Actual time taken</span>
-                                      <input
-                                        type="number"
-                                        min={0}
-                                        placeholder="hrs"
-                                        value={getFeedbackDraft(task._id).hours}
-                                        onChange={(e) =>
-                                          updateFeedbackDraft(task._id, (curr) => ({ ...curr, hours: e.target.value }))
-                                        }
-                                        className="w-10 px-1.5 text-[11px] bg-white border rounded outline-none h-6 border-border text-navy"
-                                      />
-                                      <input
-                                        type="number"
-                                        min={0}
-                                        placeholder="mins"
-                                        value={getFeedbackDraft(task._id).minutes}
-                                        onChange={(e) =>
-                                          updateFeedbackDraft(task._id, (curr) => ({ ...curr, minutes: e.target.value }))
-                                        }
-                                        className="w-12 px-1.5 text-[11px] bg-white border rounded outline-none h-6 border-border text-navy"
-                                      />
-                                    </div>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleSubmitFeedback(task._id)}
-                                      disabled={submittingFeedbackTasks.has(task._id)}
-                                      className="h-7 rounded border border-border px-2.5 text-[11px] font-medium text-slate-blue transition hover:bg-bg-gray disabled:opacity-60"
-                                    >
-                                      {submittingFeedbackTasks.has(task._id) ? 'Saving…' : 'Save'}
-                                    </button>
-                                  </>
-                                )}
-                                {feedbackErrors[task._id] && (
-                                  <div className="w-full text-right text-[11px] text-[#CF4520]">{feedbackErrors[task._id]}</div>
-                                )}
-                              </div>
-                            )
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
+                {taskRows.map((task, i) => (
+                  <TaskCard
+                    key={task._id}
+                    task={task}
+                    barColor={BAR_COLORS[i % BAR_COLORS.length]}
+                    badge={BADGE_MAP[task.taskType?.toLowerCase().replace(/\s+/g, '') ?? ''] ?? BADGE_MAP.default}
+                    isEstimating={estimatingTasks.has(task._id)}
+                    onEstimate={() => handleEstimateTask(task._id)}
+                    onEdit={() => setEditingTask(task)}
+                    onDelete={() => setDeletingTask(task)}
+                    feedback={{
+                      draft: getFeedbackDraft(task._id),
+                      error: feedbackErrors[task._id],
+                      isSubmitting: submittingFeedbackTasks.has(task._id),
+                      isEditing: editingFeedbackTasks.has(task._id),
+                      onToggleRating: (value) => updateFeedbackDraft(task._id, (curr) =>
+                        curr.rating === value
+                          ? { ...curr, rating: undefined, hours: '', minutes: '' }
+                          : { ...curr, rating: value }
+                      ),
+                      onHoursChange: (value) => updateFeedbackDraft(task._id, (curr) => ({ ...curr, hours: value })),
+                      onMinutesChange: (value) => updateFeedbackDraft(task._id, (curr) => ({ ...curr, minutes: value })),
+                      onSubmit: () => handleSubmitFeedback(task._id),
+                      onStartEdit: () => startEditFeedback(task),
+                    }}
+                  />
+                ))}
               </div>
             )}
           </section>
@@ -654,4 +376,3 @@ export default function DashboardPage() {
     </div>
   )
 }
-
