@@ -306,7 +306,7 @@ export default function DashboardPage() {
           />
           <StatCard
             label="Study Streak"
-            value={7}
+            value="—"
             indicator={{ dotClass: 'bg-teal', text: 'days in a row', textClass: 'text-white' }}
             variant="dark"
           />
