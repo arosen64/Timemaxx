@@ -82,6 +82,7 @@ export default function ClassCard({
   }
 
   async function handleStudyGoalChange(value: string) {
+    if (!value) return
     setStudyGoalValue(value)
     setStudyGoalError(null)
     try {

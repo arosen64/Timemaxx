@@ -30,6 +30,8 @@ const defaultProps = {
   courseCode: 'CS101',
   title: 'Intro to CS',
   term: 'Spring 2026',
+  grade: undefined as string | undefined,
+  studyGoal: undefined as string | undefined,
   isPast: false,
   hasSyllabus: false,
   taskCount: 0,
@@ -63,7 +65,7 @@ describe('ClassCard', () => {
     })
 
     it('pre-populates study goal selector with initial value', () => {
-      setup({ studyGoal: 'Do well' } as never)
+      setup({ studyGoal: 'Do well' })
       expect(screen.getByRole('combobox', { name: /study goal/i })).toHaveValue('Do well')
     })
 
