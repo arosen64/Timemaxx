@@ -30,6 +30,9 @@ npx vitest run --project frontend
 
 # Single file
 npx vitest run frontend/tests/OnboardingPage.test.tsx
+
+# Coverage report (text summary + HTML at coverage/index.html)
+npm test -- --coverage
 ```
 
 ---
@@ -73,16 +76,3 @@ mockUseMutation.mockReturnValue(saveOnboarding as never)
 ```
 
 Each test file mocks `convex/react` at the module level so `useQuery`, `useMutation`, `useAction`, and `useConvexAuth` can be controlled per-test.
-
----
-
-## What's Tested
-
-- **`mutations/tasks.test.ts`** — `createTask`: auth checks, task creation, field storage
-- **`mutations/users.test.ts`** — `completeOnboarding`: validation, field persistence
-- **`queries/tasks.test.ts`** — `getTask`, `getAllTasks`, `getTasksPaginated`: auth, ownership, filtering, sorting
-- **`queries/users.test.ts`** — `getCurrUser`, `isOnboardingComplete`: auth and state checks
-- **`App.test.tsx`** — auth redirect logic for all routes
-- **`OnboardingPage.test.tsx`** — 3-step flow, validation, navigation, submission
-- **`DashboardPage.test.tsx`** — task list rendering, modals, error handling
-- **`ProfileForm.test.tsx`** — form fields, tag inputs, controlled component behavior
