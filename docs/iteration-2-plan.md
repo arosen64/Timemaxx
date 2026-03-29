@@ -105,37 +105,71 @@
 
 ### Convex Schema Updates
 
-Changes needed for Iteration 2:
+Actual schema as implemented in Iteration 2:
 
 ```ts
-// users table — update transcript field
+// users table — new fields added
 {
-  transcriptFileId?: Id<"_storage">,        // file stored in Convex storage
-  transcriptDescription?: string,           // AI-generated plain-language description
+  transcriptSummary?: {         // AI-generated structured summary (replaces transcriptDescription)
+    label: string,
+    text: string,
+  }[],
 }
 
-// tasks table additions
+// tasks table — new fields added
 {
-  classTag?: string,          // course label (e.g., "CS 423")
-  taskType: string,           // extended set including custom types
-  estimateFeedback?: {
-    rating: "up" | "down",
-    correctedEstimate?: number,
-  },
+  classTag?: string,                          // free-text course label (e.g., "CS 423")
+  courseId?: Id<"userCourses">,               // reference to userCourses table
+  taskType: taskTypeValidator,                // extended set including custom types
+  estimateFeedbackRating?: "up" | "down",    // replaces nested estimateFeedback object
+  correctedEstimateMinutes?: number,
+  estimateFeedbackSubmittedAt?: number,
 }
 
 // syllabi table (new)
 {
   userId: Id<"users">,
-  fileName: string,
-  uploadedAt: number,
-  rawText: string,
-  extractedTasks: {
-    title: string,
-    dueDate: number,
-    taskType: string,
-    classTag: string,
-  }[],
+  fileContents: string,                       // raw text of the uploaded syllabus
+  courseId?: Id<"userCourses">,
+  status: "pending" | "confirmed" | "failed",
+  createdAt: number,
+}
+
+// userCourses table (new) — per-user course enrollment records
+{
+  userId: Id<"users">,
+  courseCode: string,           // e.g. "EN.501.303"
+  title: string,
+  credits?: number,
+  term: string,
+  grade?: string,
+  studyGoal?: string,
+  difficultyRating?: number,
+}
+
+// studyBlocks table (new) — scheduled time chunks assigned to tasks
+{
+  taskId: Id<"tasks">,
+  title: string,
+  startTime?: string,
+  studyBlockLength: number,
+  isConflicted?: boolean,
+}
+
+// calendarConnections table (new) — encrypted Google Calendar OAuth tokens
+{
+  userId: Id<"users">,
+  accessToken: string,
+  refreshToken: string,
+  expiresAt: number,
+  selectedCalendarIds?: string[],
+}
+
+// calendarOAuthStates table (new) — short-lived state tokens for OAuth callback
+{
+  userId: Id<"users">,
+  state: string,
+  expiresAt: number,
 }
 ```
 
