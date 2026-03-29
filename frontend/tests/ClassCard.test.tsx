@@ -30,6 +30,8 @@ const defaultProps = {
   courseCode: 'CS101',
   title: 'Intro to CS',
   term: 'Spring 2026',
+  grade: undefined as string | undefined,
+  studyGoal: undefined as string | undefined,
   isPast: false,
   hasSyllabus: false,
   taskCount: 0,
@@ -54,7 +56,26 @@ describe('ClassCard', () => {
 
     it('does not render a grade selector', () => {
       setup()
-      expect(screen.queryByRole('combobox')).not.toBeInTheDocument()
+      expect(screen.queryByText('Select grade…')).not.toBeInTheDocument()
+    })
+
+    it('renders a study goal selector', () => {
+      setup()
+      expect(screen.getByRole('combobox', { name: /study goal/i })).toBeInTheDocument()
+    })
+
+    it('pre-populates study goal selector with initial value', () => {
+      setup({ studyGoal: 'Do well' })
+      expect(screen.getByRole('combobox', { name: /study goal/i })).toHaveValue('Do well')
+    })
+
+    it('calls updateUserCourse when a study goal is selected', async () => {
+      const user = userEvent.setup()
+      const updateUserCourse = makeMutationFn()
+      mockUseMutation.mockReturnValue(updateUserCourse as never)
+      renderWithProviders(<ClassCard {...defaultProps} />)
+      await user.selectOptions(screen.getByRole('combobox', { name: /study goal/i }), 'Ace it')
+      expect(updateUserCourse).toHaveBeenCalledWith(expect.objectContaining({ studyGoal: 'Ace it' }))
     })
   })
 

@@ -3,6 +3,7 @@ import { useQuery, useMutation, useAction } from 'convex/react'
 import { api } from '../../../backend/convex/_generated/api'
 import { Id } from '../../../backend/convex/_generated/dataModel'
 import Sidebar from '../components/Sidebar'
+import { formatEstimatedTime } from '../utils/timeUtils'
 import { PlusIcon, SparklesIcon } from '../components/icons'
 import Button from '../components/ui/Button'
 import {
@@ -299,13 +300,13 @@ export default function DashboardPage() {
             indicator={{ dotClass: 'bg-success', text: '0 completed', textClass: 'text-success' }}
           />
           <StatCard
-            label="Estimated Minutes"
-            value={totalEstimatedMinutes > 0 ? Math.round(totalEstimatedMinutes) : '—'}
+            label="Estimated Time"
+            value={formatEstimatedTime(totalEstimatedMinutes)}
             indicator={{ dotClass: 'bg-sky-blue', text: 'AI estimated', textClass: 'text-sky-blue' }}
           />
           <StatCard
             label="Study Streak"
-            value={7}
+            value="—"
             indicator={{ dotClass: 'bg-teal', text: 'days in a row', textClass: 'text-white' }}
             variant="dark"
           />

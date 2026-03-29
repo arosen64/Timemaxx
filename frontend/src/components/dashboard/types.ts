@@ -1,4 +1,5 @@
 import { Id } from '../../../../backend/convex/_generated/dataModel'
+import { formatEstimatedTime } from '../../utils/timeUtils'
 
 export type TaskType = {
   _id: Id<'tasks'>
@@ -74,8 +75,7 @@ export function displayTitle(task: Pick<TaskType, 'title' | 'description'>) {
 
 export function formatMinutes(minutes: number) {
   if (!Number.isFinite(minutes) || minutes <= 0) return '—'
-  if (minutes === 1) return '1 min'
-  return `${Math.round(minutes)} mins`
+  return formatEstimatedTime(minutes)
 }
 
 export type FeedbackDraft = { rating?: 'up' | 'down'; hours: string; minutes: string }

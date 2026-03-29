@@ -11,7 +11,14 @@ export function renderWithProviders(
   { initialEntries = ['/'], ...renderOptions }: RenderWithProvidersOptions = {}
 ) {
   function Wrapper({ children }: { children: React.ReactNode }) {
-    return <MemoryRouter initialEntries={initialEntries}>{children}</MemoryRouter>
+    return (
+      <MemoryRouter
+        initialEntries={initialEntries}
+        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+      >
+        {children}
+      </MemoryRouter>
+    )
   }
   return render(ui, { wrapper: Wrapper, ...renderOptions })
 }
