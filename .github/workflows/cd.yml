@@ -2,7 +2,7 @@ name: CD
 
 on:
   pull_request:
-    branches: [ci-cd]
+    branches: [cicd]
   push:
     branches: [master]
 
