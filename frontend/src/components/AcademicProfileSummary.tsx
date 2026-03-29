@@ -54,7 +54,7 @@ export default function AcademicProfileSummary({ profile, onChange }: AcademicPr
             A Gemini-generated summary based on your transcript.
           </p>
           <p className="mt-1 font-body text-xs text-light-blue">
-            Tip: Rate your past courses' difficulty (1–5) in the previous step for a more accurate profile.
+            Tip: Rate your past courses' difficulty (1–5) for a more accurate profile.
           </p>
         </div>
         {hasCourses && !loading && (

@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { api } from '../../../../backend/convex/_generated/api'
 import { Id } from '../../../../backend/convex/_generated/dataModel'
 import { TrashIcon, SpinnerIcon, CheckCircleIcon } from '../icons'
-import { GRADES } from '../../constants'
+import { GRADES, REMOVE_CLASS_TASKS_WARNING } from '../../constants'
 import SyllabusUploadModal from './SyllabusUploadModal'
 
 
@@ -117,7 +117,7 @@ export default function ClassCard({
             </button>
           ) : (
             <div className="flex shrink-0 items-center gap-2">
-              <span className="font-body text-xs text-slate-blue whitespace-nowrap">Remove?</span>
+              <span className="font-body text-xs font-semibold text-navy whitespace-nowrap">Remove?</span>
               <button
                 type="button"
                 onClick={handleConfirmRemove}
@@ -136,6 +136,20 @@ export default function ClassCard({
             </div>
           )}
         </div>
+
+        {confirmingRemove && (
+          <div
+            role="alert"
+            className="rounded-lg border border-amber-200 bg-amber-50/80 px-3 py-2 font-body text-xs leading-relaxed text-navy"
+          >
+            {REMOVE_CLASS_TASKS_WARNING}
+            {taskCount > 0 && (
+              <span className="mt-1 block font-medium text-amber-900">
+                This class has {taskCount} linked task{taskCount === 1 ? '' : 's'} on your dashboard.
+              </span>
+            )}
+          </div>
+        )}
 
         {/* Divider */}
         <div className="h-px w-full bg-border" />

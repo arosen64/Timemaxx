@@ -8,6 +8,8 @@ vi.mock('../../backend/convex/_generated/api', () => ({
     queries: {
       users: { getCurrUser: 'getCurrUser' },
       tasks: { getAllTasks: 'getAllTasks' },
+      studyBlocks: { getUpcomingStudyBlocks: 'getUpcomingStudyBlocks' },
+      userCourses: { getUserCourses: 'getUserCourses' },
     },
     mutations: {
       tasks: { updateTask: 'updateTask', deleteTask: 'deleteTask' },
@@ -20,7 +22,7 @@ vi.mock('../../backend/convex/_generated/api', () => ({
 }))
 
 // Sidebar is out of scope for dashboard behavioral tests
-vi.mock('../src/components/sidebar', () => ({ default: () => <div data-testid="sidebar" /> }))
+vi.mock('../src/components/Sidebar', () => ({ default: () => <div data-testid="sidebar" /> }))
 
 // AddTaskModal is tested separately; mock it here so dashboard tests stay focused
 vi.mock('../src/components/dashboard/AddTaskModal', () => ({
@@ -70,6 +72,7 @@ const MOCK_TASKS = [
 function setup(tasks = MOCK_TASKS, user = MOCK_USER) {
   mockUseQuery.mockImplementation((query) => {
     if (query === 'getAllTasks') return tasks
+    if (query === 'getUpcomingStudyBlocks') return []
     return user
   })
   mockUseMutation.mockReturnValue(makeMutationFn() as never)
@@ -102,6 +105,7 @@ describe('DashboardPage', () => {
   it('shows loading state when tasks are undefined', () => {
     mockUseQuery.mockImplementation((query) => {
       if (query === 'getAllTasks') return undefined
+      if (query === 'getUpcomingStudyBlocks') return []
       return MOCK_USER
     })
     mockUseMutation.mockReturnValue(makeMutationFn() as never)
@@ -139,6 +143,7 @@ describe('DashboardPage', () => {
     const tasksWithoutEstimate = MOCK_TASKS.map((t) => ({ ...t, timeEstimate: undefined }))
     mockUseQuery.mockImplementation((query: string) => {
       if (query === 'getAllTasks') return tasksWithoutEstimate
+      if (query === 'getUpcomingStudyBlocks') return []
       return MOCK_USER
     })
     mockUseMutation.mockReturnValue(makeMutationFn() as never)
@@ -164,6 +169,7 @@ describe('DashboardPage', () => {
     const tasksWithoutEstimate = MOCK_TASKS.map((t) => ({ ...t, timeEstimate: undefined }))
     mockUseQuery.mockImplementation((query: string) => {
       if (query === 'getAllTasks') return tasksWithoutEstimate
+      if (query === 'getUpcomingStudyBlocks') return []
       return MOCK_USER
     })
     mockUseMutation.mockReturnValue(makeMutationFn() as never)
@@ -187,6 +193,7 @@ describe('DashboardPage', () => {
     const tasksWithoutEstimate = MOCK_TASKS.map((t) => ({ ...t, timeEstimate: undefined }))
     mockUseQuery.mockImplementation((query: string) => {
       if (query === 'getAllTasks') return tasksWithoutEstimate
+      if (query === 'getUpcomingStudyBlocks') return []
       return MOCK_USER
     })
     mockUseMutation.mockReturnValue(makeMutationFn() as never)

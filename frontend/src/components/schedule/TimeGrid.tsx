@@ -2,8 +2,21 @@ import { Fragment } from 'react'
 import type { AllDayEvent } from '../../../../backend/convex/actions/fetchCalendarEvents'
 import type { LayoutEvent } from './overlapLayout'
 import { TOTAL_SLOTS, SLOT_HEIGHT, DAYS_FULL, slotLabel, isoDateString, isToday, minutesFromMidnight } from './utils'
+import type { Id } from '../../../../backend/convex/_generated/dataModel'
+import ScheduleBlockConflict from './ScheduleBlockConflict'
 
 type WorkHoursRow = { day: string; available: number[]; blocked: number[] }
+
+export type StudyBlockOnGrid = {
+  _id: Id<'studyBlocks'>
+  taskId: Id<'tasks'>
+  title: string
+  startTime: string
+  studyBlockLength: number
+  isConflicted: boolean | undefined
+  taskTitle: string
+  taskDueDate: number
+}
 
 function getSlotState(grid: WorkHoursRow[] | null, dayName: string, slot: number) {
   const row = grid?.find((r) => r.day === dayName)
@@ -13,8 +26,13 @@ function getSlotState(grid: WorkHoursRow[] | null, dayName: string, slot: number
   return 'none'
 }
 
-function slotBgClass(state: 'preferred' | 'unavailable' | 'none') {
-  if (state === 'preferred') return 'bg-teal/40'
+function slotBgClass(
+  state: 'preferred' | 'unavailable' | 'none',
+  isHighlighted: boolean,
+  isAssignMode: boolean,
+) {
+  if (isHighlighted) return 'bg-teal/60 cursor-pointer hover:bg-teal/80'
+  if (state === 'preferred') return isAssignMode ? 'bg-teal/20' : 'bg-teal/40'
   if (state === 'unavailable') return 'bg-slate-blue'
   return 'bg-white'
 }
@@ -26,6 +44,15 @@ interface TimeGridProps {
   allDayEventsByDay: Record<string, AllDayEvent[]>
   calendarConnected: boolean
   gridRef: React.RefObject<HTMLDivElement>
+  studyBlocksByDay: Record<string, StudyBlockOnGrid[]>
+  highlightedSlots: Set<string>
+  isAssignMode: boolean
+  onSlotClick: (dateStr: string, slot: number) => void
+  onMoveBlock: (studyBlockId: Id<'studyBlocks'>) => void
+  onAutoReschedule: () => void
+  draggingBlockId: Id<'studyBlocks'> | null
+  onDragStart: (studyBlockId: Id<'studyBlocks'>) => void
+  onDrop: (dateStr: string, slot: number) => void
 }
 
 export default function TimeGrid({
@@ -35,6 +62,15 @@ export default function TimeGrid({
   allDayEventsByDay,
   calendarConnected,
   gridRef,
+  studyBlocksByDay,
+  highlightedSlots,
+  isAssignMode,
+  onSlotClick,
+  onMoveBlock,
+  onAutoReschedule,
+  draggingBlockId,
+  onDragStart,
+  onDrop,
 }: TimeGridProps) {
   const COLS = `3rem repeat(7, 1fr)`
 
@@ -84,8 +120,12 @@ export default function TimeGrid({
         </div>
       )}
 
-      {/* Slot rows + absolute event overlay */}
-      <div className="relative grid" style={{ gridTemplateColumns: COLS }}>
+      {/* Slot rows + absolute overlay */}
+      <div
+        className="relative grid"
+        style={{ gridTemplateColumns: COLS }}
+        onDragOver={(e) => e.preventDefault()}
+      >
         {Array.from({ length: TOTAL_SLOTS }, (_, slot) => (
           <Fragment key={slot}>
             <div
@@ -99,18 +139,31 @@ export default function TimeGrid({
               const jsDay = day.getDay()
               const dayName = DAYS_FULL[jsDay === 0 ? 6 : jsDay - 1]
               const state = getSlotState(workHoursGrid, dayName, slot)
+              const slotKey = `${key}:${slot}`
+              const isHighlighted = highlightedSlots.has(slotKey)
+
               return (
                 <div
                   key={`${key}-${slot}`}
-                  className={`border-b border-l border-border/50 ${slotBgClass(state)}`}
+                  className={`border-b border-l border-border/50 ${slotBgClass(state, isHighlighted, isAssignMode)}`}
                   style={{ height: SLOT_HEIGHT }}
+                  onClick={() => {
+                    if (isHighlighted) onSlotClick(key, slot)
+                  }}
+                  onDragOver={(e) => {
+                    if (draggingBlockId && isHighlighted) e.preventDefault()
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault()
+                    if (draggingBlockId && isHighlighted) onDrop(key, slot)
+                  }}
                 />
               )
             })}
           </Fragment>
         ))}
 
-        {/* Timed event blocks */}
+        {/* Timed calendar event blocks */}
         {days.map((day, colIdx) => {
           const key = isoDateString(day)
           return (layoutByDay[key] ?? []).map(({ event, left, width }) => {
@@ -138,6 +191,53 @@ export default function TimeGrid({
                 <span className="block font-body text-[9px] text-sky-blue">
                   {startDt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
                 </span>
+              </div>
+            )
+          })
+        })}
+
+        {/* Study block overlays */}
+        {days.map((day, colIdx) => {
+          const key = isoDateString(day)
+          return (studyBlocksByDay[key] ?? []).map((block) => {
+            const startDt = new Date(block.startTime)
+            const topPx = (minutesFromMidnight(startDt) / 30) * SLOT_HEIGHT
+            const heightPx = Math.max((block.studyBlockLength / 30) * SLOT_HEIGHT, SLOT_HEIGHT)
+            const isConflicted = block.isConflicted ?? false
+
+            return (
+              <div
+                key={block._id}
+                className="absolute"
+                style={{
+                  top: topPx,
+                  height: heightPx,
+                  left: `calc(3rem + (100% - 3rem) * ${colIdx / 7})`,
+                  width: `calc((100% - 3rem) / 7 - 2px)`,
+                  zIndex: 5,
+                }}
+                draggable={isConflicted}
+                onDragStart={() => { if (isConflicted) onDragStart(block._id) }}
+              >
+                {isConflicted ? (
+                  <ScheduleBlockConflict
+                    title={block.title}
+                    studyBlockId={block._id}
+                    startTime={block.startTime}
+                    studyBlockLength={block.studyBlockLength}
+                    onMove={onMoveBlock}
+                    onAutoReschedule={onAutoReschedule}
+                  />
+                ) : (
+                  <div className="flex h-full flex-col gap-0.5 rounded bg-navy px-2 py-1.5 overflow-hidden">
+                    <span className="block truncate font-heading text-[11px] font-semibold leading-tight text-white">
+                      {block.title}
+                    </span>
+                    <span className="block font-body text-[9px] text-sky-blue">
+                      {startDt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} · {block.studyBlockLength} min
+                    </span>
+                  </div>
+                )}
               </div>
             )
           })

@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../backend/convex/_generated/api";
+import type { WorkHoursData } from "../types";
 import Sidebar from "../components/Sidebar";
 import { ChevronDownIcon } from "../components/icons";
 import ProfileForm from "../components/ProfileForm";
 import WorkHoursSelector, { DEFAULT_WORK_HOURS } from "../components/WorkHoursSelector";
 import PreferencesForm from "../components/PreferencesForm";
-import { ProfileData, WorkHoursData, PreferencesData } from "../types";
+import AcademicProfileSummary from "../components/AcademicProfileSummary";
+import { ProfileData, PreferencesData } from "../types";
 
 function dbToWorkHours(
   grid: { day: string; available: number[]; blocked: number[] }[] | undefined
@@ -20,6 +22,7 @@ function dbToWorkHours(
 export default function PreferencesPage() {
   const user = useQuery(api.queries.users.getCurrUser);
   const updateSettings = useMutation(api.mutations.users.updateUserSettings);
+  const runDetectConflicts = useMutation(api.mutations.studyBlocks.runDetectConflicts);
 
   const [openSection, setOpenSection] = useState<string | null>(null);
   const [editingSection, setEditingSection] = useState<string | null>(null);
@@ -78,13 +81,14 @@ export default function PreferencesPage() {
           })),
         });
       } else if (editingSection === "workhours" && workHoursDraft) {
-        await updateSettings({
-          workHoursGrid: Object.entries(workHoursDraft).map(([day, slots]) => ({
-            day,
-            available: slots.available,
-            blocked: slots.blocked,
-          })),
-        });
+        const newGrid = Object.entries(workHoursDraft).map(([day, slots]) => ({
+          day,
+          available: slots.available,
+          blocked: slots.blocked,
+        }));
+        await updateSettings({ workHoursGrid: newGrid });
+        // 3.3: Trigger conflict detection after work hours change
+        await runDetectConflicts({ timedEvents: [], workHoursGrid: newGrid, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone }).catch(() => {});
       } else if (editingSection === "productivity" && preferencesDraft) {
         await updateSettings({
           productivityTraits: preferencesDraft.traits,
@@ -122,7 +126,7 @@ export default function PreferencesPage() {
           <button
             onClick={cancelEdit}
             disabled={isSaving}
-            className="px-4 py-1.5 font-heading text-sm font-semibold text-slate-blue border border-border rounded-lg hover:bg-bg-gray transition-colors disabled:opacity-50"
+            className="px-4 py-1.5 font-heading text-sm font-semibold text-navy border border-border rounded-lg hover:bg-bg-gray transition-colors disabled:opacity-50"
           >
             Cancel
           </button>
@@ -158,6 +162,11 @@ export default function PreferencesPage() {
         </div>
 
         <div className="flex flex-col gap-4">
+          {/* Academic Profile Summary */}
+          <div className="bg-white border border-border rounded-xl px-6 py-5">
+            <AcademicProfileSummary profile={profileData} onChange={() => {}} />
+          </div>
+
           {/* About You */}
           <div className="bg-white border border-border rounded-xl overflow-hidden">
             <div

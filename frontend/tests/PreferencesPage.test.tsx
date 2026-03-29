@@ -6,7 +6,10 @@ import PreferencesPage from '../src/pages/PreferencesPage'
 vi.mock('../../backend/convex/_generated/api', () => ({
   api: {
     queries: { users: { getCurrUser: 'getCurrUser' } },
-    mutations: { users: { updateUserSettings: 'updateUserSettings' } },
+    mutations: {
+      users: { updateUserSettings: 'updateUserSettings' },
+      studyBlocks: { runDetectConflicts: 'runDetectConflicts' },
+    },
   },
 }))
 
@@ -28,6 +31,12 @@ vi.mock('../src/components/WorkHoursSelector', () => ({
 vi.mock('../src/components/PreferencesForm', () => ({
   default: ({ readOnly }: { readOnly: boolean }) => (
     <div data-testid="preferences-form" data-readonly={String(readOnly)} />
+  ),
+}))
+
+vi.mock('../src/components/AcademicProfileSummary', () => ({
+  default: ({ profile }: { profile: { major: string } }) => (
+    <div data-testid="academic-profile-summary" data-major={profile.major} />
   ),
 }))
 
@@ -63,6 +72,25 @@ function setup(user = MOCK_USER) {
 describe('PreferencesPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+  })
+
+  // ── Academic Profile Summary ───────────────────────────────────────────────
+
+  it('renders academic profile summary without expanding any section', () => {
+    setup()
+    expect(screen.getByTestId('academic-profile-summary')).toBeInTheDocument()
+  })
+
+  it('passes user profile data to AcademicProfileSummary', () => {
+    setup()
+    expect(screen.getByTestId('academic-profile-summary')).toHaveAttribute('data-major', 'Computer Science')
+  })
+
+  it('academic profile summary is visible even while a section is open', async () => {
+    const user = userEvent.setup()
+    setup()
+    await user.click(screen.getByText('About You'))
+    expect(screen.getByTestId('academic-profile-summary')).toBeInTheDocument()
   })
 
   // ── Rendering ──────────────────────────────────────────────────────────────

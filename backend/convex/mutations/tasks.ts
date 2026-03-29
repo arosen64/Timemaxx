@@ -3,6 +3,12 @@ import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { taskTypeValidator } from "../lib/taskValidators";
 
+function normalizeClassTag(value: string | undefined): string | undefined {
+  if (value === undefined) return undefined;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+}
+
 /**
  * Creates a new task for the authenticated user with timeEstimate left unset.
  * Time estimation is handled separately (e.g. via a Gemini action) after creation.
@@ -14,6 +20,7 @@ export const createTask = mutation({
     taskType: taskTypeValidator,
     dueDate: v.number(),
     courseId: v.optional(v.id("userCourses")),
+    classTag: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -30,7 +37,7 @@ export const createTask = mutation({
       throw new Error("Description cannot be empty");
     }
     if (args.dueDate <= now) {
-      throw new Error("Due date must be in the future");
+      throw new Error("That due date and time are in the past. Choose a later deadline.");
     }
 
     // Insert the new task with timeEstimate left as undefined for now
@@ -41,6 +48,7 @@ export const createTask = mutation({
       taskType: args.taskType,
       dueDate: args.dueDate,
       courseId: args.courseId,
+      classTag: normalizeClassTag(args.classTag),
       timeEstimate: undefined, // populated asynchronously by estimateTaskTime action
       createdAt: Date.now(),
     });
@@ -58,6 +66,7 @@ export const updateTask = mutation({
     taskType: taskTypeValidator,
     dueDate: v.number(),
     courseId: v.optional(v.id("userCourses")),
+    classTag: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -72,6 +81,9 @@ export const updateTask = mutation({
       taskType: args.taskType,
       dueDate: args.dueDate,
       courseId: args.courseId,
+      ...(args.classTag !== undefined
+        ? { classTag: normalizeClassTag(args.classTag) }
+        : {}),
       timeEstimate: undefined,
     });
   },

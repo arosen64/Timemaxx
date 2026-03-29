@@ -102,6 +102,8 @@ export default defineSchema({
     dueDate: v.number(),
     createdAt: v.number(),
     courseId: v.optional(v.id("userCourses")),
+    /** Free-text label for the course/class (optional; complements courseId) */
+    classTag: v.optional(v.string()),
   })
     .index("by_userId", ["userId"])
     .index("by_userId_createdAt", ["userId", "createdAt"]),
@@ -112,6 +114,7 @@ export default defineSchema({
     title: v.string(),
     startTime: v.optional(v.string()),
     studyBlockLength: v.number(),
+    isConflicted: v.optional(v.boolean()),
   }).index("by_taskId", ["taskId"]),
 
   // Syllabi table — tracks uploaded syllabus files and their processing status
@@ -125,5 +128,7 @@ export default defineSchema({
       v.literal("failed"),
     ),
     createdAt: v.number(),
-  }).index("by_userId", ["userId"]),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_courseId", ["courseId"]),
 });

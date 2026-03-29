@@ -94,10 +94,17 @@ export default function CourseSelector({ onAddCourse, mode = 'all' }: CourseSele
       .finally(() => setCoursesLoading(false))
   }
 
+  const seenCodes = new Set<string>()
+  const uniqueCourses = termCourses.filter((c) => {
+    if (seenCodes.has(c.OfferingName)) return false
+    seenCodes.add(c.OfferingName)
+    return true
+  })
+
   const filteredCourses =
     courseSearch.trim().length === 0
-      ? termCourses.slice(0, 50)
-      : termCourses
+      ? uniqueCourses.slice(0, 50)
+      : uniqueCourses
           .filter((c) =>
             `${c.OfferingName} ${c.Title}`.toLowerCase().includes(courseSearch.toLowerCase())
           )

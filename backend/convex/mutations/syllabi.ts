@@ -2,6 +2,8 @@ import { internalMutation, mutation } from "../_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { taskTypeValidator } from "../lib/taskValidators";
+import { buildClassTag } from "../lib/classTagUtils";
+import { internal } from "../_generated/api";
 
 /**
  * Internal mutation called by the uploadSyllabus action to create a syllabi
@@ -21,6 +23,29 @@ export const createSyllabus = internalMutation({
       status: "pending",
       createdAt: Date.now(),
     });
+  },
+});
+
+/**
+ * Internal mutation called by the uploadSyllabus action to delete all existing
+ * syllabus records for a given courseId before inserting a new one on reupload.
+ */
+export const deleteSyllabiForCourse = internalMutation({
+  args: {
+    courseId: v.id("userCourses"),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("syllabi")
+      .withIndex("by_courseId", (q) => q.eq("courseId", args.courseId))
+      .collect();
+    const results = await Promise.allSettled(existing.map((s) => ctx.db.delete(s._id)));
+    const failed = results.filter((r) => r.status === "rejected");
+    if (failed.length > 0) {
+      throw new Error(
+        `Failed to delete ${failed.length} of ${existing.length} existing syllabus record(s) for course ${args.courseId}`
+      );
+    }
   },
 });
 
@@ -47,7 +72,9 @@ export const setSyllabusStatus = internalMutation({
  *
  * Called after the user reviews the output of uploadSyllabus and approves
  * the extracted task list. Each task is tagged with the courseId from the
- * source syllabus so it appears under the correct course.
+ * source syllabus so it appears under the correct course. When the syllabus has
+ * a course, `classTag` is set to the canonical tag for that course (same as
+ * dashboard task creation).
  *
  * Returns the IDs of all inserted tasks.
  */
@@ -72,6 +99,15 @@ export const confirmSyllabusTasks = mutation({
       throw new Error("Syllabus not found");
     }
 
+    let classTag: string | undefined;
+    if (syllabus.courseId) {
+      const course = await ctx.db.get(syllabus.courseId);
+      if (course && course.userId === userId) {
+        const tag = buildClassTag(course.courseCode, course.title).trim();
+        if (tag.length > 0) classTag = tag;
+      }
+    }
+
     const now = Date.now();
     const taskIds = await Promise.all(
       args.tasks.map((task) =>
@@ -82,12 +118,17 @@ export const confirmSyllabusTasks = mutation({
           dueDate: task.dueDate,
           taskType: task.taskType,
           courseId: syllabus.courseId,
+          ...(classTag !== undefined ? { classTag } : {}),
           createdAt: now,
         })
       )
     );
 
     await ctx.db.patch(args.syllabusId, { status: "confirmed" });
+
+    for (const taskId of taskIds) {
+      await ctx.scheduler.runAfter(0, internal.actions.estimateTaskTime.estimateTaskTime, { taskId });
+    }
 
     return taskIds;
   },

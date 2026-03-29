@@ -2,6 +2,7 @@
 
 import { action } from "../_generated/server";
 import { v } from "convex/values";
+import { Id } from "../_generated/dataModel";
 import { internal } from "../_generated/api";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { Type } from "@google/genai";
@@ -32,10 +33,29 @@ export const uploadSyllabus = action({
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Unauthenticated");
 
-    const syllabusId = await ctx.runMutation(
-      internal.mutations.syllabi.createSyllabus,
-      { userId, fileContents: args.fileContents, courseId: args.courseId }
-    );
+    if (args.courseId) {
+      try {
+        await ctx.runMutation(internal.mutations.syllabi.deleteSyllabiForCourse, {
+          courseId: args.courseId,
+        });
+      } catch (err) {
+        throw new Error(
+          `Reupload aborted: could not clear existing syllabus records. ${err instanceof Error ? err.message : String(err)}`
+        );
+      }
+    }
+
+    let syllabusId: Id<"syllabi">;
+    try {
+      syllabusId = await ctx.runMutation(
+        internal.mutations.syllabi.createSyllabus,
+        { userId, fileContents: args.fileContents, courseId: args.courseId }
+      );
+    } catch (err) {
+      throw new Error(
+        `Reupload aborted: could not create syllabus record. ${err instanceof Error ? err.message : String(err)}`
+      );
+    }
 
     const prompt = `You are an academic task extractor. Given the syllabus text below, extract every assignment, exam, project, or deliverable that has a due date.
 
@@ -87,6 +107,7 @@ ${args.fileContents}`;
 
       const validTaskTypes = new Set<string>(TASK_TYPES);
 
+      const now = Date.now();
       const extractedTasks = rawTasks
         .filter((t) => validTaskTypes.has(t.taskType))
         .map((t) => ({
@@ -94,7 +115,8 @@ ${args.fileContents}`;
           description: t.description,
           dueDate: new Date(t.dueDate).getTime(),
           taskType: t.taskType as TaskType,
-        }));
+        }))
+        .filter((t) => t.dueDate > now);
 
       await ctx.runMutation(internal.mutations.syllabi.setSyllabusStatus, {
         syllabusId,

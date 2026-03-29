@@ -7,12 +7,18 @@ vi.mock('../../backend/convex/_generated/api', () => ({
   api: {
     queries: {
       calendar: { getScheduleData: 'getScheduleData' },
+      studyBlocks: { getAllStudyBlocksWithTasks: 'getAllStudyBlocksWithTasks' },
     },
     mutations: {
       calendar: { saveSelectedCalendars: 'saveSelectedCalendars' },
+      studyBlocks: {
+        runDetectConflicts: 'runDetectConflicts',
+        editStudyBlockTime: 'editStudyBlockTime',
+      },
     },
     actions: {
       fetchCalendarEvents: { fetchCalendarEvents: 'fetchCalendarEvents' },
+      autoRescheduleConflicts: { autoRescheduleConflicts: 'autoRescheduleConflicts' },
     },
   },
 }))
@@ -41,23 +47,30 @@ const WORK_HOURS_GRID = [
   { day: 'Sunday', available: [], blocked: [] },
 ]
 
+function makeQueryImpl(scheduleData: object, studyBlocks: unknown[] = []) {
+  return (...args: Parameters<typeof useQuery>) => {
+    if (args[0] === 'getAllStudyBlocksWithTasks') return studyBlocks as never
+    return scheduleData as never
+  }
+}
+
 function setupNoCalendar() {
-  mockUseQuery.mockReturnValue({
+  mockUseQuery.mockImplementation(makeQueryImpl({
     workHoursGrid: WORK_HOURS_GRID,
     calendarConnected: false,
     selectedCalendarIds: null,
-  } as never)
+  }))
   mockUseMutation.mockReturnValue(makeMutationFn() as never)
   mockUseAction.mockReturnValue(makeMutationFn({ calendarList: [], timedEvents: [], allDayEvents: [], error: false }) as never)
   renderWithProviders(<SchedulePage />, { initialEntries: ['/schedule'] })
 }
 
 function setupConnectedNoSelection(calendarList = [{ id: 'cal1', summary: 'Personal' }]) {
-  mockUseQuery.mockReturnValue({
+  mockUseQuery.mockImplementation(makeQueryImpl({
     workHoursGrid: WORK_HOURS_GRID,
     calendarConnected: true,
     selectedCalendarIds: null,
-  } as never)
+  }))
   mockUseMutation.mockReturnValue(makeMutationFn() as never)
   mockUseAction.mockReturnValue(
     makeMutationFn({ calendarList, timedEvents: [], allDayEvents: [], error: false }) as never
@@ -66,11 +79,11 @@ function setupConnectedNoSelection(calendarList = [{ id: 'cal1', summary: 'Perso
 }
 
 function setupConnectedWithSelection() {
-  mockUseQuery.mockReturnValue({
+  mockUseQuery.mockImplementation(makeQueryImpl({
     workHoursGrid: WORK_HOURS_GRID,
     calendarConnected: true,
     selectedCalendarIds: ['cal1'],
-  } as never)
+  }))
   mockUseMutation.mockReturnValue(makeMutationFn() as never)
   mockUseAction.mockReturnValue(
     makeMutationFn({
@@ -160,11 +173,11 @@ describe('SchedulePage', () => {
   it('calls saveSelectedCalendars when a calendar is toggled', async () => {
     const user = userEvent.setup()
     const saveMutation = makeMutationFn()
-    mockUseQuery.mockReturnValue({
+    mockUseQuery.mockImplementation(makeQueryImpl({
       workHoursGrid: WORK_HOURS_GRID,
       calendarConnected: true,
       selectedCalendarIds: null,
-    } as never)
+    }))
     mockUseMutation.mockReturnValue(saveMutation as never)
     mockUseAction.mockReturnValue(
       makeMutationFn({ calendarList: [{ id: 'cal1', summary: 'Personal' }], timedEvents: [], allDayEvents: [], error: false }) as never

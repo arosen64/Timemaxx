@@ -1,6 +1,7 @@
 import { mutation } from "../_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { buildClassTag, legacyNaiveClassTag } from "../lib/classTagUtils";
 
 function termToSuffix(term: string): string {
   const parts = term.trim().split(" ");
@@ -90,6 +91,9 @@ export const updateUserCourse = mutation({
 
 /**
  * Deletes a userCourse record. Only the owning user may delete their own record.
+ * Also removes tasks linked to this course (and their study blocks): by `courseId`
+ * (e.g. syllabus imports) or by `classTag` matching the canonical deduped tag or the
+ * older naive `${courseCode}: ${title}` string, and clears syllabus rows for this course.
  */
 export const deleteUserCourse = mutation({
   args: { userCourseId: v.id("userCourses") },
@@ -100,6 +104,46 @@ export const deleteUserCourse = mutation({
     const record = await ctx.db.get(args.userCourseId);
     if (!record) throw new Error("Course record not found");
     if (record.userId !== userId) throw new Error("Not authorized");
+
+    // Dashboard tasks store `classTag` built with buildClassTag (deduped). Older rows used
+    // `${courseCode}: ${title}` and duplicated the catalog when title already had OfferingName.
+    const canonicalClassTag = buildClassTag(record.courseCode, record.title);
+    const legacyNaiveTag = legacyNaiveClassTag(record.courseCode, record.title);
+
+    const tasks = await ctx.db
+      .query("tasks")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .collect();
+
+    for (const task of tasks) {
+      const matchesByCourseId = task.courseId === args.userCourseId;
+      const tag = task.classTag?.trim();
+      const matchesByClassTag =
+        tag === canonicalClassTag || tag === legacyNaiveTag;
+      if (!matchesByCourseId && !matchesByClassTag) continue;
+
+      const studyBlocks = await ctx.db
+        .query("studyBlocks")
+        .withIndex("by_taskId", (q) => q.eq("taskId", task._id))
+        .collect();
+
+      for (const block of studyBlocks) {
+        await ctx.db.delete(block._id);
+      }
+
+      await ctx.db.delete(task._id);
+    }
+
+    const syllabi = await ctx.db
+      .query("syllabi")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .collect();
+
+    for (const syllabus of syllabi) {
+      if (syllabus.courseId === args.userCourseId) {
+        await ctx.db.patch(syllabus._id, { courseId: undefined });
+      }
+    }
 
     await ctx.db.delete(args.userCourseId);
   },
