@@ -55,6 +55,9 @@ npm test
 # Run in watch mode
 npm run test:watch
 
+# Run tests with coverage
+npm run test:coverage
+
 # Run only backend tests
 npx vitest run --project backend
 
