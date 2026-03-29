@@ -77,46 +77,68 @@ npm run build
 
 ```
 design/
-  timemaxx.pen              # File for UI design 
+  timemaxx.pen                      # Source-of-truth UI design file
 frontend/
   src/
     pages/
-      LandingPage.tsx       # Public landing / sign-in page (/)
-      OnboardingPage.tsx    # New-user setup (/onboarding)
-      DashboardPage.tsx     # Main study dashboard (/dashboard)
-      ProfilePage.tsx       # User profile (/profile)
+      LandingPage.tsx               # Public landing / sign-in page (/)
+      OnboardingPage.tsx            # New-user setup (/onboarding)
+      DashboardPage.tsx             # Main study dashboard (/dashboard)
+      SchedulePage.tsx              # Schedule view (/schedule)
+      ClassesPage.tsx               # Class management (/classes)
+      SyllabusReviewPage.tsx        # Syllabus review flow (/syllabus-review)
+      PreferencesPage.tsx           # Preferences page (/preferences)
+      ProfilePage.tsx               # User profile (/profile)
     components/
-      AddTaskModal.tsx      # Modal for adding a new task
-      PreferencesForm.tsx   # Study preferences form
-      ProfileForm.tsx       # Profile editing form
-      sidebar.tsx           # Dashboard sidebar navigation
-      WorkHoursSelector.tsx # Weekly work-hours picker
-    main.tsx                # App entry point (ConvexProvider + BrowserRouter)
-    App.tsx                 # Route definitions
+      dashboard/                    # Dashboard cards, modals, task UI
+      schedule/                     # Schedule grid, conflict blocks, calendar picker
+      classes/                      # Class cards and syllabus upload UI
+      syllabus/                     # Syllabus task review components
+      profile/                      # Profile form fields and actions
+      onboarding/                   # Onboarding shells and navigation
+      landing/                      # Landing page presentation components
+      ui/                           # Shared base UI primitives
+      Sidebar.tsx                   # App sidebar navigation
+      WorkHoursSelector.tsx         # Weekly work-hours picker
+      CourseSelector.tsx            # SIS-backed course search/selection
+    main.tsx                        # App entry point (ConvexProvider + BrowserRouter)
+    App.tsx                         # Route definitions + auth redirects
   tests/                    # Frontend behavioral tests (Vitest + React Testing Library)
 backend/
   convex/
-    schema.ts               # Convex database schema
-    auth.ts                 # Convex Auth configuration
-    queries/
-      users.ts              # User read queries
-      tasks.ts              # Task read queries
-    mutations/
-      users.ts              # User write operations
-      tasks.ts              # Task write operations
-    actions/
-      estimateTaskTime.ts         # Google Gemini time-estimation action
-      requestEstimateTaskTime.ts  # Triggers time-estimation for a task
+    schema.ts                       # Convex database schema
+    auth.ts                         # Convex Auth configuration
+    http.ts                         # Convex HTTP routes
+    calendarOAuthCallback.ts        # Google Calendar OAuth callback handler
+    actions/                        # External API + AI actions (Gemini, SIS, Calendar)
+    queries/                        # Read-only Convex queries
+    mutations/                      # Data-write Convex mutations
+    lib/                            # Shared backend helpers/utilities
+    tests/                          # Convex unit/integration tests
+    _generated/                     # Convex generated API/types (do not edit manually)
 ```
 
 ## Routes
+
+### Frontend Routes
 
 | Path | Page | Access |
 |---|---|---|
 | `/` | LandingPage | Public |
 | `/onboarding` | OnboardingPage | Authenticated |
 | `/dashboard` | DashboardPage | Authenticated |
+| `/schedule` | SchedulePage | Authenticated |
 | `/profile` | ProfilePage | Authenticated |
+| `/preferences` | PreferencesPage | Authenticated |
+| `/classes` | ClassesPage | Authenticated |
+| `/syllabus-review` | SyllabusReviewPage | Authenticated |
+
+### Backend HTTP Routes
+
+| Path | Handler | Purpose |
+|---|---|---|
+| `/api/auth/callback/google` | Convex Auth | Google auth callback |
+| `/api/calendar/callback` | `calendarOAuthCallback` | Google Calendar OAuth callback |
 
 ## Documentation
 
