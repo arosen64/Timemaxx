@@ -12,7 +12,7 @@ The key must be stored as a server-side Convex environment variable (never in fr
 Run this in the project root:
 
 ```bash
-npx convex env set SIS_API_KEY your_sis_api_key_here
+npx convex env set JHU_SIS_API_KEY your_sis_api_key_here
 ```
 
 If you need a SIS API key, please contact a member of the team via Slack/Email.
@@ -23,7 +23,7 @@ If you need a SIS API key, please contact a member of the team via Slack/Email.
 npx convex env list
 ```
 
-Confirm `SIS_API_KEY` appears in the output.
+Confirm `JHU_SIS_API_KEY` appears in the output.
 
 ## Notes
 
@@ -39,4 +39,4 @@ For production deploys, store the SIS key in GitHub Actions and let CD write it 
    - Name: `SIS_API_KEY`
    - Value: `<your production SIS API key>`
 
-The CD workflow sets `SIS_API_KEY` in Convex on deploy.
+The CD workflow sets `JHU_SIS_API_KEY` in Convex on deploy.
