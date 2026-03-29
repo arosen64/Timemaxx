@@ -34,6 +34,45 @@ vi.mock('../src/components/dashboard/AddTaskModal', () => ({
     ) : null,
 }))
 
+vi.mock('../src/components/dashboard/EditTaskModal', () => ({
+  default: ({
+    isOpen,
+    task,
+    onClose,
+  }: {
+    isOpen: boolean
+    task: { title: string } | null
+    onClose: () => void
+  }) =>
+    isOpen && task ? (
+      <div role="dialog" aria-label="Edit Task Modal">
+        <span data-testid="editing-task-title">{task.title}</span>
+        <button onClick={onClose}>Close Edit Modal</button>
+      </div>
+    ) : null,
+}))
+
+vi.mock('../src/components/dashboard/DeleteTaskModal', () => ({
+  default: ({
+    isOpen,
+    task,
+    onClose,
+    onConfirm,
+  }: {
+    isOpen: boolean
+    task: { title: string } | null
+    onClose: () => void
+    onConfirm: () => Promise<void>
+  }) =>
+    isOpen && task ? (
+      <div role="dialog" aria-label="Delete Task Modal">
+        <span data-testid="deleting-task-title">{task.title}</span>
+        <button onClick={onConfirm}>Confirm Delete</button>
+        <button onClick={onClose}>Cancel Delete</button>
+      </div>
+    ) : null,
+}))
+
 vi.mock('convex/react', () => ({
   useQuery: vi.fn(),
   useMutation: vi.fn(),
@@ -68,6 +107,13 @@ const MOCK_TASKS = [
     createdAt: Date.now(),
   },
 ]
+
+// task1 with feedback already submitted — used to test the saved-feedback "edit" flow
+const TASK_WITH_FEEDBACK = {
+  ...MOCK_TASKS[0],
+  estimateFeedbackRating: 'up' as const,
+  correctedEstimateMinutes: 60,
+}
 
 function setup(tasks = MOCK_TASKS, user = MOCK_USER) {
   mockUseQuery.mockImplementation((query) => {
@@ -206,5 +252,171 @@ describe('DashboardPage', () => {
     await waitFor(() => {
       expect(screen.getByText('Failed to estimate task time. Please try again.')).toBeInTheDocument()
     })
+  })
+
+  // ── Greeting & header ────────────────────────────────────────────────────────
+
+  it('renders the user first name in the greeting', () => {
+    setup()
+    expect(screen.getByText(/good (morning|afternoon|evening), Anna!/i)).toBeInTheDocument()
+  })
+
+  it('shows plural task count in subtitle', () => {
+    setup()
+    expect(screen.getByText(/2 tasks due this week/)).toBeInTheDocument()
+  })
+
+  it('shows singular task in subtitle when there is exactly one task', () => {
+    setup([MOCK_TASKS[0]])
+    expect(screen.getByText(/1 task due this week/)).toBeInTheDocument()
+  })
+
+  // ── Stat cards ───────────────────────────────────────────────────────────────
+
+  it('Tasks This Week stat card shows the task count', () => {
+    setup()
+    expect(screen.getByText('Tasks This Week')).toBeInTheDocument()
+    expect(screen.getByText('2')).toBeInTheDocument()
+  })
+
+  it('Estimated Time stat card shows the formatted total of estimated minutes', () => {
+    setup()
+    // task1 has 90 min, task2 has undefined → total 90 min → "1h 30m"
+    expect(screen.getByText('1h 30m')).toBeInTheDocument()
+  })
+
+  // ── Edit task flow ───────────────────────────────────────────────────────────
+
+  it('opens Edit modal with the correct task when edit button is clicked', async () => {
+    const user = userEvent.setup()
+    setup()
+
+    const editButtons = screen.getAllByRole('button', { name: /edit task/i })
+    await user.click(editButtons[0])
+
+    expect(screen.getByRole('dialog', { name: /edit task modal/i })).toBeInTheDocument()
+    expect(screen.getByTestId('editing-task-title')).toHaveTextContent('Calculus Problem Set')
+  })
+
+  it('closes Edit modal when close is triggered', async () => {
+    const user = userEvent.setup()
+    setup()
+
+    await user.click(screen.getAllByRole('button', { name: /edit task/i })[0])
+    await user.click(screen.getByRole('button', { name: /close edit modal/i }))
+
+    expect(screen.queryByRole('dialog', { name: /edit task modal/i })).not.toBeInTheDocument()
+  })
+
+  // ── Delete task flow ─────────────────────────────────────────────────────────
+
+  it('opens Delete modal with the correct task when delete button is clicked', async () => {
+    const user = userEvent.setup()
+    setup()
+
+    const deleteButtons = screen.getAllByRole('button', { name: /delete task/i })
+    await user.click(deleteButtons[0])
+
+    expect(screen.getByRole('dialog', { name: /delete task modal/i })).toBeInTheDocument()
+    expect(screen.getByTestId('deleting-task-title')).toHaveTextContent('Calculus Problem Set')
+  })
+
+  it('closes Delete modal on cancel', async () => {
+    const user = userEvent.setup()
+    setup()
+
+    await user.click(screen.getAllByRole('button', { name: /delete task/i })[0])
+    await user.click(screen.getByRole('button', { name: /cancel delete/i }))
+
+    expect(screen.queryByRole('dialog', { name: /delete task modal/i })).not.toBeInTheDocument()
+  })
+
+  it('calls deleteTask mutation when delete is confirmed', async () => {
+    const user = userEvent.setup()
+    const deleteTaskMock = vi.fn().mockResolvedValue(undefined)
+
+    mockUseQuery.mockImplementation((query: string) => {
+      if (query === 'getAllTasks') return MOCK_TASKS
+      if (query === 'getUpcomingStudyBlocks') return []
+      return MOCK_USER
+    })
+    mockUseMutation.mockImplementation(((mutation: string) => {
+      if (mutation === 'deleteTask') return deleteTaskMock as never
+      return makeMutationFn() as never
+    }) as never)
+    mockUseAction.mockReturnValue(makeMutationFn() as never)
+    renderWithProviders(<DashboardPage />)
+
+    await user.click(screen.getAllByRole('button', { name: /delete task/i })[0])
+    await user.click(screen.getByRole('button', { name: /confirm delete/i }))
+
+    await waitFor(() => {
+      expect(deleteTaskMock).toHaveBeenCalledWith({ taskId: 'task1' })
+    })
+  })
+
+  // ── Feedback flow ────────────────────────────────────────────────────────────
+
+  it('shows time inputs after a thumbs-up rating is selected', async () => {
+    const user = userEvent.setup()
+    setup()
+
+    await user.click(screen.getByRole('button', { name: /rate estimate thumbs up/i }))
+
+    expect(screen.getByPlaceholderText('hrs')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('mins')).toBeInTheDocument()
+  })
+
+  it('shows time inputs after a thumbs-down rating is selected', async () => {
+    const user = userEvent.setup()
+    setup()
+
+    await user.click(screen.getByRole('button', { name: /rate estimate thumbs down/i }))
+
+    expect(screen.getByPlaceholderText('hrs')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('mins')).toBeInTheDocument()
+  })
+
+  it('calls submitEstimateFeedback with the rating on submit', async () => {
+    const user = userEvent.setup()
+    const submitFeedbackMock = vi.fn().mockResolvedValue(undefined)
+
+    mockUseQuery.mockImplementation((query: string) => {
+      if (query === 'getAllTasks') return MOCK_TASKS
+      if (query === 'getUpcomingStudyBlocks') return []
+      return MOCK_USER
+    })
+    mockUseMutation.mockImplementation(((mutation: string) => {
+      if (mutation === 'submitEstimateFeedback') return submitFeedbackMock as never
+      return makeMutationFn() as never
+    }) as never)
+    mockUseAction.mockReturnValue(makeMutationFn() as never)
+    renderWithProviders(<DashboardPage />)
+
+    await user.click(screen.getByRole('button', { name: /rate estimate thumbs up/i }))
+    await user.click(screen.getByRole('button', { name: /^save$/i }))
+
+    await waitFor(() => {
+      expect(submitFeedbackMock).toHaveBeenCalledWith({
+        taskId: 'task1',
+        feedback: { rating: 'up', correctedEstimateMinutes: undefined },
+      })
+    })
+  })
+
+  it('re-enters the rating form when edit is clicked on saved feedback', async () => {
+    const user = userEvent.setup()
+    setup([TASK_WITH_FEEDBACK, MOCK_TASKS[1]])
+
+    // Saved feedback summary is shown
+    expect(screen.getByText(/feedback: helpful/i)).toBeInTheDocument()
+
+    // Click the inline "(edit)" button to re-enter the form
+    // The button has no aria-label; its text content is "(<span>edit</span>)" so query via the inner span
+    await user.click(screen.getByText('edit', { selector: 'span' }))
+
+    // Rating buttons are visible again
+    expect(screen.getByRole('button', { name: /rate estimate thumbs up/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /rate estimate thumbs down/i })).toBeInTheDocument()
   })
 })
