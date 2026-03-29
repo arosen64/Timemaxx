@@ -36,6 +36,7 @@ npx convex dev
 
 For Google OAuth configuration, see the [Google Auth Setup](guides/google-auth-setup.md) guide.
 For Google Calendar connection setup, see the [Google Calendar Connection Setup](guides/google-calendar-connection-setup.md) guide.
+For SIS API key setup, see the [SIS API Key Setup](guides/sis-api-key-setup.md) guide.
 
 ## Running the Application
 
