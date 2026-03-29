@@ -23,22 +23,31 @@ export default function App() {
   useEffect(() => {
     if (isLoading) return
 
-    // After a Google Calendar OAuth redirect, the callback lands on /profile.
-    // Check localStorage before the unauthenticated guard fires so the race
-    // condition (auth state briefly unresolved on full-page reload) cannot
-    // redirect the user to / before we have a chance to navigate back.
-    if (location.pathname === '/profile') {
+    // After a Google Calendar OAuth redirect, return target can come from:
+    // 1) localStorage (onboarding flow stores /onboarding), or
+    // 2) query param set by callback fallback (defaults to /profile).
+    // Handle this before auth guards to avoid navigation races on reload.
+    if (isAuthenticated) {
+      let targetFromState: string | undefined
       try {
         const saved = localStorage.getItem('timemaxx_onboarding_state')
         if (saved) {
           const { returnTo } = JSON.parse(saved) as { returnTo?: string }
           if (returnTo) {
-            navigate(returnTo, { replace: true })
-            return
+            targetFromState = returnTo
           }
         }
       } catch {
         // localStorage unavailable — continue with normal routing
+      }
+
+      const searchParams = new URLSearchParams(location.search)
+      const queryReturnTo = searchParams.get('returnTo') ?? undefined
+      const target = targetFromState ?? queryReturnTo
+      if (target && target.startsWith('/')) {
+        try { localStorage.removeItem('timemaxx_onboarding_state') } catch { /* unavailable */ }
+        navigate(target, { replace: true })
+        return
       }
     }
 
@@ -53,7 +62,7 @@ export default function App() {
         navigate('/onboarding')
       }
     }
-  }, [isAuthenticated, isLoading, location.pathname, user])
+  }, [isAuthenticated, isLoading, location.pathname, location.search, navigate, user])
 
   return (
     <Routes>
