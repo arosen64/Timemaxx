@@ -26,3 +26,19 @@ This creates and stores a strong secret used to encrypt/decrypt calendar OAuth t
 In **Google Cloud Console -> APIs & Services -> OAuth consent screen -> Audience -> Add users**, add your Google account email.
 
 Without this, sign-in and calendar authorization may be blocked in testing mode.
+
+## Production CD setup (one-time)
+
+For production deploys, store a fixed secret in GitHub Actions so CD does not rotate the encryption key:
+
+1. Generate a secret locally:
+
+```bash
+openssl rand -hex 32
+```
+
+2. Add it in GitHub: **Settings -> Secrets and variables -> Actions -> New repository secret**
+   - Name: `CALENDAR_TOKEN_SECRET`
+   - Value: `<the generated hex string>`
+
+The CD workflow writes this value to production Convex on deploy.
