@@ -97,9 +97,9 @@ describe('DashboardPage', () => {
     expect(screen.getByText('Biology Lab Report')).toBeInTheDocument()
   })
 
-  it('displays time estimate in minutes for tasks that have one', () => {
+  it('displays time estimate in hours and minutes for tasks that have one', () => {
     setup()
-    expect(screen.getByText(/90 mins estimated/i)).toBeInTheDocument()
+    expect(screen.getByText(/1h 30m estimated/i)).toBeInTheDocument()
   })
 
   it('shows loading state when tasks are undefined', () => {
