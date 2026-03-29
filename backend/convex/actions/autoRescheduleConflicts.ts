@@ -38,7 +38,7 @@ export const autoRescheduleConflicts = action({
 
     // Fetch fresh calendar events for the full 21-day window (3 weekly fetches)
     const today = new Date();
-    const todayStr = toDateStr(today);
+    const todayStr = toDateStr(today, args.timezone);
 
     const week2Start = new Date(today);
     week2Start.setDate(week2Start.getDate() + 7);
@@ -60,11 +60,11 @@ export const autoRescheduleConflicts = action({
           timezone: args.timezone,
         }),
         ctx.runAction(api.actions.fetchCalendarEvents.fetchCalendarEvents, {
-          startDate: toDateStr(week2Start),
+          startDate: toDateStr(week2Start, args.timezone),
           timezone: args.timezone,
         }),
         ctx.runAction(api.actions.fetchCalendarEvents.fetchCalendarEvents, {
-          startDate: toDateStr(week3Start),
+          startDate: toDateStr(week3Start, args.timezone),
           timezone: args.timezone,
         }),
       ]);
@@ -207,8 +207,8 @@ export const autoRescheduleConflicts = action({
   },
 });
 
-function toDateStr(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+function toDateStr(d: Date, timezone: string): string {
+  return Intl.DateTimeFormat("en-CA", { timeZone: timezone }).format(d);
 }
 
 /**
