@@ -93,16 +93,57 @@ frontend/
       ProfilePage.tsx               # User profile (/profile)
     components/
       dashboard/                    # Dashboard cards, modals, task UI
+        StatCard.tsx
+        TaskCard.tsx
+        TaskModal.tsx
+        AddTaskModal.tsx
+        EditTaskModal.tsx
+        DeleteTaskModal.tsx
+        EstimationErrorModal.tsx
+        TaskFeedbackForm.tsx
+        ScheduleBlock.tsx
+        UpcomingSchedulePanel.tsx
       schedule/                     # Schedule grid, conflict blocks, calendar picker
+        ScheduleTab.tsx
+        TimeGrid.tsx
+        CalendarSelectorPopup.tsx
+        ScheduleBlockConflict.tsx
       classes/                      # Class cards and syllabus upload UI
+        ClassCard.tsx
+        SyllabusUploadModal.tsx
       syllabus/                     # Syllabus task review components
+        TaskReviewCard.tsx
+        TaskTypePills.tsx
       profile/                      # Profile form fields and actions
+        ProfileField.tsx
+        ProfileAvatar.tsx
+        ProfileActions.tsx
+        DeleteAccountModal.tsx
       onboarding/                   # Onboarding shells and navigation
+        OnboardingStepShell.tsx
+        OnboardingNav.tsx
       landing/                      # Landing page presentation components
+        LandingHeroPanel.tsx
+        LandingLoginCard.tsx
+        BrandLogo.tsx
       ui/                           # Shared base UI primitives
+        Button.tsx
+        Modal.tsx
+        FileUpload.tsx
+        Selector.tsx
+        Toggle.tsx
       Sidebar.tsx                   # App sidebar navigation
-      WorkHoursSelector.tsx         # Weekly work-hours picker
+      AcademicProfileSummary.tsx    # Academic profile display
+      TranscriptUpload.tsx          # Transcript file upload
+      DifficultyRating.tsx          # Task difficulty rating widget
       CourseSelector.tsx            # SIS-backed course search/selection
+      CoursesList.tsx               # Enrolled courses list
+      CoursesForm.tsx               # Course add/edit form
+      PreferencesForm.tsx           # Study preferences form
+      ProfileForm.tsx               # User profile edit form
+      WorkHoursSelector.tsx         # Weekly work-hours picker
+      DueDateRowWithCalendar.tsx    # Due date row with calendar picker
+      DueTimeField.tsx              # Due time input field
     main.tsx                        # App entry point (ConvexProvider + BrowserRouter)
     App.tsx                         # Route definitions + auth redirects
   tests/                    # Frontend behavioral tests (Vitest + React Testing Library)
@@ -115,8 +156,30 @@ backend/
     http.ts                         # Convex HTTP routes
     calendarOAuthCallback.ts        # Google Calendar OAuth callback handler
     actions/                        # External API + AI actions (Gemini, SIS, Calendar)
+      estimateTaskTime.ts
+      requestEstimateTaskTime.ts
+      generateAcademicProfile.ts
+      parseTranscript.ts
+      uploadSyllabus.ts
+      fetchCalendarEvents.ts
+      getCalendarAvailability.ts
+      initiateGoogleCalendarOAuth.ts
+      autoRescheduleConflicts.ts
+      jhuCourses.ts
     queries/                        # Read-only Convex queries
+      tasks.ts
+      users.ts
+      calendar.ts
+      studyBlocks.ts
+      userCourses.ts
     mutations/                      # Data-write Convex mutations
+      tasks.ts
+      users.ts
+      calendar.ts
+      studyBlocks.ts
+      userCourses.ts
+      syllabi.ts
+      timeEstimate.ts
     lib/                            # Shared backend helpers/utilities
     tests/                          # Convex unit/integration tests
     _generated/                     # Convex generated API/types (do not edit manually)

@@ -105,37 +105,71 @@
 
 ### Convex Schema Updates
 
-Changes needed for Iteration 2:
+Actual schema as implemented in Iteration 2:
 
 ```ts
-// users table — update transcript field
+// users table — new fields added
 {
-  transcriptFileId?: Id<"_storage">,        // file stored in Convex storage
-  transcriptDescription?: string,           // AI-generated plain-language description
+  transcriptSummary?: {         // AI-generated structured summary (replaces transcriptDescription)
+    label: string,
+    text: string,
+  }[],
 }
 
-// tasks table additions
+// tasks table — new fields added
 {
-  classTag?: string,          // course label (e.g., "CS 423")
-  taskType: string,           // extended set including custom types
-  estimateFeedback?: {
-    rating: "up" | "down",
-    correctedEstimate?: number,
-  },
+  classTag?: string,                          // free-text course label (e.g., "CS 423")
+  courseId?: Id<"userCourses">,               // reference to userCourses table
+  taskType: taskTypeValidator,                // extended set including custom types
+  estimateFeedbackRating?: "up" | "down",    // replaces nested estimateFeedback object
+  correctedEstimateMinutes?: number,
+  estimateFeedbackSubmittedAt?: number,
 }
 
 // syllabi table (new)
 {
   userId: Id<"users">,
-  fileName: string,
-  uploadedAt: number,
-  rawText: string,
-  extractedTasks: {
-    title: string,
-    dueDate: number,
-    taskType: string,
-    classTag: string,
-  }[],
+  fileContents: string,                       // raw text of the uploaded syllabus
+  courseId?: Id<"userCourses">,
+  status: "pending" | "confirmed" | "failed",
+  createdAt: number,
+}
+
+// userCourses table (new) — per-user course enrollment records
+{
+  userId: Id<"users">,
+  courseCode: string,           // e.g. "EN.501.303"
+  title: string,
+  credits?: number,
+  term: string,
+  grade?: string,
+  studyGoal?: string,
+  difficultyRating?: number,
+}
+
+// studyBlocks table (new) — scheduled time chunks assigned to tasks
+{
+  taskId: Id<"tasks">,
+  title: string,
+  startTime?: string,
+  studyBlockLength: number,
+  isConflicted?: boolean,
+}
+
+// calendarConnections table (new) — encrypted Google Calendar OAuth tokens
+{
+  userId: Id<"users">,
+  accessToken: string,
+  refreshToken: string,
+  expiresAt: number,
+  selectedCalendarIds?: string[],
+}
+
+// calendarOAuthStates table (new) — short-lived state tokens for OAuth callback
+{
+  userId: Id<"users">,
+  state: string,
+  expiresAt: number,
 }
 ```
 
@@ -185,12 +219,12 @@ Return plain text only. Do not include names, IDs, or identifying information.
 
 | Feature | Owner |
 |---|---|
-| R7: Transcript upload + academic profile | TBD |
-| R8: Syllabus upload + due date extraction + class tags | TBD |
-| R9: Settings dashboard + account deletion | TBD |
-| R10: Google Calendar schedule integration + schedule tab | TBD |
-| R11: Task improvements (custom types + estimate feedback) | TBD |
-| R12: Classes tab (sidebar nav + `/classes` route + syllabus upload per class) | TBD |
+| R7: Transcript upload + academic profile | riatalwar, anviimishra |
+| R8: Syllabus upload + due date extraction + class tags | riatalwar, mromoni1 |
+| R9: Settings dashboard + account deletion | mromoni1, arosen64 |
+| R10: Google Calendar schedule integration + schedule tab | tranade, arosen64 |
+| R11: Task improvements (custom types + estimate feedback) | tranade, amintze2 |
+| R12: Classes tab (sidebar nav + `/classes` route + syllabus upload per class) | anviimishra, amintze2 |
 
 ### Dependencies
 
@@ -206,32 +240,32 @@ Return plain text only. Do not include names, IDs, or identifying information.
 
 | # | Task | Type | Assignee(s) | Requirement |
 |---|---|---|---|---|
-| TBD | **R7: Transcript Upload and Academic Profile** | feature | TBD | R7 |
-| TBD | &nbsp;&nbsp;Add transcript upload step to onboarding and profile tab | task | TBD | R7 |
-| TBD | &nbsp;&nbsp;Store transcript file in Convex file storage | task | TBD | R7 |
-| TBD | &nbsp;&nbsp;Implement Gemini action to generate transcript description | task | TBD | R7 |
-| TBD | &nbsp;&nbsp;Add editable description review UI before saving | task | TBD | R7 |
-| TBD | **R8: Syllabus Upload and Due Date Extraction** | feature | TBD | R8 |
-| TBD | &nbsp;&nbsp;Add syllabus upload to dashboard classes section and onboarding | task | TBD | R8 |
-| TBD | &nbsp;&nbsp;Implement `uploadSyllabus` Gemini action and `confirmSyllabusTasks` mutation | task | TBD | R8 |
-| TBD | &nbsp;&nbsp;Build extracted task review flow (edit/remove/confirm, with class tag) | task | TBD | R8 |
-| TBD | **R9: Settings Dashboard and Account Management** | feature | TBD | R9 |
-| TBD | &nbsp;&nbsp;Build settings page UI reusing ProfileForm and WorkHoursSelector | task | TBD | R9 |
-| TBD | &nbsp;&nbsp;Implement `updateUserSettings` mutation and wire to settings form | task | TBD | R9 |
-| TBD | &nbsp;&nbsp;Add account deletion UI and `deleteAccount` mutation | task | TBD | R9 |
-| TBD | **R10: Google Calendar Schedule Integration** | feature | TBD | R10 |
-| TBD | &nbsp;&nbsp;Add Google Calendar OAuth scope and token storage | task | TBD | R10 |
-| TBD | &nbsp;&nbsp;Build schedule tab on dashboard displaying calendar events | task | TBD | R10 |
-| TBD | &nbsp;&nbsp;Implement `getCalendarAvailability` action and available-time picker | task | TBD | R10 |
-| TBD | **R11: Task Improvements** | feature | TBD | R11 |
-| TBD | &nbsp;&nbsp;Extend task types and add custom type input | task | TBD | R11 |
-| TBD | &nbsp;&nbsp;Add class tag field to task create/edit forms | task | TBD | R11 |
-| TBD | &nbsp;&nbsp;Implement time estimate feedback UI and `submitEstimateFeedback` mutation | task | TBD | R11 |
-| TBD | **R12: Classes Tab** | feature | TBD | R12 |
-| TBD | &nbsp;&nbsp;Add Classes item to sidebar and create `/classes` route | task | TBD | R12 |
-| TBD | &nbsp;&nbsp;Build classes page UI (add/remove classes, class cards with syllabus upload) | task | TBD | R12 |
-| TBD | &nbsp;&nbsp;Link classes page from onboarding courses step | task | TBD | R12 |
-| 76 | Add date picker for add/edit task modal | feature | TBD | — |
-| 75 | Fix responsive design for various screen sizes | bug | TBD | — |
-| 74 | Route sidebar logo and user info clicks to correct pages | task | TBD | — |
+| #104 | **R7: Transcript Upload and Academic Profile** | feature | riatalwar, anviimishra | R7 |
+| #110 | &nbsp;&nbsp;Add transcript upload step to onboarding and profile tab | task | anviimishra | R7 |
+| #111 | &nbsp;&nbsp;Store transcript file in Convex file storage | task | anviimishra | R7 |
+| #112 | &nbsp;&nbsp;Implement Gemini action to generate transcript description | task | anviimishra | R7 |
+| #113 | &nbsp;&nbsp;Add editable description review UI before saving | task | anviimishra | R7 |
+| #105 | **R8: Syllabus Upload and Due Date Extraction** | feature | riatalwar, mromoni1 | R8 |
+| #114 | &nbsp;&nbsp;Add syllabus upload to dashboard classes section and onboarding | task | riatalwar | R8 |
+| #115 | &nbsp;&nbsp;Implement `uploadSyllabus` Gemini action and `confirmSyllabusTasks` mutation | task | riatalwar | R8 |
+| #116 | &nbsp;&nbsp;Build extracted task review flow (edit/remove/confirm, with class tag) | task | riatalwar | R8 |
+| #106 | **R9: Settings Dashboard and Account Management** | feature | mromoni1, arosen64 | R9 |
+| #117 | &nbsp;&nbsp;Build settings page UI reusing ProfileForm and WorkHoursSelector | task | mromoni1 | R9 |
+| #118 | &nbsp;&nbsp;Implement `updateUserSettings` mutation and wire to settings form | task | mromoni1 | R9 |
+| #119 | &nbsp;&nbsp;Add account deletion UI and `deleteAccount` mutation | task | mromoni1 | R9 |
+| #107 | **R10: Google Calendar Schedule Integration** | feature | tranade, arosen64 | R10 |
+| #120 | &nbsp;&nbsp;Add Google Calendar OAuth scope and token storage | task | arosen64 | R10 |
+| #121 | &nbsp;&nbsp;Build schedule tab on dashboard displaying calendar events | task | arosen64 | R10 |
+| #122 | &nbsp;&nbsp;Implement `getCalendarAvailability` action and available-time picker | task | arosen64 | R10 |
+| #108 | **R11: Task Improvements** | feature | tranade, amintze2 | R11 |
+| #123 | &nbsp;&nbsp;Extend task types and add custom type input | task | tranade | R11 |
+| #124 | &nbsp;&nbsp;Add class tag field to task create/edit forms | task | tranade | R11 |
+| #125 | &nbsp;&nbsp;Implement time estimate feedback UI and `submitEstimateFeedback` mutation | task | tranade | R11 |
+| #109 | **R12: Classes Tab** | feature | anviimishra, amintze2 | R12 |
+| #126 | &nbsp;&nbsp;Add Classes item to sidebar and create `/classes` route | task | amintze2 | R12 |
+| #127 | &nbsp;&nbsp;Build classes page UI (add/remove classes, class cards with syllabus upload) | task | amintze2 | R12 |
+| #128 | &nbsp;&nbsp;Link classes page from onboarding courses step | task | amintze2 | R12 |
+| #76 | Add date picker for add/edit task modal | feature | tranade | — |
+| #75 | Fix responsive design for various screen sizes | bug | tranade, riatalwar, mromoni1, anviimishra, arosen64, amintze2 | — |
+| #74 | Route sidebar logo and user info clicks to correct pages | task | mromoni1 | — |
 

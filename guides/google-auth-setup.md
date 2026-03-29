@@ -1,4 +1,4 @@
-# Dev Environment Setup
+# Dev Environment Setup For Google Auth
 
 ## Prerequisites
 - Node.js installed
