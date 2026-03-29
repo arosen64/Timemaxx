@@ -1,9 +1,9 @@
 import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { renderWithProviders, makeMutationFn } from './utils'
-import DashboardPage from '../src/pages/DashboardPage'
+import { renderWithProviders, makeMutationFn } from '../utils'
+import DashboardPage from '../../src/pages/DashboardPage'
 
-vi.mock('../../backend/convex/_generated/api', () => ({
+vi.mock('../../../backend/convex/_generated/api', () => ({
   api: {
     queries: {
       users: { getCurrUser: 'getCurrUser' },
@@ -22,10 +22,10 @@ vi.mock('../../backend/convex/_generated/api', () => ({
 }))
 
 // Sidebar is out of scope for dashboard behavioral tests
-vi.mock('../src/components/Sidebar', () => ({ default: () => <div data-testid="sidebar" /> }))
+vi.mock('../../src/components/Sidebar', () => ({ default: () => <div data-testid="sidebar" /> }))
 
 // AddTaskModal is tested separately; mock it here so dashboard tests stay focused
-vi.mock('../src/components/dashboard/AddTaskModal', () => ({
+vi.mock('../../src/components/dashboard/AddTaskModal', () => ({
   default: ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) =>
     isOpen ? (
       <div role="dialog" aria-label="Add Task Modal">
@@ -34,7 +34,7 @@ vi.mock('../src/components/dashboard/AddTaskModal', () => ({
     ) : null,
 }))
 
-vi.mock('../src/components/dashboard/EditTaskModal', () => ({
+vi.mock('../../src/components/dashboard/EditTaskModal', () => ({
   default: ({
     isOpen,
     task,
@@ -52,7 +52,7 @@ vi.mock('../src/components/dashboard/EditTaskModal', () => ({
     ) : null,
 }))
 
-vi.mock('../src/components/dashboard/DeleteTaskModal', () => ({
+vi.mock('../../src/components/dashboard/DeleteTaskModal', () => ({
   default: ({
     isOpen,
     task,
