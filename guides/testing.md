@@ -39,6 +39,8 @@ npm test -- --coverage
 
 ## Backend Test Helpers
 
+Backend test files live in `backend/convex/tests/`. Helpers are in `backend/convex-tests/helpers.ts`.
+
 Backend tests import from `backend/convex-tests/helpers.ts`.
 
 **`makeTestCtx()`** — creates a fresh in-memory Convex instance. Call this in each test to get an isolated database.
