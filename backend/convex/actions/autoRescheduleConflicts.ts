@@ -107,6 +107,12 @@ export const autoRescheduleConflicts = action({
 
     // Capture current time once for all past-slot comparisons
     const nowMs = Date.now();
+    console.log("[autoReschedule] nowMs:", new Date(nowMs).toISOString());
+    console.log("[autoReschedule] todayStr:", todayStr);
+    console.log("[autoReschedule] freeBlocks total:", freeBlocks.length);
+    if (freeBlocks.length > 0) {
+      console.log("[autoReschedule] freeBlocks[0]:", JSON.stringify(freeBlocks[0]));
+    }
 
     // Sort free blocks: preferred first, then by start time.
     // Filter out slots already fully elapsed; trim slots that are partially elapsed.
@@ -121,6 +127,10 @@ export const autoRescheduleConflicts = action({
       })),
       nowMs,
     );
+    console.log("[autoReschedule] sortedFreeBlocks after filter:", sortedFreeBlocks.length);
+    if (sortedFreeBlocks.length > 0) {
+      console.log("[autoReschedule] first valid freeSlot:", JSON.stringify({ startISO: sortedFreeBlocks[0].startISO, endISO: sortedFreeBlocks[0].endISO }));
+    }
 
     let unplacedCount = 0;
 
@@ -166,6 +176,7 @@ export const autoRescheduleConflicts = action({
 
         // Place the block
         const newStartISO = new Date(candidateStart).toISOString();
+        console.log("[autoReschedule] placing block at:", newStartISO, "freeSlot:", JSON.stringify({ startISO: freeSlot.startISO, endISO: freeSlot.endISO }));
         placedRanges.push({
           startMs: candidateStart,
           endMs: candidateStart + blockDurationMs,
