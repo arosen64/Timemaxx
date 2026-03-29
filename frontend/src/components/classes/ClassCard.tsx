@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { api } from '../../../../backend/convex/_generated/api'
 import { Id } from '../../../../backend/convex/_generated/dataModel'
 import { TrashIcon, SpinnerIcon, CheckCircleIcon } from '../icons'
+import DifficultyRating from '../DifficultyRating'
 import { GRADES, STUDY_GOALS, REMOVE_CLASS_TASKS_WARNING } from '../../constants'
 import SyllabusUploadModal from './SyllabusUploadModal'
 
@@ -15,6 +16,7 @@ interface ClassCardProps {
   term: string
   grade?: string
   studyGoal?: string
+  difficultyRating?: number
   isPast: boolean
   hasSyllabus: boolean
   taskCount: number
@@ -28,6 +30,7 @@ export default function ClassCard({
   term,
   grade: initialGrade,
   studyGoal: initialStudyGoal,
+  difficultyRating: initialDifficultyRating,
   isPast,
   hasSyllabus,
   taskCount,
@@ -60,6 +63,10 @@ export default function ClassCard({
   const [studyGoalValue, setStudyGoalValue] = useState(initialStudyGoal ?? '')
   const [studyGoalError, setStudyGoalError] = useState<string | null>(null)
 
+  // Difficulty rating state (past cards only)
+  const [difficultyValue, setDifficultyValue] = useState(initialDifficultyRating ?? 3)
+  const [difficultyError, setDifficultyError] = useState<string | null>(null)
+
   async function handleConfirmRemove() {
     setIsRemoving(true)
     try {
@@ -86,6 +93,16 @@ export default function ClassCard({
       setGradeError('Failed to save grade. Please try again.')
     } finally {
       setIsSavingGrade(false)
+    }
+  }
+
+  async function handleDifficultyChange(value: number) {
+    setDifficultyValue(value)
+    setDifficultyError(null)
+    try {
+      await updateUserCourse({ userCourseId: id, difficultyRating: value })
+    } catch {
+      setDifficultyError('Failed to save difficulty. Please try again.')
     }
   }
 
@@ -211,6 +228,13 @@ export default function ClassCard({
             {gradeError && (
               <p className="font-body text-xs text-urgent-red">{gradeError}</p>
             )}
+            <div className="flex flex-col gap-1">
+              <span className="font-body text-xs text-light-blue">Difficulty</span>
+              <DifficultyRating value={difficultyValue} onChange={handleDifficultyChange} />
+              {difficultyError && (
+                <p className="font-body text-xs text-urgent-red">{difficultyError}</p>
+              )}
+            </div>
           </div>
         ) : (
           <div className="flex flex-col gap-2">
