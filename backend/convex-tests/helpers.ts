@@ -7,7 +7,7 @@ import schema from "../convex/schema";
 // convex-test uses the presence of "_generated" in a key to find the root prefix.
 const modules = import.meta.glob("../convex/**/*.*s");
 
-export type TestInstance = ReturnType<typeof convexTest>;
+export type TestInstance = ReturnType<typeof makeTestCtx>;
 
 /**
  * Creates a convexTest instance with the project schema.
