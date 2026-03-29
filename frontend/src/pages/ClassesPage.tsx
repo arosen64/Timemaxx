@@ -179,6 +179,7 @@ export default function ClassesPage() {
                 title={course.title}
                 term={course.term ?? ''}
                 grade={course.grade}
+                studyGoal={course.studyGoal}
                 isPast={activeTab === 'past'}
                 hasSyllabus={metadataMap.get(course._id)?.hasSyllabus ?? false}
                 taskCount={metadataMap.get(course._id)?.taskCount ?? 0}
