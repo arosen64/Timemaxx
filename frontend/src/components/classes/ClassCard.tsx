@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useMutation } from 'convex/react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../../../../backend/convex/_generated/api'
@@ -41,8 +41,11 @@ export default function ClassCard({
   // Upload state (current cards only)
   const [uploadModalOpen, setUploadModalOpen] = useState(false)
 
+  const saveGradeButtonRef = useRef<HTMLButtonElement>(null)
+
   // Grade state (past cards only)
   const [gradeValue, setGradeValue] = useState(initialGrade ?? '')
+  const [confirmedGrade, setConfirmedGrade] = useState(initialGrade ?? '')
   const [isSavingGrade, setIsSavingGrade] = useState(false)
   const [gradeSaved, setGradeSaved] = useState(false)
   const [gradeError, setGradeError] = useState<string | null>(null)
@@ -66,6 +69,7 @@ export default function ClassCard({
     setIsSavingGrade(true)
     try {
       await updateUserCourse({ userCourseId: id, grade: gradeValue })
+      setConfirmedGrade(gradeValue)
       setGradeSaved(true)
       setTimeout(() => setGradeSaved(false), 2000)
     } catch {
@@ -161,6 +165,11 @@ export default function ClassCard({
               <select
                 value={gradeValue}
                 onChange={(e) => { setGradeValue(e.target.value); setGradeSaved(false); setGradeError(null) }}
+                onBlur={(e) => {
+                  if (e.relatedTarget === saveGradeButtonRef.current) return
+                  setGradeValue(confirmedGrade)
+                  setGradeError(null)
+                }}
                 className="flex-1 rounded-lg border border-border bg-bg-gray px-3 py-1.5 font-body text-sm text-navy outline-none focus:border-teal focus:ring-1 focus:ring-teal transition"
               >
                 <option value="">Select grade…</option>
@@ -169,6 +178,7 @@ export default function ClassCard({
                 ))}
               </select>
               <button
+                ref={saveGradeButtonRef}
                 type="button"
                 onClick={handleSaveGrade}
                 disabled={isSavingGrade}
