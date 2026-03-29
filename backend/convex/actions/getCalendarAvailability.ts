@@ -175,10 +175,12 @@ function localToUTCISO(
   const localHour = parseInt(parts.find((p) => p.type === "hour")?.value ?? "0", 10)
   const localMinute = parseInt(parts.find((p) => p.type === "minute")?.value ?? "0", 10)
 
-  // Compute the offset in minutes
+  // Compute the offset in minutes; clamp to ±12h to avoid off-by-24h for UTC- timezones
   const targetTotalMins = hour * 60 + minute
   const actualLocalMins = (localHour === 24 ? 0 : localHour) * 60 + localMinute
-  const offsetMins = targetTotalMins - actualLocalMins
+  let offsetMins = targetTotalMins - actualLocalMins
+  if (offsetMins < -12 * 60) offsetMins += 24 * 60
+  if (offsetMins > 12 * 60) offsetMins -= 24 * 60
 
   // Adjust the UTC time by the offset
   const adjustedUTC = new Date(approxUTC.getTime() + offsetMins * 60 * 1000)

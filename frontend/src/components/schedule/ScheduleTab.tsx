@@ -200,8 +200,9 @@ export default function ScheduleTab() {
         }
         if (conflict) continue
 
-        // Must be before task due date
+        // Must be in the future and before task due date
         const slotStartMs = new Date(`${dateStr}T00:00:00`).getTime() + slot * 30 * 60 * 1000
+        if (slotStartMs < Date.now()) continue
         if (slotStartMs >= block.taskDueDate) continue
 
         slots.add(`${dateStr}:${slot}`)
@@ -227,6 +228,7 @@ export default function ScheduleTab() {
     const activeId = assigningBlockId ?? draggingBlockId
     if (!activeId) return
     const slotStartMs = new Date(`${dateStr}T00:00:00`).getTime() + slot * 30 * 60 * 1000
+    if (slotStartMs < Date.now()) return
     const isoStart = new Date(slotStartMs).toISOString()
     await editStudyBlockTimeMutation({ studyBlockId: activeId, startTime: isoStart })
     setAssigningBlockId(null)
@@ -236,6 +238,7 @@ export default function ScheduleTab() {
   const handleDrop = useCallback(async (dateStr: string, slot: number) => {
     if (!draggingBlockId) return
     const slotStartMs = new Date(`${dateStr}T00:00:00`).getTime() + slot * 30 * 60 * 1000
+    if (slotStartMs < Date.now()) return
     const isoStart = new Date(slotStartMs).toISOString()
     await editStudyBlockTimeMutation({ studyBlockId: draggingBlockId, startTime: isoStart })
     setDraggingBlockId(null)
