@@ -16,9 +16,10 @@ export const calendarOAuthCallback = httpAction(async (ctx, request) => {
   const state = url.searchParams.get("state");
   const error = url.searchParams.get("error");
 
-  // SITE_URL is already set by the existing auth setup — strip trailing slash to avoid double-slash
+  // SITE_URL is already set by the existing auth setup — strip trailing slash to avoid double-slash.
+  // Redirect to app root (not deep links like /profile) to avoid GitHub Pages 404s on direct SPA routes.
   const siteUrl = (process.env.SITE_URL ?? "http://localhost:5173").replace(/\/$/, "");
-  const profileRedirect = `${siteUrl}/profile`;
+  const profileRedirect = `${siteUrl}/?oauth=calendar&returnTo=${encodeURIComponent("/profile")}`;
 
   if (error || !code || !state) {
     return new Response(null, { status: 302, headers: { Location: profileRedirect } });
