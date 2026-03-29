@@ -9,4 +9,5 @@ Brief "How To" guides that explain both _what_ and _why_ for each topic. Aimed a
 | [Google Calendar Connection Setup](google-calendar-connection-setup.md) | One-time per-developer setup for Calendar OAuth redirect URIs, Convex token secret, and test-user access |
 | [Gemini API Key Setup](gemini-api-key-setup.md)     | Getting a Google Gemini API key and setting it in your personal Convex deployment to enable AI-powered task time estimation |
 | [SIS API Key Setup](sis-api-key-setup.md)           | Setting the SIS API key in your Convex deployment for course lookup features |
+| [CI/CD Setup Guide](ci-cd-setup-guide.md)           | CI/CD pipeline overview, GitHub Actions workflows, secrets configuration, and deployment setup |
 | [Test Execution](testing.md)                        | Testing overview, execution, and helpers |
