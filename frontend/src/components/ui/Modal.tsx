@@ -63,7 +63,7 @@ export default function Modal({
         className={`relative z-10 flex flex-col bg-white border border-border rounded-xl ${
           isSm
             ? 'w-full max-w-sm p-8 gap-4 shadow-xl'
-            : 'w-[520px] p-12 gap-6'
+            : 'w-full max-w-xl p-12 gap-6'
         }`}
         onClick={(e) => e.stopPropagation()}
       >
@@ -76,7 +76,7 @@ export default function Modal({
 
         {/* Header */}
         <div className="flex items-center justify-between w-full">
-          <span className="font-heading text-[26px] font-bold text-navy">{title}</span>
+          <span className="font-heading text-2xl font-bold text-navy">{title}</span>
           {showCloseButton && (
             <button
               type="button"
