@@ -5,9 +5,11 @@ import { Id } from '../../../backend/convex/_generated/dataModel'
 import Sidebar from '../components/Sidebar'
 import ClassCard from '../components/classes/ClassCard'
 import CourseSelector from '../components/CourseSelector'
+import TranscriptUpload from '../components/TranscriptUpload'
 import { PlusIcon } from '../components/icons'
 import { isPastTerm } from '../utils/termUtils'
 import Button from '../components/ui/Button'
+import Modal from '../components/ui/Modal'
 
 export default function ClassesPage() {
   const courses = useQuery(api.queries.userCourses.getUserCourses)
@@ -20,6 +22,7 @@ export default function ClassesPage() {
 
   const [activeTab, setActiveTab] = useState<'current' | 'past'>('current')
   const [showAddForm, setShowAddForm] = useState(false)
+  const [importModalOpen, setImportModalOpen] = useState(false)
 
   const currentCourses = courses?.filter((c) => !isPastTerm(c.term ?? '')) ?? []
   const pastCourses = courses?.filter((c) => isPastTerm(c.term ?? '')) ?? []
@@ -40,15 +43,39 @@ export default function ClassesPage() {
             <h1 className="font-heading text-3xl font-bold text-navy">Classes</h1>
             <p className="font-body text-sm text-slate-blue">Manage your classes and syllabi</p>
           </div>
-          <Button
-            variant="primary"
-            icon={<PlusIcon size={15} />}
-            onClick={() => setShowAddForm((v) => !v)}
-            className="h-10 px-4"
-          >
-            Add Class
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="secondary"
+              onClick={() => setImportModalOpen(true)}
+              className="h-10 px-4"
+            >
+              Import Transcript
+            </Button>
+            <Button
+              variant="primary"
+              icon={<PlusIcon size={15} />}
+              onClick={() => setShowAddForm((v) => !v)}
+              className="h-10 px-4"
+            >
+              Add Class
+            </Button>
+          </div>
         </div>
+
+        <Modal
+          isOpen={importModalOpen}
+          onClose={() => setImportModalOpen(false)}
+          title="Import Transcript"
+          primaryLabel="Close"
+          onPrimary={() => setImportModalOpen(false)}
+          showCancelButton={false}
+        >
+          <TranscriptUpload
+            onCoursesAdded={(courses) => {
+              if (courses.length > 0) setImportModalOpen(false)
+            }}
+          />
+        </Modal>
 
         {/* Add Course Panel */}
         {showAddForm && (
@@ -141,6 +168,7 @@ export default function ClassesPage() {
                 title={course.title}
                 term={course.term ?? ''}
                 grade={course.grade}
+                studyGoal={course.studyGoal}
                 isPast={activeTab === 'past'}
                 hasSyllabus={metadataMap.get(course._id)?.hasSyllabus ?? false}
                 taskCount={metadataMap.get(course._id)?.taskCount ?? 0}

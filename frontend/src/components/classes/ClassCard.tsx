@@ -1,10 +1,10 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useMutation } from 'convex/react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../../../../backend/convex/_generated/api'
 import { Id } from '../../../../backend/convex/_generated/dataModel'
 import { TrashIcon, SpinnerIcon, CheckCircleIcon } from '../icons'
-import { GRADES, REMOVE_CLASS_TASKS_WARNING } from '../../constants'
+import { GRADES, STUDY_GOALS, REMOVE_CLASS_TASKS_WARNING } from '../../constants'
 import SyllabusUploadModal from './SyllabusUploadModal'
 
 
@@ -14,6 +14,7 @@ interface ClassCardProps {
   title: string
   term: string
   grade?: string
+  studyGoal?: string
   isPast: boolean
   hasSyllabus: boolean
   taskCount: number
@@ -26,6 +27,7 @@ export default function ClassCard({
   title,
   term,
   grade: initialGrade,
+  studyGoal: initialStudyGoal,
   isPast,
   hasSyllabus,
   taskCount,
@@ -42,10 +44,21 @@ export default function ClassCard({
   const [uploadModalOpen, setUploadModalOpen] = useState(false)
 
   // Grade state (past cards only)
+  const saveGradeButtonRef = useRef<HTMLButtonElement>(null)
   const [gradeValue, setGradeValue] = useState(initialGrade ?? '')
+  const [confirmedGrade, setConfirmedGrade] = useState(initialGrade ?? '')
+
+  useEffect(() => {
+    setConfirmedGrade(initialGrade ?? '')
+    setGradeValue(initialGrade ?? '')
+  }, [initialGrade])
   const [isSavingGrade, setIsSavingGrade] = useState(false)
   const [gradeSaved, setGradeSaved] = useState(false)
   const [gradeError, setGradeError] = useState<string | null>(null)
+
+  // Study goal state (current cards only)
+  const [studyGoalValue, setStudyGoalValue] = useState(initialStudyGoal ?? '')
+  const [studyGoalError, setStudyGoalError] = useState<string | null>(null)
 
   async function handleConfirmRemove() {
     setIsRemoving(true)
@@ -66,12 +79,24 @@ export default function ClassCard({
     setIsSavingGrade(true)
     try {
       await updateUserCourse({ userCourseId: id, grade: gradeValue })
+      setConfirmedGrade(gradeValue)
       setGradeSaved(true)
       setTimeout(() => setGradeSaved(false), 2000)
     } catch {
       setGradeError('Failed to save grade. Please try again.')
     } finally {
       setIsSavingGrade(false)
+    }
+  }
+
+  async function handleStudyGoalChange(value: string) {
+    if (!value) return
+    setStudyGoalValue(value)
+    setStudyGoalError(null)
+    try {
+      await updateUserCourse({ userCourseId: id, studyGoal: value })
+    } catch {
+      setStudyGoalError('Failed to save study goal. Please try again.')
     }
   }
 
@@ -161,6 +186,11 @@ export default function ClassCard({
               <select
                 value={gradeValue}
                 onChange={(e) => { setGradeValue(e.target.value); setGradeSaved(false); setGradeError(null) }}
+                onBlur={(e) => {
+                  if (e.relatedTarget === saveGradeButtonRef.current) return
+                  setGradeValue(confirmedGrade)
+                  setGradeError(null)
+                }}
                 className="flex-1 rounded-lg border border-border bg-bg-gray px-3 py-1.5 font-body text-sm text-navy outline-none focus:border-teal focus:ring-1 focus:ring-teal transition"
               >
                 <option value="">Select grade…</option>
@@ -169,6 +199,7 @@ export default function ClassCard({
                 ))}
               </select>
               <button
+                ref={saveGradeButtonRef}
                 type="button"
                 onClick={handleSaveGrade}
                 disabled={isSavingGrade}
@@ -181,7 +212,25 @@ export default function ClassCard({
               <p className="font-body text-xs text-urgent-red">{gradeError}</p>
             )}
           </div>
-        ) : hasSyllabus ? (
+        ) : (
+          <div className="flex flex-col gap-2">
+            <select
+              value={studyGoalValue}
+              onChange={(e) => handleStudyGoalChange(e.target.value)}
+              aria-label="Study goal"
+              className="w-full rounded-lg border border-border bg-bg-gray px-3 py-1.5 font-body text-sm text-navy outline-none focus:border-teal focus:ring-1 focus:ring-teal transition"
+            >
+              <option value="">Select study goal…</option>
+              {STUDY_GOALS.map((g) => (
+                <option key={g} value={g}>{g}</option>
+              ))}
+            </select>
+            {studyGoalError && (
+              <p className="font-body text-xs text-urgent-red">{studyGoalError}</p>
+            )}
+          </div>
+        )}
+        {!isPast && (hasSyllabus ? (
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5 text-success">
               <CheckCircleIcon size={14} />
@@ -205,7 +254,7 @@ export default function ClassCard({
               Upload Syllabus
             </button>
           </div>
-        )}
+        ))}
       </div>
     </>
   )

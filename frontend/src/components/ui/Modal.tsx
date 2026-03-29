@@ -18,6 +18,8 @@ interface ModalProps {
   primaryVariant?: 'default' | 'destructive'
   /** Whether to show the × close button in the header. Defaults to true. */
   showCloseButton?: boolean
+  /** Whether to show the Cancel button in the footer. Defaults to true. */
+  showCancelButton?: boolean
   /** 'sm' uses a narrower card with smaller padding and buttons (for confirm dialogs). */
   size?: 'default' | 'sm'
   /** 'blur' uses a heavier, blurred backdrop (for confirm dialogs). */
@@ -38,6 +40,7 @@ export default function Modal({
   isPrimaryDisabled = false,
   primaryVariant = 'default',
   showCloseButton = true,
+  showCancelButton = true,
   size = 'default',
   backdrop = 'default',
 }: ModalProps) {
@@ -63,7 +66,7 @@ export default function Modal({
         className={`relative z-10 flex flex-col bg-white border border-border rounded-xl ${
           isSm
             ? 'w-full max-w-sm p-8 gap-4 shadow-xl'
-            : 'w-[520px] p-12 gap-6'
+            : 'w-full max-w-xl p-12 gap-6'
         }`}
         onClick={(e) => e.stopPropagation()}
       >
@@ -76,7 +79,7 @@ export default function Modal({
 
         {/* Header */}
         <div className="flex items-center justify-between w-full">
-          <span className="font-heading text-[26px] font-bold text-navy">{title}</span>
+          <span className="font-heading text-2xl font-bold text-navy">{title}</span>
           {showCloseButton && (
             <button
               type="button"
@@ -102,15 +105,17 @@ export default function Modal({
 
         {/* Button Row */}
         <div className="flex w-full gap-3">
-          <button
-            type="button"
-            onClick={onClose}
-            className={`flex flex-1 cursor-pointer items-center justify-center rounded-lg border border-border bg-bg-gray font-heading font-semibold text-slate-blue transition hover:bg-bg-gray ${
-              isSm ? 'h-10 text-sm' : 'h-12 text-[15px]'
-            }`}
-          >
-            Cancel
-          </button>
+          {showCancelButton && (
+            <button
+              type="button"
+              onClick={onClose}
+              className={`flex flex-1 cursor-pointer items-center justify-center rounded-lg border border-border bg-bg-gray font-heading font-semibold text-slate-blue transition hover:bg-bg-gray ${
+                isSm ? 'h-10 text-sm' : 'h-12 text-[15px]'
+              }`}
+            >
+              Cancel
+            </button>
+          )}
           <button
             type="button"
             onClick={onPrimary}

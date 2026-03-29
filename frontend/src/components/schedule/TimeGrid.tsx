@@ -204,6 +204,8 @@ export default function TimeGrid({
             const topPx = (minutesFromMidnight(startDt) / 30) * SLOT_HEIGHT
             const heightPx = Math.max((block.studyBlockLength / 30) * SLOT_HEIGHT, SLOT_HEIGHT)
             const isConflicted = block.isConflicted ?? false
+            // One calendar row or less: keep title visible (truncate + flex min-size-0 can collapse the title).
+            const compactBlock = heightPx <= SLOT_HEIGHT
 
             return (
               <div
@@ -229,12 +231,17 @@ export default function TimeGrid({
                     onAutoReschedule={onAutoReschedule}
                   />
                 ) : (
-                  <div className="flex h-full flex-col gap-0.5 rounded bg-navy px-2 py-1.5 overflow-hidden">
-                    <span className="block truncate font-heading text-[11px] font-semibold leading-tight text-white">
+                  <div
+                    className={`flex h-full min-h-0 flex-col justify-start overflow-hidden rounded bg-navy px-2 ${
+                      compactBlock ? 'gap-0 py-0.5' : 'gap-0.5 py-1.5'
+                    }`}
+                  >
+                    <span className="block min-w-0 shrink-0 truncate font-heading text-[11px] font-semibold leading-tight text-white">
                       {block.title}
                     </span>
-                    <span className="block font-body text-[9px] text-sky-blue">
-                      {startDt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} · {block.studyBlockLength} min
+                    <span className="block min-w-0 shrink-0 truncate font-body text-[9px] leading-tight text-sky-blue">
+                      {startDt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} ·{' '}
+                      {block.studyBlockLength} min
                     </span>
                   </div>
                 )}
