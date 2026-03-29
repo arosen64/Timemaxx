@@ -116,11 +116,11 @@ const TASK_WITH_FEEDBACK = {
 }
 
 function setup(tasks = MOCK_TASKS, user = MOCK_USER) {
-  mockUseQuery.mockImplementation((query) => {
+  mockUseQuery.mockImplementation(((query: string) => {
     if (query === 'getAllTasks') return tasks
     if (query === 'getUpcomingStudyBlocks') return []
     return user
-  })
+  }) as never)
   mockUseMutation.mockReturnValue(makeMutationFn() as never)
   mockUseAction.mockReturnValue(makeMutationFn() as never)
   renderWithProviders(<DashboardPage />)
@@ -149,11 +149,11 @@ describe('DashboardPage', () => {
   })
 
   it('shows loading state when tasks are undefined', () => {
-    mockUseQuery.mockImplementation((query) => {
+    mockUseQuery.mockImplementation(((query: string) => {
       if (query === 'getAllTasks') return undefined
       if (query === 'getUpcomingStudyBlocks') return []
       return MOCK_USER
-    })
+    }) as never)
     mockUseMutation.mockReturnValue(makeMutationFn() as never)
     mockUseAction.mockReturnValue(makeMutationFn() as never)
     renderWithProviders(<DashboardPage />)
@@ -187,11 +187,11 @@ describe('DashboardPage', () => {
     )
 
     const tasksWithoutEstimate = MOCK_TASKS.map((t) => ({ ...t, timeEstimate: undefined }))
-    mockUseQuery.mockImplementation((query: string) => {
+    mockUseQuery.mockImplementation(((query: string) => {
       if (query === 'getAllTasks') return tasksWithoutEstimate
       if (query === 'getUpcomingStudyBlocks') return []
       return MOCK_USER
-    })
+    }) as never)
     mockUseMutation.mockReturnValue(makeMutationFn() as never)
     mockUseAction.mockReturnValue(estimateAction as never)
     renderWithProviders(<DashboardPage />)
@@ -213,11 +213,11 @@ describe('DashboardPage', () => {
     )
 
     const tasksWithoutEstimate = MOCK_TASKS.map((t) => ({ ...t, timeEstimate: undefined }))
-    mockUseQuery.mockImplementation((query: string) => {
+    mockUseQuery.mockImplementation(((query: string) => {
       if (query === 'getAllTasks') return tasksWithoutEstimate
       if (query === 'getUpcomingStudyBlocks') return []
       return MOCK_USER
-    })
+    }) as never)
     mockUseMutation.mockReturnValue(makeMutationFn() as never)
     mockUseAction.mockReturnValue(estimateAction as never)
     renderWithProviders(<DashboardPage />)
@@ -237,11 +237,11 @@ describe('DashboardPage', () => {
     const estimateAction = vi.fn().mockRejectedValue(new Error('Network error'))
 
     const tasksWithoutEstimate = MOCK_TASKS.map((t) => ({ ...t, timeEstimate: undefined }))
-    mockUseQuery.mockImplementation((query: string) => {
+    mockUseQuery.mockImplementation(((query: string) => {
       if (query === 'getAllTasks') return tasksWithoutEstimate
       if (query === 'getUpcomingStudyBlocks') return []
       return MOCK_USER
-    })
+    }) as never)
     mockUseMutation.mockReturnValue(makeMutationFn() as never)
     mockUseAction.mockReturnValue(estimateAction as never)
     renderWithProviders(<DashboardPage />)
@@ -335,11 +335,11 @@ describe('DashboardPage', () => {
     const user = userEvent.setup()
     const deleteTaskMock = vi.fn().mockResolvedValue(undefined)
 
-    mockUseQuery.mockImplementation((query: string) => {
+    mockUseQuery.mockImplementation(((query: string) => {
       if (query === 'getAllTasks') return MOCK_TASKS
       if (query === 'getUpcomingStudyBlocks') return []
       return MOCK_USER
-    })
+    }) as never)
     mockUseMutation.mockImplementation(((mutation: string) => {
       if (mutation === 'deleteTask') return deleteTaskMock as never
       return makeMutationFn() as never
@@ -381,11 +381,11 @@ describe('DashboardPage', () => {
     const user = userEvent.setup()
     const submitFeedbackMock = vi.fn().mockResolvedValue(undefined)
 
-    mockUseQuery.mockImplementation((query: string) => {
+    mockUseQuery.mockImplementation(((query: string) => {
       if (query === 'getAllTasks') return MOCK_TASKS
       if (query === 'getUpcomingStudyBlocks') return []
       return MOCK_USER
-    })
+    }) as never)
     mockUseMutation.mockImplementation(((mutation: string) => {
       if (mutation === 'submitEstimateFeedback') return submitFeedbackMock as never
       return makeMutationFn() as never
