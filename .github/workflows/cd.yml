@@ -51,8 +51,8 @@ jobs:
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
 
       # Set the production SIS API key from GitHub secrets.
-      - name: Set Convex SIS_API_KEY
-        run: npx convex env set SIS_API_KEY ${{ secrets.SIS_API_KEY }}
+      - name: Set Convex JHU_SIS_API_KEY
+        run: npx convex env set JHU_SIS_API_KEY ${{ secrets.JHU_SIS_API_KEY }}
         env:
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
 
