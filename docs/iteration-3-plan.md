@@ -227,47 +227,47 @@
 
 | # | Task | Type | Assignee(s) | Requirement |
 |---|---|---|---|---|
-| | **R13: Transcript & Course-Based Time Estimation** | feature | riatalwar, mromoni1 | R13 |
-| | &nbsp;&nbsp;Fetch prerequisite and same-department courses from SIS for the task's class | task | riatalwar | R13 |
-| | &nbsp;&nbsp;Query userCourses for prior grades in prereqs and related courses | task | riatalwar | R13 |
-| | &nbsp;&nbsp;Design extended Gemini prompt incorporating transcript summary and course performance | task | riatalwar | R13 |
-| | &nbsp;&nbsp;Add fallback logic when transcript or course data is missing | task | riatalwar | R13 |
-| | **R14: Chatbot-Informed Time Estimation** | feature | tranade, riatalwar | R14 |
-| | &nbsp;&nbsp;Implement vector search over chatbot message history | task | tranade | R14 |
-| | &nbsp;&nbsp;Build relevance filtering to extract only meaningful chat context for a given task | task | tranade | R14 |
-| | &nbsp;&nbsp;Integrate retrieved chat context into the Gemini estimation prompt | task | tranade | R14 |
-| | &nbsp;&nbsp;Add fallback logic when no relevant chat history exists | task | tranade | R14 |
-| | **R15: Subtask Generation** | feature | amintze2, tranade | R15 |
-| | &nbsp;&nbsp;Add `parentTaskId` field to tasks schema and update queries to support nesting | task | amintze2 | R15 |
-| | &nbsp;&nbsp;Implement `generateSubtasks` Gemini action | task | amintze2 | R15 |
-| | &nbsp;&nbsp;Build "Generate subtasks" checkbox and subtask review UI on task create/edit forms | task | amintze2 | R15 |
-| | &nbsp;&nbsp;Add PDF/TXT upload for assignment descriptions on task forms | task | amintze2 | R15 |
-| | &nbsp;&nbsp;Display nested subtasks under parent tasks in dashboard task list | task | amintze2 | R15 |
-| | **R16: AI Chatbot** | feature | anviimishra, amintze2 | R16 |
-| | &nbsp;&nbsp;Create `chatMessages` table and `getChatHistory` query | task | anviimishra | R16 |
-| | &nbsp;&nbsp;Implement chatbot UI component (widget/panel on dashboard) | task | anviimishra | R16 |
-| | &nbsp;&nbsp;Implement `sendChatMessage` Gemini action with function calling | task | anviimishra | R16 |
-| | &nbsp;&nbsp;Build chatbot tools: createTask, updateTask, deleteTask, updatePreferences, getSchedule | task | anviimishra | R16 |
-| | &nbsp;&nbsp;Add vector embeddings to chat messages for semantic search | task | anviimishra | R16 |
-| | **R17: Google Calendar Export** | feature | mromoni1, arosen64 | R17 |
-| | &nbsp;&nbsp;Upgrade OAuth scope to `calendar.events` and add re-authentication prompt | task | mromoni1 | R17 |
-| | &nbsp;&nbsp;Add `googleEventId` field to studyBlocks schema | task | mromoni1 | R17 |
-| | &nbsp;&nbsp;Implement `syncStudyBlockToCalendar` action (create/update/delete events) | task | mromoni1 | R17 |
-| | &nbsp;&nbsp;Trigger sync from `editStudyBlockTime`, `deleteStudyBlock`, and `deleteTask` mutations | task | mromoni1 | R17 |
-| | **R18: Schedule Tab Redesign** | feature | arosen64, anviimishra | R18 |
-| | &nbsp;&nbsp;Build calendar view component (day and week views) populated with study blocks | task | arosen64 | R18 |
-| | &nbsp;&nbsp;Implement draggable time blocks with start time persistence on drop | task | arosen64 | R18 |
-| | &nbsp;&nbsp;Add clickable tasks with collapsible time block details | task | arosen64 | R18 |
-| | &nbsp;&nbsp;Display imported Google Calendar events alongside study blocks | task | arosen64 | R18 |
-| | &nbsp;&nbsp;Add color-coding for time blocks by class or task type | task | arosen64 | R18 |
-| | **Manual Time Override** | task | unassigned | — |
-| | &nbsp;&nbsp;Add `isManualEstimate` field to tasks schema | task | unassigned | — |
-| | &nbsp;&nbsp;Add editable time estimate field to task create/edit forms | task | unassigned | — |
-| | &nbsp;&nbsp;Implement `updateTimeEstimate` mutation and recalculate study blocks on override | task | unassigned | — |
-| | &nbsp;&nbsp;Display manual vs. AI-generated indicator in task UI | task | unassigned | — |
-| | **Prompt Injection Prevention** | task | unassigned | — |
-| | &nbsp;&nbsp;Audit all existing Gemini actions and add input sanitization | task | unassigned | — |
-| | &nbsp;&nbsp;Implement structured prompt templates with user/system delimiters | task | unassigned | — |
-| | &nbsp;&nbsp;Add input validation and length limits on all LLM-facing text fields | task | unassigned | — |
-| | &nbsp;&nbsp;Validate Gemini responses against expected schemas before applying | task | unassigned | — |
-| | &nbsp;&nbsp;Add tests for common prompt injection patterns | task | unassigned | — |
+| #264 | **R13: Transcript & Course-Based Time Estimation** | feature | riatalwar, mromoni1 | R13 |
+| #270 | &nbsp;&nbsp;Fetch prerequisite and same-department courses from SIS for the task's class | task | riatalwar | R13 |
+| #271 | &nbsp;&nbsp;Query userCourses for prior grades in prereqs and related courses | task | riatalwar | R13 |
+| #272 | &nbsp;&nbsp;Design extended Gemini prompt incorporating transcript summary and course performance | task | riatalwar | R13 |
+| #273 | &nbsp;&nbsp;Add fallback logic when transcript or course data is missing | task | riatalwar | R13 |
+| #265 | **R14: Chatbot-Informed Time Estimation** | feature | tranade, riatalwar | R14 |
+| #274 | &nbsp;&nbsp;Implement vector search over chatbot message history | task | tranade | R14 |
+| #275 | &nbsp;&nbsp;Build relevance filtering to extract only meaningful chat context for a given task | task | tranade | R14 |
+| #276 | &nbsp;&nbsp;Integrate retrieved chat context into the Gemini estimation prompt | task | tranade | R14 |
+| #277 | &nbsp;&nbsp;Add fallback logic when no relevant chat history exists | task | tranade | R14 |
+| #266 | **R15: Subtask Generation** | feature | amintze2, tranade | R15 |
+| #278 | &nbsp;&nbsp;Add `parentTaskId` field to tasks schema and update queries to support nesting | task | amintze2 | R15 |
+| #279 | &nbsp;&nbsp;Implement `generateSubtasks` Gemini action | task | amintze2 | R15 |
+| #280 | &nbsp;&nbsp;Build "Generate subtasks" checkbox and subtask review UI on task create/edit forms | task | amintze2 | R15 |
+| #281 | &nbsp;&nbsp;Add PDF/TXT upload for assignment descriptions on task forms | task | amintze2 | R15 |
+| #282 | &nbsp;&nbsp;Display nested subtasks under parent tasks in dashboard task list | task | amintze2 | R15 |
+| #267 | **R16: AI Chatbot** | feature | anviimishra, amintze2 | R16 |
+| #283 | &nbsp;&nbsp;Create `chatMessages` table and `getChatHistory` query | task | anviimishra | R16 |
+| #284 | &nbsp;&nbsp;Implement chatbot UI component (widget/panel on dashboard) | task | anviimishra | R16 |
+| #285 | &nbsp;&nbsp;Implement `sendChatMessage` Gemini action with function calling | task | anviimishra | R16 |
+| #286 | &nbsp;&nbsp;Build chatbot tools: createTask, updateTask, deleteTask, updatePreferences, getSchedule | task | anviimishra | R16 |
+| #287 | &nbsp;&nbsp;Add vector embeddings to chat messages for semantic search | task | anviimishra | R16 |
+| #268 | **R17: Google Calendar Export** | feature | mromoni1, arosen64 | R17 |
+| #288 | &nbsp;&nbsp;Upgrade OAuth scope to `calendar.events` and add re-authentication prompt | task | mromoni1 | R17 |
+| #289 | &nbsp;&nbsp;Add `googleEventId` field to studyBlocks schema | task | mromoni1 | R17 |
+| #290 | &nbsp;&nbsp;Implement `syncStudyBlockToCalendar` action (create/update/delete events) | task | mromoni1 | R17 |
+| #291 | &nbsp;&nbsp;Trigger sync from `editStudyBlockTime`, `deleteStudyBlock`, and `deleteTask` mutations | task | mromoni1 | R17 |
+| #269 | **R18: Schedule Tab Redesign** | feature | arosen64, anviimishra | R18 |
+| #292 | &nbsp;&nbsp;Build calendar view component (day and week views) populated with study blocks | task | arosen64 | R18 |
+| #293 | &nbsp;&nbsp;Implement draggable time blocks with start time persistence on drop | task | arosen64 | R18 |
+| #294 | &nbsp;&nbsp;Add clickable tasks with collapsible time block details | task | arosen64 | R18 |
+| #295 | &nbsp;&nbsp;Display imported Google Calendar events alongside study blocks | task | arosen64 | R18 |
+| #296 | &nbsp;&nbsp;Add color-coding for time blocks by class or task type | task | arosen64 | R18 |
+| #297 | **Manual Time Override** | task | unassigned | — |
+| #299 | &nbsp;&nbsp;Add `isManualEstimate` field to tasks schema | task | unassigned | — |
+| #300 | &nbsp;&nbsp;Add editable time estimate field to task create/edit forms | task | unassigned | — |
+| #301 | &nbsp;&nbsp;Implement `updateTimeEstimate` mutation and recalculate study blocks on override | task | unassigned | — |
+| #302 | &nbsp;&nbsp;Display manual vs. AI-generated indicator in task UI | task | unassigned | — |
+| #298 | **Prompt Injection Prevention** | task | unassigned | — |
+| #303 | &nbsp;&nbsp;Audit all existing Gemini actions and add input sanitization | task | unassigned | — |
+| #304 | &nbsp;&nbsp;Implement structured prompt templates with user/system delimiters | task | unassigned | — |
+| #305 | &nbsp;&nbsp;Add input validation and length limits on all LLM-facing text fields | task | unassigned | — |
+| #306 | &nbsp;&nbsp;Validate Gemini responses against expected schemas before applying | task | unassigned | — |
+| #307 | &nbsp;&nbsp;Add tests for common prompt injection patterns | task | unassigned | — |
