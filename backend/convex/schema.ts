@@ -116,6 +116,7 @@ export default defineSchema({
     startTime: v.optional(v.string()),
     studyBlockLength: v.number(),
     isConflicted: v.optional(v.boolean()),
+    googleEventId: v.optional(v.string()),
   }).index("by_taskId", ["taskId"]),
 
   // Syllabi table — tracks uploaded syllabus files and their processing status
