@@ -35,6 +35,42 @@ async function seedStudyBlock(
   );
 }
 
+// ─── googleEventId field ─────────────────────────────────────────────────────
+
+describe("studyBlocks schema – googleEventId field", () => {
+  test("googleEventId is undefined on a newly created block", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+    const taskId = await seedTask(t, userId);
+
+    const blockId = await withAuth.mutation(api.mutations.studyBlocks.createStudyBlock, {
+      taskId,
+      title: "Block",
+      studyBlockLength: 60,
+    });
+
+    const block = await t.run((ctx) => ctx.db.get(blockId));
+    expect(block!.googleEventId).toBeUndefined();
+  });
+
+  test("existing block without googleEventId is unaffected when other fields are updated", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+    const taskId = await seedTask(t, userId);
+    const studyBlockId = await seedStudyBlock(t, taskId);
+    const newStart = new Date(Date.now() + 3600_000).toISOString();
+
+    await withAuth.mutation(api.mutations.studyBlocks.editStudyBlockTime, {
+      studyBlockId,
+      startTime: newStart,
+    });
+
+    const block = await t.run((ctx) => ctx.db.get(studyBlockId));
+    expect(block!.startTime).toBe(newStart);
+    expect(block!.googleEventId).toBeUndefined();
+  });
+});
+
 // ─── createStudyBlock ────────────────────────────────────────────────────────
 
 describe("mutations/studyBlocks – createStudyBlock", () => {
