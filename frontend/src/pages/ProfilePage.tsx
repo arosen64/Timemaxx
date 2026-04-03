@@ -93,7 +93,12 @@ export default function ProfilePage() {
                   Revoke Access
                 </Button>
               ) : (
-                <span className="font-body text-sm text-yellow-600">Connected with limited permissions</span>
+                <div className="flex flex-col items-center gap-1">
+                  <Button variant="warning" icon={<CalendarIcon className="stroke-white" />} onClick={handleConnectCalendar} className="px-5">
+                    Update Calendar Permissions
+                  </Button>
+                  <span className="font-body text-sm text-yellow-600">Connected with limited permissions</span>
+                </div>
               )
             ) : (
               <Button variant="primary" icon={<CalendarIcon />} onClick={handleConnectCalendar} className="px-5">
@@ -113,14 +118,14 @@ export default function ProfilePage() {
   );
 }
 
-function CalendarIcon() {
+function CalendarIcon({ className = "stroke-teal" }: { className?: string }) {
   return (
     <svg
       width="16"
       height="16"
       viewBox="0 0 24 24"
       fill="none"
-      className="stroke-teal"
+      className={className}
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
