@@ -4,12 +4,12 @@ import { internal } from "../_generated/api";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
 const GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
-const CALENDAR_SCOPE = "https://www.googleapis.com/auth/calendar.readonly";
+const CALENDAR_SCOPE = "https://www.googleapis.com/auth/calendar.events";
 const STATE_TTL_MS = 60 * 15 * 1000; // 15 minutes — matches @convex-dev/auth OAuth state TTL
 
 /**
  * Generates a short-lived OAuth state token, stores it linked to the user,
- * and returns the full Google authorization URL for the calendar.readonly scope.
+ * and returns the full Google authorization URL for the calendar.events scope.
  */
 export const initiateGoogleCalendarOAuth = action({
   args: {},

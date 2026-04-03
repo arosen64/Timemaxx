@@ -78,6 +78,7 @@ export const calendarOAuthCallback = httpAction(async (ctx, request) => {
     accessToken: await encryptToken(data.access_token, tokenSecret),
     refreshToken: await encryptToken(data.refresh_token, tokenSecret),
     expiresAt: Date.now() + data.expires_in * 1000,
+    scope: "https://www.googleapis.com/auth/calendar.events", // Store scope for potential future use
   });
 
   // Clean up the consumed state record
