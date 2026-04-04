@@ -31,6 +31,12 @@ function buildDepartmentCourseContext(
   return `Prior courses in the same department (completed with grades):\n${lines.join("\n")}`;
 }
 
+/**
+ * Estimates how long a task will take (in minutes) using Gemini.
+ * Builds context from the user's profile, current-term enrolled courses,
+ * prior same-department grades, and past estimate feedback, then stores
+ * the result via setTimeEstimate.
+ */
 export const estimateTaskTime = internalAction({
   args: {
     taskId: v.id("tasks"),
