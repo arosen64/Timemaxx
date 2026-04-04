@@ -1,33 +1,33 @@
 "use node"; // Required: @google/genai uses Node.js APIs not available in the default Convex runtime
 
-import { internalAction, ActionCtx } from "../_generated/server";
+import { internalAction } from "../_generated/server";
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { Doc } from "../_generated/dataModel";
 import { Type } from "@google/genai";
 import { callGeminiJSON } from "../lib/gemini";
+import { parseDeptPrefix } from "../lib/classTagUtils";
 
 /**
- * Builds an LLM context string summarising the user's prior performance in
- * the same department as the task's course.  Returns null if the task has no
- * associated course.
+ * From a pre-fetched list of all user courses, returns a context string of
+ * completed courses in the same department as the task's course.
+ * Returns null if the task has no course, or no matching dept courses with grades.
  */
-async function buildDepartmentCourseContext(
-  ctx: ActionCtx,
-  task: Doc<"tasks">
-): Promise<string | null> {
-  if (!task.courseId) return null;
+function buildDepartmentCourseContext(
+  allCourses: Doc<"userCourses">[],
+  taskCourse: Doc<"userCourses"> | undefined
+): string | null {
+  if (!taskCourse) return null;
 
-  const course = await ctx.runQuery(internal.queries.userCourses.getUserCoursesByDepartment, {
-    userId: task.userId,
-    courseCode: task.courseId,
-  });
+  const deptPrefix = parseDeptPrefix(taskCourse.courseCode);
+  if (!deptPrefix) return null;
 
-  if (course.length === 0) return null;
-
-  const lines = course.map(
-    (c) => `- ${c.courseCode}: ${c.title} (grade: ${c.grade})`
+  const deptCourses = allCourses.filter(
+    (c) => c.courseCode.startsWith(`${deptPrefix}.`) && c.grade !== undefined
   );
+  if (deptCourses.length === 0) return null;
+
+  const lines = deptCourses.map((c) => `- ${c.courseCode}: ${c.title} (grade: ${c.grade})`);
   return `Prior courses in the same department (completed with grades):\n${lines.join("\n")}`;
 }
 
@@ -42,13 +42,16 @@ export const estimateTaskTime = internalAction({
     });
     if (!task) return;
 
-    const user = await ctx.runQuery(internal.queries.users.getUserInternal, {
-      userId: task.userId,
-    });
-    const priorEstimateFeedback = await ctx.runQuery(
-      internal.queries.tasks.getEstimateFeedbackContextInternal,
-      { userId: task.userId }
-    );
+    const [user, priorEstimateFeedback, allCourses] = await Promise.all([
+      ctx.runQuery(internal.queries.users.getUserInternal, { userId: task.userId }),
+      ctx.runQuery(internal.queries.tasks.getEstimateFeedbackContextInternal, { userId: task.userId }),
+      ctx.runQuery(internal.queries.userCourses.getUserCoursesInternal, { userId: task.userId }),
+    ]);
+
+    const taskCourse = task.courseId ? allCourses.find((c) => c._id === task.courseId) : undefined;
+    const currentTermCourses = taskCourse
+      ? allCourses.filter((c) => c.term === taskCourse.term)
+      : [];
 
     // Build prompt
     const userContext = [
@@ -56,8 +59,8 @@ export const estimateTaskTime = internalAction({
       user?.year && `Year: ${user.year}`,
       user?.difficultSubjects?.length && `Difficult subjects: ${user.difficultSubjects.join(", ")}`,
       user?.enjoyedSubjects?.length && `Enjoyed subjects: ${user.enjoyedSubjects.join(", ")}`,
-      user?.courses?.length &&
-        `Enrolled courses: ${user.courses.map((c) => `${c.title} (goal: ${c.studyGoal})`).join("; ")}`,
+      currentTermCourses.length &&
+        `Enrolled courses: ${currentTermCourses.map((c) => `${c.title} (goal: ${c.studyGoal ?? "none"})`).join("; ")}`,
     ]
       .filter(Boolean)
       .join("\n");
@@ -76,6 +79,8 @@ export const estimateTaskTime = internalAction({
           ].join("\n")
         : "";
 
+    const deptContext = buildDepartmentCourseContext(allCourses, taskCourse);
+
     const prompt = `You are a study time estimator. Given the task details and student profile below, estimate how many minutes it will take the student to complete the task.
 
 Task title: ${task.title}
@@ -83,6 +88,7 @@ Task type: ${task.taskType}
 Task description: ${task.description}
 
 ${userContext ? `Student profile:\n${userContext}` : ""}
+${deptContext ? `\n${deptContext}` : ""}
 ${feedbackContext ? `\n${feedbackContext}` : ""}
 
 Respond with the estimated number of minutes as a single integer.`;

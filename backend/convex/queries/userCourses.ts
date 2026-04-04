@@ -3,6 +3,14 @@ import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { Id } from "../_generated/dataModel";
 import { parseDeptPrefix } from "../lib/classTagUtils";
+import { DatabaseReader } from "../_generated/server";
+
+async function fetchCoursesByUserId(db: DatabaseReader, userId: Id<"users">) {
+  return await db
+    .query("userCourses")
+    .withIndex("by_user", (q) => q.eq("userId", userId))
+    .collect();
+}
 
 /**
  * Returns all courses for the authenticated user.
@@ -12,10 +20,17 @@ export const getUserCourses = query({
   handler: async (ctx) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) return [];
-    return await ctx.db
-      .query("userCourses")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
-      .collect();
+    return await fetchCoursesByUserId(ctx.db, userId);
+  },
+});
+
+/**
+ * Returns all courses for a given user. For use by internal actions.
+ */
+export const getUserCoursesInternal = internalQuery({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    return await fetchCoursesByUserId(ctx.db, args.userId);
   },
 });
 
@@ -79,27 +94,5 @@ export const getUserCoursesByTerm = query({
       .query("userCourses")
       .withIndex("by_user_term", (q) => q.eq("userId", userId).eq("term", args.term))
       .collect();
-  },
-});
-
-/**
- * Returns all of a user's courses that share the same school+department prefix
- * as the given course code, filtered to only courses with a grade outcome.
- * E.g. courseCode "EN.601.433" → all EN.601.* courses the user has completed.
- */
-export const getUserCoursesByDepartment = internalQuery({
-  args: { userId: v.id("users"), courseCode: v.string() },
-  handler: async (ctx, args) => {
-    const deptPrefix = parseDeptPrefix(args.courseCode);
-    if (!deptPrefix) return [];
-
-    const courses = await ctx.db
-      .query("userCourses")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
-      .collect();
-
-    return courses.filter(
-      (c) => c.courseCode.startsWith(`${deptPrefix}.`) && c.grade !== undefined
-    );
   },
 });
