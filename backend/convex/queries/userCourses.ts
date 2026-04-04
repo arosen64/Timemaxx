@@ -1,4 +1,4 @@
-import { query } from "../_generated/server";
+import { internalQuery, query } from "../_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { Id } from "../_generated/dataModel";
@@ -83,22 +83,19 @@ export const getUserCoursesByTerm = query({
 });
 
 /**
- * Returns all of the authenticated user's courses that share the same
- * school+department prefix as the given course code.
- * E.g. courseCode "EN.601.433" → all user courses with "EN.601.*" course codes.
+ * Returns all of a user's courses that share the same school+department prefix
+ * as the given course code, filtered to only courses with a grade outcome.
+ * E.g. courseCode "EN.601.433" → all EN.601.* courses the user has completed.
  */
-export const getUserCoursesByDepartment = query({
-  args: { courseCode: v.string() },
+export const getUserCoursesByDepartment = internalQuery({
+  args: { userId: v.id("users"), courseCode: v.string() },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) return [];
-
     const deptPrefix = parseDeptPrefix(args.courseCode);
     if (!deptPrefix) return [];
 
     const courses = await ctx.db
       .query("userCourses")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
       .collect();
 
     return courses.filter(

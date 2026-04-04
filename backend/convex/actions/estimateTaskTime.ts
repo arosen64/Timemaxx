@@ -1,10 +1,35 @@
 "use node"; // Required: @google/genai uses Node.js APIs not available in the default Convex runtime
 
-import { internalAction } from "../_generated/server";
+import { internalAction, ActionCtx } from "../_generated/server";
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
+import { Doc } from "../_generated/dataModel";
 import { Type } from "@google/genai";
 import { callGeminiJSON } from "../lib/gemini";
+
+/**
+ * Builds an LLM context string summarising the user's prior performance in
+ * the same department as the task's course.  Returns null if the task has no
+ * associated course.
+ */
+async function buildDepartmentCourseContext(
+  ctx: ActionCtx,
+  task: Doc<"tasks">
+): Promise<string | null> {
+  if (!task.courseId) return null;
+
+  const course = await ctx.runQuery(internal.queries.userCourses.getUserCoursesByDepartment, {
+    userId: task.userId,
+    courseCode: task.courseId,
+  });
+
+  if (course.length === 0) return null;
+
+  const lines = course.map(
+    (c) => `- ${c.courseCode}: ${c.title} (grade: ${c.grade})`
+  );
+  return `Prior courses in the same department (completed with grades):\n${lines.join("\n")}`;
+}
 
 export const estimateTaskTime = internalAction({
   args: {
