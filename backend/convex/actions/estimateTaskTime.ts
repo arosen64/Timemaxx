@@ -6,7 +6,7 @@ import { internal } from "../_generated/api";
 import { Doc } from "../_generated/dataModel";
 import { Type } from "@google/genai";
 import { callGeminiJSON } from "../lib/gemini";
-import { parseDeptPrefix } from "../lib/classTagUtils";
+import { parseDeptPrefix, termSortKey } from "../lib/classTagUtils";
 
 /**
  * From a pre-fetched list of all user courses, returns a context string of
@@ -22,9 +22,9 @@ function buildDepartmentCourseContext(
   const deptPrefix = parseDeptPrefix(taskCourse.courseCode);
   if (!deptPrefix) return null;
 
-  const deptCourses = allCourses.filter(
-    (c) => c.courseCode.startsWith(`${deptPrefix}.`) && c.grade !== undefined
-  );
+  const deptCourses = allCourses
+    .filter((c) => c.courseCode.startsWith(`${deptPrefix}.`) && c.grade !== undefined)
+    .sort((a, b) => termSortKey(b.term) - termSortKey(a.term));
   if (deptCourses.length === 0) return null;
 
   const lines = deptCourses.map((c) => `- ${c.courseCode}: ${c.title} (grade: ${c.grade})`);

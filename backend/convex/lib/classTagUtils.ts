@@ -34,6 +34,15 @@ export function buildClassTag(courseCode: string, title: string): string {
   return `${code}: ${t}`;
 }
 
+/** Maps season names to a numeric order within a year (higher = more recent). */
+export const SEASON_ORDER: Record<string, number> = { Spring: 1, Summer: 2, Fall: 3 };
+
+/** Converts a term string like "Fall 2024" to a numeric sort key (higher = more recent). */
+export function termSortKey(term: string): number {
+  const [season, year] = term.split(" ");
+  return parseInt(year) * 10 + (SEASON_ORDER[season] ?? 0);
+}
+
 /** JHU course code pattern, e.g. "EN.601.226" */
 const COURSE_CODE_RE = /[A-Z]{2}\.\d{3}\.\d{3}/g;
 
