@@ -28,7 +28,7 @@ function buildDepartmentCourseContext(
   if (deptCourses.length === 0) return null;
 
   const lines = deptCourses.map((c) => `- ${c.courseCode}: ${c.title} (grade: ${c.grade})`);
-  return `Prior courses in the same department (completed with grades):\n${lines.join("\n")}`;
+  return `Prior courses in the same department (completed with grades, most to least recent):\n${lines.join("\n")}`;
 }
 
 /**
@@ -55,7 +55,7 @@ function buildCourseContext(
     const currentTermCourses = allCourses.filter((c) => c.term === taskCourse.term);
     if (currentTermCourses.length > 0) {
       const lines = currentTermCourses.map(
-        (c) => `- ${c.title} (goal: ${c.studyGoal ?? "none"})`
+        (c) => `- ${c.courseCode}: ${c.title} (goal: ${c.studyGoal ?? "none"})`
       );
       mainContext = `Current term courses:\n${lines.join("\n")}`;
     }
@@ -121,9 +121,12 @@ export const estimateTaskTime = internalAction({
 Task title: ${task.title}
 Task type: ${task.taskType}
 Task description: ${task.description}
+${taskCourse ? `Task course: ${taskCourse.courseCode} - ${taskCourse.title}` : ""}
 
 ${userContext ? `Student profile:\n${userContext}` : ""}
+
 ${courseContext ? `\n${courseContext}` : ""}
+
 ${feedbackContext ? `\n${feedbackContext}` : ""}
 
 Respond with the estimated number of minutes as a single integer.`;
