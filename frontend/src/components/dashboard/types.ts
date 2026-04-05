@@ -47,6 +47,8 @@ export type EditForm = {
   courseId?: Id<'userCourses'>
   /** Empty string clears the tag on update; omit when not supported */
   classTag?: string
+  /** User-supplied time estimate in minutes; undefined means let AI estimate */
+  timeEstimate?: number
 }
 
 export const TASK_TYPE_OPTIONS: BuiltInTaskType[] = [...BUILT_IN_TASK_TYPES]

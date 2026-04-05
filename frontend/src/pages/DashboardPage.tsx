@@ -30,6 +30,7 @@ export default function DashboardPage() {
   const tasks = useQuery(api.queries.tasks.getAllTasks, {}) as TaskType[] | undefined
   const userCourses = useQuery(api.queries.userCourses.getUserCourses)
   const updateTask = useMutation(api.mutations.tasks.updateTask)
+  const setManualTimeEstimate = useMutation(api.mutations.timeEstimate.setManualTimeEstimate)
   const deleteTask = useMutation(api.mutations.tasks.deleteTask)
   const submitEstimateFeedback = useMutation(api.mutations.timeEstimate.submitEstimateFeedback)
   const requestEstimate = useAction(api.actions.requestEstimateTaskTime.requestEstimateTaskTime)
@@ -89,7 +90,11 @@ export default function DashboardPage() {
     if (!editingTask) return
     const taskId = editingTask._id
     await updateTask({ taskId, ...form })
-    handleEstimateTask(taskId)
+    if (form.timeEstimate !== undefined) {
+      await setManualTimeEstimate({ taskId, timeEstimate: form.timeEstimate })
+    } else {
+      handleEstimateTask(taskId)
+    }
   }
 
   async function handleConfirmDelete() {

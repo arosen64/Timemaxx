@@ -50,6 +50,7 @@ interface TaskModalProps {
     dueDate: string
     dueTime: string
     classTag: string
+    timeEstimate: string
   }
   /** Current-term classes; class tag may only be empty or one of these (optional field) */
   classTagCourses?: ClassTagCourseOption[]
@@ -78,6 +79,7 @@ export default function TaskModal({
   const [classTag, setClassTag] = useState(() =>
     allowedClassTagValue(initialValues.classTag, courses)
   )
+  const [timeEstimate, setTimeEstimate] = useState(initialValues.timeEstimate)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const datePickerRef = useRef<HTMLInputElement>(null)
@@ -112,6 +114,7 @@ export default function TaskModal({
     setDueDate(initialValues.dueDate)
     setDueTime(initialValues.dueTime)
     setClassTag(allowedClassTagValue(initialValues.classTag, courses))
+    setTimeEstimate(initialValues.timeEstimate)
     setError(null)
     setSubmitting(false)
   }, [
@@ -123,6 +126,7 @@ export default function TaskModal({
     initialValues.dueDate,
     initialValues.dueTime,
     initialValues.classTag,
+    initialValues.timeEstimate,
     courses,
   ])
 
@@ -185,6 +189,7 @@ export default function TaskModal({
       const courseId = courses.find((c) => c.classTag === resolvedClassTag)?.courseId
       const dateMidnight = parseDueDateInput(trimmedDueDate)!
       const dueMs = combineDateMsWithTime(dateMidnight, dueTime)!
+      const parsedEstimate = timeEstimate.trim() !== '' ? parseInt(timeEstimate, 10) : undefined
       await onSubmit({
         title: taskName,
         description,
@@ -192,6 +197,9 @@ export default function TaskModal({
         dueDate: dueMs,
         ...(courseId !== undefined ? { courseId } : {}),
         classTag: resolvedClassTag,
+        ...(parsedEstimate !== undefined && !isNaN(parsedEstimate) && parsedEstimate > 0
+          ? { timeEstimate: parsedEstimate }
+          : {}),
       })
       onClose()
     } catch (e) {
@@ -327,6 +335,23 @@ export default function TaskModal({
               onValueChange={() => setError(null)}
             />
           </div>
+        </div>
+
+        {/* Time estimate override */}
+        <div className="flex w-full flex-col gap-1.5">
+          <label className="font-heading text-[13px] font-semibold text-navy" htmlFor="task-time-estimate">
+            Time estimate <span className="font-normal text-light-blue">(optional, minutes)</span>
+          </label>
+          <p className="font-body text-xs text-light-blue">Leave blank to let AI estimate</p>
+          <input
+            id="task-time-estimate"
+            type="number"
+            min="1"
+            value={timeEstimate}
+            onChange={(e) => setTimeEstimate(e.target.value)}
+            placeholder="e.g. 90"
+            className="h-11 w-full rounded-md border border-border bg-bg-gray px-3.5 font-body text-sm text-navy outline-none placeholder:text-light-blue"
+          />
         </div>
       </div>
     </Modal>

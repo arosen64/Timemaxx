@@ -42,6 +42,9 @@ export default function EditModal({
         dueDate: task ? formatDateMMDDYYYY(task.dueDate) : '',
         dueTime: task ? msToTimeInputValue(task.dueDate) : DEFAULT_DUE_TIME,
         classTag: task?.classTag ?? '',
+        timeEstimate: task?.isManualEstimate && task?.timeEstimate !== undefined
+          ? String(task.timeEstimate)
+          : '',
       }}
       classTagCourses={classTagCourses}
       onClose={onClose}
