@@ -21,6 +21,7 @@ export const createTask = mutation({
     dueDate: v.number(),
     courseId: v.optional(v.id("userCourses")),
     classTag: v.optional(v.string()),
+    timeEstimate: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -40,7 +41,8 @@ export const createTask = mutation({
       throw new Error("That due date and time are in the past. Choose a later deadline.");
     }
 
-    // Insert the new task with timeEstimate left as undefined for now
+    const isManualEstimate = args.timeEstimate !== undefined;
+
     const taskId = await ctx.db.insert("tasks", {
       userId,
       title: args.title,
@@ -49,7 +51,8 @@ export const createTask = mutation({
       dueDate: args.dueDate,
       courseId: args.courseId,
       classTag: normalizeClassTag(args.classTag),
-      timeEstimate: undefined, // populated asynchronously by estimateTaskTime action
+      timeEstimate: args.timeEstimate,
+      isManualEstimate,
       createdAt: Date.now(),
     });
 
@@ -84,7 +87,6 @@ export const updateTask = mutation({
       ...(args.classTag !== undefined
         ? { classTag: normalizeClassTag(args.classTag) }
         : {}),
-      timeEstimate: undefined,
     });
   },
 });

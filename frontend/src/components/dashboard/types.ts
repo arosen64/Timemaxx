@@ -7,6 +7,7 @@ export type TaskType = {
   description: string
   taskType: string
   timeEstimate?: number
+  isManualEstimate: boolean
   estimateFeedbackRating?: 'up' | 'down'
   correctedEstimateMinutes?: number
   estimateFeedbackSubmittedAt?: number
