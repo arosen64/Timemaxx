@@ -21,6 +21,7 @@ async function seedTask(
       taskType: overrides.taskType ?? "Essay",
       dueDate: overrides.dueDate ?? Date.now() + 86_400_000,
       createdAt: overrides.createdAt ?? Date.now(),
+      isManualEstimate: false,
     })
   );
 }

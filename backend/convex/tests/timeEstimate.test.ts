@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { internal } from "../_generated/api";
+import { api, internal } from "../_generated/api";
 import { makeTestCtx, createTestUser } from "../../convex-tests/helpers";
 
 async function seedTask(
@@ -22,6 +22,7 @@ async function seedTask(
       taskType: "Essay",
       dueDate: Date.now() + 86_400_000,
       createdAt: Date.now(),
+      isManualEstimate: false,
     })
   );
 }
@@ -166,5 +167,77 @@ describe("mutations/timeEstimate – setTimeEstimate auto-generates study blocks
     const ids = blocks.map((b) => b._id);
     const uniqueIds = new Set(ids);
     expect(uniqueIds.size).toBe(ids.length);
+  });
+});
+
+// ─── setManualTimeEstimate ────────────────────────────────────────────────────
+
+describe("mutations/timeEstimate – setManualTimeEstimate", () => {
+  test("sets timeEstimate and isManualEstimate to true", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+    const taskId = await seedTask(t, userId, { focusBlockLength: 60 });
+
+    await withAuth.mutation(api.mutations.timeEstimate.setManualTimeEstimate, {
+      taskId,
+      timeEstimate: 120,
+    });
+
+    const task = await t.run((ctx) => ctx.db.get(taskId));
+    expect(task!.timeEstimate).toBe(120);
+    expect(task!.isManualEstimate).toBe(true);
+  });
+
+  test("regenerates study blocks after setting manual estimate", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+    const taskId = await seedTask(t, userId, { focusBlockLength: 60 });
+
+    await withAuth.mutation(api.mutations.timeEstimate.setManualTimeEstimate, {
+      taskId,
+      timeEstimate: 120,
+    });
+
+    const blocks = await t.run((ctx) =>
+      ctx.db
+        .query("studyBlocks")
+        .withIndex("by_taskId", (q) => q.eq("taskId", taskId))
+        .collect()
+    );
+
+    expect(blocks).toHaveLength(2);
+    expect(blocks.every((b) => b.studyBlockLength === 60)).toBe(true);
+  });
+
+  test("throws when user does not own the task", async () => {
+    const t = makeTestCtx();
+    const { userId } = await createTestUser(t);
+    const { withAuth: otherAuth } = await createTestUser(t, { email: "other@example.com" });
+    const taskId = await seedTask(t, userId);
+
+    await expect(
+      otherAuth.mutation(api.mutations.timeEstimate.setManualTimeEstimate, { taskId, timeEstimate: 60 })
+    ).rejects.toThrow("Task not found");
+  });
+
+  test("setTimeEstimate does not overwrite a manual estimate", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+    const taskId = await seedTask(t, userId, { focusBlockLength: 60 });
+
+    await withAuth.mutation(api.mutations.timeEstimate.setManualTimeEstimate, {
+      taskId,
+      timeEstimate: 90,
+    });
+
+    // AI pipeline tries to set a different estimate
+    await t.mutation(internal.mutations.timeEstimate.setTimeEstimate, {
+      taskId,
+      timeEstimate: 999,
+    });
+
+    const task = await t.run((ctx) => ctx.db.get(taskId));
+    expect(task!.timeEstimate).toBe(90); // unchanged
+    expect(task!.isManualEstimate).toBe(true);
   });
 });
