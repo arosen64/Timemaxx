@@ -32,6 +32,40 @@ function buildDepartmentCourseContext(
 }
 
 /**
+ * Builds a course context string for the time estimation prompt.
+ * If prior same-department courses with grades are available, uses those.
+ * Otherwise, falls back to the user's current term course list.
+ * In either case, the study goal for the task's specific course is always included.
+ */
+function buildCourseContext(
+  allCourses: Doc<"userCourses">[],
+  taskCourse: Doc<"userCourses"> | undefined
+): string | null {
+  const studyGoalLine =
+    taskCourse?.studyGoal
+      ? `Study goal for "${taskCourse.title}": ${taskCourse.studyGoal}`
+      : null;
+
+  const deptContext = buildDepartmentCourseContext(allCourses, taskCourse);
+
+  let mainContext: string | null = null;
+  if (deptContext) {
+    mainContext = deptContext;
+  } else if (taskCourse) {
+    const currentTermCourses = allCourses.filter((c) => c.term === taskCourse.term);
+    if (currentTermCourses.length > 0) {
+      const lines = currentTermCourses.map(
+        (c) => `- ${c.title} (goal: ${c.studyGoal ?? "none"})`
+      );
+      mainContext = `Current term courses:\n${lines.join("\n")}`;
+    }
+  }
+
+  const parts = [mainContext, studyGoalLine].filter(Boolean) as string[];
+  return parts.length > 0 ? parts.join("\n") : null;
+}
+
+/**
  * Estimates how long a task will take (in minutes) using Gemini.
  * Builds context from the user's profile, current-term enrolled courses,
  * prior same-department grades, and past estimate feedback, then stores
@@ -55,9 +89,6 @@ export const estimateTaskTime = internalAction({
     ]);
 
     const taskCourse = task.courseId ? allCourses.find((c) => c._id === task.courseId) : undefined;
-    const currentTermCourses = taskCourse
-      ? allCourses.filter((c) => c.term === taskCourse.term)
-      : [];
 
     // Build prompt
     const userContext = [
@@ -65,8 +96,6 @@ export const estimateTaskTime = internalAction({
       user?.year && `Year: ${user.year}`,
       user?.difficultSubjects?.length && `Difficult subjects: ${user.difficultSubjects.join(", ")}`,
       user?.enjoyedSubjects?.length && `Enjoyed subjects: ${user.enjoyedSubjects.join(", ")}`,
-      currentTermCourses.length &&
-        `Enrolled courses: ${currentTermCourses.map((c) => `${c.title} (goal: ${c.studyGoal ?? "none"})`).join("; ")}`,
     ]
       .filter(Boolean)
       .join("\n");
@@ -85,7 +114,7 @@ export const estimateTaskTime = internalAction({
           ].join("\n")
         : "";
 
-    const deptContext = buildDepartmentCourseContext(allCourses, taskCourse);
+    const courseContext = buildCourseContext(allCourses, taskCourse);
 
     const prompt = `You are a study time estimator. Given the task details and student profile below, estimate how many minutes it will take the student to complete the task.
 
@@ -94,7 +123,7 @@ Task type: ${task.taskType}
 Task description: ${task.description}
 
 ${userContext ? `Student profile:\n${userContext}` : ""}
-${deptContext ? `\n${deptContext}` : ""}
+${courseContext ? `\n${courseContext}` : ""}
 ${feedbackContext ? `\n${feedbackContext}` : ""}
 
 Respond with the estimated number of minutes as a single integer.`;
