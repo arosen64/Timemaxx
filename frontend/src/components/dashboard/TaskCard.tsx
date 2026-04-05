@@ -2,6 +2,7 @@ import { PencilIcon, TrashIcon, SpinnerIcon, SparklesIcon } from '../icons'
 import { type TaskType, formatDueDateTimeDisplay, displayTitle, formatMinutes } from './types'
 import { formatClassTagForDisplay } from '../../utils/classTagUtils'
 import TaskFeedbackForm, { type TaskFeedbackFormProps } from './TaskFeedbackForm'
+import EstimateBadge from './EstimateBadge'
 
 type TaskCardProps = {
   task: TaskType
@@ -35,9 +36,16 @@ export default function TaskCard({
           <div className="text-sm font-semibold truncate font-heading text-navy">
             {displayTitle(task)}
           </div>
-          <div className="text-xs text-slate-blue">
-            Due {formatDueDateTimeDisplay(task.dueDate)}
-            {task.classTag ? ` · ${formatClassTagForDisplay(task.classTag)}` : ''} · {task.taskType} · ~{formatMinutes(task.timeEstimate ?? 0)} estimated
+          <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-blue">
+            <span>Due {formatDueDateTimeDisplay(task.dueDate)}</span>
+            {task.classTag ? <span>· {formatClassTagForDisplay(task.classTag)}</span> : null}
+            <span>· {task.taskType}</span>
+            {task.timeEstimate !== undefined ? (
+              <>
+                <span>· ~{formatMinutes(task.timeEstimate)} estimated</span>
+                <EstimateBadge isManual={task.isManualEstimate} />
+              </>
+            ) : null}
           </div>
           {task.description.trim().length > 0 && (
             <div className="text-xs break-words text-light-blue line-clamp-4">
