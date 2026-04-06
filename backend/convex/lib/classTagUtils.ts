@@ -43,9 +43,6 @@ export function termSortKey(term: string): number {
   return parseInt(year) * 10 + (SEASON_ORDER[season] ?? 0);
 }
 
-/** JHU course code pattern, e.g. "EN.601.226" */
-const COURSE_CODE_RE = /[A-Z]{2}\.\d{3}\.\d{3}/g;
-
 /**
  * Extracts the school+department prefix from a JHU course code.
  * "EN.601.433" → "EN.601"

@@ -2,7 +2,6 @@ import { internalQuery, query } from "../_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { Id } from "../_generated/dataModel";
-import { parseDeptPrefix } from "../lib/classTagUtils";
 import { DatabaseReader } from "../_generated/server";
 
 async function fetchCoursesByUserId(db: DatabaseReader, userId: Id<"users">) {
