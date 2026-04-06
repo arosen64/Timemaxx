@@ -36,6 +36,14 @@ describe('mixHexWithWhite', () => {
     expect(shades[0]).toBe('#2563eb') // first subtask = base color
     expect(shades[3]).not.toBe('#ffffff') // last subtask is lighter but not white
   })
+
+  it('clamps pct above 1 to white', () => {
+    expect(mixHexWithWhite('#2563eb', 1.5)).toBe('#ffffff')
+  })
+
+  it('clamps pct below 0 to base color', () => {
+    expect(mixHexWithWhite('#2563eb', -0.5)).toBe('#2563eb')
+  })
 })
 
 describe('FALLBACK_COURSE_COLOR', () => {
