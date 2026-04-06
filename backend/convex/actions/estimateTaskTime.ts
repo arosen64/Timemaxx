@@ -32,6 +32,21 @@ function buildDepartmentCourseContext(
 }
 
 /**
+ * Builds a transcript profile context string for the time estimation prompt
+ * from the AI-generated academic insights stored on the user's profile.
+ * Returns null if the user has no transcript summary.
+ */
+function buildTranscriptProfile(
+  user: Doc<"users"> | null
+): string | null {
+  const summary = user?.transcriptSummary;
+  if (!summary || summary.length === 0) return null;
+
+  const lines = summary.map((insight) => `- ${insight.label}: ${insight.text}`);
+  return `Academic profile from transcript analysis:\n${lines.join("\n")}`;
+}
+
+/**
  * Builds a course context string for the time estimation prompt.
  * If prior same-department courses with grades are available, uses those.
  * Otherwise, falls back to the user's current term course list.
@@ -115,6 +130,7 @@ export const estimateTaskTime = internalAction({
         : "";
 
     const courseContext = buildCourseContext(allCourses, taskCourse);
+    const transcriptProfile = buildTranscriptProfile(user);
 
     const prompt = `You are a study time estimator. Given the task details and student profile below, estimate how many minutes it will take the student to complete the task.
 
@@ -124,6 +140,8 @@ Task description: ${task.description}
 ${taskCourse ? `Task course: ${taskCourse.courseCode} - ${taskCourse.title}` : ""}
 
 ${userContext ? `Student profile:\n${userContext}` : ""}
+
+${transcriptProfile ? `\n${transcriptProfile}` : ""}
 
 ${courseContext ? `\n${courseContext}` : ""}
 
