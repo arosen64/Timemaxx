@@ -68,6 +68,29 @@ describe("queries/calendar – getCalendarConnectionStatus", () => {
     expect(result.hasEventsScope).toBe(true);
   });
 
+  test("returns hasEventsScope true when connected with combined readonly and events scope", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+
+    await t.run((ctx) =>
+      ctx.db.insert("calendarConnections", {
+        userId,
+        accessToken: "enc-acc",
+        refreshToken: "enc-ref",
+        expiresAt: Date.now() + 3600_000,
+        scope: "https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/calendar.events",
+      })
+    );
+
+    const result = await withAuth.query(
+      api.queries.calendar.getCalendarConnectionStatus,
+      {}
+    );
+
+    expect(result.connected).toBe(true);
+    expect(result.hasEventsScope).toBe(true);
+  });
+
   test("does not return connected status for a different user's token", async () => {
     const t = makeTestCtx();
     const { userId: user1Id } = await createTestUser(t);
