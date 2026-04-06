@@ -32,6 +32,45 @@ function buildDepartmentCourseContext(
 }
 
 /**
+ * Builds a student profile context string for the time estimation prompt
+ * from basic onboarding fields stored on the user's profile.
+ * Returns null if no relevant fields are set.
+ */
+function buildUserContext(user: Doc<"users"> | null): string | null {
+  const lines = [
+    user?.major && `Major: ${user.major}`,
+    user?.year && `Year: ${user.year}`,
+    user?.difficultSubjects?.length && `Difficult subjects: ${user.difficultSubjects.join(", ")}`,
+    user?.enjoyedSubjects?.length && `Enjoyed subjects: ${user.enjoyedSubjects.join(", ")}`,
+  ].filter(Boolean) as string[];
+  return lines.length > 0 ? lines.join("\n") : null;
+}
+
+/**
+ * Builds a past estimate feedback context string for the time estimation prompt.
+ * Returns null if the user has no prior feedback entries.
+ */
+function buildFeedbackContext(
+  priorEstimateFeedback: Array<{
+    title: string;
+    taskType: string;
+    estimatedMinutes: number;
+    rating: "up" | "down";
+    correctedEstimateMinutes?: number;
+  }>
+): string | null {
+  if (priorEstimateFeedback.length === 0) return null;
+  const lines = priorEstimateFeedback.map((entry) => {
+    const corrected =
+      entry.correctedEstimateMinutes !== undefined
+        ? `, corrected to ${entry.correctedEstimateMinutes} minutes`
+        : "";
+    return `- ${entry.taskType}: "${entry.title}" -> estimated ${entry.estimatedMinutes} minutes, feedback ${entry.rating}${corrected}`;
+  });
+  return `Past estimate feedback from this same student (learn from this):\n${lines.join("\n")}`;
+}
+
+/**
  * Builds a transcript profile context string for the time estimation prompt
  * from the AI-generated academic insights stored on the user's profile.
  * Returns null if the user has no transcript summary.
@@ -106,29 +145,8 @@ export const estimateTaskTime = internalAction({
     const taskCourse = task.courseId ? allCourses.find((c) => c._id === task.courseId) : undefined;
 
     // Build prompt
-    const userContext = [
-      user?.major && `Major: ${user.major}`,
-      user?.year && `Year: ${user.year}`,
-      user?.difficultSubjects?.length && `Difficult subjects: ${user.difficultSubjects.join(", ")}`,
-      user?.enjoyedSubjects?.length && `Enjoyed subjects: ${user.enjoyedSubjects.join(", ")}`,
-    ]
-      .filter(Boolean)
-      .join("\n");
-
-    const feedbackContext =
-      priorEstimateFeedback.length > 0
-        ? [
-            "Past estimate feedback from this same student (learn from this):",
-            ...priorEstimateFeedback.map((entry) => {
-              const corrected =
-                entry.correctedEstimateMinutes !== undefined
-                  ? `, corrected to ${entry.correctedEstimateMinutes} minutes`
-                  : "";
-              return `- ${entry.taskType}: "${entry.title}" -> estimated ${entry.estimatedMinutes} minutes, feedback ${entry.rating}${corrected}`;
-            }),
-          ].join("\n")
-        : "";
-
+    const userContext = buildUserContext(user);
+    const feedbackContext = buildFeedbackContext(priorEstimateFeedback);
     const courseContext = buildCourseContext(allCourses, taskCourse);
     const transcriptProfile = buildTranscriptProfile(user);
 
