@@ -2,6 +2,7 @@ import { mutation } from "../_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { buildClassTag, legacyNaiveClassTag } from "../lib/classTagUtils";
+import { randomCourseColor } from "../lib/courseColors";
 
 function termToSuffix(term: string): string {
   const parts = term.trim().split(" ");
@@ -59,6 +60,7 @@ export const addUserCourse = mutation({
       grade: args.grade,
       studyGoal: args.studyGoal,
       difficultyRating: args.difficultyRating ?? 3,
+      color: randomCourseColor(),
     });
   },
 });
