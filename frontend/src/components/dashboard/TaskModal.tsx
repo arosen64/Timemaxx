@@ -3,6 +3,7 @@ import { type ClassTagCourseOption, type EditForm, CUSTOM_TASK_TYPE_OPTION, TASK
 import DueDateRowWithCalendar from '../DueDateRowWithCalendar'
 import DueTimeField from '../DueTimeField'
 import Modal from '../ui/Modal'
+import Button from '../ui/Button'
 import Selector from '../ui/Selector'
 import {
   msToFormDate,
@@ -54,6 +55,8 @@ interface TaskModalProps {
   }
   /** Current-term classes; class tag may only be empty or one of these (optional field) */
   classTagCourses?: ClassTagCourseOption[]
+  /** When true, show a "Use AI Estimate" reset button in the time estimate section */
+  showAiEstimateReset?: boolean
   onClose: () => void
   onSubmit: (form: EditForm) => Promise<void>
 }
@@ -66,6 +69,7 @@ export default function TaskModal({
   primaryLoadingLabel,
   initialValues,
   classTagCourses,
+  showAiEstimateReset = false,
   onClose,
   onSubmit,
 }: TaskModalProps) {
@@ -87,6 +91,7 @@ export default function TaskModal({
     const mins = parseInt(initialValues.timeEstimate, 10)
     return isNaN(mins) ? '' : String(mins % 60)
   })
+  const [useAiEstimate, setUseAiEstimate] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const datePickerRef = useRef<HTMLInputElement>(null)
@@ -124,6 +129,7 @@ export default function TaskModal({
     const mins = parseInt(initialValues.timeEstimate, 10)
     setEstimateHours(isNaN(mins) ? '' : String(Math.floor(mins / 60)))
     setEstimateMinutes(isNaN(mins) ? '' : String(mins % 60))
+    setUseAiEstimate(false)
     setError(null)
     setSubmitting(false)
   }, [
@@ -204,7 +210,7 @@ export default function TaskModal({
         (!isNaN(hrs) || !isNaN(mins))
           ? (isNaN(hrs) ? 0 : hrs) * 60 + (isNaN(mins) ? 0 : mins)
           : NaN
-      const parsedEstimate = !isNaN(totalMinutes) && totalMinutes > 0 ? totalMinutes : undefined
+      const parsedEstimate = !useAiEstimate && !isNaN(totalMinutes) && totalMinutes > 0 ? totalMinutes : undefined
       await onSubmit({
         title: taskName,
         description,
@@ -215,6 +221,7 @@ export default function TaskModal({
         ...(parsedEstimate !== undefined && !isNaN(parsedEstimate) && parsedEstimate > 0
           ? { timeEstimate: parsedEstimate }
           : {}),
+        ...(useAiEstimate ? { useAiEstimate: true } : {}),
       })
       onClose()
     } catch (e) {
@@ -354,39 +361,71 @@ export default function TaskModal({
 
         {/* Time estimate override */}
         <div className="flex w-full flex-col gap-1.5">
-          <div>
-            <label className="font-heading text-[13px] font-semibold text-navy">
-              Time estimate <span className="font-normal text-light-blue">(optional)</span>
-            </label>
-            <p className="mt-0.5 font-body text-xs text-light-blue">Leave blank to let AI estimate</p>
-          </div>
-          <div className="flex gap-3">
-            <div className="flex flex-1 flex-col gap-1">
-              <label className="font-body text-xs font-medium text-slate-blue" htmlFor="task-estimate-hours">Hours</label>
-              <input
-                id="task-estimate-hours"
-                type="number"
-                min="0"
-                value={estimateHours}
-                onChange={(e) => setEstimateHours(e.target.value)}
-                placeholder="0"
-                className="h-11 w-full rounded-md border border-border bg-bg-gray px-3.5 font-body text-sm text-navy outline-none placeholder:text-light-blue"
-              />
+          <div className="flex items-start justify-between">
+            <div>
+              <label className="font-heading text-[13px] font-semibold text-navy">
+                Time estimate <span className="font-normal text-light-blue">(optional)</span>
+              </label>
+              {!useAiEstimate && estimateHours.trim() === '' && estimateMinutes.trim() === '' && (
+                <p className="mt-0.5 font-body text-xs text-light-blue">Leave blank to let AI estimate</p>
+              )}
             </div>
-            <div className="flex flex-1 flex-col gap-1">
-              <label className="font-body text-xs font-medium text-slate-blue" htmlFor="task-estimate-minutes">Minutes</label>
-              <input
-                id="task-estimate-minutes"
-                type="number"
-                min="0"
-                max="59"
-                value={estimateMinutes}
-                onChange={(e) => setEstimateMinutes(e.target.value)}
-                placeholder="0"
-                className="h-11 w-full rounded-md border border-border bg-bg-gray px-3.5 font-body text-sm text-navy outline-none placeholder:text-light-blue"
-              />
-            </div>
+            {showAiEstimateReset && !useAiEstimate && (
+              <Button
+                variant="outline"
+                className="h-7 px-3 text-xs font-body font-medium"
+                onClick={() => {
+                  setUseAiEstimate(true)
+                  setEstimateHours('')
+                  setEstimateMinutes('')
+                }}
+              >
+                Use AI Estimate
+              </Button>
+            )}
+            {useAiEstimate && (
+              <Button
+                variant="outline"
+                className="h-7 px-3 text-xs font-body font-medium text-slate-blue"
+                onClick={() => setUseAiEstimate(false)}
+              >
+                Set manually
+              </Button>
+            )}
           </div>
+          {useAiEstimate ? (
+            <div className="rounded-lg border border-border bg-bg-gray px-3.5 py-3 font-body text-sm text-light-blue">
+              AI will estimate after saving
+            </div>
+          ) : (
+            <div className="flex gap-3">
+              <div className="flex flex-1 flex-col gap-1">
+                <label className="font-body text-xs font-medium text-slate-blue" htmlFor="task-estimate-hours">Hours</label>
+                <input
+                  id="task-estimate-hours"
+                  type="number"
+                  min="0"
+                  value={estimateHours}
+                  onChange={(e) => setEstimateHours(e.target.value)}
+                  placeholder="0"
+                  className="h-11 w-full rounded-md border border-border bg-bg-gray px-3.5 font-body text-sm text-navy outline-none placeholder:text-light-blue"
+                />
+              </div>
+              <div className="flex flex-1 flex-col gap-1">
+                <label className="font-body text-xs font-medium text-slate-blue" htmlFor="task-estimate-minutes">Minutes</label>
+                <input
+                  id="task-estimate-minutes"
+                  type="number"
+                  min="0"
+                  max="59"
+                  value={estimateMinutes}
+                  onChange={(e) => setEstimateMinutes(e.target.value)}
+                  placeholder="0"
+                  className="h-11 w-full rounded-md border border-border bg-bg-gray px-3.5 font-body text-sm text-navy outline-none placeholder:text-light-blue"
+                />
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </Modal>
