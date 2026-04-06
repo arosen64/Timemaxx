@@ -12,12 +12,13 @@ export const FALLBACK_COURSE_COLOR = "#64748B";
  *   color  = mixHexWithWhite(courseColor, step * subtask.order)
  */
 export function mixHexWithWhite(hex: string, pct: number): string {
+  const clamped = Math.max(0, Math.min(1, pct));
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
   const b = parseInt(hex.slice(5, 7), 16);
 
   const mix = (channel: number) =>
-    Math.round(channel + (255 - channel) * pct);
+    Math.round(channel + (255 - channel) * clamped);
 
   const toHex = (n: number) => n.toString(16).padStart(2, "0");
 
