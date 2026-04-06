@@ -33,3 +33,23 @@ export function buildClassTag(courseCode: string, title: string): string {
   }
   return `${code}: ${t}`;
 }
+
+/** Maps season names to a numeric order within a year (higher = more recent). */
+export const SEASON_ORDER: Record<string, number> = { Spring: 1, Summer: 2, Fall: 3 };
+
+/** Converts a term string like "Fall 2024" to a numeric sort key (higher = more recent). */
+export function termSortKey(term: string): number {
+  const [season, year] = term.split(" ");
+  return parseInt(year) * 10 + (SEASON_ORDER[season] ?? 0);
+}
+
+/**
+ * Extracts the school+department prefix from a JHU course code.
+ * "EN.601.433" → "EN.601"
+ * Returns null if the course code doesn't match the expected format.
+ */
+export function parseDeptPrefix(courseCode: string): string | null {
+  const parts = courseCode.split(".");
+  if (parts.length < 2) return null;
+  return `${parts[0]}.${parts[1]}`;
+}
