@@ -4,6 +4,11 @@ import { api } from '../../../backend/convex/_generated/api'
 import { JhuCourse, JhuSchool, JhuTerm, CourseSelectorProps } from '../types'
 import { GRADES, STUDY_GOALS } from '../constants'
 import { isPastTerm } from '../utils/termUtils'
+import {
+  getCachedTerms, setCachedTerms,
+  getCachedSchools, setCachedSchools,
+  getCachedCourses, setCachedCourses,
+} from '../utils/sisCache'
 import Selector from './ui/Selector'
 import Button from './ui/Button'
 import DifficultyRating from './DifficultyRating'
@@ -37,10 +42,20 @@ export default function CourseSelector({ onAddCourse, mode = 'all' }: CourseSele
   const isCurrent = !isPastTerm(selectedTerm)
 
   useEffect(() => {
+    const cached = getCachedTerms<JhuTerm[]>()
+    if (cached) {
+      let filtered = cached
+      if (mode === 'current') filtered = filtered.filter((t) => !isPastTerm(t.Name))
+      if (mode === 'past') filtered = filtered.filter((t) => isPastTerm(t.Name))
+      setTerms(filtered)
+      return
+    }
     setTermsLoading(true)
     getAvailableTerms({})
       .then((res) => {
-        let filtered = res as JhuTerm[]
+        const all = res as JhuTerm[]
+        setCachedTerms(all)
+        let filtered = all
         if (mode === 'current') filtered = filtered.filter((t) => !isPastTerm(t.Name))
         if (mode === 'past') filtered = filtered.filter((t) => isPastTerm(t.Name))
         setTerms(filtered)
@@ -50,9 +65,18 @@ export default function CourseSelector({ onAddCourse, mode = 'all' }: CourseSele
   }, [getAvailableTerms, mode])
 
   useEffect(() => {
+    const cached = getCachedSchools<JhuSchool[]>()
+    if (cached) {
+      setSchools(cached)
+      return
+    }
     setSchoolsLoading(true)
     getAvailableSchools({})
-      .then((res) => setSchools(res as JhuSchool[]))
+      .then((res) => {
+        const all = res as JhuSchool[]
+        setCachedSchools(all)
+        setSchools(all)
+      })
       .catch(() => setSchools([]))
       .finally(() => setSchoolsLoading(false))
   }, [getAvailableSchools])
@@ -87,9 +111,18 @@ export default function CourseSelector({ onAddCourse, mode = 'all' }: CourseSele
     setSelectedCourse(null)
     setAddError(null)
     if (!school || !selectedTerm) return
+    const cached = getCachedCourses<JhuCourse[]>(selectedTerm, school)
+    if (cached) {
+      setTermCourses(cached)
+      return
+    }
     setCoursesLoading(true)
     getCoursesByTerm({ term: selectedTerm, school })
-      .then((res) => setTermCourses(res as JhuCourse[]))
+      .then((res) => {
+        const all = res as JhuCourse[]
+        setCachedCourses(selectedTerm, school, all)
+        setTermCourses(all)
+      })
       .catch(() => setTermCourses([]))
       .finally(() => setCoursesLoading(false))
   }
