@@ -49,6 +49,8 @@ export type EditForm = {
   classTag?: string
   /** User-supplied time estimate in minutes; undefined means let AI estimate */
   timeEstimate?: number
+  /** True when user explicitly chose to reset to AI estimation */
+  useAiEstimate?: boolean
 }
 
 export const TASK_TYPE_OPTIONS: BuiltInTaskType[] = [...BUILT_IN_TASK_TYPES]

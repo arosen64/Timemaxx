@@ -46,6 +46,7 @@ export default function EditModal({
           ? String(task.timeEstimate)
           : '',
       }}
+      showAiEstimateReset={task?.isManualEstimate === true}
       classTagCourses={classTagCourses}
       onClose={onClose}
       onSubmit={onSave}

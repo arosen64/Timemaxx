@@ -42,7 +42,7 @@ export default function TaskCard({
             <span>· {task.taskType}</span>
             {task.timeEstimate !== undefined ? (
               <>
-                <span>· ~{formatMinutes(task.timeEstimate)} estimated</span>
+                <span>· {formatMinutes(task.timeEstimate)}</span>
                 <EstimateBadge isManual={task.isManualEstimate} />
               </>
             ) : null}
@@ -95,7 +95,7 @@ export default function TaskCard({
             </button>
           </div>
 
-          {task.timeEstimate !== undefined && (
+          {task.timeEstimate !== undefined && !task.isManualEstimate && (
             <TaskFeedbackForm task={task} {...feedback} />
           )}
         </div>
