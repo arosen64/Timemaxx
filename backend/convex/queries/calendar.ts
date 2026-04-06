@@ -45,7 +45,7 @@ export const getCalendarConnectionStatus = query({
 
     return {
       connected: token !== null,
-      hasEventsScope: token?.scope === "https://www.googleapis.com/auth/calendar.events",
+      hasEventsScope: token?.scope?.includes("https://www.googleapis.com/auth/calendar.events") ?? false,
     };
   },
 });
