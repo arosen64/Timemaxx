@@ -66,6 +66,7 @@ export const calendarOAuthCallback = httpAction(async (ctx, request) => {
     access_token: string;
     refresh_token: string;
     expires_in: number;
+    scope?: string;
   };
 
   if (!data.access_token || !data.refresh_token) {
@@ -78,7 +79,7 @@ export const calendarOAuthCallback = httpAction(async (ctx, request) => {
     accessToken: await encryptToken(data.access_token, tokenSecret),
     refreshToken: await encryptToken(data.refresh_token, tokenSecret),
     expiresAt: Date.now() + data.expires_in * 1000,
-    scope: "https://www.googleapis.com/auth/calendar.events", // Store scope for potential future use
+    scope: data.scope,
   });
 
   // Clean up the consumed state record
