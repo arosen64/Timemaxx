@@ -100,6 +100,24 @@ export const deleteTask = mutation({
     const task = await ctx.db.get(args.taskId);
     if (!task || task.userId !== userId) throw new Error("Task not found");
 
+    // Cascade: delete subtasks and their study blocks
+    const subtasks = await ctx.db
+      .query("subtasks")
+      .withIndex("by_parentTaskId", (q) => q.eq("parentTaskId", args.taskId))
+      .collect();
+
+    for (const subtask of subtasks) {
+      const subtaskBlocks = await ctx.db
+        .query("studyBlocks")
+        .withIndex("by_subtaskId", (q) => q.eq("subtaskId", subtask._id))
+        .collect();
+      for (const block of subtaskBlocks) {
+        await ctx.db.delete(block._id);
+      }
+      await ctx.db.delete(subtask._id);
+    }
+
+    // Delete the task's own study blocks
     const studyBlocks = await ctx.db
       .query("studyBlocks")
       .withIndex("by_taskId", (q) => q.eq("taskId", args.taskId))

@@ -109,14 +109,33 @@ export default defineSchema({
     .index("by_userId", ["userId"])
     .index("by_userId_createdAt", ["userId", "createdAt"]),
 
-  // StudyBlocks table — stores scheduled time chunks assigned to tasks
+  // Subtasks table — AI-generated or manually created subtasks linked to a parent task
+  subtasks: defineTable({
+    parentTaskId: v.id("tasks"),
+    userId: v.id("users"),
+    title: v.string(),
+    description: v.string(),
+    taskType: taskTypeValidator,
+    color: v.string(),
+    timeEstimate: v.optional(v.number()),
+    suggestedCompletionAt: v.optional(v.number()),
+    order: v.number(),
+    createdAt: v.number(),
+  })
+    .index("by_parentTaskId", ["parentTaskId"])
+    .index("by_userId", ["userId"]),
+
+  // StudyBlocks table — stores scheduled time chunks assigned to tasks or subtasks
   studyBlocks: defineTable({
-    taskId: v.id("tasks"),
+    taskId: v.optional(v.id("tasks")),
+    subtaskId: v.optional(v.id("subtasks")),
     title: v.string(),
     startTime: v.optional(v.string()),
     studyBlockLength: v.number(),
     isConflicted: v.optional(v.boolean()),
-  }).index("by_taskId", ["taskId"]),
+  })
+    .index("by_taskId", ["taskId"])
+    .index("by_subtaskId", ["subtaskId"]),
 
   // Syllabi table — tracks uploaded syllabus files and their processing status
   syllabi: defineTable({
