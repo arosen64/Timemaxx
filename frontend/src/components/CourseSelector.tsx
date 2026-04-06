@@ -41,6 +41,13 @@ export default function CourseSelector({ onAddCourse, mode = 'all' }: CourseSele
 
   const isCurrent = !isPastTerm(selectedTerm)
 
+  // Store action functions in refs so effects don't re-run when Convex
+  // returns a new function reference on each render.
+  const getAvailableTermsRef = useRef(getAvailableTerms)
+  getAvailableTermsRef.current = getAvailableTerms
+  const getAvailableSchoolsRef = useRef(getAvailableSchools)
+  getAvailableSchoolsRef.current = getAvailableSchools
+
   useEffect(() => {
     const cached = getCachedTerms<JhuTerm[]>()
     if (cached) {
@@ -51,7 +58,7 @@ export default function CourseSelector({ onAddCourse, mode = 'all' }: CourseSele
       return
     }
     setTermsLoading(true)
-    getAvailableTerms({})
+    getAvailableTermsRef.current({})
       .then((res) => {
         const all = res as JhuTerm[]
         setCachedTerms(all)
@@ -62,7 +69,7 @@ export default function CourseSelector({ onAddCourse, mode = 'all' }: CourseSele
       })
       .catch(() => setTerms([]))
       .finally(() => setTermsLoading(false))
-  }, [getAvailableTerms, mode])
+  }, [mode])
 
   useEffect(() => {
     const cached = getCachedSchools<JhuSchool[]>()
@@ -71,7 +78,7 @@ export default function CourseSelector({ onAddCourse, mode = 'all' }: CourseSele
       return
     }
     setSchoolsLoading(true)
-    getAvailableSchools({})
+    getAvailableSchoolsRef.current({})
       .then((res) => {
         const all = res as JhuSchool[]
         setCachedSchools(all)
@@ -79,7 +86,7 @@ export default function CourseSelector({ onAddCourse, mode = 'all' }: CourseSele
       })
       .catch(() => setSchools([]))
       .finally(() => setSchoolsLoading(false))
-  }, [getAvailableSchools])
+  }, [])
 
   // Close suggestions on outside click
   useEffect(() => {
