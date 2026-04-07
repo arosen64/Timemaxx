@@ -9,7 +9,7 @@ export const requestEstimateSubtaskTime = action({
     subtaskId: v.id("subtasks"),
   },
   handler: async (ctx, args) => {
-    await ctx.runAction(internal.actions.estimateSubtaskTime.estimateSubtaskTime, {
+    await ctx.runAction(internal.actions.estimateTaskTime.estimateTaskTime, {
       subtaskId: args.subtaskId,
     });
   },
