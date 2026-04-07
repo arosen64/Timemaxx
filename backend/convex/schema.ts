@@ -119,6 +119,12 @@ export default defineSchema({
     color: v.string(),
     timeEstimate: v.optional(v.number()),
     suggestedCompletionAt: v.optional(v.number()),
+    dueDate: v.optional(v.number()),
+    courseId: v.optional(v.id("userCourses")),
+    classTag: v.optional(v.string()),
+    estimateFeedbackRating: v.optional(v.union(v.literal("up"), v.literal("down"))),
+    correctedEstimateMinutes: v.optional(v.number()),
+    estimateFeedbackSubmittedAt: v.optional(v.number()),
     order: v.number(),
     createdAt: v.number(),
   })
