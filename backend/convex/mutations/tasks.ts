@@ -2,6 +2,7 @@ import { mutation } from "../_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { taskTypeValidator } from "../lib/taskValidators";
+import { rebuildStudyBlocks } from "./timeEstimate";
 
 function normalizeClassTag(value: string | undefined): string | undefined {
   if (value === undefined) return undefined;
@@ -10,8 +11,9 @@ function normalizeClassTag(value: string | undefined): string | undefined {
 }
 
 /**
- * Creates a new task for the authenticated user with timeEstimate left unset.
- * Time estimation is handled separately (e.g. via a Gemini action) after creation.
+ * Creates a new task for the authenticated user. If a timeEstimate is provided,
+ * it is treated as a manual estimate and study blocks are built immediately.
+ * Otherwise, time estimation is handled separately (e.g. via a Gemini action).
  */
 export const createTask = mutation({
   args: {
@@ -55,6 +57,10 @@ export const createTask = mutation({
       isManualEstimate,
       createdAt: Date.now(),
     });
+
+    if (isManualEstimate) {
+      await rebuildStudyBlocks(ctx, taskId, args.timeEstimate!);
+    }
 
     return taskId;
   },

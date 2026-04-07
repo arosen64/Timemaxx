@@ -13,7 +13,6 @@ interface AddTaskModalProps {
 
 export default function AddTaskModal({ isOpen, onClose, onTaskCreated, classTagCourses }: AddTaskModalProps) {
   const createTask = useMutation(api.mutations.tasks.createTask)
-  const setManualTimeEstimate = useMutation(api.mutations.timeEstimate.setManualTimeEstimate)
 
   async function handleSubmit(form: EditForm) {
     const taskId = await createTask({
@@ -25,9 +24,6 @@ export default function AddTaskModal({ isOpen, onClose, onTaskCreated, classTagC
       classTag: form.classTag,
       ...(form.timeEstimate !== undefined ? { timeEstimate: form.timeEstimate } : {}),
     })
-    if (form.timeEstimate !== undefined) {
-      await setManualTimeEstimate({ taskId, timeEstimate: form.timeEstimate })
-    }
     onTaskCreated?.(taskId)
   }
 

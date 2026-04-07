@@ -4,7 +4,7 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import type { MutationCtx } from "../_generated/server";
 import type { Id } from "../_generated/dataModel";
 
-async function rebuildStudyBlocks(
+export async function rebuildStudyBlocks(
   ctx: MutationCtx,
   taskId: Id<"tasks">,
   timeEstimate: number
