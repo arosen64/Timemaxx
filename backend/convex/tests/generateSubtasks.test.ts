@@ -39,7 +39,6 @@ function makeGeminiSubtaskResponse(
     title: string;
     description: string;
     taskType: string;
-    suggestedCompletionAt: string;
   }>
 ) {
   return { text: JSON.stringify({ subtasks }) };
@@ -50,19 +49,16 @@ const MOCK_SUBTASKS = [
     title: "Research causes of WWI",
     description: "Read chapters 3–4 and take notes on key causes.",
     taskType: "Reading",
-    suggestedCompletionAt: new Date(Date.now() + 86_400_000 * 3).toISOString(),
   },
   {
     title: "Draft outline",
     description: "Create a structured outline with thesis and main arguments.",
     taskType: "Essay",
-    suggestedCompletionAt: new Date(Date.now() + 86_400_000 * 7).toISOString(),
   },
   {
     title: "Write and revise essay",
     description: "Write the full 5-page draft and revise for clarity.",
     taskType: "Essay",
-    suggestedCompletionAt: new Date(Date.now() + 86_400_000 * 12).toISOString(),
   },
 ];
 

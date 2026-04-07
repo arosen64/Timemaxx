@@ -10,7 +10,10 @@ export type GeneratedSubtask = {
   title: string;
   description: string;
   taskType: string;
-  suggestedCompletionAt: string; // ISO 8601 date string
+  // suggestedCompletionAt is a linear placeholder for the preview.
+  // After the user confirms and subtasks are estimated, the confirm action
+  // recomputes it proportionally from actual timeEstimate values.
+  suggestedCompletionAt: string; // ISO 8601
 };
 
 export type GenerateSubtasksResult =
@@ -58,12 +61,11 @@ For each subtask provide:
 - title: short action-oriented name (e.g. "Read chapters 3–4", "Draft thesis statement")
 - description: 1-2 sentences on what the student should do
 - taskType: one of "Essay", "Problem Set", "Exam Prep", "Coding", "Reading", "Lab", "Presentation"
-- suggestedCompletionAt: ISO 8601 date string for when to finish this subtask, distributed proportionally before the due date
 
-Return 3–6 subtasks ordered by when they should be completed.`;
+Return 1–6 subtasks ordered by when they should be completed. If the assignment is simple and doesn't benefit from being broken down, returning a single subtask is perfectly fine.`;
 
     try {
-      const json = await callGeminiJSON<{ subtasks: GeneratedSubtask[] }>(
+      const json = await callGeminiJSON<{ subtasks: Array<{ title: string; description: string; taskType: string }> }>(
         prompt,
         {
           responseMimeType: "application/json",
@@ -78,9 +80,8 @@ Return 3–6 subtasks ordered by when they should be completed.`;
                     title: { type: Type.STRING },
                     description: { type: Type.STRING },
                     taskType: { type: Type.STRING },
-                    suggestedCompletionAt: { type: Type.STRING },
                   },
-                  required: ["title", "description", "taskType", "suggestedCompletionAt"],
+                  required: ["title", "description", "taskType"],
                 },
               },
             },
@@ -90,7 +91,19 @@ Return 3–6 subtasks ordered by when they should be completed.`;
         }
       );
 
-      return { subtasks: json.subtasks ?? [] };
+      const rawSubtasks = json.subtasks ?? [];
+      const nowMs = Date.now();
+      const dueDateMs = task.dueDate;
+      const n = rawSubtasks.length;
+
+      const subtasks: GeneratedSubtask[] = rawSubtasks.map((s, i) => ({
+        ...s,
+        suggestedCompletionAt: new Date(
+          nowMs + ((i + 1) / n) * (dueDateMs - nowMs)
+        ).toISOString(),
+      }));
+
+      return { subtasks };
     } catch (err) {
       console.error("Failed to generate subtasks:", err);
       throw err;

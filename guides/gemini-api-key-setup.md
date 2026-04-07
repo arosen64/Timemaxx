@@ -4,7 +4,9 @@ This guide explains how to get a Google Gemini API key and configure it for loca
 
 ## Why This Is Needed
 
-The task time estimation feature calls the Google Gemini API from a Convex action. The API key is stored as a server-side environment variable in your Convex deployment — it is never committed to the repo or exposed to the frontend.
+Several AI features call the Google Gemini API from Convex actions: subtask generation, syllabus parsing, transcript analysis, and academic profile generation. The API key is stored as a server-side environment variable in your Convex deployment — it is never committed to the repo or exposed to the frontend.
+
+> **Note:** Task and subtask time estimation uses OpenAI (GPT-4o mini), not Gemini. See the [OpenAI API Key Setup](openai-api-key-setup.md) guide for that key.
 
 ## Step 1: Get a Gemini API Key
 
@@ -31,4 +33,4 @@ npx convex env list
 
 - Each developer has their own Convex dev deployment, so everyone must set this key individually
 - The key is **not** stored in `.env.local` — that file is for frontend (Vite) variables only
-- If the key is missing, task creation will still succeed but `timeEstimate` will remain unset
+- If the key is missing, subtask generation, syllabus parsing, and transcript analysis will be unavailable — task creation itself will still succeed

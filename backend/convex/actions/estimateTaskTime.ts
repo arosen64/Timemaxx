@@ -4,8 +4,7 @@ import { internalAction } from "../_generated/server";
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { Doc } from "../_generated/dataModel";
-import { Type } from "@google/genai";
-import { callGeminiJSON } from "../lib/gemini";
+import { callOpenAIJSON } from "../lib/openai";
 import { parseDeptPrefix, termSortKey } from "../lib/classTagUtils";
 
 /**
@@ -165,28 +164,18 @@ ${courseContext ? `\n${courseContext}` : ""}
 
 ${feedbackContext ? `\n${feedbackContext}` : ""}
 
-Respond with the estimated number of minutes as a single integer.`;
+Respond with JSON in this exact format: {"estimatedMinutes": <integer>}`;
 
-    // Call Gemini with structured output
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
       if (process.env.VITEST !== "true") {
-        console.error("GEMINI_API_KEY is not set");
+        console.error("OPENAI_API_KEY is not set");
       }
       return;
     }
 
     try {
-      const json = await callGeminiJSON<{ estimatedMinutes: number }>(prompt, {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            estimatedMinutes: { type: Type.INTEGER },
-          },
-          required: ["estimatedMinutes"],
-        },
-      });
+      const json = await callOpenAIJSON<{ estimatedMinutes: number }>(prompt);
       const estimatedMinutes = json.estimatedMinutes;
 
       if (typeof estimatedMinutes === "number") {
