@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { buildClassTag, legacyNaiveClassTag } from "../lib/classTagUtils";
 import { randomCourseColor } from "../lib/courseColors";
+import { cascadeDeleteTask } from "./tasks";
 
 function termToSuffix(term: string): string {
   const parts = term.trim().split(" ");
@@ -124,16 +125,7 @@ export const deleteUserCourse = mutation({
         tag === canonicalClassTag || tag === legacyNaiveTag;
       if (!matchesByCourseId && !matchesByClassTag) continue;
 
-      const studyBlocks = await ctx.db
-        .query("studyBlocks")
-        .withIndex("by_taskId", (q) => q.eq("taskId", task._id))
-        .collect();
-
-      for (const block of studyBlocks) {
-        await ctx.db.delete(block._id);
-      }
-
-      await ctx.db.delete(task._id);
+      await cascadeDeleteTask(ctx, task._id);
     }
 
     const syllabi = await ctx.db
