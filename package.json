@@ -14,15 +14,17 @@
     "test:coverage:backend": "vitest run --project backend --coverage"
   },
   "dependencies": {
+    "@ai-sdk/google": "^3.0.59",
     "@auth/core": "^0.37.4",
     "@convex-dev/auth": "^0.0.91",
-    "@google/genai": "^1.44.0",
+    "ai": "^6.0.149",
     "convex": "^1.32.0",
     "dotenv": "^17.3.1",
     "pdfjs-dist": "^5.5.207",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-router-dom": "^6.28.0"
+    "react-router-dom": "^6.28.0",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@edge-runtime/vm": "^4.0.4",
