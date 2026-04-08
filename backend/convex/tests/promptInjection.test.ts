@@ -267,6 +267,7 @@ describe("prompt injection prevention — estimateTaskTime (context builders)", 
         taskType: "Homework",
         dueDate: Date.now() + 7 * 86_400_000,
         createdAt: Date.now(),
+        isManualEstimate: false,
       });
     });
 
@@ -322,6 +323,7 @@ describe("prompt injection prevention — estimateTaskTime (context builders)", 
         dueDate: Date.now() + 7 * 86_400_000,
         createdAt: Date.now(),
         courseId,
+        isManualEstimate: false,
       });
     });
 
@@ -367,6 +369,7 @@ describe("prompt injection prevention — estimateTaskTime (context builders)", 
         estimateFeedbackRating: "down",
         correctedEstimateMinutes: 30,
         estimateFeedbackSubmittedAt: Date.now() - 7 * 86_400_000,
+        isManualEstimate: false,
       });
     });
 
@@ -379,6 +382,7 @@ describe("prompt injection prevention — estimateTaskTime (context builders)", 
         taskType: "Homework",
         dueDate: Date.now() + 7 * 86_400_000,
         createdAt: Date.now(),
+        isManualEstimate: false,
       });
     });
 
