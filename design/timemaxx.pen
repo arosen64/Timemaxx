@@ -3204,7 +3204,13 @@
               "width": "fit_content",
               "height": "fit_content",
               "x": 255,
-              "y": 0
+              "y": 0,
+              "descendants": {
+                "1ND11": {
+                  "x": 10,
+                  "y": 4
+                }
+              }
             },
             {
               "id": "wPVIA",
@@ -3214,7 +3220,13 @@
               "width": "fit_content",
               "height": "fit_content",
               "x": 326,
-              "y": 0
+              "y": 0,
+              "descendants": {
+                "aCp8F": {
+                  "x": 10,
+                  "y": 4
+                }
+              }
             }
           ]
         },
@@ -21253,6 +21265,310 @@
           "fontFamily": "Space Grotesk",
           "fontSize": 11,
           "fontWeight": "600"
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "3Vv36",
+      "x": 13200,
+      "y": 0,
+      "name": "ChatFAB",
+      "reusable": true,
+      "width": 56,
+      "height": 56,
+      "fill": "$--primary",
+      "cornerRadius": 28,
+      "justifyContent": "center",
+      "alignItems": "center",
+      "children": [
+        {
+          "type": "text",
+          "id": "OKRog",
+          "name": "icon",
+          "fill": "$--primary-foreground",
+          "content": "◎",
+          "fontFamily": "Space Grotesk",
+          "fontSize": 22,
+          "fontWeight": "600"
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "CNdk0",
+      "x": 13200,
+      "y": 80,
+      "name": "ChatBubble/User",
+      "reusable": true,
+      "width": 240,
+      "fill": "$--primary",
+      "cornerRadius": 12,
+      "layout": "vertical",
+      "gap": 4,
+      "padding": [
+        10,
+        14
+      ],
+      "children": [
+        {
+          "type": "text",
+          "id": "BiYcd",
+          "name": "message",
+          "fill": "$--primary-foreground",
+          "content": "How many study hours left?",
+          "fontFamily": "Inter",
+          "fontSize": 13,
+          "fontWeight": "normal"
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "1eXXk",
+      "x": 13200,
+      "y": 180,
+      "name": "ChatBubble/AI",
+      "reusable": true,
+      "width": 240,
+      "fill": "$--card",
+      "cornerRadius": 12,
+      "stroke": {
+        "align": "inside",
+        "thickness": 1,
+        "fill": "$--border"
+      },
+      "layout": "vertical",
+      "gap": 4,
+      "padding": [
+        10,
+        14
+      ],
+      "children": [
+        {
+          "type": "text",
+          "id": "jp9Pm",
+          "name": "sender",
+          "fill": "$--accent",
+          "content": "TimeMaxx AI",
+          "fontFamily": "Space Grotesk",
+          "fontSize": 11,
+          "fontWeight": "600"
+        },
+        {
+          "type": "text",
+          "id": "aH5zA",
+          "name": "message",
+          "fill": "$--foreground",
+          "content": "You have 4.5 hours available this week.",
+          "fontFamily": "Inter",
+          "fontSize": 13,
+          "fontWeight": "normal"
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "IwDgd",
+      "x": 13200,
+      "y": 320,
+      "name": "ChatOverlay",
+      "reusable": true,
+      "width": 380,
+      "height": 560,
+      "fill": "$--card",
+      "cornerRadius": 12,
+      "stroke": {
+        "align": "inside",
+        "thickness": 1,
+        "fill": "$--border"
+      },
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "BcWKl",
+          "name": "header",
+          "width": "fill_container",
+          "height": 56,
+          "fill": "$--primary",
+          "padding": [
+            0,
+            20
+          ],
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "GwDgv",
+              "name": "title",
+              "fill": "$--primary-foreground",
+              "content": "TimeMaxx AI",
+              "fontFamily": "Space Grotesk",
+              "fontSize": 15,
+              "fontWeight": "600"
+            },
+            {
+              "type": "text",
+              "id": "9yjh9",
+              "name": "close",
+              "fill": "$--primary-foreground",
+              "content": "✕",
+              "fontFamily": "Space Grotesk",
+              "fontSize": 16,
+              "fontWeight": "600"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "FBpOm",
+          "name": "messages",
+          "width": "fill_container",
+          "height": "fill_container",
+          "fill": "$--background",
+          "layout": "vertical",
+          "gap": 12,
+          "padding": 16,
+          "children": [
+            {
+              "type": "frame",
+              "id": "KM13I",
+              "name": "aiMessage1",
+              "fill": "$--card",
+              "cornerRadius": 12,
+              "stroke": {
+                "align": "inside",
+                "thickness": 1,
+                "fill": "$--border"
+              },
+              "layout": "vertical",
+              "gap": 4,
+              "padding": [
+                10,
+                14
+              ],
+              "children": [
+                {
+                  "type": "text",
+                  "id": "HZ1yj",
+                  "name": "sender",
+                  "fill": "$--accent",
+                  "content": "TimeMaxx AI",
+                  "fontFamily": "Space Grotesk",
+                  "fontSize": 11,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "text",
+                  "id": "ROepc",
+                  "name": "message",
+                  "fill": "$--foreground",
+                  "content": "Hi! I can help you plan your study schedule.",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "miqC5",
+              "name": "userMessage1Row",
+              "width": "fill_container",
+              "justifyContent": "end",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "xYg6X",
+                  "name": "userMessage1",
+                  "fill": "$--primary",
+                  "cornerRadius": 12,
+                  "layout": "vertical",
+                  "padding": [
+                    10,
+                    14
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "yArzn",
+                      "name": "message",
+                      "fill": "$--primary-foreground",
+                      "content": "How many hours do I have left?",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "clqN2",
+          "name": "inputArea",
+          "width": "fill_container",
+          "height": 64,
+          "fill": "$--card",
+          "gap": 10,
+          "padding": [
+            0,
+            12
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "MeveO",
+              "name": "input",
+              "width": "fill_container",
+              "height": 40,
+              "fill": "$--background",
+              "cornerRadius": 8,
+              "stroke": {
+                "align": "inside",
+                "thickness": 1,
+                "fill": "$--border"
+              },
+              "padding": [
+                0,
+                14
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "BSyVq",
+                  "name": "placeholder",
+                  "fill": "$--light-muted",
+                  "content": "Ask me anything…",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "id": "2tuNX",
+              "type": "ref",
+              "ref": "Xdrqk",
+              "name": "send",
+              "width": 72,
+              "height": 40,
+              "x": 296,
+              "y": 12,
+              "descendants": {
+                "vxzyR": {
+                  "x": 12.5,
+                  "y": 11
+                }
+              }
+            }
+          ]
         }
       ]
     }

@@ -1,7 +1,15 @@
-import { query } from "../_generated/server";
+import { internalQuery, query } from "../_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { Id } from "../_generated/dataModel";
+import { DatabaseReader } from "../_generated/server";
+
+async function fetchCoursesByUserId(db: DatabaseReader, userId: Id<"users">) {
+  return await db
+    .query("userCourses")
+    .withIndex("by_user", (q) => q.eq("userId", userId))
+    .collect();
+}
 
 /**
  * Returns all courses for the authenticated user.
@@ -11,10 +19,17 @@ export const getUserCourses = query({
   handler: async (ctx) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) return [];
-    return await ctx.db
-      .query("userCourses")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
-      .collect();
+    return await fetchCoursesByUserId(ctx.db, userId);
+  },
+});
+
+/**
+ * Returns all courses for a given user. For use by internal actions.
+ */
+export const getUserCoursesInternal = internalQuery({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    return await fetchCoursesByUserId(ctx.db, args.userId);
   },
 });
 
