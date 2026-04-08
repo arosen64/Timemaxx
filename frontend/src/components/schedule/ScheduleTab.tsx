@@ -138,6 +138,26 @@ export default function ScheduleTab() {
     return { scheduledBlocks: scheduled, unscheduledBlocks: unscheduled }
   }, [allStudyBlocks])
 
+  // Build color legend from scheduled blocks in the current 7-day window
+  const legend = useMemo(() => {
+    const dayKeys = new Set(days.map(isoDateString))
+    const windowBlocks = scheduledBlocks.filter((b) => dayKeys.has(isoDateString(new Date(b.startTime))))
+    const seen = new Map<string, string>() // courseColor -> courseName
+    let hasUntagged = false
+    for (const b of windowBlocks) {
+      if (b.courseColor && b.courseName) {
+        if (!seen.has(b.courseColor)) seen.set(b.courseColor, b.courseName)
+      } else {
+        hasUntagged = true
+      }
+    }
+    const entries: { courseColor: string | undefined; courseName: string }[] = Array.from(seen.entries()).map(
+      ([color, name]) => ({ courseColor: color, courseName: name })
+    )
+    if (hasUntagged) entries.push({ courseColor: undefined, courseName: 'Other' })
+    return entries
+  }, [days, scheduledBlocks])
+
   // Build studyBlocksByDay for the grid
   const studyBlocksByDay = useMemo(() => {
     const map: Record<string, StudyBlockOnGrid[]> = {}
@@ -327,6 +347,20 @@ export default function ScheduleTab() {
           </button>
           {isFetchingEvents && <SpinnerIcon color="#4E6A8C" size={14} />}
         </div>
+
+        {legend.length > 0 && (
+          <div className="flex items-center gap-3 flex-wrap">
+            {legend.map((entry) => (
+              <span key={entry.courseName} className="flex items-center gap-1.5">
+                <span
+                  className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
+                  style={{ backgroundColor: entry.courseColor ?? '#002D72' }}
+                />
+                <span className="font-body text-[11px] text-slate-blue">{entry.courseName}</span>
+              </span>
+            ))}
+          </div>
+        )}
 
         {calendarConnected ? (
           <button
