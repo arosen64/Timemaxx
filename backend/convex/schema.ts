@@ -84,6 +84,7 @@ export default defineSchema({
     grade: v.optional(v.string()),
     studyGoal: v.optional(v.string()),
     difficultyRating: v.optional(v.number()),
+    color: v.optional(v.string()),
   })
     .index("by_user", ["userId"])
     .index("by_user_course", ["userId", "courseCode"])
