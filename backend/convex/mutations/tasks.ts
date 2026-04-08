@@ -1,7 +1,32 @@
-import { mutation } from "../_generated/server";
+import { mutation, MutationCtx } from "../_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { taskTypeValidator } from "../lib/taskValidators";
+import { Id } from "../_generated/dataModel";
+
+export async function cascadeDeleteTask(ctx: MutationCtx, taskId: Id<"tasks">) {
+  const subtasks = await ctx.db
+    .query("subtasks")
+    .withIndex("by_parentTaskId", (q) => q.eq("parentTaskId", taskId))
+    .collect();
+
+  for (const subtask of subtasks) {
+    const subtaskBlocks = await ctx.db
+      .query("studyBlocks")
+      .withIndex("by_subtaskId", (q) => q.eq("subtaskId", subtask._id))
+      .collect();
+    for (const block of subtaskBlocks) await ctx.db.delete(block._id);
+    await ctx.db.delete(subtask._id);
+  }
+
+  const taskBlocks = await ctx.db
+    .query("studyBlocks")
+    .withIndex("by_taskId", (q) => q.eq("taskId", taskId))
+    .collect();
+  for (const block of taskBlocks) await ctx.db.delete(block._id);
+
+  await ctx.db.delete(taskId);
+}
 
 function normalizeClassTag(value: string | undefined): string | undefined {
   if (value === undefined) return undefined;
@@ -100,15 +125,6 @@ export const deleteTask = mutation({
     const task = await ctx.db.get(args.taskId);
     if (!task || task.userId !== userId) throw new Error("Task not found");
 
-    const studyBlocks = await ctx.db
-      .query("studyBlocks")
-      .withIndex("by_taskId", (q) => q.eq("taskId", args.taskId))
-      .collect();
-
-    for (const block of studyBlocks) {
-      await ctx.db.delete(block._id);
-    }
-
-    await ctx.db.delete(args.taskId);
+    await cascadeDeleteTask(ctx, args.taskId);
   },
 });
