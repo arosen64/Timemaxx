@@ -20,6 +20,6 @@
     "isolatedModules": true,
     "noEmit": true
   },
-  "include": ["./**/*", "../convex-tests/**/*"],
+  "include": ["./**/*"],
   "exclude": ["./_generated"]
 }

@@ -23,7 +23,7 @@ export default function SyllabusUploadModal({
   course,
   onSuccess,
 }: SyllabusUploadModalProps) {
-  const uploadSyllabus = useAction(api.actions.uploadSyllabus.uploadSyllabus)
+  const uploadSyllabus = useAction(api.ai.uploadSyllabus.uploadSyllabus)
 
   const [mode, setMode] = useState<Mode>('upload')
   const [file, setFile] = useState<File | null>(null)

@@ -127,7 +127,7 @@ export const confirmSyllabusTasks = mutation({
     await ctx.db.patch(args.syllabusId, { status: "confirmed" });
 
     for (const taskId of taskIds) {
-      await ctx.scheduler.runAfter(0, internal.actions.estimateTaskTime.estimateTaskTime, { taskId });
+      await ctx.scheduler.runAfter(0, internal.ai.estimateTaskTime.estimateTaskTime, { taskId });
     }
 
     return taskIds;

@@ -1,12 +1,15 @@
-"use node"; // Required: @google/genai uses Node.js APIs not available in the default Convex runtime
-
 import { internalAction } from "../_generated/server";
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { Doc } from "../_generated/dataModel";
-import { Type } from "@google/genai";
-import { callGeminiJSON } from "../lib/gemini";
+import { callGemini } from "../lib/gemini";
+import { sanitizeUserInput } from "../lib/sanitize";
 import { parseDeptPrefix, termSortKey } from "../lib/classTagUtils";
+import {
+  TIME_ESTIMATE_SYSTEM,
+  buildTimeEstimatePrompt,
+  timeEstimateResponseSchema,
+} from "../lib/prompts/estimateTaskTime.prompt";
 
 /**
  * From a pre-fetched list of all user courses, returns a context string of
@@ -144,28 +147,11 @@ export const estimateTaskTime = internalAction({
 
     const taskCourse = task.courseId ? allCourses.find((c) => c._id === task.courseId) : undefined;
 
-    // Build prompt
+    // Build context strings
     const userContext = buildUserContext(user);
     const feedbackContext = buildFeedbackContext(priorEstimateFeedback);
     const courseContext = buildCourseContext(allCourses, taskCourse);
     const transcriptProfile = buildTranscriptProfile(user);
-
-    const prompt = `You are a study time estimator. Given the task details and student profile below, estimate how many minutes it will take the student to complete the task.
-
-Task title: ${task.title}
-Task type: ${task.taskType}
-Task description: ${task.description}
-${taskCourse ? `Task course: ${taskCourse.courseCode} - ${taskCourse.title}` : ""}
-
-${userContext ? `Student profile:\n${userContext}` : ""}
-
-${transcriptProfile ? `\n${transcriptProfile}` : ""}
-
-${courseContext ? `\n${courseContext}` : ""}
-
-${feedbackContext ? `\n${feedbackContext}` : ""}
-
-Respond with the estimated number of minutes as a single integer.`;
 
     // Call Gemini with structured output
     const apiKey = process.env.GEMINI_API_KEY;
@@ -177,24 +163,28 @@ Respond with the estimated number of minutes as a single integer.`;
     }
 
     try {
-      const json = await callGeminiJSON<{ estimatedMinutes: number }>(prompt, {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            estimatedMinutes: { type: Type.INTEGER },
-          },
-          required: ["estimatedMinutes"],
-        },
+      const result = await callGemini({
+        system: TIME_ESTIMATE_SYSTEM,
+        prompt: buildTimeEstimatePrompt({
+          title: sanitizeUserInput(task.title, 500),
+          taskType: task.taskType,
+          description: sanitizeUserInput(task.description ?? "", 5_000),
+          courseInfo: taskCourse
+            ? `${taskCourse.courseCode} - ${taskCourse.title}`
+            : undefined,
+          userContext: userContext ?? undefined,
+          transcriptProfile: transcriptProfile ?? undefined,
+          courseContext: courseContext ?? undefined,
+          feedbackContext: feedbackContext ?? undefined,
+        }),
+        schema: timeEstimateResponseSchema,
+        schemaName: "TimeEstimate",
       });
-      const estimatedMinutes = json.estimatedMinutes;
 
-      if (typeof estimatedMinutes === "number") {
-        await ctx.runMutation(internal.mutations.timeEstimate.setTimeEstimate, {
-          taskId: args.taskId,
-          timeEstimate: estimatedMinutes,
-        });
-      }
+      await ctx.runMutation(internal.mutations.timeEstimate.setTimeEstimate, {
+        taskId: args.taskId,
+        timeEstimate: result.estimatedMinutes,
+      });
     } catch (err) {
       console.error("Failed to estimate task time:", err);
       throw err;
