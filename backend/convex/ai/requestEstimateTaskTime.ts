@@ -10,6 +10,8 @@ export const requestEstimateTaskTime = action({
     const task = await ctx.runQuery(api.queries.tasks.getTask, { taskId: args.taskId });
     if (!task) throw new Error("Task not found or access denied");
 
+    if (task.isManualEstimate) return;
+
     await ctx.runAction(internal.ai.estimateTaskTime.estimateTaskTime, {
       taskId: args.taskId,
     });

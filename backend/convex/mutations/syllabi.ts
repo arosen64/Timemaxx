@@ -120,6 +120,7 @@ export const confirmSyllabusTasks = mutation({
           courseId: syllabus.courseId,
           ...(classTag !== undefined ? { classTag } : {}),
           createdAt: now,
+          isManualEstimate: false,
         })
       )
     );

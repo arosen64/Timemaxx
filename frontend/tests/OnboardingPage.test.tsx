@@ -51,11 +51,11 @@ const mockUseMutation = vi.mocked(useMutation)
 const mockUseAction = vi.mocked(useAction)
 
 /** Renders OnboardingPage with onboarding not yet complete */
-function setup(calendarConnected = false) {
+function setup(calendarStatus: { connected: boolean; hasEventsScope: boolean } | null = { connected: false, hasEventsScope: false }) {
   const saveOnboarding = makeMutationFn()
   const mockCalendarAction = makeMutationFn('https://accounts.google.com/oauth')
   mockUseQuery.mockImplementation(((query: unknown) => {
-    if (query === 'getCalendarConnectionStatus') return { connected: calendarConnected }
+    if (query === 'getCalendarConnectionStatus') return calendarStatus === null ? undefined : calendarStatus
     if (query === 'getUserCourses') return []
     return false
   }) as never)
@@ -236,22 +236,29 @@ describe('OnboardingPage – Google Calendar section (Step 4)', () => {
     return user
   }
 
-  it('shows "Connect" button on Step 4 when calendar is not connected', async () => {
-    setup(false)
+  it('shows loading skeleton on Step 6 when calendar status is loading', async () => {
+    setup(null)
+    await advanceToStep4()
+    expect(screen.queryByRole('button', { name: /^connect$/i })).not.toBeInTheDocument()
+    expect(screen.queryByText('Connected')).not.toBeInTheDocument()
+  })
+
+  it('shows "Connect" button on Step 6 when calendar is not connected', async () => {
+    setup({ connected: false, hasEventsScope: false })
     await advanceToStep4()
     expect(screen.getByRole('button', { name: /^connect$/i })).toBeInTheDocument()
     expect(screen.queryByText('Connected')).not.toBeInTheDocument()
   })
 
-  it('shows "Connected" indicator on Step 4 when calendar is already connected', async () => {
-    setup(true)
+  it('shows "Connected" indicator on Step 6 when calendar is already connected', async () => {
+    setup({ connected: true, hasEventsScope: true })
     await advanceToStep4()
     expect(screen.getByText('Connected')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /^connect$/i })).not.toBeInTheDocument()
   })
 
-  it('calls initiateGoogleCalendarOAuth when "Connect" is clicked on Step 4', async () => {
-    const { mockCalendarAction } = setup(false)
+  it('calls initiateGoogleCalendarOAuth when "Connect" is clicked on Step 6', async () => {
+    const { mockCalendarAction } = setup({ connected: false, hasEventsScope: false })
     const user = await advanceToStep4()
 
     await user.click(screen.getByRole('button', { name: /^connect$/i }))

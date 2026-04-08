@@ -12,6 +12,7 @@ async function seedTask(t: ReturnType<typeof makeTestCtx>, userId: string) {
       description: "desc",
       taskType: "Essay",
       dueDate: FUTURE,
+      isManualEstimate: false,
       createdAt: Date.now(),
     })
   );
@@ -195,6 +196,7 @@ describe("mutations/userCourses – deleteUserCourse cascade", () => {
         description: "d",
         taskType: "Problem Set",
         dueDate: FUTURE,
+        isManualEstimate: false,
         createdAt: Date.now(),
         courseId: userCourseId,
       })
