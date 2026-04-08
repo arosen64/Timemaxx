@@ -255,6 +255,14 @@ export function RetryIcon({ color = 'currentColor', size = 16 }: { color?: strin
   )
 }
 
+export function MessageSquareIcon({ color = 'currentColor', size = 22 }: { color?: string; size?: number }) {
+  return (
+    <IconBase color={color} size={size}>
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+    </IconBase>
+  )
+}
+
 export function XIcon({ color = '#CF4520', size = 14 }: { color?: string; size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 14 14" fill="none" aria-hidden="true" style={{ flexShrink: 0 }}>
