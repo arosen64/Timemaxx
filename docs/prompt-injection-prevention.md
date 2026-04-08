@@ -60,16 +60,17 @@ When embedding structured data (objects, arrays) in prompts, `safeStringifyForPr
 
 ### 5. Input Length Validation
 
-Each action enforces a maximum character limit on user-provided text *before* any processing:
+Each Gemini-facing action enforces a maximum character limit on user-provided text *before* prompt construction, using one of two mechanisms depending on the action:
 
 - Syllabus content: 200,000 characters
 - Transcript text: 100,000 characters
 - Task title: 500 characters
 - Task description: 5,000 characters
+- Course list (academic profile): 50,000 characters
 
-Oversized input is rejected with a clear error message, never sent to the model.
+For `uploadSyllabus` and `parseTranscript`, oversized input is rejected with a clear error message via `validateLength()`. For `generateAcademicProfile` and `estimateTaskTime`, `sanitizeUserInput()` applies per-action truncation so over-limit content is shortened before being sent to the model.
 
-**Where:** `backend/convex/lib/sanitize.ts` — `validateLength()`, called at the top of each action handler.
+**Where:** `backend/convex/lib/sanitize.ts` — `validateLength()` and `sanitizeUserInput()`.
 
 ### 6. Zod-Validated Structured Output
 

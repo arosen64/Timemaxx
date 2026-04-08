@@ -10,7 +10,7 @@ import {
 } from "../lib/prompts/parseTranscript.prompt";
 
 export interface ParsedCourse {
-  courseCode: string; // e.g. "EN.601.226.FA22"
+  courseCode: string; // e.g. "EN.601.226"
   title: string;
   credits: number;
   term: string; // e.g. "Fall 2022"

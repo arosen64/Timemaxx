@@ -3,7 +3,6 @@ import { Anonymous } from "@convex-dev/auth/providers/Anonymous";
 import Google from "@auth/core/providers/google";
 
 const isAnonymousAuthEnabled =
-  process.env.NODE_ENV === "development" ||
   process.env.ANONYMOUS_AUTH_ENABLED === "true";
 
 const providers = isAnonymousAuthEnabled
