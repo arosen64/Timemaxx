@@ -13,6 +13,7 @@ export default defineSchema({
     refreshToken: v.string(),
     expiresAt: v.number(),
     selectedCalendarIds: v.optional(v.array(v.string())),
+    scope: v.optional(v.string()),
   }).index("by_userId", ["userId"]),
 
   // Short-lived state tokens used to identify users during the OAuth callback
