@@ -47,9 +47,7 @@ export default function ClassCard({
 
   // Color picker state
   const [currentColor, setCurrentColor] = useState(initialColor ?? '')
-  const [pendingColor, setPendingColor] = useState(initialColor ?? '')
-  const [colorPickerOpen, setColorPickerOpen] = useState(false)
-  const colorPickerRef = useRef<HTMLDivElement>(null)
+  const colorInputRef = useRef<HTMLInputElement>(null)
 
   // Upload state (current cards only)
   const [uploadModalOpen, setUploadModalOpen] = useState(false)
@@ -148,49 +146,26 @@ export default function ClassCard({
         {/* Header row */}
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-2 min-w-0">
-            {/* Color swatch button + popover */}
-            <div className="relative shrink-0 mt-1" ref={colorPickerRef}>
+            {/* Color swatch — clicking opens native color wheel */}
+            <div className="relative shrink-0 mt-1">
               <button
                 type="button"
                 aria-label="Set course color"
-                onClick={() => {
-                  setPendingColor(currentColor)
-                  setColorPickerOpen((o) => !o)
-                }}
+                onClick={() => colorInputRef.current?.click()}
                 className={`w-4 h-4 rounded-full border border-border transition hover:opacity-70 ${currentColor ? '' : 'bg-bg-gray'}`}
                 style={currentColor ? { backgroundColor: currentColor } : undefined}
               />
-              {colorPickerOpen && (
-                <div className="absolute left-0 top-6 z-20 flex flex-col gap-2 rounded-xl border border-border bg-white p-3 shadow-md">
-                  <span className="font-body text-[10px] text-light-blue">Course color</span>
-                  <input
-                    type="color"
-                    value={pendingColor || '#002D72'}
-                    className="w-10 h-10 cursor-pointer rounded-lg border border-border bg-bg-gray p-0.5"
-                    onChange={(e) => setPendingColor(e.target.value)}
-                  />
-                  <div className="flex gap-1.5">
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        setCurrentColor(pendingColor)
-                        await updateUserCourse({ userCourseId: id, color: pendingColor })
-                        setColorPickerOpen(false)
-                      }}
-                      className="flex-1 rounded-lg bg-navy py-1 font-heading text-[11px] font-semibold text-white transition hover:opacity-90"
-                    >
-                      Save
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setColorPickerOpen(false)}
-                      className="flex-1 rounded-lg border border-border py-1 font-heading text-[11px] font-semibold text-slate-blue transition hover:bg-bg-gray"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              )}
+              <input
+                ref={colorInputRef}
+                type="color"
+                value={currentColor || '#002D72'}
+                className="sr-only"
+                onChange={async (e) => {
+                  const color = e.target.value
+                  setCurrentColor(color)
+                  await updateUserCourse({ userCourseId: id, color })
+                }}
+              />
             </div>
 
             <div className="flex flex-col gap-0.5 min-w-0">
