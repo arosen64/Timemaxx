@@ -14,6 +14,7 @@ async function seedTask(
       taskType: "Essay",
       dueDate: Date.now() + 86_400_000,
       createdAt: Date.now(),
+      isManualEstimate: false,
     })
   );
 }

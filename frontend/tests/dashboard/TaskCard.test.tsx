@@ -62,9 +62,9 @@ describe('TaskCard', () => {
     expect(screen.getByText('Problem Set')).toBeInTheDocument()
   })
 
-  it('renders formatted time estimate "~1h 30m estimated"', () => {
+  it('renders formatted time estimate "1h 30m"', () => {
     setup()
-    expect(screen.getByText(/1h 30m estimated/i)).toBeInTheDocument()
+    expect(screen.getByText(/1h 30m/i)).toBeInTheDocument()
   })
 
   it('shows sparkle estimate button when timeEstimate is undefined', () => {

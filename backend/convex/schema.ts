@@ -13,6 +13,7 @@ export default defineSchema({
     refreshToken: v.string(),
     expiresAt: v.number(),
     selectedCalendarIds: v.optional(v.array(v.string())),
+    scope: v.optional(v.string()),
   }).index("by_userId", ["userId"]),
 
   // Short-lived state tokens used to identify users during the OAuth callback
@@ -84,6 +85,7 @@ export default defineSchema({
     grade: v.optional(v.string()),
     studyGoal: v.optional(v.string()),
     difficultyRating: v.optional(v.number()),
+    color: v.optional(v.string()),
   })
     .index("by_user", ["userId"])
     .index("by_user_course", ["userId", "courseCode"])
@@ -96,6 +98,7 @@ export default defineSchema({
     description: v.string(),
     taskType: taskTypeValidator,
     timeEstimate: v.optional(v.number()),
+    isManualEstimate: v.boolean(),
     estimateFeedbackRating: v.optional(v.union(v.literal("up"), v.literal("down"))),
     correctedEstimateMinutes: v.optional(v.number()),
     estimateFeedbackSubmittedAt: v.optional(v.number()),
@@ -108,14 +111,33 @@ export default defineSchema({
     .index("by_userId", ["userId"])
     .index("by_userId_createdAt", ["userId", "createdAt"]),
 
-  // StudyBlocks table — stores scheduled time chunks assigned to tasks
+  // Subtasks table — AI-generated or manually created subtasks linked to a parent task
+  subtasks: defineTable({
+    parentTaskId: v.id("tasks"),
+    userId: v.id("users"),
+    title: v.string(),
+    description: v.string(),
+    taskType: taskTypeValidator,
+    color: v.string(),
+    timeEstimate: v.optional(v.number()),
+    suggestedCompletionAt: v.optional(v.number()),
+    order: v.number(),
+    createdAt: v.number(),
+  })
+    .index("by_parentTaskId", ["parentTaskId"])
+    .index("by_userId", ["userId"]),
+
+  // StudyBlocks table — stores scheduled time chunks assigned to tasks or subtasks
   studyBlocks: defineTable({
-    taskId: v.id("tasks"),
+    taskId: v.optional(v.id("tasks")),
+    subtaskId: v.optional(v.id("subtasks")),
     title: v.string(),
     startTime: v.optional(v.string()),
     studyBlockLength: v.number(),
     isConflicted: v.optional(v.boolean()),
-  }).index("by_taskId", ["taskId"]),
+  })
+    .index("by_taskId", ["taskId"])
+    .index("by_subtaskId", ["subtaskId"]),
 
   // Syllabi table — tracks uploaded syllabus files and their processing status
   syllabi: defineTable({
