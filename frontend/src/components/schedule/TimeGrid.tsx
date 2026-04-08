@@ -16,6 +16,8 @@ export type StudyBlockOnGrid = {
   isConflicted: boolean | undefined
   taskTitle: string
   taskDueDate: number
+  courseColor?: string
+  courseName?: string
 }
 
 function getSlotState(grid: WorkHoursRow[] | null, dayName: string, slot: number) {

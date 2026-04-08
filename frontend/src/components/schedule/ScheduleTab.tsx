@@ -27,6 +27,8 @@ type StudyBlockWithTask = {
   isConflicted: boolean | undefined
   taskTitle: string
   taskDueDate: number
+  courseColor?: string
+  courseName?: string
 }
 
 export default function ScheduleTab() {
