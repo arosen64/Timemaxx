@@ -220,8 +220,8 @@ export default function TimeGrid({
                   width: `calc((100% - 3rem) / 7 - 2px)`,
                   zIndex: 5,
                 }}
-                draggable={isConflicted}
-                onDragStart={() => { if (isConflicted) onDragStart(block._id) }}
+                draggable
+                onDragStart={() => onDragStart(block._id)}
               >
                 {isConflicted ? (
                   <ScheduleBlockConflict
@@ -234,7 +234,7 @@ export default function TimeGrid({
                   />
                 ) : (
                   <div
-                    className={`flex h-full min-h-0 flex-col justify-start overflow-hidden rounded px-2 ${
+                    className={`flex h-full min-h-0 flex-col justify-start overflow-hidden rounded px-2 cursor-grab active:cursor-grabbing ${
                       compactBlock ? 'gap-0 py-0.5' : 'gap-0.5 py-1.5'
                     } ${block.courseColor ? '' : 'bg-navy'}`}
                     style={block.courseColor ? { backgroundColor: block.courseColor } : undefined}

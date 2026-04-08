@@ -424,7 +424,14 @@ export default function ScheduleTab() {
             onMoveBlock={handleMoveBlock}
             onAutoReschedule={handleAutoReschedule}
             draggingBlockId={draggingBlockId}
-            onDragStart={setDraggingBlockId}
+            onDragStart={(id) => {
+              const block = allStudyBlocks?.find((b) => b._id === id)
+              if (block?.isConflicted) {
+                setDraggingBlockId(id)
+              } else {
+                setAssigningBlockId(id)
+              }
+            }}
             onDrop={handleDrop}
           />
         </div>
