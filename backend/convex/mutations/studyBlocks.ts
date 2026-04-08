@@ -149,8 +149,12 @@ export const deleteStudyBlock = mutation({
     const block = await ctx.db.get(args.studyBlockId);
     if (!block) throw new Error("Study block not found");
 
-    const task = await ctx.db.get(block.taskId);
-    if (!task || task.userId !== userId) throw new Error("Unauthorized");
+    const ownerId = block.taskId
+      ? (await ctx.db.get(block.taskId))?.userId
+      : block.subtaskId
+        ? (await ctx.db.get(block.subtaskId))?.userId
+        : undefined;
+    if (ownerId !== userId) throw new Error("Unauthorized");
 
     await ctx.db.delete(args.studyBlockId);
   },
@@ -168,8 +172,12 @@ export const editStudyBlockTime = mutation({
     const block = await ctx.db.get(args.studyBlockId);
     if (!block) throw new Error("Study block not found");
 
-    const task = await ctx.db.get(block.taskId);
-    if (!task || task.userId !== userId) throw new Error("Unauthorized");
+    const ownerId = block.taskId
+      ? (await ctx.db.get(block.taskId))?.userId
+      : block.subtaskId
+        ? (await ctx.db.get(block.subtaskId))?.userId
+        : undefined;
+    if (ownerId !== userId) throw new Error("Unauthorized");
 
     await ctx.db.patch(args.studyBlockId, {
       startTime: args.startTime ?? undefined,
