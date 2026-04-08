@@ -457,17 +457,23 @@ export default function ScheduleTab() {
                   onClick={() =>
                     setAssigningBlockId((prev) => (prev === block._id ? null : block._id))
                   }
-                  className={`flex flex-col gap-0.5 rounded-lg border px-3 py-2.5 text-left transition ${
+                  className={`flex items-start gap-2 rounded-lg border px-3 py-2.5 text-left transition ${
                     isSelected
                       ? 'border-teal bg-teal/10 shadow-sm'
                       : 'border-border bg-white hover:border-teal/50 hover:bg-teal/5'
                   }`}
                 >
-                  <span className="block truncate font-heading text-[11px] font-semibold text-navy">
-                    {block.title}
+                  <span
+                    className="mt-1 inline-block h-2.5 w-2.5 shrink-0 rounded-full"
+                    style={{ backgroundColor: block.courseColor ?? '#002D72' }}
+                  />
+                  <span className="flex min-w-0 flex-col gap-0.5">
+                    <span className="block truncate font-heading text-[11px] font-semibold text-navy">
+                      {block.title}
+                    </span>
+                    <span className="text-[10px] text-slate-blue">{block.studyBlockLength} min</span>
+                    <span className="text-[10px] text-light-blue truncate">{block.taskTitle}</span>
                   </span>
-                  <span className="text-[10px] text-slate-blue">{block.studyBlockLength} min</span>
-                  <span className="text-[10px] text-light-blue truncate">{block.taskTitle}</span>
                 </button>
               )
             })
