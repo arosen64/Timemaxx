@@ -22,6 +22,7 @@ export default function AddTaskModal({ isOpen, onClose, onTaskCreated, classTagC
       dueDate: form.dueDate,
       ...(form.courseId !== undefined ? { courseId: form.courseId } : {}),
       classTag: form.classTag,
+      ...(form.timeEstimate !== undefined ? { timeEstimate: form.timeEstimate } : {}),
     })
     onTaskCreated?.(taskId)
   }
@@ -41,6 +42,7 @@ export default function AddTaskModal({ isOpen, onClose, onTaskCreated, classTagC
         dueDate: '',
         dueTime: DEFAULT_DUE_TIME,
         classTag: '',
+        timeEstimate: '',
       }}
       classTagCourses={classTagCourses}
       onClose={onClose}

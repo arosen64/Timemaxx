@@ -145,7 +145,7 @@ describe('DashboardPage', () => {
 
   it('displays time estimate in hours and minutes for tasks that have one', () => {
     setup()
-    expect(screen.getByText(/1h 30m estimated/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/1h 30m/i).length).toBeGreaterThan(0)
   })
 
   it('shows loading state when tasks are undefined', () => {

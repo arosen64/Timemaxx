@@ -63,7 +63,7 @@ export default function Modal({
         role="dialog"
         aria-modal="true"
         aria-label={`${title} modal`}
-        className={`relative z-10 flex flex-col bg-white border border-border rounded-xl ${
+        className={`relative z-10 flex flex-col bg-white border border-border rounded-xl max-h-[90vh] ${
           isSm
             ? 'w-full max-w-sm p-8 gap-4 shadow-xl'
             : 'w-full max-w-xl p-12 gap-6'
@@ -98,7 +98,9 @@ export default function Modal({
         )}
 
         {/* Body */}
-        {children}
+        <div className="overflow-y-auto flex-1 min-h-0">
+          {children}
+        </div>
 
         {/* Error */}
         {error && <p className="text-sm text-red-500 font-body">{error}</p>}
