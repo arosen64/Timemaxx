@@ -55,13 +55,13 @@ const MOCK_USER = {
   year: 'Junior',
 }
 
-function setup(calendarConnected: boolean) {
+function setup(calendarStatus: { connected: boolean; hasEventsScope: boolean } | undefined) {
   const mockAction = makeMutationFn('https://accounts.google.com/oauth')
   const mockMutation = makeMutationFn()
-  mockUseQuery.mockImplementation((query) => {
-    if (query === 'getCalendarConnectionStatus') return { connected: calendarConnected }
+  mockUseQuery.mockImplementation(((query: string) => {
+    if (query === 'getCalendarConnectionStatus') return calendarStatus
     return MOCK_USER
-  })
+  }) as never)
   mockUseMutation.mockReturnValue(mockMutation as never)
   mockUseAction.mockReturnValue(mockAction as never)
   renderWithProviders(<ProfilePage />)
@@ -75,30 +75,54 @@ describe('ProfilePage – Google Calendar section', () => {
     mockSignOut.mockClear()
   })
 
+  it('renders loading skeleton when calendar status is loading', () => {
+    setup(undefined)
+    expect(screen.queryByRole('button', { name: /connect calendar/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /revoke access/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /update calendar permissions/i })).not.toBeInTheDocument()
+  })
+
   it('renders "Connect Calendar" button when not connected', () => {
-    setup(false)
+    setup({ connected: false, hasEventsScope: false })
     expect(screen.getByRole('button', { name: /connect calendar/i })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /revoke access/i })).not.toBeInTheDocument()
   })
 
-  it('renders "Revoke Access" button when connected', () => {
-    setup(true)
+  it('renders "Revoke Access" button when connected with full scope', () => {
+    setup({ connected: true, hasEventsScope: true })
     expect(screen.getByRole('button', { name: /revoke access/i })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /connect calendar/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /update calendar permissions/i })).not.toBeInTheDocument()
+  })
+
+  it('renders "Update Calendar Permissions" button when connected with limited scope', () => {
+    setup({ connected: true, hasEventsScope: false })
+    expect(screen.getByRole('button', { name: /update calendar permissions/i })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /revoke access/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /connect calendar/i })).not.toBeInTheDocument()
   })
 
   it('calls initiateGoogleCalendarOAuth when "Connect Calendar" is clicked', async () => {
     const user = userEvent.setup()
-    const { mockAction } = setup(false)
+    const { mockAction } = setup({ connected: false, hasEventsScope: false })
 
     await user.click(screen.getByRole('button', { name: /connect calendar/i }))
 
     await waitFor(() => expect(mockAction).toHaveBeenCalledWith({}))
   })
 
+  it('calls initiateGoogleCalendarOAuth when "Update Calendar Permissions" is clicked', async () => {
+    const user = userEvent.setup()
+    const { mockAction } = setup({ connected: true, hasEventsScope: false })
+
+    await user.click(screen.getByRole('button', { name: /update calendar permissions/i }))
+
+    await waitFor(() => expect(mockAction).toHaveBeenCalledWith({}))
+  })
+
   it('calls deleteCalendarToken when "Revoke Access" is clicked', async () => {
     const user = userEvent.setup()
-    const { mockMutation } = setup(true)
+    const { mockMutation } = setup({ connected: true, hasEventsScope: true })
 
     await user.click(screen.getByRole('button', { name: /revoke access/i }))
 
@@ -114,14 +138,14 @@ describe('ProfilePage – profile info section', () => {
   })
 
   it('renders user name and email when data is loaded', () => {
-    setup(false)
+    setup({ connected: false, hasEventsScope: false })
     // Name and email each appear in both ProfileAvatar and ProfileField
     expect(screen.getAllByText('Alex Johnson').length).toBeGreaterThan(0)
     expect(screen.getAllByText('alex@example.com').length).toBeGreaterThan(0)
   })
 
   it('renders major and year when onboarding is complete', () => {
-    setup(false)
+    setup({ connected: false, hasEventsScope: false })
     expect(screen.getByText('Computer Science')).toBeInTheDocument()
     expect(screen.getByText('Junior')).toBeInTheDocument()
   })
@@ -137,7 +161,7 @@ describe('ProfilePage – profile info section', () => {
 
   it('shows onboarding prompt when onboarding is incomplete', () => {
     mockUseQuery.mockImplementation(((query: string) => {
-      if (query === 'getCalendarConnectionStatus') return { connected: false }
+      if (query === 'getCalendarConnectionStatus') return { connected: false, hasEventsScope: false }
       return { ...MOCK_USER, onboardingComplete: false }
     }) as never)
     mockUseMutation.mockReturnValue(makeMutationFn() as never)
@@ -150,7 +174,7 @@ describe('ProfilePage – profile info section', () => {
   it('navigates to /onboarding when "Complete Onboarding Survey" is clicked', async () => {
     const user = userEvent.setup()
     mockUseQuery.mockImplementation(((query: string) => {
-      if (query === 'getCalendarConnectionStatus') return { connected: false }
+      if (query === 'getCalendarConnectionStatus') return { connected: false, hasEventsScope: false }
       return { ...MOCK_USER, onboardingComplete: false }
     }) as never)
     mockUseMutation.mockReturnValue(makeMutationFn() as never)
@@ -171,14 +195,14 @@ describe('ProfilePage – account actions section', () => {
   })
 
   it('renders Log Out and Delete Account buttons', () => {
-    setup(false)
+    setup({ connected: false, hasEventsScope: false })
     expect(screen.getByRole('button', { name: /log out/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /delete account/i })).toBeInTheDocument()
   })
 
   it('opens delete confirmation modal when Delete Account is clicked', async () => {
     const user = userEvent.setup()
-    setup(false)
+    setup({ connected: false, hasEventsScope: false })
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /delete account/i }))
@@ -190,7 +214,7 @@ describe('ProfilePage – account actions section', () => {
 
   it('closes the modal when Cancel is clicked', async () => {
     const user = userEvent.setup()
-    setup(false)
+    setup({ connected: false, hasEventsScope: false })
 
     await user.click(screen.getByRole('button', { name: /delete account/i }))
     expect(screen.getByRole('dialog')).toBeInTheDocument()
@@ -201,7 +225,7 @@ describe('ProfilePage – account actions section', () => {
 
   it('calls deleteAccount mutation, signs out, and navigates to / when deletion is confirmed', async () => {
     const user = userEvent.setup()
-    const { mockMutation } = setup(false)
+    const { mockMutation } = setup({ connected: false, hasEventsScope: false })
 
     await user.click(screen.getByRole('button', { name: /delete account/i }))
     await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: /delete account/i }))
@@ -215,7 +239,7 @@ describe('ProfilePage – account actions section', () => {
 
   it('signs out and navigates to / when Log Out is clicked', async () => {
     const user = userEvent.setup()
-    setup(false)
+    setup({ connected: false, hasEventsScope: false })
 
     await user.click(screen.getByRole('button', { name: /log out/i }))
 
