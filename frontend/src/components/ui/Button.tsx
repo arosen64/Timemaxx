@@ -1,7 +1,7 @@
 import { type ReactNode } from 'react'
 
 interface ButtonProps {
-  variant: 'primary' | 'destructive' | 'secondary'
+  variant: 'primary' | 'destructive' | 'secondary' | 'outline'
   children: ReactNode
   onClick?: () => void
   icon?: ReactNode
@@ -14,6 +14,7 @@ const variantStyles = {
   primary: 'bg-navy text-white',
   destructive: 'bg-urgent-red text-white',
   secondary: 'border border-border bg-bg-gray text-slate-blue hover:border-navy/30',
+  outline: 'border border-border bg-white text-navy hover:border-navy/50',
 }
 
 export default function Button({ variant, children, onClick, icon, iconPosition = 'left', disabled, className }: ButtonProps) {

@@ -97,6 +97,7 @@ export default defineSchema({
     description: v.string(),
     taskType: taskTypeValidator,
     timeEstimate: v.optional(v.number()),
+    isManualEstimate: v.boolean(),
     estimateFeedbackRating: v.optional(v.union(v.literal("up"), v.literal("down"))),
     correctedEstimateMinutes: v.optional(v.number()),
     estimateFeedbackSubmittedAt: v.optional(v.number()),
