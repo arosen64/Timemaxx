@@ -8,7 +8,7 @@ The app sends user-provided text to Google Gemini in four places:
 
 - **Syllabus upload** — raw syllabus PDF/text → task extraction
 - **Transcript parsing** — raw transcript PDF/text → course extraction
-- **Task time estimation** — user-entered task title and description → minute estimate
+- **Task time estimation** — user-entered task title/description, plus onboarding profile fields (major, difficult/enjoyed subjects), study goals, and prior feedback → minute estimate
 - **Academic profile** — course list (titles, grades) → insight generation
 
 In each case, a malicious user could craft input that attempts to override the system instructions, extract the system prompt, or produce manipulated output. Our defenses follow a **defense-in-depth** approach — no single layer is sufficient, but together they make injection impractical.
@@ -50,7 +50,9 @@ Before user text enters any prompt, it passes through `sanitizeUserInput()` whic
 3. **Filters known injection phrases** — replaces patterns like "ignore previous instructions", "you are now", "system:", "pretend you are", etc. with `[FILTERED]`
 4. **Collapses excessive newlines** — prevents whitespace-based prompt manipulation
 
-**Where:** `backend/convex/lib/sanitize.ts` — `sanitizeUserInput()`
+For `estimateTaskTime`, sanitization extends beyond the direct task fields to all user-controlled data that enters the prompt context: onboarding profile fields (`major`, `difficultSubjects`, `enjoyedSubjects`), course titles, study goals, prior feedback task titles, and transcript profile insights are all passed through `sanitizeUserInput()` inside the context-building helper functions.
+
+**Where:** `backend/convex/lib/sanitize.ts` — `sanitizeUserInput()`; context builders in `backend/convex/ai/estimateTaskTime.ts`
 
 ### 4. Delimiter Escape for Structured Data
 
