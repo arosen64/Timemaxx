@@ -39,9 +39,15 @@ async function fetchAllStudyBlocksWithTasks(ctx: any, userId: Id<"users">) {
     isConflicted: boolean | undefined;
     taskTitle: string;
     taskDueDate: number;
+    courseColor: string | undefined;
+    courseName: string | undefined;
   }> = [];
 
   for (const task of tasks) {
+    const course = task.courseId ? await ctx.db.get(task.courseId) : null;
+    const courseColor: string | undefined = course?.color ?? undefined;
+    const courseName: string | undefined = course?.courseCode ?? undefined;
+
     const blocks = await ctx.db
       .query("studyBlocks")
       .withIndex("by_taskId", (q: any) => q.eq("taskId", task._id))
@@ -56,6 +62,8 @@ async function fetchAllStudyBlocksWithTasks(ctx: any, userId: Id<"users">) {
         isConflicted: block.isConflicted,
         taskTitle: task.title,
         taskDueDate: task.dueDate,
+        courseColor,
+        courseName,
       });
     }
   }
