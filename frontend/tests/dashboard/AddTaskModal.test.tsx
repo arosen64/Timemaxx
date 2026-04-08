@@ -41,7 +41,12 @@ vi.mock('../../src/components/dashboard/TaskModal', () => ({
 }))
 
 vi.mock('../../../backend/convex/_generated/api', () => ({
-  api: { mutations: { tasks: { createTask: 'createTask' } } },
+  api: {
+    mutations: {
+      tasks: { createTask: 'createTask' },
+      timeEstimate: { setManualTimeEstimate: 'setManualTimeEstimate' },
+    },
+  },
 }))
 vi.mock('convex/react', () => ({ useMutation: vi.fn() }))
 

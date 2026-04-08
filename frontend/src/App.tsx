@@ -11,6 +11,7 @@ import SyllabusReviewPage from './pages/SyllabusReviewPage'
 import PreferencesPage from './pages/PreferencesPage'
 import { useQuery } from "convex/react";
 import { api } from "../../backend/convex/_generated/api";
+import ChatBot from "./components/ChatBot";
 
 const PUBLIC_ROUTES = ['/']
 
@@ -65,16 +66,18 @@ export default function App() {
   }, [isAuthenticated, isLoading, location.pathname, location.search, navigate, user])
 
   return (
-    <Routes>
-      <Route path="/" element={<LandingPage />} />
-      <Route path="/onboarding" element={<OnboardingPage />} />
-      <Route path="/dashboard" element={<DashboardPage />} />
-      <Route path="/schedule" element={<SchedulePage />} />
-      <Route path="/profile" element={<ProfilePage />} />
-      <Route path="/preferences" element={<PreferencesPage />} />
-      <Route path="/classes" element={<ClassesPage />} />
-
-      <Route path="/syllabus-review" element={<SyllabusReviewPage />} />
-    </Routes>
+    <>
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/onboarding" element={<OnboardingPage />} />
+        <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/schedule" element={<SchedulePage />} />
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/preferences" element={<PreferencesPage />} />
+        <Route path="/classes" element={<ClassesPage />} />
+        <Route path="/syllabus-review" element={<SyllabusReviewPage />} />
+      </Routes>
+      {isAuthenticated && !['/syllabus-review', '/onboarding'].includes(location.pathname) && <ChatBot />}
+    </>
   )
 }

@@ -1,8 +1,30 @@
 import { describe, expect, test } from "vitest";
 import { api } from "../_generated/api";
 import { makeTestCtx, createTestUser } from "../../convex-tests/helpers";
+import { COURSE_COLOR_PALETTE } from "../lib/courseColors";
 
 const FUTURE = Date.now() + 86_400_000;
+
+describe("mutations/userCourses – addUserCourse", () => {
+  test("assigns a color from the palette when a course is created", async () => {
+    const t = makeTestCtx();
+    const { withAuth } = await createTestUser(t);
+
+    const userCourseId = await withAuth.mutation(
+      api.mutations.userCourses.addUserCourse,
+      {
+        courseCode: "EN.601.226",
+        title: "Data Structures",
+        term: "Fall 2025",
+      }
+    );
+
+    const record = await t.run((ctx) => ctx.db.get(userCourseId));
+    expect(record).not.toBeNull();
+    expect(record!.color).toBeDefined();
+    expect(COURSE_COLOR_PALETTE).toContain(record!.color);
+  });
+});
 
 describe("mutations/userCourses – deleteUserCourse", () => {
   test("deletes tasks and study blocks linked to the course, then the course", async () => {
@@ -35,6 +57,7 @@ describe("mutations/userCourses – deleteUserCourse", () => {
         taskType: "Essay",
         dueDate: FUTURE,
         createdAt: Date.now(),
+        isManualEstimate: false,
         courseId: userCourseId,
       })
     );
@@ -47,6 +70,7 @@ describe("mutations/userCourses – deleteUserCourse", () => {
         taskType: "Essay",
         dueDate: FUTURE,
         createdAt: Date.now(),
+        isManualEstimate: false,
         courseId: otherCourseId,
       })
     );
@@ -91,6 +115,7 @@ describe("mutations/userCourses – deleteUserCourse", () => {
         taskType: "Lab",
         dueDate: FUTURE,
         createdAt: Date.now(),
+        isManualEstimate: false,
         classTag: "EN.500.112.FA25: Gateway Computing",
       })
     );
@@ -126,6 +151,7 @@ describe("mutations/userCourses – deleteUserCourse", () => {
         taskType: "Essay",
         dueDate: FUTURE,
         createdAt: Date.now(),
+        isManualEstimate: false,
         classTag: legacyTag,
       })
     );
@@ -161,6 +187,7 @@ describe("mutations/userCourses – deleteUserCourse", () => {
         taskType: "Essay",
         dueDate: FUTURE,
         createdAt: Date.now(),
+        isManualEstimate: false,
         classTag: canonicalTag,
       })
     );
