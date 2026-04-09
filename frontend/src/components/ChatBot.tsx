@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useQuery } from 'convex/react'
 import { useAuthToken } from '@convex-dev/auth/react'
 import { api } from '../../../backend/convex/_generated/api'
@@ -21,26 +21,19 @@ export default function ChatBot() {
   const [isOpen, setIsOpen] = useState(false)
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  // Optimistic messages shown while streaming (not yet in DB)
+  const [sessionStart] = useState(() => Date.now())
   const [optimistic, setOptimistic] = useState<{ role: 'user' | 'assistant'; content: string }[]>([])
 
   const token = useAuthToken()
-  const history = useQuery(api.queries.chatMessages.getChatHistory, { limit: 50 }) ?? []
+  const allHistory = useQuery(api.queries.chatMessages.getChatHistory, { limit: 50 }) ?? []
+  const history = allHistory.filter((m) => m.createdAt >= sessionStart)
 
-  // Clear optimistic messages once Convex history catches up
-  useEffect(() => {
-    if (optimistic.length === 0) return
-    const lastSaved = history[history.length - 1]
-    const lastOptimistic = optimistic[optimistic.length - 1]
-    if (lastSaved?.role === 'assistant' && lastSaved?.content === lastOptimistic?.content) {
-      setOptimistic([])
-    }
-  }, [history, optimistic])
-
-  const messages = [
-    ...history,
-    ...optimistic,
-  ]
+  // Always show history; while loading, append optimistic messages not yet saved
+  const latestHistoryContent = history[history.length - 1]?.content
+  const pendingMessages = isLoading
+    ? optimistic.filter((m) => m.content !== latestHistoryContent)
+    : []
+  const messages = [...history, ...pendingMessages]
 
   const showSuggestions = messages.length === 0 && !isLoading
 
@@ -53,6 +46,7 @@ export default function ChatBot() {
     setOptimistic([{ role: 'user', content: text }])
 
     try {
+      console.log('[ChatBot] token:', token ? `${token.slice(0, 20)}...` : 'null')
       const res = await fetch(
         `${import.meta.env.VITE_CONVEX_SITE_URL}/api/chat`,
         {
@@ -97,7 +91,7 @@ export default function ChatBot() {
           <div className="flex h-14 shrink-0 items-center justify-between bg-navy px-5">
             <div className="flex items-center gap-2.5">
               <span className="h-2 w-2 rounded-full bg-teal" />
-              <span className="font-heading text-[15px] font-semibold text-white">TimeMaxx AI</span>
+              <span className="font-heading text-[15px] font-semibold text-white">Maxx ✦</span>
             </div>
             <button
               type="button"
@@ -127,7 +121,7 @@ export default function ChatBot() {
                       <MessageAvatar fallback="AI" />
                       <div className="flex flex-col gap-1 max-w-[82%]">
                         <span className="font-heading text-[11px] font-semibold text-teal px-0.5">
-                          TimeMaxx AI
+                          Maxx
                         </span>
                         <MessageContent className="bg-white border border-border text-navy rounded-2xl rounded-tl-sm">
                           {msg.content}

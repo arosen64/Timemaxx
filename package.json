@@ -19,6 +19,7 @@
     "@convex-dev/auth": "^0.0.91",
     "@convex-dev/mastra": "^0.0.1-alpha.4",
     "@google/genai": "^1.44.0",
+    "@mastra/client-js": "^0.17.2",
     "ai": "^6.0.149",
     "clsx": "^2.1.1",
     "convex": "^1.32.0",
