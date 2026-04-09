@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react'
+import { screen, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { renderWithProviders, makeMutationFn } from './utils'
 import ClassCard from '../src/components/classes/ClassCard'
@@ -31,6 +31,9 @@ const defaultProps = {
   title: 'Intro to CS',
   term: 'Spring 2026',
   grade: undefined as string | undefined,
+  studyGoal: undefined as string | undefined,
+  difficultyRating: undefined as number | undefined,
+  color: undefined as string | undefined,
   isPast: false,
   hasSyllabus: false,
   taskCount: 0,
@@ -139,6 +142,37 @@ describe('ClassCard', () => {
       setup({ taskCount: 2 })
       await user.click(screen.getByRole('button', { name: /remove intro to cs/i }))
       expect(screen.getByText(/2 linked task/i)).toBeInTheDocument()
+    })
+  })
+
+  describe('color picker', () => {
+    it('renders the color swatch button with aria-label', () => {
+      setup()
+      expect(screen.getByRole('button', { name: /set course color/i })).toBeInTheDocument()
+    })
+
+    it('applies provided color as background style on the swatch', () => {
+      setup({ color: '#ff0000' })
+      const swatch = screen.getByRole('button', { name: /set course color/i })
+      expect(swatch).toHaveStyle({ backgroundColor: '#ff0000' })
+    })
+
+    it('renders swatch with bg-bg-gray class when no color is provided', () => {
+      setup()
+      const swatch = screen.getByRole('button', { name: /set course color/i })
+      expect(swatch).toHaveClass('bg-bg-gray')
+    })
+
+    it('calls updateUserCourse with chosen color when color input changes', async () => {
+      const updateUserCourse = makeMutationFn()
+      mockUseMutation.mockReturnValue(updateUserCourse as never)
+      renderWithProviders(<ClassCard {...defaultProps} color="#aabbcc" />)
+      const input = document.querySelector('input[type="color"]') as HTMLInputElement
+      fireEvent.change(input, { target: { value: '#123456' } })
+      fireEvent.blur(input, { target: { value: '#123456' } })
+      expect(updateUserCourse).toHaveBeenCalledWith(
+        expect.objectContaining({ userCourseId: 'uc1', color: '#123456' })
+      )
     })
   })
 
