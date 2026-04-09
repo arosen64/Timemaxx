@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useAction, useMutation } from 'convex/react'
 import { api } from '../../../backend/convex/_generated/api'
-import { type ParsedCourse } from '../../../backend/convex/actions/parseTranscript'
+import { type ParsedCourse } from '../../../backend/convex/ai/parseTranscript'
 import { type Course } from '../types'
 import FileUpload from './ui/FileUpload'
 import Modal from './ui/Modal'
@@ -15,7 +15,7 @@ interface TranscriptUploadProps {
 }
 
 export default function TranscriptUpload({ onCoursesAdded }: TranscriptUploadProps) {
-  const parseTranscript = useAction(api.actions.parseTranscript.parseTranscript)
+  const parseTranscript = useAction(api.ai.parseTranscript.parseTranscript)
   const addUserCourse = useMutation(api.mutations.userCourses.addUserCourse)
 
   const [file, setFile] = useState<File | null>(null)

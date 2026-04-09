@@ -13,6 +13,7 @@ export default defineSchema({
     refreshToken: v.string(),
     expiresAt: v.number(),
     selectedCalendarIds: v.optional(v.array(v.string())),
+    scope: v.optional(v.string()),
   }).index("by_userId", ["userId"]),
 
   // Short-lived state tokens used to identify users during the OAuth callback
@@ -97,6 +98,7 @@ export default defineSchema({
     description: v.string(),
     taskType: taskTypeValidator,
     timeEstimate: v.optional(v.number()),
+    isManualEstimate: v.boolean(),
     estimateFeedbackRating: v.optional(v.union(v.literal("up"), v.literal("down"))),
     correctedEstimateMinutes: v.optional(v.number()),
     estimateFeedbackSubmittedAt: v.optional(v.number()),
@@ -139,6 +141,7 @@ export default defineSchema({
     startTime: v.optional(v.string()),
     studyBlockLength: v.number(),
     isConflicted: v.optional(v.boolean()),
+    googleEventId: v.optional(v.string()),
   })
     .index("by_taskId", ["taskId"])
     .index("by_subtaskId", ["subtaskId"]),

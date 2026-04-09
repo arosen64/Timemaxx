@@ -148,7 +148,9 @@ export default function OnboardingPage() {
               <span className="font-heading text-sm font-semibold text-navy">Google Calendar (optional)</span>
               <span className="font-body text-xs text-slate-blue">Connect to schedule around your existing events</span>
             </div>
-            {calendarStatus?.connected ? (
+            {calendarStatus === undefined ? (
+              <div className="h-10 w-24 rounded-lg bg-border animate-pulse" />
+            ) : calendarStatus.connected ? (
               <div className="flex flex-col items-center gap-1">
                 <span className="flex items-center gap-1.5 font-heading text-sm font-semibold text-teal">
                   <CalendarIcon />

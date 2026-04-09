@@ -1,11 +1,15 @@
-"use node"; // Required: @google/genai uses Node.js APIs not available in the default Convex runtime
-
 import { internalAction } from "../_generated/server";
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { Doc } from "../_generated/dataModel";
-import { callOpenAIJSON } from "../lib/openai";
+import { callGemini } from "../lib/gemini";
+import { sanitizeUserInput } from "../lib/sanitize";
 import { parseDeptPrefix, termSortKey } from "../lib/classTagUtils";
+import {
+  TIME_ESTIMATE_SYSTEM,
+  buildTimeEstimatePrompt,
+  timeEstimateResponseSchema,
+} from "../lib/prompts/estimateTaskTime.prompt";
 import { taskToTaskLike, subtaskToTaskLike, TaskLike } from "../lib/taskTypes";
 
 /**
@@ -27,7 +31,7 @@ function buildDepartmentCourseContext(
     .sort((a, b) => termSortKey(b.term) - termSortKey(a.term));
   if (deptCourses.length === 0) return null;
 
-  const lines = deptCourses.map((c) => `- ${c.courseCode}: ${c.title} (grade: ${c.grade})`);
+  const lines = deptCourses.map((c) => `- ${c.courseCode}: ${sanitizeUserInput(c.title, 500)} (grade: ${c.grade})`);
   return `Prior courses in the same department (completed with grades, most to least recent):\n${lines.join("\n")}`;
 }
 
@@ -38,10 +42,12 @@ function buildDepartmentCourseContext(
  */
 function buildUserContext(user: Doc<"users"> | null): string | null {
   const lines = [
-    user?.major && `Major: ${user.major}`,
+    user?.major && `Major: ${sanitizeUserInput(user.major, 200)}`,
     user?.year && `Year: ${user.year}`,
-    user?.difficultSubjects?.length && `Difficult subjects: ${user.difficultSubjects.join(", ")}`,
-    user?.enjoyedSubjects?.length && `Enjoyed subjects: ${user.enjoyedSubjects.join(", ")}`,
+    user?.difficultSubjects?.length &&
+      `Difficult subjects: ${user.difficultSubjects.map((s) => sanitizeUserInput(s, 200)).join(", ")}`,
+    user?.enjoyedSubjects?.length &&
+      `Enjoyed subjects: ${user.enjoyedSubjects.map((s) => sanitizeUserInput(s, 200)).join(", ")}`,
   ].filter(Boolean) as string[];
   return lines.length > 0 ? lines.join("\n") : null;
 }
@@ -65,7 +71,7 @@ function buildFeedbackContext(
       entry.correctedEstimateMinutes !== undefined
         ? `, corrected to ${entry.correctedEstimateMinutes} minutes`
         : "";
-    return `- ${entry.taskType}: "${entry.title}" -> estimated ${entry.estimatedMinutes} minutes, feedback ${entry.rating}${corrected}`;
+    return `- ${entry.taskType}: "${sanitizeUserInput(entry.title, 500)}" -> estimated ${entry.estimatedMinutes} minutes, feedback ${entry.rating}${corrected}`;
   });
   return `Past estimate feedback from this same student (learn from this):\n${lines.join("\n")}`;
 }
@@ -79,7 +85,7 @@ function buildTranscriptProfile(user: Doc<"users"> | null): string | null {
   const summary = user?.transcriptSummary;
   if (!summary || summary.length === 0) return null;
 
-  const lines = summary.map((insight) => `- ${insight.label}: ${insight.text}`);
+  const lines = summary.map((insight) => `- ${sanitizeUserInput(insight.label, 200)}: ${sanitizeUserInput(insight.text, 1_000)}`);
   return `Academic profile from transcript analysis:\n${lines.join("\n")}`;
 }
 
@@ -95,7 +101,7 @@ function buildCourseContext(
 ): string | null {
   const studyGoalLine =
     taskCourse?.studyGoal
-      ? `Study goal for "${taskCourse.title}": ${taskCourse.studyGoal}`
+      ? `Study goal for "${sanitizeUserInput(taskCourse.title, 500)}": ${sanitizeUserInput(taskCourse.studyGoal, 1_000)}`
       : null;
 
   const deptContext = buildDepartmentCourseContext(allCourses, taskCourse);
@@ -107,7 +113,7 @@ function buildCourseContext(
     const currentTermCourses = allCourses.filter((c) => c.term === taskCourse.term);
     if (currentTermCourses.length > 0) {
       const lines = currentTermCourses.map(
-        (c) => `- ${c.courseCode}: ${c.title} (goal: ${c.studyGoal ?? "none"})`
+        (c) => `- ${c.courseCode}: ${sanitizeUserInput(c.title, 500)} (goal: ${c.studyGoal ? sanitizeUserInput(c.studyGoal, 1_000) : "none"})`
       );
       mainContext = `Current term courses:\n${lines.join("\n")}`;
     }
@@ -171,43 +177,41 @@ export const estimateTaskTime = internalAction({
 
     const taskCourse = item.courseId ? allCourses.find((c) => c._id === item.courseId) : undefined;
 
+    // Build context strings
     const userContext = buildUserContext(user);
     const feedbackContext = buildFeedbackContext(priorEstimateFeedback);
     const courseContext = buildCourseContext(allCourses, taskCourse);
     const transcriptProfile = buildTranscriptProfile(user);
 
-    const prompt = `You are a study time estimator. Given the task details and student profile below, estimate how many minutes it will take the student to complete the task.
-
-Task title: ${item.title}
-Task type: ${item.taskType}
-Task description: ${item.description}
-${taskCourse ? `Task course: ${taskCourse.courseCode} - ${taskCourse.title}` : ""}
-
-${userContext ? `Student profile:\n${userContext}` : ""}
-
-${transcriptProfile ? `\n${transcriptProfile}` : ""}
-
-${courseContext ? `\n${courseContext}` : ""}
-
-${feedbackContext ? `\n${feedbackContext}` : ""}
-
-Respond with JSON in this exact format: {"estimatedMinutes": <integer>}`;
-
-    const apiKey = process.env.OPENAI_API_KEY;
+    // Call Gemini with structured output
+    const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       if (process.env.VITEST !== "true") {
-        console.error("OPENAI_API_KEY is not set");
+        console.error("GEMINI_API_KEY is not set");
       }
       return;
     }
 
     try {
-      const json = await callOpenAIJSON<{ estimatedMinutes: number }>(prompt);
-      const estimatedMinutes = json.estimatedMinutes;
+      const result = await callGemini({
+        system: TIME_ESTIMATE_SYSTEM,
+        prompt: buildTimeEstimatePrompt({
+          title: sanitizeUserInput(item.title, 500),
+          taskType: item.taskType,
+          description: sanitizeUserInput(item.description ?? "", 5_000),
+          courseInfo: taskCourse
+            ? `${taskCourse.courseCode} - ${sanitizeUserInput(taskCourse.title, 500)}`
+            : undefined,
+          userContext: userContext ?? undefined,
+          transcriptProfile: transcriptProfile ?? undefined,
+          courseContext: courseContext ?? undefined,
+          feedbackContext: feedbackContext ?? undefined,
+        }),
+        schema: timeEstimateResponseSchema,
+        schemaName: "TimeEstimate",
+      });
 
-      if (typeof estimatedMinutes === "number") {
-        await store(estimatedMinutes);
-      }
+      await store(result.estimatedMinutes);
     } catch (err) {
       console.error("Failed to estimate task time:", err);
       throw err;

@@ -7,6 +7,7 @@ export type TaskType = {
   description: string
   taskType: string
   timeEstimate?: number
+  isManualEstimate: boolean
   estimateFeedbackRating?: 'up' | 'down'
   correctedEstimateMinutes?: number
   estimateFeedbackSubmittedAt?: number
@@ -46,6 +47,10 @@ export type EditForm = {
   courseId?: Id<'userCourses'>
   /** Empty string clears the tag on update; omit when not supported */
   classTag?: string
+  /** User-supplied time estimate in minutes; undefined means let AI estimate */
+  timeEstimate?: number
+  /** True when user explicitly chose to reset to AI estimation */
+  useAiEstimate?: boolean
 }
 
 export const TASK_TYPE_OPTIONS: BuiltInTaskType[] = [...BUILT_IN_TASK_TYPES]
