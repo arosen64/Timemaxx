@@ -27,6 +27,8 @@ type StudyBlockWithTask = {
   isConflicted: boolean | undefined
   taskTitle: string
   taskDueDate: number
+  courseColor?: string
+  courseName?: string
 }
 
 export default function ScheduleTab() {
@@ -135,6 +137,26 @@ export default function ScheduleTab() {
     })
     return { scheduledBlocks: scheduled, unscheduledBlocks: unscheduled }
   }, [allStudyBlocks])
+
+  // Build color legend from scheduled blocks in the current 7-day window
+  const legend = useMemo(() => {
+    const dayKeys = new Set(days.map(isoDateString))
+    const windowBlocks = scheduledBlocks.filter((b) => dayKeys.has(isoDateString(new Date(b.startTime))))
+    const seen = new Map<string, string>() // courseName -> courseColor
+    let hasUntagged = false
+    for (const b of windowBlocks) {
+      if (b.courseColor && b.courseName) {
+        if (!seen.has(b.courseName)) seen.set(b.courseName, b.courseColor)
+      } else {
+        hasUntagged = true
+      }
+    }
+    const entries: { courseColor: string | undefined; courseName: string }[] = Array.from(seen.entries()).map(
+      ([name, color]) => ({ courseColor: color, courseName: name })
+    )
+    if (hasUntagged) entries.push({ courseColor: undefined, courseName: 'Other' })
+    return entries
+  }, [days, scheduledBlocks])
 
   // Build studyBlocksByDay for the grid
   const studyBlocksByDay = useMemo(() => {
@@ -288,10 +310,11 @@ export default function ScheduleTab() {
     <div
       className="flex flex-col flex-1 min-h-0 min-w-0"
       onClick={(e) => {
-        // Cancel assign mode when clicking outside the grid area
+        // Cancel assign/move mode when clicking outside the grid area
         const target = e.target as HTMLElement
-        if (assigningBlockId && !target.closest('[data-grid]') && !target.closest('[data-tray]')) {
-          setAssigningBlockId(null)
+        if (!target.closest('[data-grid]') && !target.closest('[data-tray]')) {
+          if (assigningBlockId) setAssigningBlockId(null)
+          if (draggingBlockId) setDraggingBlockId(null)
         }
       }}
     >
@@ -325,6 +348,20 @@ export default function ScheduleTab() {
           </button>
           {isFetchingEvents && <SpinnerIcon color="#4E6A8C" size={14} />}
         </div>
+
+        {legend.length > 0 && (
+          <div className="flex items-center gap-3 flex-wrap">
+            {legend.map((entry) => (
+              <span key={entry.courseName} className="flex items-center gap-1.5">
+                <span
+                  className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
+                  style={{ backgroundColor: entry.courseColor ?? '#002D72' }}
+                />
+                <span className="font-body text-[11px] text-slate-blue">{entry.courseName}</span>
+              </span>
+            ))}
+          </div>
+        )}
 
         {calendarConnected ? (
           <button
@@ -371,6 +408,13 @@ export default function ScheduleTab() {
         </div>
       )}
 
+      {draggingBlockId && (
+        <div className="mb-3 flex items-center gap-2 rounded-lg border border-urgent-red-light bg-urgent-red-light/30 px-4 py-2 text-sm text-navy">
+          <span className="font-semibold font-heading">Moving conflict</span>
+          <span className="text-slate-blue">Click a highlighted slot to move the block. Press Esc to cancel.</span>
+        </div>
+      )}
+
       <div className="flex flex-1 gap-4 min-h-0">
         {/* Main grid */}
         <div className="flex flex-1 flex-col min-h-0 min-w-0" data-grid>
@@ -388,7 +432,14 @@ export default function ScheduleTab() {
             onMoveBlock={handleMoveBlock}
             onAutoReschedule={handleAutoReschedule}
             draggingBlockId={draggingBlockId}
-            onDragStart={setDraggingBlockId}
+            onDragStart={(id) => {
+              const block = allStudyBlocks?.find((b) => b._id === id)
+              if (block?.isConflicted) {
+                setDraggingBlockId(id)
+              } else {
+                setAssigningBlockId(id)
+              }
+            }}
             onDrop={handleDrop}
           />
         </div>
@@ -421,17 +472,23 @@ export default function ScheduleTab() {
                   onClick={() =>
                     setAssigningBlockId((prev) => (prev === block._id ? null : block._id))
                   }
-                  className={`flex flex-col gap-0.5 rounded-lg border px-3 py-2.5 text-left transition ${
+                  className={`flex items-start gap-2 rounded-lg border px-3 py-2.5 text-left transition ${
                     isSelected
                       ? 'border-teal bg-teal/10 shadow-sm'
                       : 'border-border bg-white hover:border-teal/50 hover:bg-teal/5'
                   }`}
                 >
-                  <span className="block truncate font-heading text-[11px] font-semibold text-navy">
-                    {block.title}
+                  <span
+                    className="mt-1 inline-block h-2.5 w-2.5 shrink-0 rounded-full"
+                    style={{ backgroundColor: block.courseColor ?? '#002D72' }}
+                  />
+                  <span className="flex min-w-0 flex-col gap-0.5">
+                    <span className="block truncate font-heading text-[11px] font-semibold text-navy">
+                      {block.title}
+                    </span>
+                    <span className="text-[10px] text-slate-blue">{block.studyBlockLength} min</span>
+                    <span className="text-[10px] text-light-blue truncate">{block.taskTitle}</span>
                   </span>
-                  <span className="text-[10px] text-slate-blue">{block.studyBlockLength} min</span>
-                  <span className="text-[10px] text-light-blue truncate">{block.taskTitle}</span>
                 </button>
               )
             })

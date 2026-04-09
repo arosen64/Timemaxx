@@ -1,4 +1,12 @@
 import { Fragment } from 'react'
+
+function getTextColorClass(hexColor: string): string {
+  const r = parseInt(hexColor.slice(1, 3), 16)
+  const g = parseInt(hexColor.slice(3, 5), 16)
+  const b = parseInt(hexColor.slice(5, 7), 16)
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+  return luminance > 0.5 ? 'text-navy' : 'text-white'
+}
 import type { AllDayEvent } from '../../../../backend/convex/actions/fetchCalendarEvents'
 import type { LayoutEvent } from './overlapLayout'
 import { TOTAL_SLOTS, SLOT_HEIGHT, DAYS_FULL, slotLabel, isoDateString, isToday, minutesFromMidnight } from './utils'
@@ -16,6 +24,8 @@ export type StudyBlockOnGrid = {
   isConflicted: boolean | undefined
   taskTitle: string
   taskDueDate: number
+  courseColor?: string
+  courseName?: string
 }
 
 function getSlotState(grid: WorkHoursRow[] | null, dayName: string, slot: number) {
@@ -218,8 +228,8 @@ export default function TimeGrid({
                   width: `calc((100% - 3rem) / 7 - 2px)`,
                   zIndex: 5,
                 }}
-                draggable={isConflicted}
-                onDragStart={() => { if (isConflicted) onDragStart(block._id) }}
+                draggable
+                onDragStart={() => onDragStart(block._id)}
               >
                 {isConflicted ? (
                   <ScheduleBlockConflict
@@ -232,11 +242,12 @@ export default function TimeGrid({
                   />
                 ) : (
                   <div
-                    className={`flex h-full min-h-0 flex-col justify-start overflow-hidden rounded bg-navy px-2 ${
+                    className={`flex h-full min-h-0 flex-col justify-start overflow-hidden rounded px-2 cursor-grab active:cursor-grabbing ${
                       compactBlock ? 'gap-0 py-0.5' : 'gap-0.5 py-1.5'
-                    }`}
+                    } ${block.courseColor ? '' : 'bg-navy'}`}
+                    style={block.courseColor ? { backgroundColor: block.courseColor } : undefined}
                   >
-                    <span className="block min-w-0 shrink-0 truncate font-heading text-[11px] font-semibold leading-tight text-white">
+                    <span className={`block min-w-0 shrink-0 truncate font-heading text-[11px] font-semibold leading-tight ${block.courseColor ? getTextColorClass(block.courseColor) : 'text-white'}`}>
                       {block.title}
                     </span>
                     <span className="block min-w-0 shrink-0 truncate font-body text-[9px] leading-tight text-sky-blue">

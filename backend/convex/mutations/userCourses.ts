@@ -75,6 +75,7 @@ export const updateUserCourse = mutation({
     grade: v.optional(v.string()),
     studyGoal: v.optional(v.string()),
     difficultyRating: v.optional(v.number()),
+    color: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -88,6 +89,7 @@ export const updateUserCourse = mutation({
     if (args.grade !== undefined) patch.grade = args.grade;
     if (args.studyGoal !== undefined) patch.studyGoal = args.studyGoal;
     if (args.difficultyRating !== undefined) patch.difficultyRating = args.difficultyRating;
+    if (args.color !== undefined) patch.color = args.color;
     await ctx.db.patch(args.userCourseId, patch);
   },
 });
