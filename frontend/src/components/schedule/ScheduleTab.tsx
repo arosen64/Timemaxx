@@ -310,10 +310,11 @@ export default function ScheduleTab() {
     <div
       className="flex flex-col flex-1 min-h-0 min-w-0"
       onClick={(e) => {
-        // Cancel assign mode when clicking outside the grid area
+        // Cancel assign/move mode when clicking outside the grid area
         const target = e.target as HTMLElement
-        if (assigningBlockId && !target.closest('[data-grid]') && !target.closest('[data-tray]')) {
-          setAssigningBlockId(null)
+        if (!target.closest('[data-grid]') && !target.closest('[data-tray]')) {
+          if (assigningBlockId) setAssigningBlockId(null)
+          if (draggingBlockId) setDraggingBlockId(null)
         }
       }}
     >
@@ -407,6 +408,13 @@ export default function ScheduleTab() {
         </div>
       )}
 
+      {draggingBlockId && (
+        <div className="mb-3 flex items-center gap-2 rounded-lg border border-urgent-red-light bg-urgent-red-light/30 px-4 py-2 text-sm text-navy">
+          <span className="font-semibold font-heading">Moving conflict</span>
+          <span className="text-slate-blue">Click a highlighted slot to move the block. Press Esc to cancel.</span>
+        </div>
+      )}
+
       <div className="flex flex-1 gap-4 min-h-0">
         {/* Main grid */}
         <div className="flex flex-1 flex-col min-h-0 min-w-0" data-grid>
@@ -424,7 +432,14 @@ export default function ScheduleTab() {
             onMoveBlock={handleMoveBlock}
             onAutoReschedule={handleAutoReschedule}
             draggingBlockId={draggingBlockId}
-            onDragStart={setDraggingBlockId}
+            onDragStart={(id) => {
+              const block = allStudyBlocks?.find((b) => b._id === id)
+              if (block?.isConflicted) {
+                setDraggingBlockId(id)
+              } else {
+                setAssigningBlockId(id)
+              }
+            }}
             onDrop={handleDrop}
           />
         </div>
