@@ -160,10 +160,15 @@ export default function ClassCard({
                 type="color"
                 value={currentColor || '#002D72'}
                 className="sr-only"
-                onChange={async (e) => {
+                onChange={(e) => setCurrentColor(e.target.value)}
+                onBlur={async (e) => {
                   const color = e.target.value
-                  setCurrentColor(color)
-                  await updateUserCourse({ userCourseId: id, color })
+                  const previousColor = currentColor
+                  try {
+                    await updateUserCourse({ userCourseId: id, color })
+                  } catch {
+                    setCurrentColor(previousColor)
+                  }
                 }}
               />
             </div>

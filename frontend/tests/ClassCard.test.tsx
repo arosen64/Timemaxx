@@ -169,6 +169,7 @@ describe('ClassCard', () => {
       renderWithProviders(<ClassCard {...defaultProps} color="#aabbcc" />)
       const input = document.querySelector('input[type="color"]') as HTMLInputElement
       fireEvent.change(input, { target: { value: '#123456' } })
+      fireEvent.blur(input, { target: { value: '#123456' } })
       expect(updateUserCourse).toHaveBeenCalledWith(
         expect.objectContaining({ userCourseId: 'uc1', color: '#123456' })
       )
