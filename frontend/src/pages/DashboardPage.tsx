@@ -34,7 +34,7 @@ export default function DashboardPage() {
   const clearManualEstimate = useMutation(api.mutations.timeEstimate.clearManualEstimate)
   const deleteTask = useMutation(api.mutations.tasks.deleteTask)
   const submitEstimateFeedback = useMutation(api.mutations.timeEstimate.submitEstimateFeedback)
-  const requestEstimate = useAction(api.actions.requestEstimateTaskTime.requestEstimateTaskTime)
+  const requestEstimate = useAction(api.ai.requestEstimateTaskTime.requestEstimateTaskTime)
   const user = useQuery(api.queries.users.getCurrUser)
 
   const taskRows = useMemo(() => tasks ?? [], [tasks])

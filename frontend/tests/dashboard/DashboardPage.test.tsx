@@ -15,7 +15,7 @@ vi.mock('../../../backend/convex/_generated/api', () => ({
       tasks: { updateTask: 'updateTask', deleteTask: 'deleteTask' },
       timeEstimate: { submitEstimateFeedback: 'submitEstimateFeedback' },
     },
-    actions: {
+    ai: {
       requestEstimateTaskTime: { requestEstimateTaskTime: 'requestEstimateTaskTime' },
     },
   },
