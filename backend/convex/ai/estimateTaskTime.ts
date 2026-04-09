@@ -12,9 +12,7 @@ import {
 } from "../lib/prompts/estimateTaskTime.prompt";
 import {
   RelevantChat,
-  fetchRelevantChats,
-  fetchRelevantClasses,
-  fetchRelevantTasks,
+  fetchRelevantContext,
 } from "../lib/retrieval";
 
 type Ctx = GenericActionCtx<DataModel>;
@@ -24,15 +22,12 @@ type Ctx = GenericActionCtx<DataModel>;
 // ---------------------------------------------------------------------------
 
 /**
- * Fetches relevant courses via the retrieval layer, then batch-loads them and
- * formats a clean context block for the LLM.
+ * Batch-loads the given course IDs and formats a clean context block for the LLM.
  */
 async function buildCourseContext(
   ctx: Ctx,
-  taskId: Id<"tasks">,
-  userId: Id<"users">
+  courseIds: Id<"userCourses">[]
 ): Promise<string | null> {
-  const courseIds = await fetchRelevantClasses(ctx, taskId, userId);
   if (courseIds.length === 0) return null;
 
   const courses = await ctx.runQuery(
@@ -58,15 +53,13 @@ async function buildCourseContext(
 }
 
 /**
- * Fetches relevant prior tasks via the retrieval layer, then batch-loads them
- * and formats a context block that includes estimate history and feedback.
+ * Batch-loads the given task IDs and formats a context block that includes
+ * estimate history and feedback.
  */
 async function buildTaskContext(
   ctx: Ctx,
-  taskId: Id<"tasks">,
-  userId: Id<"users">
+  taskIds: Id<"tasks">[]
 ): Promise<string | null> {
-  const taskIds = await fetchRelevantTasks(ctx, taskId, userId);
   if (taskIds.length === 0) return null;
 
   const tasks = await ctx.runQuery(
@@ -99,12 +92,11 @@ async function buildTaskContext(
 }
 
 /**
- * Formats a list of relevant chats into a context block.
- *
- * Currently accepts pre-fetched chat objects. In the future this will accept
- * chatIds and batch-fetch them via getChatsByIdsInternal once a chats table exists.
+ * Formats relevant chats into a context block.
+ * TODO: batch-fetch chats by chatIds via getChatsByIdsInternal once a chats table exists.
  */
-function buildChatContext(chats: RelevantChat[]): string | null {
+function buildChatContext(_chatIds: string[]): string | null {
+  const chats: RelevantChat[] = [];
   if (chats.length === 0) return null;
 
   const lines = chats.map((chat) => `[${chat.role}]: ${chat.content}`);
@@ -172,7 +164,7 @@ export const estimateTaskTime = internalAction({
     });
     if (!task) return;
 
-    const [user, taskCourses, chats] = await Promise.all([
+    const [user, taskCourses, relevantContext] = await Promise.all([
       ctx.runQuery(internal.queries.users.getUserInternal, {
         userId: task.userId,
       }),
@@ -182,7 +174,7 @@ export const estimateTaskTime = internalAction({
             { courseIds: [task.courseId] }
           )
         : Promise.resolve([]),
-      fetchRelevantChats(ctx, args.taskId, task.userId),
+      fetchRelevantContext(ctx, args.taskId, task.userId),
     ]);
 
     const taskCourse = (taskCourses as Doc<"userCourses">[])[0] as
@@ -190,11 +182,11 @@ export const estimateTaskTime = internalAction({
       | undefined;
 
     const [courseContext, taskContext] = await Promise.all([
-      buildCourseContext(ctx, args.taskId, task.userId),
-      buildTaskContext(ctx, args.taskId, task.userId),
+      buildCourseContext(ctx, relevantContext.classIds),
+      buildTaskContext(ctx, relevantContext.taskIds),
     ]);
 
-    const chatContext = buildChatContext(chats);
+    const chatContext = buildChatContext(relevantContext.chatIds);
     const profileContext = buildProfileContext(user as Doc<"users"> | null);
 
     const apiKey = process.env.GEMINI_API_KEY;

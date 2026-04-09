@@ -11,6 +11,13 @@ export interface RelevantChat {
   timestamp?: number;
 }
 
+export interface RelevantContext {
+  taskIds: Id<"tasks">[];
+  classIds: Id<"userCourses">[];
+  /** Chat IDs to retrieve. TODO: type as Id<"chats">[] once the chats table exists. */
+  chatIds: string[];
+}
+
 /**
  * Mock embedding retrieval — returns the first 10 course IDs for the user.
  * TODO: Replace with vector similarity search using the task embedding as the query.
@@ -48,14 +55,36 @@ export async function fetchRelevantTasks(
 }
 
 /**
- * Mock embedding retrieval — returns an empty chat list.
- * TODO: Replace with vector similarity search returning chatIds,
- *       then batch-fetch via getChatsByIdsInternal once a chats table exists.
+ * Mock embedding retrieval — returns an empty list of chat IDs.
+ * Accepts task and class IDs so future implementations can filter chat
+ * embeddings by the metadata associated with those tasks and classes.
+ * TODO: Replace with vector similarity search returning chatIds filtered by
+ *       taskIds/classIds metadata, once a chats table exists.
  */
 export async function fetchRelevantChats(
   _ctx: Ctx,
-  _taskId: Id<"tasks">,
-  _userId: Id<"users">
-): Promise<RelevantChat[]> {
+  _taskIds: Id<"tasks">[],
+  _classIds: Id<"userCourses">[]
+): Promise<string[]> {
   return [];
+}
+
+/**
+ * Orchestrates retrieval across all three context sources.
+ *
+ * Fetches relevant classes and tasks in parallel first, then passes their IDs
+ * into fetchRelevantChats so the chat retrieval can filter by that metadata.
+ * Returns a single object with IDs for each source.
+ */
+export async function fetchRelevantContext(
+  ctx: Ctx,
+  taskId: Id<"tasks">,
+  userId: Id<"users">
+): Promise<RelevantContext> {
+  const [taskIds, classIds] = await Promise.all([
+    fetchRelevantTasks(ctx, taskId, userId),
+    fetchRelevantClasses(ctx, taskId, userId),
+  ]);
+  const chatIds = await fetchRelevantChats(ctx, taskIds, classIds);
+  return { taskIds, classIds, chatIds };
 }
