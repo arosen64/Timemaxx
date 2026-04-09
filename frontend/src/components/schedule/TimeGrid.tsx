@@ -232,7 +232,7 @@ export default function TimeGrid({
                 onDragStart={() => onDragStart(block._id)}
               >
                 {block.courseName && (
-                  <div className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-1 hidden -translate-x-1/2 whitespace-nowrap rounded bg-navy px-2 py-1 font-body text-[10px] text-white shadow-md group-hover:block">
+                  <div className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-1 hidden -translate-x-1/2 whitespace-nowrap rounded bg-navy px-2 py-1 font-body text-[10px] text-white shadow-md group-hover:block">
                     {block.courseName}
                   </div>
                 )}
