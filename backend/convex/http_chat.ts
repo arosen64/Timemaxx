@@ -1,15 +1,7 @@
 import { Hono } from "hono";
 import { MastraClient } from "@mastra/client-js";
 import { internal } from "./_generated/api";
-import type { ActionCtx } from "./_generated/server";
-import type { Id } from "./_generated/dataModel";
-
-type HonoEnv = {
-  Bindings: {
-    ctx: ActionCtx;
-    userId: Id<"users">;
-  };
-};
+import type { HonoEnv } from "./lib/httpTypes";
 
 const chatApp = new Hono<HonoEnv>();
 
@@ -28,7 +20,8 @@ chatApp.post("/api/chat", async (c) => {
     content: message,
   });
 
-  const mastraUrl = process.env.MASTRA_URL!;
+  const mastraUrl = process.env.MASTRA_URL;
+  if (!mastraUrl) return c.json({ error: "MASTRA_URL not configured" }, 503);
   const client = new MastraClient({ baseUrl: mastraUrl });
   const agent = client.getAgent("chatAgent");
   const result = await agent.generate({ messages: [{ role: "user", content: message }] });

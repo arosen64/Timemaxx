@@ -1,5 +1,5 @@
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
-import { generateText, Output, LanguageModel } from "ai";
+import { generateText, Output } from "ai";
 import { z } from "zod";
 
 const MODEL = "gemini-2.5-flash";
@@ -17,15 +17,9 @@ export async function callGemini<T>(opts: {
 
   const google = createGoogleGenerativeAI({ apiKey });
 
-  // Wrap the V1 model in a TS-safe type cast
-  const model: LanguageModel = {
-    ...(google(MODEL) as any), // cast to bypass TS
-    supportedUrls: [],         // required by LanguageModelV2/V3
-  };
-
   try {
     const result = await generateText({
-      model,
+      model: google(MODEL),
       output: Output.object({
         schema: opts.schema,
         name: opts.schemaName,

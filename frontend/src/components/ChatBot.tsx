@@ -23,15 +23,17 @@ export default function ChatBot() {
   const [isLoading, setIsLoading] = useState(false)
   const [sessionStart] = useState(() => Date.now())
   const [optimistic, setOptimistic] = useState<{ role: 'user' | 'assistant'; content: string }[]>([])
+  const [historyLenAtSend, setHistoryLenAtSend] = useState(0)
 
   const token = useAuthToken()
   const allHistory = useQuery(api.queries.chatMessages.getChatHistory, { limit: 50 }) ?? []
   const history = allHistory.filter((m) => m.createdAt >= sessionStart)
 
-  // Always show history; while loading, append optimistic messages not yet saved
-  const latestHistoryContent = history[history.length - 1]?.content
+  // Show optimistic[i] only while history hasn't committed that index yet.
+  // Using a cursor (history length at send time) instead of content comparison
+  // avoids false deduplication when the user sends identical messages back-to-back.
   const pendingMessages = isLoading
-    ? optimistic.filter((m) => m.content !== latestHistoryContent)
+    ? optimistic.slice(Math.max(0, history.length - historyLenAtSend))
     : []
   const messages = [...history, ...pendingMessages]
 
@@ -43,10 +45,10 @@ export default function ChatBot() {
 
     setInput('')
     setIsLoading(true)
+    setHistoryLenAtSend(history.length)
     setOptimistic([{ role: 'user', content: text }])
 
     try {
-      console.log('[ChatBot] token:', token ? `${token.slice(0, 20)}...` : 'null')
       const res = await fetch(
         `${import.meta.env.VITE_CONVEX_SITE_URL}/api/chat`,
         {

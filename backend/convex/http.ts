@@ -4,16 +4,9 @@ import { auth } from "./auth";
 import { httpAction } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import type { Id } from "./_generated/dataModel";
-import type { ActionCtx } from "./_generated/server";
 import { calendarOAuthCallback } from "./calendarOAuthCallback";
 import chatApp from "./http_chat";
-
-type HonoEnv = {
-  Bindings: {
-    ctx: ActionCtx;
-    userId: Id<"users">;
-  };
-};
+import type { HonoEnv } from "./lib/httpTypes";
 
 const http = httpRouter();
 
