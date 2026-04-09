@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { taskTypeValidator } from "../lib/taskValidators";
 import { Id } from "../_generated/dataModel";
+import { internal } from "../_generated/api";
 import { rebuildStudyBlocks } from "./timeEstimate";
 
 export async function cascadeDeleteTask(ctx: MutationCtx, taskId: Id<"tasks">) {
@@ -133,6 +134,39 @@ export const deleteTask = mutation({
     const task = await ctx.db.get(args.taskId);
     if (!task || task.userId !== userId) throw new Error("Task not found");
 
+    // Collect googleEventIds from all study blocks before deletion
+    const googleEventIds: string[] = [];
+
+    const subtasks = await ctx.db
+      .query("subtasks")
+      .withIndex("by_parentTaskId", (q) => q.eq("parentTaskId", args.taskId))
+      .collect();
+    for (const subtask of subtasks) {
+      const blocks = await ctx.db
+        .query("studyBlocks")
+        .withIndex("by_subtaskId", (q) => q.eq("subtaskId", subtask._id))
+        .collect();
+      for (const block of blocks) {
+        if (block.googleEventId) googleEventIds.push(block.googleEventId);
+      }
+    }
+
+    const taskBlocks = await ctx.db
+      .query("studyBlocks")
+      .withIndex("by_taskId", (q) => q.eq("taskId", args.taskId))
+      .collect();
+    for (const block of taskBlocks) {
+      if (block.googleEventId) googleEventIds.push(block.googleEventId);
+    }
+
     await cascadeDeleteTask(ctx, args.taskId);
+
+    if (googleEventIds.length > 0) {
+      await ctx.scheduler.runAfter(
+        0,
+        internal.actions.exportStudyBlocksToCalendar.deleteLinkedCalendarEvents,
+        { userId, googleEventIds },
+      );
+    }
   },
 });

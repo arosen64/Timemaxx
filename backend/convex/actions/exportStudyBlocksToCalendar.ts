@@ -1,7 +1,8 @@
 "use node";
-import { action, type ActionCtx } from "../_generated/server";
+import { action, internalAction, type ActionCtx } from "../_generated/server";
 import type { Id } from "../_generated/dataModel";
 import { internal } from "../_generated/api";
+import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { decryptToken, encryptToken } from "../lib/calendarCrypto";
 
@@ -92,6 +93,47 @@ export const exportStudyBlocksToCalendar = action({
     }
 
     return { exported, patched };
+  },
+});
+
+/**
+ * Deletes Google Calendar events linked to deleted study blocks.
+ * Called asynchronously via ctx.scheduler after a task is deleted.
+ * Silently ignores failures — the task is already gone from Convex.
+ */
+export const deleteLinkedCalendarEvents = internalAction({
+  args: {
+    userId: v.id("users"),
+    googleEventIds: v.array(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const tokenSecret = process.env.CALENDAR_TOKEN_SECRET;
+    if (!tokenSecret) return;
+
+    const connection = await ctx.runQuery(
+      internal.queries.calendar.getCalendarConnectionForUser,
+      { userId: args.userId },
+    );
+    if (!connection) return;
+
+    let accessToken: string;
+    try {
+      accessToken = await resolveAccessToken(ctx, connection, args.userId, tokenSecret);
+    } catch {
+      return;
+    }
+
+    const calendarId = connection.selectedCalendarIds?.[0] ?? "primary";
+
+    for (const eventId of args.googleEventIds) {
+      await fetch(
+        `${GOOGLE_CALENDAR_API}/calendars/${encodeURIComponent(calendarId)}/events/${encodeURIComponent(eventId)}`,
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${accessToken}` },
+        },
+      );
+    }
   },
 });
 
