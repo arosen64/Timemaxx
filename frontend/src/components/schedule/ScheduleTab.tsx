@@ -306,13 +306,16 @@ export default function ScheduleTab() {
         if (result.exported > 0) parts.push(`${result.exported} block${result.exported !== 1 ? 's' : ''} exported`)
         if (result.patched > 0) parts.push(`${result.patched} updated`)
         setExportMsg(parts.length > 0 ? parts.join(', ') + '.' : 'Nothing to export.')
+        // Re-fetch so the grid reflects updated GCal event positions immediately
+        const fresh = await fetchCalendarEventsAction({ startDate: startDateStr, timezone })
+        setCalendarData(fresh)
       }
     } catch (err) {
       setExportMsg(`Export failed: ${err instanceof Error ? err.message : String(err)}`)
     } finally {
       setIsExporting(false)
     }
-  }, [exportStudyBlocksAction])
+  }, [exportStudyBlocksAction, fetchCalendarEventsAction, startDateStr, timezone])
 
   async function handleToggleCalendar(calId: string) {
     const current = selectedCalendarIds ?? []
