@@ -1,6 +1,7 @@
 import { internal } from "../_generated/api";
 import { GenericActionCtx } from "convex/server";
-import { DataModel, Id } from "../_generated/dataModel";
+import { DataModel, Doc, Id } from "../_generated/dataModel";
+import { parseDeptPrefix, termSortKey } from "./classTagUtils";
 
 type Ctx = GenericActionCtx<DataModel>;
 
@@ -19,23 +20,51 @@ export interface RelevantContext {
 }
 
 /**
- * Mock embedding retrieval — returns the first 10 course IDs for the user.
+ * Heuristic retrieval — returns up to 10 course IDs relevant to the task.
+ *
+ * Prefers courses in the same department as the task's own course (sorted
+ * most-recent-term first), falling back to the user's most recent courses.
+ * The task's own course is excluded since it is already passed to the prompt
+ * separately as courseInfo.
  * TODO: Replace with vector similarity search using the task embedding as the query.
  */
 export async function fetchRelevantClasses(
   ctx: Ctx,
-  _taskId: Id<"tasks">,
+  taskId: Id<"tasks">,
   userId: Id<"users">
 ): Promise<Id<"userCourses">[]> {
-  const courses = await ctx.runQuery(
-    internal.queries.userCourses.getUserCoursesInternal,
-    { userId }
-  );
-  return courses.slice(0, 10).map((c: { _id: Id<"userCourses"> }) => c._id);
+  const [task, courses] = await Promise.all([
+    ctx.runQuery(internal.queries.tasks.getTaskInternal, { taskId }),
+    ctx.runQuery(internal.queries.userCourses.getUserCoursesInternal, { userId }),
+  ]);
+
+  const typedCourses = courses as Doc<"userCourses">[];
+
+  // Heuristic: prefer courses in the same department as the task's course.
+  if (task?.courseId) {
+    const taskCourse = typedCourses.find((c) => c._id === task.courseId);
+    if (taskCourse) {
+      const deptPrefix = parseDeptPrefix(taskCourse.courseCode);
+      if (deptPrefix) {
+        const deptCourses = typedCourses
+          .filter((c) => c._id !== task.courseId && c.courseCode.startsWith(`${deptPrefix}.`))
+          .sort((a, b) => termSortKey(b.term) - termSortKey(a.term));
+        if (deptCourses.length > 0) {
+          return deptCourses.slice(0, 10).map((c) => c._id);
+        }
+      }
+    }
+  }
+
+  // Fallback: most recent courses, excluding the task's own course.
+  return typedCourses
+    .filter((c) => c._id !== task?.courseId)
+    .slice(0, 10)
+    .map((c) => c._id);
 }
 
 /**
- * Mock embedding retrieval — returns the first 10 task IDs for the user,
+ * Heuristic retrieval — returns up to 10 prior task IDs for the user,
  * excluding the current task.
  * TODO: Replace with vector similarity search using the task embedding as the query.
  */
@@ -48,7 +77,7 @@ export async function fetchRelevantTasks(
     internal.queries.tasks.getAllTasksInternal,
     { userId }
   );
-  return (tasks as Array<{ _id: Id<"tasks"> }>)
+  return (tasks as Doc<"tasks">[])
     .filter((t) => t._id !== taskId)
     .slice(0, 10)
     .map((t) => t._id);

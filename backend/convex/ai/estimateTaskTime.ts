@@ -177,6 +177,7 @@ export const estimateTaskTime = internalAction({
       fetchRelevantContext(ctx, args.taskId, task.userId),
     ]);
 
+    // [0] is safe: we passed exactly one courseId, so the batch result has at most one entry.
     const taskCourse = (taskCourses as Doc<"userCourses">[])[0] as
       | Doc<"userCourses">
       | undefined;
