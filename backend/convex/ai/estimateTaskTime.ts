@@ -1,161 +1,202 @@
 import { internalAction } from "../_generated/server";
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
-import { Doc } from "../_generated/dataModel";
+import { GenericActionCtx } from "convex/server";
+import { DataModel, Doc, Id } from "../_generated/dataModel";
 import { callGemini } from "../lib/gemini";
 import { sanitizeUserInput } from "../lib/sanitize";
-import { parseDeptPrefix, termSortKey } from "../lib/classTagUtils";
 import {
   TIME_ESTIMATE_SYSTEM,
   buildTimeEstimatePrompt,
   timeEstimateResponseSchema,
 } from "../lib/prompts/estimateTaskTime.prompt";
+import {
+  RelevantChat,
+  fetchRelevantChats,
+  fetchRelevantClasses,
+  fetchRelevantTasks,
+} from "../lib/retrieval";
+
+type Ctx = GenericActionCtx<DataModel>;
+
+// ---------------------------------------------------------------------------
+// Context builders
+// ---------------------------------------------------------------------------
 
 /**
- * From a pre-fetched list of all user courses, returns a context string of
- * completed courses in the same department as the task's course.
- * Returns null if the task has no course, or no matching dept courses with grades.
+ * Fetches relevant courses via the retrieval layer, then batch-loads them and
+ * formats a clean context block for the LLM.
  */
-function buildDepartmentCourseContext(
-  allCourses: Doc<"userCourses">[],
-  taskCourse: Doc<"userCourses"> | undefined
-): string | null {
-  if (!taskCourse) return null;
+async function buildCourseContext(
+  ctx: Ctx,
+  taskId: Id<"tasks">,
+  userId: Id<"users">
+): Promise<string | null> {
+  const courseIds = await fetchRelevantClasses(ctx, taskId, userId);
+  if (courseIds.length === 0) return null;
 
-  const deptPrefix = parseDeptPrefix(taskCourse.courseCode);
-  if (!deptPrefix) return null;
+  const courses = await ctx.runQuery(
+    internal.queries.userCourses.getUserCoursesByIdsInternal,
+    { courseIds }
+  );
+  if (courses.length === 0) return null;
 
-  const deptCourses = allCourses
-    .filter((c) => c.courseCode.startsWith(`${deptPrefix}.`) && c.grade !== undefined)
-    .sort((a, b) => termSortKey(b.term) - termSortKey(a.term));
-  if (deptCourses.length === 0) return null;
-
-  const lines = deptCourses.map((c) => `- ${c.courseCode}: ${sanitizeUserInput(c.title, 500)} (grade: ${c.grade})`);
-  return `Prior courses in the same department (completed with grades, most to least recent):\n${lines.join("\n")}`;
-}
-
-/**
- * Builds a student profile context string for the time estimation prompt
- * from basic onboarding fields stored on the user's profile.
- * Returns null if no relevant fields are set.
- */
-function buildUserContext(user: Doc<"users"> | null): string | null {
-  const lines = [
-    user?.major && `Major: ${sanitizeUserInput(user.major, 200)}`,
-    user?.year && `Year: ${user.year}`,
-    user?.difficultSubjects?.length &&
-      `Difficult subjects: ${user.difficultSubjects.map((s) => sanitizeUserInput(s, 200)).join(", ")}`,
-    user?.enjoyedSubjects?.length &&
-      `Enjoyed subjects: ${user.enjoyedSubjects.map((s) => sanitizeUserInput(s, 200)).join(", ")}`,
-  ].filter(Boolean) as string[];
-  return lines.length > 0 ? lines.join("\n") : null;
-}
-
-/**
- * Builds a past estimate feedback context string for the time estimation prompt.
- * Returns null if the user has no prior feedback entries.
- */
-function buildFeedbackContext(
-  priorEstimateFeedback: Array<{
-    title: string;
-    taskType: string;
-    estimatedMinutes: number;
-    rating: "up" | "down";
-    correctedEstimateMinutes?: number;
-  }>
-): string | null {
-  if (priorEstimateFeedback.length === 0) return null;
-  const lines = priorEstimateFeedback.map((entry) => {
-    const corrected =
-      entry.correctedEstimateMinutes !== undefined
-        ? `, corrected to ${entry.correctedEstimateMinutes} minutes`
-        : "";
-    return `- ${entry.taskType}: "${sanitizeUserInput(entry.title, 500)}" -> estimated ${entry.estimatedMinutes} minutes, feedback ${entry.rating}${corrected}`;
+  const lines = (courses as Doc<"userCourses">[]).map((c) => {
+    const parts: string[] = [
+      `Code: ${c.courseCode}`,
+      `Title: ${sanitizeUserInput(c.title, 500)}`,
+      `Term: ${c.term}`,
+    ];
+    if (c.grade !== undefined) parts.push(`Grade: ${c.grade}`);
+    if (c.credits !== undefined) parts.push(`Credits: ${c.credits}`);
+    if (c.difficultyRating !== undefined) parts.push(`Difficulty: ${c.difficultyRating}/5`);
+    if (c.studyGoal) parts.push(`Study Goal: ${sanitizeUserInput(c.studyGoal, 1_000)}`);
+    return `- ${parts.join(" | ")}`;
   });
-  return `Past estimate feedback from this same student (learn from this):\n${lines.join("\n")}`;
+
+  return `Enrolled courses (most relevant to this task):\n${lines.join("\n")}`;
 }
 
 /**
- * Builds a transcript profile context string for the time estimation prompt
- * from the AI-generated academic insights stored on the user's profile.
- * Returns null if the user has no transcript summary.
+ * Fetches relevant prior tasks via the retrieval layer, then batch-loads them
+ * and formats a context block that includes estimate history and feedback.
  */
-function buildTranscriptProfile(
-  user: Doc<"users"> | null
-): string | null {
-  const summary = user?.transcriptSummary;
-  if (!summary || summary.length === 0) return null;
+async function buildTaskContext(
+  ctx: Ctx,
+  taskId: Id<"tasks">,
+  userId: Id<"users">
+): Promise<string | null> {
+  const taskIds = await fetchRelevantTasks(ctx, taskId, userId);
+  if (taskIds.length === 0) return null;
 
-  const lines = summary.map((insight) => `- ${sanitizeUserInput(insight.label, 200)}: ${sanitizeUserInput(insight.text, 1_000)}`);
-  return `Academic profile from transcript analysis:\n${lines.join("\n")}`;
-}
+  const tasks = await ctx.runQuery(
+    internal.queries.tasks.getTasksByIdsInternal,
+    { taskIds }
+  );
+  if (tasks.length === 0) return null;
 
-/**
- * Builds a course context string for the time estimation prompt.
- * If prior same-department courses with grades are available, uses those.
- * Otherwise, falls back to the user's current term course list.
- * In either case, the study goal for the task's specific course is always included.
- */
-function buildCourseContext(
-  allCourses: Doc<"userCourses">[],
-  taskCourse: Doc<"userCourses"> | undefined
-): string | null {
-  const studyGoalLine =
-    taskCourse?.studyGoal
-      ? `Study goal for "${sanitizeUserInput(taskCourse.title, 500)}": ${sanitizeUserInput(taskCourse.studyGoal, 1_000)}`
-      : null;
-
-  const deptContext = buildDepartmentCourseContext(allCourses, taskCourse);
-
-  let mainContext: string | null = null;
-  if (deptContext) {
-    mainContext = deptContext;
-  } else if (taskCourse) {
-    const currentTermCourses = allCourses.filter((c) => c.term === taskCourse.term);
-    if (currentTermCourses.length > 0) {
-      const lines = currentTermCourses.map(
-        (c) => `- ${c.courseCode}: ${sanitizeUserInput(c.title, 500)} (goal: ${c.studyGoal ? sanitizeUserInput(c.studyGoal, 1_000) : "none"})`
-      );
-      mainContext = `Current term courses:\n${lines.join("\n")}`;
+  const lines = (tasks as Doc<"tasks">[]).map((t) => {
+    const parts: string[] = [
+      `Type: ${t.taskType}`,
+      `Title: "${sanitizeUserInput(t.title, 500)}"`,
+      `Description: "${sanitizeUserInput(t.description, 1000)}"`,
+    ];
+    if (t.timeEstimate !== undefined) {
+      parts.push(`Estimated: ${t.timeEstimate} min`);
     }
+    if (t.estimateFeedbackRating !== undefined) {
+      const feedback = `Feedback: ${t.estimateFeedbackRating}`;
+      const correction =
+        t.correctedEstimateMinutes !== undefined
+          ? ` (corrected to ${t.correctedEstimateMinutes} min)`
+          : "";
+      parts.push(`${feedback}${correction}`);
+    }
+    return `- ${parts.join(" | ")}`;
+  });
+
+  return `Prior tasks from this student (learn from feedback to calibrate the estimate):\n${lines.join("\n")}`;
+}
+
+/**
+ * Formats a list of relevant chats into a context block.
+ *
+ * Currently accepts pre-fetched chat objects. In the future this will accept
+ * chatIds and batch-fetch them via getChatsByIdsInternal once a chats table exists.
+ */
+function buildChatContext(chats: RelevantChat[]): string | null {
+  if (chats.length === 0) return null;
+
+  const lines = chats.map((chat) => `[${chat.role}]: ${chat.content}`);
+  return `Relevant chat history:\n${lines.join("\n")}`;
+}
+
+/**
+ * Builds a structured JSON profile from all user preferences and academic
+ * insights that may influence study time estimation.
+ */
+function buildProfileContext(user: Doc<"users"> | null): string | null {
+  if (!user) return null;
+
+  const profile: Record<string, unknown> = {};
+
+  if (user.major) profile.major = sanitizeUserInput(user.major, 200);
+  if (user.year) profile.year = user.year;
+  if (user.difficultSubjects?.length) {
+    profile.difficultSubjects = user.difficultSubjects.map((s) =>
+      sanitizeUserInput(s, 200)
+    );
+  }
+  if (user.enjoyedSubjects?.length) {
+    profile.enjoyedSubjects = user.enjoyedSubjects.map((s) =>
+      sanitizeUserInput(s, 200)
+    );
+  }
+  if (user.focusBlockLength !== undefined) {
+    profile.focusBlockLengthMinutes = user.focusBlockLength;
+  }
+  if (user.productivityTraits) {
+    profile.productivityTraits = user.productivityTraits;
+  }
+  if (user.transcriptSummary?.length) {
+    profile.academicInsights = user.transcriptSummary.map((insight) => ({
+      label: sanitizeUserInput(insight.label, 200),
+      text: sanitizeUserInput(insight.text, 1_000),
+    }));
   }
 
-  const parts = [mainContext, studyGoalLine].filter(Boolean) as string[];
-  return parts.length > 0 ? parts.join("\n") : null;
+  if (Object.keys(profile).length === 0) return null;
+
+  return JSON.stringify(profile, null, 2);
 }
+
+// ---------------------------------------------------------------------------
+// Action
+// ---------------------------------------------------------------------------
 
 /**
  * Estimates how long a task will take (in minutes) using Gemini.
- * Builds context from the user's profile, current-term enrolled courses,
- * prior same-department grades, and past estimate feedback, then stores
- * the result via setTimeEstimate.
+ *
+ * Retrieves relevant courses, prior tasks, and chats via mock embedding
+ * retrieval functions, then builds context blocks and calls Gemini with a
+ * structured output schema that includes an estimate and a per-category
+ * reasoning trace.
  */
 export const estimateTaskTime = internalAction({
   args: {
     taskId: v.id("tasks"),
   },
   handler: async (ctx, args) => {
-    // Fetch task and user profile
     const task = await ctx.runQuery(internal.queries.tasks.getTaskInternal, {
       taskId: args.taskId,
     });
     if (!task) return;
 
-    const [user, priorEstimateFeedback, allCourses] = await Promise.all([
-      ctx.runQuery(internal.queries.users.getUserInternal, { userId: task.userId }),
-      ctx.runQuery(internal.queries.tasks.getEstimateFeedbackContextInternal, { userId: task.userId }),
-      ctx.runQuery(internal.queries.userCourses.getUserCoursesInternal, { userId: task.userId }),
+    const [user, taskCourses, chats] = await Promise.all([
+      ctx.runQuery(internal.queries.users.getUserInternal, {
+        userId: task.userId,
+      }),
+      task.courseId
+        ? ctx.runQuery(
+            internal.queries.userCourses.getUserCoursesByIdsInternal,
+            { courseIds: [task.courseId] }
+          )
+        : Promise.resolve([]),
+      fetchRelevantChats(ctx, args.taskId, task.userId),
     ]);
 
-    const taskCourse = task.courseId ? allCourses.find((c) => c._id === task.courseId) : undefined;
+    const taskCourse = (taskCourses as Doc<"userCourses">[])[0] as
+      | Doc<"userCourses">
+      | undefined;
 
-    // Build context strings
-    const userContext = buildUserContext(user);
-    const feedbackContext = buildFeedbackContext(priorEstimateFeedback);
-    const courseContext = buildCourseContext(allCourses, taskCourse);
-    const transcriptProfile = buildTranscriptProfile(user);
+    const [courseContext, taskContext] = await Promise.all([
+      buildCourseContext(ctx, args.taskId, task.userId),
+      buildTaskContext(ctx, args.taskId, task.userId),
+    ]);
 
-    // Call Gemini with structured output
+    const chatContext = buildChatContext(chats);
+    const profileContext = buildProfileContext(user as Doc<"users"> | null);
+
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       if (process.env.VITEST !== "true") {
@@ -174,10 +215,10 @@ export const estimateTaskTime = internalAction({
           courseInfo: taskCourse
             ? `${taskCourse.courseCode} - ${sanitizeUserInput(taskCourse.title, 500)}`
             : undefined,
-          userContext: userContext ?? undefined,
-          transcriptProfile: transcriptProfile ?? undefined,
           courseContext: courseContext ?? undefined,
-          feedbackContext: feedbackContext ?? undefined,
+          taskContext: taskContext ?? undefined,
+          chatContext: chatContext ?? undefined,
+          profileContext: profileContext ?? undefined,
         }),
         schema: timeEstimateResponseSchema,
         schemaName: "TimeEstimate",
