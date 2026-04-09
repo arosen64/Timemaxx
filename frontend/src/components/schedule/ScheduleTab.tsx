@@ -445,11 +445,6 @@ export default function ScheduleTab() {
                       : 'border-border bg-white hover:border-teal/50 hover:bg-teal/5'
                   }`}
                 >
-                  {block.courseName && (
-                    <div className="pointer-events-none absolute right-full top-1/2 z-20 mr-2 hidden -translate-y-1/2 whitespace-nowrap rounded bg-navy px-2 py-1 font-body text-[10px] text-white shadow-md group-hover:block">
-                      {block.courseName}
-                    </div>
-                  )}
                   <span
                     className="mt-1 inline-block h-2.5 w-2.5 shrink-0 rounded-full"
                     style={{ backgroundColor: block.courseColor ?? '#002D72' }}
@@ -460,6 +455,11 @@ export default function ScheduleTab() {
                     </span>
                     <span className="text-[10px] text-slate-blue">{block.studyBlockLength} min</span>
                     <span className="text-[10px] text-light-blue truncate">{block.taskTitle}</span>
+                    {block.courseName && (
+                      <span className="hidden group-hover:block truncate font-body text-[10px] font-medium text-teal">
+                        {block.courseName}
+                      </span>
+                    )}
                   </span>
                 </button>
               )
