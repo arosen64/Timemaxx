@@ -6,7 +6,7 @@ import { ACCENTS } from '../constants'
 import Button from './ui/Button'
 
 export default function AcademicProfileSummary({ profile, onChange }: AcademicProfileSummaryProps) {
-  const generateProfile = useAction(api.actions.generateAcademicProfile.generateAcademicProfile)
+  const generateProfile = useAction(api.ai.generateAcademicProfile.generateAcademicProfile)
   const updateSettings = useMutation(api.mutations.users.updateUserSettings)
   const currUser = useQuery(api.queries.users.getCurrUser)
   const userCourses = useQuery(api.queries.userCourses.getUserCourses)

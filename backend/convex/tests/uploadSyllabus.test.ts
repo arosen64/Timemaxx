@@ -3,20 +3,20 @@ import { api } from "../_generated/api";
 import { makeTestCtx, createTestUser } from "../../convex-tests/helpers";
 
 // ---------------------------------------------------------------------------
-// Mock @google/genai so tests never hit the real Gemini API.
-// Each test can override `mockGenerateContent` to control the response.
+// Mock the Vercel AI SDK so tests never hit the real Gemini API.
+// Each test can override `mockGenerateText` to control the response.
 // ---------------------------------------------------------------------------
-const mockGenerateContent = vi.fn();
+const mockGenerateText = vi.fn();
 
-vi.mock("@google/genai", () => ({
-  GoogleGenAI: vi.fn().mockImplementation(() => ({
-    models: { generateContent: mockGenerateContent },
-  })),
-  Type: {
-    OBJECT: "OBJECT",
-    ARRAY: "ARRAY",
-    STRING: "STRING",
+vi.mock("ai", () => ({
+  generateText: mockGenerateText,
+  Output: {
+    object: vi.fn((opts: { schema: unknown }) => opts.schema),
   },
+}));
+
+vi.mock("@ai-sdk/google", () => ({
+  createGoogleGenerativeAI: vi.fn(() => vi.fn(() => "mock-model")),
 }));
 
 /** Returns an ISO 8601 date string (YYYY-MM-DD) for N days from now. */
@@ -40,7 +40,7 @@ function makeGeminiResponse(
     taskType: string;
   }>
 ) {
-  return { text: JSON.stringify({ tasks }) };
+  return { output: { tasks } };
 }
 
 describe("actions/uploadSyllabus", () => {
@@ -57,7 +57,7 @@ describe("actions/uploadSyllabus", () => {
     const t = makeTestCtx();
 
     await expect(
-      t.action(api.actions.uploadSyllabus.uploadSyllabus, {
+      t.action(api.ai.uploadSyllabus.uploadSyllabus, {
         fileContents: SYLLABUS_TEXT,
       })
     ).rejects.toThrow("Unauthenticated");
@@ -69,7 +69,7 @@ describe("actions/uploadSyllabus", () => {
     const { withAuth } = await createTestUser(t);
 
     await expect(
-      withAuth.action(api.actions.uploadSyllabus.uploadSyllabus, {
+      withAuth.action(api.ai.uploadSyllabus.uploadSyllabus, {
         fileContents: SYLLABUS_TEXT,
       })
     ).rejects.toThrow("GEMINI_API_KEY is not set");
@@ -81,7 +81,7 @@ describe("actions/uploadSyllabus", () => {
     const { withAuth } = await createTestUser(t);
 
     await expect(
-      withAuth.action(api.actions.uploadSyllabus.uploadSyllabus, {
+      withAuth.action(api.ai.uploadSyllabus.uploadSyllabus, {
         fileContents: SYLLABUS_TEXT,
       })
     ).rejects.toThrow();
@@ -92,7 +92,7 @@ describe("actions/uploadSyllabus", () => {
   });
 
   test("returns syllabusId and extracted tasks on success", async () => {
-    mockGenerateContent.mockResolvedValueOnce(
+    mockGenerateText.mockResolvedValueOnce(
       makeGeminiResponse([
         {
           title: "Problem Set 1",
@@ -113,7 +113,7 @@ describe("actions/uploadSyllabus", () => {
     const { withAuth } = await createTestUser(t);
 
     const result = await withAuth.action(
-      api.actions.uploadSyllabus.uploadSyllabus,
+      api.ai.uploadSyllabus.uploadSyllabus,
       { fileContents: SYLLABUS_TEXT }
     );
 
@@ -129,7 +129,7 @@ describe("actions/uploadSyllabus", () => {
 
   test("converts ISO dueDate strings to millisecond timestamps", async () => {
     const dateStr = futureDateISO(90);
-    mockGenerateContent.mockResolvedValueOnce(
+    mockGenerateText.mockResolvedValueOnce(
       makeGeminiResponse([
         {
           title: "Final Project",
@@ -144,7 +144,7 @@ describe("actions/uploadSyllabus", () => {
     const { withAuth } = await createTestUser(t);
 
     const { extractedTasks } = await withAuth.action(
-      api.actions.uploadSyllabus.uploadSyllabus,
+      api.ai.uploadSyllabus.uploadSyllabus,
       { fileContents: SYLLABUS_TEXT }
     );
 
@@ -152,7 +152,7 @@ describe("actions/uploadSyllabus", () => {
   });
 
   test("filters out tasks with an unrecognised taskType", async () => {
-    mockGenerateContent.mockResolvedValueOnce(
+    mockGenerateText.mockResolvedValueOnce(
       makeGeminiResponse([
         {
           title: "Valid Task",
@@ -173,7 +173,7 @@ describe("actions/uploadSyllabus", () => {
     const { withAuth } = await createTestUser(t);
 
     const { extractedTasks } = await withAuth.action(
-      api.actions.uploadSyllabus.uploadSyllabus,
+      api.ai.uploadSyllabus.uploadSyllabus,
       { fileContents: SYLLABUS_TEXT }
     );
 
@@ -183,7 +183,7 @@ describe("actions/uploadSyllabus", () => {
 
   test("filters out tasks with a past due date", async () => {
     const pastDate = new Date(Date.now() - 86_400_000).toISOString().slice(0, 10);
-    mockGenerateContent.mockResolvedValueOnce(
+    mockGenerateText.mockResolvedValueOnce(
       makeGeminiResponse([
         {
           title: "Past Task",
@@ -204,7 +204,7 @@ describe("actions/uploadSyllabus", () => {
     const { withAuth } = await createTestUser(t);
 
     const { extractedTasks } = await withAuth.action(
-      api.actions.uploadSyllabus.uploadSyllabus,
+      api.ai.uploadSyllabus.uploadSyllabus,
       { fileContents: SYLLABUS_TEXT }
     );
 
@@ -213,13 +213,13 @@ describe("actions/uploadSyllabus", () => {
   });
 
   test("marks syllabus as confirmed after successful extraction", async () => {
-    mockGenerateContent.mockResolvedValueOnce(makeGeminiResponse([]));
+    mockGenerateText.mockResolvedValueOnce(makeGeminiResponse([]));
 
     const t = makeTestCtx();
     const { withAuth } = await createTestUser(t);
 
     const { syllabusId } = await withAuth.action(
-      api.actions.uploadSyllabus.uploadSyllabus,
+      api.ai.uploadSyllabus.uploadSyllabus,
       { fileContents: SYLLABUS_TEXT }
     );
 
@@ -228,13 +228,13 @@ describe("actions/uploadSyllabus", () => {
   });
 
   test("marks syllabus as failed when Gemini throws", async () => {
-    mockGenerateContent.mockRejectedValueOnce(new Error("Gemini unavailable"));
+    mockGenerateText.mockRejectedValueOnce(new Error("Gemini unavailable"));
 
     const t = makeTestCtx();
     const { withAuth } = await createTestUser(t);
 
     await expect(
-      withAuth.action(api.actions.uploadSyllabus.uploadSyllabus, {
+      withAuth.action(api.ai.uploadSyllabus.uploadSyllabus, {
         fileContents: SYLLABUS_TEXT,
       })
     ).rejects.toThrow("Gemini unavailable");
@@ -244,13 +244,13 @@ describe("actions/uploadSyllabus", () => {
   });
 
   test("returns an empty extractedTasks array when Gemini finds no tasks", async () => {
-    mockGenerateContent.mockResolvedValueOnce(makeGeminiResponse([]));
+    mockGenerateText.mockResolvedValueOnce(makeGeminiResponse([]));
 
     const t = makeTestCtx();
     const { withAuth } = await createTestUser(t);
 
     const { extractedTasks } = await withAuth.action(
-      api.actions.uploadSyllabus.uploadSyllabus,
+      api.ai.uploadSyllabus.uploadSyllabus,
       { fileContents: "No assignments here." }
     );
 
@@ -258,18 +258,28 @@ describe("actions/uploadSyllabus", () => {
   });
 
   test("stores the correct fileContents on the created syllabus row", async () => {
-    mockGenerateContent.mockResolvedValueOnce(makeGeminiResponse([]));
+    mockGenerateText.mockResolvedValueOnce(makeGeminiResponse([]));
 
     const t = makeTestCtx();
     const { withAuth } = await createTestUser(t);
 
     const { syllabusId } = await withAuth.action(
-      api.actions.uploadSyllabus.uploadSyllabus,
+      api.ai.uploadSyllabus.uploadSyllabus,
       { fileContents: SYLLABUS_TEXT }
     );
 
     const syllabus = await t.run((ctx) => ctx.db.get(syllabusId));
     expect(syllabus?.fileContents).toBe(SYLLABUS_TEXT);
   });
-});
 
+  test("throws when fileContents exceeds 200,000 characters", async () => {
+    const t = makeTestCtx();
+    const { withAuth } = await createTestUser(t);
+
+    await expect(
+      withAuth.action(api.ai.uploadSyllabus.uploadSyllabus, {
+        fileContents: "x".repeat(200_001),
+      })
+    ).rejects.toThrow("fileContents exceeds maximum length of 200000 characters");
+  });
+});
