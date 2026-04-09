@@ -44,6 +44,7 @@ describe("mutations/users – deleteAccount", () => {
         taskType: "Essay",
         dueDate: Date.now() + 86_400_000,
         createdAt: Date.now(),
+        isManualEstimate: false,
       });
       await ctx.db.insert("tasks", {
         userId,
@@ -52,6 +53,7 @@ describe("mutations/users – deleteAccount", () => {
         taskType: "Coding",
         dueDate: Date.now() + 86_400_000,
         createdAt: Date.now(),
+        isManualEstimate: false,
       });
     });
 
@@ -171,6 +173,7 @@ describe("mutations/users – deleteAccount", () => {
         taskType: "Essay",
         dueDate: Date.now() + 86_400_000,
         createdAt: Date.now(),
+        isManualEstimate: false,
       });
       await ctx.db.insert("syllabi", {
         userId: otherUserId,

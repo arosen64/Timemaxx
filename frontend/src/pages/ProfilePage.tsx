@@ -12,6 +12,8 @@ export default function ProfilePage() {
   const user = useQuery(api.queries.users.getCurrUser);
 
   const calendarStatus = useQuery(api.queries.calendar.getCalendarConnectionStatus);
+  const connected = calendarStatus?.connected ?? false;
+  const hasEventsScope = calendarStatus?.hasEventsScope ?? false;
   const deleteCalendarToken = useMutation(api.mutations.calendar.deleteCalendarToken);
   const initiateCalendarOAuth = useAction(api.actions.initiateGoogleCalendarOAuth.initiateGoogleCalendarOAuth);
 
@@ -83,10 +85,21 @@ export default function ProfilePage() {
               <span className="font-heading text-base font-semibold text-navy">Google Calendar</span>
               <span className="font-body text-sm text-slate-blue">Connect to improve schedule accuracy</span>
             </div>
-            {calendarStatus?.connected ? (
-              <Button variant="destructive" onClick={handleRevokeCalendar} className="px-5">
-                Revoke Access
-              </Button>
+            {calendarStatus === undefined ? (
+              <div className="h-9 w-36 rounded-lg bg-border animate-pulse" />
+            ) : connected ? (
+              hasEventsScope ? (
+                <Button variant="destructive" onClick={handleRevokeCalendar} className="px-5">
+                  Revoke Access
+                </Button>
+              ) : (
+                <div className="flex flex-col items-center gap-1">
+                  <Button variant="warning" icon={<CalendarIcon className="stroke-white" />} onClick={handleConnectCalendar} className="px-5">
+                    Update Calendar Permissions
+                  </Button>
+                  <span className="font-body text-sm text-yellow-600">Connected with limited permissions</span>
+                </div>
+              )
             ) : (
               <Button variant="primary" icon={<CalendarIcon />} onClick={handleConnectCalendar} className="px-5">
                 Connect Calendar
@@ -105,14 +118,14 @@ export default function ProfilePage() {
   );
 }
 
-function CalendarIcon() {
+function CalendarIcon({ className = "stroke-teal" }: { className?: string }) {
   return (
     <svg
       width="16"
       height="16"
       viewBox="0 0 24 24"
       fill="none"
-      className="stroke-teal"
+      className={className}
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"

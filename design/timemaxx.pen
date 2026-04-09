@@ -3195,6 +3195,38 @@
                   "y": 4
                 }
               }
+            },
+            {
+              "id": "8i3Fw",
+              "type": "ref",
+              "ref": "13tHZ",
+              "name": "badge4",
+              "width": "fit_content",
+              "height": "fit_content",
+              "x": 255,
+              "y": 0,
+              "descendants": {
+                "1ND11": {
+                  "x": 10,
+                  "y": 4
+                }
+              }
+            },
+            {
+              "id": "wPVIA",
+              "type": "ref",
+              "ref": "RNbuX",
+              "name": "badge5",
+              "width": "fit_content",
+              "height": "fit_content",
+              "x": 326,
+              "y": 0,
+              "descendants": {
+                "aCp8F": {
+                  "x": 10,
+                  "y": 4
+                }
+              }
             }
           ]
         },
@@ -4486,101 +4518,6 @@
               "y": 8.5
             }
           }
-        },
-        {
-          "type": "frame",
-          "id": "kcttZ",
-          "x": 60,
-          "y": 1800,
-          "name": "chatSection",
-          "layout": "vertical",
-          "gap": 16,
-          "children": [
-            {
-              "type": "text",
-              "id": "DvCjn",
-              "name": "sectionLabel",
-              "fill": "$--muted-foreground",
-              "content": "Chat",
-              "fontFamily": "Space Grotesk",
-              "fontSize": 13,
-              "fontWeight": "600"
-            },
-            {
-              "id": "KHBFQ",
-              "type": "ref",
-              "ref": "CnJJm",
-              "name": "ChatFAB",
-              "width": "fit_content",
-              "height": "fit_content",
-              "x": 0,
-              "y": 33,
-              "descendants": {
-                "tUbrN": {
-                  "x": 0,
-                  "y": 0
-                }
-              }
-            },
-            {
-              "id": "dIkOz",
-              "type": "ref",
-              "ref": "PPFO7",
-              "name": "ChatBubble/User",
-              "width": "fit_content",
-              "height": "fit_content",
-              "x": 0,
-              "y": 81
-            },
-            {
-              "id": "3xoIR",
-              "type": "ref",
-              "ref": "QZVZa",
-              "name": "ChatBubble/AI",
-              "width": "fit_content",
-              "height": "fit_content",
-              "x": 0,
-              "y": 133
-            },
-            {
-              "id": "ucUuS",
-              "type": "ref",
-              "ref": "VrSl5",
-              "name": "ChatOverlay",
-              "width": 380,
-              "height": 560,
-              "x": 0,
-              "y": 203,
-              "descendants": {
-                "ZcIdy": {
-                  "width": "fill_container"
-                },
-                "zVxku": {
-                  "x": 345
-                },
-                "z9JR0": {
-                  "width": "fill_container",
-                  "height": "fill_container"
-                },
-                "FMQ1D": {
-                  "width": "fill_container"
-                },
-                "ejXWl": {
-                  "x": 127
-                },
-                "4lDXb": {
-                  "width": "fill_container",
-                  "y": 496
-                },
-                "TgpXX": {
-                  "width": "fill_container"
-                },
-                "MfjLR": {
-                  "x": 296
-                }
-              }
-            }
-          ]
         }
       ]
     },
@@ -21281,7 +21218,59 @@
     },
     {
       "type": "frame",
-      "id": "CnJJm",
+      "id": "13tHZ",
+      "x": 7700,
+      "y": 220,
+      "name": "Badge/ManualEstimate",
+      "reusable": true,
+      "fill": "$--info-bg",
+      "cornerRadius": 4,
+      "padding": [
+        4,
+        10
+      ],
+      "children": [
+        {
+          "type": "text",
+          "id": "1ND11",
+          "name": "label",
+          "fill": "$--info-emphasis",
+          "content": "Manual",
+          "fontFamily": "Space Grotesk",
+          "fontSize": 11,
+          "fontWeight": "600"
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "RNbuX",
+      "x": 7700,
+      "y": 260,
+      "name": "Badge/AIEstimate",
+      "reusable": true,
+      "fill": "$--success-bg",
+      "cornerRadius": 4,
+      "padding": [
+        4,
+        10
+      ],
+      "children": [
+        {
+          "type": "text",
+          "id": "aCp8F",
+          "name": "label",
+          "fill": "$--success",
+          "content": "AI",
+          "fontFamily": "Space Grotesk",
+          "fontSize": 11,
+          "fontWeight": "600"
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "3Vv36",
       "x": 13200,
       "y": 0,
       "name": "ChatFAB",
@@ -21295,7 +21284,7 @@
       "children": [
         {
           "type": "text",
-          "id": "tUbrN",
+          "id": "OKRog",
           "name": "icon",
           "fill": "$--primary-foreground",
           "content": "◎",
@@ -21307,7 +21296,7 @@
     },
     {
       "type": "frame",
-      "id": "PPFO7",
+      "id": "CNdk0",
       "x": 13200,
       "y": 80,
       "name": "ChatBubble/User",
@@ -21324,7 +21313,7 @@
       "children": [
         {
           "type": "text",
-          "id": "Uiexv",
+          "id": "BiYcd",
           "name": "message",
           "fill": "$--primary-foreground",
           "content": "How many study hours left?",
@@ -21336,7 +21325,7 @@
     },
     {
       "type": "frame",
-      "id": "QZVZa",
+      "id": "1eXXk",
       "x": 13200,
       "y": 180,
       "name": "ChatBubble/AI",
@@ -21358,7 +21347,7 @@
       "children": [
         {
           "type": "text",
-          "id": "tLLqy",
+          "id": "jp9Pm",
           "name": "sender",
           "fill": "$--accent",
           "content": "TimeMaxx AI",
@@ -21368,7 +21357,7 @@
         },
         {
           "type": "text",
-          "id": "GbSqk",
+          "id": "aH5zA",
           "name": "message",
           "fill": "$--foreground",
           "content": "You have 4.5 hours available this week.",
@@ -21380,7 +21369,7 @@
     },
     {
       "type": "frame",
-      "id": "VrSl5",
+      "id": "IwDgd",
       "x": 13200,
       "y": 320,
       "name": "ChatOverlay",
@@ -21398,7 +21387,7 @@
       "children": [
         {
           "type": "frame",
-          "id": "ZcIdy",
+          "id": "BcWKl",
           "name": "header",
           "width": "fill_container",
           "height": 56,
@@ -21412,7 +21401,7 @@
           "children": [
             {
               "type": "text",
-              "id": "fPY0k",
+              "id": "GwDgv",
               "name": "title",
               "fill": "$--primary-foreground",
               "content": "TimeMaxx AI",
@@ -21422,7 +21411,7 @@
             },
             {
               "type": "text",
-              "id": "zVxku",
+              "id": "9yjh9",
               "name": "close",
               "fill": "$--primary-foreground",
               "content": "✕",
@@ -21434,7 +21423,7 @@
         },
         {
           "type": "frame",
-          "id": "z9JR0",
+          "id": "FBpOm",
           "name": "messages",
           "width": "fill_container",
           "height": "fill_container",
@@ -21445,7 +21434,7 @@
           "children": [
             {
               "type": "frame",
-              "id": "ThIFL",
+              "id": "KM13I",
               "name": "aiMessage1",
               "fill": "$--card",
               "cornerRadius": 12,
@@ -21463,7 +21452,7 @@
               "children": [
                 {
                   "type": "text",
-                  "id": "kWMdD",
+                  "id": "HZ1yj",
                   "name": "sender",
                   "fill": "$--accent",
                   "content": "TimeMaxx AI",
@@ -21473,7 +21462,7 @@
                 },
                 {
                   "type": "text",
-                  "id": "v20XE",
+                  "id": "ROepc",
                   "name": "message",
                   "fill": "$--foreground",
                   "content": "Hi! I can help you plan your study schedule.",
@@ -21485,14 +21474,14 @@
             },
             {
               "type": "frame",
-              "id": "FMQ1D",
+              "id": "miqC5",
               "name": "userMessage1Row",
               "width": "fill_container",
               "justifyContent": "end",
               "children": [
                 {
                   "type": "frame",
-                  "id": "ejXWl",
+                  "id": "xYg6X",
                   "name": "userMessage1",
                   "fill": "$--primary",
                   "cornerRadius": 12,
@@ -21504,7 +21493,7 @@
                   "children": [
                     {
                       "type": "text",
-                      "id": "efhuu",
+                      "id": "yArzn",
                       "name": "message",
                       "fill": "$--primary-foreground",
                       "content": "How many hours do I have left?",
@@ -21520,7 +21509,7 @@
         },
         {
           "type": "frame",
-          "id": "4lDXb",
+          "id": "clqN2",
           "name": "inputArea",
           "width": "fill_container",
           "height": 64,
@@ -21534,7 +21523,7 @@
           "children": [
             {
               "type": "frame",
-              "id": "TgpXX",
+              "id": "MeveO",
               "name": "input",
               "width": "fill_container",
               "height": 40,
@@ -21553,7 +21542,7 @@
               "children": [
                 {
                   "type": "text",
-                  "id": "L1abq",
+                  "id": "BSyVq",
                   "name": "placeholder",
                   "fill": "$--light-muted",
                   "content": "Ask me anything…",
@@ -21564,7 +21553,7 @@
               ]
             },
             {
-              "id": "MfjLR",
+              "id": "2tuNX",
               "type": "ref",
               "ref": "Xdrqk",
               "name": "send",
@@ -21574,639 +21563,12 @@
               "y": 12,
               "descendants": {
                 "vxzyR": {
-                  "x": 18.5,
-                  "y": 11,
-                  "content": "Send"
+                  "x": 12.5,
+                  "y": 11
                 }
               }
             }
           ]
-        }
-      ]
-    },
-    {
-      "type": "frame",
-      "id": "msUEf",
-      "x": 3040,
-      "y": 1000,
-      "name": "Dashboard – Chat Open",
-      "width": 1440,
-      "height": 900,
-      "fill": "$--background",
-      "children": [
-        {
-          "type": "frame",
-          "id": "1U4Nh",
-          "name": "dashBg",
-          "width": 1440,
-          "height": 900,
-          "fill": "#F5F7FA",
-          "children": [
-            {
-              "id": "MeqLp",
-              "type": "ref",
-              "ref": "GeaRV",
-              "name": "sidebar",
-              "height": "fill_container",
-              "x": 0,
-              "y": 0,
-              "descendants": {
-                "pM9zH": {
-                  "width": "fill_container",
-                  "height": "fit_content",
-                  "x": 24,
-                  "y": 32
-                },
-                "qwLOb": {
-                  "width": "fit_content",
-                  "height": "fit_content",
-                  "x": 0
-                },
-                "qwLOb/NZ5gH": {
-                  "x": 5,
-                  "y": 5
-                },
-                "qwLOb/6YpiG": {
-                  "x": 42,
-                  "y": 4.5
-                },
-                "99Oq1": {
-                  "width": "fill_container",
-                  "height": "fit_content",
-                  "y": 64
-                },
-                "t2ejm": {
-                  "width": "fill_container",
-                  "x": 0,
-                  "y": 0
-                },
-                "t2ejm/r853k": {
-                  "x": 14,
-                  "y": 14
-                },
-                "t2ejm/yUJUI": {
-                  "x": 40,
-                  "y": 13
-                },
-                "dLWqu": {
-                  "width": "fill_container",
-                  "x": 0,
-                  "y": 48
-                },
-                "dLWqu/j0EVc": {
-                  "x": 14,
-                  "y": 14
-                },
-                "dLWqu/Xkhsc": {
-                  "x": 40,
-                  "y": 13
-                },
-                "CsmwL": {
-                  "width": "fill_container",
-                  "y": 96
-                },
-                "CsmwL/LcMND": {
-                  "x": 14,
-                  "y": 14
-                },
-                "CsmwL/RN0HO": {
-                  "x": 40,
-                  "y": 13
-                },
-                "CsmwL/b9JOw": {
-                  "width": "fill_container",
-                  "x": 114,
-                  "y": 21.5
-                },
-                "CsmwL/SkVpR": {
-                  "x": 190,
-                  "y": 18
-                },
-                "78Cxh": {
-                  "width": "fill_container",
-                  "x": 0,
-                  "y": 144
-                },
-                "78Cxh/j0EVc": {
-                  "x": 14,
-                  "y": 14
-                },
-                "78Cxh/Xkhsc": {
-                  "x": 40,
-                  "y": 13
-                },
-                "jzFAO": {
-                  "width": "fit_content",
-                  "height": "fit_content",
-                  "x": 24,
-                  "y": 832
-                },
-                "lrM5h": {
-                  "x": 9.5,
-                  "y": 9.5
-                },
-                "LBXyg": {
-                  "width": "fit_content",
-                  "height": "fit_content",
-                  "x": 46,
-                  "y": 2
-                },
-                "AqSvO": {
-                  "y": 19
-                }
-              }
-            },
-            {
-              "type": "frame",
-              "id": "Q0X3P",
-              "name": "main",
-              "width": "fill_container",
-              "height": "fill_container",
-              "layout": "vertical",
-              "gap": 28,
-              "padding": 40,
-              "children": [
-                {
-                  "type": "frame",
-                  "id": "fKaRj",
-                  "name": "pageHeader",
-                  "width": "fill_container",
-                  "justifyContent": "space_between",
-                  "alignItems": "center",
-                  "children": [
-                    {
-                      "type": "frame",
-                      "id": "vMsbI",
-                      "name": "headerLeft",
-                      "layout": "vertical",
-                      "gap": 4,
-                      "children": [
-                        {
-                          "type": "text",
-                          "id": "xuFhC",
-                          "name": "headerTitle",
-                          "fill": "#002D72",
-                          "content": "Good morning, Alex",
-                          "fontFamily": "Space Grotesk",
-                          "fontSize": 28,
-                          "fontWeight": "700"
-                        },
-                        {
-                          "type": "text",
-                          "id": "1CYbX",
-                          "name": "headerSub",
-                          "fill": "#4E6A8C",
-                          "content": "Thursday, February 26 · 3 tasks due this week",
-                          "fontFamily": "Inter",
-                          "fontSize": 14,
-                          "fontWeight": "normal"
-                        }
-                      ]
-                    },
-                    {
-                      "id": "YzyrQ",
-                      "type": "ref",
-                      "ref": "tIwJu",
-                      "name": "addTaskBtn",
-                      "width": "fit_content",
-                      "x": 975,
-                      "y": 6.5,
-                      "descendants": {
-                        "hXb93": {
-                          "iconFontName": "plus",
-                          "x": 20,
-                          "y": 14
-                        },
-                        "RxGN2": {
-                          "content": "Add Task",
-                          "x": 44,
-                          "y": 13
-                        }
-                      }
-                    }
-                  ]
-                },
-                {
-                  "type": "frame",
-                  "id": "zwmiU",
-                  "name": "statsRow",
-                  "width": "fill_container",
-                  "gap": 16,
-                  "children": [
-                    {
-                      "id": "fB7wG",
-                      "type": "ref",
-                      "ref": "yMD7j",
-                      "name": "stat1",
-                      "width": "fill_container",
-                      "height": "fit_content",
-                      "x": 0,
-                      "y": 0,
-                      "descendants": {
-                        "oMHR7": {
-                          "content": "Tasks This Week",
-                          "x": 20,
-                          "y": 20
-                        },
-                        "7XF3C": {
-                          "content": "8",
-                          "x": 20,
-                          "y": 43
-                        },
-                        "5SwIp": {
-                          "width": "fit_content",
-                          "height": "fit_content",
-                          "x": 20,
-                          "y": 97
-                        },
-                        "hlOCO": {
-                          "y": 3.5
-                        },
-                        "xeZJ4": {
-                          "content": "3 completed",
-                          "x": 12
-                        }
-                      }
-                    },
-                    {
-                      "id": "FqpqW",
-                      "type": "ref",
-                      "ref": "yMD7j",
-                      "name": "stat2",
-                      "width": "fill_container",
-                      "height": "fit_content",
-                      "x": 372,
-                      "y": 0,
-                      "descendants": {
-                        "oMHR7": {
-                          "content": "Estimated Hours",
-                          "x": 20,
-                          "y": 20
-                        },
-                        "7XF3C": {
-                          "content": "14.5",
-                          "x": 20,
-                          "y": 43
-                        },
-                        "5SwIp": {
-                          "width": "fit_content",
-                          "height": "fit_content",
-                          "x": 20,
-                          "y": 97
-                        },
-                        "hlOCO": {
-                          "fill": "$--info",
-                          "y": 3.5
-                        },
-                        "xeZJ4": {
-                          "fill": "$--info",
-                          "content": "AI estimated",
-                          "x": 12
-                        }
-                      }
-                    },
-                    {
-                      "id": "SXYx6",
-                      "type": "ref",
-                      "ref": "UpqxB",
-                      "name": "stat3",
-                      "width": "fill_container",
-                      "height": "fit_content",
-                      "x": 744,
-                      "y": 0,
-                      "descendants": {
-                        "uflvb": {
-                          "content": "Study Streak",
-                          "x": 20,
-                          "y": 20
-                        },
-                        "EwvQz": {
-                          "content": "7",
-                          "x": 20,
-                          "y": 43
-                        },
-                        "K1bdi": {
-                          "width": "fit_content",
-                          "height": "fit_content",
-                          "x": 20,
-                          "y": 97
-                        },
-                        "7s2Pz": {
-                          "y": 3.5
-                        },
-                        "VPUFt": {
-                          "content": "days in a row",
-                          "x": 12
-                        }
-                      }
-                    }
-                  ]
-                },
-                {
-                  "type": "frame",
-                  "id": "HH7eS",
-                  "name": "columns",
-                  "width": "fill_container",
-                  "height": "fill_container",
-                  "gap": 24,
-                  "children": [
-                    {
-                      "type": "frame",
-                      "id": "RsFCk",
-                      "name": "taskCol",
-                      "width": "fill_container",
-                      "layout": "vertical",
-                      "gap": 16,
-                      "children": [
-                        {
-                          "type": "text",
-                          "id": "bom4a",
-                          "name": "taskColTitle",
-                          "fill": "#002D72",
-                          "content": "Upcoming Tasks",
-                          "fontFamily": "Space Grotesk",
-                          "fontSize": 16,
-                          "fontWeight": "700"
-                        },
-                        {
-                          "id": "VBeJr",
-                          "type": "ref",
-                          "ref": "f6r4k",
-                          "name": "task1",
-                          "width": "fill_container",
-                          "height": "fit_content",
-                          "x": 0,
-                          "y": 36,
-                          "descendants": {
-                            "xSyvj": {
-                              "x": 18,
-                              "y": 16
-                            },
-                            "irAAT": {
-                              "width": "fit_content",
-                              "height": "fit_content",
-                              "x": 36,
-                              "y": 17.5
-                            },
-                            "x5jOH": {
-                              "content": "Calculus Problem Set 5"
-                            },
-                            "ks9wy": {
-                              "content": "Due tomorrow · ~2.5 hrs estimated",
-                              "y": 22
-                            },
-                            "fwllh": {
-                              "width": "fit_content",
-                              "height": "fit_content",
-                              "x": 247,
-                              "y": 25
-                            },
-                            "fwllh/RDasw": {
-                              "x": 10,
-                              "y": 4
-                            }
-                          }
-                        },
-                        {
-                          "id": "ENXIV",
-                          "type": "ref",
-                          "ref": "f6r4k",
-                          "name": "task2",
-                          "width": "fill_container",
-                          "height": "fit_content",
-                          "x": 0,
-                          "y": 124,
-                          "descendants": {
-                            "xSyvj": {
-                              "fill": "$--info",
-                              "x": 18,
-                              "y": 16
-                            },
-                            "irAAT": {
-                              "width": "fit_content",
-                              "height": "fit_content",
-                              "x": 36,
-                              "y": 17.5
-                            },
-                            "x5jOH": {
-                              "content": "History Essay: Industrial Revolution"
-                            },
-                            "ks9wy": {
-                              "content": "Due in 3 days · ~4 hrs estimated",
-                              "y": 22
-                            },
-                            "fwllh": {
-                              "id": "lii85",
-                              "type": "ref",
-                              "ref": "9qrvT",
-                              "name": "badge",
-                              "width": "fit_content",
-                              "height": "fit_content",
-                              "x": 290,
-                              "y": 25,
-                              "descendants": {
-                                "adDaz": {
-                                  "x": 10,
-                                  "y": 4
-                                }
-                              }
-                            }
-                          }
-                        },
-                        {
-                          "id": "AH2Xl",
-                          "type": "ref",
-                          "ref": "f6r4k",
-                          "name": "task3",
-                          "width": "fill_container",
-                          "height": "fit_content",
-                          "x": 0,
-                          "y": 212,
-                          "descendants": {
-                            "xSyvj": {
-                              "fill": "$--success",
-                              "x": 18,
-                              "y": 16
-                            },
-                            "irAAT": {
-                              "width": "fit_content",
-                              "height": "fit_content",
-                              "x": 36,
-                              "y": 17.5
-                            },
-                            "x5jOH": {
-                              "content": "Chemistry Lab Report"
-                            },
-                            "ks9wy": {
-                              "content": "Due in 5 days · ~3 hrs estimated",
-                              "y": 22
-                            },
-                            "fwllh": {
-                              "id": "3brWu",
-                              "type": "ref",
-                              "ref": "YOta6",
-                              "name": "badge",
-                              "width": "fit_content",
-                              "height": "fit_content",
-                              "x": 233,
-                              "y": 25,
-                              "descendants": {
-                                "ezeW9": {
-                                  "x": 10,
-                                  "y": 4
-                                }
-                              }
-                            }
-                          }
-                        }
-                      ]
-                    },
-                    {
-                      "type": "frame",
-                      "id": "VEs4k",
-                      "name": "scheduleCol",
-                      "width": 300,
-                      "layout": "vertical",
-                      "gap": 16,
-                      "children": [
-                        {
-                          "type": "text",
-                          "id": "Oj3Le",
-                          "name": "schedColHeader",
-                          "fill": "#002D72",
-                          "content": "Today's Schedule",
-                          "fontFamily": "Space Grotesk",
-                          "fontSize": 16,
-                          "fontWeight": "700"
-                        },
-                        {
-                          "id": "CnJ5b",
-                          "type": "ref",
-                          "ref": "mGYEk",
-                          "name": "schedBlock1",
-                          "width": "fill_container",
-                          "height": "fit_content",
-                          "x": 0,
-                          "y": 36,
-                          "descendants": {
-                            "5gvFR": {
-                              "content": "9:00 AM – 10:30 AM",
-                              "x": 18,
-                              "y": 16
-                            },
-                            "TnhIo": {
-                              "content": "Calculus Problem Set 5",
-                              "x": 18,
-                              "y": 35
-                            },
-                            "HkeGx": {
-                              "content": "1.5 hrs · Focus block",
-                              "x": 18,
-                              "y": 58
-                            }
-                          }
-                        },
-                        {
-                          "id": "7HHeS",
-                          "type": "ref",
-                          "ref": "kdXz7",
-                          "name": "schedBlock2",
-                          "width": "fill_container",
-                          "height": "fit_content",
-                          "x": 0,
-                          "y": 141,
-                          "descendants": {
-                            "ephls": {
-                              "content": "2:00 PM – 3:00 PM",
-                              "x": 18,
-                              "y": 16
-                            },
-                            "s6t53": {
-                              "content": "History Essay",
-                              "x": 18,
-                              "y": 35
-                            },
-                            "G8o9F": {
-                              "content": "1 hr · Focus block",
-                              "x": 18,
-                              "y": 58
-                            }
-                          }
-                        },
-                        {
-                          "id": "Ml5hG",
-                          "type": "ref",
-                          "ref": "kdXz7",
-                          "name": "schedBlock3",
-                          "width": "fill_container",
-                          "height": "fit_content",
-                          "x": 0,
-                          "y": 246,
-                          "descendants": {
-                            "ephls": {
-                              "content": "6:00 PM – 7:00 PM",
-                              "x": 18,
-                              "y": 16
-                            },
-                            "s6t53": {
-                              "content": "Chemistry Lab Report",
-                              "x": 18,
-                              "y": 35
-                            },
-                            "G8o9F": {
-                              "content": "1 hr · Focus block",
-                              "x": 18,
-                              "y": 58
-                            }
-                          }
-                        },
-                        {
-                          "id": "1HSJI",
-                          "type": "ref",
-                          "ref": "SO0nX",
-                          "name": "geminiChip",
-                          "width": "fill_container",
-                          "height": "fit_content",
-                          "x": 0,
-                          "y": 351,
-                          "descendants": {
-                            "K3qRc": {
-                              "x": 14,
-                              "y": 12
-                            },
-                            "xTJtL": {
-                              "x": 36,
-                              "y": 12.5
-                            }
-                          }
-                        }
-                      ]
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "id": "czPum",
-          "type": "ref",
-          "ref": "CnJJm",
-          "name": "chatFAB",
-          "x": 1440,
-          "y": 0,
-          "width": 56,
-          "height": 56
-        },
-        {
-          "id": "iZunD",
-          "type": "ref",
-          "ref": "VrSl5",
-          "name": "chatOverlay",
-          "x": 1496,
-          "y": 0,
-          "width": 380,
-          "height": 560
         }
       ]
     }
