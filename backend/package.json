@@ -2,7 +2,8 @@
   "dependencies": {
     "@ai-sdk/google": "^1.2.22",
     "@mastra/client-js": "^0.17.2",
-    "ai": "^4.3.19"
+    "ai": "^4.3.19",
+    "hono": "^4.12.12"
   },
   "devDependencies": {
     "@libsql/client": "^0.17.2"

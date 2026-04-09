@@ -1,89 +1,96 @@
 import { httpRouter } from "convex/server";
-import { httpAction } from "./_generated/server";
+import type { Hono } from "hono";
 import { auth } from "./auth";
-import { calendarOAuthCallback } from "./calendarOAuthCallback";
+import { httpAction } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
-import { internal } from "./_generated/api";
-import { MastraClient } from "@mastra/client-js";
+import type { Id } from "./_generated/dataModel";
+import type { ActionCtx } from "./_generated/server";
+import chatApp from "./http_chat";
+
+type HonoEnv = {
+  Bindings: {
+    ctx: ActionCtx;
+    userId: Id<"users">;
+  };
+};
 
 const http = httpRouter();
+
+// ── Auth routes (required by @convex-dev/auth) ──────────────────
 auth.addHttpRoutes(http);
 
-http.route({
-  path: "/api/calendar/callback",
-  method: "GET",
-  handler: calendarOAuthCallback,
-});
+// ── Shared handler factory ──────────────────────────────────────
 
-function corsHeaders(req: Request) {
-  const origin = req.headers.get("Origin") ?? process.env.SITE_URL ?? "http://localhost:5173";
-  return {
-    "Access-Control-Allow-Origin": origin,
-    "Access-Control-Allow-Credentials": "true",
-  };
-}
+function makeApiHandler(app: Hono<HonoEnv>, path: string) {
+  const handler = httpAction(async (ctx, request) => {
+    if (request.method === "OPTIONS") {
+      return new Response(null, {
+        status: 204,
+        headers: corsHeaders(),
+      });
+    }
 
-http.route({
-  path: "/api/chat",
-  method: "POST",
-  handler: httpAction(async (ctx, req) => {
-    const cors = corsHeaders(req);
+    let userId: Id<"users"> | null = null;
     try {
-      let userId;
-      try {
-        userId = await getAuthUserId(ctx);
-      } catch {
-        return new Response("Unauthorized", { status: 401, headers: cors });
+      userId = await getAuthUserId(ctx) as Id<"users"> | null;
+    } catch {
+      // invalid token — fall through to 401
+    }
+    if (!userId) {
+      return new Response(JSON.stringify({ error: "Not authenticated" }), {
+        status: 401,
+        headers: { ...corsHeaders(), "Content-Type": "application/json" },
+      });
+    }
+
+    const env = { ctx, userId };
+
+    const url = new URL(request.url);
+    url.pathname = path;
+    const rewritten = new Request(url.toString(), request);
+
+    try {
+      const response = await app.fetch(rewritten, env);
+
+      const headers = new Headers(response.headers);
+      for (const [key, value] of Object.entries(corsHeaders())) {
+        headers.set(key, value);
       }
-      if (!userId) return new Response("Unauthorized", { status: 401, headers: cors });
 
-      const { message } = await req.json() as { message: string };
-      if (!message?.trim()) return new Response("Bad Request", { status: 400, headers: cors });
-
-      await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
-        userId,
-        role: "user",
-        content: message,
-      });
-
-      const mastraUrl = process.env.MASTRA_URL ?? "http://localhost:4112";
-      const client = new MastraClient({ baseUrl: mastraUrl });
-      const agent = client.getAgent("chat-agent");
-      const result = await agent.generate({ messages: [{ role: "user", content: message }] });
-      const aiText = result.text ?? "";
-
-      await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
-        userId,
-        role: "assistant",
-        content: aiText,
-      });
-
-      return new Response(JSON.stringify({ text: aiText }), {
-        headers: { "Content-Type": "application/json", ...cors },
+      return new Response(response.body, {
+        status: response.status,
+        statusText: response.statusText,
+        headers,
       });
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      console.error("[/api/chat] error:", msg);
+      console.error(`[${path}] error:`, msg);
       return new Response(JSON.stringify({ error: msg }), {
         status: 500,
-        headers: { "Content-Type": "application/json", ...cors },
+        headers: { ...corsHeaders(), "Content-Type": "application/json" },
       });
     }
-  }),
-});
+  });
 
-http.route({
-  path: "/api/chat",
-  method: "OPTIONS",
-  handler: httpAction(async (_ctx, req) => {
-    return new Response(null, {
-      headers: {
-        ...corsHeaders(req),
-        "Access-Control-Allow-Methods": "POST, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type, Authorization",
-      },
-    });
-  }),
-});
+  http.route({ path, method: "POST", handler });
+  http.route({ path, method: "OPTIONS", handler });
+}
+
+// ── API endpoints ───────────────────────────────────────────────
+
+makeApiHandler(chatApp, "/api/chat");
+
+// ── CORS helpers ────────────────────────────────────────────────
+
+function corsHeaders(): Record<string, string> {
+  const origin = process.env.SITE_URL ?? "http://localhost:5173";
+  return {
+    "Access-Control-Allow-Origin": origin,
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Allow-Credentials": "true",
+    "Access-Control-Max-Age": "86400",
+  };
+}
 
 export default http;

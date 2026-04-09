@@ -21,6 +21,7 @@ import type * as ai_uploadSyllabus from "../ai/uploadSyllabus.js";
 import type * as auth from "../auth.js";
 import type * as calendarOAuthCallback from "../calendarOAuthCallback.js";
 import type * as http from "../http.js";
+import type * as http_chat from "../http_chat.js";
 import type * as lib_calendarCrypto from "../lib/calendarCrypto.js";
 import type * as lib_classTagUtils from "../lib/classTagUtils.js";
 import type * as lib_courseColors from "../lib/courseColors.js";
@@ -65,6 +66,7 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   calendarOAuthCallback: typeof calendarOAuthCallback;
   http: typeof http;
+  http_chat: typeof http_chat;
   "lib/calendarCrypto": typeof lib_calendarCrypto;
   "lib/classTagUtils": typeof lib_classTagUtils;
   "lib/courseColors": typeof lib_courseColors;
