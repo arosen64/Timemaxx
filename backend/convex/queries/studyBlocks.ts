@@ -133,9 +133,18 @@ export const getFutureStudyBlocksForExport = internalQuery({
       startTime: string;
       studyBlockLength: number;
       googleEventId: string | undefined;
+      courseColor: string | undefined;
     }> = [];
 
+    const uniqueCourseIds = [...new Set(tasks.map((t) => t.courseId).filter(Boolean))];
+    const courseMap = new Map<string, { color?: string }>();
+    for (const courseId of uniqueCourseIds) {
+      const course = await ctx.db.get(courseId as Id<"userCourses">);
+      if (course) courseMap.set(courseId as string, course);
+    }
+
     for (const task of tasks) {
+      const courseColor = task.courseId ? courseMap.get(task.courseId)?.color : undefined;
       const blocks = await ctx.db
         .query("studyBlocks")
         .withIndex("by_taskId", (q) => q.eq("taskId", task._id))
@@ -150,6 +159,7 @@ export const getFutureStudyBlocksForExport = internalQuery({
           startTime: block.startTime,
           studyBlockLength: block.studyBlockLength,
           googleEventId: block.googleEventId,
+          courseColor,
         });
       }
     }

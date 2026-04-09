@@ -9,6 +9,38 @@ import { decryptToken, encryptToken } from "../lib/calendarCrypto";
 const GOOGLE_CALENDAR_API = "https://www.googleapis.com/calendar/v3";
 const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
 
+// GCal preset colors with their colorId and approximate RGB values
+const GCAL_COLORS: Array<{ id: string; r: number; g: number; b: number }> = [
+  { id: "1",  r: 121, g: 134, b: 203 }, // Lavender
+  { id: "2",  r:  51, g: 182, b: 121 }, // Sage
+  { id: "3",  r: 142, g:  36, b: 170 }, // Grape
+  { id: "4",  r: 230, g: 124, b: 115 }, // Flamingo
+  { id: "5",  r: 246, g: 191, b:  38 }, // Banana
+  { id: "6",  r: 244, g:  81, b:  30 }, // Tangerine
+  { id: "7",  r:   3, g: 155, b: 229 }, // Peacock
+  { id: "8",  r:  97, g:  97, b:  97 }, // Graphite
+  { id: "9",  r:  63, g:  81, b: 181 }, // Blueberry
+  { id: "10", r:  11, g: 128, b:  67 }, // Basil
+  { id: "11", r: 213, g:   0, b:   0 }, // Tomato
+];
+
+function hexToGcalColorId(hex: string): string | undefined {
+  const clean = hex.replace("#", "");
+  if (clean.length !== 6) return undefined;
+  const r = parseInt(clean.slice(0, 2), 16);
+  const g = parseInt(clean.slice(2, 4), 16);
+  const b = parseInt(clean.slice(4, 6), 16);
+  if (isNaN(r) || isNaN(g) || isNaN(b)) return undefined;
+
+  let bestId = GCAL_COLORS[0].id;
+  let bestDist = Infinity;
+  for (const c of GCAL_COLORS) {
+    const dist = (r - c.r) ** 2 + (g - c.g) ** 2 + (b - c.b) ** 2;
+    if (dist < bestDist) { bestDist = dist; bestId = c.id; }
+  }
+  return bestId;
+}
+
 /**
  * Upserts the authenticated user's future study blocks into Google Calendar.
  * - Blocks without a googleEventId are created as new GCal events.
@@ -48,10 +80,12 @@ export const exportStudyBlocksToCalendar = action({
         new Date(block.startTime).getTime() + block.studyBlockLength * 60 * 1000,
       ).toISOString();
 
-      const eventBody = {
+      const colorId = block.courseColor ? hexToGcalColorId(block.courseColor) : undefined;
+      const eventBody: Record<string, unknown> = {
         summary: block.title,
         start: { dateTime: block.startTime },
         end: { dateTime: endTime },
+        ...(colorId && { colorId }),
       };
 
       if (!block.googleEventId) {
