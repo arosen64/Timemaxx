@@ -28,7 +28,7 @@ chatApp.post("/api/chat", async (c) => {
     content: message,
   });
 
-  const mastraUrl = process.env.MASTRA_URL ?? "http://localhost:4112";
+  const mastraUrl = process.env.MASTRA_URL!;
   const client = new MastraClient({ baseUrl: mastraUrl });
   const agent = client.getAgent("chatAgent");
   const result = await agent.generate({ messages: [{ role: "user", content: message }] });
