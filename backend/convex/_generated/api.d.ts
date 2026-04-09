@@ -9,6 +9,7 @@
  */
 
 import type * as actions_autoRescheduleConflicts from "../actions/autoRescheduleConflicts.js";
+import type * as actions_exportStudyBlocksToCalendar from "../actions/exportStudyBlocksToCalendar.js";
 import type * as actions_fetchCalendarEvents from "../actions/fetchCalendarEvents.js";
 import type * as actions_getCalendarAvailability from "../actions/getCalendarAvailability.js";
 import type * as actions_initiateGoogleCalendarOAuth from "../actions/initiateGoogleCalendarOAuth.js";
@@ -51,6 +52,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   "actions/autoRescheduleConflicts": typeof actions_autoRescheduleConflicts;
+  "actions/exportStudyBlocksToCalendar": typeof actions_exportStudyBlocksToCalendar;
   "actions/fetchCalendarEvents": typeof actions_fetchCalendarEvents;
   "actions/getCalendarAvailability": typeof actions_getCalendarAvailability;
   "actions/initiateGoogleCalendarOAuth": typeof actions_initiateGoogleCalendarOAuth;
