@@ -136,6 +136,7 @@ export default defineSchema({
     studyBlockLength: v.number(),
     isConflicted: v.optional(v.boolean()),
     googleEventId: v.optional(v.string()),
+    needsExport: v.optional(v.boolean()),
   })
     .index("by_taskId", ["taskId"])
     .index("by_subtaskId", ["subtaskId"]),

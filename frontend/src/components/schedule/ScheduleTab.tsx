@@ -26,6 +26,8 @@ type StudyBlockWithTask = {
   startTime: string | undefined
   studyBlockLength: number
   isConflicted: boolean | undefined
+  googleEventId?: string
+  needsExport?: boolean
   taskTitle: string
   taskDueDate: number
   courseColor?: string
@@ -333,6 +335,15 @@ export default function ScheduleTab() {
 
   const hasIndicator = calendarConnected && (!selectedCalendarIds || selectedCalendarIds.length === 0)
 
+  const pendingExportCount = useMemo(() => {
+    if (!calendarConnected) return 0
+    return (allStudyBlocks ?? []).filter((b) => {
+      if (!b.startTime) return false
+      // needsExport explicitly true, or never exported (no googleEventId and needsExport not yet set)
+      return b.needsExport === true || (b.needsExport === undefined && !b.googleEventId)
+    }).length
+  }, [allStudyBlocks, calendarConnected])
+
   return (
     <div
       className="flex flex-col flex-1 min-h-0 min-w-0"
@@ -451,6 +462,15 @@ export default function ScheduleTab() {
           >
             ✕
           </button>
+        </div>
+      )}
+
+      {pendingExportCount > 0 && (
+        <div className="mb-3 flex items-center gap-2 rounded-lg border border-sky-blue bg-info-bg px-4 py-2 text-sm text-navy">
+          <CalendarIcon color="#005A8E" size={14} />
+          <span>
+            {pendingExportCount} block{pendingExportCount !== 1 ? 's' : ''} added or moved — export to sync with Google Calendar.
+          </span>
         </div>
       )}
 

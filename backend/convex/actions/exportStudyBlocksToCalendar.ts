@@ -95,6 +95,9 @@ export const exportStudyBlocksToCalendar = action({
           },
         );
         if (!res.ok) continue;
+        await ctx.runMutation(internal.mutations.studyBlocks.clearNeedsExport, {
+          studyBlockId: block._id,
+        });
         patched++;
       }
     }

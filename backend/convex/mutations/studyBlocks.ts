@@ -183,6 +183,7 @@ export const editStudyBlockTime = mutation({
     await ctx.db.patch(args.studyBlockId, {
       startTime: args.startTime ?? undefined,
       isConflicted: false,
+      needsExport: args.startTime !== null,
     });
   },
 });
@@ -193,7 +194,14 @@ export const setGoogleEventId = internalMutation({
     googleEventId: v.string(),
   },
   handler: async (ctx, args) => {
-    await ctx.db.patch(args.studyBlockId, { googleEventId: args.googleEventId });
+    await ctx.db.patch(args.studyBlockId, { googleEventId: args.googleEventId, needsExport: false });
+  },
+});
+
+export const clearNeedsExport = internalMutation({
+  args: { studyBlockId: v.id("studyBlocks") },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.studyBlockId, { needsExport: false });
   },
 });
 

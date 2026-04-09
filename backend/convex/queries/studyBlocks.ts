@@ -37,6 +37,8 @@ async function fetchAllStudyBlocksWithTasks(ctx: any, userId: Id<"users">) {
     startTime: string | undefined;
     studyBlockLength: number;
     isConflicted: boolean | undefined;
+    googleEventId: string | undefined;
+    needsExport: boolean | undefined;
     taskTitle: string;
     taskDueDate: number;
     courseColor: string | undefined;
@@ -68,6 +70,8 @@ async function fetchAllStudyBlocksWithTasks(ctx: any, userId: Id<"users">) {
         startTime: block.startTime,
         studyBlockLength: block.studyBlockLength,
         isConflicted: block.isConflicted,
+        googleEventId: block.googleEventId,
+        needsExport: block.needsExport,
         taskTitle: task.title,
         taskDueDate: task.dueDate,
         courseColor,
