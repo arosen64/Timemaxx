@@ -310,10 +310,11 @@ export default function ScheduleTab() {
     <div
       className="flex flex-col flex-1 min-h-0 min-w-0"
       onClick={(e) => {
-        // Cancel assign mode when clicking outside the grid area
+        // Cancel assign/move mode when clicking outside the grid area
         const target = e.target as HTMLElement
-        if (assigningBlockId && !target.closest('[data-grid]') && !target.closest('[data-tray]')) {
-          setAssigningBlockId(null)
+        if (!target.closest('[data-grid]') && !target.closest('[data-tray]')) {
+          if (assigningBlockId) setAssigningBlockId(null)
+          if (draggingBlockId) setDraggingBlockId(null)
         }
       }}
     >
@@ -404,6 +405,13 @@ export default function ScheduleTab() {
         <div className="mb-3 flex items-center gap-2 rounded-lg border border-teal bg-teal/10 px-4 py-2 text-sm text-navy">
           <span className="font-semibold font-heading">Assign mode</span>
           <span className="text-slate-blue">Click a highlighted slot to assign. Press Esc to cancel.</span>
+        </div>
+      )}
+
+      {draggingBlockId && (
+        <div className="mb-3 flex items-center gap-2 rounded-lg border border-urgent-red-light bg-urgent-red-light/30 px-4 py-2 text-sm text-navy">
+          <span className="font-semibold font-heading">Moving conflict</span>
+          <span className="text-slate-blue">Click a highlighted slot to move the block. Press Esc to cancel.</span>
         </div>
       )}
 
