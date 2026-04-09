@@ -68,12 +68,19 @@ export const exportStudyBlocksToCalendar = action({
           },
         );
         if (!res.ok) continue;
-        const data = await res.json() as { id: string };
-        await ctx.runMutation(internal.mutations.studyBlocks.setGoogleEventId, {
-          studyBlockId: block._id,
-          googleEventId: data.id,
-        });
-        exported++;
+        const data = await res.json() as { id?: string };
+        if (!data.id) continue;
+        try {
+          await ctx.runMutation(internal.mutations.studyBlocks.setGoogleEventId, {
+            studyBlockId: block._id,
+            googleEventId: data.id,
+          });
+          exported++;
+        } catch {
+          // GCal event was created but DB write failed — skip count to avoid
+          // reporting success; next export will re-create rather than orphan.
+          continue;
+        }
       } else {
         // Patch the existing GCal event
         const res = await fetch(
