@@ -18,7 +18,6 @@ import {
   type ClassTagCourseOption,
   type TaskType,
   type EditForm,
-  BAR_COLORS,
   BADGE_MAP,
 } from '../components/dashboard'
 import { isCurrentTerm } from '../utils/termUtils'
@@ -56,6 +55,19 @@ export default function DashboardPage() {
     }
     return rows.sort((a, b) => a.courseCode.localeCompare(b.courseCode))
   }, [userCourses])
+
+  const courseColorByTag = useMemo(() => {
+    const map = new Map<string, string>()
+    if (!Array.isArray(userCourses)) return map
+    for (const c of userCourses) {
+      if (c.color && c.courseCode && c.title) {
+        map.set(buildClassTag(c.courseCode.trim(), c.title.trim()), c.color)
+      }
+    }
+    return map
+  }, [userCourses])
+
+  const FALLBACK_COLORS = ['#CF4520', '#68ACE5', '#008767']
 
   const totalEstimatedMinutes = useMemo(
     () => taskRows.reduce((sum, t) => sum + (t.timeEstimate ?? 0), 0),
@@ -353,7 +365,7 @@ export default function DashboardPage() {
                   <TaskCard
                     key={task._id}
                     task={task}
-                    barColor={BAR_COLORS[i % BAR_COLORS.length]}
+                    barColor={courseColorByTag.get(task.classTag ?? '') ?? FALLBACK_COLORS[i % FALLBACK_COLORS.length]}
                     badge={BADGE_MAP[task.taskType?.toLowerCase().replace(/\s+/g, '') ?? ''] ?? BADGE_MAP.default}
                     isEstimating={estimatingTasks.has(task._id)}
                     onEstimate={() => handleEstimateTask(task._id)}

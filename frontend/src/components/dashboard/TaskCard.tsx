@@ -29,7 +29,7 @@ export default function TaskCard({
 
   return (
     <div className="group flex min-w-0 gap-3 rounded-[10px] border border-border bg-white px-[18px] py-4 overflow-hidden">
-      <div className={`mt-0.5 h-10 w-1 shrink-0 rounded ${barColor}`} />
+      <div className="mt-0.5 h-10 w-1 shrink-0 rounded" style={{ backgroundColor: barColor }} />
 
       <div className="flex justify-between flex-1 min-w-0 gap-4">
         <div className="flex flex-col flex-1 min-w-0 gap-1">

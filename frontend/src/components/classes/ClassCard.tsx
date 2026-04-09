@@ -48,6 +48,7 @@ export default function ClassCard({
   // Color picker state
   const [currentColor, setCurrentColor] = useState(initialColor ?? '')
   const colorInputRef = useRef<HTMLInputElement>(null)
+  const colorSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Upload state (current cards only)
   const [uploadModalOpen, setUploadModalOpen] = useState(false)
@@ -160,8 +161,23 @@ export default function ClassCard({
                 type="color"
                 value={currentColor || '#002D72'}
                 className="sr-only"
-                onChange={(e) => setCurrentColor(e.target.value)}
+                onChange={(e) => {
+                  const color = e.target.value
+                  setCurrentColor(color)
+                  if (colorSaveTimeoutRef.current) clearTimeout(colorSaveTimeoutRef.current)
+                  colorSaveTimeoutRef.current = setTimeout(async () => {
+                    try {
+                      await updateUserCourse({ userCourseId: id, color })
+                    } catch {
+                      setCurrentColor(initialColor ?? '')
+                    }
+                  }, 400)
+                }}
                 onBlur={async (e) => {
+                  if (colorSaveTimeoutRef.current) {
+                    clearTimeout(colorSaveTimeoutRef.current)
+                    colorSaveTimeoutRef.current = null
+                  }
                   const color = e.target.value
                   const previousColor = currentColor
                   try {
