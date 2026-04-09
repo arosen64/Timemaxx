@@ -140,6 +140,15 @@ export default defineSchema({
     .index("by_taskId", ["taskId"])
     .index("by_subtaskId", ["subtaskId"]),
 
+  // Chat messages — stores chatbot conversation history per user
+  chatMessages: defineTable({
+    userId: v.id("users"),
+    role: v.union(v.literal("user"), v.literal("assistant")),
+    content: v.string(),
+    createdAt: v.number(),
+  })
+    .index("by_userId_createdAt", ["userId", "createdAt"]),
+
   // Syllabi table — tracks uploaded syllabus files and their processing status
   syllabi: defineTable({
     userId: v.id("users"),

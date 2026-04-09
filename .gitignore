@@ -1,5 +1,5 @@
 # Dependencies
-node_modules
+node_modules/
 
 # Test coverage (HTML + lcov)
 coverage
@@ -37,3 +37,6 @@ Thumbs.db
 opsx
 openspec*
 opsx*
+
+# Mastra generated files
+.mastra/
