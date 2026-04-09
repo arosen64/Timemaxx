@@ -1,34 +1,35 @@
-import { useState, useRef, useEffect, type KeyboardEvent } from 'react'
+import { useState } from 'react'
+import { ChatContainerRoot, ChatContainerContent, ChatContainerScrollAnchor } from './prompt-kit/chat-container'
+import { Message, MessageAvatar, MessageContent } from './prompt-kit/message'
+import { PromptInput, PromptInputTextarea, PromptInputActions } from './prompt-kit/prompt-input'
+import { ScrollButton } from './prompt-kit/scroll-button'
+import { Loader } from './prompt-kit/loader'
+import { MessageSquareIcon, XIcon } from './icons'
 import Button from './ui/Button'
-import { MessageSquareIcon, SpinnerIcon, XIcon } from './icons'
 
-interface Message {
+interface ChatMessage {
   role: 'user' | 'ai'
   content: string
 }
 
-const INITIAL_MESSAGE: Message = {
-  role: 'ai',
-  content: 'Hi! I\'m TimeMaxx AI. Ask me anything about your study schedule, tasks, or deadlines.',
-}
+const INITIAL_MESSAGES: ChatMessage[] = [
+  {
+    role: 'ai',
+    content: "Hi! I'm TimeMaxx AI. Ask me anything about your study schedule, tasks, or deadlines.",
+  },
+]
+
+const SUGGESTIONS = [
+  'How many study hours do I have left?',
+  'What tasks are due this week?',
+  'Help me prioritize my workload',
+]
 
 export default function ChatBot() {
   const [isOpen, setIsOpen] = useState(false)
-  const [messages, setMessages] = useState<Message[]>([INITIAL_MESSAGE])
+  const [messages, setMessages] = useState<ChatMessage[]>(INITIAL_MESSAGES)
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const bottomRef = useRef<HTMLDivElement>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
-
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
-
-  useEffect(() => {
-    if (isOpen) {
-      inputRef.current?.focus()
-    }
-  }, [isOpen])
 
   async function handleSend() {
     const text = input.trim()
@@ -40,96 +41,125 @@ export default function ChatBot() {
 
     try {
       // TODO: wire up to Convex action (e.g. api.actions.chat.sendMessage)
-      await new Promise((r) => setTimeout(r, 800))
+      await new Promise((r) => setTimeout(r, 900))
       setMessages((prev) => [
         ...prev,
-        { role: 'ai', content: 'I\'m still learning! Chat backend coming soon.' },
+        { role: 'ai', content: "I'm still learning! Chat backend coming soon." },
       ])
     } finally {
       setIsLoading(false)
     }
   }
 
-  function handleKeyDown(e: KeyboardEvent<HTMLInputElement>) {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      handleSend()
-    }
-  }
+  const showSuggestions = messages.length === 1 && !isLoading
 
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
-      {/* Overlay panel */}
+      {/* Overlay */}
       {isOpen && (
-        <div className="w-[380px] h-[560px] flex flex-col bg-white border border-border rounded-xl shadow-xl overflow-hidden">
+        <div className="flex w-[400px] h-[600px] flex-col rounded-2xl border border-border bg-white shadow-xl overflow-hidden">
           {/* Header */}
-          <div className="flex items-center justify-between px-5 h-14 bg-navy rounded-t-xl shrink-0">
-            <span className="font-heading text-[15px] font-semibold text-white">TimeMaxx AI</span>
+          <div className="flex h-14 shrink-0 items-center justify-between bg-navy px-5">
+            <div className="flex items-center gap-2.5">
+              <span className="h-2 w-2 rounded-full bg-teal" />
+              <span className="font-heading text-[15px] font-semibold text-white">TimeMaxx AI</span>
+            </div>
             <button
               type="button"
               onClick={() => setIsOpen(false)}
               aria-label="Close chat"
-              className="flex items-center justify-center w-7 h-7 rounded-md bg-white/10 hover:bg-white/20 transition"
+              className="flex h-7 w-7 items-center justify-center rounded-md bg-white/10 hover:bg-white/20 transition"
             >
               <XIcon color="white" size={12} />
             </button>
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto flex flex-col gap-3 p-4 bg-bg-gray">
-            {messages.map((msg, i) =>
-              msg.role === 'ai' ? (
-                <div
-                  key={i}
-                  className="flex flex-col gap-1 max-w-[80%] bg-white border border-border rounded-xl px-3.5 py-2.5"
-                >
-                  <span className="font-heading text-[11px] font-semibold text-teal">
-                    TimeMaxx AI
-                  </span>
-                  <p className="font-body text-[13px] text-navy leading-relaxed m-0">{msg.content}</p>
-                </div>
-              ) : (
-                <div key={i} className="flex justify-end">
-                  <div className="max-w-[80%] bg-navy rounded-xl px-3.5 py-2.5">
-                    <p className="font-body text-[13px] text-white leading-relaxed m-0">{msg.content}</p>
+          <div className="relative flex-1 min-h-0">
+            <ChatContainerRoot className="h-full bg-bg-gray">
+              <ChatContainerContent className="gap-3 px-4 py-4">
+
+                {messages.map((msg, i) =>
+                  msg.role === 'ai' ? (
+                    <Message key={i} className="items-start">
+                      <MessageAvatar fallback="AI" />
+                      <div className="flex flex-col gap-1 max-w-[82%]">
+                        <span className="font-heading text-[11px] font-semibold text-teal px-0.5">
+                          TimeMaxx AI
+                        </span>
+                        <MessageContent className="bg-white border border-border text-navy rounded-2xl rounded-tl-sm">
+                          {msg.content}
+                        </MessageContent>
+                      </div>
+                    </Message>
+                  ) : (
+                    <Message key={i} className="justify-end">
+                      <MessageContent className="bg-navy text-white max-w-[82%] rounded-2xl rounded-tr-sm">
+                        {msg.content}
+                      </MessageContent>
+                    </Message>
+                  )
+                )}
+
+                {isLoading && (
+                  <Message className="items-start">
+                    <MessageAvatar fallback="AI" />
+                    <MessageContent className="bg-white border border-border rounded-2xl rounded-tl-sm">
+                      <Loader />
+                    </MessageContent>
+                  </Message>
+                )}
+
+                {/* Suggestions — only shown on empty conversation */}
+                {showSuggestions && (
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {SUGGESTIONS.map((s) => (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => setInput(s)}
+                        className="rounded-full border border-border bg-white px-3 py-1.5 text-[12px] font-body text-slate-blue hover:border-navy/30 hover:text-navy transition"
+                      >
+                        {s}
+                      </button>
+                    ))}
                   </div>
-                </div>
-              )
-            )}
-            {isLoading && (
-              <div className="flex flex-col gap-1 max-w-[80%] bg-white border border-border rounded-xl px-3.5 py-2.5">
-                <span className="font-heading text-[11px] font-semibold text-teal">TimeMaxx AI</span>
-                <div className="flex items-center gap-1.5 py-0.5">
-                  <SpinnerIcon color="#86C8BC" size={14} />
-                  <span className="font-body text-[13px] text-light-blue">Thinking…</span>
-                </div>
+                )}
+
+                <ChatContainerScrollAnchor />
+              </ChatContainerContent>
+
+              {/* ScrollButton must be inside ChatContainerRoot to access StickToBottom context */}
+              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-10">
+                <ScrollButton />
               </div>
-            )}
-            <div ref={bottomRef} />
+            </ChatContainerRoot>
           </div>
 
-          {/* Input area */}
-          <div className="flex items-center gap-2.5 h-16 px-3 bg-white border-t border-border shrink-0">
-            <div className="flex flex-1 items-center h-10 bg-bg-gray border border-border rounded-lg px-3.5">
-              <input
-                ref={inputRef}
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Ask me anything…"
-                disabled={isLoading}
-                className="flex-1 bg-transparent font-body text-[13px] text-navy placeholder:text-light-blue outline-none disabled:cursor-not-allowed"
-              />
-            </div>
-            <Button
-              variant="primary"
-              onClick={handleSend}
-              disabled={isLoading || !input.trim()}
-              className="w-[72px] h-10 text-sm rounded-lg shrink-0"
+          {/* Input */}
+          <div className="shrink-0 border-t border-border bg-white px-4 py-3">
+            <PromptInput
+              value={input}
+              onValueChange={setInput}
+              onSubmit={handleSend}
+              isLoading={isLoading}
+              disabled={isLoading}
             >
-              Send
-            </Button>
+              <PromptInputTextarea placeholder="Ask me anything… (Enter to send)" />
+              <PromptInputActions>
+                <Button
+                  variant="primary"
+                  onClick={handleSend}
+                  disabled={isLoading || !input.trim()}
+                  className="w-16 h-9 text-sm rounded-lg shrink-0"
+                >
+                  Send
+                </Button>
+              </PromptInputActions>
+            </PromptInput>
+            <p className="mt-1.5 text-center text-[11px] font-body text-light-blue">
+              Enter to send · Shift+Enter for new line
+            </p>
           </div>
         </div>
       )}
@@ -139,9 +169,13 @@ export default function ChatBot() {
         type="button"
         onClick={() => setIsOpen((v) => !v)}
         aria-label={isOpen ? 'Close AI chat' : 'Open AI chat'}
-        className="flex items-center justify-center w-14 h-14 rounded-full bg-navy shadow-lg hover:opacity-90 transition"
+        className="flex h-14 w-14 items-center justify-center rounded-full bg-navy shadow-lg hover:opacity-90 transition"
       >
-        <MessageSquareIcon color="white" size={22} />
+        {isOpen ? (
+          <XIcon color="white" size={16} />
+        ) : (
+          <MessageSquareIcon color="white" size={22} />
+        )}
       </button>
     </div>
   )
