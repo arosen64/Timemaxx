@@ -1,5 +1,3 @@
-"use node";
-
 import { action } from "../_generated/server";
 import { v } from "convex/values";
 import { internal, api } from "../_generated/api";
@@ -14,7 +12,7 @@ export const requestEstimateTaskTime = action({
 
     if (task.isManualEstimate) return;
 
-    await ctx.runAction(internal.actions.estimateTaskTime.estimateTaskTime, {
+    await ctx.runAction(internal.ai.estimateTaskTime.estimateTaskTime, {
       taskId: args.taskId,
     });
   },

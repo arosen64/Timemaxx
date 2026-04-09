@@ -40,7 +40,7 @@ describe("actions/uploadSyllabus - integration (real Gemini API)", () => {
     const { withAuth } = await createTestUser(t);
 
     const result = await withAuth.action(
-      api.actions.uploadSyllabus.uploadSyllabus,
+      api.ai.uploadSyllabus.uploadSyllabus,
       { fileContents: fixtureText }
     );
 

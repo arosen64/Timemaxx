@@ -14,6 +14,8 @@ vi.mock('../../backend/convex/_generated/api', () => ({
         getAvailableSchools: 'getAvailableSchools',
         getCoursesByTerm: 'getCoursesByTerm',
       },
+    },
+    ai: {
       parseTranscript: { parseTranscript: 'parseTranscript' },
     },
     mutations: {

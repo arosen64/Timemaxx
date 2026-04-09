@@ -3,25 +3,23 @@ import { api } from "../_generated/api";
 import { makeTestCtx, createTestUser } from "../../convex-tests/helpers";
 
 // ---------------------------------------------------------------------------
-// Mock @google/genai so tests never hit the real Gemini API.
+// Mock the Vercel AI SDK so tests never hit the real Gemini API.
 // ---------------------------------------------------------------------------
-const mockGenerateContent = vi.fn();
+const mockGenerateText = vi.fn();
 
-vi.mock("@google/genai", () => ({
-  GoogleGenAI: vi.fn().mockImplementation(() => ({
-    models: { generateContent: mockGenerateContent },
-  })),
-  Type: {
-    OBJECT: "OBJECT",
-    ARRAY: "ARRAY",
-    STRING: "STRING",
-    BOOLEAN: "BOOLEAN",
-    NUMBER: "NUMBER",
+vi.mock("ai", () => ({
+  generateText: mockGenerateText,
+  Output: {
+    object: vi.fn((opts: { schema: unknown }) => opts.schema),
   },
 }));
 
+vi.mock("@ai-sdk/google", () => ({
+  createGoogleGenerativeAI: vi.fn(() => vi.fn(() => "mock-model")),
+}));
+
 function makeGeminiResponse(isJhuTranscript: boolean, courses: object[]) {
-  return { text: JSON.stringify({ isJhuTranscript, courses }) };
+  return { output: { isJhuTranscript, courses } };
 }
 
 const SAMPLE_COURSES = [
@@ -57,28 +55,28 @@ describe("actions/parseTranscript", () => {
   test("throws when unauthenticated", async () => {
     const t = makeTestCtx();
     await expect(
-      t.action(api.actions.parseTranscript.parseTranscript, {
+      t.action(api.ai.parseTranscript.parseTranscript, {
         fileText: TRANSCRIPT_TEXT,
       })
     ).rejects.toThrow("Unauthenticated");
   });
 
-  test("throws TRANSCRIPT_TOO_LARGE when text exceeds 100,000 characters", async () => {
+  test("throws when fileText exceeds 100,000 characters", async () => {
     const t = makeTestCtx();
     const { withAuth } = await createTestUser(t);
     await expect(
-      withAuth.action(api.actions.parseTranscript.parseTranscript, {
+      withAuth.action(api.ai.parseTranscript.parseTranscript, {
         fileText: "x".repeat(100_001),
       })
-    ).rejects.toThrow("TRANSCRIPT_TOO_LARGE");
+    ).rejects.toThrow("fileText exceeds maximum length of 100000 characters");
   });
 
   test("does not throw for text exactly at the 100,000 character limit", async () => {
-    mockGenerateContent.mockResolvedValueOnce(makeGeminiResponse(true, SAMPLE_COURSES));
+    mockGenerateText.mockResolvedValueOnce(makeGeminiResponse(true, SAMPLE_COURSES));
     const t = makeTestCtx();
     const { withAuth } = await createTestUser(t);
     await expect(
-      withAuth.action(api.actions.parseTranscript.parseTranscript, {
+      withAuth.action(api.ai.parseTranscript.parseTranscript, {
         fileText: "x".repeat(100_000),
       })
     ).resolves.toBeDefined();
@@ -89,28 +87,28 @@ describe("actions/parseTranscript", () => {
     const t = makeTestCtx();
     const { withAuth } = await createTestUser(t);
     await expect(
-      withAuth.action(api.actions.parseTranscript.parseTranscript, {
+      withAuth.action(api.ai.parseTranscript.parseTranscript, {
         fileText: TRANSCRIPT_TEXT,
       })
     ).rejects.toThrow("GEMINI_API_KEY is not set");
   });
 
   test("throws NOT_JHU_TRANSCRIPT when Gemini identifies a non-JHU document", async () => {
-    mockGenerateContent.mockResolvedValueOnce(makeGeminiResponse(false, []));
+    mockGenerateText.mockResolvedValueOnce(makeGeminiResponse(false, []));
     const t = makeTestCtx();
     const { withAuth } = await createTestUser(t);
     await expect(
-      withAuth.action(api.actions.parseTranscript.parseTranscript, {
+      withAuth.action(api.ai.parseTranscript.parseTranscript, {
         fileText: "Some random document",
       })
     ).rejects.toThrow("NOT_JHU_TRANSCRIPT");
   });
 
   test("returns parsed courses on a valid JHU transcript", async () => {
-    mockGenerateContent.mockResolvedValueOnce(makeGeminiResponse(true, SAMPLE_COURSES));
+    mockGenerateText.mockResolvedValueOnce(makeGeminiResponse(true, SAMPLE_COURSES));
     const t = makeTestCtx();
     const { withAuth } = await createTestUser(t);
-    const result = await withAuth.action(api.actions.parseTranscript.parseTranscript, {
+    const result = await withAuth.action(api.ai.parseTranscript.parseTranscript, {
       fileText: TRANSCRIPT_TEXT,
     });
     expect(result).toHaveLength(2);
@@ -124,17 +122,17 @@ describe("actions/parseTranscript", () => {
   });
 
   test("returns an empty array when Gemini finds no courses", async () => {
-    mockGenerateContent.mockResolvedValueOnce(makeGeminiResponse(true, []));
+    mockGenerateText.mockResolvedValueOnce(makeGeminiResponse(true, []));
     const t = makeTestCtx();
     const { withAuth } = await createTestUser(t);
-    const result = await withAuth.action(api.actions.parseTranscript.parseTranscript, {
+    const result = await withAuth.action(api.ai.parseTranscript.parseTranscript, {
       fileText: TRANSCRIPT_TEXT,
     });
     expect(result).toEqual([]);
   });
 
   test("filters out courses with a blank courseCode", async () => {
-    mockGenerateContent.mockResolvedValueOnce(
+    mockGenerateText.mockResolvedValueOnce(
       makeGeminiResponse(true, [
         { courseCode: "", title: "Missing Code", credits: 3, term: "Fall 2022", grade: "A" },
         ...SAMPLE_COURSES,
@@ -142,7 +140,7 @@ describe("actions/parseTranscript", () => {
     );
     const t = makeTestCtx();
     const { withAuth } = await createTestUser(t);
-    const result = await withAuth.action(api.actions.parseTranscript.parseTranscript, {
+    const result = await withAuth.action(api.ai.parseTranscript.parseTranscript, {
       fileText: TRANSCRIPT_TEXT,
     });
     expect(result.find((c) => c.title === "Missing Code")).toBeUndefined();
@@ -150,7 +148,7 @@ describe("actions/parseTranscript", () => {
   });
 
   test("filters out courses with a blank grade", async () => {
-    mockGenerateContent.mockResolvedValueOnce(
+    mockGenerateText.mockResolvedValueOnce(
       makeGeminiResponse(true, [
         {
           courseCode: "EN.601.226",
@@ -164,7 +162,7 @@ describe("actions/parseTranscript", () => {
     );
     const t = makeTestCtx();
     const { withAuth } = await createTestUser(t);
-    const result = await withAuth.action(api.actions.parseTranscript.parseTranscript, {
+    const result = await withAuth.action(api.ai.parseTranscript.parseTranscript, {
       fileText: TRANSCRIPT_TEXT,
     });
     expect(result).toHaveLength(1);
@@ -172,7 +170,7 @@ describe("actions/parseTranscript", () => {
   });
 
   test("filters out courses with a blank title", async () => {
-    mockGenerateContent.mockResolvedValueOnce(
+    mockGenerateText.mockResolvedValueOnce(
       makeGeminiResponse(true, [
         {
           courseCode: "EN.601.226",
@@ -186,7 +184,7 @@ describe("actions/parseTranscript", () => {
     );
     const t = makeTestCtx();
     const { withAuth } = await createTestUser(t);
-    const result = await withAuth.action(api.actions.parseTranscript.parseTranscript, {
+    const result = await withAuth.action(api.ai.parseTranscript.parseTranscript, {
       fileText: TRANSCRIPT_TEXT,
     });
     expect(result).toHaveLength(1);
@@ -194,7 +192,7 @@ describe("actions/parseTranscript", () => {
   });
 
   test("filters out courses with a blank term", async () => {
-    mockGenerateContent.mockResolvedValueOnce(
+    mockGenerateText.mockResolvedValueOnce(
       makeGeminiResponse(true, [
         {
           courseCode: "EN.601.226",
@@ -208,7 +206,7 @@ describe("actions/parseTranscript", () => {
     );
     const t = makeTestCtx();
     const { withAuth } = await createTestUser(t);
-    const result = await withAuth.action(api.actions.parseTranscript.parseTranscript, {
+    const result = await withAuth.action(api.ai.parseTranscript.parseTranscript, {
       fileText: TRANSCRIPT_TEXT,
     });
     expect(result).toHaveLength(1);
