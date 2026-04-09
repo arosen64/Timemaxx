@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { api } from "../_generated/api";
+import { api, internal } from "../_generated/api";
 import { makeTestCtx, createTestUser } from "../../convex-tests/helpers";
 
 // Helper: seed a task directly in the db
@@ -292,5 +292,69 @@ describe("mutations/studyBlocks – editStudyBlockTime", () => {
 
     const block = await t.run((ctx) => ctx.db.get(studyBlockId));
     expect(block!.startTime).toBeUndefined();
+  });
+});
+
+// ─── setGoogleEventId ────────────────────────────────────────────────────────
+
+describe("mutations/studyBlocks – setGoogleEventId", () => {
+  test("sets googleEventId on a block that has none", async () => {
+    const t = makeTestCtx();
+    const { userId } = await createTestUser(t);
+    const taskId = await seedTask(t, userId);
+    const studyBlockId = await seedStudyBlock(t, taskId);
+
+    await t.mutation(internal.mutations.studyBlocks.setGoogleEventId, {
+      studyBlockId,
+      googleEventId: "gcal_event_abc123",
+    });
+
+    const block = await t.run((ctx) => ctx.db.get(studyBlockId));
+    expect(block!.googleEventId).toBe("gcal_event_abc123");
+  });
+
+  test("overwrites an existing googleEventId", async () => {
+    const t = makeTestCtx();
+    const { userId } = await createTestUser(t);
+    const taskId = await seedTask(t, userId);
+    const studyBlockId = await t.run((ctx) =>
+      ctx.db.insert("studyBlocks", {
+        taskId: taskId as any,
+        title: "Block",
+        studyBlockLength: 60,
+        googleEventId: "old_event_id",
+      })
+    );
+
+    await t.mutation(internal.mutations.studyBlocks.setGoogleEventId, {
+      studyBlockId,
+      googleEventId: "new_event_id",
+    });
+
+    const block = await t.run((ctx) => ctx.db.get(studyBlockId));
+    expect(block!.googleEventId).toBe("new_event_id");
+  });
+
+  test("does not affect other fields on the block", async () => {
+    const t = makeTestCtx();
+    const { userId } = await createTestUser(t);
+    const taskId = await seedTask(t, userId);
+    const startTime = new Date(Date.now() + 3600_000).toISOString();
+    const studyBlockId = await seedStudyBlock(t, taskId, {
+      title: "My block",
+      startTime,
+      studyBlockLength: 45,
+    });
+
+    await t.mutation(internal.mutations.studyBlocks.setGoogleEventId, {
+      studyBlockId,
+      googleEventId: "evt_xyz",
+    });
+
+    const block = await t.run((ctx) => ctx.db.get(studyBlockId));
+    expect(block!.title).toBe("My block");
+    expect(block!.startTime).toBe(startTime);
+    expect(block!.studyBlockLength).toBe(45);
+    expect(block!.googleEventId).toBe("evt_xyz");
   });
 });
