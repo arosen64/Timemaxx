@@ -9,15 +9,15 @@
  */
 
 import type * as actions_autoRescheduleConflicts from "../actions/autoRescheduleConflicts.js";
-import type * as actions_estimateTaskTime from "../actions/estimateTaskTime.js";
 import type * as actions_fetchCalendarEvents from "../actions/fetchCalendarEvents.js";
-import type * as actions_generateAcademicProfile from "../actions/generateAcademicProfile.js";
 import type * as actions_getCalendarAvailability from "../actions/getCalendarAvailability.js";
 import type * as actions_initiateGoogleCalendarOAuth from "../actions/initiateGoogleCalendarOAuth.js";
 import type * as actions_jhuCourses from "../actions/jhuCourses.js";
-import type * as actions_parseTranscript from "../actions/parseTranscript.js";
-import type * as actions_requestEstimateTaskTime from "../actions/requestEstimateTaskTime.js";
-import type * as actions_uploadSyllabus from "../actions/uploadSyllabus.js";
+import type * as ai_estimateTaskTime from "../ai/estimateTaskTime.js";
+import type * as ai_generateAcademicProfile from "../ai/generateAcademicProfile.js";
+import type * as ai_parseTranscript from "../ai/parseTranscript.js";
+import type * as ai_requestEstimateTaskTime from "../ai/requestEstimateTaskTime.js";
+import type * as ai_uploadSyllabus from "../ai/uploadSyllabus.js";
 import type * as auth from "../auth.js";
 import type * as calendarOAuthCallback from "../calendarOAuthCallback.js";
 import type * as http from "../http.js";
@@ -25,6 +25,7 @@ import type * as lib_calendarCrypto from "../lib/calendarCrypto.js";
 import type * as lib_classTagUtils from "../lib/classTagUtils.js";
 import type * as lib_courseColors from "../lib/courseColors.js";
 import type * as lib_gemini from "../lib/gemini.js";
+import type * as lib_sanitize from "../lib/sanitize.js";
 import type * as lib_syllabusTypes from "../lib/syllabusTypes.js";
 import type * as lib_taskValidators from "../lib/taskValidators.js";
 import type * as mutations_calendar from "../mutations/calendar.js";
@@ -50,15 +51,15 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   "actions/autoRescheduleConflicts": typeof actions_autoRescheduleConflicts;
-  "actions/estimateTaskTime": typeof actions_estimateTaskTime;
   "actions/fetchCalendarEvents": typeof actions_fetchCalendarEvents;
-  "actions/generateAcademicProfile": typeof actions_generateAcademicProfile;
   "actions/getCalendarAvailability": typeof actions_getCalendarAvailability;
   "actions/initiateGoogleCalendarOAuth": typeof actions_initiateGoogleCalendarOAuth;
   "actions/jhuCourses": typeof actions_jhuCourses;
-  "actions/parseTranscript": typeof actions_parseTranscript;
-  "actions/requestEstimateTaskTime": typeof actions_requestEstimateTaskTime;
-  "actions/uploadSyllabus": typeof actions_uploadSyllabus;
+  "ai/estimateTaskTime": typeof ai_estimateTaskTime;
+  "ai/generateAcademicProfile": typeof ai_generateAcademicProfile;
+  "ai/parseTranscript": typeof ai_parseTranscript;
+  "ai/requestEstimateTaskTime": typeof ai_requestEstimateTaskTime;
+  "ai/uploadSyllabus": typeof ai_uploadSyllabus;
   auth: typeof auth;
   calendarOAuthCallback: typeof calendarOAuthCallback;
   http: typeof http;
@@ -66,6 +67,7 @@ declare const fullApi: ApiFromModules<{
   "lib/classTagUtils": typeof lib_classTagUtils;
   "lib/courseColors": typeof lib_courseColors;
   "lib/gemini": typeof lib_gemini;
+  "lib/sanitize": typeof lib_sanitize;
   "lib/syllabusTypes": typeof lib_syllabusTypes;
   "lib/taskValidators": typeof lib_taskValidators;
   "mutations/calendar": typeof mutations_calendar;

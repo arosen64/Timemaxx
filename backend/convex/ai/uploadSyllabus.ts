@@ -1,14 +1,17 @@
-"use node"; // Required: @google/genai uses Node.js APIs not available in the default Convex runtime
-
 import { action } from "../_generated/server";
 import { v } from "convex/values";
 import { Id } from "../_generated/dataModel";
 import { internal } from "../_generated/api";
 import { getAuthUserId } from "@convex-dev/auth/server";
-import { Type } from "@google/genai";
-import { callGeminiJSON } from "../lib/gemini";
+import { callGemini } from "../lib/gemini";
+import { sanitizeUserInput, validateLength } from "../lib/sanitize";
 import { TaskType, TASK_TYPES } from "../lib/taskValidators";
 import { UploadSyllabusResult } from "../lib/syllabusTypes";
+import {
+  SYLLABUS_SYSTEM,
+  buildSyllabusPrompt,
+  syllabusResponseSchema,
+} from "../lib/prompts/uploadSyllabus.prompt";
 
 /**
  * Sends syllabus text to Gemini and returns extracted tasks.
@@ -32,6 +35,8 @@ export const uploadSyllabus = action({
   handler: async (ctx, args): Promise<UploadSyllabusResult> => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Unauthenticated");
+
+    validateLength(args.fileContents, 200_000, "fileContents");
 
     if (args.courseId) {
       try {
@@ -57,54 +62,20 @@ export const uploadSyllabus = action({
       );
     }
 
-    const prompt = `You are an academic task extractor. Given the syllabus text below, extract every assignment, exam, project, or deliverable that has a due date.
-
-For each task provide:
-- title: short name of the assignment or exam
-- description: 1-2 sentence summary of what the task involves, inferred from the syllabus context
-- dueDate: ISO 8601 date string (e.g. "2025-04-15")
-- taskType: one of "Essay", "Problem Set", "Exam Prep", "Coding", "Reading", "Lab", "Presentation"
-
-Syllabus:
-${args.fileContents}`;
+    const sanitized = sanitizeUserInput(args.fileContents, 200_000);
 
     try {
-      const json = await callGeminiJSON<{ tasks: Array<{ title: string; description: string; dueDate: string; taskType: string }> }>(
-        prompt,
-        {
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              tasks: {
-                type: Type.ARRAY,
-                items: {
-                  type: Type.OBJECT,
-                  properties: {
-                    title: { type: Type.STRING },
-                    description: { type: Type.STRING },
-                    dueDate: { type: Type.STRING },
-                    taskType: {
-                      type: Type.STRING,
-                      enum: [...TASK_TYPES],
-                    },
-                  },
-                  required: ["title", "description", "dueDate", "taskType"],
-                },
-              },
-            },
-            required: ["tasks"],
-          },
-          httpOptions: { timeout: 30_000 },
-        }
-      );
-      const rawTasks: Array<{
-        title: string;
-        description: string;
-        dueDate: string;
-        taskType: string;
-      }> = json.tasks ?? [];
+      const json = await callGemini({
+        system: SYLLABUS_SYSTEM,
+        prompt: buildSyllabusPrompt(sanitized),
+        schema: syllabusResponseSchema,
+        schemaName: "SyllabusExtraction",
+        timeoutMs: 30_000,
+      });
 
+      const rawTasks = json.tasks ?? [];
+
+      // Belt-and-suspenders: filter even though Zod schema validates taskType
       const validTaskTypes = new Set<string>(TASK_TYPES);
 
       const now = Date.now();

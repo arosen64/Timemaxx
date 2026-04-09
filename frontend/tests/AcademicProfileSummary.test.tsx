@@ -6,7 +6,7 @@ import { ProfileData } from '../src/types'
 
 vi.mock('../../backend/convex/_generated/api', () => ({
   api: {
-    actions: {
+    ai: {
       generateAcademicProfile: { generateAcademicProfile: 'generateAcademicProfile' },
     },
     mutations: {
