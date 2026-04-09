@@ -186,6 +186,16 @@ export const editStudyBlockTime = mutation({
   },
 });
 
+export const setGoogleEventId = internalMutation({
+  args: {
+    studyBlockId: v.id("studyBlocks"),
+    googleEventId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.studyBlockId, { googleEventId: args.googleEventId });
+  },
+});
+
 export const setConflictStatus = internalMutation({
   args: {
     studyBlockId: v.id("studyBlocks"),
