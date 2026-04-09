@@ -5,6 +5,7 @@ import { httpAction } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import type { Id } from "./_generated/dataModel";
 import type { ActionCtx } from "./_generated/server";
+import { calendarOAuthCallback } from "./calendarOAuthCallback";
 import chatApp from "./http_chat";
 
 type HonoEnv = {
@@ -77,6 +78,12 @@ function makeApiHandler(app: Hono<HonoEnv>, path: string) {
 }
 
 // ── API endpoints ───────────────────────────────────────────────
+
+http.route({
+  path: "/api/calendar/callback",
+  method: "GET",
+  handler: calendarOAuthCallback,
+});
 
 makeApiHandler(chatApp, "/api/chat");
 
