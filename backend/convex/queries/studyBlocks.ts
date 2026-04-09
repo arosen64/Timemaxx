@@ -43,10 +43,18 @@ async function fetchAllStudyBlocksWithTasks(ctx: any, userId: Id<"users">) {
     courseName: string | undefined;
   }> = [];
 
+  // Collect unique courseIds and batch-fetch them into a Map (avoids N+1)
+  const uniqueCourseIds = [...new Set(tasks.map((t: any) => t.courseId).filter(Boolean))];
+  const courseMap = new Map<string, any>();
+  for (const courseId of uniqueCourseIds) {
+    const course = await ctx.db.get(courseId as Id<"userCourses">);
+    if (course) courseMap.set(courseId as string, course);
+  }
+
   for (const task of tasks) {
-    const course = task.courseId ? await ctx.db.get(task.courseId) : null;
+    const course = task.courseId ? courseMap.get(task.courseId) : null;
     const courseColor: string | undefined = course?.color ?? undefined;
-    const courseName: string | undefined = course?.courseCode ?? undefined;
+    const courseName: string | undefined = course?.title ?? undefined;
 
     const blocks = await ctx.db
       .query("studyBlocks")

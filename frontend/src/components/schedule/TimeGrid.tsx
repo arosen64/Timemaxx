@@ -1,4 +1,12 @@
 import { Fragment } from 'react'
+
+function getTextColorClass(hexColor: string): string {
+  const r = parseInt(hexColor.slice(1, 3), 16)
+  const g = parseInt(hexColor.slice(3, 5), 16)
+  const b = parseInt(hexColor.slice(5, 7), 16)
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+  return luminance > 0.5 ? 'text-navy' : 'text-white'
+}
 import type { AllDayEvent } from '../../../../backend/convex/actions/fetchCalendarEvents'
 import type { LayoutEvent } from './overlapLayout'
 import { TOTAL_SLOTS, SLOT_HEIGHT, DAYS_FULL, slotLabel, isoDateString, isToday, minutesFromMidnight } from './utils'
@@ -239,7 +247,7 @@ export default function TimeGrid({
                     } ${block.courseColor ? '' : 'bg-navy'}`}
                     style={block.courseColor ? { backgroundColor: block.courseColor } : undefined}
                   >
-                    <span className="block min-w-0 shrink-0 truncate font-heading text-[11px] font-semibold leading-tight text-white">
+                    <span className={`block min-w-0 shrink-0 truncate font-heading text-[11px] font-semibold leading-tight ${block.courseColor ? getTextColorClass(block.courseColor) : 'text-white'}`}>
                       {block.title}
                     </span>
                     <span className="block min-w-0 shrink-0 truncate font-body text-[9px] leading-tight text-sky-blue">

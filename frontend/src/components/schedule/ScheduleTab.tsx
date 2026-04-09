@@ -142,17 +142,17 @@ export default function ScheduleTab() {
   const legend = useMemo(() => {
     const dayKeys = new Set(days.map(isoDateString))
     const windowBlocks = scheduledBlocks.filter((b) => dayKeys.has(isoDateString(new Date(b.startTime))))
-    const seen = new Map<string, string>() // courseColor -> courseName
+    const seen = new Map<string, string>() // courseName -> courseColor
     let hasUntagged = false
     for (const b of windowBlocks) {
       if (b.courseColor && b.courseName) {
-        if (!seen.has(b.courseColor)) seen.set(b.courseColor, b.courseName)
+        if (!seen.has(b.courseName)) seen.set(b.courseName, b.courseColor)
       } else {
         hasUntagged = true
       }
     }
     const entries: { courseColor: string | undefined; courseName: string }[] = Array.from(seen.entries()).map(
-      ([color, name]) => ({ courseColor: color, courseName: name })
+      ([name, color]) => ({ courseColor: color, courseName: name })
     )
     if (hasUntagged) entries.push({ courseColor: undefined, courseName: 'Other' })
     return entries
