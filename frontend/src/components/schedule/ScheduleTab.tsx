@@ -469,6 +469,7 @@ export default function ScheduleTab() {
                 <button
                   key={block._id}
                   type="button"
+                  title={block.courseName}
                   onClick={() =>
                     setAssigningBlockId((prev) => (prev === block._id ? null : block._id))
                   }
