@@ -1,6 +1,43 @@
 import { internalMutation, mutation } from "../_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import type { MutationCtx } from "../_generated/server";
+import type { Id } from "../_generated/dataModel";
+
+export async function rebuildStudyBlocks(
+  ctx: MutationCtx,
+  taskId: Id<"tasks">,
+  timeEstimate: number
+) {
+  const existingBlocks = await ctx.db
+    .query("studyBlocks")
+    .withIndex("by_taskId", (q) => q.eq("taskId", taskId))
+    .collect();
+  for (const block of existingBlocks) {
+    await ctx.db.delete(block._id);
+  }
+
+  const task = await ctx.db.get(taskId);
+  if (!task) return;
+
+  const user = await ctx.db.get(task.userId);
+  const focusBlockLength = user?.focusBlockLength || 60;
+
+  const blockCount = Math.ceil(timeEstimate / focusBlockLength);
+  for (let i = 0; i < blockCount; i++) {
+    const isLastBlock = i === blockCount - 1;
+    const remainder = timeEstimate % focusBlockLength;
+    const studyBlockLength =
+      isLastBlock && remainder !== 0 ? remainder : focusBlockLength;
+
+    await ctx.db.insert("studyBlocks", {
+      taskId,
+      title: task.title,
+      startTime: undefined,
+      studyBlockLength,
+    });
+  }
+}
 
 export const setTimeEstimate = internalMutation({
   args: {
@@ -8,39 +45,61 @@ export const setTimeEstimate = internalMutation({
     timeEstimate: v.number(),
   },
   handler: async (ctx, args) => {
-    await ctx.db.patch(args.taskId, { timeEstimate: args.timeEstimate });
+    const task = await ctx.db.get(args.taskId);
+    if (!task) return;
 
-    // Delete existing study blocks for this task
+    // Do not overwrite a manually set estimate
+    if (task.isManualEstimate) return;
+
+    await ctx.db.patch(args.taskId, { timeEstimate: args.timeEstimate });
+    await rebuildStudyBlocks(ctx, args.taskId, args.timeEstimate);
+  },
+});
+
+export const setManualTimeEstimate = mutation({
+  args: {
+    taskId: v.id("tasks"),
+    timeEstimate: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Unauthenticated");
+
+    const task = await ctx.db.get(args.taskId);
+    if (!task || task.userId !== userId) throw new Error("Task not found");
+
+    await ctx.db.patch(args.taskId, {
+      timeEstimate: args.timeEstimate,
+      isManualEstimate: true,
+    });
+
+    await rebuildStudyBlocks(ctx, args.taskId, args.timeEstimate);
+  },
+});
+
+export const clearManualEstimate = mutation({
+  args: {
+    taskId: v.id("tasks"),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Unauthenticated");
+
+    const task = await ctx.db.get(args.taskId);
+    if (!task || task.userId !== userId) throw new Error("Task not found");
+
+    await ctx.db.patch(args.taskId, {
+      isManualEstimate: false,
+      timeEstimate: undefined,
+    });
+
+    // Delete existing study blocks so AI can regenerate fresh
     const existingBlocks = await ctx.db
       .query("studyBlocks")
       .withIndex("by_taskId", (q) => q.eq("taskId", args.taskId))
       .collect();
     for (const block of existingBlocks) {
       await ctx.db.delete(block._id);
-    }
-
-    // Fetch the task to get userId and title
-    const task = await ctx.db.get(args.taskId);
-    if (!task) return;
-
-    // Fetch user to get focusBlockLength (default 60 min)
-    const user = await ctx.db.get(task.userId);
-    const focusBlockLength = user?.focusBlockLength || 60;
-
-    // Generate and insert study blocks
-    const blockCount = Math.ceil(args.timeEstimate / focusBlockLength);
-    for (let i = 0; i < blockCount; i++) {
-      const isLastBlock = i === blockCount - 1;
-      const remainder = args.timeEstimate % focusBlockLength;
-      const studyBlockLength =
-        isLastBlock && remainder !== 0 ? remainder : focusBlockLength;
-
-      await ctx.db.insert("studyBlocks", {
-        taskId: args.taskId,
-        title: task.title,
-        startTime: undefined,
-        studyBlockLength,
-      });
     }
   },
 });

@@ -28,6 +28,7 @@ export const storeCalendarTokenForUser = internalMutation({
     accessToken: v.string(),
     refreshToken: v.string(),
     expiresAt: v.number(),
+    scope: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     await upsertCalendarToken(ctx, args);
@@ -41,6 +42,7 @@ async function upsertCalendarToken(
     accessToken: string;
     refreshToken: string;
     expiresAt: number;
+    scope?: string;
   }
 ) {
   const existing = await ctx.db
@@ -53,6 +55,7 @@ async function upsertCalendarToken(
       accessToken: args.accessToken,
       refreshToken: args.refreshToken,
       expiresAt: args.expiresAt,
+      scope: args.scope,
     });
   } else {
     await ctx.db.insert("calendarConnections", {
@@ -60,6 +63,7 @@ async function upsertCalendarToken(
       accessToken: args.accessToken,
       refreshToken: args.refreshToken,
       expiresAt: args.expiresAt,
+      scope: args.scope,
     });
   }
 }

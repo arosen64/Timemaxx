@@ -24,6 +24,23 @@ export default function LandingLoginCard() {
           Sign in with Google
         </button>
 
+        {(import.meta.env.DEV ||
+          import.meta.env.VITE_ANONYMOUS_AUTH_ENABLED === "true") && (
+          <>
+            <div className="flex items-center gap-3">
+              <div className="h-px flex-1 bg-border" />
+              <span className="text-xs text-slate-blue">or</span>
+              <div className="h-px flex-1 bg-border" />
+            </div>
+            <button
+              onClick={() => signIn("anonymous")}
+              className="flex h-12 w-full items-center justify-center gap-3 rounded-lg border border-border bg-white font-heading text-sm font-semibold text-navy transition hover:bg-bg-gray focus:outline-none focus:ring-2 focus:ring-offset-2"
+            >
+              Continue as Guest
+            </button>
+          </>
+        )}
+
         <p className="text-xs leading-relaxed text-light-blue">
           By signing in, you agree to our Terms of Service and Privacy Policy.
         </p>

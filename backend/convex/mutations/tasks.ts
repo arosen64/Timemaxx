@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { taskTypeValidator } from "../lib/taskValidators";
 import { Id } from "../_generated/dataModel";
+import { rebuildStudyBlocks } from "./timeEstimate";
 
 export async function cascadeDeleteTask(ctx: MutationCtx, taskId: Id<"tasks">) {
   const subtasks = await ctx.db
@@ -35,8 +36,9 @@ function normalizeClassTag(value: string | undefined): string | undefined {
 }
 
 /**
- * Creates a new task for the authenticated user with timeEstimate left unset.
- * Time estimation is handled separately (e.g. via a Gemini action) after creation.
+ * Creates a new task for the authenticated user. If a timeEstimate is provided,
+ * it is treated as a manual estimate and study blocks are built immediately.
+ * Otherwise, time estimation is handled separately (e.g. via a Gemini action).
  */
 export const createTask = mutation({
   args: {
@@ -46,6 +48,7 @@ export const createTask = mutation({
     dueDate: v.number(),
     courseId: v.optional(v.id("userCourses")),
     classTag: v.optional(v.string()),
+    timeEstimate: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -65,7 +68,8 @@ export const createTask = mutation({
       throw new Error("That due date and time are in the past. Choose a later deadline.");
     }
 
-    // Insert the new task with timeEstimate left as undefined for now
+    const isManualEstimate = args.timeEstimate !== undefined;
+
     const taskId = await ctx.db.insert("tasks", {
       userId,
       title: args.title,
@@ -74,9 +78,14 @@ export const createTask = mutation({
       dueDate: args.dueDate,
       courseId: args.courseId,
       classTag: normalizeClassTag(args.classTag),
-      timeEstimate: undefined, // populated asynchronously by estimateTaskTime action
+      timeEstimate: args.timeEstimate,
+      isManualEstimate,
       createdAt: Date.now(),
     });
+
+    if (isManualEstimate) {
+      await rebuildStudyBlocks(ctx, taskId, args.timeEstimate!);
+    }
 
     return taskId;
   },
@@ -109,7 +118,6 @@ export const updateTask = mutation({
       ...(args.classTag !== undefined
         ? { classTag: normalizeClassTag(args.classTag) }
         : {}),
-      timeEstimate: undefined,
     });
   },
 });

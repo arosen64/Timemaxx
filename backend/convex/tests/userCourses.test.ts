@@ -57,6 +57,7 @@ describe("mutations/userCourses – deleteUserCourse", () => {
         taskType: "Essay",
         dueDate: FUTURE,
         createdAt: Date.now(),
+        isManualEstimate: false,
         courseId: userCourseId,
       })
     );
@@ -69,6 +70,7 @@ describe("mutations/userCourses – deleteUserCourse", () => {
         taskType: "Essay",
         dueDate: FUTURE,
         createdAt: Date.now(),
+        isManualEstimate: false,
         courseId: otherCourseId,
       })
     );
@@ -113,6 +115,7 @@ describe("mutations/userCourses – deleteUserCourse", () => {
         taskType: "Lab",
         dueDate: FUTURE,
         createdAt: Date.now(),
+        isManualEstimate: false,
         classTag: "EN.500.112.FA25: Gateway Computing",
       })
     );
@@ -148,6 +151,7 @@ describe("mutations/userCourses – deleteUserCourse", () => {
         taskType: "Essay",
         dueDate: FUTURE,
         createdAt: Date.now(),
+        isManualEstimate: false,
         classTag: legacyTag,
       })
     );
@@ -183,6 +187,7 @@ describe("mutations/userCourses – deleteUserCourse", () => {
         taskType: "Essay",
         dueDate: FUTURE,
         createdAt: Date.now(),
+        isManualEstimate: false,
         classTag: canonicalTag,
       })
     );
