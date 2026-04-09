@@ -24,7 +24,7 @@ function getLocalTimeInfo(isoString: string, timezone: string): { dayName: strin
 }
 
 function isBlockConflicted(
-  block: { startTime: string; studyBlockLength: number },
+  block: { startTime: string; studyBlockLength: number; googleEventId?: string },
   task: { dueDate: number },
   timedEvents: TimedEventArg[],
   workHoursGrid: WorkHoursRow[],
@@ -40,8 +40,9 @@ function isBlockConflicted(
   // 1. Due date violation
   if (startMs >= task.dueDate || endMs > task.dueDate) return true
 
-  // 2. Calendar event overlap
+  // 2. Calendar event overlap — skip the block's own exported GCal event
   for (const event of timedEvents) {
+    if (block.googleEventId && event.id === block.googleEventId) continue
     const eventStart = new Date(event.start).getTime()
     const eventEnd = new Date(event.end).getTime()
     if (startMs < eventEnd && eventStart < endMs) return true
@@ -247,7 +248,7 @@ export const detectConflicts = internalMutation({
         }
 
         const conflicted = isBlockConflicted(
-          { startTime: block.startTime, studyBlockLength: block.studyBlockLength },
+          { startTime: block.startTime, studyBlockLength: block.studyBlockLength, googleEventId: block.googleEventId },
           { dueDate: task.dueDate },
           args.timedEvents,
           args.workHoursGrid,
