@@ -1,0 +1,13 @@
+{
+  "dependencies": {
+    "@ai-sdk/google": "^1.2.22",
+    "@convex-dev/mastra": "^0.0.1-alpha.4",
+    "@convex-dev/workpool": "^0.4.6",
+    "@mastra/core": "^0.6.4",
+    "ai": "^4.3.19",
+    "convex-helpers": "^0.1.114"
+  },
+  "devDependencies": {
+    "@libsql/client": "^0.17.2"
+  }
+}

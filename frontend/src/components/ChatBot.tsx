@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useQuery } from 'convex/react'
+import { useAuthToken } from '@convex-dev/auth/react'
 import { api } from '../../../backend/convex/_generated/api'
 import { ChatContainerRoot, ChatContainerContent, ChatContainerScrollAnchor } from './prompt-kit/chat-container'
 import { Message, MessageAvatar, MessageContent } from './prompt-kit/message'
@@ -15,19 +16,6 @@ const SUGGESTIONS = [
   'Help me prioritize my workload',
 ]
 
-// Parse Mastra 1.x SSE stream format: data: {"type":"text-delta","payload":{"text":"..."}}
-function parseSSEChunk(chunk: string): string {
-  return chunk
-    .split('\n')
-    .filter((line) => line.startsWith('data: ') && line !== 'data: [DONE]')
-    .map((line) => {
-      try {
-        const parsed = JSON.parse(line.slice(6))
-        return parsed.type === 'text-delta' ? (parsed.payload?.text ?? '') : ''
-      } catch { return '' }
-    })
-    .join('')
-}
 
 export default function ChatBot() {
   const [isOpen, setIsOpen] = useState(false)
@@ -36,6 +24,7 @@ export default function ChatBot() {
   // Optimistic messages shown while streaming (not yet in DB)
   const [optimistic, setOptimistic] = useState<{ role: 'user' | 'assistant'; content: string }[]>([])
 
+  const token = useAuthToken()
   const history = useQuery(api.queries.chatMessages.getChatHistory, { limit: 50 }) ?? []
 
   // Clear optimistic messages once Convex history catches up
@@ -68,32 +57,31 @@ export default function ChatBot() {
         `${import.meta.env.VITE_CONVEX_SITE_URL}/api/chat`,
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+          },
           body: JSON.stringify({ message: text }),
         }
       )
 
-      if (!res.ok || !res.body) throw new Error('Chat request failed')
-
-      const reader = res.body.getReader()
-      const decoder = new TextDecoder()
-      let aiText = ''
-
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-        const chunk = decoder.decode(value, { stream: true })
-        aiText += parseSSEChunk(chunk)
-        setOptimistic([
-          { role: 'user', content: text },
-          { role: 'assistant', content: aiText },
-        ])
+      if (!res.ok) {
+        const errText = await res.text().catch(() => '(no body)')
+        throw new Error(`Chat request failed: ${res.status} ${errText}`)
       }
-    } catch {
+
+      const data = await res.json() as { text?: string }
+      const aiText = data.text ?? ''
+      setOptimistic([
+        { role: 'user', content: text },
+        { role: 'assistant', content: aiText },
+      ])
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      console.error('[ChatBot] error:', msg)
       setOptimistic((prev) => [
         ...prev,
-        { role: 'assistant', content: 'Something went wrong. Please try again.' },
+        { role: 'assistant', content: `Error: ${msg}` },
       ])
     } finally {
       setIsLoading(false)

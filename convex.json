@@ -1,3 +1,13 @@
 {
-  "functions": "backend/convex/"
+  "functions": "backend/convex/",
+  "node": {
+    "externalPackages": [
+      "@libsql/client",
+      "libsql",
+      "@libsql/linux-x64-gnu",
+      "@libsql/linux-arm64-gnu",
+      "@libsql/darwin-x64",
+      "@libsql/darwin-arm64"
+    ]
+  }
 }
