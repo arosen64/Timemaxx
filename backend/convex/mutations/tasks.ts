@@ -88,11 +88,13 @@ export const createTask = mutation({
       await rebuildStudyBlocks(ctx, taskId, args.timeEstimate!);
     }
 
-    await ctx.scheduler.runAfter(0, internal.ai.embedCourse.generateTaskEmbedding, {
-      taskId,
-      title: args.title,
-      description: args.description,
-    });
+    if (process.env.GEMINI_API_KEY) {
+      await ctx.scheduler.runAfter(0, internal.ai.embedCourse.generateTaskEmbedding, {
+        taskId,
+        title: args.title,
+        description: args.description,
+      });
+    }
 
     return taskId;
   },
@@ -127,11 +129,13 @@ export const updateTask = mutation({
         : {}),
     });
 
-    await ctx.scheduler.runAfter(0, internal.ai.embedCourse.generateTaskEmbedding, {
-      taskId: args.taskId,
-      title: args.title,
-      description: args.description,
-    });
+    if (process.env.GEMINI_API_KEY) {
+      await ctx.scheduler.runAfter(0, internal.ai.embedCourse.generateTaskEmbedding, {
+        taskId: args.taskId,
+        title: args.title,
+        description: args.description,
+      });
+    }
   },
 });
 

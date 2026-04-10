@@ -69,12 +69,14 @@ export const addUserCourse = mutation({
       color: randomCourseColor(),
     });
 
-    // Schedule embedding generation — fire and forget
-    await ctx.scheduler.runAfter(0, internal.ai.embedCourse.generateCourseEmbedding, {
-      userCourseId,
-      title: args.title,
-      description: args.description,
-    });
+    // Schedule embedding generation — skip in test environments where GEMINI_API_KEY is absent
+    if (process.env.GEMINI_API_KEY) {
+      await ctx.scheduler.runAfter(0, internal.ai.embedCourse.generateCourseEmbedding, {
+        userCourseId,
+        title: args.title,
+        description: args.description,
+      });
+    }
 
     return userCourseId;
   },
