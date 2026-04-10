@@ -142,26 +142,6 @@ export default function ScheduleTab() {
     return { scheduledBlocks: scheduled, unscheduledBlocks: unscheduled }
   }, [allStudyBlocks])
 
-  // Build color legend from scheduled blocks in the current 7-day window
-  const legend = useMemo(() => {
-    const dayKeys = new Set(days.map(isoDateString))
-    const windowBlocks = scheduledBlocks.filter((b) => dayKeys.has(isoDateString(new Date(b.startTime))))
-    const seen = new Map<string, string>() // courseName -> courseColor
-    let hasUntagged = false
-    for (const b of windowBlocks) {
-      if (b.courseColor && b.courseName) {
-        if (!seen.has(b.courseName)) seen.set(b.courseName, b.courseColor)
-      } else {
-        hasUntagged = true
-      }
-    }
-    const entries: { courseColor: string | undefined; courseName: string }[] = Array.from(seen.entries()).map(
-      ([name, color]) => ({ courseColor: color, courseName: name })
-    )
-    if (hasUntagged) entries.push({ courseColor: undefined, courseName: 'Other' })
-    return entries
-  }, [days, scheduledBlocks])
-
   // Build studyBlocksByDay for the grid
   const studyBlocksByDay = useMemo(() => {
     const map: Record<string, StudyBlockOnGrid[]> = {}
@@ -373,20 +353,6 @@ export default function ScheduleTab() {
           {isFetchingEvents && <SpinnerIcon color="#4E6A8C" size={14} />}
         </div>
 
-        {legend.length > 0 && (
-          <div className="flex items-center gap-3 flex-wrap">
-            {legend.map((entry) => (
-              <span key={entry.courseName} className="flex items-center gap-1.5">
-                <span
-                  className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
-                  style={{ backgroundColor: entry.courseColor ?? '#002D72' }}
-                />
-                <span className="font-body text-[11px] text-slate-blue">{entry.courseName}</span>
-              </span>
-            ))}
-          </div>
-        )}
-
         <div className="flex items-center gap-2">
           {calendarConnected && (
             <Button
@@ -522,7 +488,7 @@ export default function ScheduleTab() {
                   onClick={() =>
                     setAssigningBlockId((prev) => (prev === block._id ? null : block._id))
                   }
-                  className={`flex items-start gap-2 rounded-lg border px-3 py-2.5 text-left transition ${
+                  className={`group relative flex items-start gap-2 rounded-lg border px-3 py-2.5 text-left transition ${
                     isSelected
                       ? 'border-teal bg-teal/10 shadow-sm'
                       : 'border-border bg-white hover:border-teal/50 hover:bg-teal/5'
@@ -538,6 +504,11 @@ export default function ScheduleTab() {
                     </span>
                     <span className="text-[10px] text-slate-blue">{block.studyBlockLength} min</span>
                     <span className="text-[10px] text-light-blue truncate">{block.taskTitle}</span>
+                    {block.courseName && (
+                      <span className="hidden group-hover:block truncate font-body text-[10px] font-medium text-teal">
+                        {block.courseName}
+                      </span>
+                    )}
                   </span>
                 </button>
               )

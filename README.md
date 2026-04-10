@@ -38,17 +38,81 @@ For Google OAuth configuration, see the [Google Auth Setup](guides/google-auth-s
 For Google Calendar connection setup, see the [Google Calendar Connection Setup](guides/google-calendar-connection-setup.md) guide.
 For SIS API key setup, see the [SIS API Key Setup](guides/sis-api-key-setup.md) guide.
 For Gemini API key setup, see the [Gemini API Key Setup](guides/gemini-api-key-setup.md) guide.
+For Mastra (AI agent server) setup, see the [Mastra Setup](#mastra-ai-agent-server) section below.
+For ngrok tunnel setup (required for Mastra + Convex), see the [ngrok Setup](guides/ngrok-setup.md) guide.
 For testing details, see the [Test Execution](guides/testing.md) guide.
 
 ## Running the Application
 
 ```bash
-# In one terminal — starts the Convex backend
+# Terminal 1 — Convex backend
 npx convex dev
 
-# In another terminal — starts the Vite dev server
+# Terminal 2 — Mastra AI agent server
+cd mastra && npm run dev
+
+# Terminal 3 — ngrok tunnel (required so Convex can reach Mastra)
+ngrok http 4111
+
+# Terminal 4 — Vite frontend
 npm run dev
 ```
+
+## Mastra AI Agent Server
+
+The AI chat assistant runs through [Mastra](https://mastra.ai). Convex actions call Mastra over HTTP, so Mastra must be publicly reachable via an ngrok tunnel during local development.
+
+### Step 1: Get a Gemini API Key
+
+Mastra uses `gemini-2.5-flash` via the `@ai-sdk/google` package. Get your key from [Google AI Studio](https://aistudio.google.com/app/apikey). See [Gemini API Key Setup](guides/gemini-api-key-setup.md) for details.
+
+### Step 2: Configure Mastra's API Key
+
+Add your key to `mastra/.env` (create the file if it doesn't exist):
+
+```
+GOOGLE_GENERATIVE_AI_API_KEY=your_gemini_api_key_here
+```
+
+> Note: this is the same key as `GEMINI_API_KEY` used in Convex — just a different variable name required by the AI SDK.
+
+### Step 3: Run Mastra
+
+```bash
+cd mastra
+npm install   # first time only
+npm run dev   # starts on http://localhost:4111
+```
+
+### Step 4: Expose Mastra via ngrok
+
+Convex is a cloud backend and cannot reach `localhost` directly. Run ngrok to create a public tunnel:
+
+```bash
+ngrok http 4111
+```
+
+Copy the `https://` forwarding URL that ngrok prints (e.g. `https://abc123.ngrok-free.app`).
+
+### Step 5: Set the Mastra URL in Convex
+
+```bash
+npx convex env set MASTRA_URL https://abc123.ngrok-free.app/mastra
+```
+
+> The `/mastra` path suffix is required — Mastra serves its API under that prefix.
+
+You need to repeat steps 4–5 each time you restart ngrok, as the tunnel URL changes.
+
+### Frontend Environment Variable
+
+The frontend also calls Mastra directly for streaming. Add this to `frontend/.env.local`:
+
+```
+VITE_MASTRA_URL=http://localhost:4111
+```
+
+This file is gitignored — each developer sets it locally.
 
 ## Running Tests
 
