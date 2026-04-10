@@ -119,6 +119,7 @@ function setup(tasks = MOCK_TASKS, user = MOCK_USER) {
   mockUseQuery.mockImplementation(((query: string) => {
     if (query === 'getAllTasks') return tasks
     if (query === 'getUpcomingStudyBlocks') return []
+    if (query === 'getUserCourses') return []
     if (query === 'getStudyBlocksByTask') return []
     return user
   }) as never)

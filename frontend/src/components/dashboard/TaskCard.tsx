@@ -59,7 +59,7 @@ export default function TaskCard({
     >
       {/* Main card row */}
       <div className="flex gap-3 px-[18px] py-4">
-        <div className={`mt-0.5 h-10 w-1 shrink-0 rounded ${barColor}`} />
+        <div className="mt-0.5 h-10 w-1 shrink-0 rounded" style={{ backgroundColor: barColor }} />
 
         <div className="flex justify-between flex-1 min-w-0 gap-4">
           <div className="flex flex-col flex-1 min-w-0 gap-1">
