@@ -70,7 +70,8 @@ export const exportStudyBlocksToCalendar = action({
       { userId },
     );
 
-    const calendarId = connection.selectedCalendarIds?.[0] ?? "primary";
+    if (!connection.timemaxxCalendarId) throw new Error("No Timemaxx calendar found — reconnect Google Calendar to create one");
+    const calendarId = connection.timemaxxCalendarId;
 
     let exported = 0;
     let patched = 0;
@@ -207,7 +208,8 @@ export const deleteLinkedCalendarEvents = internalAction({
       return;
     }
 
-    const calendarId = connection.selectedCalendarIds?.[0] ?? "primary";
+    if (!connection.timemaxxCalendarId) return; // no Timemaxx calendar means nothing to clean up
+    const calendarId = connection.timemaxxCalendarId;
 
     for (const eventId of args.googleEventIds) {
       await fetch(
