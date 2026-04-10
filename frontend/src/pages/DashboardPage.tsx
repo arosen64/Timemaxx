@@ -14,6 +14,7 @@ import {
   EstimationErrorModal,
   StatCard,
   TaskCard,
+  ScheduleAllButton,
   parseEstimationError,
   type ClassTagCourseOption,
   type TaskType,
@@ -339,7 +340,13 @@ export default function DashboardPage() {
 
           {/* Task Column */}
           <section className="flex flex-col flex-1 min-w-0 gap-4">
-            <h2 className="text-base font-bold font-heading text-navy">Upcoming Tasks</h2>
+            <div className="flex items-start justify-between gap-3">
+              <h2 className="text-base font-bold font-heading text-navy leading-8">Upcoming Tasks</h2>
+              <ScheduleAllButton
+                disabled={taskRows.length === 0}
+                overLimitWarning={taskRows.length > 20}
+              />
+            </div>
 
             {tasks === undefined ? (
               <div className="rounded-[10px] border border-border bg-white p-5 text-sm text-slate-blue">

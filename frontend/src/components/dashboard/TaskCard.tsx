@@ -1,7 +1,7 @@
-import { useState } from 'react'
-import { useQuery } from 'convex/react'
+import { useState, useEffect } from 'react'
+import { useQuery, useAction } from 'convex/react'
 import { api } from '../../../../backend/convex/_generated/api'
-import { PencilIcon, TrashIcon, SpinnerIcon, SparklesIcon, ChevronDownIcon } from '../icons'
+import { PencilIcon, TrashIcon, SpinnerIcon, SparklesIcon, ChevronDownIcon, CalendarIcon } from '../icons'
 import { type TaskType, formatDueDateTimeDisplay, displayTitle, formatMinutes } from './types'
 import { formatClassTagForDisplay } from '../../utils/classTagUtils'
 import TaskFeedbackForm, { type TaskFeedbackFormProps } from './TaskFeedbackForm'
@@ -33,6 +33,33 @@ export default function TaskCard({
 }: TaskCardProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [showAll, setShowAll] = useState(false)
+  const [isScheduling, setIsScheduling] = useState(false)
+  const [scheduleError, setScheduleError] = useState<string | null>(null)
+
+  const scheduleTask = useAction(api.actions.scheduleTask.scheduleTask)
+
+  useEffect(() => {
+    if (!scheduleError) return
+    const timer = setTimeout(() => setScheduleError(null), 5000)
+    return () => clearTimeout(timer)
+  }, [scheduleError])
+
+  async function handleSchedule(e: React.MouseEvent) {
+    e.stopPropagation()
+    setIsScheduling(true)
+    setScheduleError(null)
+    try {
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
+      const result = await scheduleTask({ taskId: task._id, timezone })
+      if ('error' in result) {
+        setScheduleError('No available slot found for this task.')
+      }
+    } catch {
+      setScheduleError('Scheduling failed. Please try again.')
+    } finally {
+      setIsScheduling(false)
+    }
+  }
 
   const studyBlocks = useQuery(
     api.queries.studyBlocks.getStudyBlocksByTask,
@@ -111,6 +138,20 @@ export default function TaskCard({
                 ))}
               <button
                 type="button"
+                onClick={handleSchedule}
+                disabled={isScheduling}
+                className={iconBtnCls}
+                aria-label="Auto-schedule task"
+                title="Auto-schedule"
+              >
+                {isScheduling ? (
+                  <SpinnerIcon color="currentColor" size={16} />
+                ) : (
+                  <CalendarIcon color="currentColor" size={16} />
+                )}
+              </button>
+              <button
+                type="button"
                 onClick={(e) => {
                   e.stopPropagation()
                   onEdit()
@@ -140,6 +181,9 @@ export default function TaskCard({
 
             {task.timeEstimate !== undefined && !task.isManualEstimate && (
               <TaskFeedbackForm task={task} {...feedback} />
+            )}
+            {scheduleError && (
+              <p className="text-xs text-urgent-red mt-1 text-right">{scheduleError}</p>
             )}
           </div>
         </div>
