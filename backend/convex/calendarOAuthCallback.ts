@@ -86,6 +86,11 @@ export const calendarOAuthCallback = httpAction(async (ctx, request) => {
     ...(timemaxxCalendarId && { timemaxxCalendarId }),
   });
 
+  // Flag all future blocks for re-export so they get recreated in the new calendar
+  await ctx.runMutation(internal.mutations.studyBlocks.flagFutureBlocksForReexport, {
+    userId: stateRecord.userId,
+  });
+
   // Clean up the consumed state record
   await ctx.runMutation(internal.mutations.calendar.deleteCalendarOAuthState, {
     id: stateRecord._id,

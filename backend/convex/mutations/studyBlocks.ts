@@ -205,6 +205,36 @@ export const clearNeedsExport = internalMutation({
   },
 });
 
+/**
+ * Marks all future study blocks for a user as needing re-export and clears their
+ * stale Google Calendar event IDs. Called after a user reconnects Google Calendar
+ * so that blocks previously exported to the old calendar get re-created in the new one.
+ */
+export const flagFutureBlocksForReexport = internalMutation({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+    const tasks = await ctx.db
+      .query("tasks")
+      .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+      .collect();
+
+    for (const task of tasks) {
+      const blocks = await ctx.db
+        .query("studyBlocks")
+        .withIndex("by_taskId", (q) => q.eq("taskId", task._id))
+        .collect();
+
+      for (const block of blocks) {
+        if (!block.startTime) continue;
+        if (new Date(block.startTime).getTime() <= now) continue;
+        if (!block.googleEventId && block.needsExport !== false) continue;
+        await ctx.db.patch(block._id, { needsExport: true, googleEventId: undefined });
+      }
+    }
+  },
+});
+
 export const setConflictStatus = internalMutation({
   args: {
     studyBlockId: v.id("studyBlocks"),
