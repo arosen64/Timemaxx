@@ -6,7 +6,7 @@ import { type TaskType, formatDueDateTimeDisplay, displayTitle, formatMinutes } 
 import { formatClassTagForDisplay } from '../../utils/classTagUtils'
 import TaskFeedbackForm, { type TaskFeedbackFormProps } from './TaskFeedbackForm'
 import EstimateBadge from './EstimateBadge'
-import StudyBlockRow, { type StudyBlock } from './StudyBlockRow'
+import StudyBlockRow from './StudyBlockRow'
 
 const BLOCK_DISPLAY_LIMIT = 5
 
@@ -34,7 +34,10 @@ export default function TaskCard({
   const [isExpanded, setIsExpanded] = useState(false)
   const [showAll, setShowAll] = useState(false)
 
-  const studyBlocks = useQuery(api.queries.studyBlocks.getStudyBlocksByTask, { taskId: task._id })
+  const studyBlocks = useQuery(
+    api.queries.studyBlocks.getStudyBlocksByTask,
+    isExpanded ? { taskId: task._id } : 'skip',
+  )
 
   const iconBtnCls =
     'flex items-center justify-center w-8 h-8 transition rounded-lg text-slate-blue hover:bg-bg-gray hover:text-navy'
@@ -49,7 +52,10 @@ export default function TaskCard({
   return (
     <div
       className="group min-w-0 cursor-pointer rounded-[10px] border border-border bg-white overflow-hidden"
-      onClick={() => setIsExpanded((prev) => !prev)}
+      onClick={() => setIsExpanded((prev) => {
+        if (prev) setShowAll(false)
+        return !prev
+      })}
     >
       {/* Main card row */}
       <div className="flex gap-3 px-[18px] py-4">
@@ -141,10 +147,11 @@ export default function TaskCard({
 
       {/* Collapsible study blocks panel */}
       <div
-        className={`transition-all duration-200 overflow-hidden ${
-          isExpanded ? 'max-h-[2000px]' : 'max-h-0'
+        className={`grid transition-all duration-200 ${
+          isExpanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
         }`}
       >
+        <div className="overflow-hidden">
         <div className="border-t border-border px-[18px] py-3 flex flex-col gap-2">
           {studyBlocks === undefined ? (
             <div className="flex items-center gap-2 py-1 text-slate-blue">
@@ -156,7 +163,7 @@ export default function TaskCard({
           ) : (
             <>
               {visibleBlocks.map((block) => (
-                <StudyBlockRow key={block._id} block={block as StudyBlock} />
+                <StudyBlockRow key={block._id} block={block} />
               ))}
               {hiddenCount > 0 && !showAll && (
                 <button
@@ -184,6 +191,7 @@ export default function TaskCard({
               )}
             </>
           )}
+        </div>
         </div>
       </div>
     </div>

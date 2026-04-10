@@ -137,13 +137,13 @@ describe('TaskCard', () => {
 
   // --- Expand / collapse ---
   // JSDOM does not compute CSS, so we check the panel's class directly
-  // rather than toBeVisible(), which can't understand max-h-0 overflow-hidden.
+  // rather than toBeVisible(), which can't understand grid-rows-[0fr] overflow-hidden.
 
   function getPanel(container: HTMLElement) {
     return container.querySelector('[class*="transition-all"]') as HTMLElement
   }
 
-  it('panel has max-h-0 class by default (collapsed)', () => {
+  it('panel has grid-rows-[0fr] class by default (collapsed)', () => {
     mockUseQuery.mockReturnValue([makeBlock('b1')] as never)
     const { container } = renderWithProviders(
       <TaskCard
@@ -157,10 +157,10 @@ describe('TaskCard', () => {
         onDelete={vi.fn()}
       />
     )
-    expect(getPanel(container).className).toContain('max-h-0')
+    expect(getPanel(container).className).toContain('grid-rows-[0fr]')
   })
 
-  it('clicking the card switches panel to max-h-[2000px] (expanded)', async () => {
+  it('clicking the card switches panel to grid-rows-[1fr] (expanded)', async () => {
     const user = userEvent.setup()
     mockUseQuery.mockReturnValue([makeBlock('b1')] as never)
     const { container } = renderWithProviders(
@@ -176,10 +176,10 @@ describe('TaskCard', () => {
       />
     )
     await user.click(screen.getByText('Calculus Problem Set'))
-    expect(getPanel(container).className).toContain('max-h-[2000px]')
+    expect(getPanel(container).className).toContain('grid-rows-[1fr]')
   })
 
-  it('clicking the card again collapses the panel back to max-h-0', async () => {
+  it('clicking the card again collapses the panel back to grid-rows-[0fr]', async () => {
     const user = userEvent.setup()
     mockUseQuery.mockReturnValue([makeBlock('b1')] as never)
     const { container } = renderWithProviders(
@@ -197,7 +197,7 @@ describe('TaskCard', () => {
     const title = screen.getByText('Calculus Problem Set')
     await user.click(title)
     await user.click(title)
-    expect(getPanel(container).className).toContain('max-h-0')
+    expect(getPanel(container).className).toContain('grid-rows-[0fr]')
   })
 
   it('two separate card instances expand independently', async () => {
@@ -231,8 +231,8 @@ describe('TaskCard', () => {
 
     await user.click(c1.querySelector('[class*="cursor-pointer"]')!)
     // Task A expanded, Task B still collapsed
-    expect(c1.querySelector('[class*="max-h-\\[2000px\\]"]')).toBeInTheDocument()
-    expect(c2.querySelector('[class*="max-h-0"]')).toBeInTheDocument()
+    expect(c1.querySelector('[class*="grid-rows-\\[1fr\\]"]')).toBeInTheDocument()
+    expect(c2.querySelector('[class*="grid-rows-\\[0fr\\]"]')).toBeInTheDocument()
   })
 
   it('clicking edit button does not toggle expand', async () => {
@@ -251,7 +251,7 @@ describe('TaskCard', () => {
       />
     )
     await user.click(screen.getByRole('button', { name: 'Edit task' }))
-    expect(getPanel(container).className).toContain('max-h-0')
+    expect(getPanel(container).className).toContain('grid-rows-[0fr]')
   })
 
   it('clicking delete button does not toggle expand', async () => {
@@ -270,7 +270,7 @@ describe('TaskCard', () => {
       />
     )
     await user.click(screen.getByRole('button', { name: 'Delete task' }))
-    expect(getPanel(container).className).toContain('max-h-0')
+    expect(getPanel(container).className).toContain('grid-rows-[0fr]')
   })
 
   // --- Study block variants ---

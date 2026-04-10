@@ -1,9 +1,6 @@
-export type StudyBlock = {
-  _id: string
-  title: string
-  startTime?: string
-  studyBlockLength: number
-}
+import type { Doc } from '../../../../backend/convex/_generated/dataModel'
+
+export type StudyBlock = Doc<'studyBlocks'>
 
 export function isBlockActive(block: StudyBlock): boolean {
   if (!block.startTime) return false
