@@ -41,6 +41,7 @@ export const scheduleBlock = action({
       { studyBlockId: args.studyBlockId },
     );
     if (!block) throw new Error("Study block not found");
+    if (!block.taskId) throw new Error("Block is not associated with a task");
     if (block.startTime) return { scheduled: 0 }; // already scheduled
 
     const task = await ctx.runQuery(internal.queries.tasks.getTaskInternal, {
