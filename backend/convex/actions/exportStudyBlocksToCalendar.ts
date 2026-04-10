@@ -212,13 +212,16 @@ export const deleteLinkedCalendarEvents = internalAction({
     const calendarId = connection.timemaxxCalendarId;
 
     for (const eventId of args.googleEventIds) {
-      await fetch(
+      const res = await fetch(
         `${GOOGLE_CALENDAR_API}/calendars/${encodeURIComponent(calendarId)}/events/${encodeURIComponent(eventId)}`,
         {
           method: "DELETE",
           headers: { Authorization: `Bearer ${accessToken}` },
         },
       );
+      if (!res.ok) {
+        console.warn(`Failed to delete GCal event ${eventId}: HTTP ${res.status}`);
+      }
     }
   },
 });

@@ -371,6 +371,7 @@ describe("mutations/studyBlocks – flagFutureBlocksForReexport", () => {
     const blockId = await t.run((ctx) =>
       ctx.db.insert("studyBlocks", {
         taskId: taskId as any,
+        userId: userId as any,
         title: "Exported block",
         startTime: futureStart,
         studyBlockLength: 60,
@@ -464,6 +465,7 @@ describe("mutations/studyBlocks – flagFutureBlocksForReexport", () => {
     const block1Id = await t.run((ctx) =>
       ctx.db.insert("studyBlocks", {
         taskId: task1Id as any,
+        userId: user1Id as any,
         title: "User 1 block",
         startTime: futureStart,
         studyBlockLength: 60,
@@ -474,6 +476,7 @@ describe("mutations/studyBlocks – flagFutureBlocksForReexport", () => {
     const block2Id = await t.run((ctx) =>
       ctx.db.insert("studyBlocks", {
         taskId: task2Id as any,
+        userId: user2Id as any,
         title: "User 2 block",
         startTime: futureStart,
         studyBlockLength: 60,

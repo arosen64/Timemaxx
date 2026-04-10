@@ -138,6 +138,7 @@ export default defineSchema({
   studyBlocks: defineTable({
     taskId: v.optional(v.id("tasks")),
     subtaskId: v.optional(v.id("subtasks")),
+    userId: v.optional(v.id("users")),
     title: v.string(),
     startTime: v.optional(v.string()),
     studyBlockLength: v.number(),
@@ -146,7 +147,8 @@ export default defineSchema({
     needsExport: v.optional(v.boolean()),
   })
     .index("by_taskId", ["taskId"])
-    .index("by_subtaskId", ["subtaskId"]),
+    .index("by_subtaskId", ["subtaskId"])
+    .index("by_userId", ["userId"]),
 
   // Syllabi table — tracks uploaded syllabus files and their processing status
   syllabi: defineTable({

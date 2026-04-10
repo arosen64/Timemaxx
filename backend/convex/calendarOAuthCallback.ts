@@ -116,19 +116,24 @@ const TIMEMAXX_CALENDAR_NAME = "Timemaxx";
 async function findOrCreateTimemaxxCalendar(accessToken: string): Promise<string | null> {
   const headers = { Authorization: `Bearer ${accessToken}` };
 
-  // Check if "timemaxx" calendar already exists
-  const listRes = await fetch(`${GCAL_API}/users/me/calendarList`, { headers });
-  if (listRes.ok) {
+  // Check if "Timemaxx" calendar already exists, paginating through all results
+  let pageToken: string | undefined;
+  do {
+    const url = `${GCAL_API}/users/me/calendarList${pageToken ? `?pageToken=${pageToken}` : ""}`;
+    const listRes = await fetch(url, { headers });
+    if (!listRes.ok) break;
     const listData = await listRes.json() as {
       items?: Array<{ id: string; summary: string }>;
+      nextPageToken?: string;
     };
     const existing = listData.items?.find(
       (c) => c.summary === TIMEMAXX_CALENDAR_NAME,
     );
     if (existing) return existing.id;
-  }
+    pageToken = listData.nextPageToken;
+  } while (pageToken);
 
-  // Create a new "timemaxx" calendar
+  // Create a new "Timemaxx" calendar
   const createRes = await fetch(`${GCAL_API}/calendars`, {
     method: "POST",
     headers: { ...headers, "Content-Type": "application/json" },

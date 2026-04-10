@@ -32,6 +32,7 @@ export async function rebuildStudyBlocks(
 
     await ctx.db.insert("studyBlocks", {
       taskId,
+      userId: task.userId,
       title: task.title,
       startTime: undefined,
       studyBlockLength,
