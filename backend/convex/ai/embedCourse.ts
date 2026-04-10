@@ -34,3 +34,28 @@ export const generateCourseEmbedding = internalAction({
     });
   },
 });
+
+export const generateTaskEmbedding = internalAction({
+  args: {
+    taskId: v.id("tasks"),
+    title: v.string(),
+    description: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) throw new Error("GEMINI_API_KEY is not set");
+
+    const google = createGoogleGenerativeAI({ apiKey });
+    const input = `${args.title}\n\n${args.description}`;
+
+    const { embedding } = await embed({
+      model: google.embedding(EMBEDDING_MODEL),
+      value: input,
+    });
+
+    await ctx.runMutation(internal.mutations.tasks.patchTaskEmbedding, {
+      taskId: args.taskId,
+      embedding,
+    });
+  },
+});

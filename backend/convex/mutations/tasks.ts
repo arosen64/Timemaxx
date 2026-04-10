@@ -1,4 +1,5 @@
-import { mutation, MutationCtx } from "../_generated/server";
+import { mutation, internalMutation, MutationCtx } from "../_generated/server";
+import { internal } from "../_generated/api";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { taskTypeValidator } from "../lib/taskValidators";
@@ -87,6 +88,12 @@ export const createTask = mutation({
       await rebuildStudyBlocks(ctx, taskId, args.timeEstimate!);
     }
 
+    await ctx.scheduler.runAfter(0, internal.ai.embedCourse.generateTaskEmbedding, {
+      taskId,
+      title: args.title,
+      description: args.description,
+    });
+
     return taskId;
   },
 });
@@ -119,6 +126,22 @@ export const updateTask = mutation({
         ? { classTag: normalizeClassTag(args.classTag) }
         : {}),
     });
+
+    await ctx.scheduler.runAfter(0, internal.ai.embedCourse.generateTaskEmbedding, {
+      taskId: args.taskId,
+      title: args.title,
+      description: args.description,
+    });
+  },
+});
+
+export const patchTaskEmbedding = internalMutation({
+  args: {
+    taskId: v.id("tasks"),
+    embedding: v.array(v.float64()),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.taskId, { embedding: args.embedding });
   },
 });
 

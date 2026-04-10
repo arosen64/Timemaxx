@@ -111,9 +111,11 @@ export default defineSchema({
     courseId: v.optional(v.id("userCourses")),
     /** Free-text label for the course/class (optional; complements courseId) */
     classTag: v.optional(v.string()),
+    embedding: v.optional(v.array(v.float64())),
   })
     .index("by_userId", ["userId"])
-    .index("by_userId_createdAt", ["userId", "createdAt"]),
+    .index("by_userId_createdAt", ["userId", "createdAt"])
+    .vectorIndex("by_embedding", { vectorField: "embedding", dimensions: 3072, filterFields: ["userId"] }),
 
   // Subtasks table — AI-generated or manually created subtasks linked to a parent task
   subtasks: defineTable({
