@@ -5,7 +5,8 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { api, internal } from "../_generated/api";
 import {
   enumerateSlots,
-  selectSlotWithAI,
+  selectAllSlotsWithAI,
+  isSlotValid,
   type OccupiedInterval,
   type WorkHoursRow,
 } from "../lib/scheduleSlots";
@@ -113,40 +114,58 @@ export const scheduleTask = action({
 
     const nowMs = Date.now();
     const fromMs = Math.max(nowMs, task._creationTime);
-    let scheduled = 0;
 
-    for (const block of unscheduled) {
-      const candidates = enumerateSlots({
+    // Enumerate candidates for every unscheduled block upfront
+    const blockCandidates = unscheduled.map((block) =>
+      enumerateSlots({
         fromMs,
         dueDateMs: task.dueDate,
         durationMinutes: block.studyBlockLength,
         workHoursGrid,
         occupiedIntervals,
         timezone: args.timezone,
-      });
+      })
+    );
 
-      if (candidates.length === 0) {
-        return { error: "no_slot_found" };
-      }
+    if (blockCandidates.some((c) => c.length === 0)) {
+      return { error: "no_slot_found" };
+    }
 
-      const chosen = await selectSlotWithAI({
-        candidates,
+    // One Gemini call for all blocks
+    const chosenIndices = await selectAllSlotsWithAI(
+      unscheduled.map((_block, i) => ({
         taskTitle: task.title,
         dueDate: task.dueDate,
-        productivityTraits,
-      });
+        candidates: blockCandidates[i],
+      })),
+      productivityTraits,
+    );
 
-      if (!chosen) return { error: "no_slot_found" };
+    let scheduled = 0;
+
+    for (let i = 0; i < unscheduled.length; i++) {
+      const block = unscheduled[i];
+      const candidates = blockCandidates[i];
+      const durationMs = block.studyBlockLength * 60000;
+
+      // Use AI-chosen index; fall back to first still-valid candidate if it conflicts
+      let chosen = candidates[chosenIndices[i]];
+      if (!isSlotValid(chosen.startMs, durationMs, workHoursGrid, occupiedIntervals, args.timezone)) {
+        const fallback = candidates.find((c) =>
+          isSlotValid(c.startMs, durationMs, workHoursGrid, occupiedIntervals, args.timezone)
+        );
+        if (!fallback) return { error: "no_slot_found" };
+        chosen = fallback;
+      }
 
       await ctx.runMutation(internal.mutations.studyBlocks.placeStudyBlock, {
         studyBlockId: block._id,
         startTime: chosen.startISO,
       });
 
-      // Add placed block to occupied intervals so subsequent blocks don't collide
       occupiedIntervals.push({
         startMs: chosen.startMs,
-        endMs: chosen.startMs + block.studyBlockLength * 60000,
+        endMs: chosen.startMs + durationMs,
         title: block.title,
       });
 

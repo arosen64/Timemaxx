@@ -6,7 +6,8 @@ import { api, internal } from "../_generated/api";
 import {
   extendSlotPool,
   filterPoolForBlock,
-  selectSlotWithAI,
+  isSlotValid,
+  selectAllSlotsWithAI,
   roundUpTo15Min,
   SCHEDULE_HORIZON_MS,
   type OccupiedInterval,
@@ -131,8 +132,14 @@ export const scheduleAllTasks = action({
     const horizonMs = nowMs + SCHEDULE_HORIZON_MS;
     let scanCursor = roundUpTo15Min(nowMs);
 
-    let scheduled = 0;
-    let skipped = 0;
+    // Phase 1: collect all (task, block, candidates) — extend pool per task as before
+    type BlockEntry = {
+      taskId: string;
+      block: (typeof allBlocksWithTasks)[0];
+      candidates: ReturnType<typeof filterPoolForBlock>;
+    };
+    const entries: BlockEntry[] = [];
+    const tasksWithEntries = new Set<string>();
 
     for (const task of tasksToSchedule) {
       const unscheduledBlocks = (blocksByTask.get(task._id) ?? []).filter(
@@ -154,7 +161,6 @@ export const scheduleAllTasks = action({
         });
       }
 
-      let taskScheduled = false;
       for (const block of unscheduledBlocks) {
         const candidates = filterPoolForBlock({
           pool,
@@ -165,41 +171,60 @@ export const scheduleAllTasks = action({
           timezone: args.timezone,
         });
 
-        if (candidates.length === 0) break; // No slots for this block — skip task
-
-        const chosen = await selectSlotWithAI({
-          candidates,
-          taskTitle: task.title,
-          dueDate: task.dueDate,
-          productivityTraits,
-        });
-
-        if (!chosen) break;
-
-        await ctx.runMutation(internal.mutations.studyBlocks.placeStudyBlock, {
-          studyBlockId: block._id as any,
-          startTime: chosen.startISO,
-        });
-
-        // Remove placed slot from pool and add to occupied intervals
-        const poolIdx = pool.findIndex((s) => s.startMs === chosen.startMs);
-        if (poolIdx !== -1) pool.splice(poolIdx, 1);
-
-        occupiedIntervals.push({
-          startMs: chosen.startMs,
-          endMs: chosen.startMs + block.studyBlockLength * 60000,
-          title: block.title,
-        });
-
-        taskScheduled = true;
+        if (candidates.length === 0) break; // No slots — stop collecting for this task
+        entries.push({ taskId: task._id, block, candidates });
+        tasksWithEntries.add(task._id);
       }
 
-      if (taskScheduled) {
-        scheduled++;
-      } else {
-        skipped++;
-      }
     }
+
+    // Phase 2: one Gemini call for all collected blocks
+    const chosenIndices = entries.length > 0
+      ? await selectAllSlotsWithAI(
+          entries.map((e) => ({
+            taskTitle: tasksToSchedule.find((t) => t._id === e.taskId)!.title,
+            dueDate: tasksToSchedule.find((t) => t._id === e.taskId)!.dueDate,
+            candidates: e.candidates,
+          })),
+          productivityTraits,
+        )
+      : [];
+
+    // Phase 3: place blocks using AI-chosen slots, with conflict fallback
+    const scheduledTaskIds = new Set<string>();
+
+    for (let i = 0; i < entries.length; i++) {
+      const { taskId, block, candidates } = entries[i];
+      const durationMs = block.studyBlockLength * 60000;
+
+      let chosen = candidates[chosenIndices[i] ?? 0];
+      if (!isSlotValid(chosen.startMs, durationMs, workHoursGrid, occupiedIntervals, args.timezone)) {
+        const fallback = candidates.find((c) =>
+          isSlotValid(c.startMs, durationMs, workHoursGrid, occupiedIntervals, args.timezone)
+        );
+        if (!fallback) continue; // Can't place — leave block unscheduled
+        chosen = fallback;
+      }
+
+      await ctx.runMutation(internal.mutations.studyBlocks.placeStudyBlock, {
+        studyBlockId: block._id as any,
+        startTime: chosen.startISO,
+      });
+
+      const poolIdx = pool.findIndex((s) => s.startMs === chosen.startMs);
+      if (poolIdx !== -1) pool.splice(poolIdx, 1);
+
+      occupiedIntervals.push({
+        startMs: chosen.startMs,
+        endMs: chosen.startMs + durationMs,
+        title: block.title,
+      });
+
+      scheduledTaskIds.add(taskId);
+    }
+
+    const scheduled = scheduledTaskIds.size;
+    const skipped = tasksToSchedule.filter((t) => !scheduledTaskIds.has(t._id)).length;
 
     return { scheduled, skipped };
   },
