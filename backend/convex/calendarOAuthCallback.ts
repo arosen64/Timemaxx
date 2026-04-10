@@ -96,7 +96,14 @@ export const calendarOAuthCallback = httpAction(async (ctx, request) => {
     id: stateRecord._id,
   });
 
-  return new Response(null, { status: 302, headers: { Location: profileRedirect } });
+  // If the Timemaxx calendar couldn't be created, tell the frontend so it can
+  // prompt the user to reconnect via the "Update Calendar Permissions" button.
+  const redirectTarget = timemaxxCalendarId
+    ? "/profile"
+    : "/profile?calendarSetupFailed=1";
+  const finalRedirect = `${siteUrl}/?oauth=calendar&returnTo=${encodeURIComponent(redirectTarget)}`;
+
+  return new Response(null, { status: 302, headers: { Location: finalRedirect } });
 });
 
 const GCAL_API = "https://www.googleapis.com/calendar/v3";

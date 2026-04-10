@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import { useQuery, useAction } from "convex/react";
 import { api } from "../../../backend/convex/_generated/api";
@@ -9,6 +9,8 @@ import Button from "../components/ui/Button";
 
 export default function ProfilePage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const calendarSetupFailed = new URLSearchParams(location.search).get("calendarSetupFailed") === "1";
   const user = useQuery(api.queries.users.getCurrUser);
 
   const calendarStatus = useQuery(api.queries.calendar.getCalendarConnectionStatus);
@@ -79,6 +81,15 @@ export default function ProfilePage() {
           {/* Divider */}
           <div className="h-px w-full bg-border" />
 
+          {/* Google Calendar setup failure banner */}
+          {calendarSetupFailed && connected && (
+            <div className="flex items-center gap-3 rounded-lg border border-yellow-300 bg-yellow-50 px-4 py-3 text-sm text-yellow-800">
+              <span className="flex-1">
+                Your calendar connected, but the Timemaxx calendar couldn't be created. Click <strong>Update Calendar Permissions</strong> below to reconnect and finish setup.
+              </span>
+            </div>
+          )}
+
           {/* Google Calendar */}
           <div className="flex items-center justify-between">
             <div className="flex flex-col gap-1">
@@ -88,7 +99,7 @@ export default function ProfilePage() {
             {calendarStatus === undefined ? (
               <div className="h-9 w-36 rounded-lg bg-border animate-pulse" />
             ) : connected ? (
-              hasEventsScope ? (
+              hasEventsScope && !calendarSetupFailed ? (
                 <Button variant="destructive" onClick={handleRevokeCalendar} className="px-5">
                   Revoke Access
                 </Button>

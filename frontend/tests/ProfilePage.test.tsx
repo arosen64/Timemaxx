@@ -37,9 +37,14 @@ vi.mock('convex/react', () => ({
 }))
 
 const mockNavigate = vi.fn()
+let mockSearch = ''
 vi.mock('react-router-dom', async (importOriginal) => {
   const actual = await importOriginal<typeof import('react-router-dom')>()
-  return { ...actual, useNavigate: () => mockNavigate }
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+    useLocation: () => ({ search: mockSearch, pathname: '/profile', hash: '', state: null, key: 'default' }),
+  }
 })
 
 import { useQuery, useMutation, useAction } from 'convex/react'
@@ -79,6 +84,7 @@ describe('ProfilePage – Google Calendar section', () => {
     vi.clearAllMocks()
     mockNavigate.mockClear()
     mockSignOut.mockClear()
+    mockSearch = ''
   })
 
   it('renders loading skeleton when calendar status is loading', () => {
@@ -133,6 +139,15 @@ describe('ProfilePage – Google Calendar section', () => {
     await user.click(screen.getByRole('button', { name: /revoke access/i }))
 
     await waitFor(() => expect(mockRevokeAction).toHaveBeenCalledWith({}))
+  })
+
+  it('shows setup failure banner and "Update Calendar Permissions" when calendarSetupFailed=1', () => {
+    mockSearch = '?calendarSetupFailed=1'
+    setup({ connected: true, hasEventsScope: true })
+
+    expect(screen.getByText(/timemaxx calendar couldn't be created/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /update calendar permissions/i })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /revoke access/i })).not.toBeInTheDocument()
   })
 })
 
