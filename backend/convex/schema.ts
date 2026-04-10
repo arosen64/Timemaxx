@@ -112,6 +112,14 @@ export default defineSchema({
     /** Free-text label for the course/class (optional; complements courseId) */
     classTag: v.optional(v.string()),
     embedding: v.optional(v.array(v.float64())),
+    reasoning: v.optional(
+      v.object({
+        classes: v.string(),
+        tasks: v.string(),
+        chats: v.string(),
+        profile: v.string(),
+      })
+    ),
   })
     .index("by_userId", ["userId"])
     .index("by_userId_createdAt", ["userId", "createdAt"])

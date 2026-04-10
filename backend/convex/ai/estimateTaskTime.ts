@@ -220,6 +220,7 @@ export const estimateTaskTime = internalAction({
       await ctx.runMutation(internal.mutations.timeEstimate.setTimeEstimate, {
         taskId: args.taskId,
         timeEstimate: result.estimatedMinutes,
+        reasoning: result.reasoningTrace,
       });
     } catch (err) {
       console.error("Failed to estimate task time:", err);
