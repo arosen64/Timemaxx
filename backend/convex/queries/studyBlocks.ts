@@ -107,6 +107,13 @@ export const getAllStudyBlocksWithTasks = query({
   },
 });
 
+export const getStudyBlockInternal = internalQuery({
+  args: { studyBlockId: v.id("studyBlocks") },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.studyBlockId);
+  },
+});
+
 export const getAllStudyBlocksWithTasksInternal = internalQuery({
   args: { userId: v.id("users") },
   handler: async (ctx, args) => {

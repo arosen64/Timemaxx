@@ -29,16 +29,16 @@ export default function ScheduleTray({
   timezone,
   onScheduleAllMsg,
 }: Props) {
-  const scheduleTaskAction = useAction(api.actions.scheduleTask.scheduleTask)
+  const scheduleBlockAction = useAction(api.actions.scheduleBlock.scheduleBlock)
   const scheduleAllTasksAction = useAction(api.actions.scheduleAllTasks.scheduleAllTasks)
 
   const [schedulingBlockIds, setSchedulingBlockIds] = useState<Set<Id<'studyBlocks'>>>(new Set())
   const [isSchedulingAll, setIsSchedulingAll] = useState(false)
 
-  async function handleScheduleBlock(blockId: Id<'studyBlocks'>, taskId: Id<'tasks'>) {
+  async function handleScheduleBlock(blockId: Id<'studyBlocks'>) {
     setSchedulingBlockIds((prev) => new Set(prev).add(blockId))
     try {
-      await scheduleTaskAction({ taskId, timezone, studyBlockId: blockId })
+      await scheduleBlockAction({ studyBlockId: blockId, timezone })
     } finally {
       setSchedulingBlockIds((prev) => {
         const next = new Set(prev)
@@ -128,7 +128,7 @@ export default function ScheduleTray({
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation()
-                  handleScheduleBlock(block._id, block.taskId)
+                  handleScheduleBlock(block._id)
                 }}
                 disabled={isBlockScheduling}
                 className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded text-slate-blue opacity-0 transition hover:bg-navy/10 hover:text-navy group-hover:opacity-100 disabled:cursor-not-allowed disabled:opacity-50"
