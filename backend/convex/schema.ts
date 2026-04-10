@@ -80,6 +80,9 @@ export default defineSchema({
     userId: v.id("users"),
     courseCode: v.string(), //e.g. "EN.501.303 (SIS Code)"
     title: v.string(),
+    description: v.optional(v.string()),
+    prereqs: v.optional(v.array(v.string())),
+    embedding: v.optional(v.array(v.float64())),
     credits: v.optional(v.number()),
     term: v.string(),
     grade: v.optional(v.string()),
@@ -89,7 +92,8 @@ export default defineSchema({
   })
     .index("by_user", ["userId"])
     .index("by_user_course", ["userId", "courseCode"])
-    .index("by_user_term", ["userId", "term"]),
+    .index("by_user_term", ["userId", "term"])
+    .vectorIndex("by_embedding", { vectorField: "embedding", dimensions: 3072, filterFields: ["userId"] }),
 
   // Tasks table
   tasks: defineTable({
@@ -107,9 +111,11 @@ export default defineSchema({
     courseId: v.optional(v.id("userCourses")),
     /** Free-text label for the course/class (optional; complements courseId) */
     classTag: v.optional(v.string()),
+    embedding: v.optional(v.array(v.float64())),
   })
     .index("by_userId", ["userId"])
-    .index("by_userId_createdAt", ["userId", "createdAt"]),
+    .index("by_userId_createdAt", ["userId", "createdAt"])
+    .vectorIndex("by_embedding", { vectorField: "embedding", dimensions: 3072, filterFields: ["userId"] }),
 
   // Subtasks table — AI-generated or manually created subtasks linked to a parent task
   subtasks: defineTable({

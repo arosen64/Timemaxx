@@ -17,6 +17,7 @@ export default function CourseSelector({ onAddCourse, mode = 'all' }: CourseSele
   const getAvailableTerms = useAction(api.actions.jhuCourses.getAvailableTerms)
   const getAvailableSchools = useAction(api.actions.jhuCourses.getAvailableSchools)
   const getCoursesByTerm = useAction(api.actions.jhuCourses.getCoursesByTerm)
+  const getCourseDetails = useAction(api.actions.jhuCourses.getCourseDetails)
   const addUserCourse = useMutation(api.mutations.userCourses.addUserCourse)
 
   const [terms, setTerms] = useState<JhuTerm[]>([])
@@ -164,10 +165,25 @@ export default function CourseSelector({ onAddCourse, mode = 'all' }: CourseSele
     const title = `${selectedCourse.OfferingName}: ${selectedCourse.Title}`
     const credits = selectedCourse.Credits ? parseFloat(selectedCourse.Credits) : undefined
 
+    // Fetch description + prereqs from SIS; best-effort — don't block course add on failure
+    let description: string | undefined
+    let prereqs: string[] | undefined
+    try {
+      const details = await getCourseDetails({ offeringName: courseCode, term: selectedTerm })
+      if (details) {
+        description = typeof details.description === 'string' ? details.description : undefined
+        prereqs = Array.isArray(details.prereqs) ? (details.prereqs as string[]) : undefined
+      }
+    } catch {
+      // silently ignore — description/prereqs are optional
+    }
+
     try {
       const userCourseId = await addUserCourse({
         courseCode,
         title,
+        description,
+        prereqs,
         credits,
         term: selectedTerm,
         studyGoal: isCurrent ? studyGoalInput.trim() || undefined : undefined,

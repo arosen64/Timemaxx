@@ -40,3 +40,5 @@ opsx*
 
 # Mastra generated files
 .mastra/
+# Mastra
+mastra/.mastra

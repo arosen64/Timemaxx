@@ -46,7 +46,8 @@ export const getCoursesByTerm = action({
     if (args.courseTitle) parts.push(`CourseTitle=${encode(args.courseTitle)}`);
     if (args.courseNumber) parts.push(`CourseNumber=${encode(args.courseNumber)}`);
 
-    const res = await sisFetch(`${JHU_SIS_BASE_URL}?${parts.join("&")}`, "courses");
+    const queryString = parts.join("&");
+    const res = await sisFetch(`${JHU_SIS_BASE_URL}?${queryString}`, "courses");
     if (!res.ok) {
       throw new Error(`JHU SIS API error: ${res.status} ${res.statusText}`);
     }
@@ -59,6 +60,61 @@ export const getCoursesByTerm = action({
       );
     }
     return results;
+  },
+});
+
+/**
+ * Returns details (including description) for a specific course offering.
+ * offeringName is the SIS offering code, e.g. "AS.001.001" or "AS00410021".
+ * term is the term string, e.g. "Summer 2026".
+ */
+export const getCourseDetails = action({
+  args: {
+    offeringName: v.string(),
+    term: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+
+    // SIS detail endpoint expects dots removed and a trailing "1", e.g. "AS.010.222" → "AS0102221"
+    const sisCode = args.offeringName.replace(/\./g, "") + "01";
+    const encodedTerm = encodeURIComponent(args.term);
+    const url = `${JHU_SIS_BASE_URL}/${sisCode}/${encodedTerm}?key=${getApiKey()}`;
+
+    const res = await sisFetch(url, "course-details");
+    if (!res.ok) {
+      throw new Error(`JHU SIS API error: ${res.status} ${res.statusText}`);
+    }
+
+    const data = await res.json();
+    // The endpoint returns an array of sections; grab description from first section
+    const sections = data as Array<Record<string, unknown>>;
+    if (!sections.length) return null;
+
+    const first = sections[0];
+    const sectionDetails = (first.SectionDetails as Array<Record<string, unknown>> | undefined)?.[0];
+
+    // Extract course codes (e.g. "EN.500.112") from each prereq's Expression or Description
+    const prereqsArr = sectionDetails?.Prerequisites as Array<{ Expression?: string; Description?: string }> | undefined;
+    const courseCodeRegex = /[A-Z]{2}\.\d{3}\.\d{3}/g;
+    const prereqs: string[] = [];
+    for (const p of prereqsArr ?? []) {
+      const source = p.Expression ?? p.Description ?? "";
+      const matches = source.match(courseCodeRegex) ?? [];
+      for (const code of matches) {
+        if (!prereqs.includes(code)) prereqs.push(code);
+      }
+    }
+
+    return {
+      offeringName: first.OfferingName as string | undefined,
+      title: first.Title as string | undefined,
+      description: typeof sectionDetails?.Description === "string" ? sectionDetails.Description : undefined,
+      prereqs: prereqs.length > 0 ? prereqs : undefined,
+      credits: first.Credits as number | undefined,
+      sections,
+    };
   },
 });
 
