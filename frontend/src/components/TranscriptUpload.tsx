@@ -16,6 +16,7 @@ interface TranscriptUploadProps {
 
 export default function TranscriptUpload({ onCoursesAdded }: TranscriptUploadProps) {
   const parseTranscript = useAction(api.ai.parseTranscript.parseTranscript)
+  const getCourseDetails = useAction(api.actions.jhuCourses.getCourseDetails)
   const addUserCourse = useMutation(api.mutations.userCourses.addUserCourse)
 
   const [file, setFile] = useState<File | null>(null)
@@ -47,10 +48,21 @@ export default function TranscriptUpload({ onCoursesAdded }: TranscriptUploadPro
       const savedPast: Course[] = []
       await Promise.all(
         pastCourses.map(async (c) => {
+          let description: string | undefined
+          let prereqs: string[] | undefined
+          try {
+            const details = await getCourseDetails({ offeringName: c.courseCode, term: c.term })
+            if (details) {
+              description = typeof details.description === 'string' ? details.description : undefined
+              prereqs = Array.isArray(details.prereqs) ? (details.prereqs as string[]) : undefined
+            }
+          } catch { /* best-effort */ }
           try {
             const userCourseId = await addUserCourse({
               courseCode: c.courseCode,
               title: c.title,
+              description,
+              prereqs,
               credits: c.credits,
               term: c.term,
               grade: c.grade,
@@ -115,10 +127,21 @@ export default function TranscriptUpload({ onCoursesAdded }: TranscriptUploadPro
     const savedCurrent: Course[] = []
     await Promise.all(
       pendingCurrentCourses.map(async (c, i) => {
+        let description: string | undefined
+        let prereqs: string[] | undefined
+        try {
+          const details = await getCourseDetails({ offeringName: c.courseCode, term: c.term })
+          if (details) {
+            description = typeof details.description === 'string' ? details.description : undefined
+            prereqs = Array.isArray(details.prereqs) ? (details.prereqs as string[]) : undefined
+          }
+        } catch { /* best-effort */ }
         try {
           const userCourseId = await addUserCourse({
             courseCode: c.courseCode,
             title: c.title,
+            description,
+            prereqs,
             credits: c.credits,
             term: c.term,
             studyGoal: pendingGoals[i],
