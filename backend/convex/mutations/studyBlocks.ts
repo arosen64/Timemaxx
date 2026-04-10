@@ -218,6 +218,27 @@ export const setStudyBlockTime = internalMutation({
   },
 });
 
+/**
+ * Places a study block at a chosen start time, flagging it for GCal export
+ * and clearing any conflict status. Called from AI scheduling actions.
+ */
+/**
+ * Places a study block at a chosen start time and clears any conflict status.
+ * Called from AI scheduling actions.
+ */
+export const placeStudyBlock = internalMutation({
+  args: {
+    studyBlockId: v.id("studyBlocks"),
+    startTime: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.studyBlockId, {
+      startTime: args.startTime,
+      isConflicted: false,
+    });
+  },
+});
+
 export const detectConflicts = internalMutation({
   args: {
     userId: v.id("users"),

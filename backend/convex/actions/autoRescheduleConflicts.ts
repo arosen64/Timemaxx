@@ -3,8 +3,13 @@ import { action } from "../_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { api, internal } from "../_generated/api";
-import { computeFreeBlocks } from "./getCalendarAvailability";
 import type { Id } from "../_generated/dataModel";
+import {
+  enumerateSlots,
+  selectSlotWithAI,
+  type OccupiedInterval,
+  type WorkHoursRow,
+} from "../lib/scheduleSlots";
 
 type StudyBlockWithTask = {
   _id: Id<"studyBlocks">;
@@ -18,15 +23,16 @@ type StudyBlockWithTask = {
 };
 
 /**
- * Reschedules all conflicted study blocks across the full 21-day window.
- * Fetches fresh calendar events, computes availability, and greedily places
- * conflicted blocks into free slots following scheduling constraints:
- *   - Prefers green (isPreferred) slots over white
- *   - Enforces 15-min gap between any two study blocks
- *   - Enforces no same-task blocks back-to-back (60+ min gap required)
- *   - Never places blocks in unavailable slots
- *   - Blocks that cannot be placed have startTime cleared
+ * Reschedules all conflicted study blocks across the full 21-day window using
+ * AI-powered slot selection (Gemini Flash).
+ *
+ * For each conflicted block (sorted by task due date, earliest first):
+ *  - Enumerates valid candidate slots respecting work hours and occupied intervals
+ *  - Calls Gemini to select the best slot based on surrounding context and user preferences
+ *  - Places the block; blocks that can't be placed have their startTime cleared
+ *
  * Returns the count of blocks that could not be placed.
+ * External interface is unchanged from the previous implementation.
  */
 export const autoRescheduleConflicts = action({
   args: {
@@ -39,7 +45,6 @@ export const autoRescheduleConflicts = action({
     // Fetch fresh calendar events for the full 21-day window (3 weekly fetches)
     const today = new Date();
     const todayStr = toDateStr(today, args.timezone);
-
     const week2Start = new Date(today);
     week2Start.setDate(week2Start.getDate() + 7);
     const week3Start = new Date(today);
@@ -73,16 +78,10 @@ export const autoRescheduleConflicts = action({
       // Fall back to no events — availability computed from work hours only
     }
 
-    // Get user's workHoursGrid
-    const scheduleData = await ctx.runQuery(api.queries.calendar.getScheduleData);
-    const workHoursGrid = (scheduleData?.workHoursGrid ?? []) as Array<{
-      day: string;
-      available: number[];
-      blocked: number[];
-    }>;
-
-    // Compute free blocks for the full 21-day window
-    const freeBlocks = computeFreeBlocks(timedEvents, workHoursGrid, todayStr, args.timezone);
+    // Get user preferences
+    const user = await ctx.runQuery(internal.queries.users.getUserInternal, { userId });
+    const workHoursGrid = ((user?.workHoursGrid ?? []) as WorkHoursRow[]);
+    const productivityTraits: unknown = user?.productivityTraits;
 
     // Get all study blocks for the user
     const allBlocks = (await ctx.runQuery(
@@ -97,101 +96,35 @@ export const autoRescheduleConflicts = action({
     // Sort conflicted blocks by task due date (earliest first)
     conflictedBlocks.sort((a, b) => a.taskDueDate - b.taskDueDate);
 
-    // Build the set of already-placed ranges (non-conflicted scheduled blocks)
-    const placedRanges: Array<{ startMs: number; endMs: number; taskId: string }> = [];
-    for (const b of scheduledNonConflicted) {
-      const startMs = new Date(b.startTime!).getTime();
-      const endMs = startMs + b.studyBlockLength * 60 * 1000;
-      placedRanges.push({ startMs, endMs, taskId: b.taskId });
-    }
-
-    // Capture current time once for all past-slot comparisons
-    const nowMs = Date.now();
-
-    // Sort free blocks: preferred first, then by start time.
-    // Filter out slots already fully elapsed; trim slots that are partially elapsed.
-    const sortedFreeBlocks = filterPastFreeBlocks(
-      [
-        ...freeBlocks.filter((fb) => fb.isPreferred),
-        ...freeBlocks.filter((fb) => !fb.isPreferred),
-      ].map((fb) => ({
-        ...fb,
-        startMs: new Date(fb.startISO).getTime(),
-        endMs: new Date(fb.endISO).getTime(),
+    // Build initial occupied intervals from calendar events + already-placed non-conflicted blocks
+    const occupiedIntervals: OccupiedInterval[] = [
+      ...timedEvents.map((e) => ({
+        startMs: new Date(e.start).getTime(),
+        endMs: new Date(e.end).getTime(),
+        title: e.summary,
       })),
-      nowMs,
-    );
+      ...scheduledNonConflicted.map((b) => ({
+        startMs: new Date(b.startTime!).getTime(),
+        endMs: new Date(b.startTime!).getTime() + b.studyBlockLength * 60000,
+        title: b.taskTitle,
+      })),
+    ];
 
+    const nowMs = Date.now();
     let unplacedCount = 0;
 
     for (const block of conflictedBlocks) {
-      const blockDurationMs = block.studyBlockLength * 60 * 1000;
-      const taskDueDateMs = block.taskDueDate;
-      let placed = false;
+      const candidates = enumerateSlots({
+        fromMs: nowMs,
+        dueDateMs: block.taskDueDate,
+        durationMinutes: block.studyBlockLength,
+        workHoursGrid,
+        occupiedIntervals,
+        timezone: args.timezone,
+      });
 
-      for (const freeSlot of sortedFreeBlocks) {
-        if (freeSlot.endMs - freeSlot.startMs < blockDurationMs) continue;
-
-        // Find the earliest valid start within this free slot
-        let candidateStart = freeSlot.startMs;
-
-        // Apply gap constraints from all placed blocks.
-        // Re-scan after each push so a later block in the list can't create a
-        // new overlap that was missed in the single-pass order.
-        let adjusted = true;
-        while (adjusted) {
-          adjusted = false;
-          for (const range of placedRanges) {
-            if (range.endMs <= candidateStart) continue;
-            if (range.startMs >= candidateStart + blockDurationMs) continue;
-
-            // Overlap or too-close: push candidateStart forward
-            const sameTask = range.taskId === block.taskId;
-            const requiredGapMs = sameTask ? 60 * 60 * 1000 : 15 * 60 * 1000;
-            if (range.endMs + requiredGapMs > candidateStart) {
-              candidateStart = Math.max(candidateStart, range.endMs + requiredGapMs);
-              adjusted = true;
-            }
-          }
-        }
-
-        // Safety net: gap adjustments may push candidateStart into the past
-        candidateStart = Math.max(candidateStart, nowMs);
-
-        // Check if candidate fits within the free slot
-        if (candidateStart + blockDurationMs > freeSlot.endMs) continue;
-
-        // Check due date constraint
-        if (candidateStart >= taskDueDateMs) continue;
-
-        // Place the block
-        const newStartISO = new Date(candidateStart).toISOString();
-        placedRanges.push({
-          startMs: candidateStart,
-          endMs: candidateStart + blockDurationMs,
-          taskId: block.taskId,
-        });
-
-        // Trim the free slot (advance its start past the placed block + gap)
-        freeSlot.startMs = candidateStart + blockDurationMs + 15 * 60 * 1000;
-        freeSlot.startISO = new Date(freeSlot.startMs).toISOString();
-
-        await ctx.runMutation(internal.mutations.studyBlocks.setStudyBlockTime, {
-          studyBlockId: block._id,
-          startTime: newStartISO,
-        });
-        await ctx.runMutation(internal.mutations.studyBlocks.setConflictStatus, {
-          studyBlockId: block._id,
-          isConflicted: false,
-        });
-
-        placed = true;
-        break;
-      }
-
-      if (!placed) {
+      if (candidates.length === 0) {
         unplacedCount++;
-        // 4.5: Clear startTime and isConflicted for unplaced blocks
         await ctx.runMutation(internal.mutations.studyBlocks.setStudyBlockTime, {
           studyBlockId: block._id,
           startTime: null,
@@ -200,7 +133,40 @@ export const autoRescheduleConflicts = action({
           studyBlockId: block._id,
           isConflicted: false,
         });
+        continue;
       }
+
+      const chosen = await selectSlotWithAI({
+        candidates,
+        taskTitle: block.taskTitle,
+        dueDate: block.taskDueDate,
+        productivityTraits,
+      });
+
+      if (!chosen) {
+        unplacedCount++;
+        await ctx.runMutation(internal.mutations.studyBlocks.setStudyBlockTime, {
+          studyBlockId: block._id,
+          startTime: null,
+        });
+        await ctx.runMutation(internal.mutations.studyBlocks.setConflictStatus, {
+          studyBlockId: block._id,
+          isConflicted: false,
+        });
+        continue;
+      }
+
+      await ctx.runMutation(internal.mutations.studyBlocks.placeStudyBlock, {
+        studyBlockId: block._id,
+        startTime: chosen.startISO,
+      });
+
+      // Add placed block to occupied intervals so subsequent blocks don't collide
+      occupiedIntervals.push({
+        startMs: chosen.startMs,
+        endMs: chosen.startMs + block.studyBlockLength * 60000,
+        title: block.taskTitle,
+      });
     }
 
     return { unplacedCount };
