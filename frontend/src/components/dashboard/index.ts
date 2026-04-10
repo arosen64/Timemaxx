@@ -7,6 +7,8 @@ export { default as EstimationErrorModal } from './EstimationErrorModal'
 export { default as StatCard } from './StatCard'
 export { default as ScheduleBlock } from './ScheduleBlock'
 export { default as TaskCard } from './TaskCard'
+export { default as StudyBlockRow } from './StudyBlockRow'
+export type { StudyBlock } from './StudyBlockRow'
 export { default as TaskFeedbackForm } from './TaskFeedbackForm'
 export type { TaskType, EditForm, BuiltInTaskType, ClassTagCourseOption, FeedbackDraft } from './types'
 export {
@@ -18,6 +20,5 @@ export {
   displayTitle,
   formatMinutes,
   parseEstimationError,
-  BAR_COLORS,
   BADGE_MAP,
 } from './types'

@@ -22006,6 +22006,187 @@
           ]
         }
       ]
+    },
+    {
+      "type": "frame",
+      "id": "MSUig",
+      "x": 8100,
+      "y": 1958,
+      "name": "TaskCard/Expanded",
+      "reusable": true,
+      "width": 460,
+      "fill": "$--card",
+      "cornerRadius": 10,
+      "stroke": {
+        "align": "inside",
+        "thickness": 1,
+        "fill": "$--border"
+      },
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "uYYCL",
+          "name": "header",
+          "width": "fill_container",
+          "gap": 14,
+          "padding": [
+            16,
+            18
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "MEBX2",
+              "name": "priorityBar",
+              "width": 4,
+              "height": 40,
+              "fill": "$--destructive",
+              "cornerRadius": 2
+            },
+            {
+              "type": "frame",
+              "id": "zxOH4",
+              "name": "body",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 4,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "4ykI4",
+                  "name": "title",
+                  "fill": "$--primary",
+                  "content": "Task Title",
+                  "fontFamily": "Space Grotesk",
+                  "fontSize": 14,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "text",
+                  "id": "KLX3Q",
+                  "name": "meta",
+                  "fill": "$--muted-foreground",
+                  "content": "Due tomorrow · ~2.5 hrs estimated",
+                  "fontFamily": "Inter",
+                  "fontSize": 12,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "id": "qqN6b",
+              "type": "ref",
+              "ref": "adMMy",
+              "name": "badge",
+              "width": "fit_content",
+              "height": "fit_content"
+            },
+            {
+              "type": "icon_font",
+              "id": "5u0SL",
+              "name": "chevron",
+              "width": 18,
+              "height": 18,
+              "iconFontName": "chevron-up",
+              "iconFontFamily": "lucide",
+              "fill": "$--muted-foreground"
+            }
+          ]
+        },
+        {
+          "type": "rectangle",
+          "id": "83jTB",
+          "name": "divider",
+          "fill": "$--border",
+          "width": "fill_container",
+          "height": 1
+        },
+        {
+          "type": "frame",
+          "id": "sbS2E",
+          "name": "blocks",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 8,
+          "padding": [
+            12,
+            18
+          ],
+          "children": [
+            {
+              "id": "4Z61E",
+              "type": "ref",
+              "ref": "mGYEk",
+              "name": "block1",
+              "width": "fill_container"
+            },
+            {
+              "id": "ufBet",
+              "type": "ref",
+              "ref": "kdXz7",
+              "name": "block2",
+              "width": "fill_container"
+            },
+            {
+              "id": "btC2R",
+              "type": "ref",
+              "ref": "kdXz7",
+              "name": "block3",
+              "width": "fill_container"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "AISW0",
+      "x": 8100,
+      "y": 2398,
+      "name": "StudyBlockSeeMore",
+      "reusable": true,
+      "padding": [
+        4,
+        0
+      ],
+      "children": [
+        {
+          "type": "text",
+          "id": "BxFh1",
+          "name": "label",
+          "fill": "$--info",
+          "content": "See more (+3)",
+          "fontFamily": "Inter",
+          "fontSize": 13,
+          "fontWeight": "600"
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "dxsJT",
+      "x": 8100,
+      "y": 2450,
+      "name": "StudyBlockEmptyState",
+      "reusable": true,
+      "padding": [
+        12,
+        18
+      ],
+      "children": [
+        {
+          "type": "text",
+          "id": "FCBCU",
+          "name": "label",
+          "fill": "$--muted-foreground",
+          "content": "No study sessions scheduled yet.",
+          "fontFamily": "Inter",
+          "fontSize": 13,
+          "fontWeight": "normal"
+        }
+      ]
     }
   ],
   "variables": {
