@@ -59,6 +59,12 @@ export default function ClassCard({
   const [confirmedGrade, setConfirmedGrade] = useState(initialGrade ?? '')
 
   useEffect(() => {
+    return () => {
+      if (colorSaveTimeoutRef.current) clearTimeout(colorSaveTimeoutRef.current)
+    }
+  }, [])
+
+  useEffect(() => {
     setConfirmedGrade(initialGrade ?? '')
     setGradeValue(initialGrade ?? '')
   }, [initialGrade])

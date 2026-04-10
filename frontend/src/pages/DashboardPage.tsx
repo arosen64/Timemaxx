@@ -23,6 +23,8 @@ import {
 import { isCurrentTerm } from '../utils/termUtils'
 import { buildClassTag } from '../utils/classTagUtils'
 
+const FALLBACK_COLORS = ['#CF4520', '#68ACE5', '#008767']
+
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
@@ -66,8 +68,6 @@ export default function DashboardPage() {
     }
     return map
   }, [userCourses])
-
-  const FALLBACK_COLORS = ['#CF4520', '#68ACE5', '#008767']
 
   const totalEstimatedMinutes = useMemo(
     () => taskRows.reduce((sum, t) => sum + (t.timeEstimate ?? 0), 0),
