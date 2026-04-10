@@ -12,5 +12,5 @@ Be concise, friendly, and specific. If you don't have enough context to answer p
 say so clearly rather than guessing. You are the first version of a multi-agent system —
 for now you respond directly without tools.
   `.trim(),
-  model: google("gemini-2.5-flash"),
+  model: google("gemini-2.0-flash-lite"),
 });
