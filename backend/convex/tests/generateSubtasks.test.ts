@@ -2,17 +2,10 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { api } from "../_generated/api";
 import { makeTestCtx, createTestUser } from "../../convex-tests/helpers";
 
-const mockGenerateContent = vi.fn();
+const mockCallGemini = vi.fn();
 
-vi.mock("@google/genai", () => ({
-  GoogleGenAI: vi.fn().mockImplementation(() => ({
-    models: { generateContent: mockGenerateContent },
-  })),
-  Type: {
-    OBJECT: "OBJECT",
-    ARRAY: "ARRAY",
-    STRING: "STRING",
-  },
+vi.mock("../lib/gemini", () => ({
+  callGemini: mockCallGemini,
 }));
 
 const FUTURE = Date.now() + 86_400_000 * 14;
@@ -30,6 +23,7 @@ async function seedTask(
       taskType: "Essay",
       dueDate: FUTURE,
       createdAt: Date.now(),
+      isManualEstimate: false,
     })
   );
 }
@@ -41,7 +35,7 @@ function makeGeminiSubtaskResponse(
     taskType: string;
   }>
 ) {
-  return { text: JSON.stringify({ subtasks }) };
+  return { subtasks };
 }
 
 const MOCK_SUBTASKS = [
@@ -86,7 +80,7 @@ describe("actions/requestGenerateSubtasks", () => {
       error:
         "Please provide a description or upload an assignment file before generating subtasks.",
     });
-    expect(mockGenerateContent).not.toHaveBeenCalled();
+    expect(mockCallGemini).not.toHaveBeenCalled();
   });
 
   test("returns error object when description is whitespace-only and no fileContent", async () => {
@@ -100,11 +94,11 @@ describe("actions/requestGenerateSubtasks", () => {
     );
 
     expect(result).toHaveProperty("error");
-    expect(mockGenerateContent).not.toHaveBeenCalled();
+    expect(mockCallGemini).not.toHaveBeenCalled();
   });
 
   test("returns subtasks array on successful generation with description", async () => {
-    mockGenerateContent.mockResolvedValueOnce(
+    mockCallGemini.mockResolvedValueOnce(
       makeGeminiSubtaskResponse(MOCK_SUBTASKS)
     );
 
@@ -128,7 +122,7 @@ describe("actions/requestGenerateSubtasks", () => {
   });
 
   test("calls Gemini and returns subtasks when only fileContent is provided", async () => {
-    mockGenerateContent.mockResolvedValueOnce(
+    mockCallGemini.mockResolvedValueOnce(
       makeGeminiSubtaskResponse(MOCK_SUBTASKS)
     );
 
@@ -145,7 +139,7 @@ describe("actions/requestGenerateSubtasks", () => {
       }
     );
 
-    expect(mockGenerateContent).toHaveBeenCalledOnce();
+    expect(mockCallGemini).toHaveBeenCalledOnce();
     expect(result).toHaveProperty("subtasks");
   });
 
@@ -161,7 +155,7 @@ describe("actions/requestGenerateSubtasks", () => {
         { taskId }
       )
     ).rejects.toThrow("Task not found or access denied");
-    expect(mockGenerateContent).not.toHaveBeenCalled();
+    expect(mockCallGemini).not.toHaveBeenCalled();
   });
 
   test("throws when GEMINI_API_KEY is not set and description is present", async () => {
