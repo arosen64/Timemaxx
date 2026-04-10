@@ -18,6 +18,10 @@ vi.mock('../../../backend/convex/_generated/api', () => ({
     ai: {
       requestEstimateTaskTime: { requestEstimateTaskTime: 'requestEstimateTaskTime' },
     },
+    actions: {
+      scheduleTask: { scheduleTask: 'scheduleTask' },
+      scheduleAllTasks: { scheduleAllTasks: 'scheduleAllTasks' },
+    },
   },
 }))
 
