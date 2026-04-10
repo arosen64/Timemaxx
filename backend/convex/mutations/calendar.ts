@@ -59,7 +59,10 @@ async function upsertCalendarToken(
       refreshToken: args.refreshToken,
       expiresAt: args.expiresAt,
       scope: args.scope,
-      ...(args.timemaxxCalendarId && { selectedCalendarIds: [args.timemaxxCalendarId] }),
+      ...(args.timemaxxCalendarId && {
+        timemaxxCalendarId: args.timemaxxCalendarId,
+        selectedCalendarIds: [args.timemaxxCalendarId],
+      }),
     });
   } else {
     await ctx.db.insert("calendarConnections", {
@@ -68,7 +71,10 @@ async function upsertCalendarToken(
       refreshToken: args.refreshToken,
       expiresAt: args.expiresAt,
       scope: args.scope,
-      ...(args.timemaxxCalendarId && { selectedCalendarIds: [args.timemaxxCalendarId] }),
+      ...(args.timemaxxCalendarId && {
+        timemaxxCalendarId: args.timemaxxCalendarId,
+        selectedCalendarIds: [args.timemaxxCalendarId],
+      }),
     });
   }
 }

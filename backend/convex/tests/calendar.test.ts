@@ -180,7 +180,7 @@ describe("mutations/calendar – storeCalendarTokenForUser", () => {
     expect(record!.scope).toBe("https://www.googleapis.com/auth/calendar");
   });
 
-  test("stores timemaxxCalendarId as selectedCalendarIds when provided", async () => {
+  test("stores timemaxxCalendarId as dedicated field and initial selectedCalendarIds when provided", async () => {
     const t = makeTestCtx();
     const { userId } = await createTestUser(t);
 
@@ -200,6 +200,7 @@ describe("mutations/calendar – storeCalendarTokenForUser", () => {
         .unique()
     );
 
+    expect(record!.timemaxxCalendarId).toBe("timemaxx-cal-id");
     expect(record!.selectedCalendarIds).toEqual(["timemaxx-cal-id"]);
   });
 
@@ -256,6 +257,7 @@ describe("mutations/calendar – storeCalendarTokenForUser", () => {
     expect(records).toHaveLength(1);
     expect(records[0].accessToken).toBe("new-acc");
     expect(records[0].scope).toBe("https://www.googleapis.com/auth/calendar");
+    expect(records[0].timemaxxCalendarId).toBe("new-timemaxx-id");
     expect(records[0].selectedCalendarIds).toEqual(["new-timemaxx-id"]);
   });
 });

@@ -160,7 +160,7 @@ export const revokeCalendarAccess = action({
     if (!connection) return;
 
     // Attempt to delete the timemaxx calendar from Google Calendar
-    const timemaxxCalendarId = connection.selectedCalendarIds?.[0];
+    const timemaxxCalendarId = connection.timemaxxCalendarId;
     if (timemaxxCalendarId) {
       try {
         const accessToken = await resolveAccessToken(ctx, connection, userId, tokenSecret);

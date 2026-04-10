@@ -10,12 +10,14 @@ vi.mock('../../backend/convex/_generated/api', () => ({
       calendar: { getCalendarConnectionStatus: 'getCalendarConnectionStatus' },
     },
     mutations: {
-      calendar: { deleteCalendarToken: 'deleteCalendarToken' },
       users: { deleteAccount: 'deleteAccount' },
     },
     actions: {
       initiateGoogleCalendarOAuth: {
         initiateGoogleCalendarOAuth: 'initiateGoogleCalendarOAuth',
+      },
+      exportStudyBlocksToCalendar: {
+        revokeCalendarAccess: 'revokeCalendarAccess',
       },
     },
   },
@@ -56,16 +58,20 @@ const MOCK_USER = {
 }
 
 function setup(calendarStatus: { connected: boolean; hasEventsScope: boolean } | undefined) {
-  const mockAction = makeMutationFn('https://accounts.google.com/oauth')
+  const mockOAuthAction = makeMutationFn('https://accounts.google.com/oauth')
+  const mockRevokeAction = makeMutationFn()
   const mockMutation = makeMutationFn()
   mockUseQuery.mockImplementation(((query: string) => {
     if (query === 'getCalendarConnectionStatus') return calendarStatus
     return MOCK_USER
   }) as never)
   mockUseMutation.mockReturnValue(mockMutation as never)
-  mockUseAction.mockReturnValue(mockAction as never)
+  mockUseAction.mockImplementation(((key: string) => {
+    if (key === 'revokeCalendarAccess') return mockRevokeAction
+    return mockOAuthAction
+  }) as never)
   renderWithProviders(<ProfilePage />)
-  return { mockAction, mockMutation }
+  return { mockOAuthAction, mockRevokeAction, mockMutation }
 }
 
 describe('ProfilePage – Google Calendar section', () => {
@@ -104,29 +110,29 @@ describe('ProfilePage – Google Calendar section', () => {
 
   it('calls initiateGoogleCalendarOAuth when "Connect Calendar" is clicked', async () => {
     const user = userEvent.setup()
-    const { mockAction } = setup({ connected: false, hasEventsScope: false })
+    const { mockOAuthAction } = setup({ connected: false, hasEventsScope: false })
 
     await user.click(screen.getByRole('button', { name: /connect calendar/i }))
 
-    await waitFor(() => expect(mockAction).toHaveBeenCalledWith({}))
+    await waitFor(() => expect(mockOAuthAction).toHaveBeenCalledWith({}))
   })
 
   it('calls initiateGoogleCalendarOAuth when "Update Calendar Permissions" is clicked', async () => {
     const user = userEvent.setup()
-    const { mockAction } = setup({ connected: true, hasEventsScope: false })
+    const { mockOAuthAction } = setup({ connected: true, hasEventsScope: false })
 
     await user.click(screen.getByRole('button', { name: /update calendar permissions/i }))
 
-    await waitFor(() => expect(mockAction).toHaveBeenCalledWith({}))
+    await waitFor(() => expect(mockOAuthAction).toHaveBeenCalledWith({}))
   })
 
-  it('calls deleteCalendarToken when "Revoke Access" is clicked', async () => {
+  it('calls revokeCalendarAccess when "Revoke Access" is clicked', async () => {
     const user = userEvent.setup()
-    const { mockMutation } = setup({ connected: true, hasEventsScope: true })
+    const { mockRevokeAction } = setup({ connected: true, hasEventsScope: true })
 
     await user.click(screen.getByRole('button', { name: /revoke access/i }))
 
-    await waitFor(() => expect(mockMutation).toHaveBeenCalledWith({}))
+    await waitFor(() => expect(mockRevokeAction).toHaveBeenCalledWith({}))
   })
 })
 
