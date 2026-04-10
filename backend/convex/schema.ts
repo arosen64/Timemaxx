@@ -82,6 +82,7 @@ export default defineSchema({
     title: v.string(),
     description: v.optional(v.string()),
     prereqs: v.optional(v.array(v.string())),
+    embedding: v.optional(v.array(v.float64())),
     credits: v.optional(v.number()),
     term: v.string(),
     grade: v.optional(v.string()),
@@ -91,7 +92,8 @@ export default defineSchema({
   })
     .index("by_user", ["userId"])
     .index("by_user_course", ["userId", "courseCode"])
-    .index("by_user_term", ["userId", "term"]),
+    .index("by_user_term", ["userId", "term"])
+    .vectorIndex("by_embedding", { vectorField: "embedding", dimensions: 3072, filterFields: ["userId"] }),
 
   // Tasks table
   tasks: defineTable({

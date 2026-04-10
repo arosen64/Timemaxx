@@ -1,4 +1,5 @@
-import { mutation } from "../_generated/server";
+import { mutation, internalMutation } from "../_generated/server";
+import { internal } from "../_generated/api";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { buildClassTag, legacyNaiveClassTag } from "../lib/classTagUtils";
@@ -54,7 +55,7 @@ export const addUserCourse = mutation({
     }
 
     // Insert the userCourse record
-    return await ctx.db.insert("userCourses", {
+    const userCourseId = await ctx.db.insert("userCourses", {
       userId,
       courseCode,
       title: args.title,
@@ -67,6 +68,15 @@ export const addUserCourse = mutation({
       difficultyRating: args.difficultyRating ?? 3,
       color: randomCourseColor(),
     });
+
+    // Schedule embedding generation — fire and forget
+    await ctx.scheduler.runAfter(0, internal.ai.embedCourse.generateCourseEmbedding, {
+      userCourseId,
+      title: args.title,
+      description: args.description,
+    });
+
+    return userCourseId;
   },
 });
 
@@ -150,5 +160,15 @@ export const deleteUserCourse = mutation({
     }
 
     await ctx.db.delete(args.userCourseId);
+  },
+});
+
+export const patchCourseEmbedding = internalMutation({
+  args: {
+    userCourseId: v.id("userCourses"),
+    embedding: v.array(v.float64()),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.userCourseId, { embedding: args.embedding });
   },
 });

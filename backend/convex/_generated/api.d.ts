@@ -13,6 +13,7 @@ import type * as actions_fetchCalendarEvents from "../actions/fetchCalendarEvent
 import type * as actions_getCalendarAvailability from "../actions/getCalendarAvailability.js";
 import type * as actions_initiateGoogleCalendarOAuth from "../actions/initiateGoogleCalendarOAuth.js";
 import type * as actions_jhuCourses from "../actions/jhuCourses.js";
+import type * as ai_embedCourse from "../ai/embedCourse.js";
 import type * as ai_estimateTaskTime from "../ai/estimateTaskTime.js";
 import type * as ai_generateAcademicProfile from "../ai/generateAcademicProfile.js";
 import type * as ai_parseTranscript from "../ai/parseTranscript.js";
@@ -55,6 +56,7 @@ declare const fullApi: ApiFromModules<{
   "actions/getCalendarAvailability": typeof actions_getCalendarAvailability;
   "actions/initiateGoogleCalendarOAuth": typeof actions_initiateGoogleCalendarOAuth;
   "actions/jhuCourses": typeof actions_jhuCourses;
+  "ai/embedCourse": typeof ai_embedCourse;
   "ai/estimateTaskTime": typeof ai_estimateTaskTime;
   "ai/generateAcademicProfile": typeof ai_generateAcademicProfile;
   "ai/parseTranscript": typeof ai_parseTranscript;
