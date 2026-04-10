@@ -89,7 +89,7 @@ export const createTask = mutation({
     }
 
     if (process.env.GEMINI_API_KEY) {
-      await ctx.scheduler.runAfter(0, internal.ai.embedCourse.generateTaskEmbedding, {
+      await ctx.scheduler.runAfter(0, internal.ai.embeddings.generateTaskEmbedding, {
         taskId,
         title: args.title,
         description: args.description,
@@ -130,7 +130,7 @@ export const updateTask = mutation({
     });
 
     if (process.env.GEMINI_API_KEY) {
-      await ctx.scheduler.runAfter(0, internal.ai.embedCourse.generateTaskEmbedding, {
+      await ctx.scheduler.runAfter(0, internal.ai.embeddings.generateTaskEmbedding, {
         taskId: args.taskId,
         title: args.title,
         description: args.description,
