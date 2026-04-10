@@ -20,6 +20,5 @@ export {
   displayTitle,
   formatMinutes,
   parseEstimationError,
-  BAR_COLORS,
   BADGE_MAP,
 } from './types'

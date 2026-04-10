@@ -1,4 +1,7 @@
 import { useState } from 'react'
+import { useQuery } from 'convex/react'
+import { useAuthToken } from '@convex-dev/auth/react'
+import { api } from '../../../backend/convex/_generated/api'
 import { ChatContainerRoot, ChatContainerContent, ChatContainerScrollAnchor } from './prompt-kit/chat-container'
 import { Message, MessageAvatar, MessageContent } from './prompt-kit/message'
 import { PromptInput, PromptInputTextarea, PromptInputActions } from './prompt-kit/prompt-input'
@@ -7,51 +10,81 @@ import { Loader } from './prompt-kit/loader'
 import { MessageSquareIcon, XIcon } from './icons'
 import Button from './ui/Button'
 
-interface ChatMessage {
-  role: 'user' | 'ai'
-  content: string
-}
-
-const INITIAL_MESSAGES: ChatMessage[] = [
-  {
-    role: 'ai',
-    content: "Hi! I'm TimeMaxx AI. Ask me anything about your study schedule, tasks, or deadlines.",
-  },
-]
-
 const SUGGESTIONS = [
   'How many study hours do I have left?',
   'What tasks are due this week?',
   'Help me prioritize my workload',
 ]
 
+
 export default function ChatBot() {
   const [isOpen, setIsOpen] = useState(false)
-  const [messages, setMessages] = useState<ChatMessage[]>(INITIAL_MESSAGES)
+  const [sessionId, setSessionId] = useState(() => crypto.randomUUID())
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [optimistic, setOptimistic] = useState<{ role: 'user' | 'assistant'; content: string }[]>([])
+  const [historyLenAtSend, setHistoryLenAtSend] = useState(0)
+
+  const token = useAuthToken()
+  const history = useQuery(api.queries.chatMessages.getChatHistory, { sessionId, limit: 50 }) ?? []
+
+  // Show optimistic[i] only while history hasn't committed that index yet.
+  // Using a cursor (history length at send time) instead of content comparison
+  // avoids false deduplication when the user sends identical messages back-to-back.
+  const pendingMessages = isLoading
+    ? optimistic.slice(Math.max(0, history.length - historyLenAtSend))
+    : []
+  const messages = [...history, ...pendingMessages]
+
+  const showSuggestions = messages.length === 0 && !isLoading
 
   async function handleSend() {
     const text = input.trim()
     if (!text || isLoading) return
 
     setInput('')
-    setMessages((prev) => [...prev, { role: 'user', content: text }])
     setIsLoading(true)
+    setHistoryLenAtSend(history.length)
+    setOptimistic([{ role: 'user', content: text }])
 
     try {
-      // TODO: wire up to Convex action (e.g. api.actions.chat.sendMessage)
-      await new Promise((r) => setTimeout(r, 900))
-      setMessages((prev) => [
+      const res = await fetch(
+        `${import.meta.env.VITE_CONVEX_SITE_URL}/api/chat`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({ message: text, sessionId }),
+        }
+      )
+
+      if (!res.ok) {
+        if (res.status === 429) {
+          throw new Error("Maxx has hit the AI rate limit — please wait a moment and try again.")
+        }
+        const errText = await res.text().catch(() => '(no body)')
+        throw new Error(`Chat request failed: ${res.status} ${errText}`)
+      }
+
+      const data = await res.json() as { text?: string }
+      const aiText = data.text ?? ''
+      setOptimistic([
+        { role: 'user', content: text },
+        { role: 'assistant', content: aiText },
+      ])
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      console.error('[ChatBot] error:', msg)
+      setOptimistic((prev) => [
         ...prev,
-        { role: 'ai', content: "I'm still learning! Chat backend coming soon." },
+        { role: 'assistant', content: `Error: ${msg}` },
       ])
     } finally {
       setIsLoading(false)
     }
   }
-
-  const showSuggestions = messages.length === 1 && !isLoading
 
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
@@ -62,11 +95,16 @@ export default function ChatBot() {
           <div className="flex h-14 shrink-0 items-center justify-between bg-navy px-5">
             <div className="flex items-center gap-2.5">
               <span className="h-2 w-2 rounded-full bg-teal" />
-              <span className="font-heading text-[15px] font-semibold text-white">TimeMaxx AI</span>
+              <span className="font-heading text-[15px] font-semibold text-white">Maxx ✦</span>
             </div>
             <button
               type="button"
-              onClick={() => setIsOpen(false)}
+              onClick={() => {
+                setIsOpen(false)
+                setSessionId(crypto.randomUUID())
+                setOptimistic([])
+                setInput('')
+              }}
               aria-label="Close chat"
               className="flex h-7 w-7 items-center justify-center rounded-md bg-white/10 hover:bg-white/20 transition"
             >
@@ -79,13 +117,20 @@ export default function ChatBot() {
             <ChatContainerRoot className="h-full bg-bg-gray">
               <ChatContainerContent className="gap-3 px-4 py-4">
 
+                {messages.length === 0 && !isLoading && (
+                  <div className="flex flex-col items-center gap-2 pt-8 text-center">
+                    <span className="font-heading text-sm font-semibold text-navy">How can I help?</span>
+                    <span className="font-body text-xs text-light-blue">Ask about your schedule, tasks, or deadlines.</span>
+                  </div>
+                )}
+
                 {messages.map((msg, i) =>
-                  msg.role === 'ai' ? (
+                  msg.role === 'assistant' ? (
                     <Message key={i} className="items-start">
                       <MessageAvatar fallback="AI" />
                       <div className="flex flex-col gap-1 max-w-[82%]">
                         <span className="font-heading text-[11px] font-semibold text-teal px-0.5">
-                          TimeMaxx AI
+                          Maxx
                         </span>
                         <MessageContent className="bg-white border border-border text-navy rounded-2xl rounded-tl-sm">
                           {msg.content}
@@ -101,7 +146,7 @@ export default function ChatBot() {
                   )
                 )}
 
-                {isLoading && (
+                {isLoading && optimistic.length <= 1 && (
                   <Message className="items-start">
                     <MessageAvatar fallback="AI" />
                     <MessageContent className="bg-white border border-border rounded-2xl rounded-tl-sm">
@@ -110,9 +155,8 @@ export default function ChatBot() {
                   </Message>
                 )}
 
-                {/* Suggestions — only shown on empty conversation */}
                 {showSuggestions && (
-                  <div className="flex flex-wrap gap-2 pt-1">
+                  <div className="flex flex-wrap gap-2 pt-2">
                     {SUGGESTIONS.map((s) => (
                       <button
                         key={s}
@@ -129,7 +173,6 @@ export default function ChatBot() {
                 <ChatContainerScrollAnchor />
               </ChatContainerContent>
 
-              {/* ScrollButton must be inside ChatContainerRoot to access StickToBottom context */}
               <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-10">
                 <ScrollButton />
               </div>
@@ -167,15 +210,20 @@ export default function ChatBot() {
       {/* FAB */}
       <button
         type="button"
-        onClick={() => setIsOpen((v) => !v)}
+        onClick={() => {
+          if (isOpen) {
+            setIsOpen(false)
+            setSessionId(crypto.randomUUID())
+            setOptimistic([])
+            setInput('')
+          } else {
+            setIsOpen(true)
+          }
+        }}
         aria-label={isOpen ? 'Close AI chat' : 'Open AI chat'}
         className="flex h-14 w-14 items-center justify-center rounded-full bg-navy shadow-lg hover:opacity-90 transition"
       >
-        {isOpen ? (
-          <XIcon color="white" size={16} />
-        ) : (
-          <MessageSquareIcon color="white" size={22} />
-        )}
+        <MessageSquareIcon color="white" size={22} />
       </button>
     </div>
   )

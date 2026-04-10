@@ -102,8 +102,6 @@ export function parseEstimationError(err: unknown): string {
   return 'Failed to estimate task time. Please try again.'
 }
 
-export const BAR_COLORS = ['bg-urgent-red', 'bg-sky-blue', 'bg-success']
-
 export const BADGE_MAP: Record<string, { bg: string; text: string; label: string }> = {
   urgent: { bg: 'bg-urgent-red-light', text: 'text-urgent-red', label: 'Urgent' },
   inprogress: { bg: 'bg-info-bg', text: 'text-info-emphasis', label: 'In Progress' },
