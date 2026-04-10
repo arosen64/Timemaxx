@@ -113,3 +113,43 @@ export const getAllStudyBlocksWithTasksInternal = internalQuery({
     return await fetchAllStudyBlocksWithTasks(ctx, args.userId);
   },
 });
+
+export const getFutureStudyBlocksForExport = internalQuery({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+    const tasks = await ctx.db
+      .query("tasks")
+      .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+      .collect();
+
+    const result: Array<{
+      _id: Id<"studyBlocks">;
+      title: string;
+      startTime: string;
+      studyBlockLength: number;
+      googleEventId: string | undefined;
+    }> = [];
+
+    for (const task of tasks) {
+      const blocks = await ctx.db
+        .query("studyBlocks")
+        .withIndex("by_taskId", (q) => q.eq("taskId", task._id))
+        .collect();
+
+      for (const block of blocks) {
+        if (!block.startTime) continue;
+        if (new Date(block.startTime).getTime() <= now) continue;
+        result.push({
+          _id: block._id,
+          title: block.title,
+          startTime: block.startTime,
+          studyBlockLength: block.studyBlockLength,
+          googleEventId: block.googleEventId,
+        });
+      }
+    }
+
+    return result;
+  },
+});

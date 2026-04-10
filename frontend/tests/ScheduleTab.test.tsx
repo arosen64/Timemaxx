@@ -19,6 +19,7 @@ vi.mock('../../backend/convex/_generated/api', () => ({
     actions: {
       fetchCalendarEvents: { fetchCalendarEvents: 'fetchCalendarEvents' },
       autoRescheduleConflicts: { autoRescheduleConflicts: 'autoRescheduleConflicts' },
+      exportStudyBlocksToCalendar: { exportStudyBlocksToCalendar: 'exportStudyBlocksToCalendar' },
     },
   },
 }))
@@ -239,5 +240,114 @@ describe('ScheduleTab – Auto-reschedule', () => {
 
     await user.click(screen.getByRole('button', { name: '✕' }))
     expect(screen.queryByText('All conflicts resolved.')).not.toBeInTheDocument()
+  })
+})
+
+// ── Export to GCal ────────────────────────────────────────────────────────────
+
+function setupWithExport(exportResult: object | 'reject', calendarConnected = true) {
+  mockUseQuery.mockImplementation(makeQueryImpl({
+    ...BASE_SCHEDULE,
+    calendarConnected,
+    selectedCalendarIds: calendarConnected ? ['cal1'] : null,
+  }, []))
+  mockUseMutation.mockReturnValue(makeMutationFn() as never)
+  mockUseAction.mockImplementation((actionRef: unknown) => {
+    if (actionRef === 'exportStudyBlocksToCalendar') {
+      return exportResult === 'reject'
+        ? vi.fn().mockRejectedValue(new Error('token expired'))
+        : vi.fn().mockResolvedValue(exportResult)
+    }
+    return makeMutationFn({ calendarList: [], timedEvents: [], allDayEvents: [], error: false }) as never
+  })
+  renderWithProviders(<ScheduleTab />)
+}
+
+describe('ScheduleTab – Export to GCal', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('does not render Export button when calendar is not connected', () => {
+    mockUseQuery.mockImplementation(makeQueryImpl(BASE_SCHEDULE, []))
+    mockUseMutation.mockReturnValue(makeMutationFn() as never)
+    mockUseAction.mockReturnValue(makeMutationFn() as never)
+    renderWithProviders(<ScheduleTab />)
+
+    expect(screen.queryByRole('button', { name: /Export to GCal/i })).not.toBeInTheDocument()
+  })
+
+  it('renders Export button when calendar is connected', () => {
+    setupWithExport({ exported: 0, patched: 0 })
+    expect(screen.getByRole('button', { name: /Export to GCal/i })).toBeInTheDocument()
+  })
+
+  it('shows correct message when new blocks are exported', async () => {
+    const user = userEvent.setup()
+    setupWithExport({ exported: 3, patched: 0 })
+
+    await user.click(screen.getByRole('button', { name: /Export to GCal/i }))
+    await waitFor(() => {
+      expect(screen.getByText('3 blocks exported.')).toBeInTheDocument()
+    })
+  })
+
+  it('uses singular "block" when exactly one block is exported', async () => {
+    const user = userEvent.setup()
+    setupWithExport({ exported: 1, patched: 0 })
+
+    await user.click(screen.getByRole('button', { name: /Export to GCal/i }))
+    await waitFor(() => {
+      expect(screen.getByText('1 block exported.')).toBeInTheDocument()
+    })
+  })
+
+  it('shows correct message when existing blocks are patched', async () => {
+    const user = userEvent.setup()
+    setupWithExport({ exported: 0, patched: 2 })
+
+    await user.click(screen.getByRole('button', { name: /Export to GCal/i }))
+    await waitFor(() => {
+      expect(screen.getByText('2 updated.')).toBeInTheDocument()
+    })
+  })
+
+  it('shows combined message when blocks are both exported and patched', async () => {
+    const user = userEvent.setup()
+    setupWithExport({ exported: 2, patched: 1 })
+
+    await user.click(screen.getByRole('button', { name: /Export to GCal/i }))
+    await waitFor(() => {
+      expect(screen.getByText('2 blocks exported, 1 updated.')).toBeInTheDocument()
+    })
+  })
+
+  it('shows "Nothing to export." when no blocks need syncing', async () => {
+    const user = userEvent.setup()
+    setupWithExport({ exported: 0, patched: 0 })
+
+    await user.click(screen.getByRole('button', { name: /Export to GCal/i }))
+    await waitFor(() => {
+      expect(screen.getByText('Nothing to export.')).toBeInTheDocument()
+    })
+  })
+
+  it('shows error message when export action throws', async () => {
+    const user = userEvent.setup()
+    setupWithExport('reject')
+
+    await user.click(screen.getByRole('button', { name: /Export to GCal/i }))
+    await waitFor(() => {
+      expect(screen.getByText(/Export failed:/)).toBeInTheDocument()
+    })
+  })
+
+  it('dismiss button removes the export message', async () => {
+    const user = userEvent.setup()
+    setupWithExport({ exported: 1, patched: 0 })
+
+    await user.click(screen.getByRole('button', { name: /Export to GCal/i }))
+    await waitFor(() => expect(screen.getByText('1 block exported.')).toBeInTheDocument())
+
+    await user.click(screen.getByRole('button', { name: '✕' }))
+    expect(screen.queryByText('1 block exported.')).not.toBeInTheDocument()
   })
 })
