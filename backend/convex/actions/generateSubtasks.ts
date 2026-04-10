@@ -3,8 +3,8 @@
 import { internalAction } from "../_generated/server";
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
-import { Type } from "@google/genai";
-import { callGeminiJSON } from "../lib/gemini";
+import { z } from "zod";
+import { callGemini } from "../lib/gemini";
 
 export type GeneratedSubtask = {
   title: string;
@@ -64,32 +64,24 @@ For each subtask provide:
 
 Return 1–6 subtasks ordered by when they should be completed. If the assignment is simple and doesn't benefit from being broken down, returning a single subtask is perfectly fine.`;
 
+    const subtaskSchema = z.object({
+      subtasks: z.array(
+        z.object({
+          title: z.string(),
+          description: z.string(),
+          taskType: z.string(),
+        })
+      ),
+    });
+
     try {
-      const json = await callGeminiJSON<{ subtasks: Array<{ title: string; description: string; taskType: string }> }>(
+      const json = await callGemini({
+        system: "You are an academic study planner that breaks assignments into concrete, actionable subtasks.",
         prompt,
-        {
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              subtasks: {
-                type: Type.ARRAY,
-                items: {
-                  type: Type.OBJECT,
-                  properties: {
-                    title: { type: Type.STRING },
-                    description: { type: Type.STRING },
-                    taskType: { type: Type.STRING },
-                  },
-                  required: ["title", "description", "taskType"],
-                },
-              },
-            },
-            required: ["subtasks"],
-          },
-          httpOptions: { timeout: 30_000 },
-        }
-      );
+        schema: subtaskSchema,
+        schemaName: "GeneratedSubtasks",
+        timeoutMs: 30_000,
+      });
 
       const rawSubtasks = json.subtasks ?? [];
       const nowMs = Date.now();
