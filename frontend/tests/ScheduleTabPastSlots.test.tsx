@@ -36,6 +36,8 @@ vi.mock('../../backend/convex/_generated/api', () => ({
       fetchCalendarEvents: { fetchCalendarEvents: 'fetchCalendarEvents' },
       autoRescheduleConflicts: { autoRescheduleConflicts: 'autoRescheduleConflicts' },
       exportStudyBlocksToCalendar: { exportStudyBlocksToCalendar: 'exportStudyBlocksToCalendar' },
+      scheduleTask: { scheduleTask: 'scheduleTask' },
+      scheduleAllTasks: { scheduleAllTasks: 'scheduleAllTasks' },
     },
   },
 }))
