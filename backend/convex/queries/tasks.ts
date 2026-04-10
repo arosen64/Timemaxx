@@ -48,6 +48,7 @@ export const getEstimateFeedbackContextInternal = internalQuery({
   },
 });
 
+
 // Get a single task by ID
 export const getTask = query({
   args: {
@@ -91,6 +92,29 @@ export const getAllTasks = query({
   },
 });
 
+
+// Internal query for fetching recent tasks for a user (used by retrieval layer).
+// Takes 25 so the retrieval layer can exclude the current task and still have
+// enough candidates to fill its 10-result slice.
+export const getAllTasksInternal = internalQuery({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("tasks")
+      .withIndex("by_userId_createdAt", (q) => q.eq("userId", args.userId))
+      .order("desc")
+      .take(25);
+  },
+});
+
+// Internal query for batch-fetching tasks by IDs (used by context builders)
+export const getTasksByIdsInternal = internalQuery({
+  args: { taskIds: v.array(v.id("tasks")) },
+  handler: async (ctx, args) => {
+    const results = await Promise.all(args.taskIds.map((id) => ctx.db.get(id)));
+    return results.filter((t): t is NonNullable<typeof t> => t !== null);
+  },
+});
 
 export const getTasksPaginated = query({
   args: {

@@ -230,6 +230,13 @@ EN.601.226 Data Structures A`;
   });
 });
 
+const makeReasoningOutput = () => ({
+  classes: "No course context.",
+  tasks: "No task history.",
+  chats: "No chat history.",
+  profile: "No profile context.",
+});
+
 describe("prompt injection prevention — estimateTaskTime (context builders)", () => {
   beforeEach(() => {
     vi.stubEnv("GEMINI_API_KEY", "test-key");
@@ -241,7 +248,7 @@ describe("prompt injection prevention — estimateTaskTime (context builders)", 
 
   test("injection in onboarding profile fields (major, subjects) is sanitized", async () => {
     mockGenerateText.mockResolvedValueOnce({
-      output: { estimatedMinutes: 60 },
+      output: { estimatedMinutes: 60, reasoningTrace: makeReasoningOutput() },
     });
 
     const t = makeTestCtx();
@@ -290,7 +297,7 @@ describe("prompt injection prevention — estimateTaskTime (context builders)", 
 
   test("injection in course title and study goal is sanitized", async () => {
     mockGenerateText.mockResolvedValueOnce({
-      output: { estimatedMinutes: 45 },
+      output: { estimatedMinutes: 45, reasoningTrace: makeReasoningOutput() },
     });
 
     const t = makeTestCtx();
@@ -344,7 +351,7 @@ describe("prompt injection prevention — estimateTaskTime (context builders)", 
 
   test("injection in prior feedback task titles is sanitized", async () => {
     mockGenerateText.mockResolvedValueOnce({
-      output: { estimatedMinutes: 30 },
+      output: { estimatedMinutes: 30, reasoningTrace: makeReasoningOutput() },
     });
 
     const t = makeTestCtx();
