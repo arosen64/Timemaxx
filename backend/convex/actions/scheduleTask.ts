@@ -27,6 +27,7 @@ export const scheduleTask = action({
   args: {
     taskId: v.id("tasks"),
     timezone: v.string(),
+    studyBlockId: v.optional(v.id("studyBlocks")),
   },
   handler: async (
     ctx,
@@ -55,7 +56,9 @@ export const scheduleTask = action({
       api.queries.studyBlocks.getStudyBlocksByTask,
       { taskId: args.taskId },
     );
-    const unscheduled = studyBlocks.filter((b) => !b.startTime);
+    const unscheduled = studyBlocks.filter(
+      (b) => !b.startTime && (!args.studyBlockId || b._id === args.studyBlockId)
+    );
     if (unscheduled.length === 0) return { scheduled: 0 };
 
     // Fetch calendar events for the 21-day window (best effort)

@@ -38,7 +38,7 @@ export default function ScheduleTray({
   async function handleScheduleBlock(blockId: Id<'studyBlocks'>, taskId: Id<'tasks'>) {
     setSchedulingBlockIds((prev) => new Set(prev).add(blockId))
     try {
-      await scheduleTaskAction({ taskId, timezone })
+      await scheduleTaskAction({ taskId, timezone, studyBlockId: blockId })
     } finally {
       setSchedulingBlockIds((prev) => {
         const next = new Set(prev)
