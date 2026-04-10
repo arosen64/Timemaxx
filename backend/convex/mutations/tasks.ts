@@ -4,7 +4,6 @@ import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { taskTypeValidator } from "../lib/taskValidators";
 import { Id } from "../_generated/dataModel";
-import { internal } from "../_generated/api";
 import { rebuildStudyBlocks } from "./timeEstimate";
 
 export async function cascadeDeleteTask(ctx: MutationCtx, taskId: Id<"tasks">) {

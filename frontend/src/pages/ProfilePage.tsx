@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
-import { useQuery, useMutation, useAction } from "convex/react";
+import { useQuery, useAction } from "convex/react";
 import { api } from "../../../backend/convex/_generated/api";
 import ProfileActions from "../components/profile/ProfileActions";
 import ProfileAvatar from "../components/profile/ProfileAvatar";
@@ -14,7 +14,7 @@ export default function ProfilePage() {
   const calendarStatus = useQuery(api.queries.calendar.getCalendarConnectionStatus);
   const connected = calendarStatus?.connected ?? false;
   const hasEventsScope = calendarStatus?.hasEventsScope ?? false;
-  const deleteCalendarToken = useMutation(api.mutations.calendar.deleteCalendarToken);
+  const revokeCalendarAccess = useAction(api.actions.exportStudyBlocksToCalendar.revokeCalendarAccess);
   const initiateCalendarOAuth = useAction(api.actions.initiateGoogleCalendarOAuth.initiateGoogleCalendarOAuth);
 
   async function handleConnectCalendar() {
@@ -23,7 +23,7 @@ export default function ProfilePage() {
   }
 
   async function handleRevokeCalendar() {
-    await deleteCalendarToken({});
+    await revokeCalendarAccess({});
   }
 
   return (

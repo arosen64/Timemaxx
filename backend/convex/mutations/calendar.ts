@@ -143,6 +143,23 @@ export const deleteCalendarToken = mutation({
 });
 
 /**
+ * Deletes the Google Calendar OAuth token for a given userId — called from actions.
+ */
+export const deleteCalendarTokenForUser = internalMutation({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("calendarConnections")
+      .withIndex("by_userId", (q: any) => q.eq("userId", args.userId))
+      .unique();
+
+    if (existing) {
+      await ctx.db.delete(existing._id);
+    }
+  },
+});
+
+/**
  * Stores a short-lived OAuth state token linked to the user — called during OAuth initiation.
  */
 export const createCalendarOAuthState = internalMutation({

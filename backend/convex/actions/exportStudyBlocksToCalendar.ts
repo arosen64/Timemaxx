@@ -141,6 +141,46 @@ export const exportStudyBlocksToCalendar = action({
 });
 
 /**
+ * Deletes the user's timemaxx Google Calendar and removes the stored connection.
+ * Called when the user revokes calendar access from the profile page.
+ */
+export const revokeCalendarAccess = action({
+  args: {},
+  handler: async (ctx): Promise<void> => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    const tokenSecret = process.env.CALENDAR_TOKEN_SECRET;
+    if (!tokenSecret) throw new Error("Missing CALENDAR_TOKEN_SECRET");
+
+    const connection = await ctx.runQuery(
+      internal.queries.calendar.getCalendarConnectionForUser,
+      { userId },
+    );
+    if (!connection) return;
+
+    // Attempt to delete the timemaxx calendar from Google Calendar
+    const timemaxxCalendarId = connection.selectedCalendarIds?.[0];
+    if (timemaxxCalendarId) {
+      try {
+        const accessToken = await resolveAccessToken(ctx, connection, userId, tokenSecret);
+        await fetch(
+          `${GOOGLE_CALENDAR_API}/calendars/${encodeURIComponent(timemaxxCalendarId)}`,
+          {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${accessToken}` },
+          },
+        );
+      } catch {
+        // Ignore errors — still revoke locally even if Google deletion fails
+      }
+    }
+
+    await ctx.runMutation(internal.mutations.calendar.deleteCalendarTokenForUser, { userId });
+  },
+});
+
+/**
  * Deletes Google Calendar events linked to deleted study blocks.
  * Called asynchronously via ctx.scheduler after a task is deleted.
  * Silently ignores failures — the task is already gone from Convex.
