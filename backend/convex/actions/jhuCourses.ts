@@ -47,7 +47,6 @@ export const getCoursesByTerm = action({
     if (args.courseNumber) parts.push(`CourseNumber=${encode(args.courseNumber)}`);
 
     const queryString = parts.join("&");
-    console.log("[getCoursesByTerm] GET", `${JHU_SIS_BASE_URL}?${queryString}`.replace(getApiKey(), "***"));
     const res = await sisFetch(`${JHU_SIS_BASE_URL}?${queryString}`, "courses");
     if (!res.ok) {
       throw new Error(`JHU SIS API error: ${res.status} ${res.statusText}`);
@@ -83,14 +82,12 @@ export const getCourseDetails = action({
     const encodedTerm = encodeURIComponent(args.term);
     const url = `${JHU_SIS_BASE_URL}/${sisCode}/${encodedTerm}?key=${getApiKey()}`;
 
-    console.log("[getCourseDetails] GET", url.replace(getApiKey(), "***"));
     const res = await sisFetch(url, "course-details");
     if (!res.ok) {
       throw new Error(`JHU SIS API error: ${res.status} ${res.statusText}`);
     }
 
     const data = await res.json();
-    console.log("[getCourseDetails] response:", JSON.stringify(data, null, 2));
     // The endpoint returns an array of sections; grab description from first section
     const sections = data as Array<Record<string, unknown>>;
     if (!sections.length) return null;
