@@ -19,15 +19,14 @@ const SUGGESTIONS = [
 
 export default function ChatBot() {
   const [isOpen, setIsOpen] = useState(false)
+  const [sessionId, setSessionId] = useState(() => crypto.randomUUID())
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [sessionStart] = useState(() => Date.now())
   const [optimistic, setOptimistic] = useState<{ role: 'user' | 'assistant'; content: string }[]>([])
   const [historyLenAtSend, setHistoryLenAtSend] = useState(0)
 
   const token = useAuthToken()
-  const allHistory = useQuery(api.queries.chatMessages.getChatHistory, { limit: 50 }) ?? []
-  const history = allHistory.filter((m) => m.createdAt >= sessionStart)
+  const history = useQuery(api.queries.chatMessages.getChatHistory, { sessionId, limit: 50 }) ?? []
 
   // Show optimistic[i] only while history hasn't committed that index yet.
   // Using a cursor (history length at send time) instead of content comparison
@@ -57,11 +56,14 @@ export default function ChatBot() {
             'Content-Type': 'application/json',
             ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
           },
-          body: JSON.stringify({ message: text }),
+          body: JSON.stringify({ message: text, sessionId }),
         }
       )
 
       if (!res.ok) {
+        if (res.status === 429) {
+          throw new Error("Maxx has hit the AI rate limit — please wait a moment and try again.")
+        }
         const errText = await res.text().catch(() => '(no body)')
         throw new Error(`Chat request failed: ${res.status} ${errText}`)
       }
@@ -97,7 +99,12 @@ export default function ChatBot() {
             </div>
             <button
               type="button"
-              onClick={() => setIsOpen(false)}
+              onClick={() => {
+                setIsOpen(false)
+                setSessionId(crypto.randomUUID())
+                setOptimistic([])
+                setInput('')
+              }}
               aria-label="Close chat"
               className="flex h-7 w-7 items-center justify-center rounded-md bg-white/10 hover:bg-white/20 transition"
             >
@@ -203,11 +210,20 @@ export default function ChatBot() {
       {/* FAB */}
       <button
         type="button"
-        onClick={() => setIsOpen((v) => !v)}
+        onClick={() => {
+          if (isOpen) {
+            setIsOpen(false)
+            setSessionId(crypto.randomUUID())
+            setOptimistic([])
+            setInput('')
+          } else {
+            setIsOpen(true)
+          }
+        }}
         aria-label={isOpen ? 'Close AI chat' : 'Open AI chat'}
         className="flex h-14 w-14 items-center justify-center rounded-full bg-navy shadow-lg hover:opacity-90 transition"
       >
-        {isOpen ? <XIcon color="white" size={16} /> : <MessageSquareIcon color="white" size={22} />}
+        <MessageSquareIcon color="white" size={22} />
       </button>
     </div>
   )
