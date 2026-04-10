@@ -142,7 +142,6 @@ export default function ScheduleTab() {
     return { scheduledBlocks: scheduled, unscheduledBlocks: unscheduled }
   }, [allStudyBlocks])
 
-
   // Build studyBlocksByDay for the grid
   const studyBlocksByDay = useMemo(() => {
     const map: Record<string, StudyBlockOnGrid[]> = {}
