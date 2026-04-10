@@ -47,7 +47,6 @@ export const scheduleTask = action({
     });
     if (!user) throw new Error("User not found");
 
-    const focusBlockLength: number = user.focusBlockLength ?? 60;
     const workHoursGrid = (user.workHoursGrid ?? []) as WorkHoursRow[];
     const productivityTraits: unknown = user.productivityTraits;
 
