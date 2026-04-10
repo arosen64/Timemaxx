@@ -80,6 +80,8 @@ export default defineSchema({
     userId: v.id("users"),
     courseCode: v.string(), //e.g. "EN.501.303 (SIS Code)"
     title: v.string(),
+    description: v.optional(v.string()),
+    prereqs: v.optional(v.array(v.string())),
     credits: v.optional(v.number()),
     term: v.string(),
     grade: v.optional(v.string()),
