@@ -5,8 +5,7 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 
 const GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
 const CALENDAR_SCOPE = [
-  "https://www.googleapis.com/auth/calendar.readonly",
-  "https://www.googleapis.com/auth/calendar.events",
+  "https://www.googleapis.com/auth/calendar",
 ].join(" ");
 const STATE_TTL_MS = 60 * 15 * 1000; // 15 minutes — matches @convex-dev/auth OAuth state TTL
 

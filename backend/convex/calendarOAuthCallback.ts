@@ -73,6 +73,9 @@ export const calendarOAuthCallback = httpAction(async (ctx, request) => {
     return new Response(null, { status: 302, headers: { Location: profileRedirect } });
   }
 
+  // Find or create the dedicated "timemaxx" calendar before encrypting the token
+  const timemaxxCalendarId = await findOrCreateTimemaxxCalendar(data.access_token);
+
   // Encrypt tokens and store them for the identified user
   await ctx.runMutation(internal.mutations.calendar.storeCalendarTokenForUser, {
     userId: stateRecord.userId,
@@ -80,6 +83,7 @@ export const calendarOAuthCallback = httpAction(async (ctx, request) => {
     refreshToken: await encryptToken(data.refresh_token, tokenSecret),
     expiresAt: Date.now() + data.expires_in * 1000,
     scope: data.scope,
+    ...(timemaxxCalendarId && { timemaxxCalendarId }),
   });
 
   // Clean up the consumed state record
@@ -89,3 +93,37 @@ export const calendarOAuthCallback = httpAction(async (ctx, request) => {
 
   return new Response(null, { status: 302, headers: { Location: profileRedirect } });
 });
+
+const GCAL_API = "https://www.googleapis.com/calendar/v3";
+const TIMEMAXX_CALENDAR_NAME = "Timemaxx";
+
+/**
+ * Looks for an existing "timemaxx" calendar in the user's calendar list.
+ * Creates one if none is found. Returns the calendar ID, or null on failure.
+ */
+async function findOrCreateTimemaxxCalendar(accessToken: string): Promise<string | null> {
+  const headers = { Authorization: `Bearer ${accessToken}` };
+
+  // Check if "timemaxx" calendar already exists
+  const listRes = await fetch(`${GCAL_API}/users/me/calendarList`, { headers });
+  if (listRes.ok) {
+    const listData = await listRes.json() as {
+      items?: Array<{ id: string; summary: string }>;
+    };
+    const existing = listData.items?.find(
+      (c) => c.summary === TIMEMAXX_CALENDAR_NAME,
+    );
+    if (existing) return existing.id;
+  }
+
+  // Create a new "timemaxx" calendar
+  const createRes = await fetch(`${GCAL_API}/calendars`, {
+    method: "POST",
+    headers: { ...headers, "Content-Type": "application/json" },
+    body: JSON.stringify({ summary: TIMEMAXX_CALENDAR_NAME }),
+  });
+  if (!createRes.ok) return null;
+
+  const created = await createRes.json() as { id?: string };
+  return created.id ?? null;
+}

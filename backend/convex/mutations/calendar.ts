@@ -21,6 +21,7 @@ export const storeCalendarToken = mutation({
 
 /**
  * Upserts a calendar token for a specific user — called from the HTTP callback action.
+ * timemaxxCalendarId, if provided, is stored as the first entry in selectedCalendarIds.
  */
 export const storeCalendarTokenForUser = internalMutation({
   args: {
@@ -29,6 +30,7 @@ export const storeCalendarTokenForUser = internalMutation({
     refreshToken: v.string(),
     expiresAt: v.number(),
     scope: v.optional(v.string()),
+    timemaxxCalendarId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     await upsertCalendarToken(ctx, args);
@@ -43,6 +45,7 @@ async function upsertCalendarToken(
     refreshToken: string;
     expiresAt: number;
     scope?: string;
+    timemaxxCalendarId?: string;
   }
 ) {
   const existing = await ctx.db
@@ -56,6 +59,7 @@ async function upsertCalendarToken(
       refreshToken: args.refreshToken,
       expiresAt: args.expiresAt,
       scope: args.scope,
+      ...(args.timemaxxCalendarId && { selectedCalendarIds: [args.timemaxxCalendarId] }),
     });
   } else {
     await ctx.db.insert("calendarConnections", {
@@ -64,6 +68,7 @@ async function upsertCalendarToken(
       refreshToken: args.refreshToken,
       expiresAt: args.expiresAt,
       scope: args.scope,
+      ...(args.timemaxxCalendarId && { selectedCalendarIds: [args.timemaxxCalendarId] }),
     });
   }
 }
