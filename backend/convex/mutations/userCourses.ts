@@ -1,4 +1,5 @@
-import { mutation } from "../_generated/server";
+import { mutation, internalMutation } from "../_generated/server";
+import { internal } from "../_generated/api";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { buildClassTag, legacyNaiveClassTag } from "../lib/classTagUtils";
@@ -27,6 +28,8 @@ export const addUserCourse = mutation({
   args: {
     courseCode: v.string(),
     title: v.string(),
+    description: v.optional(v.string()),
+    prereqs: v.optional(v.array(v.string())),
     credits: v.optional(v.number()),
     term: v.string(),
     grade: v.optional(v.string()),
@@ -52,10 +55,12 @@ export const addUserCourse = mutation({
     }
 
     // Insert the userCourse record
-    return await ctx.db.insert("userCourses", {
+    const userCourseId = await ctx.db.insert("userCourses", {
       userId,
       courseCode,
       title: args.title,
+      description: args.description,
+      prereqs: args.prereqs,
       credits: args.credits,
       term: args.term,
       grade: args.grade,
@@ -63,6 +68,17 @@ export const addUserCourse = mutation({
       difficultyRating: args.difficultyRating ?? 3,
       color: randomCourseColor(),
     });
+
+    // Schedule embedding generation — skip in test environments where GEMINI_API_KEY is absent
+    if (process.env.GEMINI_API_KEY) {
+      await ctx.scheduler.runAfter(0, internal.ai.embeddings.generateCourseEmbedding, {
+        userCourseId,
+        title: args.title,
+        description: args.description,
+      });
+    }
+
+    return userCourseId;
   },
 });
 
@@ -76,6 +92,8 @@ export const updateUserCourse = mutation({
     studyGoal: v.optional(v.string()),
     difficultyRating: v.optional(v.number()),
     color: v.optional(v.string()),
+    description: v.optional(v.string()),
+    prereqs: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -90,6 +108,8 @@ export const updateUserCourse = mutation({
     if (args.studyGoal !== undefined) patch.studyGoal = args.studyGoal;
     if (args.difficultyRating !== undefined) patch.difficultyRating = args.difficultyRating;
     if (args.color !== undefined) patch.color = args.color;
+    if (args.description !== undefined) patch.description = args.description;
+    if (args.prereqs !== undefined) patch.prereqs = args.prereqs;
     await ctx.db.patch(args.userCourseId, patch);
   },
 });
@@ -142,5 +162,15 @@ export const deleteUserCourse = mutation({
     }
 
     await ctx.db.delete(args.userCourseId);
+  },
+});
+
+export const patchCourseEmbedding = internalMutation({
+  args: {
+    userCourseId: v.id("userCourses"),
+    embedding: v.array(v.float64()),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.userCourseId, { embedding: args.embedding });
   },
 });
