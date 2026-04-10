@@ -1,8 +1,14 @@
-import { PencilIcon, TrashIcon, SpinnerIcon, SparklesIcon } from '../icons'
+import { useState } from 'react'
+import { useQuery } from 'convex/react'
+import { api } from '../../../../backend/convex/_generated/api'
+import { PencilIcon, TrashIcon, SpinnerIcon, SparklesIcon, ChevronDownIcon } from '../icons'
 import { type TaskType, formatDueDateTimeDisplay, displayTitle, formatMinutes } from './types'
 import { formatClassTagForDisplay } from '../../utils/classTagUtils'
 import TaskFeedbackForm, { type TaskFeedbackFormProps } from './TaskFeedbackForm'
 import EstimateBadge from './EstimateBadge'
+import StudyBlockRow, { type StudyBlock } from './StudyBlockRow'
+
+const BLOCK_DISPLAY_LIMIT = 5
 
 type TaskCardProps = {
   task: TaskType
@@ -25,78 +31,158 @@ export default function TaskCard({
   onEdit,
   onDelete,
 }: TaskCardProps) {
-  const iconBtnCls = 'flex items-center justify-center w-8 h-8 transition rounded-lg text-slate-blue hover:bg-bg-gray hover:text-navy'
+  const [isExpanded, setIsExpanded] = useState(false)
+  const [showAll, setShowAll] = useState(false)
+
+  const studyBlocks = useQuery(api.queries.studyBlocks.getStudyBlocksByTask, { taskId: task._id })
+
+  const iconBtnCls =
+    'flex items-center justify-center w-8 h-8 transition rounded-lg text-slate-blue hover:bg-bg-gray hover:text-navy'
+
+  const visibleBlocks = studyBlocks
+    ? showAll
+      ? studyBlocks
+      : studyBlocks.slice(0, BLOCK_DISPLAY_LIMIT)
+    : []
+  const hiddenCount = studyBlocks ? Math.max(0, studyBlocks.length - BLOCK_DISPLAY_LIMIT) : 0
 
   return (
-    <div className="group flex min-w-0 gap-3 rounded-[10px] border border-border bg-white px-[18px] py-4 overflow-hidden">
-      <div className={`mt-0.5 h-10 w-1 shrink-0 rounded ${barColor}`} />
+    <div
+      className="group min-w-0 cursor-pointer rounded-[10px] border border-border bg-white overflow-hidden"
+      onClick={() => setIsExpanded((prev) => !prev)}
+    >
+      {/* Main card row */}
+      <div className="flex gap-3 px-[18px] py-4">
+        <div className={`mt-0.5 h-10 w-1 shrink-0 rounded ${barColor}`} />
 
-      <div className="flex justify-between flex-1 min-w-0 gap-4">
-        <div className="flex flex-col flex-1 min-w-0 gap-1">
-          <div className="text-sm font-semibold truncate font-heading text-navy">
-            {displayTitle(task)}
-          </div>
-          <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-blue">
-            <span>Due {formatDueDateTimeDisplay(task.dueDate)}</span>
-            {task.classTag ? <span>· {formatClassTagForDisplay(task.classTag)}</span> : null}
-            <span>· {task.taskType}</span>
-            {task.timeEstimate !== undefined ? (
-              <>
-                <span>· {formatMinutes(task.timeEstimate)}</span>
-                <EstimateBadge isManual={task.isManualEstimate} />
-              </>
-            ) : null}
-          </div>
-          {task.description.trim().length > 0 && (
-            <div className="text-xs break-words text-light-blue line-clamp-4">
-              {task.description}
+        <div className="flex justify-between flex-1 min-w-0 gap-4">
+          <div className="flex flex-col flex-1 min-w-0 gap-1">
+            <div className="text-sm font-semibold truncate font-heading text-navy">
+              {displayTitle(task)}
             </div>
-          )}
+            <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-blue">
+              <span>Due {formatDueDateTimeDisplay(task.dueDate)}</span>
+              {task.classTag ? <span>· {formatClassTagForDisplay(task.classTag)}</span> : null}
+              <span>· {task.taskType}</span>
+              {task.timeEstimate !== undefined ? (
+                <>
+                  <span>· {formatMinutes(task.timeEstimate)}</span>
+                  <EstimateBadge isManual={task.isManualEstimate} />
+                </>
+              ) : null}
+            </div>
+            {task.description.trim().length > 0 && (
+              <div className="text-xs break-words text-light-blue line-clamp-4">
+                {task.description}
+              </div>
+            )}
+          </div>
+
+          <div className="flex w-[260px] shrink-0 flex-col items-end gap-2">
+            <div className="flex items-center gap-2">
+              <div className={`rounded px-2.5 py-1 ${badge.bg}`}>
+                <span className={`font-heading text-[11px] font-semibold ${badge.text}`}>
+                  {badge.label}
+                </span>
+              </div>
+              {task.timeEstimate === undefined &&
+                (isEstimating ? (
+                  <div className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-blue">
+                    <SpinnerIcon color="currentColor" size={16} />
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onEstimate()
+                    }}
+                    className={iconBtnCls}
+                    aria-label="Estimate task time"
+                  >
+                    <SparklesIcon color="currentColor" size={16} />
+                  </button>
+                ))}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onEdit()
+                }}
+                className={iconBtnCls}
+                aria-label="Edit task"
+              >
+                <PencilIcon />
+              </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onDelete()
+                }}
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-blue hover:bg-urgent-red-light hover:text-urgent-red transition"
+                aria-label="Delete task"
+              >
+                <TrashIcon />
+              </button>
+              <div
+                className={`text-slate-blue transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+              >
+                <ChevronDownIcon color="currentColor" size={16} />
+              </div>
+            </div>
+
+            {task.timeEstimate !== undefined && !task.isManualEstimate && (
+              <TaskFeedbackForm task={task} {...feedback} />
+            )}
+          </div>
         </div>
+      </div>
 
-        <div className="flex w-[260px] shrink-0 flex-col items-end gap-2">
-          <div className="flex items-center gap-2">
-            <div className={`rounded px-2.5 py-1 ${badge.bg}`}>
-              <span className={`font-heading text-[11px] font-semibold ${badge.text}`}>
-                {badge.label}
-              </span>
+      {/* Collapsible study blocks panel */}
+      <div
+        className={`transition-all duration-200 overflow-hidden ${
+          isExpanded ? 'max-h-[2000px]' : 'max-h-0'
+        }`}
+      >
+        <div className="border-t border-border px-[18px] py-3 flex flex-col gap-2">
+          {studyBlocks === undefined ? (
+            <div className="flex items-center gap-2 py-1 text-slate-blue">
+              <SpinnerIcon color="currentColor" size={14} />
+              <span className="text-xs">Loading study blocks…</span>
             </div>
-            {task.timeEstimate === undefined && (
-              isEstimating ? (
-                <div className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-blue">
-                  <SpinnerIcon color="currentColor" size={16} />
-                </div>
-              ) : (
+          ) : studyBlocks.length === 0 ? (
+            <p className="text-[13px] text-slate-blue">No study sessions scheduled yet.</p>
+          ) : (
+            <>
+              {visibleBlocks.map((block) => (
+                <StudyBlockRow key={block._id} block={block as StudyBlock} />
+              ))}
+              {hiddenCount > 0 && !showAll && (
                 <button
                   type="button"
-                  onClick={onEstimate}
-                  className={iconBtnCls}
-                  aria-label="Estimate task time"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setShowAll(true)
+                  }}
+                  className="self-start text-[13px] font-semibold text-sky-blue hover:underline"
                 >
-                  <SparklesIcon color="currentColor" size={16} />
+                  See more (+{hiddenCount})
                 </button>
-              )
-            )}
-            <button
-              type="button"
-              onClick={onEdit}
-              className={iconBtnCls}
-              aria-label="Edit task"
-            >
-              <PencilIcon />
-            </button>
-            <button
-              type="button"
-              onClick={onDelete}
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-blue hover:bg-urgent-red-light hover:text-urgent-red transition"
-              aria-label="Delete task"
-            >
-              <TrashIcon />
-            </button>
-          </div>
-
-          {task.timeEstimate !== undefined && !task.isManualEstimate && (
-            <TaskFeedbackForm task={task} {...feedback} />
+              )}
+              {showAll && studyBlocks.length > BLOCK_DISPLAY_LIMIT && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setShowAll(false)
+                  }}
+                  className="self-start text-[13px] font-semibold text-sky-blue hover:underline"
+                >
+                  See less
+                </button>
+              )}
+            </>
           )}
         </div>
       </div>
