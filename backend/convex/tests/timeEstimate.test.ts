@@ -2,6 +2,13 @@ import { describe, expect, test } from "vitest";
 import { api, internal } from "../_generated/api";
 import { makeTestCtx, createTestUser } from "../../convex-tests/helpers";
 
+const makeReasoning = () => ({
+  classes: "No enrolled course context was available.",
+  tasks: "No prior task history was available.",
+  chats: "No chat history was available.",
+  profile: "No profile context was available.",
+});
+
 async function seedTask(
   t: ReturnType<typeof makeTestCtx>,
   userId: string,
@@ -36,6 +43,7 @@ describe("mutations/timeEstimate – setTimeEstimate auto-generates study blocks
     await t.mutation(internal.mutations.timeEstimate.setTimeEstimate, {
       taskId,
       timeEstimate: 120,
+      reasoning: makeReasoning(),
     });
 
     const blocks = await t.run((ctx) =>
@@ -58,6 +66,7 @@ describe("mutations/timeEstimate – setTimeEstimate auto-generates study blocks
     await t.mutation(internal.mutations.timeEstimate.setTimeEstimate, {
       taskId,
       timeEstimate: 90,
+      reasoning: makeReasoning(),
     });
 
     const blocks = await t.run((ctx) =>
@@ -80,6 +89,7 @@ describe("mutations/timeEstimate – setTimeEstimate auto-generates study blocks
     await t.mutation(internal.mutations.timeEstimate.setTimeEstimate, {
       taskId,
       timeEstimate: 60,
+      reasoning: makeReasoning(),
     });
 
     const firstBlocks = await t.run((ctx) =>
@@ -93,6 +103,7 @@ describe("mutations/timeEstimate – setTimeEstimate auto-generates study blocks
     await t.mutation(internal.mutations.timeEstimate.setTimeEstimate, {
       taskId,
       timeEstimate: 180,
+      reasoning: makeReasoning(),
     });
 
     const secondBlocks = await t.run((ctx) =>
@@ -113,6 +124,7 @@ describe("mutations/timeEstimate – setTimeEstimate auto-generates study blocks
     await t.mutation(internal.mutations.timeEstimate.setTimeEstimate, {
       taskId,
       timeEstimate: 120,
+      reasoning: makeReasoning(),
     });
 
     const blocks = await t.run((ctx) =>
@@ -134,6 +146,7 @@ describe("mutations/timeEstimate – setTimeEstimate auto-generates study blocks
     await t.mutation(internal.mutations.timeEstimate.setTimeEstimate, {
       taskId,
       timeEstimate: 45,
+      reasoning: makeReasoning(),
     });
 
     const blocks = await t.run((ctx) =>
@@ -155,6 +168,7 @@ describe("mutations/timeEstimate – setTimeEstimate auto-generates study blocks
     await t.mutation(internal.mutations.timeEstimate.setTimeEstimate, {
       taskId,
       timeEstimate: 120,
+      reasoning: makeReasoning(),
     });
 
     const blocks = await t.run((ctx) =>
@@ -167,6 +181,28 @@ describe("mutations/timeEstimate – setTimeEstimate auto-generates study blocks
     const ids = blocks.map((b) => b._id);
     const uniqueIds = new Set(ids);
     expect(uniqueIds.size).toBe(ids.length);
+  });
+
+  test("persists the reasoning trace on the task", async () => {
+    const t = makeTestCtx();
+    const { userId } = await createTestUser(t);
+    const taskId = await seedTask(t, userId, { focusBlockLength: 60 });
+
+    const reasoning = {
+      classes: "Student is enrolled in EN.601.421 with a difficulty of 4/5.",
+      tasks: "Prior essay tasks averaged 90 minutes with positive feedback.",
+      chats: "No chat history was available.",
+      profile: "Student is a junior CS major with strong writing skills.",
+    };
+
+    await t.mutation(internal.mutations.timeEstimate.setTimeEstimate, {
+      taskId,
+      timeEstimate: 90,
+      reasoning,
+    });
+
+    const task = await t.run((ctx) => ctx.db.get(taskId));
+    expect(task!.reasoning).toEqual(reasoning);
   });
 });
 
@@ -234,6 +270,7 @@ describe("mutations/timeEstimate – setManualTimeEstimate", () => {
     await t.mutation(internal.mutations.timeEstimate.setTimeEstimate, {
       taskId,
       timeEstimate: 999,
+      reasoning: makeReasoning(),
     });
 
     const task = await t.run((ctx) => ctx.db.get(taskId));
