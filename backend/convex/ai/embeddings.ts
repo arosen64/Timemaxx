@@ -8,6 +8,21 @@ import { createGoogleGenerativeAI } from "@ai-sdk/google";
 
 const EMBEDDING_MODEL = "gemini-embedding-001";
 
+async function computeEmbedding(title: string, description?: string): Promise<number[]> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) throw new Error("GEMINI_API_KEY is not set");
+
+  const google = createGoogleGenerativeAI({ apiKey });
+  const input = description ? `${title}\n\n${description}` : title;
+
+  const { embedding } = await embed({
+    model: google.embedding(EMBEDDING_MODEL),
+    value: input,
+  });
+
+  return embedding;
+}
+
 export const generateCourseEmbedding = internalAction({
   args: {
     userCourseId: v.id("userCourses"),
@@ -15,19 +30,7 @@ export const generateCourseEmbedding = internalAction({
     description: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) throw new Error("GEMINI_API_KEY is not set");
-
-    const google = createGoogleGenerativeAI({ apiKey });
-    const input = args.description
-      ? `${args.title}\n\n${args.description}`
-      : args.title;
-
-    const { embedding } = await embed({
-      model: google.embedding(EMBEDDING_MODEL),
-      value: input,
-    });
-
+    const embedding = await computeEmbedding(args.title, args.description);
     await ctx.runMutation(internal.mutations.userCourses.patchCourseEmbedding, {
       userCourseId: args.userCourseId,
       embedding,
@@ -42,17 +45,7 @@ export const generateTaskEmbedding = internalAction({
     description: v.string(),
   },
   handler: async (ctx, args) => {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) throw new Error("GEMINI_API_KEY is not set");
-
-    const google = createGoogleGenerativeAI({ apiKey });
-    const input = `${args.title}\n\n${args.description}`;
-
-    const { embedding } = await embed({
-      model: google.embedding(EMBEDDING_MODEL),
-      value: input,
-    });
-
+    const embedding = await computeEmbedding(args.title, args.description);
     await ctx.runMutation(internal.mutations.tasks.patchTaskEmbedding, {
       taskId: args.taskId,
       embedding,

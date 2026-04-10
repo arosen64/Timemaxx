@@ -71,7 +71,7 @@ export const addUserCourse = mutation({
 
     // Schedule embedding generation — skip in test environments where GEMINI_API_KEY is absent
     if (process.env.GEMINI_API_KEY) {
-      await ctx.scheduler.runAfter(0, internal.ai.embedCourse.generateCourseEmbedding, {
+      await ctx.scheduler.runAfter(0, internal.ai.embeddings.generateCourseEmbedding, {
         userCourseId,
         title: args.title,
         description: args.description,
