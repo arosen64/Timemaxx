@@ -69,4 +69,20 @@ describe("buildChatChunkSpecs", () => {
     const stride = CHUNK_TARGET_CHARS - CHUNK_OVERLAP_CHARS;
     expect(stride).toBeGreaterThan(0);
   });
+
+  test("chunk text does not end with truncated Assistant label (Assi, etc.)", () => {
+    const longUser = "word ".repeat(120);
+    const specs = buildChatChunkSpecs([
+      { role: "user", content: longUser, createdAt: 1 },
+      {
+        role: "assistant",
+        content: "You can update preferences from the Preferences page.",
+        createdAt: 2,
+      },
+      { role: "user", content: "what are your study tips", createdAt: 3 },
+    ]);
+    for (const s of specs) {
+      expect(s.text.trimEnd()).not.toMatch(/^.*Assi$/s);
+    }
+  });
 });
