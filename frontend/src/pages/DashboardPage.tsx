@@ -25,6 +25,8 @@ import { FALLBACK_COURSE_COLOR } from '../utils/color'
 import { isCurrentTerm } from '../utils/termUtils'
 import { buildClassTag } from '../utils/classTagUtils'
 
+const FALLBACK_COLORS = ['#CF4520', '#68ACE5', '#008767']
+
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
@@ -78,6 +80,17 @@ export default function DashboardPage() {
       })
     }
     return rows.sort((a, b) => a.courseCode.localeCompare(b.courseCode))
+  }, [userCourses])
+
+  const courseColorByTag = useMemo(() => {
+    const map = new Map<string, string>()
+    if (!Array.isArray(userCourses)) return map
+    for (const c of userCourses) {
+      if (c.color && c.courseCode && c.title) {
+        map.set(buildClassTag(c.courseCode.trim(), c.title.trim()), c.color)
+      }
+    }
+    return map
   }, [userCourses])
 
   const totalEstimatedMinutes = useMemo(
