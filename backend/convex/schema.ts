@@ -168,9 +168,14 @@ export default defineSchema({
         v.literal("none"),
       ),
     ),
+    /** Copied from chatSessions at insert time when that session has resolved scope */
+    taskId: v.optional(v.id("tasks")),
+    courseId: v.optional(v.id("userCourses")),
   })
     .index("by_userId_createdAt", ["userId", "createdAt"])
-    .index("by_session", ["sessionId"]),
+    .index("by_session", ["sessionId"])
+    .index("by_taskId", ["taskId"])
+    .index("by_courseId", ["courseId"]),
 
   /** Chat widget session — resolved entities + clarification state (Part 2) */
   chatSessions: defineTable({

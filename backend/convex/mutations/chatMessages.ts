@@ -10,12 +10,24 @@ export const saveMessage = internalMutation({
   },
   returns: v.id("chatMessages"),
   handler: async (ctx, args) => {
+    const session = await ctx.db
+      .query("chatSessions")
+      .withIndex("by_userId_sessionId", (q) =>
+        q.eq("userId", args.userId).eq("sessionId", args.sessionId),
+      )
+      .unique();
     return await ctx.db.insert("chatMessages", {
       userId: args.userId,
       sessionId: args.sessionId,
       role: args.role,
       content: args.content,
       createdAt: Date.now(),
+      ...(session?.resolvedTaskId !== undefined
+        ? { taskId: session.resolvedTaskId }
+        : {}),
+      ...(session?.resolvedCourseId !== undefined
+        ? { courseId: session.resolvedCourseId }
+        : {}),
     });
   },
 });

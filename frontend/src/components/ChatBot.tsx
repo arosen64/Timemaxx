@@ -114,15 +114,11 @@ export default function ChatBot() {
     if (data.status === 'needs_scope_confirmation') {
       setEntityMcq(null)
       if (userEcho !== null) {
-        setEntityChoiceHistory([])
         setOptimistic([{ role: 'user', content: userEcho }])
       } else {
         setOptimistic([])
       }
       return
-    }
-    if (userEcho !== null) {
-      setEntityChoiceHistory([])
     }
     if (data.status === 'entity_scope_locked' || data.status === 'chat_input_locked') {
       setEntityChoiceHistory([])
@@ -180,7 +176,6 @@ export default function ChatBot() {
     setInput('')
     setIsLoading(true)
     setEntityMcq(null)
-    setEntityChoiceHistory([])
     setHistoryLenAtSend(history.length)
     setOptimistic([{ role: 'user', content: text }])
 
