@@ -6,7 +6,7 @@
       "id": "OEz3F",
       "x": 0,
       "y": 0,
-      "name": "Landing \u2013 Login",
+      "name": "Landing – Login",
       "width": 1440,
       "height": 900,
       "fill": "#FFFFFF",
@@ -280,7 +280,7 @@
       "id": "n4C6P",
       "x": 1520,
       "y": 0,
-      "name": "Onboarding \u2013 Survey",
+      "name": "Onboarding – Survey",
       "width": 1440,
       "height": 900,
       "fill": "#F5F7FA",
@@ -856,7 +856,7 @@
                       "id": "QXyDx",
                       "name": "headerSub",
                       "fill": "#4E6A8C",
-                      "content": "Thursday, February 26 \u00b7 3 tasks due this week",
+                      "content": "Thursday, February 26 · 3 tasks due this week",
                       "fontFamily": "Inter",
                       "fontSize": 14,
                       "fontWeight": "normal"
@@ -1052,7 +1052,7 @@
                           "content": "Calculus Problem Set 5"
                         },
                         "ks9wy": {
-                          "content": "Due tomorrow \u00b7 ~2.5 hrs estimated",
+                          "content": "Due tomorrow · ~2.5 hrs estimated",
                           "y": 22
                         },
                         "fwllh": {
@@ -1092,7 +1092,7 @@
                           "content": "History Essay: Industrial Revolution"
                         },
                         "ks9wy": {
-                          "content": "Due in 3 days \u00b7 ~4 hrs estimated",
+                          "content": "Due in 3 days · ~4 hrs estimated",
                           "y": 22
                         },
                         "fwllh": {
@@ -1138,7 +1138,7 @@
                           "content": "Chemistry Lab Report"
                         },
                         "ks9wy": {
-                          "content": "Due in 5 days \u00b7 ~3 hrs estimated",
+                          "content": "Due in 5 days · ~3 hrs estimated",
                           "y": 22
                         },
                         "fwllh": {
@@ -1190,7 +1190,7 @@
                       "y": 36,
                       "descendants": {
                         "5gvFR": {
-                          "content": "9:00 AM \u2013 10:30 AM",
+                          "content": "9:00 AM – 10:30 AM",
                           "x": 18,
                           "y": 16
                         },
@@ -1200,7 +1200,7 @@
                           "y": 35
                         },
                         "HkeGx": {
-                          "content": "1.5 hrs \u00b7 Focus block",
+                          "content": "1.5 hrs · Focus block",
                           "x": 18,
                           "y": 58
                         }
@@ -1217,7 +1217,7 @@
                       "y": 141,
                       "descendants": {
                         "ephls": {
-                          "content": "2:00 PM \u2013 3:00 PM",
+                          "content": "2:00 PM – 3:00 PM",
                           "x": 18,
                           "y": 16
                         },
@@ -1227,7 +1227,7 @@
                           "y": 35
                         },
                         "G8o9F": {
-                          "content": "1 hr \u00b7 Focus block",
+                          "content": "1 hr · Focus block",
                           "x": 18,
                           "y": 58
                         }
@@ -1244,7 +1244,7 @@
                       "y": 246,
                       "descendants": {
                         "ephls": {
-                          "content": "6:00 PM \u2013 7:00 PM",
+                          "content": "6:00 PM – 7:00 PM",
                           "x": 18,
                           "y": 16
                         },
@@ -1254,7 +1254,7 @@
                           "y": 35
                         },
                         "G8o9F": {
-                          "content": "1 hr \u00b7 Focus block",
+                          "content": "1 hr · Focus block",
                           "x": 18,
                           "y": 58
                         }
@@ -1293,7 +1293,7 @@
       "id": "5HNBG",
       "x": 4560,
       "y": 0,
-      "name": "Dashboard \u2013 Add Task",
+      "name": "Dashboard – Add Task",
       "width": 1440,
       "height": 900,
       "fill": "#F5F7FA",
@@ -1452,7 +1452,7 @@
                       "id": "UtfBW",
                       "name": "headerSub",
                       "fill": "#4E6A8C",
-                      "content": "Thursday, February 26 \u00b7 3 tasks due this week",
+                      "content": "Thursday, February 26 · 3 tasks due this week",
                       "fontFamily": "Inter",
                       "fontSize": 14,
                       "fontWeight": "normal"
@@ -1648,7 +1648,7 @@
                           "content": "Calculus Problem Set 5"
                         },
                         "ks9wy": {
-                          "content": "Due tomorrow \u00b7 ~2.5 hrs estimated",
+                          "content": "Due tomorrow · ~2.5 hrs estimated",
                           "y": 22
                         },
                         "fwllh": {
@@ -1688,7 +1688,7 @@
                           "content": "History Essay: Industrial Revolution"
                         },
                         "ks9wy": {
-                          "content": "Due in 3 days \u00b7 ~4 hrs estimated",
+                          "content": "Due in 3 days · ~4 hrs estimated",
                           "y": 22
                         },
                         "fwllh": {
@@ -1734,7 +1734,7 @@
                           "content": "Chemistry Lab Report"
                         },
                         "ks9wy": {
-                          "content": "Due in 5 days \u00b7 ~3 hrs estimated",
+                          "content": "Due in 5 days · ~3 hrs estimated",
                           "y": 22
                         },
                         "fwllh": {
@@ -1786,7 +1786,7 @@
                       "y": 36,
                       "descendants": {
                         "5gvFR": {
-                          "content": "9:00 AM \u2013 10:30 AM",
+                          "content": "9:00 AM – 10:30 AM",
                           "x": 18,
                           "y": 16
                         },
@@ -1796,7 +1796,7 @@
                           "y": 35
                         },
                         "HkeGx": {
-                          "content": "1.5 hrs \u00b7 Focus block",
+                          "content": "1.5 hrs · Focus block",
                           "x": 18,
                           "y": 58
                         }
@@ -1813,7 +1813,7 @@
                       "y": 141,
                       "descendants": {
                         "ephls": {
-                          "content": "2:00 PM \u2013 3:00 PM",
+                          "content": "2:00 PM – 3:00 PM",
                           "x": 18,
                           "y": 16
                         },
@@ -1823,7 +1823,7 @@
                           "y": 35
                         },
                         "G8o9F": {
-                          "content": "1 hr \u00b7 Focus block",
+                          "content": "1 hr · Focus block",
                           "x": 18,
                           "y": 58
                         }
@@ -1840,7 +1840,7 @@
                       "y": 246,
                       "descendants": {
                         "ephls": {
-                          "content": "6:00 PM \u2013 7:00 PM",
+                          "content": "6:00 PM – 7:00 PM",
                           "x": 18,
                           "y": 16
                         },
@@ -1850,7 +1850,7 @@
                           "y": 35
                         },
                         "G8o9F": {
-                          "content": "1 hr \u00b7 Focus block",
+                          "content": "1 hr · Focus block",
                           "x": 18,
                           "y": 58
                         }
@@ -1945,7 +1945,7 @@
                   "id": "0AFmk",
                   "name": "closeBtnIcon",
                   "fill": "#8FA6C2",
-                  "content": "\u00d7",
+                  "content": "×",
                   "fontFamily": "Inter",
                   "fontSize": 18,
                   "fontWeight": "normal"
@@ -2769,9 +2769,9 @@
       "id": "l5Xts",
       "x": 0,
       "y": 1200,
-      "name": "\u2699 Design System",
+      "name": "⚙ Design System",
       "width": 2400,
-      "height": 1800,
+      "height": 3200,
       "fill": "#1A1A2E",
       "layout": "none",
       "children": [
@@ -2794,7 +2794,7 @@
           "y": 0,
           "name": "dsSub",
           "fill": "#68ACE5",
-          "content": "Colors \u00b7 Typography \u00b7 Components",
+          "content": "Colors · Typography · Components",
           "fontFamily": "Inter",
           "fontSize": 14,
           "fontWeight": "normal"
@@ -3079,7 +3079,7 @@
               "id": "1yfev",
               "name": "typoH1",
               "fill": "#FFFFFF",
-              "content": "Page Heading \u2014 Space Grotesk 28 Bold",
+              "content": "Page Heading — Space Grotesk 28 Bold",
               "fontFamily": "Space Grotesk",
               "fontSize": 28,
               "fontWeight": "700"
@@ -3089,7 +3089,7 @@
               "id": "I88Fa",
               "name": "typoH2",
               "fill": "#FFFFFF",
-              "content": "Section Heading \u2014 Space Grotesk 18 SemiBold",
+              "content": "Section Heading — Space Grotesk 18 SemiBold",
               "fontFamily": "Space Grotesk",
               "fontSize": 18,
               "fontWeight": "600"
@@ -3099,7 +3099,7 @@
               "id": "8xJkR",
               "name": "typoBody",
               "fill": "#68ACE5",
-              "content": "Body text \u2014 Inter 14 Regular. Used for descriptions and meta information.",
+              "content": "Body text — Inter 14 Regular. Used for descriptions and meta information.",
               "fontFamily": "Inter",
               "fontSize": 14,
               "fontWeight": "normal"
@@ -3109,7 +3109,7 @@
               "id": "oNAps",
               "name": "typoSm",
               "fill": "#8FA6C2",
-              "content": "Small / Label \u2014 Inter 12 SemiBold. Used for card labels and badges.",
+              "content": "Small / Label — Inter 12 SemiBold. Used for card labels and badges.",
               "fontFamily": "Inter",
               "fontSize": 12,
               "fontWeight": "600"
@@ -3597,7 +3597,7 @@
                   "content": "Calculus Problem Set 5"
                 },
                 "ks9wy": {
-                  "content": "Due tomorrow \u00b7 ~2.5 hrs estimated",
+                  "content": "Due tomorrow · ~2.5 hrs estimated",
                   "y": 22
                 },
                 "fwllh": {
@@ -3715,7 +3715,7 @@
               "y": 0,
               "descendants": {
                 "5gvFR": {
-                  "content": "9:00 AM \u2013 10:30 AM",
+                  "content": "9:00 AM – 10:30 AM",
                   "x": 18,
                   "y": 16
                 },
@@ -3725,7 +3725,7 @@
                   "y": 35
                 },
                 "HkeGx": {
-                  "content": "1.5 hrs \u00b7 Focus block",
+                  "content": "1.5 hrs · Focus block",
                   "x": 18,
                   "y": 58
                 }
@@ -3742,7 +3742,7 @@
               "y": 0,
               "descendants": {
                 "ephls": {
-                  "content": "2:00 PM \u2013 3:00 PM",
+                  "content": "2:00 PM – 3:00 PM",
                   "x": 18,
                   "y": 16
                 },
@@ -3752,7 +3752,7 @@
                   "y": 35
                 },
                 "G8o9F": {
-                  "content": "1 hr \u00b7 Focus block",
+                  "content": "1 hr · Focus block",
                   "x": 18,
                   "y": 58
                 }
@@ -4518,6 +4518,95 @@
               "y": 8.5
             }
           }
+        },
+        {
+          "type": "frame",
+          "id": "UoI1G",
+          "x": 60,
+          "y": 1800,
+          "name": "chatSection",
+          "layout": "vertical",
+          "gap": 16,
+          "children": [
+            {
+              "type": "text",
+              "id": "SC1Da",
+              "name": "sectionLabel",
+              "fill": "$--muted-foreground",
+              "content": "Chat",
+              "fontFamily": "Space Grotesk",
+              "fontSize": 13,
+              "fontWeight": "600"
+            },
+            {
+              "id": "MRQVQ",
+              "type": "ref",
+              "ref": "xtSub",
+              "name": "ChatFAB",
+              "width": "fit_content",
+              "height": "fit_content",
+              "x": 0,
+              "y": 33,
+              "descendants": {
+                "VXD2Q": {
+                  "x": 0,
+                  "y": 0
+                }
+              }
+            },
+            {
+              "id": "UXKPH",
+              "type": "ref",
+              "ref": "m7dFx",
+              "name": "ChatBubble/User",
+              "width": "fit_content",
+              "height": "fit_content",
+              "x": 0,
+              "y": 81
+            },
+            {
+              "id": "AbLJB",
+              "type": "ref",
+              "ref": "rQy6L",
+              "name": "ChatBubble/AI",
+              "width": "fit_content",
+              "height": "fit_content",
+              "x": 0,
+              "y": 133
+            },
+            {
+              "id": "Y3tbq",
+              "type": "ref",
+              "ref": "iQnIB",
+              "name": "ChatOverlay",
+              "width": 400,
+              "height": 600,
+              "x": 0,
+              "y": 201
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "id": "h8Jl9",
+          "x": 60,
+          "y": 2680,
+          "name": "expandedCardsLabel",
+          "fill": "#FFFFFF",
+          "content": "Expanded Task Cards",
+          "fontFamily": "Space Grotesk",
+          "fontSize": 13,
+          "fontWeight": "600"
+        },
+        {
+          "id": "kvbHg",
+          "type": "ref",
+          "ref": "CmlmK",
+          "name": "taskCardReasoning",
+          "width": 460,
+          "height": "fit_content",
+          "x": 60,
+          "y": 2704
         }
       ]
     },
@@ -4874,7 +4963,7 @@
               "id": "WXZeW",
               "name": "placeholder",
               "fill": "$--light-muted",
-              "content": "Enter value\u2026",
+              "content": "Enter value…",
               "fontFamily": "Inter",
               "fontSize": 14,
               "fontWeight": "normal"
@@ -5072,7 +5161,7 @@
               "id": "ks9wy",
               "name": "meta",
               "fill": "$--muted-foreground",
-              "content": "Due tomorrow \u00b7 ~2.5 hrs estimated",
+              "content": "Due tomorrow · ~2.5 hrs estimated",
               "fontFamily": "Inter",
               "fontSize": 12,
               "fontWeight": "normal"
@@ -5249,7 +5338,7 @@
           "id": "5gvFR",
           "name": "time",
           "fill": "$--info",
-          "content": "9:00 AM \u2013 10:30 AM",
+          "content": "9:00 AM – 10:30 AM",
           "fontFamily": "Inter",
           "fontSize": 11,
           "fontWeight": "600"
@@ -5269,7 +5358,7 @@
           "id": "HkeGx",
           "name": "duration",
           "fill": "$--info",
-          "content": "1.5 hrs \u00b7 Focus block",
+          "content": "1.5 hrs · Focus block",
           "fontFamily": "Inter",
           "fontSize": 12,
           "fontWeight": "normal"
@@ -5302,7 +5391,7 @@
           "id": "ephls",
           "name": "time",
           "fill": "$--muted-foreground",
-          "content": "2:00 PM \u2013 3:00 PM",
+          "content": "2:00 PM – 3:00 PM",
           "fontFamily": "Inter",
           "fontSize": 11,
           "fontWeight": "600"
@@ -5322,7 +5411,7 @@
           "id": "G8o9F",
           "name": "duration",
           "fill": "$--muted-foreground",
-          "content": "1 hr \u00b7 Focus block",
+          "content": "1 hr · Focus block",
           "fontFamily": "Inter",
           "fontSize": 12,
           "fontWeight": "normal"
@@ -5782,7 +5871,7 @@
       "id": "ltG2L",
       "x": 1520,
       "y": 3080,
-      "name": "Onboarding \u2013 Work Hours",
+      "name": "Onboarding – Work Hours",
       "width": 1440,
       "height": 900,
       "fill": "$--background",
@@ -6542,7 +6631,7 @@
                       "y": 0,
                       "descendants": {
                         "zZ3E7": {
-                          "content": "\u2190 Back",
+                          "content": "← Back",
                           "x": 24,
                           "y": 15
                         }
@@ -6580,7 +6669,7 @@
       "id": "mgLOQ",
       "x": 3040,
       "y": 3080,
-      "name": "Onboarding \u2013 Preferences",
+      "name": "Onboarding – Preferences",
       "width": 1440,
       "height": 900,
       "fill": "$--background",
@@ -6712,7 +6801,7 @@
                   "fill": "$--muted-foreground",
                   "textGrowth": "fixed-width",
                   "width": "fill_container",
-                  "content": "Select everything that applies \u2014 this helps us schedule smarter.",
+                  "content": "Select everything that applies — this helps us schedule smarter.",
                   "lineHeight": 1.5,
                   "fontFamily": "Inter",
                   "fontSize": 14,
@@ -6731,7 +6820,7 @@
                       "id": "KBHlD",
                       "name": "todTitle",
                       "fill": "$--primary",
-                      "content": "\ud83d\udd50 Time of Day",
+                      "content": "🕐 Time of Day",
                       "fontFamily": "Space Grotesk",
                       "fontSize": 13,
                       "fontWeight": "600"
@@ -6784,7 +6873,7 @@
                                   "id": "IZhIc",
                                   "name": "todC1t",
                                   "fill": "$--muted-foreground",
-                                  "content": "Early Morning (5\u20138am)",
+                                  "content": "Early Morning (5–8am)",
                                   "fontFamily": "Inter",
                                   "fontSize": 13,
                                   "fontWeight": "normal"
@@ -6812,7 +6901,7 @@
                                   "id": "QcopD",
                                   "name": "todC2t",
                                   "fill": "$--muted-foreground",
-                                  "content": "Morning (8\u201311am)",
+                                  "content": "Morning (8–11am)",
                                   "fontFamily": "Inter",
                                   "fontSize": 13,
                                   "fontWeight": "normal"
@@ -6840,7 +6929,7 @@
                                   "id": "VmxqD",
                                   "name": "todC3t",
                                   "fill": "$--muted-foreground",
-                                  "content": "Midday (11am\u20132pm)",
+                                  "content": "Midday (11am–2pm)",
                                   "fontFamily": "Inter",
                                   "fontSize": 13,
                                   "fontWeight": "normal"
@@ -6863,7 +6952,7 @@
                                   "id": "AlLVB",
                                   "name": "todC4t",
                                   "fill": "$--primary-foreground",
-                                  "content": "Afternoon (2\u20135pm)",
+                                  "content": "Afternoon (2–5pm)",
                                   "fontFamily": "Inter",
                                   "fontSize": 13,
                                   "fontWeight": "normal"
@@ -6900,7 +6989,7 @@
                                   "id": "HlT3a",
                                   "name": "todC5t",
                                   "fill": "$--muted-foreground",
-                                  "content": "Evening (5\u20138pm)",
+                                  "content": "Evening (5–8pm)",
                                   "fontFamily": "Inter",
                                   "fontSize": 13,
                                   "fontWeight": "normal"
@@ -6928,7 +7017,7 @@
                                   "id": "cWXNA",
                                   "name": "todC6t",
                                   "fill": "$--muted-foreground",
-                                  "content": "Night (8\u201311pm)",
+                                  "content": "Night (8–11pm)",
                                   "fontFamily": "Inter",
                                   "fontSize": 13,
                                   "fontWeight": "normal"
@@ -7011,7 +7100,7 @@
                       "id": "YSblU",
                       "name": "dowTitle",
                       "fill": "$--primary",
-                      "content": "\ud83d\udcc5 Day of Week",
+                      "content": "📅 Day of Week",
                       "fontFamily": "Space Grotesk",
                       "fontSize": 13,
                       "fontWeight": "600"
@@ -7291,7 +7380,7 @@
                       "id": "UhAeT",
                       "name": "stTitle",
                       "fill": "$--primary",
-                      "content": "\u26a1 Work Session Style",
+                      "content": "⚡ Work Session Style",
                       "fontFamily": "Space Grotesk",
                       "fontSize": 13,
                       "fontWeight": "600"
@@ -7344,7 +7433,7 @@
                                   "id": "HYfIk",
                                   "name": "stC1t",
                                   "fill": "$--muted-foreground",
-                                  "content": "Short bursts (25\u201330 min)",
+                                  "content": "Short bursts (25–30 min)",
                                   "fontFamily": "Inter",
                                   "fontSize": 13,
                                   "fontWeight": "normal"
@@ -7367,7 +7456,7 @@
                                   "id": "K4oZB",
                                   "name": "stC2t",
                                   "fill": "$--primary-foreground",
-                                  "content": "Medium sessions (45\u201360 min)",
+                                  "content": "Medium sessions (45–60 min)",
                                   "fontFamily": "Inter",
                                   "fontSize": 13,
                                   "fontWeight": "normal"
@@ -7487,7 +7576,7 @@
                       "id": "NYfyj",
                       "name": "dlTitle",
                       "fill": "$--primary",
-                      "content": "\u23f0 Deadline Behavior",
+                      "content": "⏰ Deadline Behavior",
                       "fontFamily": "Space Grotesk",
                       "fontSize": 13,
                       "fontWeight": "600"
@@ -7607,7 +7696,7 @@
                       "id": "lpgd5",
                       "name": "bpTitle",
                       "fill": "$--primary",
-                      "content": "\ud83d\udd04 Break Preferences",
+                      "content": "🔄 Break Preferences",
                       "fontFamily": "Space Grotesk",
                       "fontSize": 13,
                       "fontWeight": "600"
@@ -7660,7 +7749,7 @@
                                   "id": "odN86",
                                   "name": "bpC1t",
                                   "fill": "$--muted-foreground",
-                                  "content": "Frequent short breaks (every 25\u201330 min)",
+                                  "content": "Frequent short breaks (every 25–30 min)",
                                   "fontFamily": "Inter",
                                   "fontSize": 13,
                                   "fontWeight": "normal"
@@ -7774,7 +7863,7 @@
                       "id": "sHKMy",
                       "name": "swTitle",
                       "fill": "$--primary",
-                      "content": "\ud83d\udcda Subject/Task Switching",
+                      "content": "📚 Subject/Task Switching",
                       "fontFamily": "Space Grotesk",
                       "fontSize": 13,
                       "fontWeight": "600"
@@ -7987,7 +8076,7 @@
                       "y": 0,
                       "descendants": {
                         "zZ3E7": {
-                          "content": "\u2190 Back",
+                          "content": "← Back",
                           "x": 24,
                           "y": 15
                         }
@@ -8026,7 +8115,7 @@
       "id": "4Wxmw",
       "x": 4580,
       "y": 3080,
-      "name": "Onboarding \u2013 Calendar",
+      "name": "Onboarding – Calendar",
       "width": 1440,
       "height": 900,
       "fill": "$--background",
@@ -8277,7 +8366,7 @@
                       "y": 0,
                       "descendants": {
                         "zZ3E7": {
-                          "content": "\u2190 Back",
+                          "content": "← Back",
                           "x": 24,
                           "y": 15
                         }
@@ -8316,7 +8405,7 @@
       "id": "4rneH",
       "x": 4580,
       "y": 4060,
-      "name": "Onboarding \u2013 Calendar (Connected)",
+      "name": "Onboarding – Calendar (Connected)",
       "width": 1440,
       "height": 900,
       "fill": "$--background",
@@ -8576,7 +8665,7 @@
                       "y": 0,
                       "descendants": {
                         "zZ3E7": {
-                          "content": "\u2190 Back",
+                          "content": "← Back",
                           "x": 24,
                           "y": 15
                         }
@@ -8615,7 +8704,7 @@
       "id": "f3Dhq",
       "x": 3040,
       "y": 1500,
-      "name": "Classes \u2013 Syllabus Upload",
+      "name": "Classes – Syllabus Upload",
       "width": 1440,
       "height": 900,
       "fill": "$--background",
@@ -8673,7 +8762,7 @@
                       "id": "nNYhR",
                       "name": "closeBtnText",
                       "fill": "$--light-muted",
-                      "content": "\u00d7",
+                      "content": "×",
                       "fontFamily": "Inter",
                       "fontSize": 18,
                       "fontWeight": "normal"
@@ -8817,7 +8906,7 @@
                   "id": "1DYs7",
                   "name": "dropZoneHint",
                   "fill": "$--light-muted",
-                  "content": "PDF or .txt \u00b7 max 10 MB",
+                  "content": "PDF or .txt · max 10 MB",
                   "fontFamily": "Inter",
                   "fontSize": 12,
                   "fontWeight": "normal"
@@ -8911,7 +9000,7 @@
           "id": "i0Cfb",
           "name": "time",
           "fill": "$--info",
-          "content": "9:00 \u2013 9:30 AM",
+          "content": "9:00 – 9:30 AM",
           "fontFamily": "Inter",
           "fontSize": 10,
           "fontWeight": "normal"
@@ -9171,7 +9260,7 @@
                       "id": "FrNJZ",
                       "name": "weekLabel",
                       "fill": "$--primary",
-                      "content": "Mon, Mar 24 \u2013 Sun, Mar 30",
+                      "content": "Mon, Mar 24 – Sun, Mar 30",
                       "fontFamily": "Inter",
                       "fontSize": 14,
                       "fontWeight": "500"
@@ -9844,7 +9933,7 @@
                                   "y": 4
                                 },
                                 "i0Cfb": {
-                                  "content": "9:00 \u2013 10:00 AM",
+                                  "content": "9:00 – 10:00 AM",
                                   "x": 6,
                                   "y": 19
                                 }
@@ -10237,7 +10326,7 @@
               "id": "hxWLL",
               "name": "time",
               "fill": "$--muted-foreground",
-              "content": "2:00 PM \u2013 3:00 PM",
+              "content": "2:00 PM – 3:00 PM",
               "fontFamily": "Inter",
               "fontSize": 11,
               "fontWeight": "600"
@@ -10276,7 +10365,7 @@
           "id": "Jz4bu",
           "name": "duration",
           "fill": "$--muted-foreground",
-          "content": "1 hr \u00b7 Focus block",
+          "content": "1 hr · Focus block",
           "fontFamily": "Inter",
           "fontSize": 12,
           "fontWeight": "normal"
@@ -10764,7 +10853,7 @@
       "id": "nYr17",
       "x": 1520,
       "y": 3080,
-      "name": "Onboarding \u2013 Work Hours",
+      "name": "Onboarding – Work Hours",
       "width": 1440,
       "height": 900,
       "fill": "$--background",
@@ -11477,7 +11566,7 @@
                       "y": 0,
                       "descendants": {
                         "zZ3E7": {
-                          "content": "\u2190 Back",
+                          "content": "← Back",
                           "x": 24,
                           "y": 15
                         }
@@ -11514,7 +11603,7 @@
       "id": "3SIDN",
       "x": 3040,
       "y": 3080,
-      "name": "Onboarding \u2013 Preferences",
+      "name": "Onboarding – Preferences",
       "width": 1440,
       "height": 900,
       "fill": "$--background",
@@ -11645,7 +11734,7 @@
                   "fill": "$--muted-foreground",
                   "textGrowth": "fixed-width",
                   "width": "fill_container",
-                  "content": "Select everything that applies \u2014 this helps us schedule smarter.",
+                  "content": "Select everything that applies — this helps us schedule smarter.",
                   "lineHeight": 1.5,
                   "fontFamily": "Inter",
                   "fontSize": 14,
@@ -11663,7 +11752,7 @@
                       "type": "text",
                       "id": "PNbmH",
                       "fill": "$--primary",
-                      "content": "\ud83d\udd50 Time of Day",
+                      "content": "🕐 Time of Day",
                       "fontFamily": "Space Grotesk",
                       "fontSize": 13,
                       "fontWeight": "600"
@@ -11714,7 +11803,7 @@
                                   "type": "text",
                                   "id": "aMdJO",
                                   "fill": "$--muted-foreground",
-                                  "content": "Early Morning (5\u20138am)",
+                                  "content": "Early Morning (5–8am)",
                                   "fontFamily": "Inter",
                                   "fontSize": 13,
                                   "fontWeight": "normal"
@@ -11736,7 +11825,7 @@
                                   "type": "text",
                                   "id": "2HRdj",
                                   "fill": "$--primary-foreground",
-                                  "content": "Morning (8\u201311am)",
+                                  "content": "Morning (8–11am)",
                                   "fontFamily": "Inter",
                                   "fontSize": 13,
                                   "fontWeight": "normal"
@@ -11763,7 +11852,7 @@
                                   "type": "text",
                                   "id": "IuD8a",
                                   "fill": "$--muted-foreground",
-                                  "content": "Midday (11am\u20132pm)",
+                                  "content": "Midday (11am–2pm)",
                                   "fontFamily": "Inter",
                                   "fontSize": 13,
                                   "fontWeight": "normal"
@@ -11790,7 +11879,7 @@
                                   "type": "text",
                                   "id": "PcQjS",
                                   "fill": "$--muted-foreground",
-                                  "content": "Afternoon (2\u20135pm)",
+                                  "content": "Afternoon (2–5pm)",
                                   "fontFamily": "Inter",
                                   "fontSize": 13,
                                   "fontWeight": "normal"
@@ -11821,7 +11910,7 @@
                                   "type": "text",
                                   "id": "s6tu2",
                                   "fill": "$--primary-foreground",
-                                  "content": "Evening (5\u20138pm)",
+                                  "content": "Evening (5–8pm)",
                                   "fontFamily": "Inter",
                                   "fontSize": 13,
                                   "fontWeight": "normal"
@@ -11848,7 +11937,7 @@
                                   "type": "text",
                                   "id": "ecUfD",
                                   "fill": "$--muted-foreground",
-                                  "content": "Night (8\u201311pm)",
+                                  "content": "Night (8–11pm)",
                                   "fontFamily": "Inter",
                                   "fontSize": 13,
                                   "fontWeight": "normal"
@@ -11928,7 +12017,7 @@
                       "type": "text",
                       "id": "POKIF",
                       "fill": "$--primary",
-                      "content": "\ud83d\udcc5 Day of Week",
+                      "content": "📅 Day of Week",
                       "fontFamily": "Space Grotesk",
                       "fontSize": 13,
                       "fontWeight": "600"
@@ -12193,7 +12282,7 @@
                       "type": "text",
                       "id": "2kZuQ",
                       "fill": "$--primary",
-                      "content": "\u26a1 Work Session Style",
+                      "content": "⚡ Work Session Style",
                       "fontFamily": "Space Grotesk",
                       "fontSize": 13,
                       "fontWeight": "600"
@@ -12239,7 +12328,7 @@
                                   "type": "text",
                                   "id": "ZrsxP",
                                   "fill": "$--primary-foreground",
-                                  "content": "Short bursts (25\u201330 min)",
+                                  "content": "Short bursts (25–30 min)",
                                   "fontFamily": "Inter",
                                   "fontSize": 13,
                                   "fontWeight": "normal"
@@ -12266,7 +12355,7 @@
                                   "type": "text",
                                   "id": "kb8rn",
                                   "fill": "$--muted-foreground",
-                                  "content": "Medium sessions (45\u201360 min)",
+                                  "content": "Medium sessions (45–60 min)",
                                   "fontFamily": "Inter",
                                   "fontSize": 13,
                                   "fontWeight": "normal"
@@ -12382,7 +12471,7 @@
                       "type": "text",
                       "id": "jwnju",
                       "fill": "$--primary",
-                      "content": "\u23f0 Deadline Behavior",
+                      "content": "⏰ Deadline Behavior",
                       "fontFamily": "Space Grotesk",
                       "fontSize": 13,
                       "fontWeight": "600"
@@ -12497,7 +12586,7 @@
                       "type": "text",
                       "id": "tG9Mu",
                       "fill": "$--primary",
-                      "content": "\ud83d\udd04 Break Preferences",
+                      "content": "🔄 Break Preferences",
                       "fontFamily": "Space Grotesk",
                       "fontSize": 13,
                       "fontWeight": "600"
@@ -12548,7 +12637,7 @@
                                   "type": "text",
                                   "id": "NCUq0",
                                   "fill": "$--muted-foreground",
-                                  "content": "Frequent short breaks (every 25\u201330 min)",
+                                  "content": "Frequent short breaks (every 25–30 min)",
                                   "fontFamily": "Inter",
                                   "fontSize": 13,
                                   "fontWeight": "normal"
@@ -12658,7 +12747,7 @@
                       "type": "text",
                       "id": "KtfSS",
                       "fill": "$--primary",
-                      "content": "\ud83d\udcda Subject/Task Switching",
+                      "content": "📚 Subject/Task Switching",
                       "fontFamily": "Space Grotesk",
                       "fontSize": 13,
                       "fontWeight": "600"
@@ -12865,7 +12954,7 @@
                       "y": 0,
                       "descendants": {
                         "zZ3E7": {
-                          "content": "\u2190 Back",
+                          "content": "← Back",
                           "x": 24,
                           "y": 15
                         }
@@ -13121,7 +13210,7 @@
               "id": "6x7s6",
               "name": "fileHint",
               "fill": "$--light-muted",
-              "content": "Supports PDF \u00b7 Max 10 MB",
+              "content": "Supports PDF · Max 10 MB",
               "fontFamily": "Inter",
               "fontSize": 11,
               "fontWeight": "normal"
@@ -13135,7 +13224,7 @@
       "id": "REKca",
       "x": 3040,
       "y": 0,
-      "name": "Onboarding \u2013 Your Classes",
+      "name": "Onboarding – Your Classes",
       "width": 1440,
       "height": 900,
       "fill": "$--background",
@@ -13538,7 +13627,7 @@
                       "type": "text",
                       "id": "lfrPG",
                       "fill": "$--light-muted",
-                      "content": "Type to search courses\u2026",
+                      "content": "Type to search courses…",
                       "fontFamily": "Inter",
                       "fontSize": 13,
                       "fontWeight": "normal"
@@ -13574,7 +13663,7 @@
       "id": "ectTo",
       "x": 3040,
       "y": 1500,
-      "name": "Classes \u2013 Syllabus Upload",
+      "name": "Classes – Syllabus Upload",
       "width": 1440,
       "height": 900,
       "fill": "$--background",
@@ -13632,7 +13721,7 @@
                       "id": "ibFrC",
                       "name": "closeTxt",
                       "fill": "$--light-muted",
-                      "content": "\u00d7",
+                      "content": "×",
                       "fontFamily": "Inter",
                       "fontSize": 18,
                       "fontWeight": "normal"
@@ -13776,7 +13865,7 @@
                   "id": "HPrnn",
                   "name": "hintTxt",
                   "fill": "$--light-muted",
-                  "content": "PDF or .txt \u00b7 max 10 MB",
+                  "content": "PDF or .txt · max 10 MB",
                   "fontFamily": "Inter",
                   "fontSize": 12,
                   "fontWeight": "normal"
@@ -13834,7 +13923,7 @@
       "id": "nxWM7",
       "x": 4560,
       "y": 3080,
-      "name": "Onboarding \u2013 Calendar",
+      "name": "Onboarding – Calendar",
       "width": 1440,
       "height": 900,
       "fill": "$--background",
@@ -14107,7 +14196,7 @@
                       "y": 0,
                       "descendants": {
                         "zZ3E7": {
-                          "content": "\u2190 Back",
+                          "content": "← Back",
                           "x": 24,
                           "y": 15
                         }
@@ -14142,7 +14231,7 @@
       "id": "O9zz1",
       "x": 6080,
       "y": 3080,
-      "name": "Onboarding \u2013 Academic Profile",
+      "name": "Onboarding – Academic Profile",
       "width": 1440,
       "height": 900,
       "fill": "$--background",
@@ -14328,7 +14417,7 @@
                           "fill": "$--light-muted",
                           "textGrowth": "fixed-width",
                           "width": 400,
-                          "content": "Tip: Rate your past courses' difficulty (1\u20135) in the previous step for a more accurate profile.",
+                          "content": "Tip: Rate your past courses' difficulty (1–5) in the previous step for a more accurate profile.",
                           "fontFamily": "Inter",
                           "fontSize": 12,
                           "fontWeight": "normal"
@@ -14432,7 +14521,7 @@
                               "fill": "$--primary",
                               "textGrowth": "fixed-width",
                               "width": "fill_container",
-                              "content": "Strong performance in quantitative courses \u2014 consistent high grades in Math and CS suggest analytical aptitude.",
+                              "content": "Strong performance in quantitative courses — consistent high grades in Math and CS suggest analytical aptitude.",
                               "fontFamily": "Inter",
                               "fontSize": 13,
                               "fontWeight": "normal"
@@ -14479,7 +14568,7 @@
                               "fill": "$--primary",
                               "textGrowth": "fixed-width",
                               "width": "fill_container",
-                              "content": "Writing-intensive courses show lower grades \u2014 consider office hours or writing center support.",
+                              "content": "Writing-intensive courses show lower grades — consider office hours or writing center support.",
                               "fontFamily": "Inter",
                               "fontSize": 13,
                               "fontWeight": "normal"
@@ -14526,7 +14615,7 @@
                               "fill": "$--primary",
                               "textGrowth": "fixed-width",
                               "width": "fill_container",
-                              "content": "GPA trending upward \u2014 your most recent semester shows improvement across multiple subjects.",
+                              "content": "GPA trending upward — your most recent semester shows improvement across multiple subjects.",
                               "fontFamily": "Inter",
                               "fontSize": 13,
                               "fontWeight": "normal"
@@ -14649,7 +14738,7 @@
                       "y": 0,
                       "descendants": {
                         "zZ3E7": {
-                          "content": "\u2190 Back",
+                          "content": "← Back",
                           "x": 24,
                           "y": 15
                         }
@@ -14983,7 +15072,7 @@
               "id": "En9Pb",
               "name": "removeBtn",
               "fill": "$--light-muted",
-              "content": "\u00d7",
+              "content": "×",
               "fontFamily": "Inter",
               "fontSize": 18,
               "fontWeight": "normal"
@@ -15089,7 +15178,7 @@
       "id": "eQ4FL",
       "x": 9292,
       "y": -9,
-      "name": "Preferences \u2013 Editing",
+      "name": "Preferences – Editing",
       "width": 1440,
       "fill": "$--background",
       "children": [
@@ -15316,7 +15405,7 @@
                               "fill": "$--light-muted",
                               "textGrowth": "fixed-width",
                               "width": "fill_container",
-                              "content": "Tip: Rate your past courses' difficulty (1\u20135) in the previous step for a more accurate profile.",
+                              "content": "Tip: Rate your past courses' difficulty (1–5) in the previous step for a more accurate profile.",
                               "fontFamily": "Inter",
                               "fontSize": 12,
                               "fontWeight": "normal"
@@ -15422,7 +15511,7 @@
                                   "fill": "$--primary",
                                   "textGrowth": "fixed-width",
                                   "width": "fill_container",
-                                  "content": "Strong performance in quantitative courses \u2014 consistent high grades in Math and CS suggest analytical aptitude.",
+                                  "content": "Strong performance in quantitative courses — consistent high grades in Math and CS suggest analytical aptitude.",
                                   "fontFamily": "Inter",
                                   "fontSize": 13,
                                   "fontWeight": "normal"
@@ -15469,7 +15558,7 @@
                                   "fill": "$--primary",
                                   "textGrowth": "fixed-width",
                                   "width": "fill_container",
-                                  "content": "Writing-intensive courses show lower grades \u2014 consider office hours or writing center support.",
+                                  "content": "Writing-intensive courses show lower grades — consider office hours or writing center support.",
                                   "fontFamily": "Inter",
                                   "fontSize": 13,
                                   "fontWeight": "normal"
@@ -15516,7 +15605,7 @@
                                   "fill": "$--primary",
                                   "textGrowth": "fixed-width",
                                   "width": "fill_container",
-                                  "content": "GPA trending upward \u2014 your most recent semester shows improvement across multiple subjects.",
+                                  "content": "GPA trending upward — your most recent semester shows improvement across multiple subjects.",
                                   "fontFamily": "Inter",
                                   "fontSize": 13,
                                   "fontWeight": "normal"
@@ -16005,7 +16094,7 @@
                                       "type": "text",
                                       "id": "KOldb",
                                       "fill": "$--light-muted",
-                                      "content": "\u00d7",
+                                      "content": "×",
                                       "fontFamily": "Inter",
                                       "fontSize": 16,
                                       "fontWeight": "normal"
@@ -16953,7 +17042,7 @@
                           "fill": "$--muted-foreground",
                           "textGrowth": "fixed-width",
                           "width": "fill_container",
-                          "content": "Select everything that applies \u2014 this helps us schedule smarter.",
+                          "content": "Select everything that applies — this helps us schedule smarter.",
                           "lineHeight": 1.5,
                           "fontFamily": "Inter",
                           "fontSize": 14,
@@ -16971,7 +17060,7 @@
                               "type": "text",
                               "id": "dsZNB",
                               "fill": "$--primary",
-                              "content": "\ud83d\udd50 Time of Day",
+                              "content": "🕐 Time of Day",
                               "fontFamily": "Space Grotesk",
                               "fontSize": 13,
                               "fontWeight": "600"
@@ -17022,7 +17111,7 @@
                                           "type": "text",
                                           "id": "PqRZM",
                                           "fill": "$--muted-foreground",
-                                          "content": "Early Morning (5\u20138am)",
+                                          "content": "Early Morning (5–8am)",
                                           "fontFamily": "Inter",
                                           "fontSize": 13,
                                           "fontWeight": "normal"
@@ -17044,7 +17133,7 @@
                                           "type": "text",
                                           "id": "nJnRz",
                                           "fill": "$--primary-foreground",
-                                          "content": "Morning (8\u201311am)",
+                                          "content": "Morning (8–11am)",
                                           "fontFamily": "Inter",
                                           "fontSize": 13,
                                           "fontWeight": "normal"
@@ -17071,7 +17160,7 @@
                                           "type": "text",
                                           "id": "vdKt3",
                                           "fill": "$--muted-foreground",
-                                          "content": "Midday (11am\u20132pm)",
+                                          "content": "Midday (11am–2pm)",
                                           "fontFamily": "Inter",
                                           "fontSize": 13,
                                           "fontWeight": "normal"
@@ -17098,7 +17187,7 @@
                                           "type": "text",
                                           "id": "E0b7K",
                                           "fill": "$--muted-foreground",
-                                          "content": "Afternoon (2\u20135pm)",
+                                          "content": "Afternoon (2–5pm)",
                                           "fontFamily": "Inter",
                                           "fontSize": 13,
                                           "fontWeight": "normal"
@@ -17129,7 +17218,7 @@
                                           "type": "text",
                                           "id": "THBJL",
                                           "fill": "$--primary-foreground",
-                                          "content": "Evening (5\u20138pm)",
+                                          "content": "Evening (5–8pm)",
                                           "fontFamily": "Inter",
                                           "fontSize": 13,
                                           "fontWeight": "normal"
@@ -17156,7 +17245,7 @@
                                           "type": "text",
                                           "id": "WTFVB",
                                           "fill": "$--muted-foreground",
-                                          "content": "Night (8\u201311pm)",
+                                          "content": "Night (8–11pm)",
                                           "fontFamily": "Inter",
                                           "fontSize": 13,
                                           "fontWeight": "normal"
@@ -17236,7 +17325,7 @@
                               "type": "text",
                               "id": "DxyqR",
                               "fill": "$--primary",
-                              "content": "\ud83d\udcc5 Day of Week",
+                              "content": "📅 Day of Week",
                               "fontFamily": "Space Grotesk",
                               "fontSize": 13,
                               "fontWeight": "600"
@@ -17501,7 +17590,7 @@
                               "type": "text",
                               "id": "CcHyN",
                               "fill": "$--primary",
-                              "content": "\u26a1 Work Session Style",
+                              "content": "⚡ Work Session Style",
                               "fontFamily": "Space Grotesk",
                               "fontSize": 13,
                               "fontWeight": "600"
@@ -17547,7 +17636,7 @@
                                           "type": "text",
                                           "id": "oxhVz",
                                           "fill": "$--primary-foreground",
-                                          "content": "Short bursts (25\u201330 min)",
+                                          "content": "Short bursts (25–30 min)",
                                           "fontFamily": "Inter",
                                           "fontSize": 13,
                                           "fontWeight": "normal"
@@ -17574,7 +17663,7 @@
                                           "type": "text",
                                           "id": "lx8j8",
                                           "fill": "$--muted-foreground",
-                                          "content": "Medium sessions (45\u201360 min)",
+                                          "content": "Medium sessions (45–60 min)",
                                           "fontFamily": "Inter",
                                           "fontSize": 13,
                                           "fontWeight": "normal"
@@ -17690,7 +17779,7 @@
                               "type": "text",
                               "id": "WkXnk",
                               "fill": "$--primary",
-                              "content": "\u23f0 Deadline Behavior",
+                              "content": "⏰ Deadline Behavior",
                               "fontFamily": "Space Grotesk",
                               "fontSize": 13,
                               "fontWeight": "600"
@@ -17805,7 +17894,7 @@
                               "type": "text",
                               "id": "ImdHD",
                               "fill": "$--primary",
-                              "content": "\ud83d\udd04 Break Preferences",
+                              "content": "🔄 Break Preferences",
                               "fontFamily": "Space Grotesk",
                               "fontSize": 13,
                               "fontWeight": "600"
@@ -17856,7 +17945,7 @@
                                           "type": "text",
                                           "id": "RA65V",
                                           "fill": "$--muted-foreground",
-                                          "content": "Frequent short breaks (every 25\u201330 min)",
+                                          "content": "Frequent short breaks (every 25–30 min)",
                                           "fontFamily": "Inter",
                                           "fontSize": 13,
                                           "fontWeight": "normal"
@@ -17966,7 +18055,7 @@
                               "type": "text",
                               "id": "mSxhd",
                               "fill": "$--primary",
-                              "content": "\ud83d\udcda Subject/Task Switching",
+                              "content": "📚 Subject/Task Switching",
                               "fontFamily": "Space Grotesk",
                               "fontSize": 13,
                               "fontWeight": "600"
@@ -18171,7 +18260,7 @@
       "id": "yfO48",
       "x": 11057,
       "y": -9,
-      "name": "Preferences \u2013 Default",
+      "name": "Preferences – Default",
       "width": 1440,
       "fill": "$--background",
       "children": [
@@ -18508,7 +18597,7 @@
                                   "fill": "$--primary",
                                   "textGrowth": "fixed-width",
                                   "width": "fill_container",
-                                  "content": "Strong performance in quantitative courses \u2014 consistent high grades in Math and CS suggest analytical aptitude.",
+                                  "content": "Strong performance in quantitative courses — consistent high grades in Math and CS suggest analytical aptitude.",
                                   "fontFamily": "Inter",
                                   "fontSize": 13,
                                   "fontWeight": "normal"
@@ -18555,7 +18644,7 @@
                                   "fill": "$--primary",
                                   "textGrowth": "fixed-width",
                                   "width": "fill_container",
-                                  "content": "Writing-intensive courses show lower grades \u2014 consider office hours or writing center support.",
+                                  "content": "Writing-intensive courses show lower grades — consider office hours or writing center support.",
                                   "fontFamily": "Inter",
                                   "fontSize": 13,
                                   "fontWeight": "normal"
@@ -18602,7 +18691,7 @@
                                   "fill": "$--primary",
                                   "textGrowth": "fixed-width",
                                   "width": "fill_container",
-                                  "content": "GPA trending upward \u2014 your most recent semester shows improvement across multiple subjects.",
+                                  "content": "GPA trending upward — your most recent semester shows improvement across multiple subjects.",
                                   "fontFamily": "Inter",
                                   "fontSize": 13,
                                   "fontWeight": "normal"
@@ -19037,7 +19126,7 @@
                               "id": "yt0FR",
                               "name": "val5",
                               "fill": "$--primary",
-                              "content": "CS 374 \u2013 Algorithms, CHEM 232",
+                              "content": "CS 374 – Algorithms, CHEM 232",
                               "fontFamily": "Inter",
                               "fontSize": 14,
                               "fontWeight": "normal"
@@ -19811,7 +19900,7 @@
                               "id": "fUp4F",
                               "name": "row1label",
                               "fill": "$--primary",
-                              "content": "\ud83d\udd50 Time of Day",
+                              "content": "🕐 Time of Day",
                               "fontFamily": "Space Grotesk",
                               "fontSize": 13,
                               "fontWeight": "600"
@@ -19886,7 +19975,7 @@
                               "id": "k8shA",
                               "name": "row2label",
                               "fill": "$--primary",
-                              "content": "\ud83d\udcc5 Day of Week",
+                              "content": "📅 Day of Week",
                               "fontFamily": "Space Grotesk",
                               "fontSize": 13,
                               "fontWeight": "600"
@@ -19984,7 +20073,7 @@
                               "id": "qKdpt",
                               "name": "row3label",
                               "fill": "$--primary",
-                              "content": "\u26a1 Work Session Style",
+                              "content": "⚡ Work Session Style",
                               "fontFamily": "Space Grotesk",
                               "fontSize": 13,
                               "fontWeight": "600"
@@ -20036,7 +20125,7 @@
                               "id": "vrOKU",
                               "name": "row4label",
                               "fill": "$--primary",
-                              "content": "\u23f0 Deadline Behavior",
+                              "content": "⏰ Deadline Behavior",
                               "fontFamily": "Space Grotesk",
                               "fontSize": 13,
                               "fontWeight": "600"
@@ -20088,7 +20177,7 @@
                               "id": "crc5V",
                               "name": "row5label",
                               "fill": "$--primary",
-                              "content": "\ud83d\udd04 Break Preferences",
+                              "content": "🔄 Break Preferences",
                               "fontFamily": "Space Grotesk",
                               "fontSize": 13,
                               "fontWeight": "600"
@@ -20140,7 +20229,7 @@
                               "id": "HuZXv",
                               "name": "row6label",
                               "fill": "$--primary",
-                              "content": "\ud83d\udcda Subject/Task Switching",
+                              "content": "📚 Subject/Task Switching",
                               "fontFamily": "Space Grotesk",
                               "fontSize": 13,
                               "fontWeight": "600"
@@ -20659,7 +20748,7 @@
                   "id": "1semH",
                   "name": "placeholder",
                   "fill": "$--light-muted",
-                  "content": "Select grade\u2026",
+                  "content": "Select grade…",
                   "fontFamily": "Inter",
                   "fontSize": 13,
                   "fontWeight": "normal"
@@ -21287,7 +21376,7 @@
           "id": "OKRog",
           "name": "icon",
           "fill": "$--primary-foreground",
-          "content": "\u25ce",
+          "content": "◎",
           "fontFamily": "Space Grotesk",
           "fontSize": 22,
           "fontWeight": "600"
@@ -21414,7 +21503,7 @@
               "id": "9yjh9",
               "name": "close",
               "fill": "$--primary-foreground",
-              "content": "\u2715",
+              "content": "✕",
               "fontFamily": "Space Grotesk",
               "fontSize": 16,
               "fontWeight": "600"
@@ -21545,7 +21634,7 @@
                   "id": "BSyVq",
                   "name": "placeholder",
                   "fill": "$--light-muted",
-                  "content": "Ask me anything\u2026",
+                  "content": "Ask me anything…",
                   "fontFamily": "Inter",
                   "fontSize": 13,
                   "fontWeight": "normal"
@@ -21591,7 +21680,7 @@
           "id": "VXD2Q",
           "name": "icon",
           "fill": "$--primary-foreground",
-          "content": "\u25ce",
+          "content": "◎",
           "fontFamily": "Space Grotesk",
           "fontSize": 22,
           "fontWeight": "600"
@@ -21746,7 +21835,7 @@
                   "id": "1t9CS",
                   "name": "x",
                   "fill": "$--primary-foreground",
-                  "content": "\u2715",
+                  "content": "✕",
                   "fontFamily": "Space Grotesk",
                   "fontSize": 13,
                   "fontWeight": "600"
@@ -21912,7 +22001,7 @@
                   "id": "v5alV",
                   "name": "placeholder",
                   "fill": "$--light-muted",
-                  "content": "Ask me anything\u2026 (Enter to send)",
+                  "content": "Ask me anything… (Enter to send)",
                   "fontFamily": "Inter",
                   "fontSize": 13,
                   "fontWeight": "normal"
@@ -21942,7 +22031,530 @@
     },
     {
       "type": "frame",
-      "id": "CkbxA",
+      "id": "MSUig",
+      "x": 8100,
+      "y": 1958,
+      "name": "TaskCard/Expanded",
+      "reusable": true,
+      "width": 460,
+      "fill": "$--card",
+      "cornerRadius": 10,
+      "stroke": {
+        "align": "inside",
+        "thickness": 1,
+        "fill": "$--border"
+      },
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "uYYCL",
+          "name": "header",
+          "width": "fill_container",
+          "gap": 14,
+          "padding": [
+            16,
+            18
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "MEBX2",
+              "name": "priorityBar",
+              "width": 4,
+              "height": 40,
+              "fill": "$--destructive",
+              "cornerRadius": 2
+            },
+            {
+              "type": "frame",
+              "id": "zxOH4",
+              "name": "body",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 4,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "4ykI4",
+                  "name": "title",
+                  "fill": "$--primary",
+                  "content": "Task Title",
+                  "fontFamily": "Space Grotesk",
+                  "fontSize": 14,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "text",
+                  "id": "KLX3Q",
+                  "name": "meta",
+                  "fill": "$--muted-foreground",
+                  "content": "Due tomorrow · ~2.5 hrs estimated",
+                  "fontFamily": "Inter",
+                  "fontSize": 12,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "id": "qqN6b",
+              "type": "ref",
+              "ref": "adMMy",
+              "name": "badge",
+              "width": "fit_content",
+              "height": "fit_content"
+            },
+            {
+              "type": "icon_font",
+              "id": "5u0SL",
+              "name": "chevron",
+              "width": 18,
+              "height": 18,
+              "iconFontName": "chevron-up",
+              "iconFontFamily": "lucide",
+              "fill": "$--muted-foreground"
+            }
+          ]
+        },
+        {
+          "type": "rectangle",
+          "id": "83jTB",
+          "name": "divider",
+          "fill": "$--border",
+          "width": "fill_container",
+          "height": 1
+        },
+        {
+          "type": "frame",
+          "id": "sbS2E",
+          "name": "blocks",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 8,
+          "padding": [
+            12,
+            18
+          ],
+          "children": [
+            {
+              "id": "4Z61E",
+              "type": "ref",
+              "ref": "mGYEk",
+              "name": "block1",
+              "width": "fill_container"
+            },
+            {
+              "id": "ufBet",
+              "type": "ref",
+              "ref": "kdXz7",
+              "name": "block2",
+              "width": "fill_container"
+            },
+            {
+              "id": "btC2R",
+              "type": "ref",
+              "ref": "kdXz7",
+              "name": "block3",
+              "width": "fill_container"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "AISW0",
+      "x": 8100,
+      "y": 2398,
+      "name": "StudyBlockSeeMore",
+      "reusable": true,
+      "padding": [
+        4,
+        0
+      ],
+      "children": [
+        {
+          "type": "text",
+          "id": "BxFh1",
+          "name": "label",
+          "fill": "$--info",
+          "content": "See more (+3)",
+          "fontFamily": "Inter",
+          "fontSize": 13,
+          "fontWeight": "600"
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "dxsJT",
+      "x": 8100,
+      "y": 2450,
+      "name": "StudyBlockEmptyState",
+      "reusable": true,
+      "padding": [
+        12,
+        18
+      ],
+      "children": [
+        {
+          "type": "text",
+          "id": "FCBCU",
+          "name": "label",
+          "fill": "$--muted-foreground",
+          "content": "No study sessions scheduled yet.",
+          "fontFamily": "Inter",
+          "fontSize": 13,
+          "fontWeight": "normal"
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "CmlmK",
+      "x": 8100,
+      "y": 2502,
+      "name": "TaskCard/Expanded/Reasoning",
+      "reusable": true,
+      "width": 460,
+      "fill": "$--card",
+      "cornerRadius": 10,
+      "stroke": {
+        "align": "inside",
+        "thickness": 1,
+        "fill": "$--border"
+      },
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "dN5ID",
+          "name": "header",
+          "width": "fill_container",
+          "gap": 12,
+          "padding": [
+            16,
+            18
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "57dEL",
+              "name": "priorityBar",
+              "width": 4,
+              "height": 40,
+              "fill": "$--destructive",
+              "cornerRadius": 2
+            },
+            {
+              "type": "frame",
+              "id": "AGIZQ",
+              "name": "body",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 4,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "Ae360",
+                  "name": "title",
+                  "fill": "$--primary",
+                  "content": "Write OS Lab Report",
+                  "fontFamily": "Space Grotesk",
+                  "fontSize": 14,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "text",
+                  "id": "2pje6",
+                  "name": "meta",
+                  "fill": "$--muted-foreground",
+                  "content": "Due tomorrow · ~2.5 hrs estimated",
+                  "fontFamily": "Inter",
+                  "fontSize": 12,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "id": "Rt5bl",
+              "type": "ref",
+              "ref": "RNbuX",
+              "name": "aiBadge",
+              "width": "fit_content",
+              "height": "fit_content"
+            },
+            {
+              "type": "frame",
+              "id": "5NIjL",
+              "name": "whyBtn",
+              "fill": "$--info-bg",
+              "cornerRadius": 4,
+              "gap": 4,
+              "padding": [
+                3,
+                8
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "mxyBb",
+                  "name": "icon",
+                  "width": 12,
+                  "height": 12,
+                  "iconFontName": "sparkles",
+                  "iconFontFamily": "lucide",
+                  "fill": "$--info-emphasis"
+                },
+                {
+                  "type": "text",
+                  "id": "F25Cm",
+                  "name": "label",
+                  "fill": "$--info-emphasis",
+                  "content": "Why?",
+                  "fontFamily": "Inter",
+                  "fontSize": 11,
+                  "fontWeight": "600"
+                }
+              ]
+            },
+            {
+              "type": "icon_font",
+              "id": "skM23",
+              "name": "chevron",
+              "width": 18,
+              "height": 18,
+              "iconFontName": "chevron-up",
+              "iconFontFamily": "lucide",
+              "fill": "$--muted-foreground"
+            }
+          ]
+        },
+        {
+          "type": "rectangle",
+          "id": "qsk9p",
+          "name": "divider",
+          "fill": "$--border",
+          "width": "fill_container",
+          "height": 1
+        },
+        {
+          "type": "frame",
+          "id": "POWXQ",
+          "name": "reasoning",
+          "width": "fill_container",
+          "fill": "$--info-bg",
+          "layout": "vertical",
+          "gap": 10,
+          "padding": [
+            14,
+            18
+          ],
+          "children": [
+            {
+              "type": "frame",
+              "id": "78aO8",
+              "name": "header",
+              "width": "fill_container",
+              "gap": 6,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "dmwhF",
+                  "name": "sparkles",
+                  "width": 13,
+                  "height": 13,
+                  "iconFontName": "sparkles",
+                  "iconFontFamily": "lucide",
+                  "fill": "$--info-emphasis"
+                },
+                {
+                  "type": "text",
+                  "id": "K6oII",
+                  "name": "title",
+                  "fill": "$--info-emphasis",
+                  "content": "AI Reasoning",
+                  "fontFamily": "Space Grotesk",
+                  "fontSize": 12,
+                  "fontWeight": "600"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "8a6Za",
+              "name": "row/courses",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 2,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "gvmhS",
+                  "name": "lbl1",
+                  "fill": "$--primary",
+                  "content": "Courses",
+                  "fontFamily": "Space Grotesk",
+                  "fontSize": 11,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "text",
+                  "id": "3wpG8",
+                  "name": "txt1",
+                  "fill": "$--muted-foreground",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Enrolled in EN.601.421 (OS, difficulty 4/5) — high complexity course suggests more prep time.",
+                  "fontFamily": "Inter",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "Ged5A",
+              "name": "row/tasks",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 2,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "kmPUR",
+                  "name": "lbl2",
+                  "fill": "$--primary",
+                  "content": "Past Tasks",
+                  "fontFamily": "Space Grotesk",
+                  "fontSize": 11,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "text",
+                  "id": "4uwNP",
+                  "name": "txt2",
+                  "fill": "$--muted-foreground",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Prior lab reports averaged 110 min with positive feedback, suggesting similar scope.",
+                  "fontFamily": "Inter",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "t9z9G",
+              "name": "row/chats",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 2,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "EyZzi",
+                  "name": "lbl3",
+                  "fill": "$--primary",
+                  "content": "Chat History",
+                  "fontFamily": "Space Grotesk",
+                  "fontSize": 11,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "text",
+                  "id": "TpdwW",
+                  "name": "txt3",
+                  "fill": "$--muted-foreground",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "No relevant chat context found for this task.",
+                  "fontFamily": "Inter",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "7ml1S",
+              "name": "row/profile",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 2,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "c0xy3",
+                  "name": "lbl4",
+                  "fill": "$--primary",
+                  "content": "Profile",
+                  "fontFamily": "Space Grotesk",
+                  "fontSize": 11,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "text",
+                  "id": "crY1t",
+                  "name": "txt4",
+                  "fill": "$--muted-foreground",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Junior CS major with strong technical writing skills and moderate OS familiarity.",
+                  "fontFamily": "Inter",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "rectangle",
+          "id": "0xqSb",
+          "name": "divider2",
+          "fill": "$--border",
+          "width": "fill_container",
+          "height": 1
+        },
+        {
+          "type": "frame",
+          "id": "fNk8z",
+          "name": "blocks",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 8,
+          "padding": [
+            12,
+            18
+          ],
+          "children": [
+            {
+              "id": "YjoED",
+              "type": "ref",
+              "ref": "mGYEk",
+              "name": "block1",
+              "width": "fill_container"
+            },
+            {
+              "id": "W0cUP",
+              "type": "ref",
+              "ref": "kdXz7",
+              "name": "block2",
+              "width": "fill_container"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "R7I6Q",
       "x": 8500,
       "y": 0,
       "name": "Checkbox/GenerateSubtasks",
@@ -21952,14 +22564,14 @@
       "children": [
         {
           "type": "frame",
-          "id": "CkbxB",
+          "id": "IgzYT",
           "name": "row",
           "gap": 10,
           "alignItems": "center",
           "children": [
             {
               "type": "frame",
-              "id": "CkbxC",
+              "id": "fq7jn",
               "name": "box",
               "width": 18,
               "height": 18,
@@ -21975,7 +22587,7 @@
               "children": [
                 {
                   "type": "icon_font",
-                  "id": "CkbxD",
+                  "id": "9cGfF",
                   "name": "check",
                   "width": 12,
                   "height": 12,
@@ -21987,7 +22599,7 @@
             },
             {
               "type": "text",
-              "id": "CkbxE",
+              "id": "OKRgv",
               "name": "label",
               "fill": "$--primary",
               "content": "Generate subtasks with AI",
@@ -21999,7 +22611,7 @@
         },
         {
           "type": "text",
-          "id": "CkbxF",
+          "id": "hVlHY",
           "name": "hint",
           "fill": "$--muted-foreground",
           "content": "AI will break your task into steps",
@@ -22011,7 +22623,7 @@
     },
     {
       "type": "frame",
-      "id": "StRwE",
+      "id": "LlEW8",
       "x": 8500,
       "y": 120,
       "name": "SubtaskRow/Edit",
@@ -22033,7 +22645,7 @@
       "children": [
         {
           "type": "frame",
-          "id": "StRwF",
+          "id": "3Nl7g",
           "name": "fields",
           "width": 494,
           "layout": "vertical",
@@ -22041,7 +22653,7 @@
           "children": [
             {
               "type": "frame",
-              "id": "StRwG",
+              "id": "As5zf",
               "name": "titleInput",
               "width": 494,
               "height": 36,
@@ -22056,11 +22668,10 @@
                 0,
                 12
               ],
-              "alignItems": "center",
               "children": [
                 {
                   "type": "text",
-                  "id": "StRwH",
+                  "id": "DqU9B",
                   "name": "titlePlaceholder",
                   "fill": "$--muted-foreground",
                   "content": "Subtask title",
@@ -22072,7 +22683,7 @@
             },
             {
               "type": "frame",
-              "id": "StRwI",
+              "id": "c5vRf",
               "name": "descInput",
               "width": 494,
               "height": 52,
@@ -22090,7 +22701,7 @@
               "children": [
                 {
                   "type": "text",
-                  "id": "StRwJ",
+                  "id": "ZbXWN",
                   "name": "descPlaceholder",
                   "fill": "$--muted-foreground",
                   "content": "Brief description of what to do",
@@ -22104,7 +22715,7 @@
         },
         {
           "type": "frame",
-          "id": "StRwK",
+          "id": "110yg",
           "name": "deleteBtn",
           "width": 28,
           "height": 28,
@@ -22120,7 +22731,7 @@
           "children": [
             {
               "type": "icon_font",
-              "id": "StRwL",
+              "id": "5BMoM",
               "name": "icon",
               "width": 14,
               "height": 14,
@@ -22134,7 +22745,7 @@
     },
     {
       "type": "frame",
-      "id": "SRmdX",
+      "id": "hy6oK",
       "x": 8500,
       "y": 280,
       "name": "SubtaskReviewModal",
@@ -22151,7 +22762,7 @@
       "children": [
         {
           "type": "frame",
-          "id": "SRmdA",
+          "id": "LxWrw",
           "name": "header",
           "width": "fill_container",
           "padding": [
@@ -22163,14 +22774,14 @@
           "children": [
             {
               "type": "frame",
-              "id": "SRmdB",
+              "id": "xDvtr",
               "name": "titleGroup",
               "layout": "vertical",
               "gap": 2,
               "children": [
                 {
                   "type": "text",
-                  "id": "SRmdC",
+                  "id": "hThEr",
                   "name": "title",
                   "fill": "$--primary",
                   "content": "Review subtasks",
@@ -22180,7 +22791,7 @@
                 },
                 {
                   "type": "text",
-                  "id": "SRmdD",
+                  "id": "asGQu",
                   "name": "subtitle",
                   "fill": "$--muted-foreground",
                   "content": "Edit, remove, or add subtasks before saving",
@@ -22194,7 +22805,7 @@
         },
         {
           "type": "frame",
-          "id": "SRmdE",
+          "id": "0wx8t",
           "name": "divider",
           "width": "fill_container",
           "height": 1,
@@ -22202,7 +22813,7 @@
         },
         {
           "type": "frame",
-          "id": "SRmdF",
+          "id": "Ypeom",
           "name": "body",
           "width": "fill_container",
           "layout": "vertical",
@@ -22213,36 +22824,32 @@
           ],
           "children": [
             {
-              "id": "SRmdG",
+              "id": "SVPxF",
               "type": "ref",
-              "ref": "StRwE",
+              "ref": "LlEW8",
               "name": "subtaskRow1",
               "width": "fill_container",
-              "height": "fit_content",
-              "x": 24,
-              "y": 20
+              "height": "fit_content"
             },
             {
-              "id": "SRmdH",
+              "id": "7mY9y",
               "type": "ref",
-              "ref": "StRwE",
+              "ref": "LlEW8",
               "name": "subtaskRow2",
               "width": "fill_container",
               "height": "fit_content",
-              "x": 24,
-              "y": 146,
               "descendants": {
-                "StRwH": {
+                "DqU9B": {
                   "content": "Write thesis statement"
                 },
-                "StRwJ": {
+                "ZbXWN": {
                   "content": "Draft a 1-sentence thesis that will guide the essay"
                 }
               }
             },
             {
               "type": "frame",
-              "id": "SRmdI",
+              "id": "TcR5j",
               "name": "addRow",
               "width": "fill_container",
               "height": 36,
@@ -22262,7 +22869,7 @@
               "children": [
                 {
                   "type": "icon_font",
-                  "id": "SRmdJ",
+                  "id": "t85rb",
                   "name": "plusIcon",
                   "width": 14,
                   "height": 14,
@@ -22272,7 +22879,7 @@
                 },
                 {
                   "type": "text",
-                  "id": "SRmdK",
+                  "id": "ipQEo",
                   "name": "addLabel",
                   "fill": "$--muted-foreground",
                   "content": "Add subtask",
@@ -22286,7 +22893,7 @@
         },
         {
           "type": "frame",
-          "id": "SRmdL",
+          "id": "vXHnk",
           "name": "divider2",
           "width": "fill_container",
           "height": 1,
@@ -22294,7 +22901,7 @@
         },
         {
           "type": "frame",
-          "id": "SRmdM",
+          "id": "jd3tn",
           "name": "actions",
           "width": "fill_container",
           "gap": 12,
@@ -22306,14 +22913,12 @@
           "alignItems": "center",
           "children": [
             {
-              "id": "SRmdN",
+              "id": "KjqZS",
               "type": "ref",
               "ref": "uzHQ8",
               "name": "cancelBtn",
-              "width": 100,
               "height": 40,
-              "x": 324,
-              "y": 16,
+              "width": 100,
               "descendants": {
                 "zZ3E7": {
                   "content": "Cancel"
@@ -22321,474 +22926,17 @@
               }
             },
             {
-              "id": "SRmdO",
+              "id": "Ev1Cm",
               "type": "ref",
               "ref": "Xdrqk",
               "name": "confirmBtn",
-              "width": 140,
               "height": 40,
-              "x": 436,
-              "y": 16,
+              "width": 140,
               "descendants": {
                 "vxzyR": {
                   "content": "Confirm subtasks"
                 }
               }
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "type": "frame",
-      "id": "UoI1G",
-      "x": -224,
-      "y": 3307,
-      "name": "chatSection",
-      "layout": "vertical",
-      "gap": 16,
-      "children": [
-        {
-          "type": "text",
-          "id": "SC1Da",
-          "name": "sectionLabel",
-          "fill": "$--muted-foreground",
-          "content": "Chat",
-          "fontFamily": "Space Grotesk",
-          "fontSize": 13,
-          "fontWeight": "600"
-        },
-        {
-          "id": "MRQVQ",
-          "type": "ref",
-          "ref": "xtSub",
-          "name": "ChatFAB",
-          "width": "fit_content",
-          "height": "fit_content",
-          "x": 0,
-          "y": 33,
-          "descendants": {
-            "VXD2Q": {
-              "x": 0,
-              "y": 0
-            }
-          }
-        },
-        {
-          "id": "UXKPH",
-          "type": "ref",
-          "ref": "m7dFx",
-          "name": "ChatBubble/User",
-          "width": "fit_content",
-          "height": "fit_content",
-          "x": 0,
-          "y": 81
-        },
-        {
-          "id": "AbLJB",
-          "type": "ref",
-          "ref": "rQy6L",
-          "name": "ChatBubble/AI",
-          "width": "fit_content",
-          "height": "fit_content",
-          "x": 0,
-          "y": 133
-        }
-      ]
-    },
-    {
-      "type": "frame",
-      "id": "SubSec",
-      "x": -407,
-      "y": 3945,
-      "name": "subtaskSection",
-      "layout": "vertical",
-      "gap": 16,
-      "children": [
-        {
-          "type": "text",
-          "id": "SubSecLbl",
-          "name": "sectionLabel",
-          "fill": "$--muted-foreground",
-          "content": "Subtask UI",
-          "fontFamily": "Space Grotesk",
-          "fontSize": 13,
-          "fontWeight": "600"
-        },
-        {
-          "id": "CbGSx",
-          "type": "ref",
-          "ref": "CkbxA",
-          "name": "Checkbox/GenerateSubtasks",
-          "width": "fit_content",
-          "height": "fit_content",
-          "x": 0,
-          "y": 33
-        },
-        {
-          "id": "SRwEd",
-          "type": "ref",
-          "ref": "StRwE",
-          "name": "SubtaskRow/Edit",
-          "width": "fit_content",
-          "height": "fit_content",
-          "x": 0,
-          "y": 86
-        },
-        {
-          "id": "SRmDx",
-          "type": "ref",
-          "ref": "SRmdX",
-          "name": "SubtaskReviewModal",
-          "width": "fit_content(0)",
-          "height": "fit_content",
-          "x": 0,
-          "y": 220
-        },
-        {
-          "id": "TkCWSref",
-          "type": "ref",
-          "ref": "TkCWS",
-          "name": "TaskCard/WithSubtasks",
-          "width": "fit_content",
-          "height": "fit_content",
-          "x": 0,
-          "y": 460
-        },
-        {
-          "id": "SubCdRef",
-          "type": "ref",
-          "ref": "SubCd",
-          "name": "SubtaskCard",
-          "width": "fit_content",
-          "height": "fit_content",
-          "x": 0,
-          "y": 700
-        }
-      ]
-    },
-    {
-      "id": "Y3tbq",
-      "type": "ref",
-      "ref": "iQnIB",
-      "name": "ChatOverlay",
-      "width": 400,
-      "height": 600,
-      "x": 520,
-      "y": 3400
-    },
-    {
-      "type": "frame",
-      "id": "TkCWS",
-      "x": 8500,
-      "y": 1200,
-      "name": "TaskCard/WithSubtasks",
-      "reusable": true,
-      "fill": "$--card",
-      "cornerRadius": 10,
-      "stroke": {
-        "align": "inside",
-        "thickness": 1,
-        "fill": "$--border"
-      },
-      "layout": "vertical",
-      "gap": 0,
-      "width": 620,
-      "children": [
-        {
-          "type": "frame",
-          "id": "TkCWSrow",
-          "name": "cardRow",
-          "layout": "horizontal",
-          "gap": 14,
-          "padding": [
-            16,
-            18
-          ],
-          "alignItems": "center",
-          "width": "fill_container",
-          "children": [
-            {
-              "type": "frame",
-              "id": "TkCWSbar",
-              "name": "priorityBar",
-              "width": 4,
-              "height": 40,
-              "fill": "$--destructive",
-              "cornerRadius": 2
-            },
-            {
-              "type": "frame",
-              "id": "TkCWSbody",
-              "name": "body",
-              "layout": "vertical",
-              "gap": 4,
-              "children": [
-                {
-                  "type": "text",
-                  "id": "TkCWStitle",
-                  "name": "title",
-                  "fill": "$--primary",
-                  "content": "Task Title",
-                  "fontFamily": "Space Grotesk",
-                  "fontSize": 14,
-                  "fontWeight": "600"
-                },
-                {
-                  "type": "text",
-                  "id": "TkCWSmeta",
-                  "name": "meta",
-                  "fill": "$--muted-foreground",
-                  "content": "Due tomorrow \u00b7 ~85 min total \u00b7 3 subtasks",
-                  "fontFamily": "Inter",
-                  "fontSize": 12,
-                  "fontWeight": "normal"
-                }
-              ]
-            },
-            {
-              "type": "frame",
-              "id": "TkCWSactions",
-              "name": "actions",
-              "layout": "horizontal",
-              "gap": 6,
-              "alignItems": "center",
-              "children": [
-                {
-                  "type": "frame",
-                  "id": "TkCWSbadge",
-                  "name": "subtaskBadge",
-                  "padding": [
-                    4,
-                    8
-                  ],
-                  "cornerRadius": 6,
-                  "fill": "$--background",
-                  "stroke": {
-                    "align": "inside",
-                    "thickness": 1,
-                    "fill": "$--border"
-                  },
-                  "children": [
-                    {
-                      "type": "text",
-                      "id": "TkCWSbadgeLbl",
-                      "name": "badgeLabel",
-                      "fill": "$--muted-foreground",
-                      "content": "3 subtasks",
-                      "fontFamily": "Space Grotesk",
-                      "fontSize": 11,
-                      "fontWeight": "600"
-                    }
-                  ]
-                },
-                {
-                  "type": "frame",
-                  "id": "TkCWSchevron",
-                  "name": "chevronBtn",
-                  "width": 28,
-                  "height": 28,
-                  "cornerRadius": 6,
-                  "fill": "$--background",
-                  "stroke": {
-                    "align": "inside",
-                    "thickness": 1,
-                    "fill": "$--border"
-                  },
-                  "alignItems": "center",
-                  "justifyContent": "center",
-                  "children": [
-                    {
-                      "type": "text",
-                      "id": "TkCWSchevronIcon",
-                      "name": "chevronIcon",
-                      "fill": "$--muted-foreground",
-                      "content": "\u203a",
-                      "fontSize": 16,
-                      "fontFamily": "Inter"
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "type": "frame",
-          "id": "TkCWSsublist",
-          "name": "subtaskList",
-          "layout": "vertical",
-          "gap": 0,
-          "width": "fill_container",
-          "fill": "$--background",
-          "children": [
-            {
-              "type": "text",
-              "id": "TkCWSsublistHint",
-              "name": "subtaskListHint",
-              "fill": "$--muted-foreground",
-              "content": "[ SubtaskCard rows appear here when expanded ]",
-              "fontFamily": "Inter",
-              "fontSize": 11,
-              "padding": [
-                8,
-                18
-              ]
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "type": "frame",
-      "id": "SubCd",
-      "x": 8500,
-      "y": 1420,
-      "name": "SubtaskCard",
-      "reusable": true,
-      "fill": "$--background",
-      "stroke": {
-        "align": "inside",
-        "thickness": 1,
-        "fill": "$--border"
-      },
-      "layout": "horizontal",
-      "gap": 10,
-      "padding": [
-        10,
-        18,
-        10,
-        32
-      ],
-      "alignItems": "center",
-      "width": 620,
-      "children": [
-        {
-          "type": "frame",
-          "id": "SubCdBar",
-          "name": "colorBar",
-          "width": 3,
-          "height": 28,
-          "fill": "$--accent",
-          "cornerRadius": 2
-        },
-        {
-          "type": "frame",
-          "id": "SubCdBody",
-          "name": "body",
-          "layout": "vertical",
-          "gap": 2,
-          "children": [
-            {
-              "type": "text",
-              "id": "SubCdTitle",
-              "name": "title",
-              "fill": "$--primary",
-              "content": "Subtask title",
-              "fontFamily": "Space Grotesk",
-              "fontSize": 13,
-              "fontWeight": "600"
-            },
-            {
-              "type": "text",
-              "id": "SubCdEst",
-              "name": "estimate",
-              "fill": "$--muted-foreground",
-              "content": "~30 min",
-              "fontFamily": "Inter",
-              "fontSize": 11,
-              "fontWeight": "normal"
-            }
-          ]
-        },
-        {
-          "type": "frame",
-          "id": "SubCdBtns",
-          "name": "actions",
-          "layout": "horizontal",
-          "gap": 4,
-          "alignItems": "center",
-          "children": [
-            {
-              "type": "frame",
-              "id": "SubCdEstBtn",
-              "name": "estimateBtn",
-              "width": 28,
-              "height": 28,
-              "cornerRadius": 6,
-              "fill": "$--background",
-              "stroke": {
-                "align": "inside",
-                "thickness": 1,
-                "fill": "$--border"
-              },
-              "alignItems": "center",
-              "justifyContent": "center",
-              "children": [
-                {
-                  "type": "text",
-                  "id": "SubCdEstIcon",
-                  "name": "sparkleIcon",
-                  "fill": "$--muted-foreground",
-                  "content": "\u2728",
-                  "fontSize": 12,
-                  "fontFamily": "Inter"
-                }
-              ]
-            },
-            {
-              "type": "frame",
-              "id": "SubCdEditBtn",
-              "name": "editBtn",
-              "width": 28,
-              "height": 28,
-              "cornerRadius": 6,
-              "fill": "$--background",
-              "stroke": {
-                "align": "inside",
-                "thickness": 1,
-                "fill": "$--border"
-              },
-              "alignItems": "center",
-              "justifyContent": "center",
-              "children": [
-                {
-                  "type": "text",
-                  "id": "SubCdEditIcon",
-                  "name": "editIcon",
-                  "fill": "$--muted-foreground",
-                  "content": "\u270e",
-                  "fontSize": 12,
-                  "fontFamily": "Inter"
-                }
-              ]
-            },
-            {
-              "type": "frame",
-              "id": "SubCdDelBtn",
-              "name": "deleteBtn",
-              "width": 28,
-              "height": 28,
-              "cornerRadius": 6,
-              "fill": "$--background",
-              "stroke": {
-                "align": "inside",
-                "thickness": 1,
-                "fill": "$--border"
-              },
-              "alignItems": "center",
-              "justifyContent": "center",
-              "children": [
-                {
-                  "type": "text",
-                  "id": "SubCdDelIcon",
-                  "name": "deleteIcon",
-                  "fill": "$--destructive",
-                  "content": "\u00d7",
-                  "fontSize": 14,
-                  "fontFamily": "Inter"
-                }
-              ]
             }
           ]
         }

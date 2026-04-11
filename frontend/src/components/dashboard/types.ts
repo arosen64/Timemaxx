@@ -31,6 +31,12 @@ export type TaskType = {
   createdAt: number
   classTag?: string
   courseId?: Id<'userCourses'>
+  reasoning?: {
+    classes: string
+    tasks: string
+    chats: string
+    profile: string
+  }
 }
 
 export const BUILT_IN_TASK_TYPES = [
