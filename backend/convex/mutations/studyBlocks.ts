@@ -253,10 +253,6 @@ export const setStudyBlockTime = internalMutation({
 });
 
 /**
- * Places a study block at a chosen start time, flagging it for GCal export
- * and clearing any conflict status. Called from AI scheduling actions.
- */
-/**
  * Places a study block at a chosen start time and clears any conflict status.
  * Called from AI scheduling actions.
  */

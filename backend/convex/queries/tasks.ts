@@ -11,17 +11,6 @@ export const getTaskInternal = internalQuery({
   },
 });
 
-// Internal query for fetching all tasks for a user — used by AI scheduling actions
-export const getAllTasksForUserInternal = internalQuery({
-  args: { userId: v.id("users") },
-  handler: async (ctx, args) => {
-    return await ctx.db
-      .query("tasks")
-      .withIndex("by_userId", (q) => q.eq("userId", args.userId))
-      .collect();
-  },
-});
-
 export const getEstimateFeedbackContextInternal = internalQuery({
   args: { userId: v.id("users") },
   handler: async (ctx, args) => {
@@ -93,9 +82,8 @@ export const getAllTasks = query({
 });
 
 
-// Internal query for fetching recent tasks for a user (used by retrieval layer).
-// Takes 25 so the retrieval layer can exclude the current task and still have
-// enough candidates to fill its 10-result slice.
+// Internal query for fetching all tasks for a user.
+// Used by the retrieval layer (slices to 10) and AI scheduling actions (needs all tasks).
 export const getAllTasksInternal = internalQuery({
   args: { userId: v.id("users") },
   handler: async (ctx, args) => {
@@ -103,7 +91,7 @@ export const getAllTasksInternal = internalQuery({
       .query("tasks")
       .withIndex("by_userId_createdAt", (q) => q.eq("userId", args.userId))
       .order("desc")
-      .take(25);
+      .collect();
   },
 });
 

@@ -9,10 +9,7 @@ import {
   type OccupiedInterval,
   type WorkHoursRow,
 } from "../lib/scheduleSlots";
-
-function toDateStr(d: Date, timezone: string): string {
-  return Intl.DateTimeFormat("en-CA", { timeZone: timezone }).format(d);
-}
+import { fetch21DayCalendarEvents } from "../lib/calendarFetch";
 
 /**
  * AI-driven scheduling for a single task.
@@ -59,33 +56,7 @@ export const scheduleTask = action({
     if (unscheduled.length === 0) return { scheduled: 0 };
 
     // Fetch calendar events for the 21-day window (best effort)
-    const today = new Date();
-    const week2Start = new Date(today);
-    week2Start.setDate(today.getDate() + 7);
-    const week3Start = new Date(today);
-    week3Start.setDate(today.getDate() + 14);
-
-    type TimedEvent = { id: string; summary: string; start: string; end: string; calendarId: string };
-    let timedEvents: TimedEvent[] = [];
-    try {
-      const [r1, r2, r3] = await Promise.all([
-        ctx.runAction(api.actions.fetchCalendarEvents.fetchCalendarEvents, {
-          startDate: toDateStr(today, args.timezone),
-          timezone: args.timezone,
-        }),
-        ctx.runAction(api.actions.fetchCalendarEvents.fetchCalendarEvents, {
-          startDate: toDateStr(week2Start, args.timezone),
-          timezone: args.timezone,
-        }),
-        ctx.runAction(api.actions.fetchCalendarEvents.fetchCalendarEvents, {
-          startDate: toDateStr(week3Start, args.timezone),
-          timezone: args.timezone,
-        }),
-      ]);
-      timedEvents = [...r1.timedEvents, ...r2.timedEvents, ...r3.timedEvents];
-    } catch {
-      // No calendar connected — schedule against work hours only
-    }
+    const timedEvents = await fetch21DayCalendarEvents(ctx, args.timezone);
 
     // Build occupied intervals: calendar events + all already-placed study blocks
     const allBlocks = await ctx.runQuery(

@@ -24,7 +24,16 @@ export type PoolSlot = { startMs: number; inAvailableSlot: boolean };
 
 export const SCHEDULE_HORIZON_MS = 21 * 24 * 60 * 60 * 1000; // 21 days
 const MAX_CANDIDATES = 20;
-const FIFTEEN_MIN_MS = 15 * 60 * 1000;
+export const FIFTEEN_MIN_MS = 15 * 60 * 1000;
+
+// ---------------------------------------------------------------------------
+// Shared date utilities
+// ---------------------------------------------------------------------------
+
+/** Formats a Date as a local YYYY-MM-DD string in the given timezone. */
+export function toDateStr(d: Date, timezone: string): string {
+  return Intl.DateTimeFormat("en-CA", { timeZone: timezone }).format(d);
+}
 
 // ---------------------------------------------------------------------------
 // Internal helpers
@@ -198,7 +207,7 @@ export function enumerateSlots(opts: {
       });
     }
 
-    cursor += durationMs;
+    cursor += FIFTEEN_MIN_MS;
   }
 
   return candidates;
@@ -228,21 +237,21 @@ export function extendSlotPool(opts: {
   timezone: string;
 }): number {
   const { pool, scanCursor, targetMs, focusBlockLengthMinutes, workHoursGrid, occupiedIntervals, timezone } = opts;
-  const stepMs = focusBlockLengthMinutes * 60000;
+  const blockMs = focusBlockLengthMinutes * 60000;
   let cursor = scanCursor;
 
   while (cursor < targetMs) {
-    const endMs = cursor + stepMs;
+    const endMs = cursor + blockMs;
     if (endMs > targetMs) break;
 
-    if (isSlotValid(cursor, stepMs, workHoursGrid, occupiedIntervals, timezone)) {
+    if (isSlotValid(cursor, blockMs, workHoursGrid, occupiedIntervals, timezone)) {
       pool.push({
         startMs: cursor,
-        inAvailableSlot: isInAvailableSlot(cursor, stepMs, workHoursGrid, timezone),
+        inAvailableSlot: isInAvailableSlot(cursor, blockMs, workHoursGrid, timezone),
       });
     }
 
-    cursor += stepMs;
+    cursor += FIFTEEN_MIN_MS;
   }
 
   return cursor;
@@ -308,7 +317,8 @@ async function callGeminiForSlot(opts: {
     const idx = result.slotIndex;
     if (!Number.isInteger(idx) || idx < 0 || idx >= opts.candidates.length) return 0;
     return idx;
-  } catch {
+  } catch (e) {
+    console.error("[callGeminiForSlot] AI slot selection failed, falling back to index 0:", e);
     return 0;
   }
 }
