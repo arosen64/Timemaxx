@@ -18,6 +18,10 @@ vi.mock("@ai-sdk/google", () => ({
   createGoogleGenerativeAI: vi.fn(() => vi.fn(() => "mock-model")),
 }));
 
+vi.mock("@ai-sdk/anthropic", () => ({
+  createAnthropic: vi.fn(() => vi.fn(() => "mock-anthropic-model")),
+}));
+
 // ---------------------------------------------------------------------------
 // Prompt constants — used to verify system prompts are not overridden
 // ---------------------------------------------------------------------------
@@ -239,7 +243,7 @@ const makeReasoningOutput = () => ({
 
 describe("prompt injection prevention — estimateTaskTime (context builders)", () => {
   beforeEach(() => {
-    vi.stubEnv("GEMINI_API_KEY", "test-key");
+    vi.stubEnv("ANTHROPIC_API_KEY", "test-key");
   });
   afterEach(() => {
     vi.unstubAllEnvs();
