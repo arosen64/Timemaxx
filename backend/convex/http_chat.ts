@@ -35,7 +35,65 @@ type ChatSessionSnapshot = {
   chatInputLocked?: boolean;
   scopeBypassNextMessage?: boolean;
   pendingScopeUserMessageId?: Id<"chatMessages">;
+  activeAgent?: "task";
+  taskAgentIntent?: "create" | "rud";
 };
+
+type TaskAgentOutput = {
+  message: string;
+  intent: "create" | "rud" | "unknown";
+  needsEntityClarification: boolean;
+  needsClassClarification: boolean;
+  readyToExecute: boolean;
+  actionType: "create_task" | "update_task" | "delete_task" | "read_task" | "none";
+  title: string | null;
+  description: string | null;
+  taskType: string | null;
+  dueDateIso: string | null;
+  classTag: string | null;
+  deleteConfirmed: boolean;
+  updatedTitle: string | null;
+  updatedDescription: string | null;
+  updatedTaskType: string | null;
+  updatedDueDateIso: string | null;
+  updatedClassTag: string | null;
+  reasoning: string;
+};
+
+/** Parses an ISO date string from the task agent into a unix ms timestamp. */
+function parseDueDateIso(iso: string): number {
+  if (!iso) return Date.now() + 86_400_000;
+  const hasTime = iso.includes("T") && iso.length > 10;
+  const normalized = hasTime ? iso : `${iso}T23:59:59`;
+  const ms = new Date(normalized).getTime();
+  return isNaN(ms) ? Date.now() + 86_400_000 : ms;
+}
+
+const MENU_USER_LABELS: Record<string, string> = {
+  tasks: "Help with tasks",
+  classes: "Class questions",
+  feedback: "Give feedback on a task",
+  schedule: "Schedule something",
+  preferences: "Change my preferences",
+};
+
+const MENU_CANNED: Record<string, string> = {
+  schedule:
+    "To schedule or manage your study blocks, visit the **Schedule** page. To connect or revoke Google Calendar access, head to the **Profile** page.",
+  preferences:
+    "You can update study preferences (focus length, work hours, and similar options) from the **Preferences** page.",
+};
+
+/** Shown when the task agent signals needsEntityClarification for RUD. */
+const TASK_AGENT_RUD_INTRO =
+  "Which task would you like to work with? Pick one below, or choose **Other** to see more options.";
+
+const TASK_MENU_INTRO =
+  "Which task would you like help with? Pick one below, or choose **Other** to see more options.";
+const TASK_FEEDBACK_INTRO =
+  "Which task are you giving feedback on? Pick one below, or choose **Other** to see more options.";
+const CLASS_MENU_INTRO =
+  "Which class would you like to ask about? Pick one below, or choose **Other** to see more options.";
 
 const EXHAUSTED_MSG =
   "I still can't tell which task or class you mean after a few tries. " +
@@ -207,6 +265,259 @@ function resolveEntitySearchKind(
   return null;
 }
 
+/** Executes the Convex mutation indicated by the task agent output. */
+async function executeTaskAction(
+  ctx: ActionCtx,
+  c: Context<HonoEnv>,
+  params: {
+    userId: Id<"users">;
+    sessionId: string;
+    session: ChatSessionSnapshot | null;
+    output: TaskAgentOutput;
+  },
+): Promise<Response> {
+  const { userId, sessionId, session, output } = params;
+  const { actionType } = output;
+  let aiText = output.message;
+
+  try {
+    if (actionType === "create_task") {
+      if (!output.title || !output.dueDateIso || !output.taskType) {
+        throw new Error("Missing required task fields.");
+      }
+      await ctx.runMutation(internal.mutations.tasks.createTaskInternal, {
+        userId,
+        title: output.title,
+        description: output.description ?? output.title,
+        taskType: output.taskType,
+        dueDate: parseDueDateIso(output.dueDateIso),
+        ...(session?.resolvedCourseId ? { courseId: session.resolvedCourseId } : {}),
+        ...(output.classTag ? { classTag: output.classTag } : {}),
+      });
+    } else if (actionType === "update_task") {
+      if (!session?.resolvedTaskId) throw new Error("No task selected.");
+      await ctx.runMutation(internal.mutations.tasks.patchTaskFieldsInternal, {
+        userId,
+        taskId: session.resolvedTaskId,
+        ...(output.updatedTitle ? { title: output.updatedTitle } : {}),
+        ...(output.updatedDescription ? { description: output.updatedDescription } : {}),
+        ...(output.updatedTaskType ? { taskType: output.updatedTaskType } : {}),
+        ...(output.updatedDueDateIso ? { dueDate: parseDueDateIso(output.updatedDueDateIso) } : {}),
+        ...(session?.resolvedCourseId ? { courseId: session.resolvedCourseId } : {}),
+        ...(output.updatedClassTag !== undefined && output.updatedClassTag !== null
+          ? { classTag: output.updatedClassTag }
+          : {}),
+      });
+    } else if (actionType === "delete_task") {
+      if (!session?.resolvedTaskId) throw new Error("No task selected.");
+      await ctx.runMutation(internal.mutations.tasks.deleteTaskInternal, {
+        userId,
+        taskId: session.resolvedTaskId,
+      });
+    }
+    // "read_task": no mutation, agent message already has details
+  } catch (err) {
+    aiText = `Sorry, I ran into an issue: ${err instanceof Error ? err.message : "Please try again."}`;
+  }
+
+  // Clear task agent mode so the session can accept new topics
+  await ctx.runMutation(internal.mutations.chatSessions.clearTaskAgentStateInternal, {
+    userId,
+    sessionId,
+  });
+  await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
+    userId,
+    sessionId,
+    role: "assistant",
+    content: aiText,
+  });
+  return c.json({ text: aiText, status: "routed", route: "tasks", entityKind: "none", messageTag: "none", tagConfidence: 0 });
+}
+
+/**
+ * Routes a message to the task agent when activeAgent === "task".
+ * Handles the full lifecycle: intent detection → entity MCQ (RUD only) → execute.
+ */
+async function handleTaskAgentMessage(
+  ctx: ActionCtx,
+  c: Context<HonoEnv>,
+  params: {
+    userId: Id<"users">;
+    sessionId: string;
+    message: string;
+    session: ChatSessionSnapshot | null;
+    client: InstanceType<typeof MastraClient>;
+  },
+): Promise<Response> {
+  const { userId, sessionId, message, session, client } = params;
+
+  // Load chat history for context (last 20 messages)
+  const rawHistory = await ctx.runQuery(internal.queries.chatMessages.getChatHistoryInternal, {
+    userId,
+    sessionId,
+    limit: 20,
+  });
+  const historyText = rawHistory
+    .map((m) => `${m.role === "user" ? "User" : "Assistant"}: ${m.content}`)
+    .join("\n");
+
+  // Get resolved task details if any
+  let resolvedTaskContext = "No task is resolved yet.";
+  if (session?.resolvedTaskId) {
+    const task = await ctx.runQuery(internal.queries.tasks.getTaskInternal, {
+      taskId: session.resolvedTaskId,
+    });
+    if (task) {
+      resolvedTaskContext = [
+        `Resolved task: "${task.title}" (type: ${task.taskType}, due: ${new Date(task.dueDate).toISOString().slice(0, 10)}${task.classTag ? `, class: ${task.classTag}` : ""})`,
+        `Task ID: ${String(session.resolvedTaskId)}`,
+      ].join("\n");
+    }
+  }
+
+  // Get resolved course details if any
+  let resolvedCourseContext = "No course is resolved yet.";
+  if (session?.resolvedCourseId) {
+    const courses = await ctx.runQuery(internal.queries.userCourses.getUserCoursesByIdsInternal, {
+      courseIds: [session.resolvedCourseId],
+    });
+    if (courses.length > 0) {
+      const c2 = courses[0];
+      resolvedCourseContext = `Resolved course: "${c2.title}" (code: ${c2.courseCode})\nCourse ID: ${String(session.resolvedCourseId)}`;
+    }
+  }
+
+  const today = new Date().toISOString().slice(0, 10);
+  // When message is empty the user just picked an entity from the MCQ — no new text.
+  const continueNote = message.trim()
+    ? "Respond to the latest user message above."
+    : "The user just selected an entity from the picker (no new text). Based on the conversation history and the now-resolved context, continue the conversation — e.g. proceed to the next missing field, confirm deletion, or summarise task details.";
+  const contextPrompt =
+    `Today is ${today}.\n\nConversation history (oldest first):\n${historyText}\n\n${resolvedTaskContext}\n${resolvedCourseContext}\n${continueNote}`;
+
+  const taskWf = client.getWorkflow("task-workflow");
+  const run = await taskWf.startAsync({ inputData: { contextPrompt } });
+
+  for (const step of Object.values(run.steps ?? {})) {
+    if (!("output" in step)) {
+      const errMsg = (step as { error?: string }).error ?? "";
+      if (errMsg.includes("quota") || errMsg.includes("RESOURCE_EXHAUSTED") || errMsg.includes("429")) {
+        return c.json({ error: "quota_exceeded" }, 429);
+      }
+    }
+  }
+
+  const agentStep = run.steps?.["task-agent"];
+  const output = (agentStep && "output" in agentStep ? agentStep.output : null) as TaskAgentOutput | null;
+
+  if (!output) {
+    return c.json({ error: "task_agent_unavailable" }, 502);
+  }
+
+  // Persist intent once determined
+  if (output.intent !== "unknown" && !session?.taskAgentIntent) {
+    await ctx.runMutation(internal.mutations.chatSessions.setTaskAgentStateInternal, {
+      userId,
+      sessionId,
+      taskAgentIntent: output.intent as "create" | "rud",
+    });
+  }
+
+  // Class clarification needed (create or update) → show course MCQ
+  if (output.needsClassClarification && !session?.resolvedCourseId) {
+    const queryText = message.trim() || output.classTag || output.updatedClassTag || "class course";
+    const { candidates, hasMore } = await ctx.runAction(
+      internal.actions.entityResolution.searchCourseCandidates,
+      { userId, queryText: String(queryText), excludeIds: [] },
+    );
+    const introText =
+      candidates.length === 0
+        ? "I couldn't find any courses in your profile. Add courses from the Classes page, then try again."
+        : "Which class is this for? Pick one below, or choose **Other** to see more options.";
+    await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
+      userId,
+      sessionId,
+      role: "assistant",
+      content: introText,
+    });
+    if (candidates.length > 0) {
+      await ctx.runMutation(internal.mutations.chatSessions.setEntityPromptStateInternal, {
+        userId,
+        sessionId,
+        lastEntityQueryText: String(queryText),
+        activeEntityStep: "class",
+        needsClassAfterTask: false,
+        awaitingEntityResolution: true,
+      });
+    }
+    return c.json({
+      text: introText,
+      status: candidates.length > 0 ? "needs_entity_clarification" : "routed",
+      phase: "class",
+      ...(candidates.length > 0 ? { entityCandidates: candidates, entityHasMore: hasMore } : {}),
+      route: "tasks",
+      entityKind: "class",
+      messageTag: "none",
+      tagConfidence: 0,
+      needsClassAfterTask: false,
+    });
+  }
+
+  // RUD + no task resolved → show entity MCQ
+  if (output.intent === "rud" && output.needsEntityClarification && !session?.resolvedTaskId) {
+    const { candidates, hasMore } = await ctx.runAction(
+      internal.actions.entityResolution.searchTaskCandidates,
+      { userId, queryText: message, excludeIds: [] },
+    );
+    const introText =
+      candidates.length === 0
+        ? "I couldn't find matching tasks. Try naming the assignment, or add tasks from the dashboard."
+        : TASK_AGENT_RUD_INTRO;
+    await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
+      userId,
+      sessionId,
+      role: "assistant",
+      content: introText,
+    });
+    if (candidates.length > 0) {
+      await ctx.runMutation(internal.mutations.chatSessions.setEntityPromptStateInternal, {
+        userId,
+        sessionId,
+        lastEntityQueryText: message,
+        activeEntityStep: "task",
+        needsClassAfterTask: false,
+        awaitingEntityResolution: true,
+      });
+    }
+    return c.json({
+      text: introText,
+      status: candidates.length > 0 ? "needs_entity_clarification" : "routed",
+      phase: "task",
+      ...(candidates.length > 0 ? { entityCandidates: candidates, entityHasMore: hasMore } : {}),
+      route: "tasks",
+      entityKind: "task",
+      messageTag: "none",
+      tagConfidence: 0,
+      needsClassAfterTask: false,
+    });
+  }
+
+  // Ready to execute a Convex mutation
+  if (output.readyToExecute && output.actionType !== "none") {
+    return executeTaskAction(ctx, c, { userId, sessionId, session, output });
+  }
+
+  // Still gathering info — relay agent's conversational message
+  const aiText = output.message;
+  await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
+    userId,
+    sessionId,
+    role: "assistant",
+    content: aiText,
+  });
+  return c.json({ text: aiText, status: "routed", route: "tasks", entityKind: "none", messageTag: "none", tagConfidence: 0 });
+}
+
 async function continueAfterSupervisorOutput(
   ctx: ActionCtx,
   c: Context<HonoEnv>,
@@ -248,6 +559,29 @@ async function continueAfterSupervisorOutput(
       messageTag: output.messageTag,
       tagConfidence: output.tagConfidence,
     }, userMessageId);
+  }
+
+  // Tasks route: always hand off to the task agent — it owns entity clarification for tasks
+  if (output.route === "tasks") {
+    await ctx.runMutation(internal.mutations.chatSessions.clearEntityAwaitingInternal, {
+      userId,
+      sessionId,
+    });
+    await ctx.runMutation(internal.mutations.chatSessions.setTaskAgentStateInternal, {
+      userId,
+      sessionId,
+      activeAgent: "task",
+    });
+    const mastraUrl = process.env.MASTRA_URL;
+    if (!mastraUrl) return c.json({ error: "MASTRA_URL not configured" }, 503);
+    const taskClient = new MastraClient({ baseUrl: mastraUrl });
+    return handleTaskAgentMessage(ctx, c, {
+      userId,
+      sessionId,
+      message,
+      session: { ...sessionForEntity, activeAgent: "task" as const },
+      client: taskClient,
+    });
   }
 
   const skipEntityMcq = sessionForEntity?.clarificationExhausted === true;
@@ -568,11 +902,13 @@ chatApp.post("/api/chat", async (c) => {
         | "other_tasks"
         | "other_courses"
         | "scope_confirm_yes"
-        | "scope_confirm_no";
+        | "scope_confirm_no"
+        | "menu_pick";
       taskId?: string;
       courseId?: string;
       excludeTaskIds?: string[];
       excludeCourseIds?: string[];
+      route?: string;
     };
   }>();
 
@@ -727,6 +1063,22 @@ chatApp.post("/api/chat", async (c) => {
         route: null,
       });
     }
+    // Task agent is active — auto-continue the conversation so the agent can act
+    // on the original intent (delete / update / read) without the user needing to type again.
+    const sessionAfterPick = await ctx.runQuery(internal.queries.chatSessions.getChatSessionInternal, {
+      userId,
+      sessionId,
+    });
+    if (sessionAfterPick?.activeAgent === "task") {
+      return handleTaskAgentMessage(ctx, c, {
+        userId,
+        sessionId,
+        message: "",          // empty = MCQ auto-continue, not a new user message
+        session: sessionAfterPick,
+        client,
+      });
+    }
+
     return c.json({
       text: intro,
       status: "entity_resolved",
@@ -737,10 +1089,13 @@ chatApp.post("/api/chat", async (c) => {
 
   if (body.entity?.action === "pick_course" && body.entity.courseId) {
     const fin = finishingClassAfterTaskLock(session);
+    const isTaskAgentActive = session?.activeAgent === "task";
+
     if (session?.resolvedCourseId) {
       return persistAndReturnScopeConfirmation(ctx, c, userId, sessionId);
     }
-    if (session?.resolvedTaskId && !session.resolvedCourseId && !fin) {
+    // Guard: task resolved + no course + not in "both" flow + not task agent class clarification
+    if (session?.resolvedTaskId && !session.resolvedCourseId && !fin && !isTaskAgentActive) {
       return persistAndReturnScopeConfirmation(ctx, c, userId, sessionId);
     }
     const courseId = body.entity.courseId as Id<"userCourses">;
@@ -753,6 +1108,18 @@ chatApp.post("/api/chat", async (c) => {
       internal.queries.chatSessions.getChatSessionInternal,
       { userId, sessionId },
     );
+
+    // Task agent is active — auto-continue so agent can proceed with create/update
+    if (isTaskAgentActive) {
+      return handleTaskAgentMessage(ctx, c, {
+        userId,
+        sessionId,
+        message: "",   // empty = MCQ auto-continue
+        session: sessionAfterCourse,
+        client,
+      });
+    }
+
     const hadTaskAlready = !!sessionAfterCourse?.resolvedTaskId;
     const labels = await ctx.runQuery(
       internal.queries.chatSessions.getResolvedEntityLabelsInternal,
@@ -830,6 +1197,140 @@ chatApp.post("/api/chat", async (c) => {
     });
   }
 
+  // ── Main menu pick — no supervisor call needed ──────────────────────────────
+  if (body.entity?.action === "menu_pick" && body.entity.route) {
+    const route = body.entity.route;
+    const userLabel = MENU_USER_LABELS[route] ?? route;
+
+    await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
+      userId,
+      sessionId,
+      role: "user",
+      content: userLabel,
+    });
+
+    // Schedule and preferences: canned response only
+    const canned = MENU_CANNED[route];
+    if (canned) {
+      await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
+        userId,
+        sessionId,
+        role: "assistant",
+        content: canned,
+      });
+      return c.json({
+        text: canned,
+        status: "routed",
+        route,
+        entityKind: "none",
+        messageTag: "none",
+        tagConfidence: 0,
+      });
+    }
+
+    // Tasks: start task agent conversation (determines create vs RUD before any MCQ)
+    if (route === "tasks") {
+      await ctx.runMutation(internal.mutations.chatSessions.setTaskAgentStateInternal, {
+        userId,
+        sessionId,
+        activeAgent: "task",
+      });
+      return handleTaskAgentMessage(ctx, c, {
+        userId,
+        sessionId,
+        message: userLabel,
+        session,
+        client,
+      });
+    }
+
+    // Feedback: entity MCQ for task (feedback always needs a specific task)
+    if (route === "feedback") {
+      const queryText = "task feedback estimate effort";
+      const { candidates, hasMore } = await ctx.runAction(
+        internal.actions.entityResolution.searchTaskCandidates,
+        { userId, queryText, excludeIds: [] },
+      );
+      const aiText =
+        candidates.length === 0
+          ? "I don't see any tasks yet. Add tasks from your dashboard first, then ask again."
+          : TASK_FEEDBACK_INTRO;
+      await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
+        userId,
+        sessionId,
+        role: "assistant",
+        content: aiText,
+      });
+      if (candidates.length === 0) {
+        return c.json({ text: aiText, status: "routed", route, entityKind: "none", messageTag: "none", tagConfidence: 0 });
+      }
+      await ctx.runMutation(internal.mutations.chatSessions.setEntityPromptStateInternal, {
+        userId,
+        sessionId,
+        lastEntityQueryText: queryText,
+        activeEntityStep: "task",
+        needsClassAfterTask: false,
+        awaitingEntityResolution: true,
+      });
+      return c.json({
+        text: aiText,
+        status: "needs_entity_clarification",
+        phase: "task",
+        entityCandidates: candidates,
+        entityHasMore: hasMore,
+        route,
+        entityKind: "task",
+        messageTag: "task_feedback",
+        tagConfidence: 1,
+        needsClassAfterTask: false,
+      });
+    }
+
+    // Classes: entity MCQ for class
+    if (route === "classes") {
+      const queryText = "course class subject";
+      const { candidates, hasMore } = await ctx.runAction(
+        internal.actions.entityResolution.searchCourseCandidates,
+        { userId, queryText, excludeIds: [] },
+      );
+      const aiText =
+        candidates.length === 0
+          ? "I don't see any classes yet. Add courses from the Classes page first, then ask again."
+          : CLASS_MENU_INTRO;
+      await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
+        userId,
+        sessionId,
+        role: "assistant",
+        content: aiText,
+      });
+      if (candidates.length === 0) {
+        return c.json({ text: aiText, status: "routed", route, entityKind: "none", messageTag: "none", tagConfidence: 0 });
+      }
+      await ctx.runMutation(internal.mutations.chatSessions.setEntityPromptStateInternal, {
+        userId,
+        sessionId,
+        lastEntityQueryText: queryText,
+        activeEntityStep: "class",
+        needsClassAfterTask: false,
+        awaitingEntityResolution: true,
+      });
+      return c.json({
+        text: aiText,
+        status: "needs_entity_clarification",
+        phase: "class",
+        entityCandidates: candidates,
+        entityHasMore: hasMore,
+        route,
+        entityKind: "class",
+        messageTag: "none",
+        tagConfidence: 1,
+      });
+    }
+
+    // Unknown route fallback
+    return c.json({ error: "Unknown menu route" }, 400);
+  }
+
   // ── Normal chat message ─────────────────────────────────────────────────────
   const message = body.message?.trim();
   if (!message) {
@@ -885,6 +1386,17 @@ chatApp.post("/api/chat", async (c) => {
         route: null,
       });
     }
+  }
+
+  // ── Task agent mode — bypass supervisor ────────────────────────────────────
+  if (sessionNow?.activeAgent === "task") {
+    return handleTaskAgentMessage(ctx, c, {
+      userId,
+      sessionId,
+      message,
+      session: sessionNow,
+      client,
+    });
   }
 
   const workflow = client.getWorkflow("supervisor-workflow");

@@ -139,6 +139,91 @@ export const updateTask = mutation({
   },
 });
 
+/** Creates a task from an action context (bypasses public auth; caller must validate userId). */
+export const createTaskInternal = internalMutation({
+  args: {
+    userId: v.id("users"),
+    title: v.string(),
+    description: v.string(),
+    taskType: v.string(),
+    dueDate: v.number(),
+    courseId: v.optional(v.id("userCourses")),
+    classTag: v.optional(v.string()),
+  },
+  returns: v.id("tasks"),
+  handler: async (ctx, args) => {
+    const taskId = await ctx.db.insert("tasks", {
+      userId: args.userId,
+      title: args.title,
+      description: args.description,
+      taskType: args.taskType,
+      dueDate: args.dueDate,
+      courseId: args.courseId,
+      classTag: normalizeClassTag(args.classTag),
+      createdAt: Date.now(),
+      isManualEstimate: false,
+    });
+    if (process.env.GEMINI_API_KEY) {
+      await ctx.scheduler.runAfter(0, internal.ai.embeddings.generateTaskEmbedding, {
+        taskId,
+        title: args.title,
+        description: args.description,
+      });
+    }
+    return taskId;
+  },
+});
+
+/** Partially patches a task from an action context. Only provided fields are updated. */
+export const patchTaskFieldsInternal = internalMutation({
+  args: {
+    userId: v.id("users"),
+    taskId: v.id("tasks"),
+    title: v.optional(v.string()),
+    description: v.optional(v.string()),
+    taskType: v.optional(v.string()),
+    dueDate: v.optional(v.number()),
+    courseId: v.optional(v.id("userCourses")),
+    classTag: v.optional(v.string()),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const task = await ctx.db.get(args.taskId);
+    if (!task || task.userId !== args.userId) throw new Error("Task not found");
+    const patch: Partial<typeof task> = {};
+    if (args.title !== undefined) patch.title = args.title;
+    if (args.description !== undefined) patch.description = args.description;
+    if (args.taskType !== undefined) patch.taskType = args.taskType;
+    if (args.dueDate !== undefined) patch.dueDate = args.dueDate;
+    if (args.courseId !== undefined) patch.courseId = args.courseId;
+    if (args.classTag !== undefined) patch.classTag = normalizeClassTag(args.classTag);
+    await ctx.db.patch(args.taskId, patch);
+    if (process.env.GEMINI_API_KEY && (args.title !== undefined || args.description !== undefined)) {
+      await ctx.scheduler.runAfter(0, internal.ai.embeddings.generateTaskEmbedding, {
+        taskId: args.taskId,
+        title: args.title ?? task.title,
+        description: args.description ?? task.description,
+      });
+    }
+    return null;
+  },
+});
+
+/** Deletes a task (with cascade) from an action context. */
+export const deleteTaskInternal = internalMutation({
+  args: {
+    userId: v.id("users"),
+    taskId: v.id("tasks"),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const task = await ctx.db.get(args.taskId);
+    if (!task || task.userId !== args.userId) throw new Error("Task not found");
+    await cascadeDeleteTask(ctx, args.taskId);
+    return null;
+  },
+});
+
 export const patchTaskEmbedding = internalMutation({
   args: {
     taskId: v.id("tasks"),

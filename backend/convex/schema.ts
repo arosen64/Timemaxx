@@ -202,6 +202,10 @@ export default defineSchema({
     scopeBypassNextMessage: v.optional(v.boolean()),
     /** User message to re-process after scope Yes (same chat turn as original question) */
     pendingScopeUserMessageId: v.optional(v.id("chatMessages")),
+    /** Which specialist agent is handling this session ("task" = task CRUD agent) */
+    activeAgent: v.optional(v.literal("task")),
+    /** Intent determined by task agent: "create" skips entity MCQ, "rud" triggers it */
+    taskAgentIntent: v.optional(v.union(v.literal("create"), v.literal("rud"))),
   }).index("by_userId_sessionId", ["userId", "sessionId"]),
 
   // Syllabi table — tracks uploaded syllabus files and their processing status

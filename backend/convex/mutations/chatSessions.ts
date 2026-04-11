@@ -240,6 +240,52 @@ export const consumeScopeBypassInternal = internalMutation({
   },
 });
 
+export const setTaskAgentStateInternal = internalMutation({
+  args: {
+    userId: v.id("users"),
+    sessionId: v.string(),
+    activeAgent: v.optional(v.literal("task")),
+    taskAgentIntent: v.optional(v.union(v.literal("create"), v.literal("rud"))),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const row = await ctx.db
+      .query("chatSessions")
+      .withIndex("by_userId_sessionId", (q) =>
+        q.eq("userId", args.userId).eq("sessionId", args.sessionId),
+      )
+      .unique();
+    if (!row) throw new Error("chat session missing");
+    await ctx.db.patch(row._id, {
+      ...(args.activeAgent !== undefined ? { activeAgent: args.activeAgent } : {}),
+      ...(args.taskAgentIntent !== undefined ? { taskAgentIntent: args.taskAgentIntent } : {}),
+    });
+    return null;
+  },
+});
+
+export const clearTaskAgentStateInternal = internalMutation({
+  args: {
+    userId: v.id("users"),
+    sessionId: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const row = await ctx.db
+      .query("chatSessions")
+      .withIndex("by_userId_sessionId", (q) =>
+        q.eq("userId", args.userId).eq("sessionId", args.sessionId),
+      )
+      .unique();
+    if (!row) return null;
+    await ctx.db.patch(row._id, {
+      activeAgent: undefined,
+      taskAgentIntent: undefined,
+    });
+    return null;
+  },
+});
+
 export const incrementClarificationFailureInternal = internalMutation({
   args: {
     userId: v.id("users"),
