@@ -4,7 +4,12 @@ This guide explains how to get a Google Gemini API key and configure it for loca
 
 ## Why This Is Needed
 
-The task time estimation feature calls the Google Gemini API from a Convex action. The API key is stored as a server-side environment variable in your Convex deployment — it is never committed to the repo or exposed to the frontend.
+The Gemini API is used in two places:
+
+1. **Convex backend** — task time estimation, syllabus parsing, transcript parsing, and course embeddings. Stored as `GEMINI_API_KEY` in your Convex deployment.
+2. **Mastra AI agent server** — the chat assistant uses `gemini-2.5-flash`. Stored as `GOOGLE_GENERATIVE_AI_API_KEY` in `mastra/.env`.
+
+Both use the same key — just different variable names.
 
 ## Step 1: Get a Gemini API Key
 
@@ -27,8 +32,17 @@ This stores the key in your personal Convex dev deployment. You can verify it wa
 npx convex env list
 ```
 
+## Step 3: Set the Key for Mastra
+
+Add the same key to `mastra/.env` (create the file if it doesn't exist):
+
+```
+GOOGLE_GENERATIVE_AI_API_KEY=your_key_here
+```
+
 ## Notes
 
-- Each developer has their own Convex dev deployment, so everyone must set this key individually
-- The key is **not** stored in `.env.local` — that file is for frontend (Vite) variables only
-- If the key is missing, task creation will still succeed but `timeEstimate` will remain unset
+- Each developer has their own Convex dev deployment, so everyone must set `GEMINI_API_KEY` individually
+- `mastra/.env` is gitignored — never commit it
+- If `GEMINI_API_KEY` is missing in Convex, task time estimation and embeddings will silently fail
+- If `GOOGLE_GENERATIVE_AI_API_KEY` is missing in Mastra, the chat assistant will return errors
