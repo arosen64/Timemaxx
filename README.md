@@ -37,8 +37,8 @@ npx convex dev
 For Google OAuth configuration, see the [Google Auth Setup](guides/google-auth-setup.md) guide.
 For Google Calendar connection setup, see the [Google Calendar Connection Setup](guides/google-calendar-connection-setup.md) guide.
 For SIS API key setup, see the [SIS API Key Setup](guides/sis-api-key-setup.md) guide.
-For Gemini API key setup, see the [Gemini API Key Setup](guides/gemini-api-key-setup.md) guide.
-For Mastra (AI agent server) setup, see the [Mastra Setup](#mastra-ai-agent-server) section below.
+For Gemini API key setup (details and troubleshooting), see the [Gemini API Key Setup](guides/gemini-api-key-setup.md) guide.
+For Mastra (AI agent server), **Gemini and Anthropic** keys for Convex/Mastra, and the ngrok `MASTRA_URL` flow, see [Mastra AI Agent Server](#mastra-ai-agent-server).
 For ngrok tunnel setup (required for Mastra + Convex), see the [ngrok Setup](guides/ngrok-setup.md) guide.
 For testing details, see the [Test Execution](guides/testing.md) guide.
 
@@ -62,21 +62,47 @@ npm run dev
 
 The AI chat assistant runs through [Mastra](https://mastra.ai). Convex actions call Mastra over HTTP, so Mastra must be publicly reachable via an ngrok tunnel during local development.
 
-### Step 1: Get a Gemini API Key
+Configure **both** a Gemini key and an Anthropic key for local development: Convex uses Gemini for several features and Anthropic for others; Mastra’s `.env` should include both so nothing fails as you switch models or run different code paths. See [Gemini API Key Setup](guides/gemini-api-key-setup.md) for more detail on Gemini.
 
-Mastra uses `gemini-2.5-flash` via the `@ai-sdk/google` package. Get your key from [Google AI Studio](https://aistudio.google.com/app/apikey). See [Gemini API Key Setup](guides/gemini-api-key-setup.md) for details.
+### Gemini API key (Mastra and Convex)
 
-### Step 2: Configure Mastra's API Key
+The Convex backend uses Google Gemini for syllabus parsing, embeddings, transcript parsing, and related flows (`GEMINI_API_KEY`). Mastra expects the same key under the variable name the Google AI SDK uses.
 
-Add your key to `mastra/.env` (create the file if it doesn't exist):
+1. **Get a key** from [Google AI Studio](https://aistudio.google.com/app/apikey).
 
-```
-GOOGLE_GENERATIVE_AI_API_KEY=your_gemini_api_key_here
-```
+2. **Convex (your deployment):**
 
-> Note: this is the same key as `GEMINI_API_KEY` used in Convex — just a different variable name required by the AI SDK.
+   ```bash
+   npx convex env set GEMINI_API_KEY your_key_here
+   ```
 
-### Step 3: Run Mastra
+3. **Mastra (local):** Add to `mastra/.env` (same key as Convex; different variable name required by the SDK):
+
+   ```
+   GOOGLE_GENERATIVE_AI_API_KEY=your_key_here
+   ```
+
+### Anthropic API key (Mastra and Convex)
+
+Mastra chat agents use Claude via `@ai-sdk/anthropic`. The Convex backend uses the same key for task time estimation and related Anthropic calls (`ANTHROPIC_API_KEY` in server code). Configure **both** Mastra and Convex:
+
+1. **Create an API key** in the [Anthropic Console](https://console.anthropic.com/settings/keys).
+
+2. **Mastra (local):** Add to `mastra/.env` (same file as above; it is gitignored):
+
+   ```
+   ANTHROPIC_API_KEY=your_key_here
+   ```
+
+3. **Convex (your deployment):**
+
+   ```bash
+   npx convex env set ANTHROPIC_API_KEY your_key_here
+   ```
+
+   Confirm with `npx convex env list`. Each developer must set Convex env vars on their own dev deployment.
+
+### Run Mastra
 
 ```bash
 cd mastra
@@ -84,7 +110,7 @@ npm install   # first time only
 npm run dev   # starts on http://localhost:4111
 ```
 
-### Step 4: Expose Mastra via ngrok
+### Expose Mastra via ngrok
 
 Convex is a cloud backend and cannot reach `localhost` directly. Run ngrok to create a public tunnel:
 
@@ -94,7 +120,7 @@ ngrok http 4111
 
 Copy the `https://` forwarding URL that ngrok prints (e.g. `https://abc123.ngrok-free.app`).
 
-### Step 5: Set the Mastra URL in Convex
+### Set the Mastra URL in Convex
 
 ```bash
 npx convex env set MASTRA_URL https://abc123.ngrok-free.app/mastra
@@ -102,7 +128,7 @@ npx convex env set MASTRA_URL https://abc123.ngrok-free.app/mastra
 
 > The `/mastra` path suffix is required — Mastra serves its API under that prefix.
 
-You need to repeat steps 4–5 each time you restart ngrok, as the tunnel URL changes.
+You need to repeat the ngrok tunnel and `MASTRA_URL` update each time you restart ngrok, as the tunnel URL changes.
 
 ### Frontend Environment Variable
 

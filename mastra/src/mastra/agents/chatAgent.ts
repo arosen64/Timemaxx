@@ -1,5 +1,5 @@
 import { Agent } from "@mastra/core/agent";
-import { google } from "@ai-sdk/google";
+import { anthropic } from "@ai-sdk/anthropic";
 
 export const chatAgent = new Agent({
   id: "chat-agent",
@@ -12,5 +12,5 @@ Be concise, friendly, and specific. If you don't have enough context to answer p
 say so clearly rather than guessing. You are the first version of a multi-agent system —
 for now you respond directly without tools.
   `.trim(),
-  model: google("gemini-2.0-flash-lite"),
+  model: anthropic("claude-sonnet-4-20250514"),
 });
