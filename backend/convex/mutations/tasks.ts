@@ -160,6 +160,39 @@ export const deleteTask = mutation({
     const task = await ctx.db.get(args.taskId);
     if (!task || task.userId !== userId) throw new Error("Task not found");
 
+    // Collect googleEventIds from all study blocks before deletion
+    const subtasks = await ctx.db
+      .query("subtasks")
+      .withIndex("by_parentTaskId", (q) => q.eq("parentTaskId", args.taskId))
+      .collect();
+
+    const [subtaskBlockArrays, taskBlocks] = await Promise.all([
+      Promise.all(
+        subtasks.map((subtask) =>
+          ctx.db
+            .query("studyBlocks")
+            .withIndex("by_subtaskId", (q) => q.eq("subtaskId", subtask._id))
+            .collect(),
+        ),
+      ),
+      ctx.db
+        .query("studyBlocks")
+        .withIndex("by_taskId", (q) => q.eq("taskId", args.taskId))
+        .collect(),
+    ]);
+
+    const googleEventIds = [...subtaskBlockArrays.flat(), ...taskBlocks]
+      .map((b) => b.googleEventId)
+      .filter((id): id is string => id !== undefined);
+
     await cascadeDeleteTask(ctx, args.taskId);
+
+    if (googleEventIds.length > 0) {
+      await ctx.scheduler.runAfter(
+        0,
+        internal.actions.exportStudyBlocksToCalendar.deleteLinkedCalendarEvents,
+        { userId, googleEventIds },
+      );
+    }
   },
 });
