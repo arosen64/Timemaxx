@@ -1,13 +1,9 @@
 "use node";
-import { action, type ActionCtx } from "../_generated/server";
-import type { Id } from "../_generated/dataModel";
+import { action } from "../_generated/server";
 import { internal } from "../_generated/api";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
-import { encryptToken, decryptToken } from "../lib/calendarCrypto";
-
-const GOOGLE_CALENDAR_API = "https://www.googleapis.com/calendar/v3";
-const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
+import { GOOGLE_CALENDAR_API, resolveAccessToken } from "../lib/gcalHelpers";
 
 export type CalendarEntry = { id: string; summary: string };
 export type TimedEvent = {
@@ -128,56 +124,6 @@ export const fetchCalendarEvents = action({
   },
 });
 
-/**
- * Returns a valid (plaintext) access token, refreshing via refresh token if expired.
- * Writes the new encrypted token back via updateCalendarToken internal mutation.
- * Throws on refresh failure so the caller can return an error flag.
- */
-async function resolveAccessToken(
-  ctx: ActionCtx,
-  connection: {
-    userId: Id<"users">;
-    accessToken: string;
-    refreshToken: string;
-    expiresAt: number;
-  },
-  userId: Id<"users">,
-  tokenSecret: string,
-): Promise<string> {
-  // Refresh 60 seconds early to avoid using a token that expires mid-request
-  if (Date.now() + 60_000 < connection.expiresAt) {
-    return await decryptToken(connection.accessToken, tokenSecret);
-  }
-
-  const refreshToken = await decryptToken(connection.refreshToken, tokenSecret);
-  const clientId = process.env.AUTH_GOOGLE_ID;
-  const clientSecret = process.env.AUTH_GOOGLE_SECRET;
-  if (!clientId || !clientSecret) throw new Error("Missing Google OAuth credentials");
-
-  const tokenRes = await fetch(GOOGLE_TOKEN_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      client_id: clientId,
-      client_secret: clientSecret,
-      refresh_token: refreshToken,
-      grant_type: "refresh_token",
-    }),
-  });
-  if (!tokenRes.ok) throw new Error("Token refresh failed");
-
-  const tokenData = await tokenRes.json() as { access_token: string; expires_in: number };
-  if (!tokenData.access_token) throw new Error("No access_token in refresh response");
-
-  const newExpiry = Date.now() + tokenData.expires_in * 1000;
-  await ctx.runMutation(internal.mutations.calendar.updateCalendarToken, {
-    userId,
-    accessToken: await encryptToken(tokenData.access_token, tokenSecret),
-    expiresAt: newExpiry,
-  });
-
-  return tokenData.access_token;
-}
 
 async function fetchCalendarList(accessToken: string): Promise<CalendarEntry[]> {
   const res = await fetch(`${GOOGLE_CALENDAR_API}/users/me/calendarList`, {

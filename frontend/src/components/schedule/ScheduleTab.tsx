@@ -4,6 +4,7 @@ import { api } from '../../../../backend/convex/_generated/api'
 import type { Id } from '../../../../backend/convex/_generated/dataModel'
 import type { CalendarEntry, TimedEvent, AllDayEvent } from '../../../../backend/convex/actions/fetchCalendarEvents'
 import { CalendarIcon, SpinnerIcon, WarningIcon, ChevronLeftIcon, ChevronRightIcon } from '../icons'
+import Button from '../ui/Button'
 import TimeGrid, { type StudyBlockOnGrid } from './TimeGrid'
 import CalendarSelectorPopup from './CalendarSelectorPopup'
 import { computeOverlapLayout } from './overlapLayout'
@@ -25,6 +26,8 @@ type StudyBlockWithTask = {
   startTime: string | undefined
   studyBlockLength: number
   isConflicted: boolean | undefined
+  googleEventId?: string
+  needsExport?: boolean
   taskTitle: string
   taskDueDate: number
   courseColor?: string
@@ -39,6 +42,7 @@ export default function ScheduleTab() {
   const runDetectConflictsMutation = useMutation(api.mutations.studyBlocks.runDetectConflicts)
   const autoRescheduleAction = useAction(api.actions.autoRescheduleConflicts.autoRescheduleConflicts)
   const fetchCalendarEventsAction = useAction(api.actions.fetchCalendarEvents.fetchCalendarEvents)
+  const exportStudyBlocksAction = useAction(api.actions.exportStudyBlocksToCalendar.exportStudyBlocksToCalendar)
 
   const [weekOffset, setWeekOffset] = useState(0)
   const [calendarData, setCalendarData] = useState<CalendarData | null>(null)
@@ -48,6 +52,8 @@ export default function ScheduleTab() {
   const [draggingBlockId, setDraggingBlockId] = useState<Id<'studyBlocks'> | null>(null)
   const [autoRescheduleMsg, setAutoRescheduleMsg] = useState<string | null>(null)
   const [isRescheduling, setIsRescheduling] = useState(false)
+  const [isExporting, setIsExporting] = useState(false)
+  const [exportMsg, setExportMsg] = useState<string | null>(null)
 
   const gridRef = useRef<HTMLDivElement>(null)
 
@@ -137,26 +143,6 @@ export default function ScheduleTab() {
     })
     return { scheduledBlocks: scheduled, unscheduledBlocks: unscheduled }
   }, [allStudyBlocks])
-
-  // Build color legend from scheduled blocks in the current 7-day window
-  const legend = useMemo(() => {
-    const dayKeys = new Set(days.map(isoDateString))
-    const windowBlocks = scheduledBlocks.filter((b) => dayKeys.has(isoDateString(new Date(b.startTime))))
-    const seen = new Map<string, string>() // courseName -> courseColor
-    let hasUntagged = false
-    for (const b of windowBlocks) {
-      if (b.courseColor && b.courseName) {
-        if (!seen.has(b.courseName)) seen.set(b.courseName, b.courseColor)
-      } else {
-        hasUntagged = true
-      }
-    }
-    const entries: { courseColor: string | undefined; courseName: string }[] = Array.from(seen.entries()).map(
-      ([name, color]) => ({ courseColor: color, courseName: name })
-    )
-    if (hasUntagged) entries.push({ courseColor: undefined, courseName: 'Other' })
-    return entries
-  }, [days, scheduledBlocks])
 
   // Build studyBlocksByDay for the grid
   const studyBlocksByDay = useMemo(() => {
@@ -290,6 +276,29 @@ export default function ScheduleTab() {
     }
   }, [autoRescheduleAction, timezone])
 
+  const handleExport = useCallback(async () => {
+    setIsExporting(true)
+    setExportMsg(null)
+    try {
+      const result = await exportStudyBlocksAction({})
+      if (result.noCalendar) {
+        setExportMsg('No calendar connected.')
+      } else {
+        const parts: string[] = []
+        if (result.exported > 0) parts.push(`${result.exported} block${result.exported !== 1 ? 's' : ''} exported`)
+        if (result.patched > 0) parts.push(`${result.patched} updated`)
+        setExportMsg(parts.length > 0 ? parts.join(', ') + '.' : 'Nothing to export.')
+        // Re-fetch so the grid reflects updated GCal event positions immediately
+        const fresh = await fetchCalendarEventsAction({ startDate: startDateStr, timezone })
+        setCalendarData(fresh)
+      }
+    } catch (err) {
+      setExportMsg(`Export failed: ${err instanceof Error ? err.message : String(err)}`)
+    } finally {
+      setIsExporting(false)
+    }
+  }, [exportStudyBlocksAction, fetchCalendarEventsAction, startDateStr, timezone])
+
   async function handleToggleCalendar(calId: string) {
     const current = selectedCalendarIds ?? []
     const next = current.includes(calId) ? current.filter((id) => id !== calId) : [...current, calId]
@@ -305,6 +314,15 @@ export default function ScheduleTab() {
   }
 
   const hasIndicator = calendarConnected && (!selectedCalendarIds || selectedCalendarIds.length === 0)
+
+  const pendingExportCount = useMemo(() => {
+    if (!calendarConnected) return 0
+    return (allStudyBlocks ?? []).filter((b) => {
+      if (!b.startTime) return false
+      // needsExport explicitly true, or never exported (no googleEventId and needsExport not yet set)
+      return b.needsExport === true || (b.needsExport === undefined && !b.googleEventId)
+    }).length
+  }, [allStudyBlocks, calendarConnected])
 
   return (
     <div
@@ -349,36 +367,35 @@ export default function ScheduleTab() {
           {isFetchingEvents && <SpinnerIcon color="#4E6A8C" size={14} />}
         </div>
 
-        {legend.length > 0 && (
-          <div className="flex items-center gap-3 flex-wrap">
-            {legend.map((entry) => (
-              <span key={entry.courseName} className="flex items-center gap-1.5">
-                <span
-                  className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
-                  style={{ backgroundColor: entry.courseColor ?? '#002D72' }}
-                />
-                <span className="font-body text-[11px] text-slate-blue">{entry.courseName}</span>
-              </span>
-            ))}
-          </div>
-        )}
-
-        {calendarConnected ? (
-          <button
-            type="button"
-            onClick={() => setSelectorOpen((o) => !o)}
-            className={`flex items-center gap-2 rounded-lg px-4 h-9 font-heading text-sm font-semibold text-white transition hover:opacity-90 ${hasIndicator ? 'bg-info-bg text-navy' : 'bg-navy'}`}
-            aria-label="Select calendars"
-          >
-            <CalendarIcon color="#86C8BC" size={14} />
-            Calendars
-            {hasIndicator && (
-              <span className="flex h-2 w-2 rounded-full bg-sky-blue" aria-hidden="true" />
-            )}
-          </button>
-        ) : (
-          <div className="w-[110px]" />
-        )}
+        <div className="flex items-center gap-2">
+          {calendarConnected && (
+            <Button
+              variant="secondary"
+              onClick={handleExport}
+              disabled={isExporting}
+              icon={isExporting ? <SpinnerIcon color="#4E6A8C" size={14} /> : <CalendarIcon color="#4E6A8C" size={14} />}
+              className="h-9 px-4 text-sm"
+            >
+              {isExporting ? 'Exporting…' : 'Export to GCal'}
+            </Button>
+          )}
+          {calendarConnected ? (
+            <button
+              type="button"
+              onClick={() => setSelectorOpen((o) => !o)}
+              className={`flex items-center gap-2 rounded-lg px-4 h-9 font-heading text-sm font-semibold text-white transition hover:opacity-90 ${hasIndicator ? 'bg-info-bg text-navy' : 'bg-navy'}`}
+              aria-label="Select calendars"
+            >
+              <CalendarIcon color="#86C8BC" size={14} />
+              Calendars
+              {hasIndicator && (
+                <span className="flex h-2 w-2 rounded-full bg-sky-blue" aria-hidden="true" />
+              )}
+            </button>
+          ) : (
+            <div className="w-[110px]" />
+          )}
+        </div>
       </div>
 
       {calendarData?.error && (
@@ -398,6 +415,28 @@ export default function ScheduleTab() {
           >
             ✕
           </button>
+        </div>
+      )}
+
+      {exportMsg && (
+        <div className="mb-3 flex items-center justify-between gap-2 rounded-lg border border-border bg-bg-gray px-4 py-2 text-sm text-slate-blue">
+          <span>{exportMsg}</span>
+          <button
+            type="button"
+            onClick={() => setExportMsg(null)}
+            className="text-light-blue hover:text-slate-blue"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
+      {pendingExportCount > 0 && (
+        <div className="mb-3 flex items-center gap-2 rounded-lg border border-sky-blue bg-info-bg px-4 py-2 text-sm text-navy">
+          <CalendarIcon color="#005A8E" size={14} />
+          <span>
+            {pendingExportCount} block{pendingExportCount !== 1 ? 's' : ''} added or moved — export to sync with Google Calendar.
+          </span>
         </div>
       )}
 
@@ -472,7 +511,7 @@ export default function ScheduleTab() {
                   onClick={() =>
                     setAssigningBlockId((prev) => (prev === block._id ? null : block._id))
                   }
-                  className={`flex items-start gap-2 rounded-lg border px-3 py-2.5 text-left transition ${
+                  className={`group relative flex items-start gap-2 rounded-lg border px-3 py-2.5 text-left transition ${
                     isSelected
                       ? 'border-teal bg-teal/10 shadow-sm'
                       : 'border-border bg-white hover:border-teal/50 hover:bg-teal/5'
@@ -488,6 +527,11 @@ export default function ScheduleTab() {
                     </span>
                     <span className="text-[10px] text-slate-blue">{block.studyBlockLength} min</span>
                     <span className="text-[10px] text-light-blue truncate">{block.taskTitle}</span>
+                    {block.courseName && (
+                      <span className="hidden group-hover:block truncate font-body text-[10px] font-medium text-teal">
+                        {block.courseName}
+                      </span>
+                    )}
                   </span>
                 </button>
               )

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { api } from "../_generated/api";
+import { api, internal } from "../_generated/api";
 import { makeTestCtx, createTestUser } from "../../convex-tests/helpers";
 
 async function seedTask(
@@ -99,5 +99,113 @@ describe("queries/studyBlocks – getStudyBlockById", () => {
 
     const result = await t.query(api.queries.studyBlocks.getStudyBlockById, { studyBlockId });
     expect(result).toBeNull();
+  });
+});
+
+// ─── getFutureStudyBlocksForExport ───────────────────────────────────────────
+
+describe("queries/studyBlocks – getFutureStudyBlocksForExport", () => {
+  test("returns empty array when user has no tasks", async () => {
+    const t = makeTestCtx();
+    const { userId } = await createTestUser(t);
+
+    const result = await t.query(internal.queries.studyBlocks.getFutureStudyBlocksForExport, {
+      userId: userId as any,
+    });
+    expect(result).toEqual([]);
+  });
+
+  test("skips blocks with no startTime", async () => {
+    const t = makeTestCtx();
+    const { userId } = await createTestUser(t);
+    const taskId = await seedTask(t, userId);
+    await seedStudyBlock(t, taskId); // no startTime
+
+    const result = await t.query(internal.queries.studyBlocks.getFutureStudyBlocksForExport, {
+      userId: userId as any,
+    });
+    expect(result).toHaveLength(0);
+  });
+
+  test("skips blocks whose startTime is in the past", async () => {
+    const t = makeTestCtx();
+    const { userId } = await createTestUser(t);
+    const taskId = await seedTask(t, userId);
+    const pastStart = new Date(Date.now() - 3600_000).toISOString();
+    await seedStudyBlock(t, taskId, { startTime: pastStart });
+
+    const result = await t.query(internal.queries.studyBlocks.getFutureStudyBlocksForExport, {
+      userId: userId as any,
+    });
+    expect(result).toHaveLength(0);
+  });
+
+  test("returns future blocks with correct fields", async () => {
+    const t = makeTestCtx();
+    const { userId } = await createTestUser(t);
+    const taskId = await seedTask(t, userId);
+    const futureStart = new Date(Date.now() + 3600_000).toISOString();
+    await seedStudyBlock(t, taskId, { title: "Future block", startTime: futureStart, studyBlockLength: 90 });
+
+    const result = await t.query(internal.queries.studyBlocks.getFutureStudyBlocksForExport, {
+      userId: userId as any,
+    });
+    expect(result).toHaveLength(1);
+    expect(result[0].title).toBe("Future block");
+    expect(result[0].startTime).toBe(futureStart);
+    expect(result[0].studyBlockLength).toBe(90);
+    expect(result[0].googleEventId).toBeUndefined();
+  });
+
+  test("includes googleEventId when already set", async () => {
+    const t = makeTestCtx();
+    const { userId } = await createTestUser(t);
+    const taskId = await seedTask(t, userId);
+    const futureStart = new Date(Date.now() + 3600_000).toISOString();
+    await t.run((ctx) =>
+      ctx.db.insert("studyBlocks", {
+        taskId: taskId as any,
+        title: "Exported block",
+        startTime: futureStart,
+        studyBlockLength: 60,
+        googleEventId: "existing_gcal_event",
+      })
+    );
+
+    const result = await t.query(internal.queries.studyBlocks.getFutureStudyBlocksForExport, {
+      userId: userId as any,
+    });
+    expect(result).toHaveLength(1);
+    expect(result[0].googleEventId).toBe("existing_gcal_event");
+  });
+
+  test("returns only future blocks when a task has a mix of past, unscheduled, and future blocks", async () => {
+    const t = makeTestCtx();
+    const { userId } = await createTestUser(t);
+    const taskId = await seedTask(t, userId);
+    const futureStart = new Date(Date.now() + 7200_000).toISOString();
+    await seedStudyBlock(t, taskId, { title: "Unscheduled" }); // no startTime
+    await seedStudyBlock(t, taskId, { title: "Past", startTime: new Date(Date.now() - 3600_000).toISOString() });
+    await seedStudyBlock(t, taskId, { title: "Future", startTime: futureStart });
+
+    const result = await t.query(internal.queries.studyBlocks.getFutureStudyBlocksForExport, {
+      userId: userId as any,
+    });
+    expect(result).toHaveLength(1);
+    expect(result[0].title).toBe("Future");
+  });
+
+  test("does not return blocks belonging to another user", async () => {
+    const t = makeTestCtx();
+    const { userId: aliceId } = await createTestUser(t, { email: "alice@example.com" });
+    const { userId: bobId } = await createTestUser(t, { email: "bob@example.com" });
+    const aliceTaskId = await seedTask(t, aliceId);
+    const futureStart = new Date(Date.now() + 3600_000).toISOString();
+    await seedStudyBlock(t, aliceTaskId, { startTime: futureStart });
+
+    const result = await t.query(internal.queries.studyBlocks.getFutureStudyBlocksForExport, {
+      userId: bobId as any,
+    });
+    expect(result).toHaveLength(0);
   });
 });
