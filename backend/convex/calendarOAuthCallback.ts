@@ -73,6 +73,9 @@ export const calendarOAuthCallback = httpAction(async (ctx, request) => {
     return new Response(null, { status: 302, headers: { Location: profileRedirect } });
   }
 
+  // Find or create the dedicated "timemaxx" calendar before encrypting the token
+  const timemaxxCalendarId = await findOrCreateTimemaxxCalendar(data.access_token);
+
   // Encrypt tokens and store them for the identified user
   await ctx.runMutation(internal.mutations.calendar.storeCalendarTokenForUser, {
     userId: stateRecord.userId,
@@ -80,6 +83,12 @@ export const calendarOAuthCallback = httpAction(async (ctx, request) => {
     refreshToken: await encryptToken(data.refresh_token, tokenSecret),
     expiresAt: Date.now() + data.expires_in * 1000,
     scope: data.scope,
+    ...(timemaxxCalendarId && { timemaxxCalendarId }),
+  });
+
+  // Flag all future blocks for re-export so they get recreated in the new calendar
+  await ctx.runMutation(internal.mutations.studyBlocks.flagFutureBlocksForReexport, {
+    userId: stateRecord.userId,
   });
 
   // Clean up the consumed state record
@@ -87,5 +96,51 @@ export const calendarOAuthCallback = httpAction(async (ctx, request) => {
     id: stateRecord._id,
   });
 
-  return new Response(null, { status: 302, headers: { Location: profileRedirect } });
+  // If the Timemaxx calendar couldn't be created, tell the frontend so it can
+  // prompt the user to reconnect via the "Update Calendar Permissions" button.
+  const redirectTarget = timemaxxCalendarId
+    ? "/profile"
+    : "/profile?calendarSetupFailed=1";
+  const finalRedirect = `${siteUrl}/?oauth=calendar&returnTo=${encodeURIComponent(redirectTarget)}`;
+
+  return new Response(null, { status: 302, headers: { Location: finalRedirect } });
 });
+
+const GCAL_API = "https://www.googleapis.com/calendar/v3";
+const TIMEMAXX_CALENDAR_NAME = "Timemaxx";
+
+/**
+ * Looks for an existing "timemaxx" calendar in the user's calendar list.
+ * Creates one if none is found. Returns the calendar ID, or null on failure.
+ */
+async function findOrCreateTimemaxxCalendar(accessToken: string): Promise<string | null> {
+  const headers = { Authorization: `Bearer ${accessToken}` };
+
+  // Check if "Timemaxx" calendar already exists, paginating through all results
+  let pageToken: string | undefined;
+  do {
+    const url = `${GCAL_API}/users/me/calendarList${pageToken ? `?pageToken=${pageToken}` : ""}`;
+    const listRes = await fetch(url, { headers });
+    if (!listRes.ok) break;
+    const listData = await listRes.json() as {
+      items?: Array<{ id: string; summary: string }>;
+      nextPageToken?: string;
+    };
+    const existing = listData.items?.find(
+      (c) => c.summary === TIMEMAXX_CALENDAR_NAME,
+    );
+    if (existing) return existing.id;
+    pageToken = listData.nextPageToken;
+  } while (pageToken);
+
+  // Create a new "Timemaxx" calendar
+  const createRes = await fetch(`${GCAL_API}/calendars`, {
+    method: "POST",
+    headers: { ...headers, "Content-Type": "application/json" },
+    body: JSON.stringify({ summary: TIMEMAXX_CALENDAR_NAME }),
+  });
+  if (!createRes.ok) return null;
+
+  const created = await createRes.json() as { id?: string };
+  return created.id ?? null;
+}
