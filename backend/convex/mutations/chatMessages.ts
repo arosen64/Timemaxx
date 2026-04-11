@@ -1,4 +1,5 @@
 import { internalMutation } from "../_generated/server";
+import { internal } from "../_generated/api";
 import { v } from "convex/values";
 
 export const saveMessage = internalMutation({
@@ -16,7 +17,7 @@ export const saveMessage = internalMutation({
         q.eq("userId", args.userId).eq("sessionId", args.sessionId),
       )
       .unique();
-    return await ctx.db.insert("chatMessages", {
+    const id = await ctx.db.insert("chatMessages", {
       userId: args.userId,
       sessionId: args.sessionId,
       role: args.role,
@@ -29,6 +30,13 @@ export const saveMessage = internalMutation({
         ? { courseId: session.resolvedCourseId }
         : {}),
     });
+
+    await ctx.scheduler.runAfter(0, internal.mutations.chatChunks.rebuildChatChunksForSessionInternal, {
+      userId: args.userId,
+      sessionId: args.sessionId,
+    });
+
+    return id;
   },
 });
 
@@ -70,6 +78,12 @@ export const applyResolvedEntityToClarifyTriggerMessageInternal = internalMutati
         entityClarifyTriggerUserMessageId: undefined,
       });
     }
+
+    await ctx.scheduler.runAfter(0, internal.mutations.chatChunks.rebuildChatChunksForSessionInternal, {
+      userId: args.userId,
+      sessionId: args.sessionId,
+    });
+
     return null;
   },
 });
@@ -93,6 +107,14 @@ export const patchUserMessageClarificationIntent = internalMutation({
     await ctx.db.patch(args.messageId, {
       clarificationIntent: args.clarificationIntent,
     });
+
+    if (msg.sessionId) {
+      await ctx.scheduler.runAfter(0, internal.mutations.chatChunks.rebuildChatChunksForSessionInternal, {
+        userId: args.userId,
+        sessionId: msg.sessionId,
+      });
+    }
+
     return null;
   },
 });
