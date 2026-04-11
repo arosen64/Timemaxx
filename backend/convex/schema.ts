@@ -14,6 +14,7 @@ export default defineSchema({
     expiresAt: v.number(),
     selectedCalendarIds: v.optional(v.array(v.string())),
     scope: v.optional(v.string()),
+    timemaxxCalendarId: v.optional(v.string()),
   }).index("by_userId", ["userId"]),
 
   // Short-lived state tokens used to identify users during the OAuth callback
@@ -145,14 +146,17 @@ export default defineSchema({
   studyBlocks: defineTable({
     taskId: v.optional(v.id("tasks")),
     subtaskId: v.optional(v.id("subtasks")),
+    userId: v.optional(v.id("users")),
     title: v.string(),
     startTime: v.optional(v.string()),
     studyBlockLength: v.number(),
     isConflicted: v.optional(v.boolean()),
     googleEventId: v.optional(v.string()),
+    needsExport: v.optional(v.boolean()),
   })
     .index("by_taskId", ["taskId"])
-    .index("by_subtaskId", ["subtaskId"]),
+    .index("by_subtaskId", ["subtaskId"])
+    .index("by_userId", ["userId"]),
 
   // Chat messages — stores chatbot conversation history per user
   chatMessages: defineTable({

@@ -29,6 +29,7 @@ import type * as lib_anthropic from "../lib/anthropic.js";
 import type * as lib_calendarCrypto from "../lib/calendarCrypto.js";
 import type * as lib_classTagUtils from "../lib/classTagUtils.js";
 import type * as lib_courseColors from "../lib/courseColors.js";
+import type * as lib_gcalHelpers from "../lib/gcalHelpers.js";
 import type * as lib_gemini from "../lib/gemini.js";
 import type * as lib_geminiEmbedding from "../lib/geminiEmbedding.js";
 import type * as lib_httpTypes from "../lib/httpTypes.js";
@@ -83,6 +84,7 @@ declare const fullApi: ApiFromModules<{
   "lib/calendarCrypto": typeof lib_calendarCrypto;
   "lib/classTagUtils": typeof lib_classTagUtils;
   "lib/courseColors": typeof lib_courseColors;
+  "lib/gcalHelpers": typeof lib_gcalHelpers;
   "lib/gemini": typeof lib_gemini;
   "lib/geminiEmbedding": typeof lib_geminiEmbedding;
   "lib/httpTypes": typeof lib_httpTypes;
