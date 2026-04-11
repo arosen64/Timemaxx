@@ -17,6 +17,7 @@ vi.mock('../../backend/convex/_generated/api', () => ({
     queries: {
       users: { getCurrUser: 'getCurrUser' },
       chatMessages: { getChatHistory: 'getChatHistory' },
+      chatSessions: { getChatSessionEntityScope: 'getChatSessionEntityScope' },
     },
   },
 }))
@@ -72,7 +73,12 @@ describe('App routing', () => {
   it('redirects authenticated user with complete profile to /dashboard', async () => {
     mockUseConvexAuth.mockReturnValue({ isAuthenticated: true, isLoading: false })
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    mockUseQuery.mockImplementation((...args: any[]) => args[0] === 'getChatHistory' ? [] : { onboardingComplete: true, name: 'Test User' })
+    mockUseQuery.mockImplementation((...args: any[]) => {
+      const ref = args[0] as string
+      if (ref === 'getChatHistory') return []
+      if (ref === 'getChatSessionEntityScope') return null
+      return { onboardingComplete: true, name: 'Test User' }
+    })
 
     renderWithProviders(<App />, { initialEntries: ['/'] })
 
@@ -84,7 +90,12 @@ describe('App routing', () => {
   it('redirects authenticated user with incomplete profile to /onboarding', async () => {
     mockUseConvexAuth.mockReturnValue({ isAuthenticated: true, isLoading: false })
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    mockUseQuery.mockImplementation((...args: any[]) => args[0] === 'getChatHistory' ? [] : { onboardingComplete: false, name: 'Test User' })
+    mockUseQuery.mockImplementation((...args: any[]) => {
+      const ref = args[0] as string
+      if (ref === 'getChatHistory') return []
+      if (ref === 'getChatSessionEntityScope') return null
+      return { onboardingComplete: false, name: 'Test User' }
+    })
 
     renderWithProviders(<App />, { initialEntries: ['/'] })
 
@@ -96,7 +107,12 @@ describe('App routing', () => {
   it('renders dashboard for authenticated user with complete profile', async () => {
     mockUseConvexAuth.mockReturnValue({ isAuthenticated: true, isLoading: false })
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    mockUseQuery.mockImplementation((...args: any[]) => args[0] === 'getChatHistory' ? [] : { onboardingComplete: true, name: 'Test User' })
+    mockUseQuery.mockImplementation((...args: any[]) => {
+      const ref = args[0] as string
+      if (ref === 'getChatHistory') return []
+      if (ref === 'getChatSessionEntityScope') return null
+      return { onboardingComplete: true, name: 'Test User' }
+    })
 
     renderWithProviders(<App />, { initialEntries: ['/dashboard'] })
 
@@ -108,7 +124,12 @@ describe('App routing', () => {
   it('renders profile page for authenticated user', async () => {
     mockUseConvexAuth.mockReturnValue({ isAuthenticated: true, isLoading: false })
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    mockUseQuery.mockImplementation((...args: any[]) => args[0] === 'getChatHistory' ? [] : { onboardingComplete: true, name: 'Test User' })
+    mockUseQuery.mockImplementation((...args: any[]) => {
+      const ref = args[0] as string
+      if (ref === 'getChatHistory') return []
+      if (ref === 'getChatSessionEntityScope') return null
+      return { onboardingComplete: true, name: 'Test User' }
+    })
 
     renderWithProviders(<App />, { initialEntries: ['/profile'] })
 
