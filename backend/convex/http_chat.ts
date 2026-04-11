@@ -152,18 +152,15 @@ function shouldBlockEntityScopeChange(
     }
   }
 
+  /**
+   * Class locked but no task yet (e.g. user picked a course from “class is too hard”).
+   * Never scope-block here: the user still needs to **attach a task** (MCQ). The supervisor
+   * often mis-tags follow-ups like “my essay not going well” as `needs_entity` + `class`,
+   * which previously showed “same task and class?” with only the class — wrong UX.
+   * Switching to another course is handled when they explicitly pick a different class (MCQ).
+   */
   if (!hasT && hasC) {
-    if (output.messageTag === "class_difficulty" || output.messageTag === "task_feedback") {
-      return true;
-    }
-    if (
-      output.status === "needs_entity_clarification" &&
-      (output.entityKind === "class" ||
-        output.entityKind === "task" ||
-        output.entityKind === "both")
-    ) {
-      return true;
-    }
+    return false;
   }
 
   return false;
