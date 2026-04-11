@@ -3,7 +3,7 @@ import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { GenericActionCtx } from "convex/server";
 import { DataModel, Doc, Id } from "../_generated/dataModel";
-import { callGemini } from "../lib/gemini";
+import { callAnthropic } from "../lib/anthropic";
 import { sanitizeUserInput } from "../lib/sanitize";
 import {
   TIME_ESTIMATE_SYSTEM,
@@ -147,10 +147,10 @@ function buildProfileContext(user: Doc<"users"> | null): string | null {
 // ---------------------------------------------------------------------------
 
 /**
- * Estimates how long a task will take (in minutes) using Gemini.
+ * Estimates how long a task will take (in minutes) using Claude Sonnet 4.
  *
  * Retrieves relevant courses, prior tasks, and chats via mock embedding
- * retrieval functions, then builds context blocks and calls Gemini with a
+ * retrieval functions, then builds context blocks and calls Anthropic with a
  * structured output schema that includes an estimate and a per-category
  * reasoning trace.
  */
@@ -190,16 +190,16 @@ export const estimateTaskTime = internalAction({
     const chatContext = buildChatContext(relevantContext.chatIds);
     const profileContext = buildProfileContext(user as Doc<"users"> | null);
 
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
       if (process.env.VITEST !== "true") {
-        console.error("GEMINI_API_KEY is not set");
+        console.error("ANTHROPIC_API_KEY is not set");
       }
       return;
     }
 
     try {
-      const result = await callGemini({
+      const result = await callAnthropic({
         system: TIME_ESTIMATE_SYSTEM,
         prompt: buildTimeEstimatePrompt({
           title: sanitizeUserInput(task.title, 500),

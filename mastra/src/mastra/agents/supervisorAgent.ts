@@ -1,5 +1,5 @@
 import { Agent } from "@mastra/core/agent";
-import { google } from "@ai-sdk/google";
+import { anthropic } from "@ai-sdk/anthropic";
 
 const ROUTES = ["tasks", "schedule", "preferences", "feedback", "classes"] as const;
 export type Route = (typeof ROUTES)[number];
@@ -27,7 +27,7 @@ Respond with a JSON object in this exact format:
 If the query could fit multiple routes, pick the single most relevant one.
 Do not include any other text — only the JSON object.
   `.trim(),
-  model: google("gemini-2.0-flash-lite"),
+  model: anthropic("claude-sonnet-4-20250514"),
 });
 
 export const clarifierAgent = new Agent({
@@ -58,5 +58,5 @@ Respond with a JSON object in this exact format:
 
 Do not include any other text — only the JSON object.
   `.trim(),
-  model: google("gemini-2.0-flash-lite"),
+  model: anthropic("claude-sonnet-4-20250514"),
 });
