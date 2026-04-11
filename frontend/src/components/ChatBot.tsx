@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { useQuery } from 'convex/react'
 import { useAuthToken } from '@convex-dev/auth/react'
 import { api } from '../../../backend/convex/_generated/api'
@@ -24,6 +24,21 @@ type ChatApiResponse = {
   entityCandidates?: EntityCandidate[]
   entityHasMore?: boolean
   phase?: 'task' | 'class'
+}
+
+/** Renders `**like this**` as bold (common in assistant copy; plain text otherwise). */
+function renderInlineBoldMarkdown(text: string): ReactNode {
+  const parts = text.split(/(\*\*.+?\*\*)/g)
+  return parts.map((part, i) => {
+    if (part.startsWith('**') && part.endsWith('**') && part.length > 4) {
+      return (
+        <strong key={i} className="font-semibold">
+          {part.slice(2, -2)}
+        </strong>
+      )
+    }
+    return part
+  })
 }
 
 export default function ChatBot() {
@@ -205,7 +220,7 @@ export default function ChatBot() {
                           Maxx
                         </span>
                         <MessageContent className="bg-white border border-border text-navy rounded-2xl rounded-tl-sm">
-                          {msg.content}
+                          {renderInlineBoldMarkdown(msg.content)}
                         </MessageContent>
                       </div>
                     </Message>
