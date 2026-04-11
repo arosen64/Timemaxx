@@ -32,6 +32,48 @@ export const saveMessage = internalMutation({
   },
 });
 
+/**
+ * Copy resolved task/class from MCQ onto the user message that started the clarify flow,
+ * and optionally drop the session pointer when disambiguation is complete.
+ */
+export const applyResolvedEntityToClarifyTriggerMessageInternal = internalMutation({
+  args: {
+    userId: v.id("users"),
+    sessionId: v.string(),
+    taskId: v.optional(v.id("tasks")),
+    courseId: v.optional(v.id("userCourses")),
+    clearTriggerPointer: v.boolean(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const session = await ctx.db
+      .query("chatSessions")
+      .withIndex("by_userId_sessionId", (q) =>
+        q.eq("userId", args.userId).eq("sessionId", args.sessionId),
+      )
+      .unique();
+    if (!session) throw new Error("chat session missing");
+
+    const triggerId = session.entityClarifyTriggerUserMessageId;
+    if (triggerId) {
+      const msg = await ctx.db.get(triggerId);
+      if (msg && msg.userId === args.userId && msg.role === "user") {
+        await ctx.db.patch(triggerId, {
+          ...(args.taskId !== undefined ? { taskId: args.taskId } : {}),
+          ...(args.courseId !== undefined ? { courseId: args.courseId } : {}),
+        });
+      }
+    }
+
+    if (args.clearTriggerPointer) {
+      await ctx.db.patch(session._id, {
+        entityClarifyTriggerUserMessageId: undefined,
+      });
+    }
+    return null;
+  },
+});
+
 export const patchUserMessageClarificationIntent = internalMutation({
   args: {
     userId: v.id("users"),

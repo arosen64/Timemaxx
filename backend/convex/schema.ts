@@ -187,6 +187,8 @@ export default defineSchema({
     sessionId: v.string(),
     resolvedTaskId: v.optional(v.id("tasks")),
     resolvedCourseId: v.optional(v.id("userCourses")),
+    /** User message that started the active MCQ clarify flow — tagged when user picks task/class */
+    entityClarifyTriggerUserMessageId: v.optional(v.id("chatMessages")),
     /** Last user utterance used for embedding search (MCQ / Other) */
     lastEntityQueryText: v.optional(v.string()),
     /** Which entity we are disambiguating in the active MCQ flow */
@@ -200,6 +202,9 @@ export default defineSchema({
     awaitingEntityResolution: v.optional(v.boolean()),
     /** User must answer Yes/No: still same scoped task/class? */
     awaitingScopeConfirm: v.optional(v.boolean()),
+    /** Legacy / UI flags for scope confirmation (may exist on older session docs) */
+    scopeConfirmPendingTask: v.optional(v.boolean()),
+    scopeConfirmPendingClass: v.optional(v.boolean()),
     /** After user answers No on scope — no more messages until new session */
     chatInputLocked: v.optional(v.boolean()),
     /** One-shot: next user message skips scope-change block after Yes */
