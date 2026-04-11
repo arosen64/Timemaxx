@@ -1,36 +1,286 @@
 import { Hono } from "hono";
 import { MastraClient } from "@mastra/client-js";
 import { internal } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
 import type { HonoEnv } from "./lib/httpTypes";
 
 const chatApp = new Hono<HonoEnv>();
 
+type EntityKind = "task" | "class" | "both" | "none";
+type MessageTag = "task_feedback" | "class_difficulty" | "none";
+
+type WorkflowRespondOutput = {
+  status: "needs_domain_clarification" | "needs_entity_clarification" | "routed";
+  clarifyingQuestion: string | null;
+  entityKind: EntityKind;
+  messageTag: MessageTag;
+  tagConfidence: number;
+  route: string | null;
+  reasoning: string | null;
+  query: string | null;
+  cannedResponse: string | null;
+};
+
+type ChatSessionSnapshot = {
+  resolvedTaskId?: Id<"tasks">;
+  resolvedCourseId?: Id<"userCourses">;
+  lastEntityQueryText?: string;
+  activeEntityStep?: "task" | "class";
+  needsClassAfterTask?: boolean;
+  clarificationAttemptCount?: number;
+  clarificationExhausted?: boolean;
+  awaitingEntityResolution?: boolean;
+};
+
+const EXHAUSTED_MSG =
+  "I still can't tell which task or class you mean after a few tries. " +
+  "Try naming a course code or assignment title, or open it from your list — then ask again.";
+
+const ENTITY_INTRO_TASK =
+  "Which task do you mean? Pick one below, or choose **Other** to see more options.";
+
+const ENTITY_INTRO_CLASS =
+  "Which class do you mean? Pick one below, or choose **Other** to see more options.";
+
+function resolveEntitySearchKind(
+  output: WorkflowRespondOutput,
+  session: ChatSessionSnapshot | null,
+): { kind: "task" | "class"; needsClassAfterTask: boolean } | null {
+  const hasTask = !!session?.resolvedTaskId;
+  const hasCourse = !!session?.resolvedCourseId;
+
+  /** "Both" flow: task resolved, still need a class */
+  const forcedClass =
+    session?.activeEntityStep === "class" && !!session?.resolvedTaskId && !hasCourse;
+
+  if (forcedClass) {
+    return { kind: "class", needsClassAfterTask: false };
+  }
+
+  if (output.status === "needs_entity_clarification") {
+    if (output.entityKind === "task") {
+      if (hasTask) return null;
+      return { kind: "task", needsClassAfterTask: false };
+    }
+    if (output.entityKind === "class") {
+      if (hasCourse) return null;
+      return { kind: "class", needsClassAfterTask: false };
+    }
+    if (output.entityKind === "both") {
+      if (!hasTask) return { kind: "task", needsClassAfterTask: true };
+      if (!hasCourse) return { kind: "class", needsClassAfterTask: false };
+      return null;
+    }
+  }
+
+  if (output.messageTag === "task_feedback" && !hasTask) {
+    return { kind: "task", needsClassAfterTask: false };
+  }
+  if (output.messageTag === "class_difficulty" && !hasCourse) {
+    return { kind: "class", needsClassAfterTask: false };
+  }
+
+  return null;
+}
+
 chatApp.post("/api/chat", async (c) => {
   const { ctx, userId } = c.env;
 
-  const body = await c.req.json<{ message?: string; sessionId?: string }>();
-  const message = body.message?.trim();
+  const body = await c.req.json<{
+    message?: string;
+    sessionId?: string;
+    entity?: {
+      action: "pick_task" | "pick_course" | "other_tasks" | "other_courses";
+      taskId?: string;
+      courseId?: string;
+      excludeTaskIds?: string[];
+      excludeCourseIds?: string[];
+    };
+  }>();
+
   const sessionId = body.sessionId?.trim();
-  if (!message || !sessionId) {
+  if (!sessionId) {
     return c.json({ error: "Bad Request" }, 400);
   }
 
-  await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
+  await ctx.runMutation(internal.mutations.chatSessions.getOrCreateChatSessionInternal, {
     userId,
     sessionId,
-    role: "user",
-    content: message,
+  });
+
+  const session = await ctx.runQuery(internal.queries.chatSessions.getChatSessionInternal, {
+    userId,
+    sessionId,
   });
 
   const mastraUrl = process.env.MASTRA_URL;
   if (!mastraUrl) return c.json({ error: "MASTRA_URL not configured" }, 503);
   const client = new MastraClient({ baseUrl: mastraUrl });
 
-  // Run supervisor workflow to clarify and route the query
+  // ── Entity UI actions (MCQ / Other) — no supervisor call ────────────────────
+  if (body.entity?.action === "pick_task" && body.entity.taskId) {
+    const taskId = body.entity.taskId as Id<"tasks">;
+    const { needsClassNext } = await ctx.runMutation(
+      internal.mutations.chatSessions.resolvePickedTaskInternal,
+      { userId, sessionId, taskId },
+    );
+    const intro = needsClassNext ? ENTITY_INTRO_CLASS : "Got it — I’ll use that task.";
+    await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
+      userId,
+      sessionId,
+      role: "assistant",
+      content: intro,
+    });
+    if (needsClassNext) {
+      const s2 = await ctx.runQuery(internal.queries.chatSessions.getChatSessionInternal, {
+        userId,
+        sessionId,
+      });
+      const qText = s2?.lastEntityQueryText ?? "";
+      const { candidates, hasMore } = await ctx.runAction(
+        internal.actions.entityResolution.searchCourseCandidates,
+        {
+          userId,
+          queryText: qText,
+          excludeIds: [],
+        },
+      );
+      await ctx.runMutation(internal.mutations.chatSessions.setEntityPromptStateInternal, {
+        userId,
+        sessionId,
+        lastEntityQueryText: qText,
+        activeEntityStep: "class",
+        needsClassAfterTask: false,
+        awaitingEntityResolution: true,
+      });
+      return c.json({
+        text: intro,
+        status: "needs_entity_clarification",
+        phase: "class",
+        entityCandidates: candidates,
+        entityHasMore: hasMore,
+        route: null,
+      });
+    }
+    return c.json({
+      text: intro,
+      status: "entity_resolved",
+      phase: "task",
+      route: null,
+    });
+  }
+
+  if (body.entity?.action === "pick_course" && body.entity.courseId) {
+    const courseId = body.entity.courseId as Id<"userCourses">;
+    await ctx.runMutation(internal.mutations.chatSessions.resolvePickedCourseInternal, {
+      userId,
+      sessionId,
+      courseId,
+    });
+    const text = "Thanks — I’ve got the class.";
+    await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
+      userId,
+      sessionId,
+      role: "assistant",
+      content: text,
+    });
+    return c.json({
+      text,
+      status: "entity_resolved",
+      phase: "class",
+      route: null,
+    });
+  }
+
+  if (body.entity?.action === "other_tasks") {
+    const qText = session?.lastEntityQueryText ?? "";
+    if (!qText) {
+      return c.json({ error: "Missing entity query context" }, 400);
+    }
+    const exclude = (body.entity.excludeTaskIds ?? []) as Id<"tasks">[];
+    const { candidates, hasMore } = await ctx.runAction(
+      internal.actions.entityResolution.searchTaskCandidates,
+      {
+        userId,
+        queryText: qText,
+        excludeIds: exclude,
+      },
+    );
+    return c.json({
+      text: ENTITY_INTRO_TASK,
+      status: "needs_entity_clarification",
+      phase: "task",
+      entityCandidates: candidates,
+      entityHasMore: hasMore,
+      route: null,
+    });
+  }
+
+  if (body.entity?.action === "other_courses") {
+    const qText = session?.lastEntityQueryText ?? "";
+    if (!qText) {
+      return c.json({ error: "Missing entity query context" }, 400);
+    }
+    const exclude = (body.entity.excludeCourseIds ?? []) as Id<"userCourses">[];
+    const { candidates, hasMore } = await ctx.runAction(
+      internal.actions.entityResolution.searchCourseCandidates,
+      {
+        userId,
+        queryText: qText,
+        excludeIds: exclude,
+      },
+    );
+    return c.json({
+      text: ENTITY_INTRO_CLASS,
+      status: "needs_entity_clarification",
+      phase: "class",
+      entityCandidates: candidates,
+      entityHasMore: hasMore,
+      route: null,
+    });
+  }
+
+  // ── Normal chat message ─────────────────────────────────────────────────────
+  const message = body.message?.trim();
+  if (!message) {
+    return c.json({ error: "Bad Request" }, 400);
+  }
+
+  const userMessageId = await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
+    userId,
+    sessionId,
+    role: "user",
+    content: message,
+  });
+
+  const sessionNow = await ctx.runQuery(internal.queries.chatSessions.getChatSessionInternal, {
+    userId,
+    sessionId,
+  });
+
+  if (sessionNow?.awaitingEntityResolution && !sessionNow.clarificationExhausted) {
+    const inc = await ctx.runMutation(
+      internal.mutations.chatSessions.incrementClarificationFailureInternal,
+      { userId, sessionId },
+    );
+    if (inc.exhausted) {
+      await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
+        userId,
+        sessionId,
+        role: "assistant",
+        content: EXHAUSTED_MSG,
+      });
+      return c.json({
+        text: EXHAUSTED_MSG,
+        status: "clarification_exhausted",
+        route: null,
+      });
+    }
+  }
+
   const workflow = client.getWorkflow("supervisor-workflow");
   const run = await workflow.startAsync({ inputData: { query: message } });
 
-  // Check if any step failed (e.g. quota exceeded — Mastra swallows step errors instead of throwing)
   for (const step of Object.values(run.steps ?? {})) {
     if (!("output" in step)) {
       const errMsg = (step as { error?: string }).error ?? "";
@@ -41,35 +291,197 @@ chatApp.post("/api/chat", async (c) => {
   }
 
   const respondStep = run.steps?.["respond"];
-  const output = (respondStep && "output" in respondStep ? respondStep.output : null) as {
-    status: string;
-    clarifyingQuestion: string | null;
-    route: string | null;
-    cannedResponse: string | null;
-  } | null;
+  const output = (respondStep && "output" in respondStep ? respondStep.output : null) as
+    | WorkflowRespondOutput
+    | null;
 
-  // Clarification needed
-  if (output?.status === "needs_clarification" && output.clarifyingQuestion) {
+  if (!output) {
+    return c.json({ error: "supervisor_unavailable" }, 502);
+  }
+
+  await ctx.runMutation(internal.mutations.chatMessages.patchUserMessageClarificationIntent, {
+    userId,
+    messageId: userMessageId,
+    clarificationIntent: output.messageTag,
+  });
+
+  const sessionForEntity = await ctx.runQuery(internal.queries.chatSessions.getChatSessionInternal, {
+    userId,
+    sessionId,
+  });
+
+  const skipEntityMcq = sessionForEntity?.clarificationExhausted === true;
+  const searchPlan = skipEntityMcq ? null : resolveEntitySearchKind(output, sessionForEntity);
+
+  if (output.status === "needs_domain_clarification" && output.clarifyingQuestion) {
+    await ctx.runMutation(internal.mutations.chatSessions.clearEntityAwaitingInternal, {
+      userId,
+      sessionId,
+    });
     const aiText = output.clarifyingQuestion;
     await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
-      userId, sessionId, role: "assistant", content: aiText,
+      userId,
+      sessionId,
+      role: "assistant",
+      content: aiText,
     });
-    return c.json({ text: aiText, status: "needs_clarification" });
+    return c.json({
+      text: aiText,
+      status: "needs_domain_clarification",
+      route: null,
+      entityKind: output.entityKind,
+      messageTag: output.messageTag,
+      tagConfidence: output.tagConfidence,
+    });
   }
 
-  // Canned response for page-specific routes (classes, schedule)
-  if (output?.cannedResponse) {
+  if (searchPlan && !skipEntityMcq) {
+    const queryText = message;
+    if (searchPlan.kind === "task") {
+      const { candidates, hasMore } = await ctx.runAction(
+        internal.actions.entityResolution.searchTaskCandidates,
+        {
+          userId,
+          queryText,
+          excludeIds: [],
+        },
+      );
+      const aiText =
+        candidates.length === 0
+          ? "I couldn’t match that to your tasks yet. Try naming the assignment, or add tasks in your dashboard."
+          : ENTITY_INTRO_TASK;
+      await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
+        userId,
+        sessionId,
+        role: "assistant",
+        content: aiText,
+      });
+      if (candidates.length === 0) {
+        await ctx.runMutation(internal.mutations.chatSessions.clearEntityAwaitingInternal, {
+          userId,
+          sessionId,
+        });
+        return c.json({
+          text: aiText,
+          status: "routed",
+          route: output.route,
+          entityKind: output.entityKind,
+          messageTag: output.messageTag,
+          tagConfidence: output.tagConfidence,
+        });
+      }
+      await ctx.runMutation(internal.mutations.chatSessions.setEntityPromptStateInternal, {
+        userId,
+        sessionId,
+        lastEntityQueryText: queryText,
+        activeEntityStep: "task",
+        needsClassAfterTask: searchPlan.needsClassAfterTask,
+        awaitingEntityResolution: true,
+      });
+      return c.json({
+        text: aiText,
+        status: "needs_entity_clarification",
+        phase: "task",
+        entityCandidates: candidates,
+        entityHasMore: hasMore,
+        route: output.route,
+        entityKind: output.entityKind,
+        messageTag: output.messageTag,
+        tagConfidence: output.tagConfidence,
+        needsClassAfterTask: searchPlan.needsClassAfterTask,
+      });
+    }
+
+    const { candidates, hasMore } = await ctx.runAction(
+      internal.actions.entityResolution.searchCourseCandidates,
+      {
+        userId,
+        queryText,
+        excludeIds: [],
+      },
+    );
+    const aiText =
+      candidates.length === 0
+        ? "I couldn’t match that to your courses yet. Try a course code, or add classes first."
+        : ENTITY_INTRO_CLASS;
+    await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
+      userId,
+      sessionId,
+      role: "assistant",
+      content: aiText,
+    });
+    if (candidates.length === 0) {
+      await ctx.runMutation(internal.mutations.chatSessions.clearEntityAwaitingInternal, {
+        userId,
+        sessionId,
+      });
+      return c.json({
+        text: aiText,
+        status: "routed",
+        route: output.route,
+        entityKind: output.entityKind,
+        messageTag: output.messageTag,
+        tagConfidence: output.tagConfidence,
+      });
+    }
+    await ctx.runMutation(internal.mutations.chatSessions.setEntityPromptStateInternal, {
+      userId,
+      sessionId,
+      lastEntityQueryText: queryText,
+      activeEntityStep: "class",
+      needsClassAfterTask: false,
+      awaitingEntityResolution: true,
+    });
+    return c.json({
+      text: aiText,
+      status: "needs_entity_clarification",
+      phase: "class",
+      entityCandidates: candidates,
+      entityHasMore: hasMore,
+      route: output.route,
+      entityKind: output.entityKind,
+      messageTag: output.messageTag,
+      tagConfidence: output.tagConfidence,
+    });
+  }
+
+  if (output.cannedResponse) {
+    await ctx.runMutation(internal.mutations.chatSessions.clearEntityAwaitingInternal, {
+      userId,
+      sessionId,
+    });
     const aiText = output.cannedResponse;
     await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
-      userId, sessionId, role: "assistant", content: aiText,
+      userId,
+      sessionId,
+      role: "assistant",
+      content: aiText,
     });
-    return c.json({ text: aiText, status: "routed", route: output.route });
+    return c.json({
+      text: aiText,
+      status: "routed",
+      route: output.route,
+      entityKind: output.entityKind,
+      messageTag: output.messageTag,
+      tagConfidence: output.tagConfidence,
+    });
   }
 
-  const route = output?.route ?? null;
-  const routeLabel = route ? `Routed to: **${route}**` : "";
-  return c.json({ text: routeLabel, status: "routed", route });
+  await ctx.runMutation(internal.mutations.chatSessions.clearEntityAwaitingInternal, {
+    userId,
+    sessionId,
+  });
 
+  const route = output.route ?? null;
+  const routeLabel = route ? `Routed to: **${route}**` : "";
+  return c.json({
+    text: routeLabel,
+    status: "routed",
+    route,
+    entityKind: output.entityKind,
+    messageTag: output.messageTag,
+    tagConfidence: output.tagConfidence,
+  });
 });
 
 export default chatApp;

@@ -16,6 +16,15 @@ const SUGGESTIONS = [
   'Help me prioritize my workload',
 ]
 
+type EntityCandidate = { id: string; label: string; subtitle: string }
+
+type ChatApiResponse = {
+  text?: string
+  status?: string
+  entityCandidates?: EntityCandidate[]
+  entityHasMore?: boolean
+  phase?: 'task' | 'class'
+}
 
 export default function ChatBot() {
   const [isOpen, setIsOpen] = useState(false)
@@ -24,6 +33,11 @@ export default function ChatBot() {
   const [isLoading, setIsLoading] = useState(false)
   const [optimistic, setOptimistic] = useState<{ role: 'user' | 'assistant'; content: string }[]>([])
   const [historyLenAtSend, setHistoryLenAtSend] = useState(0)
+  const [entityMcq, setEntityMcq] = useState<{
+    phase: 'task' | 'class'
+    candidates: EntityCandidate[]
+    hasMore: boolean
+  } | null>(null)
 
   const token = useAuthToken()
   const history = useQuery(api.queries.chatMessages.getChatHistory, { sessionId, limit: 50 }) ?? []
@@ -38,49 +52,106 @@ export default function ChatBot() {
 
   const showSuggestions = messages.length === 0 && !isLoading
 
+  function applyEntityResponse(data: ChatApiResponse, userEcho: string | null) {
+    const aiText = data.text ?? ''
+    if (data.entityCandidates && data.entityCandidates.length > 0 && data.phase) {
+      setEntityMcq({
+        phase: data.phase,
+        candidates: data.entityCandidates,
+        hasMore: data.entityHasMore ?? false,
+      })
+    } else {
+      setEntityMcq(null)
+    }
+    if (userEcho !== null) {
+      setOptimistic([
+        { role: 'user', content: userEcho },
+        { role: 'assistant', content: aiText },
+      ])
+    } else {
+      // MCQ actions persist via Convex; avoid double-rendering with optimistic rows
+      setOptimistic([])
+    }
+  }
+
+  async function postChat(body: Record<string, unknown>, userEcho: string | null) {
+    const res = await fetch(`${import.meta.env.VITE_CONVEX_SITE_URL}/api/chat`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify(body),
+    })
+    if (!res.ok) {
+      if (res.status === 429) {
+        throw new Error('Maxx has hit the AI rate limit — please wait a moment and try again.')
+      }
+      const errText = await res.text().catch(() => '(no body)')
+      throw new Error(`Chat request failed: ${res.status} ${errText}`)
+    }
+    const data = (await res.json()) as ChatApiResponse
+    applyEntityResponse(data, userEcho)
+  }
+
   async function handleSend() {
     const text = input.trim()
     if (!text || isLoading) return
 
     setInput('')
     setIsLoading(true)
+    setEntityMcq(null)
     setHistoryLenAtSend(history.length)
     setOptimistic([{ role: 'user', content: text }])
 
     try {
-      const res = await fetch(
-        `${import.meta.env.VITE_CONVEX_SITE_URL}/api/chat`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-          },
-          body: JSON.stringify({ message: text, sessionId }),
-        }
-      )
-
-      if (!res.ok) {
-        if (res.status === 429) {
-          throw new Error("Maxx has hit the AI rate limit — please wait a moment and try again.")
-        }
-        const errText = await res.text().catch(() => '(no body)')
-        throw new Error(`Chat request failed: ${res.status} ${errText}`)
-      }
-
-      const data = await res.json() as { text?: string }
-      const aiText = data.text ?? ''
-      setOptimistic([
-        { role: 'user', content: text },
-        { role: 'assistant', content: aiText },
-      ])
+      await postChat({ message: text, sessionId }, text)
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
       console.error('[ChatBot] error:', msg)
-      setOptimistic((prev) => [
-        ...prev,
-        { role: 'assistant', content: `Error: ${msg}` },
-      ])
+      setOptimistic((prev) => [...prev, { role: 'assistant', content: `Error: ${msg}` }])
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  async function handlePickEntity(phase: 'task' | 'class', id: string) {
+    if (isLoading) return
+    setIsLoading(true)
+    setEntityMcq(null)
+    try {
+      if (phase === 'task') {
+        await postChat({ sessionId, entity: { action: 'pick_task', taskId: id } }, null)
+      } else {
+        await postChat({ sessionId, entity: { action: 'pick_course', courseId: id } }, null)
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      setOptimistic((prev) => [...prev, { role: 'assistant', content: `Error: ${msg}` }])
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  async function handleOtherEntity() {
+    if (!entityMcq || isLoading || !entityMcq.hasMore) return
+    const ids = entityMcq.candidates.map((c) => c.id)
+    setIsLoading(true)
+    try {
+      if (entityMcq.phase === 'task') {
+        await postChat(
+          { sessionId, entity: { action: 'other_tasks', excludeTaskIds: ids } },
+          null,
+        )
+      } else {
+        await postChat(
+          { sessionId, entity: { action: 'other_courses', excludeCourseIds: ids } },
+          null,
+        )
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      setOptimistic((prev) => [...prev, { role: 'assistant', content: `Error: ${msg}` }])
     } finally {
       setIsLoading(false)
     }
@@ -103,6 +174,7 @@ export default function ChatBot() {
                 setIsOpen(false)
                 setSessionId(crypto.randomUUID())
                 setOptimistic([])
+                setEntityMcq(null)
                 setInput('')
               }}
               aria-label="Close chat"
@@ -170,6 +242,45 @@ export default function ChatBot() {
                   </div>
                 )}
 
+                {entityMcq && entityMcq.candidates.length > 0 && (
+                  <div className="rounded-xl border border-border bg-white p-3 space-y-2">
+                    <p className="text-[11px] font-heading font-semibold text-navy">
+                      {entityMcq.phase === 'task' ? 'Pick a task' : 'Pick a class'}
+                    </p>
+                    <div className="flex flex-col gap-1.5 max-h-40 overflow-y-auto">
+                      {entityMcq.candidates.map((c) => (
+                        <button
+                          key={c.id}
+                          type="button"
+                          onClick={() => void handlePickEntity(entityMcq.phase, c.id)}
+                          disabled={isLoading}
+                          className="text-left rounded-lg border border-border px-2.5 py-2 text-[12px] hover:bg-bg-gray transition disabled:opacity-50"
+                        >
+                          <span className="font-medium text-navy block">{c.label}</span>
+                          <span className="text-light-blue text-[11px]">{c.subtitle}</span>
+                        </button>
+                      ))}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => void handleOtherEntity()}
+                      disabled={isLoading || !entityMcq.hasMore}
+                      title={
+                        entityMcq.hasMore
+                          ? 'Show more options'
+                          : 'No more matches for this search'
+                      }
+                      className={
+                        entityMcq.hasMore
+                          ? 'w-full rounded-lg border border-dashed border-teal/50 py-2 text-[12px] font-medium text-teal hover:bg-teal/5 transition disabled:opacity-50'
+                          : 'w-full rounded-lg border border-dashed border-border py-2 text-[12px] font-medium text-light-blue cursor-not-allowed opacity-70'
+                      }
+                    >
+                      Other…
+                    </button>
+                  </div>
+                )}
+
                 <ChatContainerScrollAnchor />
               </ChatContainerContent>
 
@@ -215,6 +326,7 @@ export default function ChatBot() {
             setIsOpen(false)
             setSessionId(crypto.randomUUID())
             setOptimistic([])
+            setEntityMcq(null)
             setInput('')
           } else {
             setIsOpen(true)

@@ -161,9 +161,35 @@ export default defineSchema({
     role: v.union(v.literal("user"), v.literal("assistant")),
     content: v.string(),
     createdAt: v.number(),
+    clarificationIntent: v.optional(
+      v.union(
+        v.literal("task_feedback"),
+        v.literal("class_difficulty"),
+        v.literal("none"),
+      ),
+    ),
   })
     .index("by_userId_createdAt", ["userId", "createdAt"])
     .index("by_session", ["sessionId"]),
+
+  /** Chat widget session — resolved entities + clarification state (Part 2) */
+  chatSessions: defineTable({
+    userId: v.id("users"),
+    sessionId: v.string(),
+    resolvedTaskId: v.optional(v.id("tasks")),
+    resolvedCourseId: v.optional(v.id("userCourses")),
+    /** Last user utterance used for embedding search (MCQ / Other) */
+    lastEntityQueryText: v.optional(v.string()),
+    /** Which entity we are disambiguating in the active MCQ flow */
+    activeEntityStep: v.optional(
+      v.union(v.literal("task"), v.literal("class")),
+    ),
+    /** Supervisor said "both" — after task, prompt for class */
+    needsClassAfterTask: v.optional(v.boolean()),
+    clarificationAttemptCount: v.optional(v.number()),
+    clarificationExhausted: v.optional(v.boolean()),
+    awaitingEntityResolution: v.optional(v.boolean()),
+  }).index("by_userId_sessionId", ["userId", "sessionId"]),
 
   // Syllabi table — tracks uploaded syllabus files and their processing status
   syllabi: defineTable({
