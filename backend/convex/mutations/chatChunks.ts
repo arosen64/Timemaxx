@@ -84,19 +84,3 @@ export const rebuildChatChunksForSessionInternal = internalMutation({
     return null;
   },
 });
-
-export const patchChatChunkEmbedding = internalMutation({
-  args: {
-    chatChunkId: v.id("chatChunks"),
-    embedding: v.array(v.float64()),
-  },
-  returns: v.null(),
-  handler: async (ctx, args) => {
-    const row = await ctx.db.get(args.chatChunkId);
-    if (!row) {
-      return null;
-    }
-    await ctx.db.patch(args.chatChunkId, { embedding: args.embedding });
-    return null;
-  },
-});

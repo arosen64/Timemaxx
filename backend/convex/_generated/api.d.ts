@@ -39,6 +39,7 @@ import type * as lib_sanitize from "../lib/sanitize.js";
 import type * as lib_syllabusTypes from "../lib/syllabusTypes.js";
 import type * as lib_taskValidators from "../lib/taskValidators.js";
 import type * as mutations_calendar from "../mutations/calendar.js";
+import type * as mutations_chatChunkEmbeddings from "../mutations/chatChunkEmbeddings.js";
 import type * as mutations_chatChunks from "../mutations/chatChunks.js";
 import type * as mutations_chatMessages from "../mutations/chatMessages.js";
 import type * as mutations_chatSessions from "../mutations/chatSessions.js";
@@ -96,6 +97,7 @@ declare const fullApi: ApiFromModules<{
   "lib/syllabusTypes": typeof lib_syllabusTypes;
   "lib/taskValidators": typeof lib_taskValidators;
   "mutations/calendar": typeof mutations_calendar;
+  "mutations/chatChunkEmbeddings": typeof mutations_chatChunkEmbeddings;
   "mutations/chatChunks": typeof mutations_chatChunks;
   "mutations/chatMessages": typeof mutations_chatMessages;
   "mutations/chatSessions": typeof mutations_chatSessions;

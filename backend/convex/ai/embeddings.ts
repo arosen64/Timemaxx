@@ -57,7 +57,7 @@ export const generateChatChunkEmbedding = internalAction({
     }
     try {
       const embedding = await embedGeminiText(args.text);
-      await ctx.runMutation(internal.mutations.chatChunks.patchChatChunkEmbedding, {
+      await ctx.runMutation(internal.mutations.chatChunkEmbeddings.patchChatChunkEmbedding, {
         chatChunkId: args.chatChunkId,
         embedding,
       });
