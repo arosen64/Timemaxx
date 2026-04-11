@@ -60,6 +60,11 @@ export default function ChatBot() {
 
   const token = useAuthToken()
   const history = useQuery(api.queries.chatMessages.getChatHistory, { sessionId, limit: 50 }) ?? []
+  const entityScope =
+    useQuery(
+      api.queries.chatSessions.getChatSessionEntityScope,
+      isOpen ? { sessionId } : 'skip',
+    ) ?? null
 
   // Show optimistic[i] only while history hasn't committed that index yet.
   // Using a cursor (history length at send time) instead of content comparison
@@ -80,7 +85,9 @@ export default function ChatBot() {
     if (userEcho !== null) {
       setEntityChoiceHistory([])
     }
-    if (entityPick) {
+    if (data.status === 'entity_scope_locked') {
+      setEntityChoiceHistory([])
+    } else if (entityPick) {
       setEntityChoiceHistory((prev) => [...prev, entityPick])
     }
     if (data.entityCandidates && data.entityCandidates.length > 0 && data.phase) {
@@ -206,10 +213,24 @@ export default function ChatBot() {
       {isOpen && (
         <div className="flex w-[400px] h-[600px] flex-col rounded-2xl border border-border bg-white shadow-xl overflow-hidden">
           {/* Header */}
-          <div className="flex h-14 shrink-0 items-center justify-between bg-navy px-5">
-            <div className="flex items-center gap-2.5">
-              <span className="h-2 w-2 rounded-full bg-teal" />
-              <span className="font-heading text-[15px] font-semibold text-white">Maxx ✦</span>
+          <div className="flex min-h-14 shrink-0 items-start justify-between gap-3 bg-navy px-5 py-2.5">
+            <div className="flex min-w-0 flex-1 flex-col gap-1 pt-0.5">
+              <div className="flex items-center gap-2.5">
+                <span className="h-2 w-2 shrink-0 rounded-full bg-teal" />
+                <span className="font-heading text-[15px] font-semibold text-white">Maxx ✦</span>
+              </div>
+              {entityScope && entityScope.entityScopeTags.length > 0 && (
+                <div className="flex flex-wrap gap-1 pl-4">
+                  {entityScope.entityScopeTags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="rounded bg-white/15 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide text-white/90"
+                    >
+                      {tag === 'task_id_set' ? 'Task ID set' : 'Class ID set'}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
             <button
               type="button"
@@ -222,7 +243,7 @@ export default function ChatBot() {
                 setInput('')
               }}
               aria-label="Close chat"
-              className="flex h-7 w-7 items-center justify-center rounded-md bg-white/10 hover:bg-white/20 transition"
+              className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-white/10 hover:bg-white/20 transition"
             >
               <XIcon color="white" size={12} />
             </button>

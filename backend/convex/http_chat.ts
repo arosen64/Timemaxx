@@ -48,6 +48,69 @@ const ENTITY_NUDGE_TASK =
 const ENTITY_NUDGE_CLASS =
   "I didn’t get a clear choice yet — tap one of the classes below, or **Other…**, so I know which one you mean.";
 
+const ENTITY_SCOPE_LOCK_MSG =
+  "This chat is already linked to a specific task and/or class. " +
+  "To ask about a **different** assignment or course, close this chat and start a **new** one (tap × on the widget, then open Maxx again for a fresh session).";
+
+/** Task chosen; we are still picking the matching class in the planned “both” flow. */
+function finishingClassAfterTaskLock(session: ChatSessionSnapshot | null): boolean {
+  return !!(
+    session?.resolvedTaskId &&
+    !session.resolvedCourseId &&
+    session.awaitingEntityResolution === true &&
+    session.activeEntityStep === "class"
+  );
+}
+
+/** User message would start another task/class disambiguation while this session is already scoped. */
+function shouldBlockEntityScopeChange(
+  output: WorkflowRespondOutput,
+  session: ChatSessionSnapshot | null,
+): boolean {
+  if (!session) return false;
+  const hasT = !!session.resolvedTaskId;
+  const hasC = !!session.resolvedCourseId;
+  const fc = finishingClassAfterTaskLock(session);
+
+  if (hasT && hasC) {
+    if (output.status === "needs_entity_clarification" && output.entityKind !== "none") {
+      return true;
+    }
+    if (output.messageTag === "task_feedback" || output.messageTag === "class_difficulty") {
+      return true;
+    }
+  }
+
+  if (hasT && !fc) {
+    if (output.messageTag === "task_feedback") return true;
+    if (output.status === "needs_entity_clarification") {
+      if (
+        output.entityKind === "task" ||
+        output.entityKind === "both" ||
+        output.entityKind === "class"
+      ) {
+        return true;
+      }
+    }
+  }
+
+  if (!hasT && hasC) {
+    if (output.messageTag === "class_difficulty" || output.messageTag === "task_feedback") {
+      return true;
+    }
+    if (
+      output.status === "needs_entity_clarification" &&
+      (output.entityKind === "class" ||
+        output.entityKind === "task" ||
+        output.entityKind === "both")
+    ) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 function resolveEntitySearchKind(
   output: WorkflowRespondOutput,
   session: ChatSessionSnapshot | null,
@@ -125,6 +188,19 @@ chatApp.post("/api/chat", async (c) => {
 
   // ── Entity UI actions (MCQ / Other) — no supervisor call ────────────────────
   if (body.entity?.action === "pick_task" && body.entity.taskId) {
+    if (session?.resolvedTaskId) {
+      await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
+        userId,
+        sessionId,
+        role: "assistant",
+        content: ENTITY_SCOPE_LOCK_MSG,
+      });
+      return c.json({
+        text: ENTITY_SCOPE_LOCK_MSG,
+        status: "entity_scope_locked",
+        route: null,
+      });
+    }
     const taskId = body.entity.taskId as Id<"tasks">;
     const { needsClassNext } = await ctx.runMutation(
       internal.mutations.chatSessions.resolvePickedTaskInternal,
@@ -177,6 +253,33 @@ chatApp.post("/api/chat", async (c) => {
   }
 
   if (body.entity?.action === "pick_course" && body.entity.courseId) {
+    const fin = finishingClassAfterTaskLock(session);
+    if (session?.resolvedCourseId) {
+      await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
+        userId,
+        sessionId,
+        role: "assistant",
+        content: ENTITY_SCOPE_LOCK_MSG,
+      });
+      return c.json({
+        text: ENTITY_SCOPE_LOCK_MSG,
+        status: "entity_scope_locked",
+        route: null,
+      });
+    }
+    if (session?.resolvedTaskId && !session.resolvedCourseId && !fin) {
+      await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
+        userId,
+        sessionId,
+        role: "assistant",
+        content: ENTITY_SCOPE_LOCK_MSG,
+      });
+      return c.json({
+        text: ENTITY_SCOPE_LOCK_MSG,
+        status: "entity_scope_locked",
+        route: null,
+      });
+    }
     const courseId = body.entity.courseId as Id<"userCourses">;
     await ctx.runMutation(internal.mutations.chatSessions.resolvePickedCourseInternal, {
       userId,
@@ -322,6 +425,27 @@ chatApp.post("/api/chat", async (c) => {
     userId,
     sessionId,
   });
+
+  if (shouldBlockEntityScopeChange(output, sessionForEntity)) {
+    await ctx.runMutation(internal.mutations.chatSessions.clearEntityAwaitingInternal, {
+      userId,
+      sessionId,
+    });
+    await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
+      userId,
+      sessionId,
+      role: "assistant",
+      content: ENTITY_SCOPE_LOCK_MSG,
+    });
+    return c.json({
+      text: ENTITY_SCOPE_LOCK_MSG,
+      status: "entity_scope_locked",
+      route: output.route,
+      entityKind: output.entityKind,
+      messageTag: output.messageTag,
+      tagConfidence: output.tagConfidence,
+    });
+  }
 
   const skipEntityMcq = sessionForEntity?.clarificationExhausted === true;
   const searchPlan = skipEntityMcq ? null : resolveEntitySearchKind(output, sessionForEntity);

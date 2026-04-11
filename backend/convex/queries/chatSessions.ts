@@ -1,4 +1,5 @@
-import { internalQuery } from "../_generated/server";
+import { getAuthUserId } from "@convex-dev/auth/server";
+import { internalQuery, query } from "../_generated/server";
 import { v } from "convex/values";
 
 export const getChatSessionInternal = internalQuery({
@@ -41,5 +42,35 @@ export const getChatSessionInternal = internalQuery({
       clarificationExhausted: row.clarificationExhausted,
       awaitingEntityResolution: row.awaitingEntityResolution,
     };
+  },
+});
+
+/** Tags for the chat widget header: which entity IDs are locked for this session. */
+export const getChatSessionEntityScope = query({
+  args: { sessionId: v.string() },
+  returns: v.union(
+    v.null(),
+    v.object({
+      entityScopeTags: v.array(
+        v.union(v.literal("task_id_set"), v.literal("class_id_set")),
+      ),
+    }),
+  ),
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+
+    const row = await ctx.db
+      .query("chatSessions")
+      .withIndex("by_userId_sessionId", (q) =>
+        q.eq("userId", userId).eq("sessionId", args.sessionId),
+      )
+      .unique();
+    if (!row) return null;
+
+    const entityScopeTags: Array<"task_id_set" | "class_id_set"> = [];
+    if (row.resolvedTaskId) entityScopeTags.push("task_id_set");
+    if (row.resolvedCourseId) entityScopeTags.push("class_id_set");
+    return { entityScopeTags };
   },
 });
