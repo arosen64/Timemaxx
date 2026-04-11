@@ -170,7 +170,7 @@ export default function TaskCard({
           {task.reasoning && (
             <div className="border-t border-border bg-info-bg px-[18px] py-3 flex flex-col gap-2.5">
               <div className="flex items-center gap-1.5">
-                <SparklesIcon color="#0077D8" size={12} />
+                <span className="text-info-emphasis"><SparklesIcon color="currentColor" size={12} /></span>
                 <span className="text-[11px] font-semibold font-heading text-info-emphasis">AI Reasoning</span>
               </div>
               {[
