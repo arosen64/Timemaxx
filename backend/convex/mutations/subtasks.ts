@@ -39,6 +39,10 @@ export const createSubtask = mutation({
       color: args.color,
       order: args.order,
       suggestedCompletionAt: args.suggestedCompletionAt,
+      // Inherit course, class tag, and due date from parent
+      courseId: parent.courseId,
+      classTag: parent.classTag,
+      dueDate: parent.dueDate,
       createdAt: Date.now(),
     });
   },
@@ -85,6 +89,18 @@ export const setSubtaskTimeEstimate = internalMutation({
   },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.subtaskId, { timeEstimate: args.timeEstimate });
+
+    // Roll up: sum all sibling estimates and patch parent task
+    const subtask = await ctx.db.get(args.subtaskId);
+    if (!subtask) return;
+
+    const siblings = await ctx.db
+      .query("subtasks")
+      .withIndex("by_parentTaskId", (q) => q.eq("parentTaskId", subtask.parentTaskId))
+      .collect();
+
+    const total = siblings.reduce((sum, s) => sum + (s.timeEstimate ?? 0), 0);
+    await ctx.db.patch(subtask.parentTaskId, { timeEstimate: total });
   },
 });
 

@@ -119,6 +119,17 @@ export const updateTask = mutation({
         ? { classTag: normalizeClassTag(args.classTag) }
         : {}),
     });
+
+    // Cascade dueDate change to child subtasks
+    if (args.dueDate !== task.dueDate) {
+      const subtasks = await ctx.db
+        .query("subtasks")
+        .withIndex("by_parentTaskId", (q) => q.eq("parentTaskId", args.taskId))
+        .collect();
+      for (const subtask of subtasks) {
+        await ctx.db.patch(subtask._id, { dueDate: args.dueDate });
+      }
+    }
   },
 });
 

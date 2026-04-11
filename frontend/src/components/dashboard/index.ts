@@ -9,7 +9,8 @@ export { default as StatCard } from './StatCard'
 export { default as ScheduleBlock } from './ScheduleBlock'
 export { default as TaskCard } from './TaskCard'
 export { default as TaskFeedbackForm } from './TaskFeedbackForm'
-export type { TaskType, EditForm, BuiltInTaskType, ClassTagCourseOption, FeedbackDraft } from './types'
+export { default as SubtaskCard } from './SubtaskCard'
+export type { TaskType, SubtaskType, EditForm, BuiltInTaskType, ClassTagCourseOption, FeedbackDraft } from './types'
 export {
   BUILT_IN_TASK_TYPES,
   TASK_TYPE_OPTIONS,
