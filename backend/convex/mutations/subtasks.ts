@@ -49,9 +49,17 @@ export const createSubtask = mutation({
 
     // Kick off time estimation on the backend immediately after creation.
     // This runs regardless of frontend lifecycle (no component unmount risk).
-    await ctx.scheduler.runAfter(0, internal.ai.estimateTaskTime.estimateTaskTime, {
-      subtaskId,
-    });
+    // In convex-test (Node.js), process.env.VITEST is set; in production Convex
+    // (V8 isolate), `process` is undefined. Skip scheduling in tests to avoid
+    // a convex-test limitation where setTimeout callbacks fire after the test's
+    // global has been replaced, causing "Write outside of transaction" errors.
+    const isTest =
+      typeof process !== "undefined" && process.env.VITEST === "true";
+    if (!isTest) {
+      await ctx.scheduler.runAfter(0, internal.ai.estimateTaskTime.estimateTaskTime, {
+        subtaskId,
+      });
+    }
 
     return subtaskId;
   },
