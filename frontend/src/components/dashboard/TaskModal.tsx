@@ -236,6 +236,8 @@ export default function TaskModal({
     setGeneratingSubtasks(true)
     setError(null)
     try {
+      // Delete existing subtasks first so regeneration doesn't create duplicates
+      if (onDeleteSubtasks) await onDeleteSubtasks()
       const result = await requestGenerateSubtasks({ taskId: existingTaskId })
       if ('error' in result) {
         setError(result.error)
