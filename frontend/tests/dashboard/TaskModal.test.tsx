@@ -3,6 +3,18 @@ import userEvent from '@testing-library/user-event'
 import { renderWithProviders } from '../utils'
 import TaskModal from '../../src/components/dashboard/TaskModal'
 
+vi.mock('../../../backend/convex/_generated/api', () => ({
+  api: {
+    actions: {
+      requestGenerateSubtasks: { requestGenerateSubtasks: 'requestGenerateSubtasks' },
+    },
+  },
+}))
+
+vi.mock('convex/react', () => ({
+  useAction: vi.fn().mockReturnValue(vi.fn()),
+}))
+
 function renderModal(overrides: Partial<Parameters<typeof TaskModal>[0]> = {}) {
   const props = {
     isOpen: true,
@@ -18,6 +30,7 @@ function renderModal(overrides: Partial<Parameters<typeof TaskModal>[0]> = {}) {
       dueDate: '',
       dueTime: '23:59',
       classTag: '',
+      timeEstimate: '',
     },
     onClose: vi.fn(),
     onSubmit: vi.fn().mockResolvedValue(undefined),
@@ -158,6 +171,7 @@ describe('TaskModal', () => {
         dueDate: '',
         dueTime: '23:59',
         classTag: '',
+        timeEstimate: '',
       },
     })
     expect(screen.getByDisplayValue('Existing Task')).toBeInTheDocument()
