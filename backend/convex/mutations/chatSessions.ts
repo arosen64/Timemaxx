@@ -147,6 +147,99 @@ export const clearEntityAwaitingInternal = internalMutation({
   },
 });
 
+export const beginAwaitingScopeConfirmInternal = internalMutation({
+  args: {
+    userId: v.id("users"),
+    sessionId: v.string(),
+    pendingScopeUserMessageId: v.optional(v.id("chatMessages")),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const row = await ctx.db
+      .query("chatSessions")
+      .withIndex("by_userId_sessionId", (q) =>
+        q.eq("userId", args.userId).eq("sessionId", args.sessionId),
+      )
+      .unique();
+    if (!row) throw new Error("chat session missing");
+    await ctx.db.patch(row._id, {
+      awaitingScopeConfirm: true,
+      ...(args.pendingScopeUserMessageId !== undefined
+        ? { pendingScopeUserMessageId: args.pendingScopeUserMessageId }
+        : {}),
+    });
+    return null;
+  },
+});
+
+export const resolveScopeConfirmYesInternal = internalMutation({
+  args: {
+    userId: v.id("users"),
+    sessionId: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const row = await ctx.db
+      .query("chatSessions")
+      .withIndex("by_userId_sessionId", (q) =>
+        q.eq("userId", args.userId).eq("sessionId", args.sessionId),
+      )
+      .unique();
+    if (!row) throw new Error("chat session missing");
+    await ctx.db.patch(row._id, {
+      awaitingScopeConfirm: false,
+      scopeBypassNextMessage: true,
+      pendingScopeUserMessageId: undefined,
+    });
+    return null;
+  },
+});
+
+export const resolveScopeConfirmNoInternal = internalMutation({
+  args: {
+    userId: v.id("users"),
+    sessionId: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const row = await ctx.db
+      .query("chatSessions")
+      .withIndex("by_userId_sessionId", (q) =>
+        q.eq("userId", args.userId).eq("sessionId", args.sessionId),
+      )
+      .unique();
+    if (!row) throw new Error("chat session missing");
+    await ctx.db.patch(row._id, {
+      awaitingScopeConfirm: false,
+      scopeBypassNextMessage: false,
+      chatInputLocked: true,
+      pendingScopeUserMessageId: undefined,
+    });
+    return null;
+  },
+});
+
+export const consumeScopeBypassInternal = internalMutation({
+  args: {
+    userId: v.id("users"),
+    sessionId: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const row = await ctx.db
+      .query("chatSessions")
+      .withIndex("by_userId_sessionId", (q) =>
+        q.eq("userId", args.userId).eq("sessionId", args.sessionId),
+      )
+      .unique();
+    if (!row) return null;
+    await ctx.db.patch(row._id, {
+      scopeBypassNextMessage: false,
+    });
+    return null;
+  },
+});
+
 export const incrementClarificationFailureInternal = internalMutation({
   args: {
     userId: v.id("users"),

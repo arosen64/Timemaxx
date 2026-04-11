@@ -24,6 +24,8 @@ type ChatApiResponse = {
   entityCandidates?: EntityCandidate[]
   entityHasMore?: boolean
   phase?: 'task' | 'class'
+  scopeConfirmTaskLabel?: string | null
+  scopeConfirmClassLabel?: string | null
 }
 
 type EntityPickMeta = { phase: 'task' | 'class'; label: string }
@@ -75,6 +77,27 @@ export default function ChatBot() {
   const messages = [...history, ...pendingMessages]
 
   const showSuggestions = messages.length === 0 && !isLoading
+  const chatLocked = entityScope?.chatInputLocked === true
+  const scopeConfirmOpen = entityScope?.awaitingScopeConfirm === true
+
+  async function handleScopeConfirm(yes: boolean) {
+    if (isLoading || chatLocked) return
+    setIsLoading(true)
+    try {
+      await postChat(
+        {
+          sessionId,
+          entity: { action: yes ? 'scope_confirm_yes' : 'scope_confirm_no' },
+        },
+        null,
+      )
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      setOptimistic((prev) => [...prev, { role: 'assistant', content: `Error: ${msg}` }])
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   function applyEntityResponse(
     data: ChatApiResponse,
@@ -82,10 +105,26 @@ export default function ChatBot() {
     entityPick?: EntityPickMeta,
   ) {
     const aiText = data.text ?? ''
+    if (data.status === 'awaiting_scope_reply') {
+      setEntityMcq(null)
+      if (userEcho !== null) setInput(userEcho)
+      setOptimistic([{ role: 'assistant', content: aiText }])
+      return
+    }
+    if (data.status === 'needs_scope_confirmation') {
+      setEntityMcq(null)
+      if (userEcho !== null) {
+        setEntityChoiceHistory([])
+        setOptimistic([{ role: 'user', content: userEcho }])
+      } else {
+        setOptimistic([])
+      }
+      return
+    }
     if (userEcho !== null) {
       setEntityChoiceHistory([])
     }
-    if (data.status === 'entity_scope_locked') {
+    if (data.status === 'entity_scope_locked' || data.status === 'chat_input_locked') {
       setEntityChoiceHistory([])
     } else if (entityPick) {
       setEntityChoiceHistory((prev) => [...prev, entityPick])
@@ -136,7 +175,7 @@ export default function ChatBot() {
 
   async function handleSend() {
     const text = input.trim()
-    if (!text || isLoading) return
+    if (!text || isLoading || chatLocked) return
 
     setInput('')
     setIsLoading(true)
@@ -157,7 +196,7 @@ export default function ChatBot() {
   }
 
   async function handlePickEntity(phase: 'task' | 'class', id: string) {
-    if (isLoading || !entityMcq) return
+    if (isLoading || chatLocked || !entityMcq) return
     const picked = entityMcq.candidates.find((c) => c.id === id)
     const label = picked?.label ?? 'Your choice'
     setIsLoading(true)
@@ -184,7 +223,7 @@ export default function ChatBot() {
   }
 
   async function handleOtherEntity() {
-    if (!entityMcq || isLoading || !entityMcq.hasMore) return
+    if (!entityMcq || isLoading || chatLocked || !entityMcq.hasMore) return
     const ids = entityMcq.candidates.map((c) => c.id)
     setIsLoading(true)
     try {
@@ -307,6 +346,48 @@ export default function ChatBot() {
                   </div>
                 )}
 
+                {scopeConfirmOpen && (
+                  <div className="rounded-xl border border-teal/40 bg-white p-3 space-y-2.5">
+                    <p className="text-[11px] font-heading font-semibold text-navy">
+                      Still the same task or class?
+                    </p>
+                    {(entityScope?.scopeConfirmTaskLabel || entityScope?.scopeConfirmClassLabel) && (
+                      <div className="rounded-lg bg-bg-gray/90 px-2.5 py-2 text-[12px] text-navy space-y-1">
+                        {entityScope?.scopeConfirmTaskLabel ? (
+                          <div>
+                            <span className="font-heading text-[10px] font-semibold text-teal">Task </span>
+                            <span className="font-medium">{entityScope.scopeConfirmTaskLabel}</span>
+                          </div>
+                        ) : null}
+                        {entityScope?.scopeConfirmClassLabel ? (
+                          <div>
+                            <span className="font-heading text-[10px] font-semibold text-teal">Class </span>
+                            <span className="font-medium">{entityScope.scopeConfirmClassLabel}</span>
+                          </div>
+                        ) : null}
+                      </div>
+                    )}
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        disabled={isLoading}
+                        onClick={() => void handleScopeConfirm(true)}
+                        className="flex-1 rounded-lg bg-teal py-2 text-[12px] font-semibold text-white hover:opacity-90 transition disabled:opacity-50"
+                      >
+                        Yes
+                      </button>
+                      <button
+                        type="button"
+                        disabled={isLoading}
+                        onClick={() => void handleScopeConfirm(false)}
+                        className="flex-1 rounded-lg border border-border py-2 text-[12px] font-semibold text-navy hover:bg-bg-gray transition disabled:opacity-50"
+                      >
+                        No
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 {(entityChoiceHistory.length > 0 || (entityMcq && entityMcq.candidates.length > 0)) && (
                   <div className="rounded-xl border border-border bg-white p-3 space-y-2">
                     {entityChoiceHistory.length > 0 && (
@@ -381,19 +462,30 @@ export default function ChatBot() {
 
           {/* Input */}
           <div className="shrink-0 border-t border-border bg-white px-4 py-3">
+            {chatLocked && (
+              <p className="mb-2 rounded-lg bg-amber-50 border border-amber-200 px-2.5 py-2 text-[11px] font-body text-amber-950">
+                This chat is closed for new messages. Tap × and open Maxx again to start a new session.
+              </p>
+            )}
             <PromptInput
               value={input}
               onValueChange={setInput}
               onSubmit={handleSend}
               isLoading={isLoading}
-              disabled={isLoading}
+              disabled={isLoading || chatLocked}
             >
-              <PromptInputTextarea placeholder="Ask me anything… (Enter to send)" />
+              <PromptInputTextarea
+                placeholder={
+                  chatLocked
+                    ? 'Chat closed — open a new session…'
+                    : 'Ask me anything… (Enter to send)'
+                }
+              />
               <PromptInputActions>
                 <Button
                   variant="primary"
                   onClick={handleSend}
-                  disabled={isLoading || !input.trim()}
+                  disabled={isLoading || chatLocked || !input.trim()}
                   className="w-16 h-9 text-sm rounded-lg shrink-0"
                 >
                   Send
@@ -401,7 +493,9 @@ export default function ChatBot() {
               </PromptInputActions>
             </PromptInput>
             <p className="mt-1.5 text-center text-[11px] font-body text-light-blue">
-              Enter to send · Shift+Enter for new line
+              {chatLocked
+                ? 'Start a new chat from the widget to continue.'
+                : 'Enter to send · Shift+Enter for new line'}
             </p>
           </div>
         </div>

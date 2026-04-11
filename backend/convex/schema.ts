@@ -189,6 +189,14 @@ export default defineSchema({
     clarificationAttemptCount: v.optional(v.number()),
     clarificationExhausted: v.optional(v.boolean()),
     awaitingEntityResolution: v.optional(v.boolean()),
+    /** User must answer Yes/No: still same scoped task/class? */
+    awaitingScopeConfirm: v.optional(v.boolean()),
+    /** After user answers No on scope — no more messages until new session */
+    chatInputLocked: v.optional(v.boolean()),
+    /** One-shot: next user message skips scope-change block after Yes */
+    scopeBypassNextMessage: v.optional(v.boolean()),
+    /** User message to re-process after scope Yes (same chat turn as original question) */
+    pendingScopeUserMessageId: v.optional(v.id("chatMessages")),
   }).index("by_userId_sessionId", ["userId", "sessionId"]),
 
   // Syllabi table — tracks uploaded syllabus files and their processing status

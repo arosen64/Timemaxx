@@ -1,6 +1,7 @@
-import { Hono } from "hono";
+import { Hono, type Context } from "hono";
 import { MastraClient } from "@mastra/client-js";
 import { internal } from "./_generated/api";
+import type { ActionCtx } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
 import type { HonoEnv } from "./lib/httpTypes";
 
@@ -30,6 +31,10 @@ type ChatSessionSnapshot = {
   clarificationAttemptCount?: number;
   clarificationExhausted?: boolean;
   awaitingEntityResolution?: boolean;
+  awaitingScopeConfirm?: boolean;
+  chatInputLocked?: boolean;
+  scopeBypassNextMessage?: boolean;
+  pendingScopeUserMessageId?: Id<"chatMessages">;
 };
 
 const EXHAUSTED_MSG =
@@ -48,9 +53,62 @@ const ENTITY_NUDGE_TASK =
 const ENTITY_NUDGE_CLASS =
   "I didn’t get a clear choice yet — tap one of the classes below, or **Other…**, so I know which one you mean.";
 
-const ENTITY_SCOPE_LOCK_MSG =
-  "This chat is already linked to a specific task and/or class. " +
-  "To ask about a **different** assignment or course, close this chat and start a **new** one (tap × on the widget, then open Maxx again for a fresh session).";
+const SCOPE_DENY_FINAL_MSG =
+  "You can’t have two different task or class topics in the same chat. Please **close** this chat (× on the widget), then open Maxx again for a fresh session.";
+
+const SCOPE_USE_BUTTONS_MSG =
+  "Please tap **Yes** or **No** below so I know whether you’re still on the same task or class.";
+
+const SCOPE_YES_ACK_MSG =
+  "Got it — I’ll keep this chat on that same task/class. Go ahead with your next message.";
+
+const CHAT_INPUT_LOCKED_REPLY_MSG =
+  "This chat was closed for new topics. Close the widget (×), then open Maxx again to start a fresh session.";
+
+async function persistAndReturnScopeConfirmation(
+  ctx: ActionCtx,
+  c: Context<HonoEnv>,
+  userId: Id<"users">,
+  sessionId: string,
+  meta?: {
+    route: string | null;
+    entityKind: EntityKind;
+    messageTag: MessageTag;
+    tagConfidence: number;
+  },
+  pendingUserMessageId?: Id<"chatMessages">,
+) {
+  const labels = await ctx.runQuery(internal.queries.chatSessions.getResolvedEntityLabelsInternal, {
+    userId,
+    sessionId,
+  });
+  await ctx.runMutation(internal.mutations.chatSessions.clearEntityAwaitingInternal, {
+    userId,
+    sessionId,
+  });
+  await ctx.runMutation(internal.mutations.chatSessions.beginAwaitingScopeConfirmInternal, {
+    userId,
+    sessionId,
+    ...(pendingUserMessageId !== undefined
+      ? { pendingScopeUserMessageId: pendingUserMessageId }
+      : {}),
+  });
+  /** Scope copy lives in the widget (Yes/No + labels); avoid duplicating as a chat bubble. */
+  return c.json({
+    text: "",
+    status: "needs_scope_confirmation",
+    scopeConfirmTaskLabel: labels.taskTitle,
+    scopeConfirmClassLabel: labels.courseLabel,
+    route: meta?.route ?? null,
+    ...(meta
+      ? {
+          entityKind: meta.entityKind,
+          messageTag: meta.messageTag,
+          tagConfidence: meta.tagConfidence,
+        }
+      : {}),
+  });
+}
 
 /** Task chosen; we are still picking the matching class in the planned “both” flow. */
 function finishingClassAfterTaskLock(session: ChatSessionSnapshot | null): boolean {
@@ -152,268 +210,18 @@ function resolveEntitySearchKind(
   return null;
 }
 
-chatApp.post("/api/chat", async (c) => {
-  const { ctx, userId } = c.env;
-
-  const body = await c.req.json<{
-    message?: string;
-    sessionId?: string;
-    entity?: {
-      action: "pick_task" | "pick_course" | "other_tasks" | "other_courses";
-      taskId?: string;
-      courseId?: string;
-      excludeTaskIds?: string[];
-      excludeCourseIds?: string[];
-    };
-  }>();
-
-  const sessionId = body.sessionId?.trim();
-  if (!sessionId) {
-    return c.json({ error: "Bad Request" }, 400);
-  }
-
-  await ctx.runMutation(internal.mutations.chatSessions.getOrCreateChatSessionInternal, {
-    userId,
-    sessionId,
-  });
-
-  const session = await ctx.runQuery(internal.queries.chatSessions.getChatSessionInternal, {
-    userId,
-    sessionId,
-  });
-
-  const mastraUrl = process.env.MASTRA_URL;
-  if (!mastraUrl) return c.json({ error: "MASTRA_URL not configured" }, 503);
-  const client = new MastraClient({ baseUrl: mastraUrl });
-
-  // ── Entity UI actions (MCQ / Other) — no supervisor call ────────────────────
-  if (body.entity?.action === "pick_task" && body.entity.taskId) {
-    if (session?.resolvedTaskId) {
-      await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
-        userId,
-        sessionId,
-        role: "assistant",
-        content: ENTITY_SCOPE_LOCK_MSG,
-      });
-      return c.json({
-        text: ENTITY_SCOPE_LOCK_MSG,
-        status: "entity_scope_locked",
-        route: null,
-      });
-    }
-    const taskId = body.entity.taskId as Id<"tasks">;
-    const { needsClassNext } = await ctx.runMutation(
-      internal.mutations.chatSessions.resolvePickedTaskInternal,
-      { userId, sessionId, taskId },
-    );
-    const intro = needsClassNext ? ENTITY_INTRO_CLASS : "Got it — I’ll use that task.";
-    await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
-      userId,
-      sessionId,
-      role: "assistant",
-      content: intro,
-    });
-    if (needsClassNext) {
-      const s2 = await ctx.runQuery(internal.queries.chatSessions.getChatSessionInternal, {
-        userId,
-        sessionId,
-      });
-      const qText = s2?.lastEntityQueryText ?? "";
-      const { candidates, hasMore } = await ctx.runAction(
-        internal.actions.entityResolution.searchCourseCandidates,
-        {
-          userId,
-          queryText: qText,
-          excludeIds: [],
-        },
-      );
-      await ctx.runMutation(internal.mutations.chatSessions.setEntityPromptStateInternal, {
-        userId,
-        sessionId,
-        lastEntityQueryText: qText,
-        activeEntityStep: "class",
-        needsClassAfterTask: false,
-        awaitingEntityResolution: true,
-      });
-      return c.json({
-        text: intro,
-        status: "needs_entity_clarification",
-        phase: "class",
-        entityCandidates: candidates,
-        entityHasMore: hasMore,
-        route: null,
-      });
-    }
-    return c.json({
-      text: intro,
-      status: "entity_resolved",
-      phase: "task",
-      route: null,
-    });
-  }
-
-  if (body.entity?.action === "pick_course" && body.entity.courseId) {
-    const fin = finishingClassAfterTaskLock(session);
-    if (session?.resolvedCourseId) {
-      await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
-        userId,
-        sessionId,
-        role: "assistant",
-        content: ENTITY_SCOPE_LOCK_MSG,
-      });
-      return c.json({
-        text: ENTITY_SCOPE_LOCK_MSG,
-        status: "entity_scope_locked",
-        route: null,
-      });
-    }
-    if (session?.resolvedTaskId && !session.resolvedCourseId && !fin) {
-      await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
-        userId,
-        sessionId,
-        role: "assistant",
-        content: ENTITY_SCOPE_LOCK_MSG,
-      });
-      return c.json({
-        text: ENTITY_SCOPE_LOCK_MSG,
-        status: "entity_scope_locked",
-        route: null,
-      });
-    }
-    const courseId = body.entity.courseId as Id<"userCourses">;
-    await ctx.runMutation(internal.mutations.chatSessions.resolvePickedCourseInternal, {
-      userId,
-      sessionId,
-      courseId,
-    });
-    const sessionAfterCourse = await ctx.runQuery(
-      internal.queries.chatSessions.getChatSessionInternal,
-      { userId, sessionId },
-    );
-    const hadTaskAlready = !!sessionAfterCourse?.resolvedTaskId;
-    const text = hadTaskAlready
-      ? "Thanks — I’ve got the task and the class you picked."
-      : "Thanks — I’ve got the class.";
-    await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
-      userId,
-      sessionId,
-      role: "assistant",
-      content: text,
-    });
-    return c.json({
-      text,
-      status: "entity_resolved",
-      phase: "class",
-      route: null,
-    });
-  }
-
-  if (body.entity?.action === "other_tasks") {
-    const qText = session?.lastEntityQueryText ?? "";
-    if (!qText) {
-      return c.json({ error: "Missing entity query context" }, 400);
-    }
-    const exclude = (body.entity.excludeTaskIds ?? []) as Id<"tasks">[];
-    const { candidates, hasMore } = await ctx.runAction(
-      internal.actions.entityResolution.searchTaskCandidates,
-      {
-        userId,
-        queryText: qText,
-        excludeIds: exclude,
-      },
-    );
-    return c.json({
-      text: ENTITY_INTRO_TASK,
-      status: "needs_entity_clarification",
-      phase: "task",
-      entityCandidates: candidates,
-      entityHasMore: hasMore,
-      route: null,
-    });
-  }
-
-  if (body.entity?.action === "other_courses") {
-    const qText = session?.lastEntityQueryText ?? "";
-    if (!qText) {
-      return c.json({ error: "Missing entity query context" }, 400);
-    }
-    const exclude = (body.entity.excludeCourseIds ?? []) as Id<"userCourses">[];
-    const { candidates, hasMore } = await ctx.runAction(
-      internal.actions.entityResolution.searchCourseCandidates,
-      {
-        userId,
-        queryText: qText,
-        excludeIds: exclude,
-      },
-    );
-    return c.json({
-      text: ENTITY_INTRO_CLASS,
-      status: "needs_entity_clarification",
-      phase: "class",
-      entityCandidates: candidates,
-      entityHasMore: hasMore,
-      route: null,
-    });
-  }
-
-  // ── Normal chat message ─────────────────────────────────────────────────────
-  const message = body.message?.trim();
-  if (!message) {
-    return c.json({ error: "Bad Request" }, 400);
-  }
-
-  const userMessageId = await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
-    userId,
-    sessionId,
-    role: "user",
-    content: message,
-  });
-
-  const sessionNow = await ctx.runQuery(internal.queries.chatSessions.getChatSessionInternal, {
-    userId,
-    sessionId,
-  });
-
-  if (sessionNow?.awaitingEntityResolution && !sessionNow.clarificationExhausted) {
-    const inc = await ctx.runMutation(
-      internal.mutations.chatSessions.incrementClarificationFailureInternal,
-      { userId, sessionId },
-    );
-    if (inc.exhausted) {
-      await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
-        userId,
-        sessionId,
-        role: "assistant",
-        content: EXHAUSTED_MSG,
-      });
-      return c.json({
-        text: EXHAUSTED_MSG,
-        status: "clarification_exhausted",
-        route: null,
-      });
-    }
-  }
-
-  const workflow = client.getWorkflow("supervisor-workflow");
-  const run = await workflow.startAsync({ inputData: { query: message } });
-
-  for (const step of Object.values(run.steps ?? {})) {
-    if (!("output" in step)) {
-      const errMsg = (step as { error?: string }).error ?? "";
-      if (errMsg.includes("quota") || errMsg.includes("RESOURCE_EXHAUSTED") || errMsg.includes("429")) {
-        return c.json({ error: "quota_exceeded" }, 429);
-      }
-    }
-  }
-
-  const respondStep = run.steps?.["respond"];
-  const output = (respondStep && "output" in respondStep ? respondStep.output : null) as
-    | WorkflowRespondOutput
-    | null;
-
-  if (!output) {
-    return c.json({ error: "supervisor_unavailable" }, 502);
-  }
+async function continueAfterSupervisorOutput(
+  ctx: ActionCtx,
+  c: Context<HonoEnv>,
+  params: {
+    userId: Id<"users">;
+    sessionId: string;
+    message: string;
+    userMessageId: Id<"chatMessages">;
+    output: WorkflowRespondOutput;
+  },
+): Promise<Response> {
+  const { userId, sessionId, message, userMessageId, output } = params;
 
   await ctx.runMutation(internal.mutations.chatMessages.patchUserMessageClarificationIntent, {
     userId,
@@ -426,25 +234,23 @@ chatApp.post("/api/chat", async (c) => {
     sessionId,
   });
 
-  if (shouldBlockEntityScopeChange(output, sessionForEntity)) {
-    await ctx.runMutation(internal.mutations.chatSessions.clearEntityAwaitingInternal, {
+  const blockedInit = shouldBlockEntityScopeChange(output, sessionForEntity);
+  const hadBypass = sessionForEntity?.scopeBypassNextMessage === true;
+  if (hadBypass) {
+    await ctx.runMutation(internal.mutations.chatSessions.consumeScopeBypassInternal, {
       userId,
       sessionId,
     });
-    await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
-      userId,
-      sessionId,
-      role: "assistant",
-      content: ENTITY_SCOPE_LOCK_MSG,
-    });
-    return c.json({
-      text: ENTITY_SCOPE_LOCK_MSG,
-      status: "entity_scope_locked",
+  }
+  const effectiveScopeBlock = blockedInit && !hadBypass;
+
+  if (effectiveScopeBlock) {
+    return persistAndReturnScopeConfirmation(ctx, c, userId, sessionId, {
       route: output.route,
       entityKind: output.entityKind,
       messageTag: output.messageTag,
       tagConfidence: output.tagConfidence,
-    });
+    }, userMessageId);
   }
 
   const skipEntityMcq = sessionForEntity?.clarificationExhausted === true;
@@ -749,6 +555,357 @@ chatApp.post("/api/chat", async (c) => {
     entityKind: output.entityKind,
     messageTag: output.messageTag,
     tagConfidence: output.tagConfidence,
+  });
+}
+
+chatApp.post("/api/chat", async (c) => {
+  const { ctx, userId } = c.env;
+
+  const body = await c.req.json<{
+    message?: string;
+    sessionId?: string;
+    entity?: {
+      action:
+        | "pick_task"
+        | "pick_course"
+        | "other_tasks"
+        | "other_courses"
+        | "scope_confirm_yes"
+        | "scope_confirm_no";
+      taskId?: string;
+      courseId?: string;
+      excludeTaskIds?: string[];
+      excludeCourseIds?: string[];
+    };
+  }>();
+
+  const sessionId = body.sessionId?.trim();
+  if (!sessionId) {
+    return c.json({ error: "Bad Request" }, 400);
+  }
+
+  await ctx.runMutation(internal.mutations.chatSessions.getOrCreateChatSessionInternal, {
+    userId,
+    sessionId,
+  });
+
+  const session = await ctx.runQuery(internal.queries.chatSessions.getChatSessionInternal, {
+    userId,
+    sessionId,
+  });
+
+  const mastraUrl = process.env.MASTRA_URL;
+  if (!mastraUrl) return c.json({ error: "MASTRA_URL not configured" }, 503);
+  const client = new MastraClient({ baseUrl: mastraUrl });
+
+  // ── Entity UI actions (MCQ / Other) — no supervisor call ────────────────────
+  if (body.entity?.action === "scope_confirm_yes") {
+    if (session?.awaitingScopeConfirm !== true) {
+      return c.json({ error: "No pending scope confirmation" }, 400);
+    }
+    const pendingId = session.pendingScopeUserMessageId;
+    const replay =
+      pendingId !== undefined
+        ? await ctx.runQuery(internal.queries.chatMessages.getUserMessageForScopeReplayInternal, {
+            userId,
+            sessionId,
+            messageId: pendingId,
+          })
+        : null;
+
+    await ctx.runMutation(internal.mutations.chatSessions.resolveScopeConfirmYesInternal, {
+      userId,
+      sessionId,
+    });
+
+    if (replay && pendingId !== undefined) {
+      const workflow = client.getWorkflow("supervisor-workflow");
+      const run = await workflow.startAsync({ inputData: { query: replay.content } });
+
+      for (const step of Object.values(run.steps ?? {})) {
+        if (!("output" in step)) {
+          const errMsg = (step as { error?: string }).error ?? "";
+          if (errMsg.includes("quota") || errMsg.includes("RESOURCE_EXHAUSTED") || errMsg.includes("429")) {
+            return c.json({ error: "quota_exceeded" }, 429);
+          }
+        }
+      }
+
+      const respondStep = run.steps?.["respond"];
+      const output = (respondStep && "output" in respondStep ? respondStep.output : null) as
+        | WorkflowRespondOutput
+        | null;
+
+      if (!output) {
+        return c.json({ error: "supervisor_unavailable" }, 502);
+      }
+
+      return continueAfterSupervisorOutput(ctx, c, {
+        userId,
+        sessionId,
+        message: replay.content,
+        userMessageId: pendingId,
+        output,
+      });
+    }
+
+    await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
+      userId,
+      sessionId,
+      role: "assistant",
+      content: SCOPE_YES_ACK_MSG,
+    });
+    return c.json({
+      text: SCOPE_YES_ACK_MSG,
+      status: "scope_confirm_yes",
+      route: null,
+    });
+  }
+
+  if (body.entity?.action === "scope_confirm_no") {
+    if (session?.awaitingScopeConfirm !== true) {
+      return c.json({ error: "No pending scope confirmation" }, 400);
+    }
+    await ctx.runMutation(internal.mutations.chatSessions.resolveScopeConfirmNoInternal, {
+      userId,
+      sessionId,
+    });
+    await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
+      userId,
+      sessionId,
+      role: "assistant",
+      content: SCOPE_DENY_FINAL_MSG,
+    });
+    return c.json({
+      text: SCOPE_DENY_FINAL_MSG,
+      status: "chat_input_locked",
+      route: null,
+    });
+  }
+
+  if (body.entity?.action === "pick_task" && body.entity.taskId) {
+    if (session?.resolvedTaskId) {
+      return persistAndReturnScopeConfirmation(ctx, c, userId, sessionId);
+    }
+    const taskId = body.entity.taskId as Id<"tasks">;
+    const { needsClassNext } = await ctx.runMutation(
+      internal.mutations.chatSessions.resolvePickedTaskInternal,
+      { userId, sessionId, taskId },
+    );
+    const intro = needsClassNext ? ENTITY_INTRO_CLASS : "Got it — I’ll use that task.";
+    await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
+      userId,
+      sessionId,
+      role: "assistant",
+      content: intro,
+    });
+    if (needsClassNext) {
+      const s2 = await ctx.runQuery(internal.queries.chatSessions.getChatSessionInternal, {
+        userId,
+        sessionId,
+      });
+      const qText = s2?.lastEntityQueryText ?? "";
+      const { candidates, hasMore } = await ctx.runAction(
+        internal.actions.entityResolution.searchCourseCandidates,
+        {
+          userId,
+          queryText: qText,
+          excludeIds: [],
+        },
+      );
+      await ctx.runMutation(internal.mutations.chatSessions.setEntityPromptStateInternal, {
+        userId,
+        sessionId,
+        lastEntityQueryText: qText,
+        activeEntityStep: "class",
+        needsClassAfterTask: false,
+        awaitingEntityResolution: true,
+      });
+      return c.json({
+        text: intro,
+        status: "needs_entity_clarification",
+        phase: "class",
+        entityCandidates: candidates,
+        entityHasMore: hasMore,
+        route: null,
+      });
+    }
+    return c.json({
+      text: intro,
+      status: "entity_resolved",
+      phase: "task",
+      route: null,
+    });
+  }
+
+  if (body.entity?.action === "pick_course" && body.entity.courseId) {
+    const fin = finishingClassAfterTaskLock(session);
+    if (session?.resolvedCourseId) {
+      return persistAndReturnScopeConfirmation(ctx, c, userId, sessionId);
+    }
+    if (session?.resolvedTaskId && !session.resolvedCourseId && !fin) {
+      return persistAndReturnScopeConfirmation(ctx, c, userId, sessionId);
+    }
+    const courseId = body.entity.courseId as Id<"userCourses">;
+    await ctx.runMutation(internal.mutations.chatSessions.resolvePickedCourseInternal, {
+      userId,
+      sessionId,
+      courseId,
+    });
+    const sessionAfterCourse = await ctx.runQuery(
+      internal.queries.chatSessions.getChatSessionInternal,
+      { userId, sessionId },
+    );
+    const hadTaskAlready = !!sessionAfterCourse?.resolvedTaskId;
+    const text = hadTaskAlready
+      ? "Thanks — I’ve got the task and the class you picked."
+      : "Thanks — I’ve got the class.";
+    await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
+      userId,
+      sessionId,
+      role: "assistant",
+      content: text,
+    });
+    return c.json({
+      text,
+      status: "entity_resolved",
+      phase: "class",
+      route: null,
+    });
+  }
+
+  if (body.entity?.action === "other_tasks") {
+    const qText = session?.lastEntityQueryText ?? "";
+    if (!qText) {
+      return c.json({ error: "Missing entity query context" }, 400);
+    }
+    const exclude = (body.entity.excludeTaskIds ?? []) as Id<"tasks">[];
+    const { candidates, hasMore } = await ctx.runAction(
+      internal.actions.entityResolution.searchTaskCandidates,
+      {
+        userId,
+        queryText: qText,
+        excludeIds: exclude,
+      },
+    );
+    return c.json({
+      text: ENTITY_INTRO_TASK,
+      status: "needs_entity_clarification",
+      phase: "task",
+      entityCandidates: candidates,
+      entityHasMore: hasMore,
+      route: null,
+    });
+  }
+
+  if (body.entity?.action === "other_courses") {
+    const qText = session?.lastEntityQueryText ?? "";
+    if (!qText) {
+      return c.json({ error: "Missing entity query context" }, 400);
+    }
+    const exclude = (body.entity.excludeCourseIds ?? []) as Id<"userCourses">[];
+    const { candidates, hasMore } = await ctx.runAction(
+      internal.actions.entityResolution.searchCourseCandidates,
+      {
+        userId,
+        queryText: qText,
+        excludeIds: exclude,
+      },
+    );
+    return c.json({
+      text: ENTITY_INTRO_CLASS,
+      status: "needs_entity_clarification",
+      phase: "class",
+      entityCandidates: candidates,
+      entityHasMore: hasMore,
+      route: null,
+    });
+  }
+
+  // ── Normal chat message ─────────────────────────────────────────────────────
+  const message = body.message?.trim();
+  if (!message) {
+    return c.json({ error: "Bad Request" }, 400);
+  }
+
+  const sessionBeforeUserMsg = await ctx.runQuery(
+    internal.queries.chatSessions.getChatSessionInternal,
+    { userId, sessionId },
+  );
+  if (sessionBeforeUserMsg?.chatInputLocked === true) {
+    return c.json({
+      text: CHAT_INPUT_LOCKED_REPLY_MSG,
+      status: "chat_input_locked",
+      route: null,
+    });
+  }
+  if (sessionBeforeUserMsg?.awaitingScopeConfirm === true) {
+    return c.json({
+      text: SCOPE_USE_BUTTONS_MSG,
+      status: "awaiting_scope_reply",
+      route: null,
+    });
+  }
+
+  const userMessageId = await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
+    userId,
+    sessionId,
+    role: "user",
+    content: message,
+  });
+
+  const sessionNow = await ctx.runQuery(internal.queries.chatSessions.getChatSessionInternal, {
+    userId,
+    sessionId,
+  });
+
+  if (sessionNow?.awaitingEntityResolution && !sessionNow.clarificationExhausted) {
+    const inc = await ctx.runMutation(
+      internal.mutations.chatSessions.incrementClarificationFailureInternal,
+      { userId, sessionId },
+    );
+    if (inc.exhausted) {
+      await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
+        userId,
+        sessionId,
+        role: "assistant",
+        content: EXHAUSTED_MSG,
+      });
+      return c.json({
+        text: EXHAUSTED_MSG,
+        status: "clarification_exhausted",
+        route: null,
+      });
+    }
+  }
+
+  const workflow = client.getWorkflow("supervisor-workflow");
+  const run = await workflow.startAsync({ inputData: { query: message } });
+
+  for (const step of Object.values(run.steps ?? {})) {
+    if (!("output" in step)) {
+      const errMsg = (step as { error?: string }).error ?? "";
+      if (errMsg.includes("quota") || errMsg.includes("RESOURCE_EXHAUSTED") || errMsg.includes("429")) {
+        return c.json({ error: "quota_exceeded" }, 429);
+      }
+    }
+  }
+
+  const respondStep = run.steps?.["respond"];
+  const output = (respondStep && "output" in respondStep ? respondStep.output : null) as
+    | WorkflowRespondOutput
+    | null;
+
+  if (!output) {
+    return c.json({ error: "supervisor_unavailable" }, 502);
+  }
+
+  return continueAfterSupervisorOutput(ctx, c, {
+    userId,
+    sessionId,
+    message,
+    userMessageId,
+    output,
   });
 });
 
