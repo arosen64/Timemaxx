@@ -161,6 +161,11 @@ export const estimateTaskTime = internalAction({
     subtaskId: v.optional(v.id("subtasks")),
   },
   handler: async (ctx, args) => {
+    if (!args.taskId && !args.subtaskId) {
+      console.error("estimateTaskTime: must pass taskId or subtaskId");
+      return;
+    }
+
     let item: TaskLike
     let store: (minutes: number) => Promise<void>
     let contextTaskId: Id<"tasks">

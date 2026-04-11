@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useMutation, useAction, useQuery } from 'convex/react'
 import { api } from '../../../../backend/convex/_generated/api'
 import { type Id } from '../../../../backend/convex/_generated/dataModel'
@@ -107,12 +107,11 @@ export default function SubtaskReviewModal({
   }
 
   // Reset rows when modal opens with new subtasks
-  const [lastParentId, setLastParentId] = useState<Id<'tasks'> | null>(null)
-  if (isOpen && parentTaskId !== lastParentId) {
-    setLastParentId(parentTaskId)
+  useEffect(() => {
+    if (!isOpen) return
     setRows(initialSubtasks.map((s, i) => ({ ...s, localId: String(i) })))
     setError(null)
-  }
+  }, [isOpen, parentTaskId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <Modal
