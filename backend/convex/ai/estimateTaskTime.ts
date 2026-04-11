@@ -3,7 +3,7 @@ import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { GenericActionCtx } from "convex/server";
 import { DataModel, Doc, Id } from "../_generated/dataModel";
-import { callGemini } from "../lib/gemini";
+import { callAnthropic } from "../lib/anthropic";
 import { sanitizeUserInput } from "../lib/sanitize";
 import {
   TIME_ESTIMATE_SYSTEM,
@@ -152,12 +152,12 @@ function buildProfileContext(user: Doc<"users"> | null): string | null {
 // ---------------------------------------------------------------------------
 
 /**
- * Estimates how long a task or subtask will take (in minutes) using Gemini.
+ * Estimates how long a task or subtask will take (in minutes) using Claude Sonnet 4.
  * Pass either taskId or subtaskId — not both.
- * Retrieves relevant courses, prior tasks, and chats via embedding retrieval,
- * then builds context blocks and calls Gemini with a structured output schema
- * that includes an estimate and a per-category reasoning trace. Stores the
- * result via the appropriate mutation.
+ * Retrieves relevant courses, prior tasks, and chats via mock embedding
+ * retrieval functions, then builds context blocks and calls Anthropic with a
+ * structured output schema that includes an estimate and a per-category
+ * reasoning trace. Stores the result via the appropriate mutation.
  */
 export const estimateTaskTime = internalAction({
   args: {
@@ -165,8 +165,9 @@ export const estimateTaskTime = internalAction({
     subtaskId: v.optional(v.id("subtasks")),
   },
   handler: async (ctx, args) => {
+    type ReasoningTrace = { classes: string; tasks: string; chats: string; profile: string };
     let item: TaskLike;
-    let store: (minutes: number) => Promise<void>;
+    let store: (minutes: number, reasoning: ReasoningTrace) => Promise<void>;
     let contextTaskId: Id<"tasks">;
 
     if (args.subtaskId) {
@@ -180,7 +181,7 @@ export const estimateTaskTime = internalAction({
       if (!parentTask) return;
       item = subtaskToTaskLike(subtask, parentTask);
       contextTaskId = subtask.parentTaskId;
-      store = async (minutes) => {
+      store = async (minutes, _reasoning) => {
         await ctx.runMutation(internal.mutations.subtasks.setSubtaskTimeEstimate, {
           subtaskId: args.subtaskId!,
           timeEstimate: minutes,
@@ -193,10 +194,11 @@ export const estimateTaskTime = internalAction({
       if (!task) return;
       item = taskToTaskLike(task);
       contextTaskId = args.taskId!;
-      store = async (minutes) => {
+      store = async (minutes, reasoning) => {
         await ctx.runMutation(internal.mutations.timeEstimate.setTimeEstimate, {
           taskId: args.taskId!,
           timeEstimate: minutes,
+          reasoning,
         });
       };
     }
@@ -217,16 +219,16 @@ export const estimateTaskTime = internalAction({
     const chatContext = buildChatContext(relevantContext.chatIds);
     const profileContext = buildProfileContext(user as Doc<"users"> | null);
 
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
       if (process.env.VITEST !== "true") {
-        console.error("GEMINI_API_KEY is not set");
+        console.error("ANTHROPIC_API_KEY is not set");
       }
       return;
     }
 
     try {
-      const result = await callGemini({
+      const result = await callAnthropic({
         system: TIME_ESTIMATE_SYSTEM,
         prompt: buildTimeEstimatePrompt({
           title: sanitizeUserInput(item.title, 500),
@@ -244,7 +246,7 @@ export const estimateTaskTime = internalAction({
         schemaName: "TimeEstimate",
       });
 
-      await store(result.estimatedMinutes);
+      await store(result.estimatedMinutes, result.reasoningTrace);
     } catch (err) {
       console.error("Failed to estimate task time:", err);
       throw err;

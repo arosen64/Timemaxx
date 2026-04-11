@@ -22,12 +22,48 @@ async function seedTask(
 async function seedStudyBlock(
   t: ReturnType<typeof makeTestCtx>,
   taskId: string,
+  opts: { googleEventId?: string } = {},
 ) {
   return t.run((ctx) =>
     ctx.db.insert("studyBlocks", {
       taskId: taskId as any,
       title: "Block",
       studyBlockLength: 60,
+      ...(opts.googleEventId ? { googleEventId: opts.googleEventId } : {}),
+    })
+  );
+}
+
+async function seedSubtask(
+  t: ReturnType<typeof makeTestCtx>,
+  taskId: string,
+  userId: string,
+) {
+  return t.run((ctx) =>
+    ctx.db.insert("subtasks", {
+      parentTaskId: taskId as any,
+      userId: userId as any,
+      title: "Subtask",
+      description: "desc",
+      taskType: "Essay",
+      color: "#ffffff",
+      order: 0,
+      createdAt: Date.now(),
+    })
+  );
+}
+
+async function seedSubtaskStudyBlock(
+  t: ReturnType<typeof makeTestCtx>,
+  subtaskId: string,
+  opts: { googleEventId?: string } = {},
+) {
+  return t.run((ctx) =>
+    ctx.db.insert("studyBlocks", {
+      subtaskId: subtaskId as any,
+      title: "Subtask Block",
+      studyBlockLength: 60,
+      ...(opts.googleEventId ? { googleEventId: opts.googleEventId } : {}),
     })
   );
 }
@@ -97,5 +133,34 @@ describe("mutations/tasks – deleteTask", () => {
     const blocks = await t.run((ctx) => ctx.db.query("studyBlocks").collect());
     expect(blocks).toHaveLength(1);
     expect(blocks[0].taskId).toBe(taskId2);
+  });
+
+  test("schedules GCal deletion for googleEventIds on subtask study blocks", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+    const taskId = await seedTask(t, userId);
+
+    const subtaskId1 = await seedSubtask(t, taskId, userId);
+    const subtaskId2 = await seedSubtask(t, taskId, userId);
+    await seedSubtaskStudyBlock(t, subtaskId1, { googleEventId: "gcal-event-1" });
+    await seedSubtaskStudyBlock(t, subtaskId2, { googleEventId: "gcal-event-2" });
+    // A subtask block without a googleEventId should not appear in the scheduled call
+    await seedSubtaskStudyBlock(t, subtaskId2);
+
+    await withAuth.mutation(api.mutations.tasks.deleteTask, { taskId });
+
+    const scheduled = await t.run((ctx) =>
+      ctx.db.system.query("_scheduled_functions").collect()
+    );
+
+    const calDeletion = scheduled.find((f) =>
+      f.name.includes("deleteLinkedCalendarEvents")
+    );
+    expect(calDeletion).toBeDefined();
+    // convex-test stores scheduled function args as [parsedArgs]
+    const { googleEventIds } = (calDeletion!.args as [{ userId: string; googleEventIds: string[] }])[0];
+    expect(googleEventIds).toHaveLength(2);
+    expect(googleEventIds).toContain("gcal-event-1");
+    expect(googleEventIds).toContain("gcal-event-2");
   });
 });
