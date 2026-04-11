@@ -82,6 +82,17 @@ export const getCourseMetadata = query({
 });
 
 /**
+ * Internal query for batch-fetching courses by IDs (used by context builders).
+ */
+export const getUserCoursesByIdsInternal = internalQuery({
+  args: { courseIds: v.array(v.id("userCourses")) },
+  handler: async (ctx, args) => {
+    const results = await Promise.all(args.courseIds.map((id) => ctx.db.get(id)));
+    return results.filter((c): c is NonNullable<typeof c> => c !== null);
+  },
+});
+
+/**
  * Returns all courses for the authenticated user filtered by term.
  */
 export const getUserCoursesByTerm = query({

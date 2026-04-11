@@ -44,6 +44,12 @@ export const setTimeEstimate = internalMutation({
   args: {
     taskId: v.id("tasks"),
     timeEstimate: v.number(),
+    reasoning: v.object({
+      classes: v.string(),
+      tasks: v.string(),
+      chats: v.string(),
+      profile: v.string(),
+    }),
   },
   handler: async (ctx, args) => {
     const task = await ctx.db.get(args.taskId);
@@ -52,7 +58,10 @@ export const setTimeEstimate = internalMutation({
     // Do not overwrite a manually set estimate
     if (task.isManualEstimate) return;
 
-    await ctx.db.patch(args.taskId, { timeEstimate: args.timeEstimate });
+    await ctx.db.patch(args.taskId, {
+      timeEstimate: args.timeEstimate,
+      reasoning: args.reasoning,
+    });
     await rebuildStudyBlocks(ctx, args.taskId, args.timeEstimate);
   },
 });
