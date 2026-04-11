@@ -2771,7 +2771,7 @@
       "y": 1200,
       "name": "⚙ Design System",
       "width": 2400,
-      "height": 1800,
+      "height": 3200,
       "fill": "#1A1A2E",
       "layout": "none",
       "children": [
@@ -4585,6 +4585,28 @@
               "y": 201
             }
           ]
+        },
+        {
+          "type": "text",
+          "id": "h8Jl9",
+          "x": 60,
+          "y": 2680,
+          "name": "expandedCardsLabel",
+          "fill": "#FFFFFF",
+          "content": "Expanded Task Cards",
+          "fontFamily": "Space Grotesk",
+          "fontSize": 13,
+          "fontWeight": "600"
+        },
+        {
+          "id": "kvbHg",
+          "type": "ref",
+          "ref": "CmlmK",
+          "name": "taskCardReasoning",
+          "width": 460,
+          "height": "fit_content",
+          "x": 60,
+          "y": 2704
         }
       ]
     },
@@ -22185,6 +22207,348 @@
           "fontFamily": "Inter",
           "fontSize": 13,
           "fontWeight": "normal"
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "CmlmK",
+      "x": 8100,
+      "y": 2502,
+      "name": "TaskCard/Expanded/Reasoning",
+      "reusable": true,
+      "width": 460,
+      "fill": "$--card",
+      "cornerRadius": 10,
+      "stroke": {
+        "align": "inside",
+        "thickness": 1,
+        "fill": "$--border"
+      },
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "dN5ID",
+          "name": "header",
+          "width": "fill_container",
+          "gap": 12,
+          "padding": [
+            16,
+            18
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "57dEL",
+              "name": "priorityBar",
+              "width": 4,
+              "height": 40,
+              "fill": "$--destructive",
+              "cornerRadius": 2
+            },
+            {
+              "type": "frame",
+              "id": "AGIZQ",
+              "name": "body",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 4,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "Ae360",
+                  "name": "title",
+                  "fill": "$--primary",
+                  "content": "Write OS Lab Report",
+                  "fontFamily": "Space Grotesk",
+                  "fontSize": 14,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "text",
+                  "id": "2pje6",
+                  "name": "meta",
+                  "fill": "$--muted-foreground",
+                  "content": "Due tomorrow · ~2.5 hrs estimated",
+                  "fontFamily": "Inter",
+                  "fontSize": 12,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "id": "Rt5bl",
+              "type": "ref",
+              "ref": "RNbuX",
+              "name": "aiBadge",
+              "width": "fit_content",
+              "height": "fit_content"
+            },
+            {
+              "type": "frame",
+              "id": "5NIjL",
+              "name": "whyBtn",
+              "fill": "$--info-bg",
+              "cornerRadius": 4,
+              "gap": 4,
+              "padding": [
+                3,
+                8
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "mxyBb",
+                  "name": "icon",
+                  "width": 12,
+                  "height": 12,
+                  "iconFontName": "sparkles",
+                  "iconFontFamily": "lucide",
+                  "fill": "$--info-emphasis"
+                },
+                {
+                  "type": "text",
+                  "id": "F25Cm",
+                  "name": "label",
+                  "fill": "$--info-emphasis",
+                  "content": "Why?",
+                  "fontFamily": "Inter",
+                  "fontSize": 11,
+                  "fontWeight": "600"
+                }
+              ]
+            },
+            {
+              "type": "icon_font",
+              "id": "skM23",
+              "name": "chevron",
+              "width": 18,
+              "height": 18,
+              "iconFontName": "chevron-up",
+              "iconFontFamily": "lucide",
+              "fill": "$--muted-foreground"
+            }
+          ]
+        },
+        {
+          "type": "rectangle",
+          "id": "qsk9p",
+          "name": "divider",
+          "fill": "$--border",
+          "width": "fill_container",
+          "height": 1
+        },
+        {
+          "type": "frame",
+          "id": "POWXQ",
+          "name": "reasoning",
+          "width": "fill_container",
+          "fill": "$--info-bg",
+          "layout": "vertical",
+          "gap": 10,
+          "padding": [
+            14,
+            18
+          ],
+          "children": [
+            {
+              "type": "frame",
+              "id": "78aO8",
+              "name": "header",
+              "width": "fill_container",
+              "gap": 6,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "dmwhF",
+                  "name": "sparkles",
+                  "width": 13,
+                  "height": 13,
+                  "iconFontName": "sparkles",
+                  "iconFontFamily": "lucide",
+                  "fill": "$--info-emphasis"
+                },
+                {
+                  "type": "text",
+                  "id": "K6oII",
+                  "name": "title",
+                  "fill": "$--info-emphasis",
+                  "content": "AI Reasoning",
+                  "fontFamily": "Space Grotesk",
+                  "fontSize": 12,
+                  "fontWeight": "600"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "8a6Za",
+              "name": "row/courses",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 2,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "gvmhS",
+                  "name": "lbl1",
+                  "fill": "$--primary",
+                  "content": "Courses",
+                  "fontFamily": "Space Grotesk",
+                  "fontSize": 11,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "text",
+                  "id": "3wpG8",
+                  "name": "txt1",
+                  "fill": "$--muted-foreground",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Enrolled in EN.601.421 (OS, difficulty 4/5) — high complexity course suggests more prep time.",
+                  "fontFamily": "Inter",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "Ged5A",
+              "name": "row/tasks",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 2,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "kmPUR",
+                  "name": "lbl2",
+                  "fill": "$--primary",
+                  "content": "Past Tasks",
+                  "fontFamily": "Space Grotesk",
+                  "fontSize": 11,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "text",
+                  "id": "4uwNP",
+                  "name": "txt2",
+                  "fill": "$--muted-foreground",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Prior lab reports averaged 110 min with positive feedback, suggesting similar scope.",
+                  "fontFamily": "Inter",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "t9z9G",
+              "name": "row/chats",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 2,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "EyZzi",
+                  "name": "lbl3",
+                  "fill": "$--primary",
+                  "content": "Chat History",
+                  "fontFamily": "Space Grotesk",
+                  "fontSize": 11,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "text",
+                  "id": "TpdwW",
+                  "name": "txt3",
+                  "fill": "$--muted-foreground",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "No relevant chat context found for this task.",
+                  "fontFamily": "Inter",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "7ml1S",
+              "name": "row/profile",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 2,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "c0xy3",
+                  "name": "lbl4",
+                  "fill": "$--primary",
+                  "content": "Profile",
+                  "fontFamily": "Space Grotesk",
+                  "fontSize": 11,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "text",
+                  "id": "crY1t",
+                  "name": "txt4",
+                  "fill": "$--muted-foreground",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Junior CS major with strong technical writing skills and moderate OS familiarity.",
+                  "fontFamily": "Inter",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "rectangle",
+          "id": "0xqSb",
+          "name": "divider2",
+          "fill": "$--border",
+          "width": "fill_container",
+          "height": 1
+        },
+        {
+          "type": "frame",
+          "id": "fNk8z",
+          "name": "blocks",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 8,
+          "padding": [
+            12,
+            18
+          ],
+          "children": [
+            {
+              "id": "YjoED",
+              "type": "ref",
+              "ref": "mGYEk",
+              "name": "block1",
+              "width": "fill_container"
+            },
+            {
+              "id": "W0cUP",
+              "type": "ref",
+              "ref": "kdXz7",
+              "name": "block2",
+              "width": "fill_container"
+            }
+          ]
         }
       ]
     }
