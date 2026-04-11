@@ -757,9 +757,20 @@ chatApp.post("/api/chat", async (c) => {
       { userId, sessionId },
     );
     const hadTaskAlready = !!sessionAfterCourse?.resolvedTaskId;
-    const text = hadTaskAlready
-      ? "Thanks — I’ve got the task and the class you picked."
-      : "Thanks — I’ve got the class.";
+    const labels = await ctx.runQuery(
+      internal.queries.chatSessions.getResolvedEntityLabelsInternal,
+      { userId, sessionId },
+    );
+    let text: string;
+    if (hadTaskAlready) {
+      const taskPart = labels.taskTitle ? `**${labels.taskTitle}**` : "the task";
+      const classPart = labels.courseLabel ? `**${labels.courseLabel}**` : "the class";
+      text = `Thanks — I’ve got ${taskPart} and ${classPart}.`;
+    } else {
+      text = labels.courseLabel
+        ? `Thanks — I’ve got **${labels.courseLabel}**.`
+        : "Thanks — I’ve got the class.";
+    }
     await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
       userId,
       sessionId,

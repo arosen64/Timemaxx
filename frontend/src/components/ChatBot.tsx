@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { Fragment, useEffect, useState, type ReactNode } from 'react'
 import { useQuery } from 'convex/react'
 import { useAuthToken } from '@convex-dev/auth/react'
 import { api } from '../../../backend/convex/_generated/api'
@@ -28,7 +28,31 @@ type ChatApiResponse = {
   scopeConfirmClassLabel?: string | null
 }
 
-type EntityPickMeta = { phase: 'task' | 'class'; label: string }
+/** Assistant copy that introduces the task/class MCQ (must stay in sync with http_chat strings). */
+function isMcqIntroAssistantContent(content: string): boolean {
+  return (
+    content.includes('Which task do you mean') ||
+    content.includes('Which class do you mean') ||
+    content.includes('Pick one below') ||
+    content.includes('see more options') ||
+    content.includes('tap one of the tasks') ||
+    content.includes('tap one of the classes') ||
+    content.includes('Pick a task') ||
+    content.includes('Pick a class')
+  )
+}
+
+function findLastMcqIntroAssistantIndex(
+  msgs: ReadonlyArray<{ role: string; content: string }>,
+): number {
+  for (let i = msgs.length - 1; i >= 0; i--) {
+    const m = msgs[i]
+    if (m.role === 'assistant' && isMcqIntroAssistantContent(m.content)) {
+      return i
+    }
+  }
+  return -1
+}
 
 /** Renders `**like this**` as bold (common in assistant copy; plain text otherwise). */
 function renderInlineBoldMarkdown(text: string): ReactNode {
@@ -57,8 +81,8 @@ export default function ChatBot() {
     candidates: EntityCandidate[]
     hasMore: boolean
   } | null>(null)
-  /** Confirmed picks in the current clarification flow (shown above the active MCQ). */
-  const [entityChoiceHistory, setEntityChoiceHistory] = useState<EntityPickMeta[]>([])
+  /** Insert MCQ right after this message index (the MCQ intro assistant line). */
+  const [entityBlockAfterIndex, setEntityBlockAfterIndex] = useState<number | null>(null)
 
   const token = useAuthToken()
   const history = useQuery(api.queries.chatMessages.getChatHistory, { sessionId, limit: 50 }) ?? []
@@ -80,6 +104,18 @@ export default function ChatBot() {
   const chatLocked = entityScope?.chatInputLocked === true
   const scopeConfirmOpen = entityScope?.awaitingScopeConfirm === true
 
+  const shouldShowEntityBlock = entityMcq !== null && entityMcq.candidates.length > 0
+
+  useEffect(() => {
+    if (!shouldShowEntityBlock || entityBlockAfterIndex !== null) return
+    const idx = findLastMcqIntroAssistantIndex(messages)
+    if (idx >= 0) {
+      setEntityBlockAfterIndex(idx)
+    }
+    // `messages` is intentionally omitted: deps track when history grows so we re-scan for the MCQ intro line.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shouldShowEntityBlock, entityBlockAfterIndex, history.length, optimistic.length])
+
   async function handleScopeConfirm(yes: boolean) {
     if (isLoading || chatLocked) return
     setIsLoading(true)
@@ -99,20 +135,18 @@ export default function ChatBot() {
     }
   }
 
-  function applyEntityResponse(
-    data: ChatApiResponse,
-    userEcho: string | null,
-    entityPick?: EntityPickMeta,
-  ) {
+  function applyEntityResponse(data: ChatApiResponse, userEcho: string | null) {
     const aiText = data.text ?? ''
     if (data.status === 'awaiting_scope_reply') {
       setEntityMcq(null)
+      setEntityBlockAfterIndex(null)
       if (userEcho !== null) setInput(userEcho)
       setOptimistic([{ role: 'assistant', content: aiText }])
       return
     }
     if (data.status === 'needs_scope_confirmation') {
       setEntityMcq(null)
+      setEntityBlockAfterIndex(null)
       if (userEcho !== null) {
         setOptimistic([{ role: 'user', content: userEcho }])
       } else {
@@ -121,11 +155,10 @@ export default function ChatBot() {
       return
     }
     if (data.status === 'entity_scope_locked' || data.status === 'chat_input_locked') {
-      setEntityChoiceHistory([])
-    } else if (entityPick) {
-      setEntityChoiceHistory((prev) => [...prev, entityPick])
+      setEntityBlockAfterIndex(null)
     }
     if (data.entityCandidates && data.entityCandidates.length > 0 && data.phase) {
+      setEntityBlockAfterIndex(null)
       setEntityMcq({
         phase: data.phase,
         candidates: data.entityCandidates,
@@ -133,6 +166,7 @@ export default function ChatBot() {
       })
     } else {
       setEntityMcq(null)
+      setEntityBlockAfterIndex(null)
     }
     if (userEcho !== null) {
       setOptimistic([
@@ -145,11 +179,7 @@ export default function ChatBot() {
     }
   }
 
-  async function postChat(
-    body: Record<string, unknown>,
-    userEcho: string | null,
-    entityPick?: EntityPickMeta,
-  ) {
+  async function postChat(body: Record<string, unknown>, userEcho: string | null) {
     const res = await fetch(`${import.meta.env.VITE_CONVEX_SITE_URL}/api/chat`, {
       method: 'POST',
       headers: {
@@ -166,7 +196,7 @@ export default function ChatBot() {
       throw new Error(`Chat request failed: ${res.status} ${errText}`)
     }
     const data = (await res.json()) as ChatApiResponse
-    applyEntityResponse(data, userEcho, entityPick)
+    applyEntityResponse(data, userEcho)
   }
 
   async function handleSend() {
@@ -176,6 +206,7 @@ export default function ChatBot() {
     setInput('')
     setIsLoading(true)
     setEntityMcq(null)
+    setEntityBlockAfterIndex(null)
     setHistoryLenAtSend(history.length)
     setOptimistic([{ role: 'user', content: text }])
 
@@ -192,22 +223,12 @@ export default function ChatBot() {
 
   async function handlePickEntity(phase: 'task' | 'class', id: string) {
     if (isLoading || chatLocked || !entityMcq) return
-    const picked = entityMcq.candidates.find((c) => c.id === id)
-    const label = picked?.label ?? 'Your choice'
     setIsLoading(true)
     try {
       if (phase === 'task') {
-        await postChat(
-          { sessionId, entity: { action: 'pick_task', taskId: id } },
-          null,
-          { phase: 'task', label },
-        )
+        await postChat({ sessionId, entity: { action: 'pick_task', taskId: id } }, null)
       } else {
-        await postChat(
-          { sessionId, entity: { action: 'pick_course', courseId: id } },
-          null,
-          { phase: 'class', label },
-        )
+        await postChat({ sessionId, entity: { action: 'pick_course', courseId: id } }, null)
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
@@ -241,8 +262,46 @@ export default function ChatBot() {
     }
   }
 
+  function renderEntityMcqBlock() {
+    if (!shouldShowEntityBlock || !entityMcq) return null
+    return (
+      <div className="p-3 space-y-2 bg-white border rounded-xl border-border">
+        <p className="text-[11px] font-heading font-semibold text-navy">
+          {entityMcq.phase === 'task' ? 'Pick a task' : 'Pick a class'}
+        </p>
+        <div className="flex flex-col gap-1.5 max-h-40 overflow-y-auto">
+          {entityMcq.candidates.map((c) => (
+            <button
+              key={c.id}
+              type="button"
+              onClick={() => void handlePickEntity(entityMcq.phase, c.id)}
+              disabled={isLoading}
+              className="text-left rounded-lg border border-border px-2.5 py-2 text-[12px] hover:bg-bg-gray transition disabled:opacity-50"
+            >
+              <span className="block font-medium text-navy">{c.label}</span>
+              <span className="text-light-blue text-[11px]">{c.subtitle}</span>
+            </button>
+          ))}
+        </div>
+        <button
+          type="button"
+          onClick={() => void handleOtherEntity()}
+          disabled={isLoading || !entityMcq.hasMore}
+          title={entityMcq.hasMore ? 'Show more options' : 'No more matches for this search'}
+          className={
+            entityMcq.hasMore
+              ? 'w-full rounded-lg border border-dashed border-teal/50 py-2 text-[12px] font-medium text-teal hover:bg-teal/5 transition disabled:opacity-50'
+              : 'w-full rounded-lg border border-dashed border-border py-2 text-[12px] font-medium text-light-blue cursor-not-allowed opacity-70'
+          }
+        >
+          Other…
+        </button>
+      </div>
+    )
+  }
+
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
+    <div className="fixed z-50 flex flex-col items-end gap-3 bottom-6 right-6">
       {/* Overlay */}
       {isOpen && (
         <div className="flex w-[400px] h-[600px] flex-col rounded-2xl border border-border bg-white shadow-xl overflow-hidden">
@@ -250,7 +309,7 @@ export default function ChatBot() {
           <div className="flex min-h-14 shrink-0 items-start justify-between gap-3 bg-navy px-5 py-2.5">
             <div className="flex min-w-0 flex-1 flex-col gap-1 pt-0.5">
               <div className="flex items-center gap-2.5">
-                <span className="h-2 w-2 shrink-0 rounded-full bg-teal" />
+                <span className="w-2 h-2 rounded-full shrink-0 bg-teal" />
                 <span className="font-heading text-[15px] font-semibold text-white">Maxx ✦</span>
               </div>
               {entityScope && entityScope.entityScopeTags.length > 0 && (
@@ -273,7 +332,7 @@ export default function ChatBot() {
                 setSessionId(crypto.randomUUID())
                 setOptimistic([])
                 setEntityMcq(null)
-                setEntityChoiceHistory([])
+                setEntityBlockAfterIndex(null)
                 setInput('')
               }}
               aria-label="Close chat"
@@ -290,37 +349,47 @@ export default function ChatBot() {
 
                 {messages.length === 0 && !isLoading && (
                   <div className="flex flex-col items-center gap-2 pt-8 text-center">
-                    <span className="font-heading text-sm font-semibold text-navy">How can I help?</span>
-                    <span className="font-body text-xs text-light-blue">Ask about your schedule, tasks, or deadlines.</span>
+                    <span className="text-sm font-semibold font-heading text-navy">How can I help?</span>
+                    <span className="text-xs font-body text-light-blue">Ask about your schedule, tasks, or deadlines.</span>
                   </div>
                 )}
 
-                {messages.map((msg, i) =>
-                  msg.role === 'assistant' ? (
-                    <Message key={i} className="items-start">
-                      <MessageAvatar fallback="AI" />
-                      <div className="flex flex-col gap-1 max-w-[82%]">
-                        <span className="font-heading text-[11px] font-semibold text-teal px-0.5">
-                          Maxx
-                        </span>
-                        <MessageContent className="bg-white border border-border text-navy rounded-2xl rounded-tl-sm">
-                          {renderInlineBoldMarkdown(msg.content)}
-                        </MessageContent>
-                      </div>
-                    </Message>
-                  ) : (
-                    <Message key={i} className="justify-end">
-                      <MessageContent className="bg-navy text-white max-w-[82%] rounded-2xl rounded-tr-sm">
-                        {msg.content}
-                      </MessageContent>
-                    </Message>
+                {messages.map((msg, i) => {
+                  const m = msg as { role: 'user' | 'assistant'; content: string; _id?: string }
+                  const key = typeof m._id === 'string' ? m._id : `m-${i}`
+                  const showEntityAfterThis =
+                    shouldShowEntityBlock && entityBlockAfterIndex !== null && i === entityBlockAfterIndex
+                  return (
+                    <Fragment key={key}>
+                      {m.role === 'assistant' ? (
+                        <Message className="items-start">
+                          <MessageAvatar fallback="AI" />
+                          <div className="flex flex-col gap-1 max-w-[82%]">
+                            <span className="font-heading text-[11px] font-semibold text-teal px-0.5">
+                              Maxx
+                            </span>
+                            <MessageContent className="bg-white border rounded-tl-sm border-border text-navy rounded-2xl">
+                              {renderInlineBoldMarkdown(m.content)}
+                            </MessageContent>
+                          </div>
+                        </Message>
+                      ) : (
+                        <Message className="justify-end">
+                          <MessageContent className="bg-navy text-white max-w-[82%] rounded-2xl rounded-tr-sm">
+                            {m.content}
+                          </MessageContent>
+                        </Message>
+                      )}
+                      {showEntityAfterThis ? renderEntityMcqBlock() : null}
+                    </Fragment>
                   )
-                )}
+                })}
+                {shouldShowEntityBlock && entityBlockAfterIndex === null ? renderEntityMcqBlock() : null}
 
                 {isLoading && optimistic.length <= 1 && (
                   <Message className="items-start">
                     <MessageAvatar fallback="AI" />
-                    <MessageContent className="bg-white border border-border rounded-2xl rounded-tl-sm">
+                    <MessageContent className="bg-white border rounded-tl-sm border-border rounded-2xl">
                       <Loader />
                     </MessageContent>
                   </Message>
@@ -344,7 +413,7 @@ export default function ChatBot() {
                 {scopeConfirmOpen && (
                   <div className="rounded-xl border border-teal/40 bg-white p-3 space-y-2.5">
                     <p className="text-[11px] font-heading font-semibold text-navy">
-                      Still the same task or class?
+                      Still the same task and class?
                     </p>
                     {(entityScope?.scopeConfirmTaskLabel || entityScope?.scopeConfirmClassLabel) && (
                       <div className="rounded-lg bg-bg-gray/90 px-2.5 py-2 text-[12px] text-navy space-y-1">
@@ -383,80 +452,17 @@ export default function ChatBot() {
                   </div>
                 )}
 
-                {(entityChoiceHistory.length > 0 || (entityMcq && entityMcq.candidates.length > 0)) && (
-                  <div className="rounded-xl border border-border bg-white p-3 space-y-2">
-                    {entityChoiceHistory.length > 0 && (
-                      <div className="flex flex-col gap-1.5">
-                        <p className="text-[10px] font-heading font-semibold uppercase tracking-wide text-light-blue">
-                          Your picks
-                        </p>
-                        <ul className="flex flex-col gap-1">
-                          {entityChoiceHistory.map((c, idx) => (
-                            <li
-                              key={`${c.phase}-${idx}-${c.label}`}
-                              className="flex items-baseline gap-2 rounded-lg bg-bg-gray/80 px-2.5 py-1.5 text-[12px]"
-                            >
-                              <span className="shrink-0 font-heading text-[10px] font-semibold text-teal">
-                                {c.phase === 'task' ? 'Task' : 'Class'}
-                              </span>
-                              <span className="font-medium text-navy">{c.label}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                    {entityMcq && entityMcq.candidates.length > 0 && (
-                      <>
-                        <p className="text-[11px] font-heading font-semibold text-navy">
-                          {entityMcq.phase === 'task' ? 'Pick a task' : 'Pick a class'}
-                        </p>
-                        <div className="flex flex-col gap-1.5 max-h-40 overflow-y-auto">
-                          {entityMcq.candidates.map((c) => (
-                            <button
-                              key={c.id}
-                              type="button"
-                              onClick={() => void handlePickEntity(entityMcq.phase, c.id)}
-                              disabled={isLoading}
-                              className="text-left rounded-lg border border-border px-2.5 py-2 text-[12px] hover:bg-bg-gray transition disabled:opacity-50"
-                            >
-                              <span className="font-medium text-navy block">{c.label}</span>
-                              <span className="text-light-blue text-[11px]">{c.subtitle}</span>
-                            </button>
-                          ))}
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => void handleOtherEntity()}
-                          disabled={isLoading || !entityMcq.hasMore}
-                          title={
-                            entityMcq.hasMore
-                              ? 'Show more options'
-                              : 'No more matches for this search'
-                          }
-                          className={
-                            entityMcq.hasMore
-                              ? 'w-full rounded-lg border border-dashed border-teal/50 py-2 text-[12px] font-medium text-teal hover:bg-teal/5 transition disabled:opacity-50'
-                              : 'w-full rounded-lg border border-dashed border-border py-2 text-[12px] font-medium text-light-blue cursor-not-allowed opacity-70'
-                          }
-                        >
-                          Other…
-                        </button>
-                      </>
-                    )}
-                  </div>
-                )}
-
                 <ChatContainerScrollAnchor />
               </ChatContainerContent>
 
-              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-10">
+              <div className="absolute z-10 -translate-x-1/2 bottom-2 left-1/2">
                 <ScrollButton />
               </div>
             </ChatContainerRoot>
           </div>
 
           {/* Input */}
-          <div className="shrink-0 border-t border-border bg-white px-4 py-3">
+          <div className="px-4 py-3 bg-white border-t shrink-0 border-border">
             {chatLocked && (
               <p className="mb-2 rounded-lg bg-amber-50 border border-amber-200 px-2.5 py-2 text-[11px] font-body text-amber-950">
                 This chat is closed for new messages. Tap × and open Maxx again to start a new session.
@@ -481,7 +487,7 @@ export default function ChatBot() {
                   variant="primary"
                   onClick={handleSend}
                   disabled={isLoading || chatLocked || !input.trim()}
-                  className="w-16 h-9 text-sm rounded-lg shrink-0"
+                  className="w-16 text-sm rounded-lg h-9 shrink-0"
                 >
                   Send
                 </Button>
@@ -505,14 +511,14 @@ export default function ChatBot() {
             setSessionId(crypto.randomUUID())
             setOptimistic([])
             setEntityMcq(null)
-            setEntityChoiceHistory([])
+            setEntityBlockAfterIndex(null)
             setInput('')
           } else {
             setIsOpen(true)
           }
         }}
         aria-label={isOpen ? 'Close AI chat' : 'Open AI chat'}
-        className="flex h-14 w-14 items-center justify-center rounded-full bg-navy shadow-lg hover:opacity-90 transition"
+        className="flex items-center justify-center transition rounded-full shadow-lg h-14 w-14 bg-navy hover:opacity-90"
       >
         <MessageSquareIcon color="white" size={22} />
       </button>
