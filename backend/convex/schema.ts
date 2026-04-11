@@ -14,6 +14,7 @@ export default defineSchema({
     expiresAt: v.number(),
     selectedCalendarIds: v.optional(v.array(v.string())),
     scope: v.optional(v.string()),
+    timemaxxCalendarId: v.optional(v.string()),
   }).index("by_userId", ["userId"]),
 
   // Short-lived state tokens used to identify users during the OAuth callback
@@ -145,14 +146,17 @@ export default defineSchema({
   studyBlocks: defineTable({
     taskId: v.optional(v.id("tasks")),
     subtaskId: v.optional(v.id("subtasks")),
+    userId: v.optional(v.id("users")),
     title: v.string(),
     startTime: v.optional(v.string()),
     studyBlockLength: v.number(),
     isConflicted: v.optional(v.boolean()),
     googleEventId: v.optional(v.string()),
+    needsExport: v.optional(v.boolean()),
   })
     .index("by_taskId", ["taskId"])
-    .index("by_subtaskId", ["subtaskId"]),
+    .index("by_subtaskId", ["subtaskId"])
+    .index("by_userId", ["userId"]),
 
   // Chat messages — stores chatbot conversation history per user
   chatMessages: defineTable({
@@ -161,9 +165,48 @@ export default defineSchema({
     role: v.union(v.literal("user"), v.literal("assistant")),
     content: v.string(),
     createdAt: v.number(),
+    clarificationIntent: v.optional(
+      v.union(
+        v.literal("task_feedback"),
+        v.literal("class_difficulty"),
+        v.literal("none"),
+      ),
+    ),
+    /** Copied from chatSessions at insert time when that session has resolved scope */
+    taskId: v.optional(v.id("tasks")),
+    courseId: v.optional(v.id("userCourses")),
   })
     .index("by_userId_createdAt", ["userId", "createdAt"])
-    .index("by_session", ["sessionId"]),
+    .index("by_session", ["sessionId"])
+    .index("by_taskId", ["taskId"])
+    .index("by_courseId", ["courseId"]),
+
+  /** Chat widget session — resolved entities + clarification state (Part 2) */
+  chatSessions: defineTable({
+    userId: v.id("users"),
+    sessionId: v.string(),
+    resolvedTaskId: v.optional(v.id("tasks")),
+    resolvedCourseId: v.optional(v.id("userCourses")),
+    /** Last user utterance used for embedding search (MCQ / Other) */
+    lastEntityQueryText: v.optional(v.string()),
+    /** Which entity we are disambiguating in the active MCQ flow */
+    activeEntityStep: v.optional(
+      v.union(v.literal("task"), v.literal("class")),
+    ),
+    /** Supervisor said "both" — after task, prompt for class */
+    needsClassAfterTask: v.optional(v.boolean()),
+    clarificationAttemptCount: v.optional(v.number()),
+    clarificationExhausted: v.optional(v.boolean()),
+    awaitingEntityResolution: v.optional(v.boolean()),
+    /** User must answer Yes/No: still same scoped task/class? */
+    awaitingScopeConfirm: v.optional(v.boolean()),
+    /** After user answers No on scope — no more messages until new session */
+    chatInputLocked: v.optional(v.boolean()),
+    /** One-shot: next user message skips scope-change block after Yes */
+    scopeBypassNextMessage: v.optional(v.boolean()),
+    /** User message to re-process after scope Yes (same chat turn as original question) */
+    pendingScopeUserMessageId: v.optional(v.id("chatMessages")),
+  }).index("by_userId_sessionId", ["userId", "sessionId"]),
 
   // Syllabi table — tracks uploaded syllabus files and their processing status
   syllabi: defineTable({

@@ -9,6 +9,7 @@
  */
 
 import type * as actions_autoRescheduleConflicts from "../actions/autoRescheduleConflicts.js";
+import type * as actions_entityResolution from "../actions/entityResolution.js";
 import type * as actions_exportStudyBlocksToCalendar from "../actions/exportStudyBlocksToCalendar.js";
 import type * as actions_fetchCalendarEvents from "../actions/fetchCalendarEvents.js";
 import type * as actions_getCalendarAvailability from "../actions/getCalendarAvailability.js";
@@ -28,7 +29,9 @@ import type * as lib_anthropic from "../lib/anthropic.js";
 import type * as lib_calendarCrypto from "../lib/calendarCrypto.js";
 import type * as lib_classTagUtils from "../lib/classTagUtils.js";
 import type * as lib_courseColors from "../lib/courseColors.js";
+import type * as lib_gcalHelpers from "../lib/gcalHelpers.js";
 import type * as lib_gemini from "../lib/gemini.js";
+import type * as lib_geminiEmbedding from "../lib/geminiEmbedding.js";
 import type * as lib_httpTypes from "../lib/httpTypes.js";
 import type * as lib_retrieval from "../lib/retrieval.js";
 import type * as lib_sanitize from "../lib/sanitize.js";
@@ -36,6 +39,7 @@ import type * as lib_syllabusTypes from "../lib/syllabusTypes.js";
 import type * as lib_taskValidators from "../lib/taskValidators.js";
 import type * as mutations_calendar from "../mutations/calendar.js";
 import type * as mutations_chatMessages from "../mutations/chatMessages.js";
+import type * as mutations_chatSessions from "../mutations/chatSessions.js";
 import type * as mutations_studyBlocks from "../mutations/studyBlocks.js";
 import type * as mutations_subtasks from "../mutations/subtasks.js";
 import type * as mutations_syllabi from "../mutations/syllabi.js";
@@ -45,6 +49,7 @@ import type * as mutations_userCourses from "../mutations/userCourses.js";
 import type * as mutations_users from "../mutations/users.js";
 import type * as queries_calendar from "../queries/calendar.js";
 import type * as queries_chatMessages from "../queries/chatMessages.js";
+import type * as queries_chatSessions from "../queries/chatSessions.js";
 import type * as queries_studyBlocks from "../queries/studyBlocks.js";
 import type * as queries_subtasks from "../queries/subtasks.js";
 import type * as queries_tasks from "../queries/tasks.js";
@@ -59,6 +64,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   "actions/autoRescheduleConflicts": typeof actions_autoRescheduleConflicts;
+  "actions/entityResolution": typeof actions_entityResolution;
   "actions/exportStudyBlocksToCalendar": typeof actions_exportStudyBlocksToCalendar;
   "actions/fetchCalendarEvents": typeof actions_fetchCalendarEvents;
   "actions/getCalendarAvailability": typeof actions_getCalendarAvailability;
@@ -78,7 +84,9 @@ declare const fullApi: ApiFromModules<{
   "lib/calendarCrypto": typeof lib_calendarCrypto;
   "lib/classTagUtils": typeof lib_classTagUtils;
   "lib/courseColors": typeof lib_courseColors;
+  "lib/gcalHelpers": typeof lib_gcalHelpers;
   "lib/gemini": typeof lib_gemini;
+  "lib/geminiEmbedding": typeof lib_geminiEmbedding;
   "lib/httpTypes": typeof lib_httpTypes;
   "lib/retrieval": typeof lib_retrieval;
   "lib/sanitize": typeof lib_sanitize;
@@ -86,6 +94,7 @@ declare const fullApi: ApiFromModules<{
   "lib/taskValidators": typeof lib_taskValidators;
   "mutations/calendar": typeof mutations_calendar;
   "mutations/chatMessages": typeof mutations_chatMessages;
+  "mutations/chatSessions": typeof mutations_chatSessions;
   "mutations/studyBlocks": typeof mutations_studyBlocks;
   "mutations/subtasks": typeof mutations_subtasks;
   "mutations/syllabi": typeof mutations_syllabi;
@@ -95,6 +104,7 @@ declare const fullApi: ApiFromModules<{
   "mutations/users": typeof mutations_users;
   "queries/calendar": typeof queries_calendar;
   "queries/chatMessages": typeof queries_chatMessages;
+  "queries/chatSessions": typeof queries_chatSessions;
   "queries/studyBlocks": typeof queries_studyBlocks;
   "queries/subtasks": typeof queries_subtasks;
   "queries/tasks": typeof queries_tasks;

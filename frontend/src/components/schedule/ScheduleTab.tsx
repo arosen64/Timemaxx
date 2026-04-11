@@ -26,6 +26,8 @@ type StudyBlockWithTask = {
   startTime: string | undefined
   studyBlockLength: number
   isConflicted: boolean | undefined
+  googleEventId?: string
+  needsExport?: boolean
   taskTitle: string
   taskDueDate: number
   courseColor?: string
@@ -286,13 +288,16 @@ export default function ScheduleTab() {
         if (result.exported > 0) parts.push(`${result.exported} block${result.exported !== 1 ? 's' : ''} exported`)
         if (result.patched > 0) parts.push(`${result.patched} updated`)
         setExportMsg(parts.length > 0 ? parts.join(', ') + '.' : 'Nothing to export.')
+        // Re-fetch so the grid reflects updated GCal event positions immediately
+        const fresh = await fetchCalendarEventsAction({ startDate: startDateStr, timezone })
+        setCalendarData(fresh)
       }
     } catch (err) {
       setExportMsg(`Export failed: ${err instanceof Error ? err.message : String(err)}`)
     } finally {
       setIsExporting(false)
     }
-  }, [exportStudyBlocksAction])
+  }, [exportStudyBlocksAction, fetchCalendarEventsAction, startDateStr, timezone])
 
   async function handleToggleCalendar(calId: string) {
     const current = selectedCalendarIds ?? []
@@ -309,6 +314,15 @@ export default function ScheduleTab() {
   }
 
   const hasIndicator = calendarConnected && (!selectedCalendarIds || selectedCalendarIds.length === 0)
+
+  const pendingExportCount = useMemo(() => {
+    if (!calendarConnected) return 0
+    return (allStudyBlocks ?? []).filter((b) => {
+      if (!b.startTime) return false
+      // needsExport explicitly true, or never exported (no googleEventId and needsExport not yet set)
+      return b.needsExport === true || (b.needsExport === undefined && !b.googleEventId)
+    }).length
+  }, [allStudyBlocks, calendarConnected])
 
   return (
     <div
@@ -414,6 +428,15 @@ export default function ScheduleTab() {
           >
             ✕
           </button>
+        </div>
+      )}
+
+      {pendingExportCount > 0 && (
+        <div className="mb-3 flex items-center gap-2 rounded-lg border border-sky-blue bg-info-bg px-4 py-2 text-sm text-navy">
+          <CalendarIcon color="#005A8E" size={14} />
+          <span>
+            {pendingExportCount} block{pendingExportCount !== 1 ? 's' : ''} added or moved — export to sync with Google Calendar.
+          </span>
         </div>
       )}
 
