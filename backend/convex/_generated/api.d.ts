@@ -29,6 +29,7 @@ import type * as lib_classTagUtils from "../lib/classTagUtils.js";
 import type * as lib_courseColors from "../lib/courseColors.js";
 import type * as lib_gemini from "../lib/gemini.js";
 import type * as lib_httpTypes from "../lib/httpTypes.js";
+import type * as lib_retrieval from "../lib/retrieval.js";
 import type * as lib_sanitize from "../lib/sanitize.js";
 import type * as lib_syllabusTypes from "../lib/syllabusTypes.js";
 import type * as lib_taskValidators from "../lib/taskValidators.js";
@@ -77,6 +78,7 @@ declare const fullApi: ApiFromModules<{
   "lib/courseColors": typeof lib_courseColors;
   "lib/gemini": typeof lib_gemini;
   "lib/httpTypes": typeof lib_httpTypes;
+  "lib/retrieval": typeof lib_retrieval;
   "lib/sanitize": typeof lib_sanitize;
   "lib/syllabusTypes": typeof lib_syllabusTypes;
   "lib/taskValidators": typeof lib_taskValidators;
