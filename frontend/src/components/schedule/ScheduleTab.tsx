@@ -3,10 +3,11 @@ import { useQuery, useAction, useMutation } from 'convex/react'
 import { api } from '../../../../backend/convex/_generated/api'
 import type { Id } from '../../../../backend/convex/_generated/dataModel'
 import type { CalendarEntry, TimedEvent, AllDayEvent } from '../../../../backend/convex/actions/fetchCalendarEvents'
-import { CalendarIcon, SpinnerIcon, WarningIcon, ChevronLeftIcon, ChevronRightIcon } from '../icons'
-import Button from '../ui/Button'
+import { SpinnerIcon, WarningIcon } from '../icons'
 import TimeGrid, { type StudyBlockOnGrid } from './TimeGrid'
 import CalendarSelectorPopup from './CalendarSelectorPopup'
+import ScheduleHeader from './ScheduleHeader'
+import ScheduleTray from './ScheduleTray'
 import { computeOverlapLayout } from './overlapLayout'
 import { offsetDate, isoDateString, minutesFromMidnight, SLOT_HEIGHT, MAX_OFFSET_DAYS, DAYS_FULL } from './utils'
 
@@ -54,6 +55,7 @@ export default function ScheduleTab() {
   const [isRescheduling, setIsRescheduling] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   const [exportMsg, setExportMsg] = useState<string | null>(null)
+  const [scheduleAllMsg, setScheduleAllMsg] = useState<string | null>(null)
 
   const gridRef = useRef<HTMLDivElement>(null)
 
@@ -136,7 +138,6 @@ export default function ScheduleTab() {
       if (b.startTime) scheduled.push(b as StudyBlockOnGrid)
       else unscheduled.push(b)
     }
-    // Sort unscheduled by task due date ascending, then by block id (creation order)
     unscheduled.sort((a, b) => {
       if (a.taskDueDate !== b.taskDueDate) return a.taskDueDate - b.taskDueDate
       return a._id < b._id ? -1 : 1
@@ -144,7 +145,6 @@ export default function ScheduleTab() {
     return { scheduledBlocks: scheduled, unscheduledBlocks: unscheduled }
   }, [allStudyBlocks])
 
-  // Build studyBlocksByDay for the grid
   const studyBlocksByDay = useMemo(() => {
     const map: Record<string, StudyBlockOnGrid[]> = {}
     for (const b of scheduledBlocks) {
@@ -154,7 +154,6 @@ export default function ScheduleTab() {
     return map
   }, [scheduledBlocks])
 
-  // Compute highlighted (eligible) slots for assign mode
   const highlightedSlots = useMemo((): Set<string> => {
     if (!assigningBlockId && !draggingBlockId) return new Set()
 
@@ -165,7 +164,6 @@ export default function ScheduleTab() {
     const slots = new Set<string>()
     const timedEvents = calendarData?.timedEvents ?? []
 
-    // Generate all 21 days from today
     for (let offset = 0; offset < MAX_OFFSET_DAYS; offset++) {
       const date = offsetDate(offset)
       const dateStr = isoDateString(date)
@@ -173,7 +171,6 @@ export default function ScheduleTab() {
       const dayName = DAYS_FULL[jsDay === 0 ? 6 : jsDay - 1]
       const row = workHoursGrid?.find((r) => r.day === dayName)
 
-      // Events for this day
       const dayEventSlots = new Set<number>()
       for (const e of timedEvents) {
         if (isoDateString(new Date(e.start)) !== dateStr) continue
@@ -184,7 +181,6 @@ export default function ScheduleTab() {
         for (let s = startSlot; s < endSlot; s++) dayEventSlots.add(s)
       }
 
-      // Study blocks already on this day
       const dayBlockSlots = new Set<number>()
       for (const sb of studyBlocksByDay[dateStr] ?? []) {
         if (sb._id === activeId) continue
@@ -194,11 +190,9 @@ export default function ScheduleTab() {
         for (let s = startSlot; s < startSlot + blockSlots; s++) dayBlockSlots.add(s)
       }
 
-      // How many consecutive slots the block needs
       const neededSlots = Math.ceil(block.studyBlockLength / 30)
 
       for (let slot = 0; slot <= 48 - neededSlots; slot++) {
-        // Must not overlap any blocked or event/block slot for the full duration
         let conflict = false
         for (let s = slot; s < slot + neededSlots; s++) {
           if (row?.blocked.includes(s) || dayEventSlots.has(s) || dayBlockSlots.has(s)) {
@@ -208,7 +202,6 @@ export default function ScheduleTab() {
         }
         if (conflict) continue
 
-        // Must be in the future and before task due date
         const slotStartMs = new Date(`${dateStr}T00:00:00`).getTime() + slot * 30 * 60 * 1000
         if (slotStartMs < Date.now()) continue
         if (slotStartMs >= block.taskDueDate) continue
@@ -262,13 +255,11 @@ export default function ScheduleTab() {
     setAutoRescheduleMsg(null)
     try {
       const result = await autoRescheduleAction({ timezone })
-      if (result.unplacedCount > 0) {
-        setAutoRescheduleMsg(
-          `${result.unplacedCount} block${result.unplacedCount !== 1 ? 's' : ''} could not be placed and moved to the tray.`
-        )
-      } else {
-        setAutoRescheduleMsg('All conflicts resolved.')
-      }
+      setAutoRescheduleMsg(
+        result.unplacedCount > 0
+          ? `${result.unplacedCount} block${result.unplacedCount !== 1 ? 's' : ''} could not be placed and moved to the tray.`
+          : 'All conflicts resolved.'
+      )
     } catch {
       setAutoRescheduleMsg('Auto-reschedule failed. Please try again.')
     } finally {
@@ -305,7 +296,6 @@ export default function ScheduleTab() {
     await saveSelectedCalendarsMutation({ selectedCalendarIds: next })
     const data = await fetchCalendarEventsAction({ startDate: startDateStr, timezone })
     setCalendarData(data)
-    // 3.4: Trigger conflict detection after selectedCalendarIds changes
     await runDetectConflictsMutation({
       timedEvents: data.timedEvents,
       workHoursGrid: workHoursGrid ?? [],
@@ -328,7 +318,6 @@ export default function ScheduleTab() {
     <div
       className="flex flex-col flex-1 min-h-0 min-w-0"
       onClick={(e) => {
-        // Cancel assign/move mode when clicking outside the grid area
         const target = e.target as HTMLElement
         if (!target.closest('[data-grid]') && !target.closest('[data-tray]')) {
           if (assigningBlockId) setAssigningBlockId(null)
@@ -336,67 +325,18 @@ export default function ScheduleTab() {
         }
       }}
     >
-      {/* Page header: title + week nav + calendar selector */}
-      <div className="flex items-center justify-between mb-4 rounded-xl bg-white border border-border px-6 py-4">
-        <h1 className="font-heading text-xl font-bold text-navy">Schedule</h1>
-
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setWeekOffset((o) => o - 7)}
-            disabled={weekOffset === 0}
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-white text-slate-blue transition hover:bg-bg-gray disabled:cursor-not-allowed disabled:opacity-40"
-            aria-label="Previous week"
-          >
-            <ChevronLeftIcon size={14} />
-          </button>
-          <span className="min-w-[148px] text-center font-body text-sm font-medium text-navy">
-            {days[0].toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-            {' – '}
-            {days[6].toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-          </span>
-          <button
-            type="button"
-            onClick={() => setWeekOffset((o) => o + 7)}
-            disabled={weekOffset + 7 >= MAX_OFFSET_DAYS}
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-white text-slate-blue transition hover:bg-bg-gray disabled:cursor-not-allowed disabled:opacity-40"
-            aria-label="Next week"
-          >
-            <ChevronRightIcon size={14} />
-          </button>
-          {isFetchingEvents && <SpinnerIcon color="#4E6A8C" size={14} />}
-        </div>
-
-        <div className="flex items-center gap-2">
-          {calendarConnected && (
-            <Button
-              variant="secondary"
-              onClick={handleExport}
-              disabled={isExporting}
-              icon={isExporting ? <SpinnerIcon color="#4E6A8C" size={14} /> : <CalendarIcon color="#4E6A8C" size={14} />}
-              className="h-9 px-4 text-sm"
-            >
-              {isExporting ? 'Exporting…' : 'Export to GCal'}
-            </Button>
-          )}
-          {calendarConnected ? (
-            <button
-              type="button"
-              onClick={() => setSelectorOpen((o) => !o)}
-              className={`flex items-center gap-2 rounded-lg px-4 h-9 font-heading text-sm font-semibold text-white transition hover:opacity-90 ${hasIndicator ? 'bg-info-bg text-navy' : 'bg-navy'}`}
-              aria-label="Select calendars"
-            >
-              <CalendarIcon color="#86C8BC" size={14} />
-              Calendars
-              {hasIndicator && (
-                <span className="flex h-2 w-2 rounded-full bg-sky-blue" aria-hidden="true" />
-              )}
-            </button>
-          ) : (
-            <div className="w-[110px]" />
-          )}
-        </div>
-      </div>
+      <ScheduleHeader
+        days={days}
+        weekOffset={weekOffset}
+        isFetchingEvents={isFetchingEvents}
+        calendarConnected={calendarConnected}
+        hasCalendarIndicator={hasIndicator}
+        isExporting={isExporting}
+        onPrevWeek={() => setWeekOffset((o) => o - 7)}
+        onNextWeek={() => setWeekOffset((o) => o + 7)}
+        onExport={handleExport}
+        onOpenSelector={() => setSelectorOpen((o) => !o)}
+      />
 
       {calendarData?.error && (
         <div className="mb-3 flex items-center gap-2 rounded-lg border border-urgent-red-light bg-urgent-red-light px-4 py-2 text-sm text-urgent-red">
@@ -408,26 +348,21 @@ export default function ScheduleTab() {
       {autoRescheduleMsg && (
         <div className="mb-3 flex items-center justify-between gap-2 rounded-lg border border-border bg-bg-gray px-4 py-2 text-sm text-slate-blue">
           <span>{autoRescheduleMsg}</span>
-          <button
-            type="button"
-            onClick={() => setAutoRescheduleMsg(null)}
-            className="text-light-blue hover:text-slate-blue"
-          >
-            ✕
-          </button>
+          <button type="button" onClick={() => setAutoRescheduleMsg(null)} className="text-light-blue hover:text-slate-blue">✕</button>
         </div>
       )}
 
       {exportMsg && (
         <div className="mb-3 flex items-center justify-between gap-2 rounded-lg border border-border bg-bg-gray px-4 py-2 text-sm text-slate-blue">
           <span>{exportMsg}</span>
-          <button
-            type="button"
-            onClick={() => setExportMsg(null)}
-            className="text-light-blue hover:text-slate-blue"
-          >
-            ✕
-          </button>
+          <button type="button" onClick={() => setExportMsg(null)} className="text-light-blue hover:text-slate-blue">✕</button>
+        </div>
+      )}
+
+      {scheduleAllMsg && (
+        <div className="mb-3 flex items-center justify-between gap-2 rounded-lg border border-border bg-bg-gray px-4 py-2 text-sm text-slate-blue">
+          <span>{scheduleAllMsg}</span>
+          <button type="button" onClick={() => setScheduleAllMsg(null)} className="text-light-blue hover:text-slate-blue">✕</button>
         </div>
       )}
 
@@ -455,7 +390,6 @@ export default function ScheduleTab() {
       )}
 
       <div className="flex flex-1 gap-4 min-h-0">
-        {/* Main grid */}
         <div className="flex flex-1 flex-col min-h-0 min-w-0" data-grid>
           <TimeGrid
             days={days}
@@ -483,61 +417,20 @@ export default function ScheduleTab() {
           />
         </div>
 
-        {/* Unscheduled block tray */}
-        <aside
-          className="flex w-[180px] shrink-0 flex-col gap-2 overflow-y-auto"
-          data-tray
-        >
-          <h3 className="font-heading text-xs font-semibold text-navy">Unscheduled</h3>
+        {isRescheduling && (
+          <div className="flex items-center gap-2 text-xs text-slate-blue self-start mt-2">
+            <SpinnerIcon color="#4E6A8C" size={12} />
+            Rescheduling…
+          </div>
+        )}
 
-          {isRescheduling && (
-            <div className="flex items-center gap-2 text-xs text-slate-blue">
-              <SpinnerIcon color="#4E6A8C" size={12} />
-              Rescheduling…
-            </div>
-          )}
-
-          {unscheduledBlocks.length === 0 ? (
-            <div className="rounded-lg border border-border bg-white px-3 py-3 text-[11px] text-light-blue">
-              All blocks scheduled.
-            </div>
-          ) : (
-            unscheduledBlocks.map((block) => {
-              const isSelected = assigningBlockId === block._id
-              return (
-                <button
-                  key={block._id}
-                  type="button"
-                  onClick={() =>
-                    setAssigningBlockId((prev) => (prev === block._id ? null : block._id))
-                  }
-                  className={`group relative flex items-start gap-2 rounded-lg border px-3 py-2.5 text-left transition ${
-                    isSelected
-                      ? 'border-teal bg-teal/10 shadow-sm'
-                      : 'border-border bg-white hover:border-teal/50 hover:bg-teal/5'
-                  }`}
-                >
-                  <span
-                    className="mt-1 inline-block h-2.5 w-2.5 shrink-0 rounded-full"
-                    style={{ backgroundColor: block.courseColor ?? '#002D72' }}
-                  />
-                  <span className="flex min-w-0 flex-col gap-0.5">
-                    <span className="block truncate font-heading text-[11px] font-semibold text-navy">
-                      {block.title}
-                    </span>
-                    <span className="text-[10px] text-slate-blue">{block.studyBlockLength} min</span>
-                    <span className="text-[10px] text-light-blue truncate">{block.taskTitle}</span>
-                    {block.courseName && (
-                      <span className="hidden group-hover:block truncate font-body text-[10px] font-medium text-teal">
-                        {block.courseName}
-                      </span>
-                    )}
-                  </span>
-                </button>
-              )
-            })
-          )}
-        </aside>
+        <ScheduleTray
+          blocks={unscheduledBlocks}
+          assigningBlockId={assigningBlockId}
+          onToggleAssign={(id) => setAssigningBlockId((prev) => (prev === id ? null : id))}
+          timezone={timezone}
+          onScheduleAllMsg={setScheduleAllMsg}
+        />
       </div>
 
       {selectorOpen && (

@@ -18,6 +18,9 @@ import type * as actions_initiateGoogleCalendarOAuth from "../actions/initiateGo
 import type * as actions_jhuCourses from "../actions/jhuCourses.js";
 import type * as actions_requestEstimateSubtaskTime from "../actions/requestEstimateSubtaskTime.js";
 import type * as actions_requestGenerateSubtasks from "../actions/requestGenerateSubtasks.js";
+import type * as actions_scheduleAllTasks from "../actions/scheduleAllTasks.js";
+import type * as actions_scheduleBlock from "../actions/scheduleBlock.js";
+import type * as actions_scheduleTask from "../actions/scheduleTask.js";
 import type * as ai_embeddings from "../ai/embeddings.js";
 import type * as ai_estimateTaskTime from "../ai/estimateTaskTime.js";
 import type * as ai_generateAcademicProfile from "../ai/generateAcademicProfile.js";
@@ -38,6 +41,7 @@ import type * as lib_geminiEmbedding from "../lib/geminiEmbedding.js";
 import type * as lib_httpTypes from "../lib/httpTypes.js";
 import type * as lib_retrieval from "../lib/retrieval.js";
 import type * as lib_sanitize from "../lib/sanitize.js";
+import type * as lib_scheduleSlots from "../lib/scheduleSlots.js";
 import type * as lib_syllabusTypes from "../lib/syllabusTypes.js";
 import type * as lib_taskTypes from "../lib/taskTypes.js";
 import type * as lib_taskValidators from "../lib/taskValidators.js";
@@ -77,6 +81,9 @@ declare const fullApi: ApiFromModules<{
   "actions/jhuCourses": typeof actions_jhuCourses;
   "actions/requestEstimateSubtaskTime": typeof actions_requestEstimateSubtaskTime;
   "actions/requestGenerateSubtasks": typeof actions_requestGenerateSubtasks;
+  "actions/scheduleAllTasks": typeof actions_scheduleAllTasks;
+  "actions/scheduleBlock": typeof actions_scheduleBlock;
+  "actions/scheduleTask": typeof actions_scheduleTask;
   "ai/embeddings": typeof ai_embeddings;
   "ai/estimateTaskTime": typeof ai_estimateTaskTime;
   "ai/generateAcademicProfile": typeof ai_generateAcademicProfile;
@@ -97,6 +104,7 @@ declare const fullApi: ApiFromModules<{
   "lib/httpTypes": typeof lib_httpTypes;
   "lib/retrieval": typeof lib_retrieval;
   "lib/sanitize": typeof lib_sanitize;
+  "lib/scheduleSlots": typeof lib_scheduleSlots;
   "lib/syllabusTypes": typeof lib_syllabusTypes;
   "lib/taskTypes": typeof lib_taskTypes;
   "lib/taskValidators": typeof lib_taskValidators;

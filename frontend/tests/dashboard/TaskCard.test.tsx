@@ -5,12 +5,16 @@ import type React from 'react'
 import TaskCard from '../../src/components/dashboard/TaskCard'
 
 vi.mock('../../../backend/convex/_generated/api', () => ({
-  api: { queries: { studyBlocks: { getStudyBlocksByTask: 'getStudyBlocksByTask' } } },
+  api: {
+    queries: { studyBlocks: { getStudyBlocksByTask: 'getStudyBlocksByTask' } },
+    mutations: { studyBlocks: { deleteStudyBlocksForTask: 'deleteStudyBlocksForTask' } },
+  },
 }))
-vi.mock('convex/react', () => ({ useQuery: vi.fn() }))
+vi.mock('convex/react', () => ({ useQuery: vi.fn(), useMutation: vi.fn() }))
 
-import { useQuery } from 'convex/react'
+import { useQuery, useMutation } from 'convex/react'
 const mockUseQuery = vi.mocked(useQuery)
+const mockUseMutation = vi.mocked(useMutation)
 
 const MOCK_TASK = {
   _id: 'task1' as any,
@@ -67,6 +71,7 @@ describe('TaskCard', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockUseQuery.mockReturnValue([] as never)
+    mockUseMutation.mockReturnValue(vi.fn() as never)
   })
 
   it('renders task title', () => {
