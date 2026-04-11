@@ -34,8 +34,11 @@ Set needsDomainClarification TRUE only when the message is off-topic or too vagu
 entityKind "none", messageTag "none", tagConfidence 0, and domainClarifyingQuestion to one short question.
 
 ## Entity clarification (concrete taskId / userCourses id)
-Set needsEntityClarification TRUE when the user refers to a specific task or class without a stable name/code:
-"this assignment", "that class", "the problem set", "it took longer than I thought", comparative difficulty, etc.
+Set needsEntityClarification TRUE only when the user is talking about a **specific existing** task or class they did not name clearly — e.g.
+"this assignment", "that class", "the problem set", "it took longer than I thought", comparative difficulty.
+
+Set needsEntityClarification FALSE for **general how-to** questions, including:
+"can I create a task?", "how do I add homework?", "where do I edit tasks?" — those are normal **tasks** routing with entityKind "none"; do not ask them to pick from a list.
 - entityKind "task" — they need a particular task/assignment.
 - entityKind "class" — they need a particular course.
 - entityKind "both" — they may need both (e.g. ambiguous workload spanning a class and its tasks); downstream will ask task first, then class if needed.

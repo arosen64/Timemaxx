@@ -36,6 +36,12 @@ const superviseStep = createStep({
 });
 
 const CANNED_RESPONSES: Partial<Record<Route, string>> = {
+  tasks:
+    "Yes — you can create tasks in TimeMaxx. Open **Tasks** from the app to add an assignment, set a due date, and link it to a class if you want. If you describe what you’re working on, I can help you break it down or think about time.",
+  preferences:
+    "You can update study preferences (focus length, work hours, and similar options) from the **Preferences** page.",
+  feedback:
+    "To rate how long something took versus the estimate, or give time feedback, use the feedback options on a task or visit the **Feedback** / task-detail flow from your list.",
   classes:
     "To add or remove a course, or to upload a class syllabus, please visit the **Classes** page — you can manage all of that there.",
   schedule:

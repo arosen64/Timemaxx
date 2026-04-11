@@ -602,7 +602,15 @@ chatApp.post("/api/chat", async (c) => {
   });
 
   const route = output.route ?? null;
-  const routeLabel = route ? `Routed to: **${route}**` : "";
+  const routeLabel = route
+    ? `Here’s the gist for **${route}** — use the matching area in the app for details.`
+    : "I’m not sure which area that fits yet — try one more detail (tasks, schedule, classes, preferences, or feedback).";
+  await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
+    userId,
+    sessionId,
+    role: "assistant",
+    content: routeLabel,
+  });
   return c.json({
     text: routeLabel,
     status: "routed",
