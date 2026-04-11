@@ -1,9 +1,9 @@
 import type { Doc, Id } from "../_generated/dataModel";
 
 /** Tunable window over the concatenated transcript (chars). */
-export const CHUNK_TARGET_CHARS = 1200;
+export const CHUNK_TARGET_CHARS = 500;
 /** ~15% overlap so boundaries do not split semantic units awkwardly. */
-export const CHUNK_OVERLAP_CHARS = 180;
+export const CHUNK_OVERLAP_CHARS = 75;
 
 export const MAX_MESSAGES_PER_REBUILD = 200;
 export const MAX_TRANSCRIPT_CHARS = 100_000;
