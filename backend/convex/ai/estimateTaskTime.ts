@@ -95,6 +95,10 @@ async function buildTaskContext(
 /**
  * Formats relevant chats into a context block.
  * TODO: batch-fetch chats by chatIds via getChatsByIdsInternal once a chats table exists.
+ * NOTE: fetchRelevantChats always returns [] until a chats table is added, so this
+ * always returns null. The Gemini prompt's "chats" reasoning category will therefore
+ * always report no chat context. Consider removing the chats category from the required
+ * reasoning trace (reasoningTraceSchema + TIME_ESTIMATE_SYSTEM) until this is populated.
  */
 function buildChatContext(_chatIds: string[]): string | null {
   const chats: RelevantChat[] = [];
@@ -161,9 +165,9 @@ export const estimateTaskTime = internalAction({
     subtaskId: v.optional(v.id("subtasks")),
   },
   handler: async (ctx, args) => {
-    let item: TaskLike
-    let store: (minutes: number) => Promise<void>
-    let contextTaskId: Id<"tasks">
+    let item: TaskLike;
+    let store: (minutes: number) => Promise<void>;
+    let contextTaskId: Id<"tasks">;
 
     if (args.subtaskId) {
       const subtask = await ctx.runQuery(internal.queries.subtasks.getSubtaskInternal, {

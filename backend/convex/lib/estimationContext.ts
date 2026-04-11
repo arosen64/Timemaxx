@@ -107,9 +107,11 @@ export function buildCourseContext(
 // ─── Shared estimation function ───────────────────────────────────────────────
 
 /**
- * Builds an estimation prompt for a TaskLike item, calls OpenAI, and invokes
- * the store callback with the result. Each caller provides its own store
- * function to write to the correct table (tasks or subtasks).
+ * EXPERIMENTAL — not wired up anywhere yet.
+ * Builds an estimation prompt for a TaskLike item, calls OpenAI (GPT-4o mini),
+ * and invokes the store callback with the result. This is being explored as an
+ * alternative to the Gemini-based estimateTaskTime action; do not call it from
+ * production paths until the migration is decided.
  */
 export async function estimateAndStore(
   item: TaskLike,
