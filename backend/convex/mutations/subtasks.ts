@@ -2,6 +2,7 @@ import { internalMutation, mutation } from "../_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { taskTypeValidator } from "../lib/taskValidators";
+import { internal } from "../_generated/api";
 
 /**
  * Creates a new subtask linked to a parent task.
@@ -30,7 +31,7 @@ export const createSubtask = mutation({
     if (args.title.trim().length === 0) throw new Error("Title cannot be empty");
     if (args.description.trim().length === 0) throw new Error("Description cannot be empty");
 
-    return await ctx.db.insert("subtasks", {
+    const subtaskId = await ctx.db.insert("subtasks", {
       parentTaskId: args.parentTaskId,
       userId,
       title: args.title,
@@ -45,6 +46,14 @@ export const createSubtask = mutation({
       dueDate: parent.dueDate,
       createdAt: Date.now(),
     });
+
+    // Kick off time estimation on the backend immediately after creation.
+    // This runs regardless of frontend lifecycle (no component unmount risk).
+    await ctx.scheduler.runAfter(0, internal.ai.estimateTaskTime.estimateTaskTime, {
+      subtaskId,
+    });
+
+    return subtaskId;
   },
 });
 

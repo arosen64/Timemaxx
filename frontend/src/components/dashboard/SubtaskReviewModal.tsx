@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useMutation, useAction, useQuery } from 'convex/react'
+import { useMutation, useQuery } from 'convex/react'
 import { api } from '../../../../backend/convex/_generated/api'
 import { type Id } from '../../../../backend/convex/_generated/dataModel'
 import { type GeneratedSubtask } from '../../../../backend/convex/actions/generateSubtasks'
@@ -33,9 +33,6 @@ export default function SubtaskReviewModal({
 
   const courses = useQuery(api.queries.userCourses.getUserCourses)
   const createSubtask = useMutation(api.mutations.subtasks.createSubtask)
-  const requestEstimateSubtaskTime = useAction(
-    api.actions.requestEstimateSubtaskTime.requestEstimateSubtaskTime
-  )
 
   const parentColor: string = (() => {
     if (!courseId || !courses) return FALLBACK_COURSE_COLOR
@@ -78,7 +75,7 @@ export default function SubtaskReviewModal({
     setError(null)
     try {
       const n = valid.length
-      const subtaskIds = await Promise.all(
+      await Promise.all(
         valid.map((s, i) =>
           createSubtask({
             parentTaskId,
@@ -92,12 +89,8 @@ export default function SubtaskReviewModal({
         )
       )
 
-      await Promise.all(
-        subtaskIds.map((subtaskId) =>
-          requestEstimateSubtaskTime({ subtaskId: subtaskId as Id<'subtasks'> })
-        )
-      )
-
+      // Estimation is now scheduled automatically by the createSubtask mutation.
+      // Estimates appear in the background via the reactive query.
       onClose()
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Something went wrong. Please try again.')
