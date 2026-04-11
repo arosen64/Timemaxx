@@ -162,7 +162,7 @@ export default function TaskCard({
 
       {/* Collapsible reasoning panel */}
       <div
-        className={`grid transition-all duration-200 ${
+        className={`grid transition-[grid-template-rows] duration-200 ${
           showReasoning && task.reasoning ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
         }`}
       >
