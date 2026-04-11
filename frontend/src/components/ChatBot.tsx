@@ -26,6 +26,8 @@ type ChatApiResponse = {
   phase?: 'task' | 'class'
 }
 
+type EntityPickMeta = { phase: 'task' | 'class'; label: string }
+
 /** Renders `**like this**` as bold (common in assistant copy; plain text otherwise). */
 function renderInlineBoldMarkdown(text: string): ReactNode {
   const parts = text.split(/(\*\*.+?\*\*)/g)
@@ -53,6 +55,8 @@ export default function ChatBot() {
     candidates: EntityCandidate[]
     hasMore: boolean
   } | null>(null)
+  /** Confirmed picks in the current clarification flow (shown above the active MCQ). */
+  const [entityChoiceHistory, setEntityChoiceHistory] = useState<EntityPickMeta[]>([])
 
   const token = useAuthToken()
   const history = useQuery(api.queries.chatMessages.getChatHistory, { sessionId, limit: 50 }) ?? []
@@ -67,8 +71,18 @@ export default function ChatBot() {
 
   const showSuggestions = messages.length === 0 && !isLoading
 
-  function applyEntityResponse(data: ChatApiResponse, userEcho: string | null) {
+  function applyEntityResponse(
+    data: ChatApiResponse,
+    userEcho: string | null,
+    entityPick?: EntityPickMeta,
+  ) {
     const aiText = data.text ?? ''
+    if (userEcho !== null) {
+      setEntityChoiceHistory([])
+    }
+    if (entityPick) {
+      setEntityChoiceHistory((prev) => [...prev, entityPick])
+    }
     if (data.entityCandidates && data.entityCandidates.length > 0 && data.phase) {
       setEntityMcq({
         phase: data.phase,
@@ -89,7 +103,11 @@ export default function ChatBot() {
     }
   }
 
-  async function postChat(body: Record<string, unknown>, userEcho: string | null) {
+  async function postChat(
+    body: Record<string, unknown>,
+    userEcho: string | null,
+    entityPick?: EntityPickMeta,
+  ) {
     const res = await fetch(`${import.meta.env.VITE_CONVEX_SITE_URL}/api/chat`, {
       method: 'POST',
       headers: {
@@ -106,7 +124,7 @@ export default function ChatBot() {
       throw new Error(`Chat request failed: ${res.status} ${errText}`)
     }
     const data = (await res.json()) as ChatApiResponse
-    applyEntityResponse(data, userEcho)
+    applyEntityResponse(data, userEcho, entityPick)
   }
 
   async function handleSend() {
@@ -116,6 +134,7 @@ export default function ChatBot() {
     setInput('')
     setIsLoading(true)
     setEntityMcq(null)
+    setEntityChoiceHistory([])
     setHistoryLenAtSend(history.length)
     setOptimistic([{ role: 'user', content: text }])
 
@@ -131,14 +150,23 @@ export default function ChatBot() {
   }
 
   async function handlePickEntity(phase: 'task' | 'class', id: string) {
-    if (isLoading) return
+    if (isLoading || !entityMcq) return
+    const picked = entityMcq.candidates.find((c) => c.id === id)
+    const label = picked?.label ?? 'Your choice'
     setIsLoading(true)
-    setEntityMcq(null)
     try {
       if (phase === 'task') {
-        await postChat({ sessionId, entity: { action: 'pick_task', taskId: id } }, null)
+        await postChat(
+          { sessionId, entity: { action: 'pick_task', taskId: id } },
+          null,
+          { phase: 'task', label },
+        )
       } else {
-        await postChat({ sessionId, entity: { action: 'pick_course', courseId: id } }, null)
+        await postChat(
+          { sessionId, entity: { action: 'pick_course', courseId: id } },
+          null,
+          { phase: 'class', label },
+        )
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
@@ -190,6 +218,7 @@ export default function ChatBot() {
                 setSessionId(crypto.randomUUID())
                 setOptimistic([])
                 setEntityMcq(null)
+                setEntityChoiceHistory([])
                 setInput('')
               }}
               aria-label="Close chat"
@@ -257,42 +286,66 @@ export default function ChatBot() {
                   </div>
                 )}
 
-                {entityMcq && entityMcq.candidates.length > 0 && (
+                {(entityChoiceHistory.length > 0 || (entityMcq && entityMcq.candidates.length > 0)) && (
                   <div className="rounded-xl border border-border bg-white p-3 space-y-2">
-                    <p className="text-[11px] font-heading font-semibold text-navy">
-                      {entityMcq.phase === 'task' ? 'Pick a task' : 'Pick a class'}
-                    </p>
-                    <div className="flex flex-col gap-1.5 max-h-40 overflow-y-auto">
-                      {entityMcq.candidates.map((c) => (
+                    {entityChoiceHistory.length > 0 && (
+                      <div className="flex flex-col gap-1.5">
+                        <p className="text-[10px] font-heading font-semibold uppercase tracking-wide text-light-blue">
+                          Your picks
+                        </p>
+                        <ul className="flex flex-col gap-1">
+                          {entityChoiceHistory.map((c, idx) => (
+                            <li
+                              key={`${c.phase}-${idx}-${c.label}`}
+                              className="flex items-baseline gap-2 rounded-lg bg-bg-gray/80 px-2.5 py-1.5 text-[12px]"
+                            >
+                              <span className="shrink-0 font-heading text-[10px] font-semibold text-teal">
+                                {c.phase === 'task' ? 'Task' : 'Class'}
+                              </span>
+                              <span className="font-medium text-navy">{c.label}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {entityMcq && entityMcq.candidates.length > 0 && (
+                      <>
+                        <p className="text-[11px] font-heading font-semibold text-navy">
+                          {entityMcq.phase === 'task' ? 'Pick a task' : 'Pick a class'}
+                        </p>
+                        <div className="flex flex-col gap-1.5 max-h-40 overflow-y-auto">
+                          {entityMcq.candidates.map((c) => (
+                            <button
+                              key={c.id}
+                              type="button"
+                              onClick={() => void handlePickEntity(entityMcq.phase, c.id)}
+                              disabled={isLoading}
+                              className="text-left rounded-lg border border-border px-2.5 py-2 text-[12px] hover:bg-bg-gray transition disabled:opacity-50"
+                            >
+                              <span className="font-medium text-navy block">{c.label}</span>
+                              <span className="text-light-blue text-[11px]">{c.subtitle}</span>
+                            </button>
+                          ))}
+                        </div>
                         <button
-                          key={c.id}
                           type="button"
-                          onClick={() => void handlePickEntity(entityMcq.phase, c.id)}
-                          disabled={isLoading}
-                          className="text-left rounded-lg border border-border px-2.5 py-2 text-[12px] hover:bg-bg-gray transition disabled:opacity-50"
+                          onClick={() => void handleOtherEntity()}
+                          disabled={isLoading || !entityMcq.hasMore}
+                          title={
+                            entityMcq.hasMore
+                              ? 'Show more options'
+                              : 'No more matches for this search'
+                          }
+                          className={
+                            entityMcq.hasMore
+                              ? 'w-full rounded-lg border border-dashed border-teal/50 py-2 text-[12px] font-medium text-teal hover:bg-teal/5 transition disabled:opacity-50'
+                              : 'w-full rounded-lg border border-dashed border-border py-2 text-[12px] font-medium text-light-blue cursor-not-allowed opacity-70'
+                          }
                         >
-                          <span className="font-medium text-navy block">{c.label}</span>
-                          <span className="text-light-blue text-[11px]">{c.subtitle}</span>
+                          Other…
                         </button>
-                      ))}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => void handleOtherEntity()}
-                      disabled={isLoading || !entityMcq.hasMore}
-                      title={
-                        entityMcq.hasMore
-                          ? 'Show more options'
-                          : 'No more matches for this search'
-                      }
-                      className={
-                        entityMcq.hasMore
-                          ? 'w-full rounded-lg border border-dashed border-teal/50 py-2 text-[12px] font-medium text-teal hover:bg-teal/5 transition disabled:opacity-50'
-                          : 'w-full rounded-lg border border-dashed border-border py-2 text-[12px] font-medium text-light-blue cursor-not-allowed opacity-70'
-                      }
-                    >
-                      Other…
-                    </button>
+                      </>
+                    )}
                   </div>
                 )}
 
@@ -342,6 +395,7 @@ export default function ChatBot() {
             setSessionId(crypto.randomUUID())
             setOptimistic([])
             setEntityMcq(null)
+            setEntityChoiceHistory([])
             setInput('')
           } else {
             setIsOpen(true)

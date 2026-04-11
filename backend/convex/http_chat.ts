@@ -183,7 +183,14 @@ chatApp.post("/api/chat", async (c) => {
       sessionId,
       courseId,
     });
-    const text = "Thanks — I’ve got the class.";
+    const sessionAfterCourse = await ctx.runQuery(
+      internal.queries.chatSessions.getChatSessionInternal,
+      { userId, sessionId },
+    );
+    const hadTaskAlready = !!sessionAfterCourse?.resolvedTaskId;
+    const text = hadTaskAlready
+      ? "Thanks — I’ve got the task and the class you picked."
+      : "Thanks — I’ve got the class.";
     await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
       userId,
       sessionId,
