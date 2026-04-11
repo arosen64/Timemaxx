@@ -4518,73 +4518,6 @@
               "y": 8.5
             }
           }
-        },
-        {
-          "type": "frame",
-          "id": "UoI1G",
-          "x": 60,
-          "y": 1800,
-          "name": "chatSection",
-          "layout": "vertical",
-          "gap": 16,
-          "children": [
-            {
-              "type": "text",
-              "id": "SC1Da",
-              "name": "sectionLabel",
-              "fill": "$--muted-foreground",
-              "content": "Chat",
-              "fontFamily": "Space Grotesk",
-              "fontSize": 13,
-              "fontWeight": "600"
-            },
-            {
-              "id": "MRQVQ",
-              "type": "ref",
-              "ref": "xtSub",
-              "name": "ChatFAB",
-              "width": "fit_content",
-              "height": "fit_content",
-              "x": 0,
-              "y": 33,
-              "descendants": {
-                "VXD2Q": {
-                  "x": 0,
-                  "y": 0
-                }
-              }
-            },
-            {
-              "id": "UXKPH",
-              "type": "ref",
-              "ref": "m7dFx",
-              "name": "ChatBubble/User",
-              "width": "fit_content",
-              "height": "fit_content",
-              "x": 0,
-              "y": 81
-            },
-            {
-              "id": "AbLJB",
-              "type": "ref",
-              "ref": "rQy6L",
-              "name": "ChatBubble/AI",
-              "width": "fit_content",
-              "height": "fit_content",
-              "x": 0,
-              "y": 133
-            },
-            {
-              "id": "Y3tbq",
-              "type": "ref",
-              "ref": "iQnIB",
-              "name": "ChatOverlay",
-              "width": 400,
-              "height": 600,
-              "x": 0,
-              "y": 201
-            }
-          ]
         }
       ]
     },
@@ -22006,6 +21939,523 @@
           ]
         }
       ]
+    },
+    {
+      "type": "frame",
+      "id": "CkbxA",
+      "x": 8500,
+      "y": 0,
+      "name": "Checkbox/GenerateSubtasks",
+      "reusable": true,
+      "layout": "vertical",
+      "gap": 4,
+      "children": [
+        {
+          "type": "frame",
+          "id": "CkbxB",
+          "name": "row",
+          "gap": 10,
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "CkbxC",
+              "name": "box",
+              "width": 18,
+              "height": 18,
+              "fill": "$--card",
+              "cornerRadius": 4,
+              "stroke": {
+                "align": "inside",
+                "thickness": 1.5,
+                "fill": "$--border"
+              },
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "CkbxD",
+                  "name": "check",
+                  "width": 12,
+                  "height": 12,
+                  "iconFontName": "check",
+                  "iconFontFamily": "lucide",
+                  "fill": "$--primary"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "CkbxE",
+              "name": "label",
+              "fill": "$--primary",
+              "content": "Generate subtasks with AI",
+              "fontFamily": "Space Grotesk",
+              "fontSize": 13,
+              "fontWeight": "600"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "id": "CkbxF",
+          "name": "hint",
+          "fill": "$--muted-foreground",
+          "content": "AI will break your task into steps",
+          "fontFamily": "Inter",
+          "fontSize": 12,
+          "fontWeight": "normal"
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "StRwE",
+      "x": 8500,
+      "y": 120,
+      "name": "SubtaskRow/Edit",
+      "reusable": true,
+      "width": 560,
+      "fill": "$--card",
+      "cornerRadius": "$--radius-m",
+      "stroke": {
+        "align": "inside",
+        "thickness": 1,
+        "fill": "$--border"
+      },
+      "gap": 8,
+      "padding": [
+        12,
+        16
+      ],
+      "alignItems": "center",
+      "children": [
+        {
+          "type": "frame",
+          "id": "StRwF",
+          "name": "fields",
+          "width": 494,
+          "layout": "vertical",
+          "gap": 6,
+          "children": [
+            {
+              "type": "frame",
+              "id": "StRwG",
+              "name": "titleInput",
+              "width": 494,
+              "height": 36,
+              "fill": "$--background",
+              "cornerRadius": "$--radius-m",
+              "stroke": {
+                "align": "inside",
+                "thickness": 1,
+                "fill": "$--border"
+              },
+              "padding": [
+                0,
+                12
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "StRwH",
+                  "name": "titlePlaceholder",
+                  "fill": "$--muted-foreground",
+                  "content": "Subtask title",
+                  "fontFamily": "Space Grotesk",
+                  "fontSize": 13,
+                  "fontWeight": "600"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "StRwI",
+              "name": "descInput",
+              "width": 494,
+              "height": 52,
+              "fill": "$--background",
+              "cornerRadius": "$--radius-m",
+              "stroke": {
+                "align": "inside",
+                "thickness": 1,
+                "fill": "$--border"
+              },
+              "padding": [
+                8,
+                12
+              ],
+              "children": [
+                {
+                  "type": "text",
+                  "id": "StRwJ",
+                  "name": "descPlaceholder",
+                  "fill": "$--muted-foreground",
+                  "content": "Brief description of what to do",
+                  "fontFamily": "Inter",
+                  "fontSize": 12,
+                  "fontWeight": "normal"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "StRwK",
+          "name": "deleteBtn",
+          "width": 28,
+          "height": 28,
+          "fill": "$--background",
+          "cornerRadius": "$--radius-m",
+          "stroke": {
+            "align": "inside",
+            "thickness": 1,
+            "fill": "$--border"
+          },
+          "justifyContent": "center",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "icon_font",
+              "id": "StRwL",
+              "name": "icon",
+              "width": 14,
+              "height": 14,
+              "iconFontName": "x",
+              "iconFontFamily": "lucide",
+              "fill": "$--muted-foreground"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "SRmdX",
+      "x": 8500,
+      "y": 280,
+      "name": "SubtaskReviewModal",
+      "reusable": true,
+      "width": 600,
+      "fill": "$--card",
+      "cornerRadius": 16,
+      "stroke": {
+        "align": "inside",
+        "thickness": 1,
+        "fill": "$--border"
+      },
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "SRmdA",
+          "name": "header",
+          "width": "fill_container",
+          "padding": [
+            20,
+            24
+          ],
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "SRmdB",
+              "name": "titleGroup",
+              "layout": "vertical",
+              "gap": 2,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "SRmdC",
+                  "name": "title",
+                  "fill": "$--primary",
+                  "content": "Review subtasks",
+                  "fontFamily": "Space Grotesk",
+                  "fontSize": 18,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "text",
+                  "id": "SRmdD",
+                  "name": "subtitle",
+                  "fill": "$--muted-foreground",
+                  "content": "Edit, remove, or add subtasks before saving",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "SRmdE",
+          "name": "divider",
+          "width": "fill_container",
+          "height": 1,
+          "fill": "$--border"
+        },
+        {
+          "type": "frame",
+          "id": "SRmdF",
+          "name": "body",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 8,
+          "padding": [
+            20,
+            24
+          ],
+          "children": [
+            {
+              "id": "SRmdG",
+              "type": "ref",
+              "ref": "StRwE",
+              "name": "subtaskRow1",
+              "width": "fill_container",
+              "height": "fit_content",
+              "x": 24,
+              "y": 20
+            },
+            {
+              "id": "SRmdH",
+              "type": "ref",
+              "ref": "StRwE",
+              "name": "subtaskRow2",
+              "width": "fill_container",
+              "height": "fit_content",
+              "x": 24,
+              "y": 146,
+              "descendants": {
+                "StRwH": {
+                  "content": "Write thesis statement"
+                },
+                "StRwJ": {
+                  "content": "Draft a 1-sentence thesis that will guide the essay"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "SRmdI",
+              "name": "addRow",
+              "width": "fill_container",
+              "height": 36,
+              "fill": "$--background",
+              "cornerRadius": "$--radius-m",
+              "stroke": {
+                "align": "inside",
+                "thickness": 1,
+                "fill": "$--border"
+              },
+              "gap": 6,
+              "padding": [
+                0,
+                12
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "SRmdJ",
+                  "name": "plusIcon",
+                  "width": 14,
+                  "height": 14,
+                  "iconFontName": "plus",
+                  "iconFontFamily": "lucide",
+                  "fill": "$--muted-foreground"
+                },
+                {
+                  "type": "text",
+                  "id": "SRmdK",
+                  "name": "addLabel",
+                  "fill": "$--muted-foreground",
+                  "content": "Add subtask",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "SRmdL",
+          "name": "divider2",
+          "width": "fill_container",
+          "height": 1,
+          "fill": "$--border"
+        },
+        {
+          "type": "frame",
+          "id": "SRmdM",
+          "name": "actions",
+          "width": "fill_container",
+          "gap": 12,
+          "padding": [
+            16,
+            24
+          ],
+          "justifyContent": "end",
+          "alignItems": "center",
+          "children": [
+            {
+              "id": "SRmdN",
+              "type": "ref",
+              "ref": "uzHQ8",
+              "name": "cancelBtn",
+              "width": 100,
+              "height": 40,
+              "x": 324,
+              "y": 16,
+              "descendants": {
+                "zZ3E7": {
+                  "content": "Cancel"
+                }
+              }
+            },
+            {
+              "id": "SRmdO",
+              "type": "ref",
+              "ref": "Xdrqk",
+              "name": "confirmBtn",
+              "width": 140,
+              "height": 40,
+              "x": 436,
+              "y": 16,
+              "descendants": {
+                "vxzyR": {
+                  "content": "Confirm subtasks"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "UoI1G",
+      "x": -224,
+      "y": 3307,
+      "name": "chatSection",
+      "layout": "vertical",
+      "gap": 16,
+      "children": [
+        {
+          "type": "text",
+          "id": "SC1Da",
+          "name": "sectionLabel",
+          "fill": "$--muted-foreground",
+          "content": "Chat",
+          "fontFamily": "Space Grotesk",
+          "fontSize": 13,
+          "fontWeight": "600"
+        },
+        {
+          "id": "MRQVQ",
+          "type": "ref",
+          "ref": "xtSub",
+          "name": "ChatFAB",
+          "width": "fit_content",
+          "height": "fit_content",
+          "x": 0,
+          "y": 33,
+          "descendants": {
+            "VXD2Q": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        },
+        {
+          "id": "UXKPH",
+          "type": "ref",
+          "ref": "m7dFx",
+          "name": "ChatBubble/User",
+          "width": "fit_content",
+          "height": "fit_content",
+          "x": 0,
+          "y": 81
+        },
+        {
+          "id": "AbLJB",
+          "type": "ref",
+          "ref": "rQy6L",
+          "name": "ChatBubble/AI",
+          "width": "fit_content",
+          "height": "fit_content",
+          "x": 0,
+          "y": 133
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "SubSec",
+      "x": -407,
+      "y": 3945,
+      "name": "subtaskSection",
+      "layout": "vertical",
+      "gap": 16,
+      "children": [
+        {
+          "type": "text",
+          "id": "SubSecLbl",
+          "name": "sectionLabel",
+          "fill": "$--muted-foreground",
+          "content": "Subtask UI",
+          "fontFamily": "Space Grotesk",
+          "fontSize": 13,
+          "fontWeight": "600"
+        },
+        {
+          "id": "CbGSx",
+          "type": "ref",
+          "ref": "CkbxA",
+          "name": "Checkbox/GenerateSubtasks",
+          "width": "fit_content",
+          "height": "fit_content",
+          "x": 0,
+          "y": 33
+        },
+        {
+          "id": "SRwEd",
+          "type": "ref",
+          "ref": "StRwE",
+          "name": "SubtaskRow/Edit",
+          "width": "fit_content",
+          "height": "fit_content",
+          "x": 0,
+          "y": 86
+        },
+        {
+          "id": "SRmDx",
+          "type": "ref",
+          "ref": "SRmdX",
+          "name": "SubtaskReviewModal",
+          "width": "fit_content(0)",
+          "height": "fit_content",
+          "x": 0,
+          "y": 220
+        }
+      ]
+    },
+    {
+      "id": "Y3tbq",
+      "type": "ref",
+      "ref": "iQnIB",
+      "name": "ChatOverlay",
+      "width": 400,
+      "height": 600,
+      "x": 520,
+      "y": 3400
     }
   ],
   "variables": {

@@ -1,4 +1,5 @@
 export { default as TaskModal } from './TaskModal'
+export { default as SubtaskReviewModal } from './SubtaskReviewModal'
 export { default as AddTaskModal } from './AddTaskModal'
 export { default as EditModal } from './EditTaskModal'
 export { default as DeleteModal } from './DeleteTaskModal'

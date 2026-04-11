@@ -1,10 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useAction } from 'convex/react'
+import { api } from '../../../../backend/convex/_generated/api'
+import { type Id } from '../../../../backend/convex/_generated/dataModel'
+import { type GeneratedSubtask } from '../../../../backend/convex/actions/generateSubtasks'
 import { type ClassTagCourseOption, type EditForm, CUSTOM_TASK_TYPE_OPTION, TASK_TYPE_OPTIONS } from './types'
 import DueDateRowWithCalendar from '../DueDateRowWithCalendar'
 import DueTimeField from '../DueTimeField'
 import Modal from '../ui/Modal'
 import Button from '../ui/Button'
 import Selector from '../ui/Selector'
+import SubtaskReviewModal from './SubtaskReviewModal'
 import {
   msToFormDate,
   msToDateInputValue,
@@ -58,7 +63,8 @@ interface TaskModalProps {
   /** When true, show a "Use AI Estimate" reset button in the time estimate section */
   showAiEstimateReset?: boolean
   onClose: () => void
-  onSubmit: (form: EditForm) => Promise<void>
+  /** Return the created/updated taskId when generating subtasks; void for normal flow */
+  onSubmit: (form: EditForm) => Promise<string | void>
 }
 
 export default function TaskModal({
@@ -94,6 +100,12 @@ export default function TaskModal({
   const [useAiEstimate, setUseAiEstimate] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [generateSubtasks, setGenerateSubtasks] = useState(false)
+  const [generatingSubtasks, setGeneratingSubtasks] = useState(false)
+  const [pendingSubtasks, setPendingSubtasks] = useState<GeneratedSubtask[] | null>(null)
+  const [pendingTaskId, setPendingTaskId] = useState<Id<'tasks'> | null>(null)
+  const [pendingCourseId, setPendingCourseId] = useState<Id<'userCourses'> | undefined>(undefined)
+  const requestGenerateSubtasks = useAction(api.actions.requestGenerateSubtasks.requestGenerateSubtasks)
   const datePickerRef = useRef<HTMLInputElement>(null)
 
   const datePickerValue = useMemo(() => {
@@ -132,6 +144,11 @@ export default function TaskModal({
     setUseAiEstimate(false)
     setError(null)
     setSubmitting(false)
+    setGenerateSubtasks(false)
+    setGeneratingSubtasks(false)
+    setPendingSubtasks(null)
+    setPendingTaskId(null)
+    setPendingCourseId(undefined)
   }, [
     isOpen,
     initialValues.taskName,
@@ -211,7 +228,7 @@ export default function TaskModal({
           ? (isNaN(hrs) ? 0 : hrs) * 60 + (isNaN(mins) ? 0 : mins)
           : NaN
       const parsedEstimate = !useAiEstimate && !isNaN(totalMinutes) && totalMinutes > 0 ? totalMinutes : undefined
-      await onSubmit({
+      const form: EditForm = {
         title: taskName,
         description,
         taskType: resolvedTaskType,
@@ -222,9 +239,31 @@ export default function TaskModal({
           ? { timeEstimate: parsedEstimate }
           : {}),
         ...(useAiEstimate ? { useAiEstimate: true } : {}),
-      })
-      onClose()
+      }
+
+      if (generateSubtasks) {
+        const taskId = await onSubmit(form)
+        if (!taskId) {
+          setError('Failed to create task. Please try again.')
+          return
+        }
+        setGeneratingSubtasks(true)
+        const result = await requestGenerateSubtasks({ taskId: taskId as Id<'tasks'> })
+        setGeneratingSubtasks(false)
+        if ('error' in result) {
+          setError(result.error)
+          return
+        }
+        setPendingTaskId(taskId as Id<'tasks'>)
+        setPendingCourseId(courseId)
+        setPendingSubtasks(result.subtasks)
+        // Don't call onClose — SubtaskReviewModal takes over
+      } else {
+        await onSubmit(form)
+        onClose()
+      }
     } catch (e) {
+      setGeneratingSubtasks(false)
       setError(e instanceof Error ? e.message : 'Something went wrong. Please try again.')
     } finally {
       setSubmitting(false)
@@ -232,6 +271,7 @@ export default function TaskModal({
   }
 
   return (
+    <>
     <Modal
       isOpen={isOpen}
       onClose={onClose}
@@ -239,9 +279,9 @@ export default function TaskModal({
       subtitle={subtitle}
       error={error}
       primaryLabel={primaryLabel}
-      primaryLoadingLabel={primaryLoadingLabel}
+      primaryLoadingLabel={generatingSubtasks ? 'Generating subtasks…' : primaryLoadingLabel}
       onPrimary={handleSubmit}
-      isPrimaryDisabled={submitting}
+      isPrimaryDisabled={submitting || generatingSubtasks}
     >
       <div className="flex w-full flex-col gap-5">
         {/* Task name */}
@@ -323,6 +363,35 @@ export default function TaskModal({
             placeholder="Paste or type your assignment description here..."
             className="h-24 w-full resize-none rounded-md border border-border bg-bg-gray px-3.5 py-2.5 font-body text-sm leading-normal text-navy outline-none placeholder:text-light-blue"
           />
+        </div>
+
+        {/* Generate subtasks checkbox */}
+        <div className="flex flex-col gap-1">
+          <label className="flex cursor-pointer items-center gap-2.5">
+            <div
+              onClick={() => setGenerateSubtasks((v) => !v)}
+              className={`flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center rounded border ${
+                generateSubtasks
+                  ? 'border-navy bg-navy'
+                  : 'border-border bg-bg-gray'
+              }`}
+            >
+              {generateSubtasks && (
+                <svg width="11" height="8" viewBox="0 0 11 8" fill="none">
+                  <path d="M1 4l3 3 6-6" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              )}
+            </div>
+            <span
+              onClick={() => setGenerateSubtasks((v) => !v)}
+              className="font-heading text-[13px] font-semibold text-navy"
+            >
+              Generate subtasks with AI
+            </span>
+          </label>
+          <p className="pl-[26px] font-body text-xs text-light-blue">
+            AI will break your task into steps
+          </p>
         </div>
 
         {/* Due date & time — default time 11:59 PM for new tasks */}
@@ -429,5 +498,20 @@ export default function TaskModal({
         </div>
       </div>
     </Modal>
+    {pendingSubtasks && pendingTaskId && (
+      <SubtaskReviewModal
+        isOpen={true}
+        subtasks={pendingSubtasks}
+        parentTaskId={pendingTaskId}
+        courseId={pendingCourseId}
+        onClose={() => {
+          setPendingSubtasks(null)
+          setPendingTaskId(null)
+          setPendingCourseId(undefined)
+          onClose()
+        }}
+      />
+    )}
+    </>
   )
 }
