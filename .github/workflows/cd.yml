@@ -60,6 +60,7 @@ jobs:
       - run: npm run build
         env:
           VITE_CONVEX_URL: ${{ secrets.VITE_CONVEX_URL }}
+          VITE_CONVEX_SITE_URL: ${{ secrets.VITE_CONVEX_SITE_URL }}
 
       # Copy index.html to 404.html so GitHub Pages serves the SPA for unknown routes
       # (e.g. direct navigation to /dashboard). React Router then handles the path and
