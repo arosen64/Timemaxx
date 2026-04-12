@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import type { Doc } from "../_generated/dataModel";
 import {
   buildChatRetrievalQueryText,
+  chunkHasMetadataOverlap,
   fetchRelevantChats,
   fetchRelevantClasses,
   fetchRelevantTasks,
@@ -47,23 +48,15 @@ const chatChunkHitShape = v.object({
   embeddingLength: v.union(v.number(), v.null()),
 });
 
-function chatChunkEntityOverlap(
-  chunk: Doc<"chatChunks">,
-  currentTaskId: Doc<"tasks">["_id"],
-  relatedTaskIds: Doc<"tasks">["_id"][],
-  relatedClassIds: Doc<"userCourses">["_id"][],
-  taskCourseId: Doc<"userCourses">["_id"] | undefined,
-): boolean {
-  const taskIdSet = new Set([currentTaskId, ...relatedTaskIds]);
-  const courseIdSet = new Set(relatedClassIds);
-  if (taskCourseId) {
-    courseIdSet.add(taskCourseId);
-  }
-  return (
-    chunk.linkedTaskIds.some((id) => taskIdSet.has(id)) ||
-    chunk.linkedCourseIds.some((id) => courseIdSet.has(id))
-  );
-}
+/** Anchor summary for chat RAG inspect only (omits task self-embedding fields — those describe task/course retrieval, not the chat query). */
+const chatInspectAnchorTaskShape = v.object({
+  _id: v.id("tasks"),
+  title: v.string(),
+  taskType: v.string(),
+  descriptionPreview: v.string(),
+  userId: v.id("users"),
+  courseId: v.optional(v.id("userCourses")),
+});
 
 /**
  * Local testing helper for `fetchRelevantTasks` + `fetchRelevantClasses` (not chats).
@@ -183,7 +176,7 @@ export const inspectChatRetrievalForTask = internalAction({
     }),
     v.object({
       ok: v.literal(true),
-      anchorTask: anchorTaskShape,
+      anchorTask: chatInspectAnchorTaskShape,
       relevantTaskIds: v.array(v.id("tasks")),
       relevantClassIds: v.array(v.id("userCourses")),
       retrievalQueryPreview: v.string(),
@@ -201,17 +194,39 @@ export const inspectChatRetrievalForTask = internalAction({
       return { ok: false as const, message: "No task found for that taskId." };
     }
 
-    const emb = task.embedding;
-    const embeddingLength = Array.isArray(emb) ? emb.length : null;
-    const usedVectorRetrieval =
-      Array.isArray(emb) && emb.length === EMBEDDING_DIMS;
-
     const [relevantTaskIds, relevantClassIds] = await Promise.all([
       fetchRelevantTasks(ctx, args.taskId, task.userId),
       fetchRelevantClasses(ctx, args.taskId, task.userId),
     ]);
 
+    const preview = (s: string, max = 200) => (s.length <= max ? s : `${s.slice(0, max)}…`);
+
     const retrievalFullText = buildChatRetrievalQueryText(task);
+    if (retrievalFullText === null) {
+      const retrievalQueryPreview =
+        "Skipped: empty task title and description (no anchor text for chat retrieval).";
+      console.log(
+        `[inspectChatRetrievalForTask] anchor=${task._id} queryEmbedOk=false chunks=0 (empty anchor text) relevantTasks=${relevantTaskIds.length} relevantClasses=${relevantClassIds.length}`,
+      );
+      return {
+        ok: true as const,
+        anchorTask: {
+          _id: task._id,
+          title: task.title,
+          taskType: task.taskType,
+          descriptionPreview: preview(task.description ?? "", 120),
+          userId: task.userId,
+          courseId: task.courseId,
+        },
+        relevantTaskIds,
+        relevantClassIds,
+        retrievalQueryPreview,
+        queryEmbeddingOk: false,
+        relevantChatChunkIds: [],
+        chatChunks: [],
+      };
+    }
+
     const retrievalQueryPreview =
       retrievalFullText.length <= 600 ? retrievalFullText : `${retrievalFullText.slice(0, 600)}…`;
 
@@ -221,24 +236,21 @@ export const inspectChatRetrievalForTask = internalAction({
     const queryEmbeddingOk =
       Array.isArray(queryVector) && queryVector.length === EMBEDDING_DIMS;
 
-    const relevantChatChunkIds = await fetchRelevantChats(
-      ctx,
-      task.userId,
-      args.taskId,
-      relevantTaskIds,
-      relevantClassIds,
-      queryEmbeddingOk ? { queryEmbedding: queryVector } : undefined,
-    );
+    let relevantChatChunkIds: Doc<"chatChunks">["_id"][] = [];
+    let chunksRaw: Doc<"chatChunks">[] = [];
+    if (queryEmbeddingOk) {
+      const chats = await fetchRelevantChats(ctx, task.userId, args.taskId, relevantTaskIds, relevantClassIds, {
+        queryEmbedding: queryVector,
+      });
+      relevantChatChunkIds = chats.chunkIds;
+      chunksRaw = chats.chunks;
+    }
 
-    const chunksRaw =
-      relevantChatChunkIds.length === 0
-        ? ([] as Doc<"chatChunks">[])
-        : ((await ctx.runQuery(internal.queries.chatChunks.getChatChunksByIdsInternal, {
-            userId: task.userId,
-            chunkIds: relevantChatChunkIds,
-          })) as Doc<"chatChunks">[]);
-
-    const preview = (s: string, max = 200) => (s.length <= max ? s : `${s.slice(0, max)}…`);
+    const taskIdSet = new Set([args.taskId, ...relevantTaskIds]);
+    const courseIdSet = new Set(relevantClassIds);
+    if (task.courseId) {
+      courseIdSet.add(task.courseId);
+    }
 
     const chatChunks = chunksRaw.map((c) => ({
       _id: c._id,
@@ -247,13 +259,7 @@ export const inspectChatRetrievalForTask = internalAction({
       startCreatedAt: c.startCreatedAt,
       linkedTaskIds: c.linkedTaskIds,
       linkedCourseIds: c.linkedCourseIds,
-      hadMetadataOverlap: chatChunkEntityOverlap(
-        c,
-        args.taskId,
-        relevantTaskIds,
-        relevantClassIds,
-        task.courseId,
-      ),
+      hadMetadataOverlap: chunkHasMetadataOverlap(c, taskIdSet, courseIdSet),
       embeddingLength: Array.isArray(c.embedding) ? c.embedding.length : null,
     }));
 
@@ -270,8 +276,6 @@ export const inspectChatRetrievalForTask = internalAction({
         descriptionPreview: preview(task.description ?? "", 120),
         userId: task.userId,
         courseId: task.courseId,
-        embeddingLength,
-        usedVectorRetrieval,
       },
       relevantTaskIds,
       relevantClassIds,

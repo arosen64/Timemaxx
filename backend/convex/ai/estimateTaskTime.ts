@@ -90,19 +90,23 @@ async function buildTaskContext(
 
 /**
  * Loads `chatChunks` by id and formats transcript excerpts for the LLM.
+ * When `preloadedChunks` matches `chunkIds` in length and order (from `fetchRelevantContext`), skips a second DB read.
  */
 async function buildChatContext(
   ctx: Ctx,
   userId: Id<"users">,
   chunkIds: Id<"chatChunks">[],
+  preloadedChunks?: Doc<"chatChunks">[],
 ): Promise<string | null> {
   if (chunkIds.length === 0) return null;
 
-  const rows = await ctx.runQuery(internal.queries.chatChunks.getChatChunksByIdsInternal, {
-    userId,
-    chunkIds,
-  });
-  const chunks = rows as Doc<"chatChunks">[];
+  const chunks =
+    preloadedChunks !== undefined && preloadedChunks.length === chunkIds.length
+      ? preloadedChunks
+      : ((await ctx.runQuery(internal.queries.chatChunks.getChatChunksByIdsInternal, {
+          userId,
+          chunkIds,
+        })) as Doc<"chatChunks">[]);
   if (chunks.length === 0) return null;
 
   const lines = chunks.map((c) => {
@@ -194,7 +198,7 @@ export const estimateTaskTime = internalAction({
     const [courseContext, taskContext, chatContext] = await Promise.all([
       buildCourseContext(ctx, relevantContext.classIds),
       buildTaskContext(ctx, relevantContext.taskIds),
-      buildChatContext(ctx, task.userId, relevantContext.chatChunkIds),
+      buildChatContext(ctx, task.userId, relevantContext.chatChunkIds, relevantContext.chatChunks),
     ]);
     const profileContext = buildProfileContext(user as Doc<"users"> | null);
 

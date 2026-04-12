@@ -22,11 +22,19 @@ function taskQueryEmbedding(task: Doc<"tasks">): number[] | null {
   return e;
 }
 
+export interface RelevantChats {
+  chunkIds: Id<"chatChunks">[];
+  /** Same order as `chunkIds`; loaded once in `fetchRelevantChats` for callers to format without re-querying. */
+  chunks: Doc<"chatChunks">[];
+}
+
 export interface RelevantContext {
   taskIds: Id<"tasks">[];
   classIds: Id<"userCourses">[];
   /** `chatChunks` IDs from vector search over embedded transcript slices. */
   chatChunkIds: Id<"chatChunks">[];
+  /** Same order as `chatChunkIds`. */
+  chatChunks: Doc<"chatChunks">[];
 }
 
 /**
@@ -134,15 +142,19 @@ export async function fetchRelevantTasks(
     .map((t) => t._id);
 }
 
-/** Same string embedded for `chatChunks` RAG (debug / tooling may log a preview). */
-export function buildChatRetrievalQueryText(task: Doc<"tasks">): string {
+/**
+ * Same string embedded for `chatChunks` RAG (debug / tooling may log a preview).
+ * Returns null when there is no task-specific anchor text so we do not embed the fixed intent alone.
+ */
+export function buildChatRetrievalQueryText(task: Doc<"tasks">): string | null {
   const title = task.title?.trim() ?? "";
   const desc = (task.description ?? "").trim();
+  if (title.length === 0 && desc.length === 0) return null;
   const body = desc.length > 0 ? `${title}\n\n${desc}` : title;
   return `${body}\n\n${CHAT_RETRIEVAL_INTENT}`.trim();
 }
 
-function chunkHasMetadataOverlap(
+export function chunkHasMetadataOverlap(
   chunk: Doc<"chatChunks">,
   taskIdSet: Set<Id<"tasks">>,
   courseIdSet: Set<Id<"userCourses">>,
@@ -158,7 +170,7 @@ function chunkHasMetadataOverlap(
  * `linkedTaskIds` / `linkedCourseIds` overlap related tasks, the current task,
  * related courses, or the task's course.
  *
- * Requires `GEMINI_API_KEY` and embedded chunks; otherwise returns [].
+ * Requires `GEMINI_API_KEY` and embedded chunks; otherwise returns empty ids/chunks.
  *
  * @param opts.queryEmbedding — If a 3072-length vector, used as the query
  *   vector and the Gemini embed step is skipped (for debug callers that already
@@ -171,12 +183,15 @@ export async function fetchRelevantChats(
   relatedTaskIds: Id<"tasks">[],
   relatedClassIds: Id<"userCourses">[],
   opts?: { queryEmbedding?: number[] },
-): Promise<Id<"chatChunks">[]> {
+): Promise<RelevantChats> {
+  const empty: RelevantChats = { chunkIds: [], chunks: [] };
   const { internal } = (await import("../_generated/api")) as unknown as { internal: any };
   const task = await ctx.runQuery(internal.queries.tasks.getTaskInternal, { taskId: currentTaskId });
-  if (!task || task.userId !== userId) return [];
+  if (!task || task.userId !== userId) return empty;
 
   const retrievalText = buildChatRetrievalQueryText(task);
+  if (retrievalText === null) return empty;
+
   const pre = opts?.queryEmbedding;
   let embedding: number[] | null =
     Array.isArray(pre) && pre.length === EMBEDDING_DIMS ? pre : null;
@@ -186,7 +201,7 @@ export async function fetchRelevantChats(
     })) as number[] | null;
   }
   if (!Array.isArray(embedding) || embedding.length !== EMBEDDING_DIMS) {
-    return [];
+    return empty;
   }
 
   const raw = await ctx.vectorSearch("chatChunks", "by_embedding", {
@@ -194,7 +209,7 @@ export async function fetchRelevantChats(
     limit: CHAT_VECTOR_SCAN_LIMIT,
     filter: (q) => q.eq("userId", userId),
   });
-  if (raw.length === 0) return [];
+  if (raw.length === 0) return empty;
 
   const orderedIds = raw.map((row) => row._id as Id<"chatChunks">);
   const chunks = (await ctx.runQuery(internal.queries.chatChunks.getChatChunksByIdsInternal, {
@@ -211,27 +226,19 @@ export async function fetchRelevantChats(
     courseIdSet.add(task.courseId);
   }
 
-  const withOverlap: Id<"chatChunks">[] = [];
-  const withoutOverlap: Id<"chatChunks">[] = [];
+  const withOverlap: Doc<"chatChunks">[] = [];
+  const withoutOverlap: Doc<"chatChunks">[] = [];
   for (const c of ordered) {
     if (chunkHasMetadataOverlap(c, taskIdSet, courseIdSet)) {
-      withOverlap.push(c._id);
+      withOverlap.push(c);
     } else {
-      withoutOverlap.push(c._id);
+      withoutOverlap.push(c);
     }
   }
 
-  const merged = [...withOverlap, ...withoutOverlap];
-  const seen = new Set<string>();
-  const deduped: Id<"chatChunks">[] = [];
-  for (const id of merged) {
-    const key = id as string;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    deduped.push(id);
-    if (deduped.length >= CHAT_RETRIEVAL_CAP) break;
-  }
-  return deduped;
+  const mergedDocs = [...withOverlap, ...withoutOverlap].slice(0, CHAT_RETRIEVAL_CAP);
+  const chunkIds = mergedDocs.map((c) => c._id);
+  return { chunkIds, chunks: mergedDocs };
 }
 
 /**
@@ -239,7 +246,8 @@ export async function fetchRelevantChats(
  *
  * Fetches relevant classes and tasks in parallel first, then passes their IDs
  * into fetchRelevantChats so the chat retrieval can filter by that metadata.
- * Returns a single object with IDs for each source.
+ * Returns IDs for tasks and courses, plus chat chunk IDs and the same chunks
+ * as documents (one load) for prompt building.
  */
 export async function fetchRelevantContext(
   ctx: Ctx,
@@ -250,6 +258,6 @@ export async function fetchRelevantContext(
     fetchRelevantTasks(ctx, taskId, userId),
     fetchRelevantClasses(ctx, taskId, userId),
   ]);
-  const chatChunkIds = await fetchRelevantChats(ctx, userId, taskId, taskIds, classIds);
-  return { taskIds, classIds, chatChunkIds };
+  const chats = await fetchRelevantChats(ctx, userId, taskId, taskIds, classIds);
+  return { taskIds, classIds, chatChunkIds: chats.chunkIds, chatChunks: chats.chunks };
 }
