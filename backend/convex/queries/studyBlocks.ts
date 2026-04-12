@@ -54,6 +54,9 @@ async function fetchAllStudyBlocksWithTasks(ctx: any, userId: Id<"users">) {
   }
 
   for (const task of tasks) {
+    // Skip completed tasks — their blocks are unscheduled and should not appear on the calendar
+    if (task.status === "completed") continue;
+
     const course = task.courseId ? courseMap.get(task.courseId) : null;
     const courseColor: string | undefined = course?.color ?? undefined;
     const courseName: string | undefined = course?.title ?? undefined;
@@ -151,6 +154,7 @@ export const getFutureStudyBlocksForExport = internalQuery({
     }
 
     for (const task of tasks) {
+      if (task.status === "completed") continue;
       const courseColor = task.courseId ? courseMap.get(task.courseId)?.color : undefined;
       const blocks = await ctx.db
         .query("studyBlocks")

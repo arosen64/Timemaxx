@@ -147,6 +147,25 @@ export const setSubtaskTimeEstimate = internalMutation({
 });
 
 /**
+ * Updates the status of a subtask. No propagation to parent task.
+ */
+export const updateSubtaskStatus = mutation({
+  args: {
+    subtaskId: v.id("subtasks"),
+    status: v.union(v.literal("not_started"), v.literal("in_progress"), v.literal("completed")),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Unauthenticated");
+
+    const subtask = await ctx.db.get(args.subtaskId);
+    if (!subtask || subtask.userId !== userId) throw new Error("Subtask not found");
+
+    await ctx.db.patch(args.subtaskId, { status: args.status });
+  },
+});
+
+/**
  * Deletes a subtask and all its associated study blocks.
  */
 export const deleteSubtask = mutation({
