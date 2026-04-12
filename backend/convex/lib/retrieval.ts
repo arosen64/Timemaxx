@@ -10,24 +10,23 @@ const RELEVANT_RESULT_CAP = 10;
 /** Head room after excluding current task or own course from vector hits. */
 const RELEVANT_VECTOR_SCAN_LIMIT = 32;
 
+const CHAT_RETRIEVAL_CAP = 8;
+const CHAT_VECTOR_SCAN_LIMIT = 40;
+
+const CHAT_RETRIEVAL_INTENT =
+  "Information relevant to estimating study time: scope, difficulty, prior experience, deadlines, and how long similar work took.";
+
 function taskQueryEmbedding(task: Doc<"tasks">): number[] | null {
   const e = task.embedding;
   if (!Array.isArray(e) || e.length !== EMBEDDING_DIMS) return null;
   return e;
 }
 
-export interface RelevantChat {
-  id: string;
-  content: string;
-  role: "user" | "assistant";
-  timestamp?: number;
-}
-
 export interface RelevantContext {
   taskIds: Id<"tasks">[];
   classIds: Id<"userCourses">[];
-  /** Chat IDs to retrieve. TODO: type as Id<"chats">[] once the chats table exists. */
-  chatIds: string[];
+  /** `chatChunks` IDs from vector search over embedded transcript slices. */
+  chatChunkIds: Id<"chatChunks">[];
 }
 
 /**
@@ -135,19 +134,93 @@ export async function fetchRelevantTasks(
     .map((t) => t._id);
 }
 
+function buildChatRetrievalQueryText(task: Doc<"tasks">): string {
+  const title = task.title?.trim() ?? "";
+  const desc = (task.description ?? "").trim();
+  const body = desc.length > 0 ? `${title}\n\n${desc}` : title;
+  return `${body}\n\n${CHAT_RETRIEVAL_INTENT}`.trim();
+}
+
+function chunkHasMetadataOverlap(
+  chunk: Doc<"chatChunks">,
+  taskIdSet: Set<Id<"tasks">>,
+  courseIdSet: Set<Id<"userCourses">>,
+): boolean {
+  const taskHit = chunk.linkedTaskIds.some((id) => taskIdSet.has(id));
+  const courseHit = chunk.linkedCourseIds.some((id) => courseIdSet.has(id));
+  return taskHit || courseHit;
+}
+
 /**
- * Mock embedding retrieval — returns an empty list of chat IDs.
- * Accepts task and class IDs so future implementations can filter chat
- * embeddings by the metadata associated with those tasks and classes.
- * TODO: Replace with vector similarity search returning chatIds filtered by
- *       taskIds/classIds metadata, once a chats table exists.
+ * Vector search over `chatChunks` for the user: embeds a query from the
+ * current task plus a fixed intent phrase, then prefers chunks whose
+ * `linkedTaskIds` / `linkedCourseIds` overlap related tasks, the current task,
+ * related courses, or the task's course.
+ *
+ * Requires `GEMINI_API_KEY` and embedded chunks; otherwise returns [].
  */
 export async function fetchRelevantChats(
-  _ctx: Ctx,
-  _taskIds: Id<"tasks">[],
-  _classIds: Id<"userCourses">[]
-): Promise<string[]> {
-  return [];
+  ctx: Ctx,
+  userId: Id<"users">,
+  currentTaskId: Id<"tasks">,
+  relatedTaskIds: Id<"tasks">[],
+  relatedClassIds: Id<"userCourses">[],
+): Promise<Id<"chatChunks">[]> {
+  const { internal } = (await import("../_generated/api")) as unknown as { internal: any };
+  const task = await ctx.runQuery(internal.queries.tasks.getTaskInternal, { taskId: currentTaskId });
+  if (!task || task.userId !== userId) return [];
+
+  const retrievalText = buildChatRetrievalQueryText(task);
+  const embedding = (await ctx.runAction(internal.ai.embeddings.embedRetrievalQueryInternal, {
+    text: retrievalText,
+  })) as number[] | null;
+  if (!Array.isArray(embedding) || embedding.length !== EMBEDDING_DIMS) {
+    return [];
+  }
+
+  const raw = await ctx.vectorSearch("chatChunks", "by_embedding", {
+    vector: embedding,
+    limit: CHAT_VECTOR_SCAN_LIMIT,
+    filter: (q) => q.eq("userId", userId),
+  });
+  if (raw.length === 0) return [];
+
+  const orderedIds = raw.map((row) => row._id as Id<"chatChunks">);
+  const chunks = (await ctx.runQuery(internal.queries.chatChunks.getChatChunksByIdsInternal, {
+    userId,
+    chunkIds: orderedIds,
+  })) as Doc<"chatChunks">[];
+
+  const byId = new Map(chunks.map((c) => [c._id, c]));
+  const ordered = orderedIds.map((id) => byId.get(id)).filter((c): c is Doc<"chatChunks"> => c !== undefined);
+
+  const taskIdSet = new Set<Id<"tasks">>([currentTaskId, ...relatedTaskIds]);
+  const courseIdSet = new Set<Id<"userCourses">>(relatedClassIds);
+  if (task.courseId) {
+    courseIdSet.add(task.courseId);
+  }
+
+  const withOverlap: Id<"chatChunks">[] = [];
+  const withoutOverlap: Id<"chatChunks">[] = [];
+  for (const c of ordered) {
+    if (chunkHasMetadataOverlap(c, taskIdSet, courseIdSet)) {
+      withOverlap.push(c._id);
+    } else {
+      withoutOverlap.push(c._id);
+    }
+  }
+
+  const merged = [...withOverlap, ...withoutOverlap];
+  const seen = new Set<string>();
+  const deduped: Id<"chatChunks">[] = [];
+  for (const id of merged) {
+    const key = id as string;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    deduped.push(id);
+    if (deduped.length >= CHAT_RETRIEVAL_CAP) break;
+  }
+  return deduped;
 }
 
 /**
@@ -166,6 +239,6 @@ export async function fetchRelevantContext(
     fetchRelevantTasks(ctx, taskId, userId),
     fetchRelevantClasses(ctx, taskId, userId),
   ]);
-  const chatIds = await fetchRelevantChats(ctx, taskIds, classIds);
-  return { taskIds, classIds, chatIds };
+  const chatChunkIds = await fetchRelevantChats(ctx, userId, taskId, taskIds, classIds);
+  return { taskIds, classIds, chatChunkIds };
 }

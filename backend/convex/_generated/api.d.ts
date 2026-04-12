@@ -52,6 +52,7 @@ import type * as mutations_timeEstimate from "../mutations/timeEstimate.js";
 import type * as mutations_userCourses from "../mutations/userCourses.js";
 import type * as mutations_users from "../mutations/users.js";
 import type * as queries_calendar from "../queries/calendar.js";
+import type * as queries_chatChunks from "../queries/chatChunks.js";
 import type * as queries_chatMessages from "../queries/chatMessages.js";
 import type * as queries_chatSessions from "../queries/chatSessions.js";
 import type * as queries_studyBlocks from "../queries/studyBlocks.js";
@@ -111,6 +112,7 @@ declare const fullApi: ApiFromModules<{
   "mutations/userCourses": typeof mutations_userCourses;
   "mutations/users": typeof mutations_users;
   "queries/calendar": typeof queries_calendar;
+  "queries/chatChunks": typeof queries_chatChunks;
   "queries/chatMessages": typeof queries_chatMessages;
   "queries/chatSessions": typeof queries_chatSessions;
   "queries/studyBlocks": typeof queries_studyBlocks;
