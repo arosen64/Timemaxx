@@ -62,6 +62,16 @@ interface TaskModalProps {
   classTagCourses?: ClassTagCourseOption[]
   /** When true, show a "Use AI Estimate" reset button in the time estimate section */
   showAiEstimateReset?: boolean
+  /** When true, hides the entire subtask generation section (e.g. when editing a subtask) */
+  hideSubtaskGeneration?: boolean
+  /** When > 0, show Delete/Regenerate subtask buttons instead of the generate checkbox */
+  existingSubtaskCount?: number
+  /** Task ID for regenerating subtasks on an already-saved task */
+  existingTaskId?: Id<'tasks'>
+  /** Course ID for regenerating subtasks (determines color assignment) */
+  existingCourseId?: Id<'userCourses'>
+  /** Called when user clicks "Delete subtasks" */
+  onDeleteSubtasks?: () => Promise<void>
   onClose: () => void
   /** Return the created/updated taskId when generating subtasks; void for normal flow */
   onSubmit: (form: EditForm) => Promise<string | void>
@@ -76,6 +86,11 @@ export default function TaskModal({
   initialValues,
   classTagCourses,
   showAiEstimateReset = false,
+  hideSubtaskGeneration = false,
+  existingSubtaskCount,
+  existingTaskId,
+  existingCourseId,
+  onDeleteSubtasks,
   onClose,
   onSubmit,
 }: TaskModalProps) {
@@ -102,6 +117,7 @@ export default function TaskModal({
   const [error, setError] = useState<string | null>(null)
   const [generateSubtasks, setGenerateSubtasks] = useState(false)
   const [generatingSubtasks, setGeneratingSubtasks] = useState(false)
+  const [deletingSubtasks, setDeletingSubtasks] = useState(false)
   const [pendingSubtasks, setPendingSubtasks] = useState<GeneratedSubtask[] | null>(null)
   const [pendingTaskId, setPendingTaskId] = useState<Id<'tasks'> | null>(null)
   const [pendingCourseId, setPendingCourseId] = useState<Id<'userCourses'> | undefined>(undefined)
@@ -146,6 +162,7 @@ export default function TaskModal({
     setSubmitting(false)
     setGenerateSubtasks(false)
     setGeneratingSubtasks(false)
+    setDeletingSubtasks(false)
     setPendingSubtasks(null)
     setPendingTaskId(null)
     setPendingCourseId(undefined)
@@ -202,6 +219,38 @@ export default function TaskModal({
     setDueDate(display)
     const err = validateDueDate(display)
     setError(err)
+  }
+
+  async function handleDeleteSubtasks() {
+    if (!onDeleteSubtasks) return
+    setDeletingSubtasks(true)
+    try {
+      await onDeleteSubtasks()
+    } finally {
+      setDeletingSubtasks(false)
+    }
+  }
+
+  async function handleRegenerateSubtasks() {
+    if (!existingTaskId) return
+    setGeneratingSubtasks(true)
+    setError(null)
+    try {
+      // Delete existing subtasks first so regeneration doesn't create duplicates
+      if (onDeleteSubtasks) await onDeleteSubtasks()
+      const result = await requestGenerateSubtasks({ taskId: existingTaskId })
+      if ('error' in result) {
+        setError(result.error)
+        return
+      }
+      setPendingTaskId(existingTaskId)
+      setPendingCourseId(existingCourseId)
+      setPendingSubtasks(result.subtasks)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to generate subtasks.')
+    } finally {
+      setGeneratingSubtasks(false)
+    }
   }
 
   async function handleSubmit() {
@@ -365,34 +414,62 @@ export default function TaskModal({
           />
         </div>
 
-        {/* Generate subtasks checkbox */}
-        <div className="flex flex-col gap-1">
-          <label className="flex cursor-pointer items-center gap-2.5">
-            <div
-              onClick={() => setGenerateSubtasks((v) => !v)}
-              className={`flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center rounded border ${
-                generateSubtasks
-                  ? 'border-navy bg-navy'
-                  : 'border-border bg-bg-gray'
-              }`}
-            >
-              {generateSubtasks && (
-                <svg width="11" height="8" viewBox="0 0 11 8" fill="none">
-                  <path d="M1 4l3 3 6-6" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              )}
+        {/* Subtasks section — hidden for subtask editing; delete/regenerate when subtasks exist, checkbox when none */}
+        {!hideSubtaskGeneration && (
+          existingSubtaskCount !== undefined && existingSubtaskCount > 0 ? (
+            <div className="flex flex-col gap-1.5">
+              <label className="font-heading text-[13px] font-semibold text-navy">
+                Subtasks <span className="font-normal text-light-blue">({existingSubtaskCount})</span>
+              </label>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={handleDeleteSubtasks}
+                  disabled={deletingSubtasks || generatingSubtasks || submitting}
+                  className="flex flex-1 items-center justify-center rounded-md border border-urgent-red/30 bg-bg-gray px-3 py-2 font-body text-xs font-semibold text-urgent-red transition hover:bg-urgent-red-light disabled:opacity-50"
+                >
+                  {deletingSubtasks ? 'Deleting…' : 'Delete subtasks'}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleRegenerateSubtasks}
+                  disabled={deletingSubtasks || generatingSubtasks || submitting}
+                  className="flex flex-1 items-center justify-center rounded-md border border-border bg-bg-gray px-3 py-2 font-body text-xs font-semibold text-slate-blue transition hover:bg-white hover:text-navy disabled:opacity-50"
+                >
+                  {generatingSubtasks ? 'Generating…' : 'Regenerate subtasks'}
+                </button>
+              </div>
             </div>
-            <span
-              onClick={() => setGenerateSubtasks((v) => !v)}
-              className="font-heading text-[13px] font-semibold text-navy"
-            >
-              Generate subtasks with AI
-            </span>
-          </label>
-          <p className="pl-[26px] font-body text-xs text-light-blue">
-            AI will break your task into steps
-          </p>
-        </div>
+          ) : (
+            <div className="flex flex-col gap-1">
+              <label className="flex cursor-pointer items-center gap-2.5">
+                <div
+                  onClick={() => setGenerateSubtasks((v) => !v)}
+                  className={`flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center rounded border ${
+                    generateSubtasks
+                      ? 'border-navy bg-navy'
+                      : 'border-border bg-bg-gray'
+                  }`}
+                >
+                  {generateSubtasks && (
+                    <svg width="11" height="8" viewBox="0 0 11 8" fill="none">
+                      <path d="M1 4l3 3 6-6" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  )}
+                </div>
+                <span
+                  onClick={() => setGenerateSubtasks((v) => !v)}
+                  className="font-heading text-[13px] font-semibold text-navy"
+                >
+                  Generate subtasks with AI
+                </span>
+              </label>
+              <p className="pl-[26px] font-body text-xs text-light-blue">
+                AI will break your task into steps
+              </p>
+            </div>
+          )
+        )}
 
         {/* Due date & time — default time 11:59 PM for new tasks */}
         <div className="flex w-full flex-col gap-1.5">

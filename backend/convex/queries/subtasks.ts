@@ -24,6 +24,22 @@ export const getSubtask = query({
   },
 });
 
+// Get all subtasks for the current user (bulk fetch for dashboard)
+export const getAllSubtasksForUser = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
+
+    const subtasks = await ctx.db
+      .query("subtasks")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .collect();
+
+    return subtasks.sort((a, b) => a.order - b.order);
+  },
+});
+
 // Get all subtasks for a parent task, ordered by `order` ascending
 export const getSubtasksForTask = query({
   args: { parentTaskId: v.id("tasks") },

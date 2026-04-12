@@ -12,7 +12,8 @@ export { default as ScheduleAllButton } from './ScheduleAllButton'
 export { default as StudyBlockRow } from './StudyBlockRow'
 export type { StudyBlock } from './StudyBlockRow'
 export { default as TaskFeedbackForm } from './TaskFeedbackForm'
-export type { TaskType, EditForm, BuiltInTaskType, ClassTagCourseOption, FeedbackDraft } from './types'
+export { default as SubtaskCard } from './SubtaskCard'
+export type { TaskType, SubtaskType, EditForm, BuiltInTaskType, ClassTagCourseOption, FeedbackDraft } from './types'
 export {
   BUILT_IN_TASK_TYPES,
   TASK_TYPE_OPTIONS,

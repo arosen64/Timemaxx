@@ -17,28 +17,50 @@ import {
   parseEstimationError,
   type ClassTagCourseOption,
   type TaskType,
+  type SubtaskType,
   type EditForm,
   BADGE_MAP,
 } from '../components/dashboard'
+import { FALLBACK_COURSE_COLOR } from '../utils/color'
 import { isCurrentTerm } from '../utils/termUtils'
 import { buildClassTag } from '../utils/classTagUtils'
-
-const FALLBACK_COLORS = ['#CF4520', '#68ACE5', '#008767']
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
   const tasks = useQuery(api.queries.tasks.getAllTasks, {}) as TaskType[] | undefined
+  const allSubtasks = useQuery(api.queries.subtasks.getAllSubtasksForUser) as SubtaskType[] | undefined
   const userCourses = useQuery(api.queries.userCourses.getUserCourses)
   const updateTask = useMutation(api.mutations.tasks.updateTask)
   const setManualTimeEstimate = useMutation(api.mutations.timeEstimate.setManualTimeEstimate)
   const clearManualEstimate = useMutation(api.mutations.timeEstimate.clearManualEstimate)
   const deleteTask = useMutation(api.mutations.tasks.deleteTask)
+  const deleteSubtask = useMutation(api.mutations.subtasks.deleteSubtask)
+  const updateSubtask = useMutation(api.mutations.subtasks.updateSubtask)
   const submitEstimateFeedback = useMutation(api.mutations.timeEstimate.submitEstimateFeedback)
   const requestEstimate = useAction(api.ai.requestEstimateTaskTime.requestEstimateTaskTime)
+  const requestEstimateSubtask = useAction(api.actions.requestEstimateSubtaskTime.requestEstimateSubtaskTime)
   const user = useQuery(api.queries.users.getCurrUser)
 
   const taskRows = useMemo(() => tasks ?? [], [tasks])
+
+  function getTaskBarColor(task: TaskType): string {
+    if (!task.courseId || !userCourses) return FALLBACK_COURSE_COLOR
+    const course = userCourses.find((c) => c._id === task.courseId)
+    return course?.color ?? FALLBACK_COURSE_COLOR
+  }
+
+  const subtasksByTaskId = useMemo(() => {
+    const map = new Map<Id<'tasks'>, SubtaskType[]>()
+    for (const s of allSubtasks ?? []) {
+      const list = map.get(s.parentTaskId) ?? []
+      list.push(s)
+      map.set(s.parentTaskId, list)
+    }
+    // already sorted by order from query, but sort again to be safe
+    for (const [k, v] of map) map.set(k, v.sort((a, b) => a.order - b.order))
+    return map
+  }, [allSubtasks])
 
   const classTagCourses = useMemo((): ClassTagCourseOption[] => {
     if (!userCourses?.length) return []
@@ -58,17 +80,6 @@ export default function DashboardPage() {
     return rows.sort((a, b) => a.courseCode.localeCompare(b.courseCode))
   }, [userCourses])
 
-  const courseColorByTag = useMemo(() => {
-    const map = new Map<string, string>()
-    if (!Array.isArray(userCourses)) return map
-    for (const c of userCourses) {
-      if (c.color && c.courseCode && c.title) {
-        map.set(buildClassTag(c.courseCode.trim(), c.title.trim()), c.color)
-      }
-    }
-    return map
-  }, [userCourses])
-
   const totalEstimatedMinutes = useMemo(
     () => taskRows.reduce((sum, t) => sum + (t.timeEstimate ?? 0), 0),
     [taskRows]
@@ -78,6 +89,8 @@ export default function DashboardPage() {
   const [deletingTask, setDeletingTask] = useState<TaskType | null>(null)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [estimatingTasks, setEstimatingTasks] = useState<Set<Id<'tasks'>>>(new Set())
+  const [estimatingSubtasks, setEstimatingSubtasks] = useState<Set<Id<'subtasks'>>>(new Set())
+  const [editingSubtask, setEditingSubtask] = useState<SubtaskType | null>(null)
   const [submittingFeedbackTasks, setSubmittingFeedbackTasks] = useState<Set<Id<'tasks'>>>(new Set())
   const [editingFeedbackTasks, setEditingFeedbackTasks] = useState<Set<Id<'tasks'>>>(new Set())
   const [feedbackDrafts, setFeedbackDrafts] = useState<
@@ -99,6 +112,19 @@ export default function DashboardPage() {
     })
   }, [taskRows])
 
+  // Clear subtasks from estimatingSubtasks once their timeEstimate arrives
+  useEffect(() => {
+    setEstimatingSubtasks((prev) => {
+      if (prev.size === 0) return prev
+      const next = new Set(prev)
+      for (const id of prev) {
+        const subtask = (allSubtasks ?? []).find((s) => s._id === id)
+        if (subtask?.timeEstimate !== undefined) next.delete(id)
+      }
+      return next.size === prev.size ? prev : next
+    })
+  }, [allSubtasks])
+
   async function handleSaveEdit(form: EditForm) {
     if (!editingTask) return
     const taskId = editingTask._id
@@ -117,6 +143,21 @@ export default function DashboardPage() {
   async function handleConfirmDelete() {
     if (!deletingTask) return
     await deleteTask({ taskId: deletingTask._id })
+  }
+
+  async function handleEstimateSubtask(subtaskId: Id<'subtasks'>) {
+    setEstimatingSubtasks((prev) => new Set(prev).add(subtaskId))
+    try {
+      await requestEstimateSubtask({ subtaskId })
+    } catch (err) {
+      setEstimationError(parseEstimationError(err))
+    } finally {
+      setEstimatingSubtasks((prev) => {
+        const next = new Set(prev)
+        next.delete(subtaskId)
+        return next
+      })
+    }
   }
 
   async function handleEstimateTask(taskId: Id<'tasks'>) {
@@ -259,10 +300,43 @@ export default function DashboardPage() {
         onClose={() => setEstimationError(null)}
       />
       <EditModal
-        isOpen={editingTask !== null}
+        isOpen={editingTask !== null && editingSubtask === null}
         task={editingTask}
         onClose={() => setEditingTask(null)}
         onSave={handleSaveEdit}
+        classTagCourses={classTagCourses}
+        existingSubtaskCount={editingTask ? (subtasksByTaskId.get(editingTask._id)?.length ?? 0) : 0}
+        onDeleteSubtasks={editingTask ? async () => {
+          const subtasks = subtasksByTaskId.get(editingTask._id) ?? []
+          await Promise.all(subtasks.map((s) => deleteSubtask({ subtaskId: s._id })))
+        } : undefined}
+      />
+      <EditModal
+        isOpen={editingSubtask !== null}
+        title="Edit subtask"
+        subtitle="Update the subtask details below."
+        hideSubtaskGeneration
+        task={editingSubtask ? {
+          _id: editingSubtask._id as unknown as Id<'tasks'>,
+          title: editingSubtask.title,
+          description: editingSubtask.description,
+          taskType: editingSubtask.taskType,
+          dueDate: editingSubtask.dueDate ?? Date.now(),
+          classTag: editingSubtask.classTag,
+          timeEstimate: editingSubtask.timeEstimate,
+          isManualEstimate: false,
+          createdAt: editingSubtask.createdAt,
+        } : null}
+        onClose={() => setEditingSubtask(null)}
+        onSave={async (form) => {
+          if (!editingSubtask) return
+          await updateSubtask({
+            subtaskId: editingSubtask._id,
+            title: form.title,
+            description: form.description,
+            taskType: form.taskType,
+          })
+        }}
         classTagCourses={classTagCourses}
       />
       <DeleteModal
@@ -270,6 +344,7 @@ export default function DashboardPage() {
         task={deletingTask}
         onClose={() => setDeletingTask(null)}
         onConfirm={handleConfirmDelete}
+        subtaskCount={deletingTask ? (subtasksByTaskId.get(deletingTask._id)?.length ?? 0) : 0}
       />
       <AddTaskModal
         isOpen={isAddModalOpen}
@@ -361,16 +436,21 @@ export default function DashboardPage() {
               </div>
             ) : (
               <div className="flex flex-col gap-3">
-                {taskRows.map((task, i) => (
+                {taskRows.map((task) => (
                   <TaskCard
                     key={task._id}
                     task={task}
-                    barColor={courseColorByTag.get(task.classTag ?? '') ?? FALLBACK_COLORS[i % FALLBACK_COLORS.length]}
+                    barColor={getTaskBarColor(task)}
                     badge={BADGE_MAP[task.taskType?.toLowerCase().replace(/\s+/g, '') ?? ''] ?? BADGE_MAP.default}
                     isEstimating={estimatingTasks.has(task._id)}
                     onEstimate={() => handleEstimateTask(task._id)}
                     onEdit={() => setEditingTask(task)}
                     onDelete={() => setDeletingTask(task)}
+                    subtasks={subtasksByTaskId.get(task._id) ?? []}
+                    estimatingSubtasks={estimatingSubtasks}
+                    onEditSubtask={(subtask) => setEditingSubtask(subtask)}
+                    onDeleteSubtask={(subtaskId) => deleteSubtask({ subtaskId })}
+                    onEstimateSubtask={(subtaskId) => handleEstimateSubtask(subtaskId)}
                     feedback={{
                       draft: getFeedbackDraft(task._id),
                       error: feedbackErrors[task._id],

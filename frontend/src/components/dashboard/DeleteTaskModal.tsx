@@ -8,11 +8,13 @@ export default function DeleteModal({
   task,
   onClose,
   onConfirm,
+  subtaskCount = 0,
 }: {
   isOpen: boolean
   task: TaskType | null
   onClose: () => void
   onConfirm: () => Promise<void>
+  subtaskCount?: number
 }) {
   const [deleting, setDeleting] = useState(false)
 
@@ -41,6 +43,11 @@ export default function DeleteModal({
       <p className="text-sm leading-relaxed text-slate-blue">
         <span className="font-semibold text-navy">"{task ? displayTitle(task) : ''}"</span> will be
         permanently deleted. This cannot be undone.
+        {subtaskCount > 0 && (
+          <span className="mt-1 block text-slate-blue">
+            This will also delete {subtaskCount} subtask{subtaskCount !== 1 ? 's' : ''}.
+          </span>
+        )}
       </p>
     </Modal>
   )
