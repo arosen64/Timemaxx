@@ -100,6 +100,12 @@ const TASK_FEEDBACK_INTRO =
 const CLASS_MENU_INTRO =
   "Which class would you like to ask about? Pick one below, or choose **Other** to see more options.";
 
+/** Max messages per session before the chat is locked. ~15 turns is plenty for one task. */
+const CHAT_MESSAGE_LIMIT = 20;
+
+const CHAT_LIMIT_MSG =
+  "This chat has reached its message limit. Close the widget (×) and open Maxx again to start a fresh conversation.";
+
 const EXHAUSTED_MSG =
   "I still can't tell which task or class you mean after a few tries. " +
   "Try naming a course code or assignment title, or open it from your list — then ask again.";
@@ -1100,6 +1106,26 @@ chatApp.post("/api/chat", async (c) => {
     role: "user",
     content: message,
   });
+
+  // Check message limit — fetch one extra to detect overflow without counting everything.
+  const recentMsgs = await ctx.runQuery(internal.queries.chatMessages.getChatHistoryInternal, {
+    userId,
+    sessionId,
+    limit: CHAT_MESSAGE_LIMIT + 1,
+  });
+  if (recentMsgs.length > CHAT_MESSAGE_LIMIT) {
+    await ctx.runMutation(internal.mutations.chatSessions.resolveScopeConfirmNoInternal, {
+      userId,
+      sessionId,
+    });
+    await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
+      userId,
+      sessionId,
+      role: "assistant",
+      content: CHAT_LIMIT_MSG,
+    });
+    return c.json({ text: CHAT_LIMIT_MSG, status: "chat_input_locked", route: null });
+  }
 
   const sessionNow = await ctx.runQuery(internal.queries.chatSessions.getChatSessionInternal, {
     userId,
