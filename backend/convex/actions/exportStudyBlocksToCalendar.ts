@@ -1,12 +1,9 @@
 "use node";
-import { action, type ActionCtx } from "../_generated/server";
-import type { Id } from "../_generated/dataModel";
+import { action, internalAction } from "../_generated/server";
 import { internal } from "../_generated/api";
+import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
-import { decryptToken, encryptToken } from "../lib/calendarCrypto";
-
-const GOOGLE_CALENDAR_API = "https://www.googleapis.com/calendar/v3";
-const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
+import { GOOGLE_CALENDAR_API, hexToGcalColorId, resolveAccessToken } from "../lib/gcalHelpers";
 
 /**
  * Upserts the authenticated user's future study blocks into Google Calendar.
@@ -37,7 +34,8 @@ export const exportStudyBlocksToCalendar = action({
       { userId },
     );
 
-    const calendarId = connection.selectedCalendarIds?.[0] ?? "primary";
+    if (!connection.timemaxxCalendarId) throw new Error("No Timemaxx calendar found — reconnect Google Calendar to create one");
+    const calendarId = connection.timemaxxCalendarId;
 
     let exported = 0;
     let patched = 0;
@@ -47,10 +45,12 @@ export const exportStudyBlocksToCalendar = action({
         new Date(block.startTime).getTime() + block.studyBlockLength * 60 * 1000,
       ).toISOString();
 
-      const eventBody = {
+      const colorId = block.courseColor ? hexToGcalColorId(block.courseColor) : undefined;
+      const eventBody: Record<string, unknown> = {
         summary: block.title,
         start: { dateTime: block.startTime },
         end: { dateTime: endTime },
+        ...(colorId && { colorId }),
       };
 
       if (!block.googleEventId) {
@@ -94,6 +94,9 @@ export const exportStudyBlocksToCalendar = action({
           },
         );
         if (!res.ok) continue;
+        await ctx.runMutation(internal.mutations.studyBlocks.clearNeedsExport, {
+          studyBlockId: block._id,
+        });
         patched++;
       }
     }
@@ -102,47 +105,87 @@ export const exportStudyBlocksToCalendar = action({
   },
 });
 
-async function resolveAccessToken(
-  ctx: ActionCtx,
-  connection: {
-    userId: Id<"users">;
-    accessToken: string;
-    refreshToken: string;
-    expiresAt: number;
+/**
+ * Deletes the user's timemaxx Google Calendar and removes the stored connection.
+ * Called when the user revokes calendar access from the profile page.
+ */
+export const revokeCalendarAccess = action({
+  args: {},
+  handler: async (ctx): Promise<void> => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    const tokenSecret = process.env.CALENDAR_TOKEN_SECRET;
+    if (!tokenSecret) throw new Error("Missing CALENDAR_TOKEN_SECRET");
+
+    const connection = await ctx.runQuery(
+      internal.queries.calendar.getCalendarConnectionForUser,
+      { userId },
+    );
+    if (!connection) return;
+
+    // Attempt to delete the timemaxx calendar from Google Calendar
+    const timemaxxCalendarId = connection.timemaxxCalendarId;
+    if (timemaxxCalendarId) {
+      try {
+        const accessToken = await resolveAccessToken(ctx, connection, userId, tokenSecret);
+        await fetch(
+          `${GOOGLE_CALENDAR_API}/calendars/${encodeURIComponent(timemaxxCalendarId)}`,
+          {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${accessToken}` },
+          },
+        );
+      } catch {
+        // Ignore errors — still revoke locally even if Google deletion fails
+      }
+    }
+
+    await ctx.runMutation(internal.mutations.calendar.deleteCalendarTokenForUser, { userId });
   },
-  userId: Id<"users">,
-  tokenSecret: string,
-): Promise<string> {
-  if (Date.now() + 60_000 < connection.expiresAt) {
-    return await decryptToken(connection.accessToken, tokenSecret);
-  }
+});
 
-  const refreshToken = await decryptToken(connection.refreshToken, tokenSecret);
-  const clientId = process.env.AUTH_GOOGLE_ID;
-  const clientSecret = process.env.AUTH_GOOGLE_SECRET;
-  if (!clientId || !clientSecret) throw new Error("Missing Google OAuth credentials");
+/**
+ * Deletes Google Calendar events linked to deleted study blocks.
+ * Called asynchronously via ctx.scheduler after a task is deleted.
+ * Silently ignores failures — the task is already gone from Convex.
+ */
+export const deleteLinkedCalendarEvents = internalAction({
+  args: {
+    userId: v.id("users"),
+    googleEventIds: v.array(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const tokenSecret = process.env.CALENDAR_TOKEN_SECRET;
+    if (!tokenSecret) return;
 
-  const tokenRes = await fetch(GOOGLE_TOKEN_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      client_id: clientId,
-      client_secret: clientSecret,
-      refresh_token: refreshToken,
-      grant_type: "refresh_token",
-    }),
-  });
-  if (!tokenRes.ok) throw new Error("Token refresh failed");
+    const connection = await ctx.runQuery(
+      internal.queries.calendar.getCalendarConnectionForUser,
+      { userId: args.userId },
+    );
+    if (!connection) return;
 
-  const tokenData = await tokenRes.json() as { access_token: string; expires_in: number };
-  if (!tokenData.access_token) throw new Error("No access_token in refresh response");
+    let accessToken: string;
+    try {
+      accessToken = await resolveAccessToken(ctx, connection, args.userId, tokenSecret);
+    } catch {
+      return;
+    }
 
-  const newExpiry = Date.now() + tokenData.expires_in * 1000;
-  await ctx.runMutation(internal.mutations.calendar.updateCalendarToken, {
-    userId,
-    accessToken: await encryptToken(tokenData.access_token, tokenSecret),
-    expiresAt: newExpiry,
-  });
+    if (!connection.timemaxxCalendarId) return; // no Timemaxx calendar means nothing to clean up
+    const calendarId = connection.timemaxxCalendarId;
 
-  return tokenData.access_token;
-}
+    for (const eventId of args.googleEventIds) {
+      const res = await fetch(
+        `${GOOGLE_CALENDAR_API}/calendars/${encodeURIComponent(calendarId)}/events/${encodeURIComponent(eventId)}`,
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${accessToken}` },
+        },
+      );
+      if (!res.ok) {
+        console.warn(`Failed to delete GCal event ${eventId}: HTTP ${res.status}`);
+      }
+    }
+  },
+});

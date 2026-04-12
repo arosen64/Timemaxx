@@ -24,7 +24,7 @@ function getLocalTimeInfo(isoString: string, timezone: string): { dayName: strin
 }
 
 function isBlockConflicted(
-  block: { startTime: string; studyBlockLength: number },
+  block: { startTime: string; studyBlockLength: number; googleEventId?: string },
   task: { dueDate: number },
   timedEvents: TimedEventArg[],
   workHoursGrid: WorkHoursRow[],
@@ -40,8 +40,9 @@ function isBlockConflicted(
   // 1. Due date violation
   if (startMs >= task.dueDate || endMs > task.dueDate) return true
 
-  // 2. Calendar event overlap
+  // 2. Calendar event overlap — skip the block's own exported GCal event
   for (const event of timedEvents) {
+    if (block.googleEventId && event.id === block.googleEventId) continue
     const eventStart = new Date(event.start).getTime()
     const eventEnd = new Date(event.end).getTime()
     if (startMs < eventEnd && eventStart < endMs) return true
@@ -96,6 +97,7 @@ export const createStudyBlock = mutation({
 
     return await ctx.db.insert("studyBlocks", {
       taskId: args.taskId,
+      userId,
       title: args.title,
       startTime: args.startTime,
       studyBlockLength: args.studyBlockLength,
@@ -130,6 +132,7 @@ export const createTaskBlocks = mutation({
     for (const block of args.blocks) {
       await ctx.db.insert("studyBlocks", {
         taskId: args.taskId,
+        userId,
         title: block.title,
         startTime: undefined,
         studyBlockLength: block.studyBlockLength,
@@ -201,6 +204,7 @@ export const editStudyBlockTime = mutation({
     await ctx.db.patch(args.studyBlockId, {
       startTime: args.startTime ?? undefined,
       isConflicted: false,
+      needsExport: args.startTime !== null,
     });
   },
 });
@@ -211,7 +215,37 @@ export const setGoogleEventId = internalMutation({
     googleEventId: v.string(),
   },
   handler: async (ctx, args) => {
-    await ctx.db.patch(args.studyBlockId, { googleEventId: args.googleEventId });
+    await ctx.db.patch(args.studyBlockId, { googleEventId: args.googleEventId, needsExport: false });
+  },
+});
+
+export const clearNeedsExport = internalMutation({
+  args: { studyBlockId: v.id("studyBlocks") },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.studyBlockId, { needsExport: false });
+  },
+});
+
+/**
+ * Marks all future study blocks for a user as needing re-export and clears their
+ * stale Google Calendar event IDs. Called after a user reconnects Google Calendar
+ * so that blocks previously exported to the old calendar get re-created in the new one.
+ */
+export const flagFutureBlocksForReexport = internalMutation({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+    const blocks = await ctx.db
+      .query("studyBlocks")
+      .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+      .collect();
+
+    for (const block of blocks) {
+      if (!block.startTime) continue;
+      if (new Date(block.startTime).getTime() <= now) continue;
+      if (!block.googleEventId && block.needsExport !== false) continue;
+      await ctx.db.patch(block._id, { needsExport: true, googleEventId: undefined });
+    }
   },
 });
 
@@ -237,10 +271,6 @@ export const setStudyBlockTime = internalMutation({
   },
 });
 
-/**
- * Places a study block at a chosen start time, flagging it for GCal export
- * and clearing any conflict status. Called from AI scheduling actions.
- */
 /**
  * Places a study block at a chosen start time and clears any conflict status.
  * Called from AI scheduling actions.
@@ -287,7 +317,7 @@ export const detectConflicts = internalMutation({
         }
 
         const conflicted = isBlockConflicted(
-          { startTime: block.startTime, studyBlockLength: block.studyBlockLength },
+          { startTime: block.startTime, studyBlockLength: block.studyBlockLength, googleEventId: block.googleEventId },
           { dueDate: task.dueDate },
           args.timedEvents,
           args.workHoursGrid,

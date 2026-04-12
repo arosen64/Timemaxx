@@ -2,7 +2,7 @@
 import { action } from "../_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
-import { api, internal } from "../_generated/api";
+import { internal } from "../_generated/api";
 import {
   extendSlotPool,
   filterPoolForBlock,
@@ -14,12 +14,9 @@ import {
   type WorkHoursRow,
   type PoolSlot,
 } from "../lib/scheduleSlots";
+import { fetch21DayCalendarEvents } from "../lib/calendarFetch";
 
 const MAX_TASKS = 20;
-
-function toDateStr(d: Date, timezone: string): string {
-  return Intl.DateTimeFormat("en-CA", { timeZone: timezone }).format(d);
-}
 
 /**
  * AI-driven bulk scheduling for all unscheduled tasks.
@@ -48,7 +45,7 @@ export const scheduleAllTasks = action({
 
     // Fetch all tasks for user
     const allTasks = await ctx.runQuery(
-      internal.queries.tasks.getAllTasksForUserInternal,
+      internal.queries.tasks.getAllTasksInternal,
       { userId },
     );
 
@@ -82,33 +79,7 @@ export const scheduleAllTasks = action({
     if (tasksToSchedule.length === 0) return { scheduled: 0, skipped: 0 };
 
     // Fetch calendar events once for the full 21-day window
-    const today = new Date();
-    const week2Start = new Date(today);
-    week2Start.setDate(today.getDate() + 7);
-    const week3Start = new Date(today);
-    week3Start.setDate(today.getDate() + 14);
-
-    type TimedEvent = { id: string; summary: string; start: string; end: string; calendarId: string };
-    let timedEvents: TimedEvent[] = [];
-    try {
-      const [r1, r2, r3] = await Promise.all([
-        ctx.runAction(api.actions.fetchCalendarEvents.fetchCalendarEvents, {
-          startDate: toDateStr(today, args.timezone),
-          timezone: args.timezone,
-        }),
-        ctx.runAction(api.actions.fetchCalendarEvents.fetchCalendarEvents, {
-          startDate: toDateStr(week2Start, args.timezone),
-          timezone: args.timezone,
-        }),
-        ctx.runAction(api.actions.fetchCalendarEvents.fetchCalendarEvents, {
-          startDate: toDateStr(week3Start, args.timezone),
-          timezone: args.timezone,
-        }),
-      ]);
-      timedEvents = [...r1.timedEvents, ...r2.timedEvents, ...r3.timedEvents];
-    } catch {
-      // No calendar — schedule against work hours only
-    }
+    const timedEvents = await fetch21DayCalendarEvents(ctx, args.timezone);
 
     // Build initial occupied intervals from calendar events + already-scheduled blocks
     const occupiedIntervals: OccupiedInterval[] = [

@@ -10,6 +10,7 @@ import {
   type OccupiedInterval,
   type WorkHoursRow,
 } from "../lib/scheduleSlots";
+import { fetch21DayCalendarEvents } from "../lib/calendarFetch";
 
 type StudyBlockWithTask = {
   _id: Id<"studyBlocks">;
@@ -43,40 +44,7 @@ export const autoRescheduleConflicts = action({
     if (!userId) throw new Error("Unauthenticated");
 
     // Fetch fresh calendar events for the full 21-day window (3 weekly fetches)
-    const today = new Date();
-    const todayStr = toDateStr(today, args.timezone);
-    const week2Start = new Date(today);
-    week2Start.setDate(week2Start.getDate() + 7);
-    const week3Start = new Date(today);
-    week3Start.setDate(week3Start.getDate() + 14);
-
-    let timedEvents: Array<{
-      id: string;
-      summary: string;
-      start: string;
-      end: string;
-      calendarId: string;
-    }> = [];
-
-    try {
-      const [r1, r2, r3] = await Promise.all([
-        ctx.runAction(api.actions.fetchCalendarEvents.fetchCalendarEvents, {
-          startDate: todayStr,
-          timezone: args.timezone,
-        }),
-        ctx.runAction(api.actions.fetchCalendarEvents.fetchCalendarEvents, {
-          startDate: toDateStr(week2Start, args.timezone),
-          timezone: args.timezone,
-        }),
-        ctx.runAction(api.actions.fetchCalendarEvents.fetchCalendarEvents, {
-          startDate: toDateStr(week3Start, args.timezone),
-          timezone: args.timezone,
-        }),
-      ]);
-      timedEvents = [...r1.timedEvents, ...r2.timedEvents, ...r3.timedEvents];
-    } catch {
-      // Fall back to no events — availability computed from work hours only
-    }
+    const timedEvents = await fetch21DayCalendarEvents(ctx, args.timezone);
 
     // Get user preferences
     const user = await ctx.runQuery(internal.queries.users.getUserInternal, { userId });
@@ -172,10 +140,6 @@ export const autoRescheduleConflicts = action({
     return { unplacedCount };
   },
 });
-
-function toDateStr(d: Date, timezone: string): string {
-  return Intl.DateTimeFormat("en-CA", { timeZone: timezone }).format(d);
-}
 
 /**
  * Filters and trims a list of free blocks so that no block starts or ends in
