@@ -31,6 +31,8 @@ export const setEntityPromptStateInternal = internalMutation({
     activeEntityStep: v.union(v.literal("task"), v.literal("class")),
     needsClassAfterTask: v.boolean(),
     awaitingEntityResolution: v.boolean(),
+    /** Set only when starting a new MCQ from a user turn; omit to keep existing trigger id */
+    clarifyTriggerUserMessageId: v.optional(v.id("chatMessages")),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -46,6 +48,9 @@ export const setEntityPromptStateInternal = internalMutation({
       activeEntityStep: args.activeEntityStep,
       needsClassAfterTask: args.needsClassAfterTask,
       awaitingEntityResolution: args.awaitingEntityResolution,
+      ...(args.clarifyTriggerUserMessageId !== undefined
+        ? { entityClarifyTriggerUserMessageId: args.clarifyTriggerUserMessageId }
+        : {}),
     });
     return null;
   },
@@ -142,6 +147,7 @@ export const clearEntityAwaitingInternal = internalMutation({
     await ctx.db.patch(row._id, {
       awaitingEntityResolution: false,
       activeEntityStep: undefined,
+      entityClarifyTriggerUserMessageId: undefined,
     });
     return null;
   },

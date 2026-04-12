@@ -45,8 +45,8 @@ export default function TaskCard({
 }: TaskCardProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [showAll, setShowAll] = useState(false)
-  const [showReasoning, setShowReasoning] = useState(false)
   const [isCancellingBlocks, setIsCancellingBlocks] = useState(false)
+  const [showReasoning, setShowReasoning] = useState(false)
 
   const deleteStudyBlocksForTask = useMutation(api.mutations.studyBlocks.deleteStudyBlocksForTask)
 

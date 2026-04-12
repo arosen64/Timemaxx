@@ -84,6 +84,11 @@ Return 1–6 subtasks ordered by when they should be completed. If the assignmen
       });
 
       const rawSubtasks = json.subtasks ?? [];
+
+      if (rawSubtasks.length === 0) {
+        return { error: "Gemini returned no subtasks. Please try again." };
+      }
+
       const nowMs = Date.now();
       const dueDateMs = task.dueDate;
       const n = rawSubtasks.length;
@@ -98,7 +103,7 @@ Return 1–6 subtasks ordered by when they should be completed. If the assignmen
       return { subtasks };
     } catch (err) {
       console.error("Failed to generate subtasks:", err);
-      throw err;
+      return { error: err instanceof Error ? err.message : "Failed to generate subtasks" };
     }
   },
 });

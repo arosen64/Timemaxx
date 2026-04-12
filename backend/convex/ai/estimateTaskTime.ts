@@ -11,10 +11,7 @@ import {
   timeEstimateResponseSchema,
 } from "../lib/prompts/estimateTaskTime.prompt";
 import { taskToTaskLike, subtaskToTaskLike, TaskLike } from "../lib/taskTypes";
-import {
-  RelevantChat,
-  fetchRelevantContext,
-} from "../lib/retrieval";
+import { fetchRelevantContext } from "../lib/retrieval";
 
 type Ctx = GenericActionCtx<DataModel>;
 
@@ -93,19 +90,31 @@ async function buildTaskContext(
 }
 
 /**
- * Formats relevant chats into a context block.
- * TODO: batch-fetch chats by chatIds via getChatsByIdsInternal once a chats table exists.
- * NOTE: fetchRelevantChats always returns [] until a chats table is added, so this
- * always returns null. The Gemini prompt's "chats" reasoning category will therefore
- * always report no chat context. Consider removing the chats category from the required
- * reasoning trace (reasoningTraceSchema + TIME_ESTIMATE_SYSTEM) until this is populated.
+ * Loads `chatChunks` by id and formats transcript excerpts for the LLM.
+ * When `preloadedChunks` matches `chunkIds` in length and order (from `fetchRelevantContext`), skips a second DB read.
  */
-function buildChatContext(_chatIds: string[]): string | null {
-  const chats: RelevantChat[] = [];
-  if (chats.length === 0) return null;
+async function buildChatContext(
+  ctx: Ctx,
+  userId: Id<"users">,
+  chunkIds: Id<"chatChunks">[],
+  preloadedChunks?: Doc<"chatChunks">[],
+): Promise<string | null> {
+  if (chunkIds.length === 0) return null;
 
-  const lines = chats.map((chat) => `[${chat.role}]: ${chat.content}`);
-  return `Relevant chat history:\n${lines.join("\n")}`;
+  const chunks =
+    preloadedChunks !== undefined && preloadedChunks.length === chunkIds.length
+      ? preloadedChunks
+      : ((await ctx.runQuery(internal.queries.chatChunks.getChatChunksByIdsInternal, {
+          userId,
+          chunkIds,
+        })) as Doc<"chatChunks">[]);
+  if (chunks.length === 0) return null;
+
+  const lines = chunks.map((c) => {
+    const excerpt = sanitizeUserInput(c.text, 2_500);
+    return `- (${new Date(c.startCreatedAt).toISOString()}) ${excerpt}`;
+  });
+  return `Relevant chat history (excerpts from prior conversations):\n${lines.join("\n")}`;
 }
 
 /**
@@ -154,10 +163,11 @@ function buildProfileContext(user: Doc<"users"> | null): string | null {
 /**
  * Estimates how long a task or subtask will take (in minutes) using Claude Sonnet 4.
  * Pass either taskId or subtaskId — not both.
- * Retrieves relevant courses, prior tasks, and chats via mock embedding
- * retrieval functions, then builds context blocks and calls Anthropic with a
- * structured output schema that includes an estimate and a per-category
- * reasoning trace. Stores the result via the appropriate mutation.
+ *
+ * Retrieves relevant courses, prior tasks, and embedded chat chunks, then
+ * builds context blocks and calls Anthropic with a structured output schema
+ * that includes an estimate and a per-category reasoning trace.
+ * Stores the result via the appropriate mutation.
  */
 export const estimateTaskTime = internalAction({
   args: {
@@ -216,12 +226,11 @@ export const estimateTaskTime = internalAction({
 
     const taskCourse = item.courseId ? allCourses.find((c: Doc<"userCourses">) => c._id === item.courseId) : undefined;
 
-    const [courseContext, taskContext] = await Promise.all([
+    const [courseContext, taskContext, chatContext] = await Promise.all([
       buildCourseContext(ctx, relevantContext.classIds),
       buildTaskContext(ctx, relevantContext.taskIds),
+      buildChatContext(ctx, item.userId, relevantContext.chatChunkIds, relevantContext.chatChunks),
     ]);
-
-    const chatContext = buildChatContext(relevantContext.chatIds);
     const profileContext = buildProfileContext(user as Doc<"users"> | null);
 
     const apiKey = process.env.ANTHROPIC_API_KEY;
