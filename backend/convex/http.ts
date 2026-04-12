@@ -83,7 +83,8 @@ makeApiHandler(chatApp, "/api/chat");
 // ── CORS helpers ────────────────────────────────────────────────
 
 function corsHeaders(): Record<string, string> {
-  const origin = process.env.SITE_URL ?? "http://localhost:5173";
+  const siteUrl = process.env.SITE_URL ?? "http://localhost:5173";
+  const origin = new URL(siteUrl).origin;
   return {
     "Access-Control-Allow-Origin": origin,
     "Access-Control-Allow-Methods": "POST, OPTIONS",

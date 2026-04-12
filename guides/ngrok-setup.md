@@ -1,6 +1,6 @@
 # ngrok Setup Guide
 
-This guide explains how to use ngrok to expose the local Mastra AI agent server so that the Convex backend can reach it.
+This guide explains how to use ngrok to expose the local Mastra AI agent server so that the Convex backend can reach the agent.
 
 ## Why This Is Needed
 
