@@ -54,6 +54,10 @@ export const createSubtask = mutation({
       createdAt: Date.now(),
     });
 
+    // Parent time is rolled up from subtasks; drop any prior whole-task AI reasoning
+    // so we never show stale explanations alongside a summed estimate.
+    await ctx.db.patch(args.parentTaskId, { reasoning: undefined });
+
     // Kick off time estimation on the backend immediately after creation.
     // This runs regardless of frontend lifecycle (no component unmount risk).
     // In convex-test (Node.js), process.env.VITEST is set; in production Convex

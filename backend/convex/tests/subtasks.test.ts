@@ -72,6 +72,29 @@ describe("mutations/subtasks – createSubtask", () => {
     expect(record!.userId).toBe(userId);
   });
 
+  test("clears parent task reasoning when a subtask is created", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+    const parentTaskId = await seedTask(t, userId);
+    await t.run((ctx) =>
+      ctx.db.patch(parentTaskId, {
+        reasoning: makeReasoning(),
+      })
+    );
+
+    await withAuth.mutation(api.mutations.subtasks.createSubtask, {
+      parentTaskId,
+      title: "Write intro",
+      description: "Draft the introduction section",
+      taskType: "Essay",
+      color: "#2563eb",
+      order: 0,
+    });
+
+    const parent = await t.run((ctx) => ctx.db.get(parentTaskId));
+    expect(parent!.reasoning).toBeUndefined();
+  });
+
   test("throws when parent task does not belong to the user", async () => {
     const t = makeTestCtx();
     const { withAuth } = await createTestUser(t);
