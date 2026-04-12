@@ -192,6 +192,9 @@ function snapStartForward(transcript: string, rawStart: number): number {
  * Chunk ends are snapped to whitespace / newlines so words and role labels
  * like `Assistant:` are not cut in half. The next window starts at
  * `end - overlap` so there are no gaps when `end` moves backward.
+ *
+ * Messages are grouped by taskId first - messages with different taskIds
+ * are never in the same chunk.
  */
 export function buildChatChunkSpecs(
   messages: ChatMessageForChunking[],
@@ -199,11 +202,41 @@ export function buildChatChunkSpecs(
   const selected = selectMessagesForChunking(messages);
   if (selected.length === 0) return [];
 
-  const { transcript, spans } = buildTranscript(selected);
+  // Group messages by taskId - messages with different taskIds go in separate chunks
+  const messagesByTask = new Map<Id<"tasks"> | null, ChatMessageForChunking[]>();
+  for (const message of selected) {
+    const taskId = message.taskId || null; // Use null for messages without taskId
+    if (!messagesByTask.has(taskId)) {
+      messagesByTask.set(taskId, []);
+    }
+    messagesByTask.get(taskId)!.push(message);
+  }
+
+  const allSpecs: ChatChunkSpec[] = [];
+  let globalChunkIndex = 0;
+
+  // Process each task group separately
+  for (const [taskId, taskMessages] of messagesByTask) {
+    const specs = buildChunkSpecsForMessages(taskMessages, globalChunkIndex);
+    allSpecs.push(...specs);
+    globalChunkIndex += specs.length;
+  }
+
+  return allSpecs;
+}
+
+/**
+ * Build chunk specs for a group of messages (already filtered to same taskId).
+ */
+function buildChunkSpecsForMessages(
+  messages: ChatMessageForChunking[],
+  startChunkIndex: number,
+): ChatChunkSpec[] {
+  const { transcript, spans } = buildTranscript(messages);
   if (transcript.trim().length === 0) return [];
 
   const specs: ChatChunkSpec[] = [];
-  let chunkIndex = 0;
+  let chunkIndex = startChunkIndex;
   let start = 0;
 
   while (start < transcript.length) {
