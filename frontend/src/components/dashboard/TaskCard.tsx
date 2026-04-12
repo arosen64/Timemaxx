@@ -200,9 +200,11 @@ export default function TaskCard({
               </div>
             </div>
 
-            {!hasSubtasks && task.timeEstimate !== undefined && !task.isManualEstimate && (
-              <TaskFeedbackForm task={task} {...feedback} />
-            )}
+            {task.timeEstimate !== undefined &&
+              !task.isManualEstimate &&
+              (!hasSubtasks || !anySubtaskPending) && (
+                <TaskFeedbackForm task={task} {...feedback} />
+              )}
           </div>
         </div>
       </div>

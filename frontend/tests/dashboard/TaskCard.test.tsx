@@ -140,6 +140,59 @@ describe('TaskCard', () => {
     expect(screen.queryByRole('button', { name: 'Rate estimate thumbs up' })).not.toBeInTheDocument()
   })
 
+  it('renders TaskFeedbackForm when task has subtasks and rollup estimate is ready', () => {
+    setup({
+      task: { ...MOCK_TASK, timeEstimate: 90 },
+      subtasks: [
+        {
+          _id: 'sub1' as any,
+          parentTaskId: MOCK_TASK._id,
+          title: 'A',
+          description: 'd',
+          taskType: 'Problem Set',
+          color: '#2563eb',
+          timeEstimate: 45,
+          order: 0,
+          createdAt: Date.now(),
+        },
+        {
+          _id: 'sub2' as any,
+          parentTaskId: MOCK_TASK._id,
+          title: 'B',
+          description: 'd',
+          taskType: 'Problem Set',
+          color: '#2563eb',
+          timeEstimate: 45,
+          order: 1,
+          createdAt: Date.now(),
+        },
+      ],
+      estimatingSubtasks: new Set(),
+    })
+    expect(screen.getByRole('button', { name: 'Rate estimate thumbs up' })).toBeInTheDocument()
+  })
+
+  it('does not render TaskFeedbackForm while a subtask is still estimating', () => {
+    setup({
+      task: { ...MOCK_TASK, timeEstimate: 45 },
+      subtasks: [
+        {
+          _id: 'sub1' as any,
+          parentTaskId: MOCK_TASK._id,
+          title: 'A',
+          description: 'd',
+          taskType: 'Problem Set',
+          color: '#2563eb',
+          timeEstimate: undefined,
+          order: 0,
+          createdAt: Date.now(),
+        },
+      ],
+      estimatingSubtasks: new Set(['sub1' as any]),
+    })
+    expect(screen.queryByRole('button', { name: 'Rate estimate thumbs up' })).not.toBeInTheDocument()
+  })
+
   // --- Expand / collapse ---
   // JSDOM does not compute CSS, so we check the panel's class directly
   // rather than toBeVisible(), which can't understand grid-rows-[0fr] overflow-hidden.
