@@ -244,7 +244,7 @@ export const setTaskAgentStateInternal = internalMutation({
   args: {
     userId: v.id("users"),
     sessionId: v.string(),
-    activeAgent: v.optional(v.literal("task")),
+    activeAgent: v.optional(v.union(v.literal("task"), v.literal("feedback"), v.literal("preferences"))),
     taskAgentIntent: v.optional(v.union(v.literal("create"), v.literal("rud"))),
   },
   returns: v.null(),
@@ -278,9 +278,18 @@ export const clearTaskAgentStateInternal = internalMutation({
       )
       .unique();
     if (!row) return null;
+    // Clear agent state AND resolved entities — each subagent interaction is self-contained.
+    // The next invocation starts fresh so the user can act on a different task or class.
     await ctx.db.patch(row._id, {
       activeAgent: undefined,
       taskAgentIntent: undefined,
+      resolvedTaskId: undefined,
+      resolvedCourseId: undefined,
+      awaitingEntityResolution: false,
+      activeEntityStep: undefined,
+      needsClassAfterTask: false,
+      clarificationAttemptCount: 0,
+      clarificationExhausted: false,
     });
     return null;
   },

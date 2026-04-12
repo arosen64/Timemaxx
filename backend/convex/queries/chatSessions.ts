@@ -25,7 +25,7 @@ export const getChatSessionInternal = internalQuery({
       chatInputLocked: v.optional(v.boolean()),
       scopeBypassNextMessage: v.optional(v.boolean()),
       pendingScopeUserMessageId: v.optional(v.id("chatMessages")),
-      activeAgent: v.optional(v.literal("task")),
+      activeAgent: v.optional(v.union(v.literal("task"), v.literal("feedback"), v.literal("preferences"))),
       taskAgentIntent: v.optional(v.union(v.literal("create"), v.literal("rud"))),
     }),
   ),
