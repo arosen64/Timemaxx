@@ -328,6 +328,7 @@ async function continueAfterSupervisorOutput(
         activeEntityStep: "task",
         needsClassAfterTask: searchPlan.needsClassAfterTask,
         awaitingEntityResolution: true,
+        ...(!stillInEntityMcq ? { clarifyTriggerUserMessageId: userMessageId } : {}),
       });
       return c.json({
         text: aiText,
@@ -382,6 +383,7 @@ async function continueAfterSupervisorOutput(
       activeEntityStep: "class",
       needsClassAfterTask: false,
       awaitingEntityResolution: true,
+      ...(!stillInEntityMcq ? { clarifyTriggerUserMessageId: userMessageId } : {}),
     });
     return c.json({
       text: aiText,
@@ -689,6 +691,15 @@ chatApp.post("/api/chat", async (c) => {
       internal.mutations.chatSessions.resolvePickedTaskInternal,
       { userId, sessionId, taskId },
     );
+    await ctx.runMutation(
+      internal.mutations.chatMessages.applyResolvedEntityToClarifyTriggerMessageInternal,
+      {
+        userId,
+        sessionId,
+        taskId,
+        clearTriggerPointer: !needsClassNext,
+      },
+    );
     const intro = needsClassNext ? ENTITY_INTRO_CLASS : "Got it — I’ll use that task.";
     await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
       userId,
@@ -749,6 +760,15 @@ chatApp.post("/api/chat", async (c) => {
       sessionId,
       courseId,
     });
+    await ctx.runMutation(
+      internal.mutations.chatMessages.applyResolvedEntityToClarifyTriggerMessageInternal,
+      {
+        userId,
+        sessionId,
+        courseId,
+        clearTriggerPointer: true,
+      },
+    );
     const sessionAfterCourse = await ctx.runQuery(
       internal.queries.chatSessions.getChatSessionInternal,
       { userId, sessionId },
