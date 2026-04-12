@@ -4,6 +4,13 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { taskTypeValidator } from "../lib/taskValidators";
 import { internal } from "../_generated/api";
 
+const reasoningTraceArgs = v.object({
+  classes: v.string(),
+  tasks: v.string(),
+  chats: v.string(),
+  profile: v.string(),
+});
+
 /**
  * Creates a new subtask linked to a parent task.
  * Validates that the parentTaskId references a row in the `tasks` table
@@ -92,6 +99,7 @@ export const updateSubtask = mutation({
       taskType: args.taskType,
       suggestedCompletionAt: args.suggestedCompletionAt,
       timeEstimate: undefined,
+      reasoning: undefined,
     });
 
     // Re-schedule estimation since content changed.
@@ -112,9 +120,13 @@ export const setSubtaskTimeEstimate = internalMutation({
   args: {
     subtaskId: v.id("subtasks"),
     timeEstimate: v.number(),
+    reasoning: reasoningTraceArgs,
   },
   handler: async (ctx, args) => {
-    await ctx.db.patch(args.subtaskId, { timeEstimate: args.timeEstimate });
+    await ctx.db.patch(args.subtaskId, {
+      timeEstimate: args.timeEstimate,
+      reasoning: args.reasoning,
+    });
 
     // Roll up: sum all sibling estimates and patch parent task
     const subtask = await ctx.db.get(args.subtaskId);
