@@ -10,10 +10,8 @@ import {
   buildTimeEstimatePrompt,
   timeEstimateResponseSchema,
 } from "../lib/prompts/estimateTaskTime.prompt";
-import {
-  RelevantChat,
-  fetchRelevantContext,
-} from "../lib/retrieval";
+import { taskToTaskLike, subtaskToTaskLike, TaskLike } from "../lib/taskTypes";
+import { fetchRelevantContext } from "../lib/retrieval";
 
 type Ctx = GenericActionCtx<DataModel>;
 
@@ -92,15 +90,31 @@ async function buildTaskContext(
 }
 
 /**
- * Formats relevant chats into a context block.
- * TODO: batch-fetch chats by chatIds via getChatsByIdsInternal once a chats table exists.
+ * Loads `chatChunks` by id and formats transcript excerpts for the LLM.
+ * When `preloadedChunks` matches `chunkIds` in length and order (from `fetchRelevantContext`), skips a second DB read.
  */
-function buildChatContext(_chatIds: string[]): string | null {
-  const chats: RelevantChat[] = [];
-  if (chats.length === 0) return null;
+async function buildChatContext(
+  ctx: Ctx,
+  userId: Id<"users">,
+  chunkIds: Id<"chatChunks">[],
+  preloadedChunks?: Doc<"chatChunks">[],
+): Promise<string | null> {
+  if (chunkIds.length === 0) return null;
 
-  const lines = chats.map((chat) => `[${chat.role}]: ${chat.content}`);
-  return `Relevant chat history:\n${lines.join("\n")}`;
+  const chunks =
+    preloadedChunks !== undefined && preloadedChunks.length === chunkIds.length
+      ? preloadedChunks
+      : ((await ctx.runQuery(internal.queries.chatChunks.getChatChunksByIdsInternal, {
+          userId,
+          chunkIds,
+        })) as Doc<"chatChunks">[]);
+  if (chunks.length === 0) return null;
+
+  const lines = chunks.map((c) => {
+    const excerpt = sanitizeUserInput(c.text, 2_500);
+    return `- (${new Date(c.startCreatedAt).toISOString()}) ${excerpt}`;
+  });
+  return `Relevant chat history (excerpts from prior conversations):\n${lines.join("\n")}`;
 }
 
 /**
@@ -147,47 +161,76 @@ function buildProfileContext(user: Doc<"users"> | null): string | null {
 // ---------------------------------------------------------------------------
 
 /**
- * Estimates how long a task will take (in minutes) using Claude Sonnet 4.
+ * Estimates how long a task or subtask will take (in minutes) using Claude Sonnet 4.
+ * Pass either taskId or subtaskId — not both.
  *
- * Retrieves relevant courses, prior tasks, and chats via mock embedding
- * retrieval functions, then builds context blocks and calls Anthropic with a
- * structured output schema that includes an estimate and a per-category
- * reasoning trace.
+ * Retrieves relevant courses, prior tasks, and embedded chat chunks, then
+ * builds context blocks and calls Anthropic with a structured output schema
+ * that includes an estimate and a per-category reasoning trace.
+ * Stores the result via the appropriate mutation.
  */
 export const estimateTaskTime = internalAction({
   args: {
-    taskId: v.id("tasks"),
+    taskId: v.optional(v.id("tasks")),
+    subtaskId: v.optional(v.id("subtasks")),
   },
   handler: async (ctx, args) => {
-    const task = await ctx.runQuery(internal.queries.tasks.getTaskInternal, {
-      taskId: args.taskId,
-    });
-    if (!task) return;
+    if (!args.taskId && !args.subtaskId) {
+      console.error("estimateTaskTime: must pass taskId or subtaskId");
+      return;
+    }
 
-    const [user, taskCourses, relevantContext] = await Promise.all([
-      ctx.runQuery(internal.queries.users.getUserInternal, {
-        userId: task.userId,
-      }),
-      task.courseId
-        ? ctx.runQuery(
-            internal.queries.userCourses.getUserCoursesByIdsInternal,
-            { courseIds: [task.courseId] }
-          )
-        : Promise.resolve([]),
-      fetchRelevantContext(ctx, args.taskId, task.userId),
+    type ReasoningTrace = { classes: string; tasks: string; chats: string; profile: string };
+    let item: TaskLike;
+    let store: (minutes: number, reasoning: ReasoningTrace) => Promise<void>;
+    let contextTaskId: Id<"tasks">;
+
+    if (args.subtaskId) {
+      const subtask = await ctx.runQuery(internal.queries.subtasks.getSubtaskInternal, {
+        subtaskId: args.subtaskId,
+      });
+      if (!subtask) return;
+      const parentTask = await ctx.runQuery(internal.queries.tasks.getTaskInternal, {
+        taskId: subtask.parentTaskId,
+      });
+      if (!parentTask) return;
+      item = subtaskToTaskLike(subtask, parentTask);
+      contextTaskId = subtask.parentTaskId;
+      store = async (minutes, _reasoning) => {
+        await ctx.runMutation(internal.mutations.subtasks.setSubtaskTimeEstimate, {
+          subtaskId: args.subtaskId!,
+          timeEstimate: minutes,
+        });
+      };
+    } else {
+      const task = await ctx.runQuery(internal.queries.tasks.getTaskInternal, {
+        taskId: args.taskId!,
+      });
+      if (!task) return;
+      item = taskToTaskLike(task);
+      contextTaskId = args.taskId!;
+      store = async (minutes, reasoning) => {
+        await ctx.runMutation(internal.mutations.timeEstimate.setTimeEstimate, {
+          taskId: args.taskId!,
+          timeEstimate: minutes,
+          reasoning,
+        });
+      };
+    }
+
+    const [user, relevantContext, allCourses] = await Promise.all([
+      ctx.runQuery(internal.queries.users.getUserInternal, { userId: item.userId }),
+      fetchRelevantContext(ctx, contextTaskId, item.userId),
+      ctx.runQuery(internal.queries.userCourses.getUserCoursesInternal, { userId: item.userId }),
     ]);
 
-    // [0] is safe: we passed exactly one courseId, so the batch result has at most one entry.
-    const taskCourse = (taskCourses as Doc<"userCourses">[])[0] as
-      | Doc<"userCourses">
-      | undefined;
+    const taskCourse = item.courseId ? allCourses.find((c: Doc<"userCourses">) => c._id === item.courseId) : undefined;
 
-    const [courseContext, taskContext] = await Promise.all([
+    const [courseContext, taskContext, chatContext] = await Promise.all([
       buildCourseContext(ctx, relevantContext.classIds),
       buildTaskContext(ctx, relevantContext.taskIds),
+      buildChatContext(ctx, item.userId, relevantContext.chatChunkIds, relevantContext.chatChunks),
     ]);
-
-    const chatContext = buildChatContext(relevantContext.chatIds);
     const profileContext = buildProfileContext(user as Doc<"users"> | null);
 
     const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -202,9 +245,9 @@ export const estimateTaskTime = internalAction({
       const result = await callAnthropic({
         system: TIME_ESTIMATE_SYSTEM,
         prompt: buildTimeEstimatePrompt({
-          title: sanitizeUserInput(task.title, 500),
-          taskType: task.taskType,
-          description: sanitizeUserInput(task.description ?? "", 5_000),
+          title: sanitizeUserInput(item.title, 500),
+          taskType: item.taskType,
+          description: sanitizeUserInput(item.description ?? "", 5_000),
           courseInfo: taskCourse
             ? `${taskCourse.courseCode} - ${sanitizeUserInput(taskCourse.title, 500)}`
             : undefined,
@@ -217,11 +260,7 @@ export const estimateTaskTime = internalAction({
         schemaName: "TimeEstimate",
       });
 
-      await ctx.runMutation(internal.mutations.timeEstimate.setTimeEstimate, {
-        taskId: args.taskId,
-        timeEstimate: result.estimatedMinutes,
-        reasoning: result.reasoningTrace,
-      });
+      await store(result.estimatedMinutes, result.reasoningTrace);
     } catch (err) {
       console.error("Failed to estimate task time:", err);
       throw err;

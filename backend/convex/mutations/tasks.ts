@@ -129,6 +129,17 @@ export const updateTask = mutation({
         : {}),
     });
 
+    // Cascade dueDate change to child subtasks
+    if (args.dueDate !== task.dueDate) {
+      const subtasks = await ctx.db
+        .query("subtasks")
+        .withIndex("by_parentTaskId", (q) => q.eq("parentTaskId", args.taskId))
+        .collect();
+      for (const subtask of subtasks) {
+        await ctx.db.patch(subtask._id, { dueDate: args.dueDate });
+      }
+    }
+
     if (process.env.GEMINI_API_KEY) {
       await ctx.scheduler.runAfter(0, internal.ai.embeddings.generateTaskEmbedding, {
         taskId: args.taskId,

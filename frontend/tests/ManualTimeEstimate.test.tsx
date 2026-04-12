@@ -6,6 +6,9 @@ import EstimateBadge from '../src/components/dashboard/EstimateBadge'
 
 vi.mock('../../backend/convex/_generated/api', () => ({
   api: {
+    actions: {
+      requestGenerateSubtasks: { requestGenerateSubtasks: 'requestGenerateSubtasks' },
+    },
     mutations: {
       tasks: { createTask: 'createTask' },
       timeEstimate: { setManualTimeEstimate: 'setManualTimeEstimate' },
@@ -15,6 +18,7 @@ vi.mock('../../backend/convex/_generated/api', () => ({
 
 vi.mock('convex/react', () => ({
   useMutation: vi.fn(),
+  useAction: vi.fn().mockReturnValue(vi.fn()),
 }))
 
 import { useMutation } from 'convex/react'

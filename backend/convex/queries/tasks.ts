@@ -11,6 +11,18 @@ export const getTaskInternal = internalQuery({
   },
 });
 
+// Internal query for fetching all tasks for a user — used by AI scheduling actions
+export const getAllTasksForUserInternal = internalQuery({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("tasks")
+      .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+      .collect();
+  },
+});
+
+
 export const getEstimateFeedbackContextInternal = internalQuery({
   args: { userId: v.id("users") },
   handler: async (ctx, args) => {

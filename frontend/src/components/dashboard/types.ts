@@ -1,6 +1,22 @@
 import { Id } from '../../../../backend/convex/_generated/dataModel'
 import { formatEstimatedTime } from '../../utils/timeUtils'
 
+export type SubtaskType = {
+  _id: Id<'subtasks'>
+  parentTaskId: Id<'tasks'>
+  title: string
+  description: string
+  taskType: string
+  color: string
+  timeEstimate?: number
+  dueDate?: number
+  classTag?: string
+  courseId?: Id<'userCourses'>
+  order: number
+  suggestedCompletionAt?: number
+  createdAt: number
+}
+
 export type TaskType = {
   _id: Id<'tasks'>
   title: string
@@ -14,6 +30,7 @@ export type TaskType = {
   dueDate: number
   createdAt: number
   classTag?: string
+  courseId?: Id<'userCourses'>
   reasoning?: {
     classes: string
     tasks: string
