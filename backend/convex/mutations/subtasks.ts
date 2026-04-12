@@ -93,6 +93,15 @@ export const updateSubtask = mutation({
       suggestedCompletionAt: args.suggestedCompletionAt,
       timeEstimate: undefined,
     });
+
+    // Re-schedule estimation since content changed.
+    const isTest =
+      typeof process !== "undefined" && process.env.VITEST === "true";
+    if (!isTest) {
+      await ctx.scheduler.runAfter(0, internal.ai.estimateTaskTime.estimateTaskTime, {
+        subtaskId: args.subtaskId,
+      });
+    }
   },
 });
 
@@ -143,5 +152,16 @@ export const deleteSubtask = mutation({
     }
 
     await ctx.db.delete(args.subtaskId);
+
+    // Recalculate parent task estimate from remaining siblings.
+    const remaining = await ctx.db
+      .query("subtasks")
+      .withIndex("by_parentTaskId", (q) => q.eq("parentTaskId", subtask.parentTaskId))
+      .collect();
+
+    const newTotal = remaining.reduce((sum, s) => sum + (s.timeEstimate ?? 0), 0);
+    await ctx.db.patch(subtask.parentTaskId, {
+      timeEstimate: newTotal > 0 ? newTotal : undefined,
+    });
   },
 });
