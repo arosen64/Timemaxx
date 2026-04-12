@@ -175,7 +175,10 @@ export const estimateTaskTime = internalAction({
     subtaskId: v.optional(v.id("subtasks")),
   },
   handler: async (ctx, args) => {
-    if (!args.taskId && !args.subtaskId) return;
+    if (!args.taskId && !args.subtaskId) {
+      console.error("estimateTaskTime: must pass taskId or subtaskId");
+      return;
+    }
 
     type ReasoningTrace = { classes: string; tasks: string; chats: string; profile: string };
     let item: TaskLike;
