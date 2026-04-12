@@ -74,10 +74,10 @@ export default function ScheduleTray({
             onClick={handleScheduleAll}
             disabled={isSchedulingAll}
             className="flex items-center gap-1 px-2 h-6 text-[10px] font-semibold font-heading rounded-md bg-navy text-white transition hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
-            aria-label="Schedule all unscheduled blocks"
+            aria-label="Schedule unscheduled blocks"
           >
             {isSchedulingAll && <SpinnerIcon color="currentColor" size={10} />}
-            Schedule All
+            Schedule
           </button>
         )}
       </div>
