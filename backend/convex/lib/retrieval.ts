@@ -1,4 +1,3 @@
-import { internal } from "../_generated/api";
 import { GenericActionCtx } from "convex/server";
 import { DataModel, Doc, Id } from "../_generated/dataModel";
 import { parseDeptPrefix, termSortKey } from "./classTagUtils";
@@ -44,6 +43,8 @@ export async function fetchRelevantClasses(
   taskId: Id<"tasks">,
   userId: Id<"users">
 ): Promise<Id<"userCourses">[]> {
+  // Dynamic import avoids a static import cycle (api → … → this file → api).
+  const { internal } = (await import("../_generated/api")) as unknown as { internal: any };
   const task = await ctx.runQuery(internal.queries.tasks.getTaskInternal, { taskId });
   if (!task || task.userId !== userId) return [];
 
@@ -104,6 +105,7 @@ export async function fetchRelevantTasks(
   taskId: Id<"tasks">,
   userId: Id<"users">
 ): Promise<Id<"tasks">[]> {
+  const { internal } = (await import("../_generated/api")) as unknown as { internal: any };
   const task = await ctx.runQuery(internal.queries.tasks.getTaskInternal, { taskId });
   if (!task || task.userId !== userId) return [];
 
