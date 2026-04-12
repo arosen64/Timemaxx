@@ -1,7 +1,12 @@
 import { internalAction } from "../_generated/server";
 import { v } from "convex/values";
 import type { Doc } from "../_generated/dataModel";
-import { fetchRelevantClasses, fetchRelevantTasks } from "../lib/retrieval";
+import {
+  buildChatRetrievalQueryText,
+  fetchRelevantChats,
+  fetchRelevantClasses,
+  fetchRelevantTasks,
+} from "../lib/retrieval";
 
 const EMBEDDING_DIMS = 3072;
 
@@ -31,8 +36,38 @@ const classHitShape = v.object({
   term: v.string(),
 });
 
+const chatChunkHitShape = v.object({
+  _id: v.id("chatChunks"),
+  sessionId: v.string(),
+  textPreview: v.string(),
+  startCreatedAt: v.number(),
+  linkedTaskIds: v.array(v.id("tasks")),
+  linkedCourseIds: v.array(v.id("userCourses")),
+  hadMetadataOverlap: v.boolean(),
+  embeddingLength: v.union(v.number(), v.null()),
+});
+
+function chatChunkEntityOverlap(
+  chunk: Doc<"chatChunks">,
+  currentTaskId: Doc<"tasks">["_id"],
+  relatedTaskIds: Doc<"tasks">["_id"][],
+  relatedClassIds: Doc<"userCourses">["_id"][],
+  taskCourseId: Doc<"userCourses">["_id"] | undefined,
+): boolean {
+  const taskIdSet = new Set([currentTaskId, ...relatedTaskIds]);
+  const courseIdSet = new Set(relatedClassIds);
+  if (taskCourseId) {
+    courseIdSet.add(taskCourseId);
+  }
+  return (
+    chunk.linkedTaskIds.some((id) => taskIdSet.has(id)) ||
+    chunk.linkedCourseIds.some((id) => courseIdSet.has(id))
+  );
+}
+
 /**
  * Dev-only helper for `fetchRelevantTasks` + `fetchRelevantClasses` (not chats).
+ * For **`chatChunks`** RAG, use **`inspectChatRetrievalForTask`**.
  *
  * CLI (from repo root, with `npx convex dev` running):
  * `npx convex run ai/debugRetrieval:inspectRetrievalForTask '{"taskId":"<tasks._id>"}'`
@@ -125,6 +160,124 @@ export const inspectRetrievalForTask = internalAction({
         title: c.title,
         term: c.term,
       })),
+    };
+  },
+});
+
+/**
+ * Dev-only: runs the same chat RAG path as `estimateTaskTime` — related tasks
+ * and courses, then `fetchRelevantChats`, and returns chunk previews plus
+ * whether each hit had entity metadata overlap.
+ *
+ * CLI (repo root, `npx convex dev` running, `GEMINI_API_KEY` on deployment for
+ * query embedding and indexed `chatChunks`):
+ * `npx convex run ai/debugRetrieval:inspectChatRetrievalForTask '{"taskId":"<tasks._id>"}'`
+ */
+export const inspectChatRetrievalForTask = internalAction({
+  args: { taskId: v.id("tasks") },
+  returns: v.union(
+    v.object({
+      ok: v.literal(false),
+      message: v.string(),
+    }),
+    v.object({
+      ok: v.literal(true),
+      anchorTask: anchorTaskShape,
+      relevantTaskIds: v.array(v.id("tasks")),
+      relevantClassIds: v.array(v.id("userCourses")),
+      retrievalQueryPreview: v.string(),
+      queryEmbeddingOk: v.boolean(),
+      relevantChatChunkIds: v.array(v.id("chatChunks")),
+      chatChunks: v.array(chatChunkHitShape),
+    }),
+  ),
+  handler: async (ctx, args) => {
+    const { internal } = (await import("../_generated/api")) as unknown as { internal: any };
+    const task: Doc<"tasks"> | null = await ctx.runQuery(internal.queries.tasks.getTaskInternal, {
+      taskId: args.taskId,
+    });
+    if (!task) {
+      return { ok: false as const, message: "No task found for that taskId." };
+    }
+
+    const emb = task.embedding;
+    const embeddingLength = Array.isArray(emb) ? emb.length : null;
+    const usedVectorRetrieval =
+      Array.isArray(emb) && emb.length === EMBEDDING_DIMS;
+
+    const [relevantTaskIds, relevantClassIds] = await Promise.all([
+      fetchRelevantTasks(ctx, args.taskId, task.userId),
+      fetchRelevantClasses(ctx, args.taskId, task.userId),
+    ]);
+
+    const retrievalFullText = buildChatRetrievalQueryText(task);
+    const retrievalQueryPreview =
+      retrievalFullText.length <= 600 ? retrievalFullText : `${retrievalFullText.slice(0, 600)}…`;
+
+    const queryVector = (await ctx.runAction(internal.ai.embeddings.embedRetrievalQueryInternal, {
+      text: retrievalFullText,
+    })) as number[] | null;
+    const queryEmbeddingOk =
+      Array.isArray(queryVector) && queryVector.length === EMBEDDING_DIMS;
+
+    const relevantChatChunkIds = await fetchRelevantChats(
+      ctx,
+      task.userId,
+      args.taskId,
+      relevantTaskIds,
+      relevantClassIds,
+      queryEmbeddingOk ? { queryEmbedding: queryVector } : undefined,
+    );
+
+    const chunksRaw =
+      relevantChatChunkIds.length === 0
+        ? ([] as Doc<"chatChunks">[])
+        : ((await ctx.runQuery(internal.queries.chatChunks.getChatChunksByIdsInternal, {
+            userId: task.userId,
+            chunkIds: relevantChatChunkIds,
+          })) as Doc<"chatChunks">[]);
+
+    const preview = (s: string, max = 200) => (s.length <= max ? s : `${s.slice(0, max)}…`);
+
+    const chatChunks = chunksRaw.map((c) => ({
+      _id: c._id,
+      sessionId: c.sessionId,
+      textPreview: preview(c.text),
+      startCreatedAt: c.startCreatedAt,
+      linkedTaskIds: c.linkedTaskIds,
+      linkedCourseIds: c.linkedCourseIds,
+      hadMetadataOverlap: chatChunkEntityOverlap(
+        c,
+        args.taskId,
+        relevantTaskIds,
+        relevantClassIds,
+        task.courseId,
+      ),
+      embeddingLength: Array.isArray(c.embedding) ? c.embedding.length : null,
+    }));
+
+    console.log(
+      `[inspectChatRetrievalForTask] anchor=${task._id} queryEmbedOk=${queryEmbeddingOk} chunks=${relevantChatChunkIds.length} relevantTasks=${relevantTaskIds.length} relevantClasses=${relevantClassIds.length}`,
+    );
+
+    return {
+      ok: true as const,
+      anchorTask: {
+        _id: task._id,
+        title: task.title,
+        taskType: task.taskType,
+        descriptionPreview: preview(task.description ?? "", 120),
+        userId: task.userId,
+        courseId: task.courseId,
+        embeddingLength,
+        usedVectorRetrieval,
+      },
+      relevantTaskIds,
+      relevantClassIds,
+      retrievalQueryPreview,
+      queryEmbeddingOk,
+      relevantChatChunkIds,
+      chatChunks,
     };
   },
 });

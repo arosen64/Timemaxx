@@ -134,7 +134,8 @@ export async function fetchRelevantTasks(
     .map((t) => t._id);
 }
 
-function buildChatRetrievalQueryText(task: Doc<"tasks">): string {
+/** Same string embedded for `chatChunks` RAG (debug / tooling may log a preview). */
+export function buildChatRetrievalQueryText(task: Doc<"tasks">): string {
   const title = task.title?.trim() ?? "";
   const desc = (task.description ?? "").trim();
   const body = desc.length > 0 ? `${title}\n\n${desc}` : title;
@@ -158,6 +159,10 @@ function chunkHasMetadataOverlap(
  * related courses, or the task's course.
  *
  * Requires `GEMINI_API_KEY` and embedded chunks; otherwise returns [].
+ *
+ * @param opts.queryEmbedding — If a 3072-length vector, used as the query
+ *   vector and the Gemini embed step is skipped (for debug callers that already
+ *   embedded the same text).
  */
 export async function fetchRelevantChats(
   ctx: Ctx,
@@ -165,15 +170,21 @@ export async function fetchRelevantChats(
   currentTaskId: Id<"tasks">,
   relatedTaskIds: Id<"tasks">[],
   relatedClassIds: Id<"userCourses">[],
+  opts?: { queryEmbedding?: number[] },
 ): Promise<Id<"chatChunks">[]> {
   const { internal } = (await import("../_generated/api")) as unknown as { internal: any };
   const task = await ctx.runQuery(internal.queries.tasks.getTaskInternal, { taskId: currentTaskId });
   if (!task || task.userId !== userId) return [];
 
   const retrievalText = buildChatRetrievalQueryText(task);
-  const embedding = (await ctx.runAction(internal.ai.embeddings.embedRetrievalQueryInternal, {
-    text: retrievalText,
-  })) as number[] | null;
+  const pre = opts?.queryEmbedding;
+  let embedding: number[] | null =
+    Array.isArray(pre) && pre.length === EMBEDDING_DIMS ? pre : null;
+  if (!embedding) {
+    embedding = (await ctx.runAction(internal.ai.embeddings.embedRetrievalQueryInternal, {
+      text: retrievalText,
+    })) as number[] | null;
+  }
   if (!Array.isArray(embedding) || embedding.length !== EMBEDDING_DIMS) {
     return [];
   }
