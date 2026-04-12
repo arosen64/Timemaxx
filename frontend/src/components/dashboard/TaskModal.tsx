@@ -1,10 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useAction } from 'convex/react'
+import { api } from '../../../../backend/convex/_generated/api'
+import { type Id } from '../../../../backend/convex/_generated/dataModel'
+import { type GeneratedSubtask } from '../../../../backend/convex/actions/generateSubtasks'
 import { type ClassTagCourseOption, type EditForm, CUSTOM_TASK_TYPE_OPTION, TASK_TYPE_OPTIONS } from './types'
 import DueDateRowWithCalendar from '../DueDateRowWithCalendar'
 import DueTimeField from '../DueTimeField'
 import Modal from '../ui/Modal'
 import Button from '../ui/Button'
 import Selector from '../ui/Selector'
+import SubtaskReviewModal from './SubtaskReviewModal'
 import {
   msToFormDate,
   msToDateInputValue,
@@ -57,8 +62,19 @@ interface TaskModalProps {
   classTagCourses?: ClassTagCourseOption[]
   /** When true, show a "Use AI Estimate" reset button in the time estimate section */
   showAiEstimateReset?: boolean
+  /** When true, hides the entire subtask generation section (e.g. when editing a subtask) */
+  hideSubtaskGeneration?: boolean
+  /** When > 0, show Delete/Regenerate subtask buttons instead of the generate checkbox */
+  existingSubtaskCount?: number
+  /** Task ID for regenerating subtasks on an already-saved task */
+  existingTaskId?: Id<'tasks'>
+  /** Course ID for regenerating subtasks (determines color assignment) */
+  existingCourseId?: Id<'userCourses'>
+  /** Called when user clicks "Delete subtasks" */
+  onDeleteSubtasks?: () => Promise<void>
   onClose: () => void
-  onSubmit: (form: EditForm) => Promise<void>
+  /** Return the created/updated taskId when generating subtasks; void for normal flow */
+  onSubmit: (form: EditForm) => Promise<string | void>
 }
 
 export default function TaskModal({
@@ -70,6 +86,11 @@ export default function TaskModal({
   initialValues,
   classTagCourses,
   showAiEstimateReset = false,
+  hideSubtaskGeneration = false,
+  existingSubtaskCount,
+  existingTaskId,
+  existingCourseId,
+  onDeleteSubtasks,
   onClose,
   onSubmit,
 }: TaskModalProps) {
@@ -94,6 +115,13 @@ export default function TaskModal({
   const [useAiEstimate, setUseAiEstimate] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [generateSubtasks, setGenerateSubtasks] = useState(false)
+  const [generatingSubtasks, setGeneratingSubtasks] = useState(false)
+  const [deletingSubtasks, setDeletingSubtasks] = useState(false)
+  const [pendingSubtasks, setPendingSubtasks] = useState<GeneratedSubtask[] | null>(null)
+  const [pendingTaskId, setPendingTaskId] = useState<Id<'tasks'> | null>(null)
+  const [pendingCourseId, setPendingCourseId] = useState<Id<'userCourses'> | undefined>(undefined)
+  const requestGenerateSubtasks = useAction(api.actions.requestGenerateSubtasks.requestGenerateSubtasks)
   const datePickerRef = useRef<HTMLInputElement>(null)
 
   const datePickerValue = useMemo(() => {
@@ -132,6 +160,12 @@ export default function TaskModal({
     setUseAiEstimate(false)
     setError(null)
     setSubmitting(false)
+    setGenerateSubtasks(false)
+    setGeneratingSubtasks(false)
+    setDeletingSubtasks(false)
+    setPendingSubtasks(null)
+    setPendingTaskId(null)
+    setPendingCourseId(undefined)
   }, [
     isOpen,
     initialValues.taskName,
@@ -187,6 +221,38 @@ export default function TaskModal({
     setError(err)
   }
 
+  async function handleDeleteSubtasks() {
+    if (!onDeleteSubtasks) return
+    setDeletingSubtasks(true)
+    try {
+      await onDeleteSubtasks()
+    } finally {
+      setDeletingSubtasks(false)
+    }
+  }
+
+  async function handleRegenerateSubtasks() {
+    if (!existingTaskId) return
+    setGeneratingSubtasks(true)
+    setError(null)
+    try {
+      // Delete existing subtasks first so regeneration doesn't create duplicates
+      if (onDeleteSubtasks) await onDeleteSubtasks()
+      const result = await requestGenerateSubtasks({ taskId: existingTaskId })
+      if ('error' in result) {
+        setError(result.error)
+        return
+      }
+      setPendingTaskId(existingTaskId)
+      setPendingCourseId(existingCourseId)
+      setPendingSubtasks(result.subtasks)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to generate subtasks.')
+    } finally {
+      setGeneratingSubtasks(false)
+    }
+  }
+
   async function handleSubmit() {
     if (!taskName.trim()) { setError('Please enter a task name.'); return }
     if (!selectedType.trim()) { setError('Please select a task type.'); return }
@@ -211,7 +277,7 @@ export default function TaskModal({
           ? (isNaN(hrs) ? 0 : hrs) * 60 + (isNaN(mins) ? 0 : mins)
           : NaN
       const parsedEstimate = !useAiEstimate && !isNaN(totalMinutes) && totalMinutes > 0 ? totalMinutes : undefined
-      await onSubmit({
+      const form: EditForm = {
         title: taskName,
         description,
         taskType: resolvedTaskType,
@@ -222,9 +288,31 @@ export default function TaskModal({
           ? { timeEstimate: parsedEstimate }
           : {}),
         ...(useAiEstimate ? { useAiEstimate: true } : {}),
-      })
-      onClose()
+      }
+
+      if (generateSubtasks) {
+        const taskId = await onSubmit(form)
+        if (!taskId) {
+          setError('Failed to create task. Please try again.')
+          return
+        }
+        setGeneratingSubtasks(true)
+        const result = await requestGenerateSubtasks({ taskId: taskId as Id<'tasks'> })
+        setGeneratingSubtasks(false)
+        if ('error' in result) {
+          setError(result.error)
+          return
+        }
+        setPendingTaskId(taskId as Id<'tasks'>)
+        setPendingCourseId(courseId)
+        setPendingSubtasks(result.subtasks)
+        // Don't call onClose — SubtaskReviewModal takes over
+      } else {
+        await onSubmit(form)
+        onClose()
+      }
     } catch (e) {
+      setGeneratingSubtasks(false)
       setError(e instanceof Error ? e.message : 'Something went wrong. Please try again.')
     } finally {
       setSubmitting(false)
@@ -232,6 +320,7 @@ export default function TaskModal({
   }
 
   return (
+    <>
     <Modal
       isOpen={isOpen}
       onClose={onClose}
@@ -239,9 +328,9 @@ export default function TaskModal({
       subtitle={subtitle}
       error={error}
       primaryLabel={primaryLabel}
-      primaryLoadingLabel={primaryLoadingLabel}
+      primaryLoadingLabel={generatingSubtasks ? 'Generating subtasks…' : primaryLoadingLabel}
       onPrimary={handleSubmit}
-      isPrimaryDisabled={submitting}
+      isPrimaryDisabled={submitting || generatingSubtasks}
     >
       <div className="flex w-full flex-col gap-5">
         {/* Task name */}
@@ -324,6 +413,63 @@ export default function TaskModal({
             className="h-24 w-full resize-none rounded-md border border-border bg-bg-gray px-3.5 py-2.5 font-body text-sm leading-normal text-navy outline-none placeholder:text-light-blue"
           />
         </div>
+
+        {/* Subtasks section — hidden for subtask editing; delete/regenerate when subtasks exist, checkbox when none */}
+        {!hideSubtaskGeneration && (
+          existingSubtaskCount !== undefined && existingSubtaskCount > 0 ? (
+            <div className="flex flex-col gap-1.5">
+              <label className="font-heading text-[13px] font-semibold text-navy">
+                Subtasks <span className="font-normal text-light-blue">({existingSubtaskCount})</span>
+              </label>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={handleDeleteSubtasks}
+                  disabled={deletingSubtasks || generatingSubtasks || submitting}
+                  className="flex flex-1 items-center justify-center rounded-md border border-urgent-red/30 bg-bg-gray px-3 py-2 font-body text-xs font-semibold text-urgent-red transition hover:bg-urgent-red-light disabled:opacity-50"
+                >
+                  {deletingSubtasks ? 'Deleting…' : 'Delete subtasks'}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleRegenerateSubtasks}
+                  disabled={deletingSubtasks || generatingSubtasks || submitting}
+                  className="flex flex-1 items-center justify-center rounded-md border border-border bg-bg-gray px-3 py-2 font-body text-xs font-semibold text-slate-blue transition hover:bg-white hover:text-navy disabled:opacity-50"
+                >
+                  {generatingSubtasks ? 'Generating…' : 'Regenerate subtasks'}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-1">
+              <label className="flex cursor-pointer items-center gap-2.5">
+                <div
+                  onClick={() => setGenerateSubtasks((v) => !v)}
+                  className={`flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center rounded border ${
+                    generateSubtasks
+                      ? 'border-navy bg-navy'
+                      : 'border-border bg-bg-gray'
+                  }`}
+                >
+                  {generateSubtasks && (
+                    <svg width="11" height="8" viewBox="0 0 11 8" fill="none">
+                      <path d="M1 4l3 3 6-6" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  )}
+                </div>
+                <span
+                  onClick={() => setGenerateSubtasks((v) => !v)}
+                  className="font-heading text-[13px] font-semibold text-navy"
+                >
+                  Generate subtasks with AI
+                </span>
+              </label>
+              <p className="pl-[26px] font-body text-xs text-light-blue">
+                AI will break your task into steps
+              </p>
+            </div>
+          )
+        )}
 
         {/* Due date & time — default time 11:59 PM for new tasks */}
         <div className="flex w-full flex-col gap-1.5">
@@ -429,5 +575,20 @@ export default function TaskModal({
         </div>
       </div>
     </Modal>
+    {pendingSubtasks && pendingTaskId && (
+      <SubtaskReviewModal
+        isOpen={true}
+        subtasks={pendingSubtasks}
+        parentTaskId={pendingTaskId}
+        courseId={pendingCourseId}
+        onClose={() => {
+          setPendingSubtasks(null)
+          setPendingTaskId(null)
+          setPendingCourseId(undefined)
+          onClose()
+        }}
+      />
+    )}
+    </>
   )
 }

@@ -1,11 +1,13 @@
 import { useState } from 'react'
-import { useQuery } from 'convex/react'
+import { useQuery, useMutation } from 'convex/react'
 import { api } from '../../../../backend/convex/_generated/api'
 import { PencilIcon, TrashIcon, SpinnerIcon, SparklesIcon, ChevronDownIcon } from '../icons'
-import { type TaskType, formatDueDateTimeDisplay, displayTitle, formatMinutes } from './types'
+import { type TaskType, type SubtaskType, formatDueDateTimeDisplay, displayTitle, formatMinutes } from './types'
+import { type Id } from '../../../../backend/convex/_generated/dataModel'
 import { formatClassTagForDisplay } from '../../utils/classTagUtils'
 import TaskFeedbackForm, { type TaskFeedbackFormProps } from './TaskFeedbackForm'
 import EstimateBadge from './EstimateBadge'
+import SubtaskCard from './SubtaskCard'
 import StudyBlockRow from './StudyBlockRow'
 
 const BLOCK_DISPLAY_LIMIT = 5
@@ -19,6 +21,11 @@ type TaskCardProps = {
   onEstimate: () => void
   onEdit: () => void
   onDelete: () => void
+  subtasks?: SubtaskType[]
+  estimatingSubtasks?: Set<Id<'subtasks'>>
+  onEditSubtask?: (subtask: SubtaskType) => void
+  onDeleteSubtask?: (id: Id<'subtasks'>) => void
+  onEstimateSubtask?: (id: Id<'subtasks'>) => void
 }
 
 export default function TaskCard({
@@ -30,10 +37,28 @@ export default function TaskCard({
   onEstimate,
   onEdit,
   onDelete,
+  subtasks = [],
+  estimatingSubtasks,
+  onEditSubtask,
+  onDeleteSubtask,
+  onEstimateSubtask,
 }: TaskCardProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [showAll, setShowAll] = useState(false)
+  const [isCancellingBlocks, setIsCancellingBlocks] = useState(false)
   const [showReasoning, setShowReasoning] = useState(false)
+
+  const deleteStudyBlocksForTask = useMutation(api.mutations.studyBlocks.deleteStudyBlocksForTask)
+
+  async function handleCancelBlocks(e: React.MouseEvent) {
+    e.stopPropagation()
+    setIsCancellingBlocks(true)
+    try {
+      await deleteStudyBlocksForTask({ taskId: task._id })
+    } finally {
+      setIsCancellingBlocks(false)
+    }
+  }
 
   const studyBlocks = useQuery(
     api.queries.studyBlocks.getStudyBlocksByTask,
@@ -49,6 +74,17 @@ export default function TaskCard({
       : studyBlocks.slice(0, BLOCK_DISPLAY_LIMIT)
     : []
   const hiddenCount = studyBlocks ? Math.max(0, studyBlocks.length - BLOCK_DISPLAY_LIMIT) : 0
+
+  const hasSubtasks = subtasks.length > 0
+  const anySubtaskPending = hasSubtasks && subtasks.some(
+    (s) => s.timeEstimate === undefined && (estimatingSubtasks?.has(s._id) ?? false)
+  )
+  const subtaskTotal = hasSubtasks
+    ? subtasks.reduce((sum, s) => sum + (s.timeEstimate ?? 0), 0)
+    : undefined
+
+  const displayedEstimate = hasSubtasks ? subtaskTotal : task.timeEstimate
+  const showEstimateSpinner = hasSubtasks ? anySubtaskPending : (task.timeEstimate === undefined && isEstimating)
 
   return (
     <div
@@ -71,7 +107,17 @@ export default function TaskCard({
               <span>Due {formatDueDateTimeDisplay(task.dueDate)}</span>
               {task.classTag ? <span>· {formatClassTagForDisplay(task.classTag)}</span> : null}
               <span>· {task.taskType}</span>
-              {task.timeEstimate !== undefined ? (
+              {hasSubtasks ? (
+                <>
+                  {anySubtaskPending ? (
+                    <span className="flex items-center gap-1">
+                      · <SpinnerIcon color="currentColor" size={11} /> Estimating subtasks…
+                    </span>
+                  ) : subtaskTotal !== undefined && subtaskTotal > 0 ? (
+                    <span>· {formatMinutes(subtaskTotal)} total · {subtasks.length} subtask{subtasks.length !== 1 ? 's' : ''}</span>
+                  ) : null}
+                </>
+              ) : task.timeEstimate !== undefined ? (
                 <>
                   <span>· {formatMinutes(task.timeEstimate)}</span>
                   <EstimateBadge isManual={task.isManualEstimate} />
@@ -106,8 +152,8 @@ export default function TaskCard({
                   {badge.label}
                 </span>
               </div>
-              {task.timeEstimate === undefined &&
-                (isEstimating ? (
+              {!hasSubtasks && displayedEstimate === undefined && (
+                showEstimateSpinner ? (
                   <div className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-blue">
                     <SpinnerIcon color="currentColor" size={16} />
                   </div>
@@ -123,7 +169,8 @@ export default function TaskCard({
                   >
                     <SparklesIcon color="currentColor" size={16} />
                   </button>
-                ))}
+                )
+              )}
               <button
                 type="button"
                 onClick={(e) => {
@@ -153,7 +200,7 @@ export default function TaskCard({
               </div>
             </div>
 
-            {task.timeEstimate !== undefined && !task.isManualEstimate && (
+            {!hasSubtasks && task.timeEstimate !== undefined && !task.isManualEstimate && (
               <TaskFeedbackForm task={task} {...feedback} />
             )}
           </div>
@@ -189,53 +236,86 @@ export default function TaskCard({
         </div>
       </div>
 
-      {/* Collapsible study blocks panel */}
+      {/* Collapsible panel: study blocks + subtasks */}
       <div
         className={`grid transition-all duration-200 ${
           isExpanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
         }`}
       >
         <div className="overflow-hidden">
-        <div className="border-t border-border px-[18px] py-3 flex flex-col gap-2">
-          {studyBlocks === undefined ? (
-            <div className="flex items-center gap-2 py-1 text-slate-blue">
-              <SpinnerIcon color="currentColor" size={14} />
-              <span className="text-xs">Loading study blocks…</span>
-            </div>
-          ) : studyBlocks.length === 0 ? (
-            <p className="text-[13px] text-slate-blue">No study sessions scheduled yet.</p>
-          ) : (
-            <>
-              {visibleBlocks.map((block) => (
-                <StudyBlockRow key={block._id} block={block} />
-              ))}
-              {hiddenCount > 0 && !showAll && (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setShowAll(true)
-                  }}
-                  className="self-start text-[13px] font-semibold text-sky-blue hover:underline"
-                >
-                  See more (+{hiddenCount})
-                </button>
-              )}
-              {showAll && studyBlocks.length > BLOCK_DISPLAY_LIMIT && (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setShowAll(false)
-                  }}
-                  className="self-start text-[13px] font-semibold text-sky-blue hover:underline"
-                >
-                  See less
-                </button>
-              )}
-            </>
-          )}
-        </div>
+          <div className="border-t border-border px-[18px] py-3 flex flex-col gap-2">
+            {/* Study blocks */}
+            {studyBlocks === undefined ? (
+              <div className="flex items-center gap-2 py-1 text-slate-blue">
+                <SpinnerIcon color="currentColor" size={14} />
+                <span className="text-xs">Loading study blocks…</span>
+              </div>
+            ) : studyBlocks.length === 0 && !hasSubtasks ? (
+              <p className="text-[13px] text-slate-blue">No study sessions scheduled yet.</p>
+            ) : (
+              <>
+                {visibleBlocks.map((block) => (
+                  <StudyBlockRow key={block._id} block={block} />
+                ))}
+                {hiddenCount > 0 && !showAll && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setShowAll(true)
+                    }}
+                    className="self-start text-[13px] font-semibold text-sky-blue hover:underline"
+                  >
+                    See more (+{hiddenCount})
+                  </button>
+                )}
+                {showAll && studyBlocks.length > BLOCK_DISPLAY_LIMIT && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setShowAll(false)
+                    }}
+                    className="self-start text-[13px] font-semibold text-sky-blue hover:underline"
+                  >
+                    See less
+                  </button>
+                )}
+                {studyBlocks.length > 0 && (
+                  <div className="flex justify-end pt-1">
+                    <button
+                      type="button"
+                      onClick={handleCancelBlocks}
+                      disabled={isCancellingBlocks}
+                      className="flex items-center gap-1 text-[11px] font-semibold text-slate-blue hover:text-urgent-red transition disabled:opacity-50"
+                      aria-label="Cancel study block generation"
+                    >
+                      {isCancellingBlocks
+                        ? <SpinnerIcon color="currentColor" size={11} />
+                        : null}
+                      Cancel blocks
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* Subtasks */}
+            {hasSubtasks && (
+              <div className="flex flex-col">
+                {subtasks.map((subtask) => (
+                  <SubtaskCard
+                    key={subtask._id}
+                    subtask={subtask}
+                    isEstimating={estimatingSubtasks?.has(subtask._id) ?? false}
+                    onEstimate={onEstimateSubtask ?? (() => {})}
+                    onEdit={onEditSubtask ?? (() => {})}
+                    onDelete={onDeleteSubtask ?? (() => {})}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

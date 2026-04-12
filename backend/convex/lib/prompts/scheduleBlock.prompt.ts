@@ -14,6 +14,14 @@ export const slotSelectionResponseSchema = z.object({
 
 export type SlotSelectionResponse = z.infer<typeof slotSelectionResponseSchema>;
 
+export const batchSlotSelectionResponseSchema = z.object({
+  selections: z
+    .array(z.number().int().min(0))
+    .describe("Array of chosen slot indices, one per block in the same order as the input"),
+});
+
+export type BatchSlotSelectionResponse = z.infer<typeof batchSlotSelectionResponseSchema>;
+
 // ---------------------------------------------------------------------------
 // System prompt
 // ---------------------------------------------------------------------------
@@ -90,4 +98,49 @@ ${slotsJson}
 </candidate_slots>`);
 
   return `Select the best slot index for this study block.\n\n${sections.join("\n\n")}`;
+}
+
+// ---------------------------------------------------------------------------
+// Batch prompt (one call for multiple blocks)
+// ---------------------------------------------------------------------------
+
+export interface BatchScheduleBlockEntry {
+  taskTitle: string;
+  dueDate: number;
+  candidates: ScheduleBlockSlot[];
+}
+
+export function buildBatchScheduleBlockPrompt(
+  blocks: BatchScheduleBlockEntry[],
+  productivityTraits: unknown,
+): string {
+  const sections: string[] = [];
+
+  if (productivityTraits) {
+    sections.push(`<productivity_preferences>
+${JSON.stringify(productivityTraits, null, 2)}
+</productivity_preferences>`);
+  }
+
+  const blocksJson = blocks.map((b, bi) => ({
+    blockIndex: bi,
+    taskTitle: b.taskTitle,
+    dueDate: new Date(b.dueDate).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" }),
+    candidates: b.candidates.map((s, si) => ({
+      index: si,
+      startTime: s.startISO,
+      dayOfWeek: new Intl.DateTimeFormat("en-US", { weekday: "long" }).format(new Date(s.startMs)),
+      inAvailableSlot: s.inAvailableSlot,
+      previousEventTitle: s.previousEventTitle,
+      minutesSincePreviousEvent: s.minutesSincePreviousEvent,
+      nextEventTitle: s.nextEventTitle,
+      minutesUntilNextEvent: s.minutesUntilNextEvent,
+    })),
+  }));
+
+  sections.push(`<blocks>
+${JSON.stringify(blocksJson, null, 2)}
+</blocks>`);
+
+  return `Select the best slot index for each study block. Return one integer per block in the same order as the input.\n\n${sections.join("\n\n")}`;
 }
