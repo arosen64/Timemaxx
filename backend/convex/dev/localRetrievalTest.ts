@@ -66,14 +66,15 @@ function chatChunkEntityOverlap(
 }
 
 /**
- * Dev-only helper for `fetchRelevantTasks` + `fetchRelevantClasses` (not chats).
+ * Local testing helper for `fetchRelevantTasks` + `fetchRelevantClasses` (not chats).
+ * Not used by production routes — run from the Convex CLI or dashboard against a dev deployment.
  * For **`chatChunks`** RAG, use **`inspectChatRetrievalForTask`**.
  *
  * CLI (from repo root, with `npx convex dev` running):
- * `npx convex run ai/debugRetrieval:inspectRetrievalForTask '{"taskId":"<tasks._id>"}'`
+ * `npx convex run dev/localRetrievalTest:inspectRetrievalForTask '{"taskId":"<tasks._id>"}'`
  *
- * Dashboard: Functions → `ai/debugRetrieval` → `inspectRetrievalForTask`.
- * See guides/convex-retrieval-debug.md (and CLAUDE.md for a one-liner).
+ * Dashboard: Functions → `dev/localRetrievalTest` → `inspectRetrievalForTask`.
+ * See guides/convex-retrieval-debug.md.
  */
 export const inspectRetrievalForTask = internalAction({
   args: { taskId: v.id("tasks") },
@@ -165,13 +166,13 @@ export const inspectRetrievalForTask = internalAction({
 });
 
 /**
- * Dev-only: runs the same chat RAG path as `estimateTaskTime` — related tasks
+ * Local testing: runs the same chat RAG path as `estimateTaskTime` — related tasks
  * and courses, then `fetchRelevantChats`, and returns chunk previews plus
- * whether each hit had entity metadata overlap.
+ * whether each hit had entity metadata overlap. Not wired into production.
  *
  * CLI (repo root, `npx convex dev` running, `GEMINI_API_KEY` on deployment for
  * query embedding and indexed `chatChunks`):
- * `npx convex run ai/debugRetrieval:inspectChatRetrievalForTask '{"taskId":"<tasks._id>"}'`
+ * `npx convex run dev/localRetrievalTest:inspectChatRetrievalForTask '{"taskId":"<tasks._id>"}'`
  */
 export const inspectChatRetrievalForTask = internalAction({
   args: { taskId: v.id("tasks") },

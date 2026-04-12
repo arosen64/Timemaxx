@@ -15,7 +15,6 @@ import type * as actions_fetchCalendarEvents from "../actions/fetchCalendarEvent
 import type * as actions_getCalendarAvailability from "../actions/getCalendarAvailability.js";
 import type * as actions_initiateGoogleCalendarOAuth from "../actions/initiateGoogleCalendarOAuth.js";
 import type * as actions_jhuCourses from "../actions/jhuCourses.js";
-import type * as ai_debugRetrieval from "../ai/debugRetrieval.js";
 import type * as ai_embeddings from "../ai/embeddings.js";
 import type * as ai_estimateTaskTime from "../ai/estimateTaskTime.js";
 import type * as ai_generateAcademicProfile from "../ai/generateAcademicProfile.js";
@@ -24,6 +23,7 @@ import type * as ai_requestEstimateTaskTime from "../ai/requestEstimateTaskTime.
 import type * as ai_uploadSyllabus from "../ai/uploadSyllabus.js";
 import type * as auth from "../auth.js";
 import type * as calendarOAuthCallback from "../calendarOAuthCallback.js";
+import type * as dev_localRetrievalTest from "../dev/localRetrievalTest.js";
 import type * as http from "../http.js";
 import type * as http_chat from "../http_chat.js";
 import type * as lib_anthropic from "../lib/anthropic.js";
@@ -75,7 +75,6 @@ declare const fullApi: ApiFromModules<{
   "actions/getCalendarAvailability": typeof actions_getCalendarAvailability;
   "actions/initiateGoogleCalendarOAuth": typeof actions_initiateGoogleCalendarOAuth;
   "actions/jhuCourses": typeof actions_jhuCourses;
-  "ai/debugRetrieval": typeof ai_debugRetrieval;
   "ai/embeddings": typeof ai_embeddings;
   "ai/estimateTaskTime": typeof ai_estimateTaskTime;
   "ai/generateAcademicProfile": typeof ai_generateAcademicProfile;
@@ -84,6 +83,7 @@ declare const fullApi: ApiFromModules<{
   "ai/uploadSyllabus": typeof ai_uploadSyllabus;
   auth: typeof auth;
   calendarOAuthCallback: typeof calendarOAuthCallback;
+  "dev/localRetrievalTest": typeof dev_localRetrievalTest;
   http: typeof http;
   http_chat: typeof http_chat;
   "lib/anthropic": typeof lib_anthropic;

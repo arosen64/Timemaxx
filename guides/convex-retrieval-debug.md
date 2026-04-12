@@ -2,6 +2,8 @@
 
 When `estimateTaskTime` runs, it loads extra context via `fetchRelevantContext` in `backend/convex/lib/retrieval.ts`: **related tasks**, **related courses**, and **chat chunks** (vector RAG over `chatChunks`). This guide shows how to **inspect that retrieval locally** without calling Anthropic.
 
+The local retrieval testing actions live under **`backend/convex/dev/`** (module **`dev/localRetrievalTest`**) — they are **not** imported by production HTTP, mutations, or scheduled jobs; they exist only for **`npx convex run`** and the dashboard.
+
 ---
 
 ## What you are testing
@@ -26,12 +28,12 @@ Embeddings for tasks/courses are built from **title + description** (see `backen
 
 ## CLI: `inspectRetrievalForTask`
 
-Internal action: `backend/convex/ai/debugRetrieval.ts` → **`inspectRetrievalForTask`**.
+Internal action: `backend/convex/dev/localRetrievalTest.ts` → **`inspectRetrievalForTask`**.
 
 Convex **`convex run`** expects the **module path + export name** as printed in error messages and the dashboard — **not** the TypeScript `internal.*` prefix.
 
 ```bash
-npx convex run ai/debugRetrieval:inspectRetrievalForTask '{"taskId":"<paste_tasks._id_here>"}'
+npx convex run dev/localRetrievalTest:inspectRetrievalForTask '{"taskId":"<paste_tasks._id_here>"}'
 ```
 
 **JSON rules:** `taskId` must be a **string** in double quotes. Wrong: `{"taskId":abc123}`; right: `{"taskId":"abc123"}`.
@@ -39,7 +41,7 @@ npx convex run ai/debugRetrieval:inspectRetrievalForTask '{"taskId":"<paste_task
 **Example:**
 
 ```bash
-npx convex run ai/debugRetrieval:inspectRetrievalForTask '{"taskId":"j574qjv328esbt31c8aqepmw6184m4wy"}'
+npx convex run dev/localRetrievalTest:inspectRetrievalForTask '{"taskId":"j574qjv328esbt31c8aqepmw6184m4wy"}'
 ```
 
 You should see:
@@ -47,18 +49,18 @@ You should see:
 - JSON with `ok`, `anchorTask` (including `usedVectorRetrieval` and `embeddingLength`), `relevantTaskIds` / `relevantTasks`, `relevantClassIds` / `relevantClasses`.
 - A **log line** in the terminal with counts and whether the vector path was used.
 
-If the command says the function was not found, confirm **`npx convex dev`** has pushed successfully (no TypeScript errors) and that you used **`ai/debugRetrieval:...`**, not `internal/ai/...`.
+If the command says the function was not found, confirm **`npx convex dev`** has pushed successfully (no TypeScript errors) and that **`convex run`** uses the module path **`dev/localRetrievalTest:...`** (as in the dashboard), not a dotted `internal.*` path.
 
 ---
 
 ## CLI: `inspectChatRetrievalForTask`
 
-Internal action: `backend/convex/ai/debugRetrieval.ts` → **`inspectChatRetrievalForTask`**.
+Internal action: `backend/convex/dev/localRetrievalTest.ts` → **`inspectChatRetrievalForTask`**.
 
 Runs **`fetchRelevantTasks`**, **`fetchRelevantClasses`**, and **`fetchRelevantChats`** for the same anchor `taskId`, then loads chunk rows. Use this to verify **semantic hits**, **`queryEmbeddingOk`**, and **`hadMetadataOverlap`** per chunk.
 
 ```bash
-npx convex run ai/debugRetrieval:inspectChatRetrievalForTask '{"taskId":"<paste_tasks._id_here>"}'
+npx convex run dev/localRetrievalTest:inspectChatRetrievalForTask '{"taskId":"<paste_tasks._id_here>"}'
 ```
 
 You should see JSON with `retrievalQueryPreview`, `queryEmbeddingOk`, `relevantChatChunkIds`, and `chatChunks` (each with `textPreview`, `linkedTaskIds`, `linkedCourseIds`, `hadMetadataOverlap`, `embeddingLength`). A **log line** is printed with counts.
@@ -69,7 +71,7 @@ When `queryEmbeddingOk` is true, the same query vector is **reused** for `fetchR
 
 ## Dashboard
 
-Convex dashboard → **Functions** → **`ai/debugRetrieval`** → **`inspectRetrievalForTask`** or **`inspectChatRetrievalForTask`** → run with `{"taskId": "..."}`.
+Convex dashboard → **Functions** → **`dev/localRetrievalTest`** → **`inspectRetrievalForTask`** or **`inspectChatRetrievalForTask`** → run with `{"taskId": "..."}`.
 
 ---
 
@@ -78,7 +80,7 @@ Convex dashboard → **Functions** → **`ai/debugRetrieval`** → **`inspectRet
 | File | Role |
 | ---- | ---- |
 | `backend/convex/lib/retrieval.ts` | `fetchRelevantTasks`, `fetchRelevantClasses`, `fetchRelevantChats`, `fetchRelevantContext` |
-| `backend/convex/ai/debugRetrieval.ts` | Dev-only `inspectRetrievalForTask`, `inspectChatRetrievalForTask` |
+| `backend/convex/dev/localRetrievalTest.ts` | Local testing: `inspectRetrievalForTask`, `inspectChatRetrievalForTask` |
 | `backend/convex/ai/estimateTaskTime.ts` | Calls `fetchRelevantContext` before the LLM |
 
 ---

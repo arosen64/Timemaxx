@@ -61,6 +61,8 @@ mastra/
         chatAgent.ts            # "Maxx" — the chat assistant agent
 backend/
   convex/
+    dev/                      # Dev-only modules (CLI/dashboard; not wired into prod flows)
+      localRetrievalTest.ts   # local CLI/dashboard testing: inspectRetrievalForTask
     schema.ts                 # Convex database schema
     queries/                  # Read-only data fetching functions (useQuery)
       tasks.ts
