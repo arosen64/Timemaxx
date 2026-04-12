@@ -15,6 +15,8 @@ import type * as actions_fetchCalendarEvents from "../actions/fetchCalendarEvent
 import type * as actions_getCalendarAvailability from "../actions/getCalendarAvailability.js";
 import type * as actions_initiateGoogleCalendarOAuth from "../actions/initiateGoogleCalendarOAuth.js";
 import type * as actions_jhuCourses from "../actions/jhuCourses.js";
+import type * as actions_scheduleAllTasks from "../actions/scheduleAllTasks.js";
+import type * as actions_scheduleTask from "../actions/scheduleTask.js";
 import type * as ai_embeddings from "../ai/embeddings.js";
 import type * as ai_estimateTaskTime from "../ai/estimateTaskTime.js";
 import type * as ai_generateAcademicProfile from "../ai/generateAcademicProfile.js";
@@ -37,6 +39,7 @@ import type * as lib_geminiEmbedding from "../lib/geminiEmbedding.js";
 import type * as lib_httpTypes from "../lib/httpTypes.js";
 import type * as lib_retrieval from "../lib/retrieval.js";
 import type * as lib_sanitize from "../lib/sanitize.js";
+import type * as lib_scheduleSlots from "../lib/scheduleSlots.js";
 import type * as lib_syllabusTypes from "../lib/syllabusTypes.js";
 import type * as lib_taskValidators from "../lib/taskValidators.js";
 import type * as mutations_calendar from "../mutations/calendar.js";
@@ -75,6 +78,8 @@ declare const fullApi: ApiFromModules<{
   "actions/getCalendarAvailability": typeof actions_getCalendarAvailability;
   "actions/initiateGoogleCalendarOAuth": typeof actions_initiateGoogleCalendarOAuth;
   "actions/jhuCourses": typeof actions_jhuCourses;
+  "actions/scheduleAllTasks": typeof actions_scheduleAllTasks;
+  "actions/scheduleTask": typeof actions_scheduleTask;
   "ai/embeddings": typeof ai_embeddings;
   "ai/estimateTaskTime": typeof ai_estimateTaskTime;
   "ai/generateAcademicProfile": typeof ai_generateAcademicProfile;
@@ -97,6 +102,7 @@ declare const fullApi: ApiFromModules<{
   "lib/httpTypes": typeof lib_httpTypes;
   "lib/retrieval": typeof lib_retrieval;
   "lib/sanitize": typeof lib_sanitize;
+  "lib/scheduleSlots": typeof lib_scheduleSlots;
   "lib/syllabusTypes": typeof lib_syllabusTypes;
   "lib/taskValidators": typeof lib_taskValidators;
   "mutations/calendar": typeof mutations_calendar;
