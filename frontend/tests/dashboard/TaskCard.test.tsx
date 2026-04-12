@@ -27,8 +27,6 @@ const MOCK_TASK = {
   createdAt: Date.now(),
 }
 
-const MOCK_BADGE = { bg: 'bg-red-100', text: 'text-red-700', label: 'Problem Set' }
-
 const DEFAULT_FEEDBACK = {
   draft: { rating: undefined as 'up' | 'down' | undefined, hours: '', minutes: '' },
   error: undefined as string | undefined,
@@ -55,9 +53,9 @@ function setup(overrides: Partial<React.ComponentProps<typeof TaskCard>> = {}) {
   const props = {
     task: MOCK_TASK,
     barColor: 'bg-red-500',
-    badge: MOCK_BADGE,
     isEstimating: false,
     feedback: DEFAULT_FEEDBACK,
+    onStatusChange: vi.fn(),
     onEstimate: vi.fn(),
     onEdit: vi.fn(),
     onDelete: vi.fn(),
@@ -84,9 +82,9 @@ describe('TaskCard', () => {
     expect(screen.getByText('Chapter 5 problems')).toBeInTheDocument()
   })
 
-  it('shows badge label', () => {
+  it('shows status dropdown with default not-started label', () => {
     setup()
-    expect(screen.getByText('Problem Set')).toBeInTheDocument()
+    expect(screen.getByText('Not Started')).toBeInTheDocument()
   })
 
   it('renders formatted time estimate "1h 30m"', () => {
@@ -207,7 +205,7 @@ describe('TaskCard', () => {
       <TaskCard
         task={MOCK_TASK}
         barColor="bg-red-500"
-        badge={MOCK_BADGE}
+        onStatusChange={vi.fn()}
         isEstimating={false}
         feedback={DEFAULT_FEEDBACK}
         onEstimate={vi.fn()}
@@ -225,7 +223,7 @@ describe('TaskCard', () => {
       <TaskCard
         task={MOCK_TASK}
         barColor="bg-red-500"
-        badge={MOCK_BADGE}
+        onStatusChange={vi.fn()}
         isEstimating={false}
         feedback={DEFAULT_FEEDBACK}
         onEstimate={vi.fn()}
@@ -244,7 +242,7 @@ describe('TaskCard', () => {
       <TaskCard
         task={MOCK_TASK}
         barColor="bg-red-500"
-        badge={MOCK_BADGE}
+        onStatusChange={vi.fn()}
         isEstimating={false}
         feedback={DEFAULT_FEEDBACK}
         onEstimate={vi.fn()}
@@ -266,7 +264,7 @@ describe('TaskCard', () => {
       <TaskCard
         task={{ ...MOCK_TASK, _id: 'task-a' as any, title: 'Task A' }}
         barColor="bg-red-500"
-        badge={MOCK_BADGE}
+        onStatusChange={vi.fn()}
         isEstimating={false}
         feedback={DEFAULT_FEEDBACK}
         onEstimate={vi.fn()}
@@ -278,7 +276,7 @@ describe('TaskCard', () => {
       <TaskCard
         task={{ ...MOCK_TASK, _id: 'task-b' as any, title: 'Task B' }}
         barColor="bg-red-500"
-        badge={MOCK_BADGE}
+        onStatusChange={vi.fn()}
         isEstimating={false}
         feedback={DEFAULT_FEEDBACK}
         onEstimate={vi.fn()}
@@ -300,9 +298,9 @@ describe('TaskCard', () => {
       <TaskCard
         task={MOCK_TASK}
         barColor="bg-red-500"
-        badge={MOCK_BADGE}
         isEstimating={false}
         feedback={DEFAULT_FEEDBACK}
+        onStatusChange={vi.fn()}
         onEstimate={vi.fn()}
         onEdit={vi.fn()}
         onDelete={vi.fn()}
@@ -319,9 +317,9 @@ describe('TaskCard', () => {
       <TaskCard
         task={MOCK_TASK}
         barColor="bg-red-500"
-        badge={MOCK_BADGE}
         isEstimating={false}
         feedback={DEFAULT_FEEDBACK}
+        onStatusChange={vi.fn()}
         onEstimate={vi.fn()}
         onEdit={vi.fn()}
         onDelete={vi.fn()}
