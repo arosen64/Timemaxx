@@ -15,12 +15,17 @@ React + Vite + TypeScript + TailwindCSS + Convex + React Router + Google Gemini 
 - Run Mastra agent server: `cd mastra && npx mastra dev` (run in its own terminal — required for the chatbot)
 - Run frontend: `npm run dev` (run after backend and Mastra are running, in a separate terminal)
 - Run tests: `npm test`
-- Run linter: `<command>`
+- Run linter: not configured (TypeScript type checking via `npm run build`)
 - Build for production: `npm run build`
 
 > The Mastra server must be publicly reachable for Convex HTTP actions to call it.
-> In local dev, use ngrok: `ngrok http 4111`, then set `npx convex env set MASTRA_URL <ngrok-url>`.
-> Convex cloud cannot reach `localhost`. Not sure why.
+> In local dev, use ngrok to create a public tunnel. First-time setup (once per machine):
+> 1. Sign up at https://ngrok.com and copy your authtoken from the dashboard
+> 2. `ngrok config add-authtoken <your-token>`
+> 3. `ngrok http 4111` — copy the `https://` URL it prints
+> 4. `npx convex env set MASTRA_URL <ngrok-url>/mastra`
+>
+> See `guides/ngrok-setup.md` for the full walkthrough. The ngrok URL changes each session (free tier) — repeat steps 3–4 each time.
 
 ## Code Style
 
