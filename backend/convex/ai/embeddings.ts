@@ -43,3 +43,43 @@ export const generateTaskEmbedding = internalAction({
     return null;
   },
 });
+
+/** Used by chat RAG retrieval; same model/dimensions as task/course/chunk embeddings. */
+export const embedRetrievalQueryInternal = internalAction({
+  args: { text: v.string() },
+  returns: v.union(v.array(v.float64()), v.null()),
+  handler: async (_ctx, args) => {
+    if (!process.env.GEMINI_API_KEY) {
+      return null;
+    }
+    try {
+      return await embedGeminiText(args.text);
+    } catch {
+      return null;
+    }
+  },
+});
+
+/** Same 3072-dim Gemini pipeline as tasks/courses; patches `chatChunks.embedding`. */
+export const generateChatChunkEmbedding = internalAction({
+  args: {
+    chatChunkId: v.id("chatChunks"),
+    text: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    if (!process.env.GEMINI_API_KEY) {
+      return null;
+    }
+    try {
+      const embedding = await embedGeminiText(args.text);
+      await ctx.runMutation(internal.mutations.chatChunkEmbeddings.patchChatChunkEmbedding, {
+        chatChunkId: args.chatChunkId,
+        embedding,
+      });
+    } catch {
+      // Best-effort: chunk rebuild may have deleted the row; embedding can fail transiently.
+    }
+    return null;
+  },
+});

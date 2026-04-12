@@ -163,6 +163,25 @@ export const deleteStudyBlock = mutation({
   },
 });
 
+export const deleteStudyBlocksForTask = mutation({
+  args: { taskId: v.id("tasks") },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Unauthenticated");
+
+    const task = await ctx.db.get(args.taskId);
+    if (!task || task.userId !== userId) throw new Error("Task not found");
+
+    const blocks = await ctx.db
+      .query("studyBlocks")
+      .withIndex("by_taskId", (q) => q.eq("taskId", args.taskId))
+      .collect();
+    for (const block of blocks) {
+      await ctx.db.delete(block._id);
+    }
+  },
+});
+
 export const editStudyBlockTime = mutation({
   args: {
     studyBlockId: v.id("studyBlocks"),
@@ -248,6 +267,23 @@ export const setStudyBlockTime = internalMutation({
   handler: async (ctx, args) => {
     await ctx.db.patch(args.studyBlockId, {
       startTime: args.startTime ?? undefined,
+    });
+  },
+});
+
+/**
+ * Places a study block at a chosen start time and clears any conflict status.
+ * Called from AI scheduling actions.
+ */
+export const placeStudyBlock = internalMutation({
+  args: {
+    studyBlockId: v.id("studyBlocks"),
+    startTime: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.studyBlockId, {
+      startTime: args.startTime,
+      isConflicted: false,
     });
   },
 });
