@@ -1,6 +1,13 @@
 import { describe, expect, test } from "vitest";
-import { api } from "../_generated/api";
+import { api, internal } from "../_generated/api";
 import { makeTestCtx, createTestUser } from "../../convex-tests/helpers";
+
+const makeReasoning = () => ({
+  classes: "Course context.",
+  tasks: "Prior tasks context.",
+  chats: "Chat context.",
+  profile: "Profile context.",
+});
 
 const FUTURE = Date.now() + 86_400_000;
 
@@ -65,6 +72,29 @@ describe("mutations/subtasks – createSubtask", () => {
     expect(record!.userId).toBe(userId);
   });
 
+  test("clears parent task reasoning when a subtask is created", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+    const parentTaskId = await seedTask(t, userId);
+    await t.run((ctx) =>
+      ctx.db.patch(parentTaskId, {
+        reasoning: makeReasoning(),
+      })
+    );
+
+    await withAuth.mutation(api.mutations.subtasks.createSubtask, {
+      parentTaskId,
+      title: "Write intro",
+      description: "Draft the introduction section",
+      taskType: "Essay",
+      color: "#2563eb",
+      order: 0,
+    });
+
+    const parent = await t.run((ctx) => ctx.db.get(parentTaskId));
+    expect(parent!.reasoning).toBeUndefined();
+  });
+
   test("throws when parent task does not belong to the user", async () => {
     const t = makeTestCtx();
     const { withAuth } = await createTestUser(t);
@@ -98,6 +128,30 @@ describe("mutations/subtasks – createSubtask", () => {
         order: 0,
       })
     ).rejects.toThrow("Title cannot be empty");
+  });
+});
+
+// ─── setSubtaskTimeEstimate (internal) ────────────────────────────────────────
+
+describe("mutations/subtasks – setSubtaskTimeEstimate", () => {
+  test("persists reasoning on the subtask and rolls up parent time", async () => {
+    const t = makeTestCtx();
+    const { userId } = await createTestUser(t);
+    const parentTaskId = await seedTask(t, userId);
+    const subtaskId = await seedSubtask(t, userId, parentTaskId);
+
+    await t.mutation(internal.mutations.subtasks.setSubtaskTimeEstimate, {
+      subtaskId,
+      timeEstimate: 45,
+      reasoning: makeReasoning(),
+    });
+
+    const subtask = await t.run((ctx) => ctx.db.get(subtaskId));
+    expect(subtask!.timeEstimate).toBe(45);
+    expect(subtask!.reasoning).toEqual(makeReasoning());
+
+    const parent = await t.run((ctx) => ctx.db.get(parentTaskId));
+    expect(parent!.timeEstimate).toBe(45);
   });
 });
 
