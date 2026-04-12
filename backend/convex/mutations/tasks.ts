@@ -152,6 +152,11 @@ export const createTaskInternal = internalMutation({
   },
   returns: v.id("tasks"),
   handler: async (ctx, args) => {
+    let classTag = normalizeClassTag(args.classTag);
+    if (args.courseId) {
+      const course = await ctx.db.get(args.courseId);
+      if (course) classTag = `${course.courseCode}: ${course.title}`;
+    }
     const taskId = await ctx.db.insert("tasks", {
       userId: args.userId,
       title: args.title,
@@ -159,7 +164,7 @@ export const createTaskInternal = internalMutation({
       taskType: args.taskType,
       dueDate: args.dueDate,
       courseId: args.courseId,
-      classTag: normalizeClassTag(args.classTag),
+      classTag,
       createdAt: Date.now(),
       isManualEstimate: false,
     });
@@ -195,8 +200,13 @@ export const patchTaskFieldsInternal = internalMutation({
     if (args.description !== undefined) patch.description = args.description;
     if (args.taskType !== undefined) patch.taskType = args.taskType;
     if (args.dueDate !== undefined) patch.dueDate = args.dueDate;
-    if (args.courseId !== undefined) patch.courseId = args.courseId;
-    if (args.classTag !== undefined) patch.classTag = normalizeClassTag(args.classTag);
+    if (args.courseId !== undefined) {
+      patch.courseId = args.courseId;
+      const course = await ctx.db.get(args.courseId);
+      if (course) patch.classTag = `${course.courseCode}: ${course.title}`;
+    } else if (args.classTag !== undefined) {
+      patch.classTag = normalizeClassTag(args.classTag);
+    }
     await ctx.db.patch(args.taskId, patch);
     if (process.env.GEMINI_API_KEY && (args.title !== undefined || args.description !== undefined)) {
       await ctx.scheduler.runAfter(0, internal.ai.embeddings.generateTaskEmbedding, {
