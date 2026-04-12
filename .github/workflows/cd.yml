@@ -60,6 +60,13 @@ jobs:
       - run: npm run build
         env:
           VITE_CONVEX_URL: ${{ secrets.VITE_CONVEX_URL }}
+          VITE_CONVEX_SITE_URL: ${{ secrets.VITE_CONVEX_SITE_URL }}
+
+      # Copy index.html to 404.html so GitHub Pages serves the SPA for unknown routes
+      # (e.g. direct navigation to /dashboard). React Router then handles the path and
+      # the auth guard redirects unauthenticated users to the landing page.
+      - name: Create 404 fallback for SPA routing
+        run: cp frontend/dist/index.html frontend/dist/404.html
 
       - uses: actions/upload-pages-artifact@v3
         with:
@@ -74,6 +81,39 @@ jobs:
           fi
         env:
           VITE_CONVEX_URL: ${{ secrets.VITE_CONVEX_URL }}
+
+  deploy-mastra:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: mastra/package-lock.json
+
+      - name: Install Mastra dependencies
+        run: npm ci
+        working-directory: mastra
+
+      - name: Build Mastra
+        run: npx mastra build --dir src/mastra
+        working-directory: mastra
+
+      - name: Deploy to Mastra Cloud
+        run: npx mastra server deploy -y
+        working-directory: mastra
+        env:
+          MASTRA_API_TOKEN: ${{ secrets.MASTRA_API_TOKEN }}
+          MASTRA_ORG_ID: ${{ secrets.MASTRA_ORG_ID }}
+          MASTRA_PROJECT_ID: ${{ secrets.MASTRA_PROJECT_ID }}
+
+      - name: Set Convex MASTRA_URL
+        run: npx convex env set MASTRA_URL ${{ secrets.MASTRA_URL }}
+        env:
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
 
   deploy:
     needs: build

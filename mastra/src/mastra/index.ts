@@ -1,9 +1,14 @@
 import { Mastra } from "@mastra/core";
-import { chatAgent } from "./agents/chatAgent";
-import { supervisorAgent, clarifierAgent, entityClarifierAgent } from "./agents/supervisorAgent";
+import { supervisorAgent } from "./agents/supervisorAgent";
+import { taskAgent } from "./agents/taskAgent";
+import { feedbackAgent } from "./agents/feedbackAgent";
+import { preferencesAgent } from "./agents/preferencesAgent";
 import { supervisorWorkflow } from "./workflows/supervisorWorkflow";
+import { taskWorkflow } from "./workflows/taskWorkflow";
+import { feedbackWorkflow } from "./workflows/feedbackWorkflow";
+import { preferencesWorkflow } from "./workflows/preferencesWorkflow";
 
 export const mastra = new Mastra({
-  agents: { chatAgent, supervisorAgent, clarifierAgent, entityClarifierAgent },
-  workflows: { supervisorWorkflow },
+  agents: { supervisorAgent, taskAgent, feedbackAgent, preferencesAgent },
+  workflows: { supervisorWorkflow, taskWorkflow, feedbackWorkflow, preferencesWorkflow },
 });

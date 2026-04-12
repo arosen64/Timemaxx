@@ -196,10 +196,11 @@ export const estimateTaskTime = internalAction({
       if (!parentTask) return;
       item = subtaskToTaskLike(subtask, parentTask);
       contextTaskId = subtask.parentTaskId;
-      store = async (minutes, _reasoning) => {
+      store = async (minutes, reasoning) => {
         await ctx.runMutation(internal.mutations.subtasks.setSubtaskTimeEstimate, {
           subtaskId: args.subtaskId!,
           timeEstimate: minutes,
+          reasoning,
         });
       };
     } else {

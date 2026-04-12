@@ -36,14 +36,14 @@ export default function ScheduleAllButton({ disabled, overLimitWarning }: Props)
           onClick={handleClick}
           disabled={isScheduling || disabled}
           className="flex items-center gap-1.5 px-3 h-8 text-xs font-semibold font-heading rounded-lg bg-navy text-white transition hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-          aria-label="Schedule all tasks"
+          aria-label="Schedule tasks"
         >
           {isScheduling ? (
             <SpinnerIcon color="currentColor" size={13} />
           ) : (
             <CalendarIcon color="currentColor" size={13} />
           )}
-          Schedule All
+          Schedule
         </button>
       </div>
 

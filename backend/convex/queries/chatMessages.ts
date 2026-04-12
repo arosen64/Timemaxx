@@ -24,6 +24,21 @@ export const getUserMessageForScopeReplayInternal = internalQuery({
   },
 });
 
+export const getChatHistoryInternal = internalQuery({
+  args: {
+    userId: v.id("users"),
+    sessionId: v.string(),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("chatMessages")
+      .withIndex("by_session", (q) => q.eq("sessionId", args.sessionId))
+      .order("asc")
+      .take(args.limit ?? 20);
+  },
+});
+
 export const getChatHistory = query({
   args: { sessionId: v.optional(v.string()), limit: v.optional(v.number()) },
   handler: async (ctx, args) => {

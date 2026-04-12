@@ -3,6 +3,14 @@ import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { taskTypeValidator } from "../lib/taskValidators";
 import { internal } from "../_generated/api";
+import { rebuildStudyBlocks } from "./timeEstimate";
+
+const reasoningTraceArgs = v.object({
+  classes: v.string(),
+  tasks: v.string(),
+  chats: v.string(),
+  profile: v.string(),
+});
 
 /**
  * Creates a new subtask linked to a parent task.
@@ -46,6 +54,10 @@ export const createSubtask = mutation({
       dueDate: parent.dueDate,
       createdAt: Date.now(),
     });
+
+    // Parent time is rolled up from subtasks; drop any prior whole-task AI reasoning
+    // so we never show stale explanations alongside a summed estimate.
+    await ctx.db.patch(args.parentTaskId, { reasoning: undefined });
 
     // Kick off time estimation on the backend immediately after creation.
     // This runs regardless of frontend lifecycle (no component unmount risk).
@@ -92,6 +104,7 @@ export const updateSubtask = mutation({
       taskType: args.taskType,
       suggestedCompletionAt: args.suggestedCompletionAt,
       timeEstimate: undefined,
+      reasoning: undefined,
     });
 
     // Re-schedule estimation since content changed.
@@ -112,9 +125,13 @@ export const setSubtaskTimeEstimate = internalMutation({
   args: {
     subtaskId: v.id("subtasks"),
     timeEstimate: v.number(),
+    reasoning: reasoningTraceArgs,
   },
   handler: async (ctx, args) => {
-    await ctx.db.patch(args.subtaskId, { timeEstimate: args.timeEstimate });
+    await ctx.db.patch(args.subtaskId, {
+      timeEstimate: args.timeEstimate,
+      reasoning: args.reasoning,
+    });
 
     // Roll up: sum all sibling estimates and patch parent task
     const subtask = await ctx.db.get(args.subtaskId);
@@ -127,6 +144,15 @@ export const setSubtaskTimeEstimate = internalMutation({
 
     const total = siblings.reduce((sum, s) => sum + (s.timeEstimate ?? 0), 0);
     await ctx.db.patch(subtask.parentTaskId, { timeEstimate: total });
+
+    // Only rebuild study blocks once all subtasks have been estimated.
+    // Rebuilding on every partial rollup would create blocks sized to an
+    // incomplete sum; waiting for the final tally ensures block count and
+    // lengths match the true total.
+    const allEstimated = siblings.every((s) => s.timeEstimate !== undefined);
+    if (allEstimated && total > 0) {
+      await rebuildStudyBlocks(ctx, subtask.parentTaskId, total);
+    }
   },
 });
 
