@@ -1,4 +1,4 @@
-import { mutation } from "../_generated/server";
+import { internalMutation, mutation } from "../_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { taskTypeValidator } from "../lib/taskValidators";
@@ -72,6 +72,19 @@ export const updateSubtask = mutation({
       suggestedCompletionAt: args.suggestedCompletionAt,
       timeEstimate: undefined,
     });
+  },
+});
+
+/**
+ * Sets the time estimate on a subtask. Called by estimateSubtaskTime action.
+ */
+export const setSubtaskTimeEstimate = internalMutation({
+  args: {
+    subtaskId: v.id("subtasks"),
+    timeEstimate: v.number(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.subtaskId, { timeEstimate: args.timeEstimate });
   },
 });
 
