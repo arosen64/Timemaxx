@@ -73,11 +73,13 @@ export default function SubtaskCard({
 
         {/* Actions */}
         <div className="flex shrink-0 items-center gap-1.5">
-          <StatusDropdown
-            value={subtask.status ?? 'not_started'}
-            onChange={(s) => onStatusChange(subtask._id, s)}
-            size="sm"
-          />
+          {!isReadOnly && (
+            <StatusDropdown
+              value={subtask.status ?? 'not_started'}
+              onChange={(s) => onStatusChange(subtask._id, s)}
+              size="sm"
+            />
+          )}
           {!isReadOnly && (
             <>
               {subtask.timeEstimate === undefined &&

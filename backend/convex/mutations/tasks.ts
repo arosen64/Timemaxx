@@ -295,12 +295,13 @@ export const updateTaskStatus = mutation({
 
     await ctx.db.patch(args.taskId, { status: args.status });
 
+    const subtasks = await ctx.db
+      .query("subtasks")
+      .withIndex("by_parentTaskId", (q) => q.eq("parentTaskId", args.taskId))
+      .collect();
+
     if (args.status === "completed") {
-      // Cascade status to all child subtasks
-      const subtasks = await ctx.db
-        .query("subtasks")
-        .withIndex("by_parentTaskId", (q) => q.eq("parentTaskId", args.taskId))
-        .collect();
+      // Cascade completion to all child subtasks
       for (const subtask of subtasks) {
         await ctx.db.patch(subtask._id, { status: "completed" });
       }
@@ -322,6 +323,13 @@ export const updateTaskStatus = mutation({
           .collect();
         for (const block of subtaskBlocks) {
           await unscheduleBlock(ctx, block._id);
+        }
+      }
+    } else {
+      // Cascade reopen: reset completed subtasks back to not_started
+      for (const subtask of subtasks) {
+        if (subtask.status === "completed") {
+          await ctx.db.patch(subtask._id, { status: "not_started" });
         }
       }
     }

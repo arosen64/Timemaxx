@@ -18,7 +18,7 @@ type TaskCardProps = {
   barColor: string
   isEstimating: boolean
   feedback: Omit<TaskFeedbackFormProps, 'task'>
-  onStatusChange: (status: TaskStatus) => void
+  onStatusChange?: (status: TaskStatus) => void
   onEstimate: () => void
   onEdit: () => void
   onDelete: () => void
@@ -170,7 +170,7 @@ export default function TaskCard({
                   <StatusDropdown
                     value={task.status ?? 'not_started'}
                     onChange={(s) => {
-                      onStatusChange(s)
+                      onStatusChange?.(s)
                     }}
                     size="md"
                   />
