@@ -93,13 +93,6 @@ const MENU_CANNED: Record<string, string> = {
 const TASK_AGENT_RUD_INTRO =
   "Which task would you like to work with? Pick one below, or choose **Other** to see more options.";
 
-const TASK_MENU_INTRO =
-  "Which task would you like help with? Pick one below, or choose **Other** to see more options.";
-const TASK_FEEDBACK_INTRO =
-  "Which task are you giving feedback on? Pick one below, or choose **Other** to see more options.";
-const CLASS_MENU_INTRO =
-  "Which class would you like to ask about? Pick one below, or choose **Other** to see more options.";
-
 /** Max messages per session before the chat is locked. ~15 turns is plenty for one task. */
 const CHAT_MESSAGE_LIMIT = 20;
 
