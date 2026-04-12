@@ -61,6 +61,12 @@ jobs:
         env:
           VITE_CONVEX_URL: ${{ secrets.VITE_CONVEX_URL }}
 
+      # Copy index.html to 404.html so GitHub Pages serves the SPA for unknown routes
+      # (e.g. direct navigation to /dashboard). React Router then handles the path and
+      # the auth guard redirects unauthenticated users to the landing page.
+      - name: Create 404 fallback for SPA routing
+        run: cp frontend/dist/index.html frontend/dist/404.html
+
       - uses: actions/upload-pages-artifact@v3
         with:
           path: frontend/dist
