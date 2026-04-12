@@ -44,6 +44,22 @@ export const generateTaskEmbedding = internalAction({
   },
 });
 
+/** Used by chat RAG retrieval; same model/dimensions as task/course/chunk embeddings. */
+export const embedRetrievalQueryInternal = internalAction({
+  args: { text: v.string() },
+  returns: v.union(v.array(v.float64()), v.null()),
+  handler: async (_ctx, args) => {
+    if (!process.env.GEMINI_API_KEY) {
+      return null;
+    }
+    try {
+      return await embedGeminiText(args.text);
+    } catch {
+      return null;
+    }
+  },
+});
+
 /** Same 3072-dim Gemini pipeline as tasks/courses; patches `chatChunks.embedding`. */
 export const generateChatChunkEmbedding = internalAction({
   args: {
