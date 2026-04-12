@@ -216,7 +216,7 @@ export function buildChatChunkSpecs(
   let globalChunkIndex = 0;
 
   // Process each task group separately
-  for (const [taskId, taskMessages] of messagesByTask) {
+  for (const [_taskId, taskMessages] of messagesByTask) {
     const specs = buildChunkSpecsForMessages(taskMessages, globalChunkIndex);
     allSpecs.push(...specs);
     globalChunkIndex += specs.length;
