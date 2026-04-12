@@ -21,6 +21,7 @@ export const storeCalendarToken = mutation({
 
 /**
  * Upserts a calendar token for a specific user — called from the HTTP callback action.
+ * timemaxxCalendarId, if provided, is stored as the first entry in selectedCalendarIds.
  */
 export const storeCalendarTokenForUser = internalMutation({
   args: {
@@ -28,6 +29,8 @@ export const storeCalendarTokenForUser = internalMutation({
     accessToken: v.string(),
     refreshToken: v.string(),
     expiresAt: v.number(),
+    scope: v.optional(v.string()),
+    timemaxxCalendarId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     await upsertCalendarToken(ctx, args);
@@ -41,6 +44,8 @@ async function upsertCalendarToken(
     accessToken: string;
     refreshToken: string;
     expiresAt: number;
+    scope?: string;
+    timemaxxCalendarId?: string;
   }
 ) {
   const existing = await ctx.db
@@ -53,6 +58,11 @@ async function upsertCalendarToken(
       accessToken: args.accessToken,
       refreshToken: args.refreshToken,
       expiresAt: args.expiresAt,
+      scope: args.scope,
+      ...(args.timemaxxCalendarId && {
+        timemaxxCalendarId: args.timemaxxCalendarId,
+        selectedCalendarIds: [args.timemaxxCalendarId],
+      }),
     });
   } else {
     await ctx.db.insert("calendarConnections", {
@@ -60,6 +70,11 @@ async function upsertCalendarToken(
       accessToken: args.accessToken,
       refreshToken: args.refreshToken,
       expiresAt: args.expiresAt,
+      scope: args.scope,
+      ...(args.timemaxxCalendarId && {
+        timemaxxCalendarId: args.timemaxxCalendarId,
+        selectedCalendarIds: [args.timemaxxCalendarId],
+      }),
     });
   }
 }
@@ -125,6 +140,23 @@ export const deleteCalendarToken = mutation({
     const existing = await ctx.db
       .query("calendarConnections")
       .withIndex("by_userId", (q: any) => q.eq("userId", userId))
+      .unique();
+
+    if (existing) {
+      await ctx.db.delete(existing._id);
+    }
+  },
+});
+
+/**
+ * Deletes the Google Calendar OAuth token for a given userId — called from actions.
+ */
+export const deleteCalendarTokenForUser = internalMutation({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("calendarConnections")
+      .withIndex("by_userId", (q: any) => q.eq("userId", args.userId))
       .unique();
 
     if (existing) {

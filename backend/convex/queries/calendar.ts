@@ -43,7 +43,15 @@ export const getCalendarConnectionStatus = query({
       .withIndex("by_userId", (q) => q.eq("userId", userId))
       .unique();
 
-    return { connected: token !== null };
+    const scopes = token?.scope?.split(" ") ?? [];
+    const hasEventsScope =
+      scopes.includes("https://www.googleapis.com/auth/calendar.events") ||
+      scopes.includes("https://www.googleapis.com/auth/calendar");
+
+    return {
+      connected: token !== null,
+      hasEventsScope,
+    };
   },
 });
 

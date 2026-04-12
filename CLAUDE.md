@@ -6,16 +6,21 @@ AI-powered study scheduler that estimates task time using Google Gemini and buil
 
 ## Tech Stack
 
-React + Vite + TypeScript + TailwindCSS + Convex + React Router + Google Gemini
+React + Vite + TypeScript + TailwindCSS + Convex + React Router + Google Gemini + Mastra (AI agent server)
 
 ## Commands
 
 - Install dependencies: `npm install`
 - Run backend: `npx convex dev` (run this first, in its own terminal)
-- Run frontend: `npm run dev` (run this after the backend is running, in a separate terminal)
+- Run Mastra agent server: `cd mastra && npx mastra dev` (run in its own terminal — required for the chatbot)
+- Run frontend: `npm run dev` (run after backend and Mastra are running, in a separate terminal)
 - Run tests: `npm test`
 - Run linter: `<command>`
 - Build for production: `npm run build`
+
+> The Mastra server must be publicly reachable for Convex HTTP actions to call it.
+> In local dev, use ngrok: `ngrok http 4111`, then set `npx convex env set MASTRA_URL <ngrok-url>`.
+> Convex cloud cannot reach `localhost`. Not sure why.
 
 ## Code Style
 
@@ -48,8 +53,16 @@ frontend/
       ui/
     main.tsx                  # App entry point (ConvexProvider + BrowserRouter)
     App.tsx                   # Route definitions
+mastra/
+  src/
+    mastra/
+      index.ts                  # Registers all agents with new Mastra({ agents: { ... } })
+      agents/
+        chatAgent.ts            # "Maxx" — the chat assistant agent
 backend/
   convex/
+    dev/                      # Dev-only modules (CLI/dashboard; not wired into prod flows)
+      localRetrievalTest.ts   # local CLI/dashboard testing: inspectRetrievalForTask
     schema.ts                 # Convex database schema
     queries/                  # Read-only data fetching functions (useQuery)
       tasks.ts
@@ -65,6 +78,8 @@ backend/
       userCourses.ts
       syllabi.ts
       timeEstimate.ts
+    http.ts                   # HTTP router — auth, CORS, and makeApiHandler factory (Hono-based)
+    http_chat.ts              # Hono app handling POST /api/chat → Mastra → save to DB
     actions/                  # Side-effectful functions, e.g. Google Gemini API calls
       estimateTaskTime.ts
       requestEstimateTaskTime.ts

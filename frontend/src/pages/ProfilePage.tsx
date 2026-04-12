@@ -1,6 +1,6 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
-import { useQuery, useMutation, useAction } from "convex/react";
+import { useQuery, useAction } from "convex/react";
 import { api } from "../../../backend/convex/_generated/api";
 import ProfileActions from "../components/profile/ProfileActions";
 import ProfileAvatar from "../components/profile/ProfileAvatar";
@@ -9,10 +9,14 @@ import Button from "../components/ui/Button";
 
 export default function ProfilePage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const calendarSetupFailed = new URLSearchParams(location.search).get("calendarSetupFailed") === "1";
   const user = useQuery(api.queries.users.getCurrUser);
 
   const calendarStatus = useQuery(api.queries.calendar.getCalendarConnectionStatus);
-  const deleteCalendarToken = useMutation(api.mutations.calendar.deleteCalendarToken);
+  const connected = calendarStatus?.connected ?? false;
+  const hasEventsScope = calendarStatus?.hasEventsScope ?? false;
+  const revokeCalendarAccess = useAction(api.actions.exportStudyBlocksToCalendar.revokeCalendarAccess);
   const initiateCalendarOAuth = useAction(api.actions.initiateGoogleCalendarOAuth.initiateGoogleCalendarOAuth);
 
   async function handleConnectCalendar() {
@@ -21,7 +25,7 @@ export default function ProfilePage() {
   }
 
   async function handleRevokeCalendar() {
-    await deleteCalendarToken({});
+    await revokeCalendarAccess({});
   }
 
   return (
@@ -77,16 +81,36 @@ export default function ProfilePage() {
           {/* Divider */}
           <div className="h-px w-full bg-border" />
 
+          {/* Google Calendar setup failure banner */}
+          {calendarSetupFailed && connected && (
+            <div className="flex items-center gap-3 rounded-lg border border-yellow-300 bg-yellow-50 px-4 py-3 text-sm text-yellow-800">
+              <span className="flex-1">
+                Your calendar connected, but the Timemaxx calendar couldn't be created. Click <strong>Update Calendar Permissions</strong> below to reconnect and finish setup.
+              </span>
+            </div>
+          )}
+
           {/* Google Calendar */}
           <div className="flex items-center justify-between">
             <div className="flex flex-col gap-1">
               <span className="font-heading text-base font-semibold text-navy">Google Calendar</span>
               <span className="font-body text-sm text-slate-blue">Connect to improve schedule accuracy</span>
             </div>
-            {calendarStatus?.connected ? (
-              <Button variant="destructive" onClick={handleRevokeCalendar} className="px-5">
-                Revoke Access
-              </Button>
+            {calendarStatus === undefined ? (
+              <div className="h-9 w-36 rounded-lg bg-border animate-pulse" />
+            ) : connected ? (
+              hasEventsScope && !calendarSetupFailed ? (
+                <Button variant="destructive" onClick={handleRevokeCalendar} className="px-5">
+                  Revoke Access
+                </Button>
+              ) : (
+                <div className="flex flex-col items-center gap-1">
+                  <Button variant="warning" icon={<CalendarIcon className="stroke-white" />} onClick={handleConnectCalendar} className="px-5">
+                    Update Calendar Permissions
+                  </Button>
+                  <span className="font-body text-sm text-yellow-600">Connected with limited permissions</span>
+                </div>
+              )
             ) : (
               <Button variant="primary" icon={<CalendarIcon />} onClick={handleConnectCalendar} className="px-5">
                 Connect Calendar
@@ -105,14 +129,14 @@ export default function ProfilePage() {
   );
 }
 
-function CalendarIcon() {
+function CalendarIcon({ className = "stroke-teal" }: { className?: string }) {
   return (
     <svg
       width="16"
       height="16"
       viewBox="0 0 24 24"
       fill="none"
-      className="stroke-teal"
+      className={className}
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"

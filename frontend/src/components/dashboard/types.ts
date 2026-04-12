@@ -1,18 +1,42 @@
 import { Id } from '../../../../backend/convex/_generated/dataModel'
 import { formatEstimatedTime } from '../../utils/timeUtils'
 
+export type SubtaskType = {
+  _id: Id<'subtasks'>
+  parentTaskId: Id<'tasks'>
+  title: string
+  description: string
+  taskType: string
+  color: string
+  timeEstimate?: number
+  dueDate?: number
+  classTag?: string
+  courseId?: Id<'userCourses'>
+  order: number
+  suggestedCompletionAt?: number
+  createdAt: number
+}
+
 export type TaskType = {
   _id: Id<'tasks'>
   title: string
   description: string
   taskType: string
   timeEstimate?: number
+  isManualEstimate: boolean
   estimateFeedbackRating?: 'up' | 'down'
   correctedEstimateMinutes?: number
   estimateFeedbackSubmittedAt?: number
   dueDate: number
   createdAt: number
   classTag?: string
+  courseId?: Id<'userCourses'>
+  reasoning?: {
+    classes: string
+    tasks: string
+    chats: string
+    profile: string
+  }
 }
 
 export const BUILT_IN_TASK_TYPES = [
@@ -46,6 +70,10 @@ export type EditForm = {
   courseId?: Id<'userCourses'>
   /** Empty string clears the tag on update; omit when not supported */
   classTag?: string
+  /** User-supplied time estimate in minutes; undefined means let AI estimate */
+  timeEstimate?: number
+  /** True when user explicitly chose to reset to AI estimation */
+  useAiEstimate?: boolean
 }
 
 export const TASK_TYPE_OPTIONS: BuiltInTaskType[] = [...BUILT_IN_TASK_TYPES]
@@ -96,8 +124,6 @@ export function parseEstimationError(err: unknown): string {
   }
   return 'Failed to estimate task time. Please try again.'
 }
-
-export const BAR_COLORS = ['bg-urgent-red', 'bg-sky-blue', 'bg-success']
 
 export const BADGE_MAP: Record<string, { bg: string; text: string; label: string }> = {
   urgent: { bg: 'bg-urgent-red-light', text: 'text-urgent-red', label: 'Urgent' },

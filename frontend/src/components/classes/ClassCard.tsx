@@ -17,6 +17,7 @@ interface ClassCardProps {
   grade?: string
   studyGoal?: string
   difficultyRating?: number
+  color?: string
   isPast: boolean
   hasSyllabus: boolean
   taskCount: number
@@ -31,6 +32,7 @@ export default function ClassCard({
   grade: initialGrade,
   studyGoal: initialStudyGoal,
   difficultyRating: initialDifficultyRating,
+  color: initialColor,
   isPast,
   hasSyllabus,
   taskCount,
@@ -43,6 +45,11 @@ export default function ClassCard({
   const [confirmingRemove, setConfirmingRemove] = useState(false)
   const [isRemoving, setIsRemoving] = useState(false)
 
+  // Color picker state
+  const [currentColor, setCurrentColor] = useState(initialColor ?? '')
+  const colorInputRef = useRef<HTMLInputElement>(null)
+  const colorSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   // Upload state (current cards only)
   const [uploadModalOpen, setUploadModalOpen] = useState(false)
 
@@ -50,6 +57,12 @@ export default function ClassCard({
   const saveGradeButtonRef = useRef<HTMLButtonElement>(null)
   const [gradeValue, setGradeValue] = useState(initialGrade ?? '')
   const [confirmedGrade, setConfirmedGrade] = useState(initialGrade ?? '')
+
+  useEffect(() => {
+    return () => {
+      if (colorSaveTimeoutRef.current) clearTimeout(colorSaveTimeoutRef.current)
+    }
+  }, [])
 
   useEffect(() => {
     setConfirmedGrade(initialGrade ?? '')
@@ -139,12 +152,56 @@ export default function ClassCard({
       <div className="flex flex-col gap-4 rounded-xl border border-border bg-white p-6">
         {/* Header row */}
         <div className="flex items-start justify-between gap-4">
-          <div className="flex flex-col gap-0.5 min-w-0">
-            <span className="font-heading text-xs font-semibold uppercase tracking-wide text-slate-blue">
-              {courseCode}
-            </span>
-            <h3 className="font-heading text-base font-bold text-navy truncate">{title}</h3>
-            <span className="font-body text-xs text-light-blue">{term}</span>
+          <div className="flex items-start gap-2 min-w-0">
+            {/* Color swatch — clicking opens native color wheel */}
+            <div className="relative shrink-0 mt-1">
+              <button
+                type="button"
+                aria-label="Set course color"
+                onClick={() => colorInputRef.current?.click()}
+                className={`w-4 h-4 rounded-full border border-border transition hover:opacity-70 ${currentColor ? '' : 'bg-bg-gray'}`}
+                style={currentColor ? { backgroundColor: currentColor } : undefined}
+              />
+              <input
+                ref={colorInputRef}
+                type="color"
+                value={currentColor || '#002D72'}
+                className="sr-only"
+                onChange={(e) => {
+                  const color = e.target.value
+                  setCurrentColor(color)
+                  if (colorSaveTimeoutRef.current) clearTimeout(colorSaveTimeoutRef.current)
+                  colorSaveTimeoutRef.current = setTimeout(async () => {
+                    try {
+                      await updateUserCourse({ userCourseId: id, color })
+                    } catch {
+                      setCurrentColor(initialColor ?? '')
+                    }
+                  }, 400)
+                }}
+                onBlur={async (e) => {
+                  if (colorSaveTimeoutRef.current) {
+                    clearTimeout(colorSaveTimeoutRef.current)
+                    colorSaveTimeoutRef.current = null
+                  }
+                  const color = e.target.value
+                  const previousColor = currentColor
+                  try {
+                    await updateUserCourse({ userCourseId: id, color })
+                  } catch {
+                    setCurrentColor(previousColor)
+                  }
+                }}
+              />
+            </div>
+
+            <div className="flex flex-col gap-0.5 min-w-0">
+              <span className="font-heading text-xs font-semibold uppercase tracking-wide text-slate-blue">
+                {courseCode}
+              </span>
+              <h3 className="font-heading text-base font-bold text-navy truncate">{title}</h3>
+              <span className="font-body text-xs text-light-blue">{term}</span>
+            </div>
           </div>
 
           {/* Remove button / inline confirmation */}

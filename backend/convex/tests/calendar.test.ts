@@ -106,7 +106,7 @@ describe("mutations/calendar – deleteCalendarToken", () => {
 });
 
 describe("mutations/calendar – updateCalendarToken", () => {
-  test("updates accessToken and expiresAt without touching refreshToken or selectedCalendarIds", async () => {
+  test("updates accessToken and expiresAt without touching refreshToken, selectedCalendarIds, or scope", async () => {
     const t = makeTestCtx();
     const { userId } = await createTestUser(t);
 
@@ -117,6 +117,7 @@ describe("mutations/calendar – updateCalendarToken", () => {
         refreshToken: "ref",
         expiresAt: Date.now() + 1000,
         selectedCalendarIds: ["cal-1"],
+        scope: "https://www.googleapis.com/auth/calendar.events",
       })
     );
 
@@ -138,6 +139,7 @@ describe("mutations/calendar – updateCalendarToken", () => {
     expect(record!.expiresAt).toBe(newExpiry);
     expect(record!.refreshToken).toBe("ref");
     expect(record!.selectedCalendarIds).toEqual(["cal-1"]);
+    expect(record!.scope).toBe("https://www.googleapis.com/auth/calendar.events");
   });
 
   test("is a no-op when no calendarConnections record exists", async () => {
@@ -151,6 +153,174 @@ describe("mutations/calendar – updateCalendarToken", () => {
         expiresAt: Date.now() + 3600_000,
       })
     ).resolves.not.toThrow();
+  });
+});
+
+describe("mutations/calendar – storeCalendarTokenForUser", () => {
+  test("stores a token with scope for the given user", async () => {
+    const t = makeTestCtx();
+    const { userId } = await createTestUser(t);
+
+    await t.mutation(internal.mutations.calendar.storeCalendarTokenForUser, {
+      userId,
+      accessToken: "enc-acc",
+      refreshToken: "enc-ref",
+      expiresAt: Date.now() + 3600_000,
+      scope: "https://www.googleapis.com/auth/calendar",
+    });
+
+    const record = await t.run((ctx) =>
+      ctx.db
+        .query("calendarConnections")
+        .withIndex("by_userId", (q) => q.eq("userId", userId))
+        .unique()
+    );
+
+    expect(record).not.toBeNull();
+    expect(record!.scope).toBe("https://www.googleapis.com/auth/calendar");
+  });
+
+  test("stores timemaxxCalendarId as dedicated field and initial selectedCalendarIds when provided", async () => {
+    const t = makeTestCtx();
+    const { userId } = await createTestUser(t);
+
+    await t.mutation(internal.mutations.calendar.storeCalendarTokenForUser, {
+      userId,
+      accessToken: "enc-acc",
+      refreshToken: "enc-ref",
+      expiresAt: Date.now() + 3600_000,
+      scope: "https://www.googleapis.com/auth/calendar",
+      timemaxxCalendarId: "timemaxx-cal-id",
+    });
+
+    const record = await t.run((ctx) =>
+      ctx.db
+        .query("calendarConnections")
+        .withIndex("by_userId", (q) => q.eq("userId", userId))
+        .unique()
+    );
+
+    expect(record!.timemaxxCalendarId).toBe("timemaxx-cal-id");
+    expect(record!.selectedCalendarIds).toEqual(["timemaxx-cal-id"]);
+  });
+
+  test("does not set selectedCalendarIds when timemaxxCalendarId is omitted", async () => {
+    const t = makeTestCtx();
+    const { userId } = await createTestUser(t);
+
+    await t.mutation(internal.mutations.calendar.storeCalendarTokenForUser, {
+      userId,
+      accessToken: "enc-acc",
+      refreshToken: "enc-ref",
+      expiresAt: Date.now() + 3600_000,
+    });
+
+    const record = await t.run((ctx) =>
+      ctx.db
+        .query("calendarConnections")
+        .withIndex("by_userId", (q) => q.eq("userId", userId))
+        .unique()
+    );
+
+    expect(record!.selectedCalendarIds).toBeUndefined();
+  });
+
+  test("overwrites an existing token and updates selectedCalendarIds on re-connect", async () => {
+    const t = makeTestCtx();
+    const { userId } = await createTestUser(t);
+
+    await t.run((ctx) =>
+      ctx.db.insert("calendarConnections", {
+        userId,
+        accessToken: "old-acc",
+        refreshToken: "old-ref",
+        expiresAt: Date.now() + 1000,
+      })
+    );
+
+    await t.mutation(internal.mutations.calendar.storeCalendarTokenForUser, {
+      userId,
+      accessToken: "new-acc",
+      refreshToken: "new-ref",
+      expiresAt: Date.now() + 3600_000,
+      scope: "https://www.googleapis.com/auth/calendar",
+      timemaxxCalendarId: "new-timemaxx-id",
+    });
+
+    const records = await t.run((ctx) =>
+      ctx.db
+        .query("calendarConnections")
+        .withIndex("by_userId", (q) => q.eq("userId", userId))
+        .collect()
+    );
+
+    expect(records).toHaveLength(1);
+    expect(records[0].accessToken).toBe("new-acc");
+    expect(records[0].scope).toBe("https://www.googleapis.com/auth/calendar");
+    expect(records[0].timemaxxCalendarId).toBe("new-timemaxx-id");
+    expect(records[0].selectedCalendarIds).toEqual(["new-timemaxx-id"]);
+  });
+});
+
+describe("mutations/calendar – deleteCalendarTokenForUser", () => {
+  test("removes the token record for the given userId", async () => {
+    const t = makeTestCtx();
+    const { userId } = await createTestUser(t);
+
+    await t.run((ctx) =>
+      ctx.db.insert("calendarConnections", {
+        userId,
+        accessToken: "acc",
+        refreshToken: "ref",
+        expiresAt: Date.now() + 3600_000,
+      })
+    );
+
+    await t.mutation(internal.mutations.calendar.deleteCalendarTokenForUser, { userId });
+
+    const record = await t.run((ctx) =>
+      ctx.db
+        .query("calendarConnections")
+        .withIndex("by_userId", (q) => q.eq("userId", userId))
+        .unique()
+    );
+
+    expect(record).toBeNull();
+  });
+
+  test("is a no-op when no token exists for the user", async () => {
+    const t = makeTestCtx();
+    const { userId } = await createTestUser(t);
+
+    await expect(
+      t.mutation(internal.mutations.calendar.deleteCalendarTokenForUser, { userId })
+    ).resolves.not.toThrow();
+  });
+
+  test("does not remove a different user's token", async () => {
+    const t = makeTestCtx();
+    const { userId: user1Id } = await createTestUser(t);
+    const { userId: user2Id } = await createTestUser(t, { email: "other@example.com" });
+
+    await t.run((ctx) =>
+      ctx.db.insert("calendarConnections", {
+        userId: user1Id,
+        accessToken: "acc",
+        refreshToken: "ref",
+        expiresAt: Date.now() + 3600_000,
+      })
+    );
+
+    await t.mutation(internal.mutations.calendar.deleteCalendarTokenForUser, { userId: user2Id });
+
+    const record = await t.run((ctx) =>
+      ctx.db
+        .query("calendarConnections")
+        .withIndex("by_userId", (q) => q.eq("userId", user1Id))
+        .unique()
+    );
+
+    expect(record).not.toBeNull();
   });
 });
 

@@ -170,6 +170,7 @@ export default function ClassesPage() {
                 grade={course.grade}
                 studyGoal={course.studyGoal}
                 difficultyRating={course.difficultyRating}
+                color={course.color}
                 isPast={activeTab === 'past'}
                 hasSyllabus={metadataMap.get(course._id)?.hasSyllabus ?? false}
                 taskCount={metadataMap.get(course._id)?.taskCount ?? 0}

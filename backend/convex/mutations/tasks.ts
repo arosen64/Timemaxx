@@ -1,7 +1,34 @@
-import { mutation } from "../_generated/server";
+import { mutation, internalMutation, MutationCtx } from "../_generated/server";
+import { internal } from "../_generated/api";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { taskTypeValidator } from "../lib/taskValidators";
+import { Id } from "../_generated/dataModel";
+import { rebuildStudyBlocks } from "./timeEstimate";
+
+export async function cascadeDeleteTask(ctx: MutationCtx, taskId: Id<"tasks">) {
+  const subtasks = await ctx.db
+    .query("subtasks")
+    .withIndex("by_parentTaskId", (q) => q.eq("parentTaskId", taskId))
+    .collect();
+
+  for (const subtask of subtasks) {
+    const subtaskBlocks = await ctx.db
+      .query("studyBlocks")
+      .withIndex("by_subtaskId", (q) => q.eq("subtaskId", subtask._id))
+      .collect();
+    for (const block of subtaskBlocks) await ctx.db.delete(block._id);
+    await ctx.db.delete(subtask._id);
+  }
+
+  const taskBlocks = await ctx.db
+    .query("studyBlocks")
+    .withIndex("by_taskId", (q) => q.eq("taskId", taskId))
+    .collect();
+  for (const block of taskBlocks) await ctx.db.delete(block._id);
+
+  await ctx.db.delete(taskId);
+}
 
 function normalizeClassTag(value: string | undefined): string | undefined {
   if (value === undefined) return undefined;
@@ -10,8 +37,9 @@ function normalizeClassTag(value: string | undefined): string | undefined {
 }
 
 /**
- * Creates a new task for the authenticated user with timeEstimate left unset.
- * Time estimation is handled separately (e.g. via a Gemini action) after creation.
+ * Creates a new task for the authenticated user. If a timeEstimate is provided,
+ * it is treated as a manual estimate and study blocks are built immediately.
+ * Otherwise, time estimation is handled separately (e.g. via a Gemini action).
  */
 export const createTask = mutation({
   args: {
@@ -21,6 +49,7 @@ export const createTask = mutation({
     dueDate: v.number(),
     courseId: v.optional(v.id("userCourses")),
     classTag: v.optional(v.string()),
+    timeEstimate: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -40,7 +69,8 @@ export const createTask = mutation({
       throw new Error("That due date and time are in the past. Choose a later deadline.");
     }
 
-    // Insert the new task with timeEstimate left as undefined for now
+    const isManualEstimate = args.timeEstimate !== undefined;
+
     const taskId = await ctx.db.insert("tasks", {
       userId,
       title: args.title,
@@ -49,9 +79,22 @@ export const createTask = mutation({
       dueDate: args.dueDate,
       courseId: args.courseId,
       classTag: normalizeClassTag(args.classTag),
-      timeEstimate: undefined, // populated asynchronously by estimateTaskTime action
+      timeEstimate: args.timeEstimate,
+      isManualEstimate,
       createdAt: Date.now(),
     });
+
+    if (isManualEstimate) {
+      await rebuildStudyBlocks(ctx, taskId, args.timeEstimate!);
+    }
+
+    if (process.env.GEMINI_API_KEY) {
+      await ctx.scheduler.runAfter(0, internal.ai.embeddings.generateTaskEmbedding, {
+        taskId,
+        title: args.title,
+        description: args.description,
+      });
+    }
 
     return taskId;
   },
@@ -84,8 +127,36 @@ export const updateTask = mutation({
       ...(args.classTag !== undefined
         ? { classTag: normalizeClassTag(args.classTag) }
         : {}),
-      timeEstimate: undefined,
     });
+
+    // Cascade dueDate change to child subtasks
+    if (args.dueDate !== task.dueDate) {
+      const subtasks = await ctx.db
+        .query("subtasks")
+        .withIndex("by_parentTaskId", (q) => q.eq("parentTaskId", args.taskId))
+        .collect();
+      for (const subtask of subtasks) {
+        await ctx.db.patch(subtask._id, { dueDate: args.dueDate });
+      }
+    }
+
+    if (process.env.GEMINI_API_KEY) {
+      await ctx.scheduler.runAfter(0, internal.ai.embeddings.generateTaskEmbedding, {
+        taskId: args.taskId,
+        title: args.title,
+        description: args.description,
+      });
+    }
+  },
+});
+
+export const patchTaskEmbedding = internalMutation({
+  args: {
+    taskId: v.id("tasks"),
+    embedding: v.array(v.float64()),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.taskId, { embedding: args.embedding });
   },
 });
 
@@ -100,15 +171,39 @@ export const deleteTask = mutation({
     const task = await ctx.db.get(args.taskId);
     if (!task || task.userId !== userId) throw new Error("Task not found");
 
-    const studyBlocks = await ctx.db
-      .query("studyBlocks")
-      .withIndex("by_taskId", (q) => q.eq("taskId", args.taskId))
+    // Collect googleEventIds from all study blocks before deletion
+    const subtasks = await ctx.db
+      .query("subtasks")
+      .withIndex("by_parentTaskId", (q) => q.eq("parentTaskId", args.taskId))
       .collect();
 
-    for (const block of studyBlocks) {
-      await ctx.db.delete(block._id);
-    }
+    const [subtaskBlockArrays, taskBlocks] = await Promise.all([
+      Promise.all(
+        subtasks.map((subtask) =>
+          ctx.db
+            .query("studyBlocks")
+            .withIndex("by_subtaskId", (q) => q.eq("subtaskId", subtask._id))
+            .collect(),
+        ),
+      ),
+      ctx.db
+        .query("studyBlocks")
+        .withIndex("by_taskId", (q) => q.eq("taskId", args.taskId))
+        .collect(),
+    ]);
 
-    await ctx.db.delete(args.taskId);
+    const googleEventIds = [...subtaskBlockArrays.flat(), ...taskBlocks]
+      .map((b) => b.googleEventId)
+      .filter((id): id is string => id !== undefined);
+
+    await cascadeDeleteTask(ctx, args.taskId);
+
+    if (googleEventIds.length > 0) {
+      await ctx.scheduler.runAfter(
+        0,
+        internal.actions.exportStudyBlocksToCalendar.deleteLinkedCalendarEvents,
+        { userId, googleEventIds },
+      );
+    }
   },
 });
