@@ -10,11 +10,13 @@ import { Loader } from './prompt-kit/loader'
 import { MessageSquareIcon, XIcon } from './icons'
 import Button from './ui/Button'
 
-const SUGGESTIONS = [
-  'How many study hours do I have left?',
-  'What tasks are due this week?',
-  'Help me prioritize my workload',
-]
+const MAIN_MENU = [
+  { label: 'Give feedback on a task', route: 'feedback' },
+  { label: 'Schedule something', route: 'schedule' },
+  { label: 'Task help (create / edit / view)', route: 'tasks' },
+  { label: 'Class questions', route: 'classes' },
+  { label: 'Change preferences', route: 'preferences' },
+] as const
 
 type EntityCandidate = { id: string; label: string; subtitle: string }
 
@@ -262,6 +264,23 @@ export default function ChatBot() {
     }
   }
 
+  async function handleMenuPick(route: string, label: string) {
+    if (isLoading || chatLocked) return
+    setIsLoading(true)
+    setEntityMcq(null)
+    setEntityBlockAfterIndex(null)
+    setHistoryLenAtSend(history.length)
+    setOptimistic([{ role: 'user', content: label }])
+    try {
+      await postChat({ sessionId, entity: { action: 'menu_pick', route } }, label)
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      setOptimistic((prev) => [...prev, { role: 'assistant', content: `Error: ${msg}` }])
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   function renderEntityMcqBlock() {
     if (!shouldShowEntityBlock || !entityMcq) return null
     return (
@@ -349,8 +368,8 @@ export default function ChatBot() {
 
                 {messages.length === 0 && !isLoading && (
                   <div className="flex flex-col items-center gap-2 pt-8 text-center">
-                    <span className="text-sm font-semibold font-heading text-navy">How can I help?</span>
-                    <span className="text-xs font-body text-light-blue">Ask about your schedule, tasks, or deadlines.</span>
+                    <span className="text-sm font-semibold font-heading text-navy">What can I help you with?</span>
+                    <span className="text-xs font-body text-light-blue">Pick an option below or type your question.</span>
                   </div>
                 )}
 
@@ -396,15 +415,16 @@ export default function ChatBot() {
                 )}
 
                 {showSuggestions && (
-                  <div className="flex flex-wrap gap-2 pt-2">
-                    {SUGGESTIONS.map((s) => (
+                  <div className="flex flex-col gap-2 pt-1">
+                    {MAIN_MENU.map((opt) => (
                       <button
-                        key={s}
+                        key={opt.route}
                         type="button"
-                        onClick={() => setInput(s)}
-                        className="rounded-full border border-border bg-white px-3 py-1.5 text-[12px] font-body text-slate-blue hover:border-navy/30 hover:text-navy transition"
+                        onClick={() => void handleMenuPick(opt.route, opt.label)}
+                        disabled={isLoading}
+                        className="text-left rounded-xl border border-border bg-white px-3.5 py-2.5 text-[12px] font-body text-navy hover:border-navy/30 hover:bg-bg-gray transition disabled:opacity-50"
                       >
-                        {s}
+                        {opt.label}
                       </button>
                     ))}
                   </div>

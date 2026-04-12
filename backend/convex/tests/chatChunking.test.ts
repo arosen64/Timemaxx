@@ -29,7 +29,7 @@ describe("buildChatChunkSpecs", () => {
     expect(specs[0]!.startCreatedAt).toBe(1000);
   });
 
-  test("carries task and course ids from overlapping messages", () => {
+  test("carries task and course ids from overlapping messages with same taskId", () => {
     const specs = buildChatChunkSpecs([
       {
         role: "user",
@@ -41,6 +41,7 @@ describe("buildChatChunkSpecs", () => {
         role: "assistant",
         content: "I can help.",
         createdAt: 2,
+        taskId: taskA,
         courseId: courseA,
       },
     ]);
@@ -49,6 +50,35 @@ describe("buildChatChunkSpecs", () => {
       (s) => s.linkedTaskIds.includes(taskA) && s.linkedCourseIds.includes(courseA),
     );
     expect(withBoth).toBeDefined();
+  });
+
+  test("messages with different taskIds are in separate chunks", () => {
+    const taskB = "xyz789" as Id<"tasks">;
+    const specs = buildChatChunkSpecs([
+      {
+        role: "user",
+        content: "About task A",
+        createdAt: 1,
+        taskId: taskA,
+      },
+      {
+        role: "user",
+        content: "About task B",
+        createdAt: 2,
+        taskId: taskB,
+      },
+    ]);
+    // Should have at least 2 chunks since messages have different taskIds
+    expect(specs.length).toBeGreaterThanOrEqual(2);
+    const taskAChunks = specs.filter(s => s.linkedTaskIds.includes(taskA));
+    const taskBChunks = specs.filter(s => s.linkedTaskIds.includes(taskB));
+    expect(taskAChunks.length).toBeGreaterThan(0);
+    expect(taskBChunks.length).toBeGreaterThan(0);
+    // No chunk should contain both taskIds
+    const mixedChunks = specs.filter(s =>
+      s.linkedTaskIds.includes(taskA) && s.linkedTaskIds.includes(taskB)
+    );
+    expect(mixedChunks.length).toBe(0);
   });
 
   test("long thread produces multiple chunks with overlap stride", () => {
