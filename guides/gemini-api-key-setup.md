@@ -4,12 +4,9 @@ This guide explains how to get a Google Gemini API key and configure it for loca
 
 ## Why This Is Needed
 
-The Gemini API is used in two places:
+The Gemini API is used by the **Convex backend** for task time estimation, syllabus parsing, transcript parsing, and course embeddings. Stored as `GEMINI_API_KEY` in your Convex deployment.
 
-1. **Convex backend** — task time estimation, syllabus parsing, transcript parsing, and course embeddings. Stored as `GEMINI_API_KEY` in your Convex deployment.
-2. **Mastra AI agent server** — the chat assistant uses `gemini-2.5-flash`. Stored as `GOOGLE_GENERATIVE_AI_API_KEY` in `mastra/.env`.
-
-Both use the same key — just different variable names.
+> **Note:** The Mastra AI agent server uses the Anthropic API (not Gemini). See `guides/mastra-setup.md` for that setup.
 
 ## Step 1: Get a Gemini API Key
 
@@ -32,17 +29,7 @@ This stores the key in your personal Convex dev deployment. You can verify it wa
 npx convex env list
 ```
 
-## Step 3: Set the Key for Mastra
-
-Add the same key to `mastra/.env` (create the file if it doesn't exist):
-
-```
-GOOGLE_GENERATIVE_AI_API_KEY=your_key_here
-```
-
 ## Notes
 
 - Each developer has their own Convex dev deployment, so everyone must set `GEMINI_API_KEY` individually
-- `mastra/.env` is gitignored — never commit it
 - If `GEMINI_API_KEY` is missing in Convex, task time estimation and embeddings will silently fail
-- If `GOOGLE_GENERATIVE_AI_API_KEY` is missing in Mastra, the chat assistant will return errors

@@ -15,7 +15,7 @@ React + Vite + TypeScript + TailwindCSS + Convex + React Router + Google Gemini 
 - Run Mastra agent server: `cd mastra && npx mastra dev` (run in its own terminal — required for the chatbot)
 - Run frontend: `npm run dev` (run after backend and Mastra are running, in a separate terminal)
 - Run tests: `npm test`
-- Run linter: `<command>`
+- Run linter: not configured (TypeScript type checking via `npm run build`)
 - Build for production: `npm run build`
 
 > The Mastra server must be publicly reachable for Convex HTTP actions to call it.
