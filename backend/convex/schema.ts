@@ -3,6 +3,14 @@ import { v } from "convex/values";
 import { authTables } from "@convex-dev/auth/server";
 import { taskTypeValidator } from "./lib/taskValidators";
 
+/** Per-category AI explanation for time estimates (tasks and subtasks). */
+const reasoningTraceValidator = v.object({
+  classes: v.string(),
+  tasks: v.string(),
+  chats: v.string(),
+  profile: v.string(),
+});
+
 export default defineSchema({
   ...authTables,
 
@@ -113,14 +121,7 @@ export default defineSchema({
     /** Free-text label for the course/class (optional; complements courseId) */
     classTag: v.optional(v.string()),
     embedding: v.optional(v.array(v.float64())),
-    reasoning: v.optional(
-      v.object({
-        classes: v.string(),
-        tasks: v.string(),
-        chats: v.string(),
-        profile: v.string(),
-      })
-    ),
+    reasoning: v.optional(reasoningTraceValidator),
   })
     .index("by_userId", ["userId"])
     .index("by_userId_createdAt", ["userId", "createdAt"])
@@ -142,6 +143,7 @@ export default defineSchema({
     estimateFeedbackRating: v.optional(v.union(v.literal("up"), v.literal("down"))),
     correctedEstimateMinutes: v.optional(v.number()),
     estimateFeedbackSubmittedAt: v.optional(v.number()),
+    reasoning: v.optional(reasoningTraceValidator),
     order: v.number(),
     createdAt: v.number(),
   })

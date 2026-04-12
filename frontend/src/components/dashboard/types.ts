@@ -1,6 +1,14 @@
 import { Id } from '../../../../backend/convex/_generated/dataModel'
 import { formatEstimatedTime } from '../../utils/timeUtils'
 
+/** Matches Convex `reasoningTraceValidator` — AI explanation for time estimates. */
+export type ReasoningTrace = {
+  classes: string
+  tasks: string
+  chats: string
+  profile: string
+}
+
 export type SubtaskType = {
   _id: Id<'subtasks'>
   parentTaskId: Id<'tasks'>
@@ -15,6 +23,7 @@ export type SubtaskType = {
   order: number
   suggestedCompletionAt?: number
   createdAt: number
+  reasoning?: ReasoningTrace
 }
 
 export type TaskType = {
@@ -31,12 +40,7 @@ export type TaskType = {
   createdAt: number
   classTag?: string
   courseId?: Id<'userCourses'>
-  reasoning?: {
-    classes: string
-    tasks: string
-    chats: string
-    profile: string
-  }
+  reasoning?: ReasoningTrace
 }
 
 export const BUILT_IN_TASK_TYPES = [
