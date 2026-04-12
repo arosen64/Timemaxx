@@ -14,6 +14,12 @@ export type TaskType = {
   dueDate: number
   createdAt: number
   classTag?: string
+  reasoning?: {
+    classes: string
+    tasks: string
+    chats: string
+    profile: string
+  }
 }
 
 export const BUILT_IN_TASK_TYPES = [

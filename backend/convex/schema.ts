@@ -14,6 +14,7 @@ export default defineSchema({
     expiresAt: v.number(),
     selectedCalendarIds: v.optional(v.array(v.string())),
     scope: v.optional(v.string()),
+    timemaxxCalendarId: v.optional(v.string()),
   }).index("by_userId", ["userId"]),
 
   // Short-lived state tokens used to identify users during the OAuth callback
@@ -145,14 +146,17 @@ export default defineSchema({
   studyBlocks: defineTable({
     taskId: v.optional(v.id("tasks")),
     subtaskId: v.optional(v.id("subtasks")),
+    userId: v.optional(v.id("users")),
     title: v.string(),
     startTime: v.optional(v.string()),
     studyBlockLength: v.number(),
     isConflicted: v.optional(v.boolean()),
     googleEventId: v.optional(v.string()),
+    needsExport: v.optional(v.boolean()),
   })
     .index("by_taskId", ["taskId"])
-    .index("by_subtaskId", ["subtaskId"]),
+    .index("by_subtaskId", ["subtaskId"])
+    .index("by_userId", ["userId"]),
 
   // Chat messages — stores chatbot conversation history per user
   chatMessages: defineTable({
@@ -183,6 +187,8 @@ export default defineSchema({
     sessionId: v.string(),
     resolvedTaskId: v.optional(v.id("tasks")),
     resolvedCourseId: v.optional(v.id("userCourses")),
+    /** User message that started the active MCQ clarify flow — tagged when user picks task/class */
+    entityClarifyTriggerUserMessageId: v.optional(v.id("chatMessages")),
     /** Last user utterance used for embedding search (MCQ / Other) */
     lastEntityQueryText: v.optional(v.string()),
     /** Which entity we are disambiguating in the active MCQ flow */
@@ -196,6 +202,9 @@ export default defineSchema({
     awaitingEntityResolution: v.optional(v.boolean()),
     /** User must answer Yes/No: still same scoped task/class? */
     awaitingScopeConfirm: v.optional(v.boolean()),
+    /** Legacy / UI flags for scope confirmation (may exist on older session docs) */
+    scopeConfirmPendingTask: v.optional(v.boolean()),
+    scopeConfirmPendingClass: v.optional(v.boolean()),
     /** After user answers No on scope — no more messages until new session */
     chatInputLocked: v.optional(v.boolean()),
     /** One-shot: next user message skips scope-change block after Yes */
@@ -207,6 +216,37 @@ export default defineSchema({
     /** Intent determined by task agent: "create" skips entity MCQ, "rud" triggers it */
     taskAgentIntent: v.optional(v.union(v.literal("create"), v.literal("rud"))),
   }).index("by_userId_sessionId", ["userId", "sessionId"]),
+
+  /**
+   * Searchable transcript slices for RAG (time estimation, etc.).
+   * Rebuilt from chatMessages with sliding-window overlap; embeddings added in Part 4.
+   */
+  chatChunks: defineTable({
+    userId: v.id("users"),
+    sessionId: v.string(),
+    text: v.string(),
+    chunkIndex: v.number(),
+    /** Earliest message timestamp covered by this chunk (ordering / reconstruction). */
+    startCreatedAt: v.number(),
+    linkedTaskIds: v.array(v.id("tasks")),
+    linkedCourseIds: v.array(v.id("userCourses")),
+    clarificationIntent: v.optional(
+      v.union(
+        v.literal("task_feedback"),
+        v.literal("class_difficulty"),
+        v.literal("none"),
+      ),
+    ),
+    embedding: v.optional(v.array(v.float64())),
+    createdAt: v.number(),
+  })
+    .index("by_userId_sessionId", ["userId", "sessionId"])
+    .index("by_userId_sessionId_chunkIndex", ["userId", "sessionId", "chunkIndex"])
+    .vectorIndex("by_embedding", {
+      vectorField: "embedding",
+      dimensions: 3072,
+      filterFields: ["userId"],
+    }),
 
   // Syllabi table — tracks uploaded syllabus files and their processing status
   syllabi: defineTable({

@@ -33,6 +33,7 @@ export default function TaskCard({
 }: TaskCardProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [showAll, setShowAll] = useState(false)
+  const [showReasoning, setShowReasoning] = useState(false)
 
   const studyBlocks = useQuery(
     api.queries.studyBlocks.getStudyBlocksByTask,
@@ -74,6 +75,20 @@ export default function TaskCard({
                 <>
                   <span>· {formatMinutes(task.timeEstimate)}</span>
                   <EstimateBadge isManual={task.isManualEstimate} />
+                  {!task.isManualEstimate && task.reasoning && !isEstimating && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setShowReasoning((prev) => !prev)
+                      }}
+                      className="flex items-center gap-1 text-info-emphasis hover:underline"
+                      aria-label="Toggle AI reasoning"
+                    >
+                      <SparklesIcon color="currentColor" size={11} />
+                      <span className="text-[11px] font-semibold">Why?</span>
+                    </button>
+                  )}
                 </>
               ) : null}
             </div>
@@ -142,6 +157,35 @@ export default function TaskCard({
               <TaskFeedbackForm task={task} {...feedback} />
             )}
           </div>
+        </div>
+      </div>
+
+      {/* Collapsible reasoning panel */}
+      <div
+        className={`grid transition-[grid-template-rows] duration-200 ${
+          showReasoning && task.reasoning ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
+        }`}
+      >
+        <div className="overflow-hidden">
+          {task.reasoning && (
+            <div className="border-t border-border bg-info-bg px-[18px] py-3 flex flex-col gap-2.5">
+              <div className="flex items-center gap-1.5">
+                <span className="text-info-emphasis"><SparklesIcon color="currentColor" size={12} /></span>
+                <span className="text-[11px] font-semibold font-heading text-info-emphasis">AI Reasoning</span>
+              </div>
+              {[
+                { label: 'Courses', text: task.reasoning.classes },
+                { label: 'Past Tasks', text: task.reasoning.tasks },
+                { label: 'Chat History', text: task.reasoning.chats },
+                { label: 'Profile', text: task.reasoning.profile },
+              ].map(({ label, text }) => (
+                <div key={label} className="flex flex-col gap-0.5">
+                  <span className="text-[11px] font-semibold font-heading text-navy">{label}</span>
+                  <span className="text-[11px] leading-relaxed text-slate-blue">{text}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
