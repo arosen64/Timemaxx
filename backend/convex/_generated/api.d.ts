@@ -25,6 +25,7 @@ import type * as ai_requestEstimateTaskTime from "../ai/requestEstimateTaskTime.
 import type * as ai_uploadSyllabus from "../ai/uploadSyllabus.js";
 import type * as auth from "../auth.js";
 import type * as calendarOAuthCallback from "../calendarOAuthCallback.js";
+import type * as dev_localRetrievalTest from "../dev/localRetrievalTest.js";
 import type * as http from "../http.js";
 import type * as http_chat from "../http_chat.js";
 import type * as lib_anthropic from "../lib/anthropic.js";
@@ -54,6 +55,7 @@ import type * as mutations_timeEstimate from "../mutations/timeEstimate.js";
 import type * as mutations_userCourses from "../mutations/userCourses.js";
 import type * as mutations_users from "../mutations/users.js";
 import type * as queries_calendar from "../queries/calendar.js";
+import type * as queries_chatChunks from "../queries/chatChunks.js";
 import type * as queries_chatMessages from "../queries/chatMessages.js";
 import type * as queries_chatSessions from "../queries/chatSessions.js";
 import type * as queries_studyBlocks from "../queries/studyBlocks.js";
@@ -86,6 +88,7 @@ declare const fullApi: ApiFromModules<{
   "ai/uploadSyllabus": typeof ai_uploadSyllabus;
   auth: typeof auth;
   calendarOAuthCallback: typeof calendarOAuthCallback;
+  "dev/localRetrievalTest": typeof dev_localRetrievalTest;
   http: typeof http;
   http_chat: typeof http_chat;
   "lib/anthropic": typeof lib_anthropic;
@@ -115,6 +118,7 @@ declare const fullApi: ApiFromModules<{
   "mutations/userCourses": typeof mutations_userCourses;
   "mutations/users": typeof mutations_users;
   "queries/calendar": typeof queries_calendar;
+  "queries/chatChunks": typeof queries_chatChunks;
   "queries/chatMessages": typeof queries_chatMessages;
   "queries/chatSessions": typeof queries_chatSessions;
   "queries/studyBlocks": typeof queries_studyBlocks;
