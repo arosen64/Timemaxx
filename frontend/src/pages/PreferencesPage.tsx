@@ -3,7 +3,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../backend/convex/_generated/api";
 import type { WorkHoursData } from "../types";
 import Sidebar from "../components/Sidebar";
-import { ChevronDownIcon } from "../components/icons";
+import { CalendarIcon, ChevronDownIcon } from "../components/icons";
 import ProfileForm from "../components/ProfileForm";
 import WorkHoursSelector, { DEFAULT_WORK_HOURS } from "../components/WorkHoursSelector";
 import PreferencesForm from "../components/PreferencesForm";
@@ -289,14 +289,7 @@ export default function PreferencesPage() {
           {/* Google Calendar Color Mapping */}
           <div className="flex items-center justify-between bg-white border border-border rounded-xl p-6 gap-4">
             <div className="flex items-center gap-3 flex-1">
-              {/* Google Calendar icon */}
-              <div className="flex-shrink-0 flex flex-col w-6 h-6 rounded bg-white border-2 border-gcal-blue overflow-hidden">
-                <div className="h-[7px] bg-gcal-blue" />
-                <div className="flex flex-1 gap-0.5 p-0.5">
-                  <div className="flex-1 rounded-sm bg-gcal-red" />
-                  <div className="flex-1 rounded-sm bg-gcal-green" />
-                </div>
-              </div>
+              <CalendarIcon size={24}/>
               <div className="flex flex-col gap-1">
                 <span className="font-heading text-sm font-semibold text-navy">
                   Map Timemaxx course color to exported Google Calendar blocks
