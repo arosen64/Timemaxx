@@ -322,6 +322,38 @@ describe("mutations/calendar – deleteCalendarTokenForUser", () => {
 
     expect(record).not.toBeNull();
   });
+
+  test("resets gcalColorMappingEnabled to false on the user record", async () => {
+    const t = makeTestCtx();
+    const { userId } = await createTestUser(t);
+
+    await t.run((ctx) => ctx.db.patch(userId, { gcalColorMappingEnabled: true }));
+    await t.run((ctx) =>
+      ctx.db.insert("calendarConnections", {
+        userId,
+        accessToken: "acc",
+        refreshToken: "ref",
+        expiresAt: Date.now() + 3600_000,
+      })
+    );
+
+    await t.mutation(internal.mutations.calendar.deleteCalendarTokenForUser, { userId });
+
+    const user = await t.run((ctx) => ctx.db.get(userId));
+    expect(user!.gcalColorMappingEnabled).toBe(false);
+  });
+
+  test("resets gcalColorMappingEnabled even when no connection record exists", async () => {
+    const t = makeTestCtx();
+    const { userId } = await createTestUser(t);
+
+    await t.run((ctx) => ctx.db.patch(userId, { gcalColorMappingEnabled: true }));
+
+    await t.mutation(internal.mutations.calendar.deleteCalendarTokenForUser, { userId });
+
+    const user = await t.run((ctx) => ctx.db.get(userId));
+    expect(user!.gcalColorMappingEnabled).toBe(false);
+  });
 });
 
 describe("mutations/calendar – saveSelectedCalendars", () => {

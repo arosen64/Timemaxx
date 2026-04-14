@@ -286,6 +286,47 @@ describe("mutations/users – updateUserSettings", () => {
     expect(user!.year).toBe("Junior");
     expect(user!.focusBlockLength).toBe(30);
   });
+
+  test("sets gcalColorMappingEnabled to true", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+
+    await withAuth.mutation(api.mutations.users.updateUserSettings, {
+      gcalColorMappingEnabled: true,
+    });
+
+    const user = await t.run((ctx) => ctx.db.get(userId));
+    expect(user!.gcalColorMappingEnabled).toBe(true);
+  });
+
+  test("sets gcalColorMappingEnabled to false", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+
+    await t.run((ctx) => ctx.db.patch(userId, { gcalColorMappingEnabled: true }));
+
+    await withAuth.mutation(api.mutations.users.updateUserSettings, {
+      gcalColorMappingEnabled: false,
+    });
+
+    const user = await t.run((ctx) => ctx.db.get(userId));
+    expect(user!.gcalColorMappingEnabled).toBe(false);
+  });
+
+  test("does not affect other fields when only gcalColorMappingEnabled is updated", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+
+    await withAuth.mutation(api.mutations.users.completeOnboarding, VALID_ONBOARDING_ARGS);
+    await withAuth.mutation(api.mutations.users.updateUserSettings, {
+      gcalColorMappingEnabled: true,
+    });
+
+    const user = await t.run((ctx) => ctx.db.get(userId));
+    expect(user!.major).toBe("Computer Science");
+    expect(user!.focusBlockLength).toBe(50);
+    expect(user!.gcalColorMappingEnabled).toBe(true);
+  });
 });
 
 describe("mutations/users – completeOnboarding", () => {

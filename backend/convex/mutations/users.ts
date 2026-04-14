@@ -48,16 +48,24 @@ export const updateUserSettings = mutation({
 
     // When gcalColorMappingEnabled is toggled, re-export all previously exported blocks
     // so their GCal colors reflect the new setting immediately.
+    // Skip if the user has no connected calendar — there is nothing to re-export.
     if (
       prevUser !== null &&
       args.gcalColorMappingEnabled !== undefined &&
       args.gcalColorMappingEnabled !== prevUser.gcalColorMappingEnabled
     ) {
-      await ctx.scheduler.runAfter(
-        0,
-        internal.actions.exportStudyBlocksToCalendar.internalExportStudyBlocksToCalendar,
-        { userId },
-      );
+      const connection = await ctx.db
+        .query("calendarConnections")
+        .withIndex("by_userId", (q) => q.eq("userId", userId))
+        .unique();
+
+      if (connection) {
+        await ctx.scheduler.runAfter(
+          0,
+          internal.actions.exportStudyBlocksToCalendar.internalExportStudyBlocksToCalendar,
+          { userId },
+        );
+      }
     }
   },
 });
