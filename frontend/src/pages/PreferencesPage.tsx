@@ -21,6 +21,7 @@ function dbToWorkHours(
 
 export default function PreferencesPage() {
   const user = useQuery(api.queries.users.getCurrUser);
+  const calendarStatus = useQuery(api.queries.calendar.getCalendarConnectionStatus);
   const updateSettings = useMutation(api.mutations.users.updateUserSettings);
   const runDetectConflicts = useMutation(api.mutations.studyBlocks.runDetectConflicts);
 
@@ -286,35 +287,37 @@ export default function PreferencesPage() {
             )}
           </div>
 
-          {/* Google Calendar Color Mapping */}
-          <div className="flex items-center justify-between bg-white border border-border rounded-xl p-6 gap-4">
-            <div className="flex items-center gap-3 flex-1">
-              <CalendarIcon size={24}/>
-              <div className="flex flex-col gap-1">
-                <span className="font-heading text-sm font-semibold text-navy">
-                  Map Timemaxx course color to exported Google Calendar blocks
-                </span>
-                <span className="font-body text-xs text-slate-blue">
-                  When enabled, study blocks exported to Google Calendar will use your course colors.
-                </span>
+          {/* Google Calendar Color Mapping — only shown when calendar is connected */}
+          {calendarStatus?.connected && (
+            <div className="flex items-center justify-between bg-white border border-border rounded-xl p-6 gap-4">
+              <div className="flex items-center gap-3 flex-1">
+                <CalendarIcon size={24} color="#002D72" />
+                <div className="flex flex-col gap-1">
+                  <span className="font-heading text-sm font-semibold text-navy">
+                    Map Timemaxx course color to exported Google Calendar blocks
+                  </span>
+                  <span className="font-body text-xs text-slate-blue">
+                    When enabled, study blocks exported to Google Calendar will use your course colors.
+                  </span>
+                </div>
               </div>
-            </div>
-            <button
-              role="switch"
-              aria-checked={gcalColorMappingEnabled}
-              onClick={handleGcalColorToggle}
-              disabled={isTogglingGcalColor}
-              className={`relative flex-shrink-0 w-11 h-6 rounded-full p-0.5 transition-colors disabled:opacity-50 ${
-                gcalColorMappingEnabled ? "bg-teal" : "bg-light-blue"
-              }`}
-            >
-              <div
-                className={`w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${
-                  gcalColorMappingEnabled ? "translate-x-5" : "translate-x-0"
+              <button
+                role="switch"
+                aria-checked={gcalColorMappingEnabled}
+                onClick={handleGcalColorToggle}
+                disabled={isTogglingGcalColor}
+                className={`relative flex-shrink-0 w-11 h-6 rounded-full p-0.5 transition-colors disabled:opacity-50 ${
+                  gcalColorMappingEnabled ? "bg-teal" : "bg-light-blue"
                 }`}
-              />
-            </button>
-          </div>
+              >
+                <div
+                  className={`w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${
+                    gcalColorMappingEnabled ? "translate-x-5" : "translate-x-0"
+                  }`}
+                />
+              </button>
+            </div>
+          )}
         </div>
       </main>
     </div>
