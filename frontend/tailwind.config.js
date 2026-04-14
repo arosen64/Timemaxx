@@ -26,6 +26,9 @@ export default {
         'success-light': '#E6F5F0',
         'info-bg': '#EBF5FF',
         'info-emphasis': '#0077D8',
+        'gcal-blue': '#4285F4',
+        'gcal-red': '#EA4335',
+        'gcal-green': '#34A853',
       },
       spacing: {
         '4.5': '1.125rem',
