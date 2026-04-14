@@ -62,6 +62,17 @@ export const setTimeEstimate = internalMutation({
       timeEstimate: args.timeEstimate,
       reasoning: args.reasoning,
     });
+
+    // When subtasks exist, block rebuilding is owned by the subtask rollup in
+    // setSubtaskTimeEstimate (runs once all subtask estimates are in). Running
+    // rebuildStudyBlocks here would create blocks sized to a whole-task estimate
+    // that doesn't account for the subtask breakdown.
+    const subtasks = await ctx.db
+      .query("subtasks")
+      .withIndex("by_parentTaskId", (q) => q.eq("parentTaskId", args.taskId))
+      .collect();
+    if (subtasks.length > 0) return;
+
     await rebuildStudyBlocks(ctx, args.taskId, args.timeEstimate);
   },
 });

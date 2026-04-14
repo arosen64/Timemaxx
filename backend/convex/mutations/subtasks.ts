@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { taskTypeValidator } from "../lib/taskValidators";
 import { internal } from "../_generated/api";
+import { rebuildStudyBlocks } from "./timeEstimate";
 
 const reasoningTraceArgs = v.object({
   classes: v.string(),
@@ -143,6 +144,15 @@ export const setSubtaskTimeEstimate = internalMutation({
 
     const total = siblings.reduce((sum, s) => sum + (s.timeEstimate ?? 0), 0);
     await ctx.db.patch(subtask.parentTaskId, { timeEstimate: total });
+
+    // Only rebuild study blocks once all subtasks have been estimated.
+    // Rebuilding on every partial rollup would create blocks sized to an
+    // incomplete sum; waiting for the final tally ensures block count and
+    // lengths match the true total.
+    const allEstimated = siblings.every((s) => s.timeEstimate !== undefined);
+    if (allEstimated && total > 0) {
+      await rebuildStudyBlocks(ctx, subtask.parentTaskId, total);
+    }
   },
 });
 
