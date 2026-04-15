@@ -80,6 +80,8 @@ export default defineSchema({
       )
     ),
 
+    gcalColorMappingEnabled: v.optional(v.boolean()),
+
   })
     .index("email", ["email"])
     .index("phone", ["phone"]),

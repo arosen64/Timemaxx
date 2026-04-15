@@ -27,7 +27,7 @@ export default function UpcomingSchedulePanel() {
 
       <div className="flex items-center gap-2 rounded-lg border border-border bg-bg-gray px-3.5 py-3 text-sky-blue">
         <SparklesIcon color="currentColor" size={14} />
-        <span className="text-[11px] text-slate-blue">Powered by Google Gemini</span>
+        <span className="text-[11px] text-slate-blue">AI-powered scheduling</span>
       </div>
     </aside>
   )

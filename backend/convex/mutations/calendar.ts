@@ -162,6 +162,10 @@ export const deleteCalendarTokenForUser = internalMutation({
     if (existing) {
       await ctx.db.delete(existing._id);
     }
+
+    // Clear the GCal color mapping preference — it has no effect without a
+    // connected calendar and should reset so the toggle starts fresh on reconnect.
+    await ctx.db.patch(args.userId, { gcalColorMappingEnabled: false });
   },
 });
 

@@ -1,7 +1,7 @@
 import BrandLogo from "./BrandLogo";
 
 const FEATURES = [
-  "Gemini-powered time estimation",
+  "AI-powered time estimation",
   "Personalized daily study windows",
   "Smart scheduling around your life",
 ];
