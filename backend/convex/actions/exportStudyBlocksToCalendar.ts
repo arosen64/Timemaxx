@@ -58,6 +58,7 @@ async function runExport(
       start: { dateTime: block.startTime },
       end: { dateTime: endTime },
       ...(colorId && { colorId }),
+      ...(block.courseName && { description: `Course: ${block.courseName}` }),
     };
 
     if (!block.googleEventId) {
