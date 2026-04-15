@@ -148,9 +148,11 @@ export default defineSchema({
     reasoning: v.optional(reasoningTraceValidator),
     order: v.number(),
     createdAt: v.number(),
+    embedding: v.optional(v.array(v.float64())),
   })
     .index("by_parentTaskId", ["parentTaskId"])
-    .index("by_userId", ["userId"]),
+    .index("by_userId", ["userId"])
+    .vectorIndex("by_embedding", { vectorField: "embedding", dimensions: 3072, filterFields: ["userId"] }),
 
   // StudyBlocks table — stores scheduled time chunks assigned to tasks or subtasks
   studyBlocks: defineTable({

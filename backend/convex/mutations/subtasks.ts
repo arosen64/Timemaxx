@@ -59,17 +59,16 @@ export const createSubtask = mutation({
     // so we never show stale explanations alongside a summed estimate.
     await ctx.db.patch(args.parentTaskId, { reasoning: undefined });
 
-    // Kick off time estimation on the backend immediately after creation.
-    // This runs regardless of frontend lifecycle (no component unmount risk).
-    // In convex-test (Node.js), process.env.VITEST is set; in production Convex
-    // (V8 isolate), `process` is undefined. Skip scheduling in tests to avoid
-    // a convex-test limitation where setTimeout callbacks fire after the test's
-    // global has been replaced, causing "Write outside of transaction" errors.
     const isTest =
       typeof process !== "undefined" && process.env.VITEST === "true";
     if (!isTest) {
       await ctx.scheduler.runAfter(0, internal.ai.estimateTaskTime.estimateTaskTime, {
         subtaskId,
+      });
+      await ctx.scheduler.runAfter(0, internal.ai.embeddings.generateSubtaskEmbedding, {
+        subtaskId,
+        title: args.title,
+        description: args.description,
       });
     }
 
@@ -107,12 +106,16 @@ export const updateSubtask = mutation({
       reasoning: undefined,
     });
 
-    // Re-schedule estimation since content changed.
     const isTest =
       typeof process !== "undefined" && process.env.VITEST === "true";
     if (!isTest) {
       await ctx.scheduler.runAfter(0, internal.ai.estimateTaskTime.estimateTaskTime, {
         subtaskId: args.subtaskId,
+      });
+      await ctx.scheduler.runAfter(0, internal.ai.embeddings.generateSubtaskEmbedding, {
+        subtaskId: args.subtaskId,
+        title: args.title,
+        description: args.description,
       });
     }
   },
@@ -153,6 +156,16 @@ export const setSubtaskTimeEstimate = internalMutation({
     if (allEstimated && total > 0) {
       await rebuildStudyBlocks(ctx, subtask.parentTaskId, total);
     }
+  },
+});
+
+export const patchSubtaskEmbedding = internalMutation({
+  args: {
+    subtaskId: v.id("subtasks"),
+    embedding: v.array(v.float64()),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.subtaskId, { embedding: args.embedding });
   },
 });
 
