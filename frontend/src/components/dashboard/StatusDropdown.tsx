@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { ChevronDownIcon } from '../icons'
 import { type TaskStatus } from './types'
 
@@ -32,7 +33,9 @@ type StatusDropdownProps = {
 
 export default function StatusDropdown({ value, onChange, size = 'md' }: StatusDropdownProps) {
   const [open, setOpen] = useState(false)
+  const [menuStyle, setMenuStyle] = useState<{ top: number; left: number }>({ top: 0, left: 0 })
   const ref = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
   const config = STATUS_CONFIG[value]
 
   useEffect(() => {
@@ -52,12 +55,47 @@ export default function StatusDropdown({ value, onChange, size = 'md' }: StatusD
   const dotCls = `rounded-full shrink-0 ${config.dot} ${isSm ? 'w-[5px] h-[5px]' : 'w-[6px] h-[6px]'}`
   const labelCls = `font-heading font-semibold ${config.text} ${isSm ? 'text-[10px]' : 'text-[11px]'}`
 
+  const menu = open ? createPortal(
+    <div
+      ref={ref}
+      style={{ position: 'fixed', top: menuStyle.top, left: menuStyle.left, zIndex: 9999 }}
+      className="min-w-[130px] rounded-lg border border-border bg-white shadow-md"
+      role="listbox"
+    >
+      {(Object.entries(STATUS_CONFIG) as [TaskStatus, typeof config][]).map(([status, cfg]) => (
+        <button
+          key={status}
+          type="button"
+          role="option"
+          aria-selected={status === value}
+          onClick={(e) => {
+            e.stopPropagation()
+            onChange(status)
+            setOpen(false)
+          }}
+          className={`flex w-full items-center gap-2 px-3 py-2 text-left text-[12px] font-semibold font-heading transition
+            hover:bg-bg-gray
+            ${status === value ? 'bg-bg-gray' : ''}`}
+        >
+          <span className={`w-[6px] h-[6px] rounded-full shrink-0 ${cfg.dot}`} />
+          <span className={cfg.text}>{cfg.label}</span>
+        </button>
+      ))}
+    </div>,
+    document.body,
+  ) : null
+
   return (
-    <div className="relative" ref={ref}>
+    <div className="relative">
       <button
+        ref={triggerRef}
         type="button"
         onClick={(e) => {
           e.stopPropagation()
+          if (!open && triggerRef.current) {
+            const rect = triggerRef.current.getBoundingClientRect()
+            setMenuStyle({ top: rect.bottom + 4, left: rect.left })
+          }
           setOpen((prev) => !prev)
         }}
         className={triggerCls}
@@ -71,32 +109,7 @@ export default function StatusDropdown({ value, onChange, size = 'md' }: StatusD
         </span>
       </button>
 
-      {open && (
-        <div
-          className="absolute left-0 top-full z-50 mt-1 min-w-[130px] rounded-lg border border-border bg-white shadow-md"
-          role="listbox"
-        >
-          {(Object.entries(STATUS_CONFIG) as [TaskStatus, typeof config][]).map(([status, cfg]) => (
-            <button
-              key={status}
-              type="button"
-              role="option"
-              aria-selected={status === value}
-              onClick={(e) => {
-                e.stopPropagation()
-                onChange(status)
-                setOpen(false)
-              }}
-              className={`flex w-full items-center gap-2 px-3 py-2 text-left text-[12px] font-semibold font-heading transition
-                hover:bg-bg-gray
-                ${status === value ? 'bg-bg-gray' : ''}`}
-            >
-              <span className={`w-[6px] h-[6px] rounded-full shrink-0 ${cfg.dot}`} />
-              <span className={cfg.text}>{cfg.label}</span>
-            </button>
-          ))}
-        </div>
-      )}
+      {menu}
     </div>
   )
 }
