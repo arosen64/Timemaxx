@@ -15277,7 +15277,7 @@
               }
             },
             "jzFAO": {
-              "y": 2813,
+              "y": 2922,
               "width": "fit_content",
               "height": "fit_content",
               "x": 24
@@ -18248,6 +18248,149 @@
                       ]
                     }
                   ]
+                },
+                {
+                  "type": "frame",
+                  "id": "0UQkX",
+                  "name": "gcalColorToggle",
+                  "width": "fill_container",
+                  "fill": "$--card",
+                  "cornerRadius": 12,
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "$--border"
+                  },
+                  "gap": 16,
+                  "padding": 24,
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "c9gwI",
+                      "name": "leftSide",
+                      "width": "fill_container",
+                      "gap": 12,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "Fv1yg",
+                          "name": "gcalIcon",
+                          "width": 24,
+                          "height": 24,
+                          "fill": "#FFFFFF",
+                          "cornerRadius": 3,
+                          "stroke": {
+                            "align": "inside",
+                            "thickness": 2,
+                            "fill": "#4285F4"
+                          },
+                          "layout": "vertical",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "UfsiE",
+                              "name": "topBar",
+                              "width": "fill_container",
+                              "height": 7,
+                              "fill": "#4285F4",
+                              "cornerRadius": [
+                                1,
+                                1,
+                                0,
+                                0
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "ug9Jc",
+                              "name": "iconBody",
+                              "width": "fill_container",
+                              "height": "fill_container",
+                              "gap": 2,
+                              "padding": 2,
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "K6Y3J",
+                                  "name": "leftCell",
+                                  "width": "fill_container",
+                                  "height": "fill_container",
+                                  "fill": "#EA4335",
+                                  "cornerRadius": 1
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "2WOBh",
+                                  "name": "rightCell",
+                                  "width": "fill_container",
+                                  "height": "fill_container",
+                                  "fill": "#34A853",
+                                  "cornerRadius": 1
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "m1T9V",
+                          "name": "textGroup",
+                          "width": "fill_container",
+                          "layout": "vertical",
+                          "gap": 4,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "kAvaj",
+                              "name": "toggleLabel",
+                              "fill": "$--primary",
+                              "content": "Map Timemaxx course color to exported Google Calendar blocks",
+                              "fontFamily": "Space Grotesk",
+                              "fontSize": 14,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "text",
+                              "id": "LVboP",
+                              "name": "toggleDesc",
+                              "fill": "$--muted-foreground",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "When enabled, study blocks exported to Google Calendar will use your course colors.",
+                              "fontFamily": "Inter",
+                              "fontSize": 12,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "zXBk1",
+                      "name": "toggleTrack",
+                      "width": 44,
+                      "height": 24,
+                      "fill": "$--accent",
+                      "cornerRadius": 12,
+                      "padding": 2,
+                      "justifyContent": "end",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "ZiV0f",
+                          "name": "toggleKnob",
+                          "width": 20,
+                          "height": 20,
+                          "fill": "$--primary-foreground",
+                          "cornerRadius": 10
+                        }
+                      ]
+                    }
+                  ]
                 }
               ]
             }
@@ -18361,7 +18504,7 @@
               }
             },
             "jzFAO": {
-              "y": 1800,
+              "y": 1909,
               "width": "fit_content",
               "height": "fit_content",
               "x": 24
@@ -20318,6 +20461,151 @@
                               ]
                             }
                           ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "BkVco",
+                  "name": "gcalColorCard",
+                  "width": "fill_container",
+                  "fill": "$--card",
+                  "cornerRadius": 12,
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "$--border"
+                  },
+                  "gap": 16,
+                  "padding": 24,
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "7hPYw",
+                      "name": "leftContent",
+                      "width": "fill_container",
+                      "gap": 12,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "GutQ6",
+                          "name": "gcalIcon",
+                          "width": 24,
+                          "height": 24,
+                          "fill": "#FFFFFF",
+                          "cornerRadius": 3,
+                          "stroke": {
+                            "align": "inside",
+                            "thickness": 2,
+                            "fill": "#4285F4"
+                          },
+                          "layout": "vertical",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "c4KRn",
+                              "name": "iconTopBar",
+                              "width": "fill_container",
+                              "height": 7,
+                              "fill": "#4285F4",
+                              "cornerRadius": [
+                                1,
+                                1,
+                                0,
+                                0
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "i0hbe",
+                              "name": "iconBody",
+                              "width": "fill_container",
+                              "height": "fill_container",
+                              "gap": 2,
+                              "padding": 2,
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "rDow7",
+                                  "name": "leftCell",
+                                  "width": "fill_container",
+                                  "height": "fill_container",
+                                  "fill": "#EA4335",
+                                  "cornerRadius": 1
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "Fq6KJ",
+                                  "name": "rightCell",
+                                  "width": "fill_container",
+                                  "height": "fill_container",
+                                  "fill": "#34A853",
+                                  "cornerRadius": 1
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "ub7ee",
+                          "name": "textGroup",
+                          "width": "fill_container",
+                          "layout": "vertical",
+                          "gap": 4,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "YhNMZ",
+                              "name": "label",
+                              "fill": "$--primary",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "Map Timemaxx course color to exported Google Calendar blocks",
+                              "fontFamily": "Space Grotesk",
+                              "fontSize": 14,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "text",
+                              "id": "VD6ga",
+                              "name": "description",
+                              "fill": "$--muted-foreground",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "When enabled, study blocks exported to Google Calendar will use your course colors.",
+                              "fontFamily": "Inter",
+                              "fontSize": 12,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "xPZVV",
+                      "name": "toggleTrack",
+                      "width": 44,
+                      "height": 24,
+                      "fill": "$--accent",
+                      "cornerRadius": 12,
+                      "padding": 2,
+                      "justifyContent": "end",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "Y0OlA",
+                          "name": "toggleKnob",
+                          "width": 20,
+                          "height": 20,
+                          "fill": "$--primary-foreground",
+                          "cornerRadius": 10
                         }
                       ]
                     }

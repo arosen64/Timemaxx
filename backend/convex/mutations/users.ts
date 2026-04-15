@@ -1,6 +1,7 @@
 import { mutation } from "../_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { internal } from "../_generated/api";
 
 /**
  * Partially updates the authenticated user's settings (work hours, focus block length, study profile).
@@ -20,6 +21,7 @@ export const updateUserSettings = mutation({
     }))),
     productivityTraits: v.optional(v.any()),
     focusBlockLength: v.optional(v.number()),
+    gcalColorMappingEnabled: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -38,7 +40,33 @@ export const updateUserSettings = mutation({
     //   - productivityTraits uses v.any() and has no shape enforcement
     // Track this as a follow-up issue for backend input validation.
 
+    const prevUser = args.gcalColorMappingEnabled !== undefined
+      ? await ctx.db.get(userId)
+      : null;
+
     await ctx.db.patch(userId, args);
+
+    // When gcalColorMappingEnabled is toggled, re-export all previously exported blocks
+    // so their GCal colors reflect the new setting immediately.
+    // Skip if the user has no connected calendar — there is nothing to re-export.
+    if (
+      prevUser !== null &&
+      args.gcalColorMappingEnabled !== undefined &&
+      args.gcalColorMappingEnabled !== prevUser.gcalColorMappingEnabled
+    ) {
+      const connection = await ctx.db
+        .query("calendarConnections")
+        .withIndex("by_userId", (q) => q.eq("userId", userId))
+        .unique();
+
+      if (connection) {
+        await ctx.scheduler.runAfter(
+          0,
+          internal.actions.exportStudyBlocksToCalendar.internalExportStudyBlocksToCalendar,
+          { userId },
+        );
+      }
+    }
   },
 });
 
