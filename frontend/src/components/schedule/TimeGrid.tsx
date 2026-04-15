@@ -105,17 +105,24 @@ export default function TimeGrid({
           const today = isToday(day)
           return (
             <div key={isoDateString(day)} className="border-l border-border py-2 text-center">
-              <div className={`font-body text-xs font-semibold ${today ? 'text-teal' : 'text-slate-blue'}`}>
-                {day.toLocaleDateString('en-US', { weekday: 'short' })}
-              </div>
               {today ? (
-                <div className="mx-auto flex h-7 w-7 items-center justify-center rounded-full bg-navy font-heading text-xs font-bold text-white">
-                  {day.getDate()}
+                <div className="mx-auto inline-flex flex-col items-center justify-center rounded-lg bg-navy px-2.5 py-1.5 gap-0.5">
+                  <span className="font-body text-[10px] font-semibold leading-tight text-teal">
+                    {day.toLocaleDateString('en-US', { weekday: 'short' })}
+                  </span>
+                  <span className="font-heading text-xs font-bold leading-tight text-white">
+                    {day.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric' })}
+                  </span>
                 </div>
               ) : (
-                <div className="font-heading text-sm font-bold text-slate-blue">
-                  {day.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric' })}
-                </div>
+                <>
+                  <div className="font-body text-xs font-semibold text-slate-blue">
+                    {day.toLocaleDateString('en-US', { weekday: 'short' })}
+                  </div>
+                  <div className="font-heading text-sm font-bold text-slate-blue">
+                    {day.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric' })}
+                  </div>
+                </>
               )}
             </div>
           )

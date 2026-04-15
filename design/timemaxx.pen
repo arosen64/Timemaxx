@@ -9377,32 +9377,37 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "text",
-                          "id": "wyHQg",
-                          "fill": "$--accent",
-                          "content": "THU",
-                          "fontFamily": "Inter",
-                          "fontSize": 10,
-                          "fontWeight": "600"
-                        },
-                        {
                           "type": "frame",
-                          "id": "Y867b",
-                          "name": "todayCircle",
-                          "width": 28,
-                          "height": 28,
+                          "id": "89mbk",
+                          "name": "todayPill",
                           "fill": "$--primary",
-                          "cornerRadius": 14,
-                          "justifyContent": "center",
+                          "cornerRadius": 8,
+                          "layout": "vertical",
+                          "gap": 2,
+                          "padding": [
+                            6,
+                            10
+                          ],
                           "alignItems": "center",
                           "children": [
                             {
                               "type": "text",
-                              "id": "zl3rW",
+                              "id": "XV3HT",
+                              "name": "weekday",
+                              "fill": "$--accent",
+                              "content": "THU",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "text",
+                              "id": "WUMu3",
+                              "name": "date",
                               "fill": "$--primary-foreground",
-                              "content": "27",
+                              "content": "4/15",
                               "fontFamily": "Space Grotesk",
-                              "fontSize": 16,
+                              "fontSize": 12,
                               "fontWeight": "700"
                             }
                           ]
