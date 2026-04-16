@@ -105,25 +105,12 @@ export default function TimeGrid({
           const today = isToday(day)
           return (
             <div key={isoDateString(day)} className={`flex flex-col items-center justify-center border-l border-border py-2 ${today ? 'bg-navy' : ''}`}>
-              {today ? (
-                <>
-                  <div className="font-body text-xs font-semibold text-teal">
-                    {day.toLocaleDateString('en-US', { weekday: 'short' })}
-                  </div>
-                  <div className="font-heading text-sm font-bold text-white">
-                    {day.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric' })}
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="font-body text-xs font-semibold text-slate-blue">
-                    {day.toLocaleDateString('en-US', { weekday: 'short' })}
-                  </div>
-                  <div className="font-heading text-sm font-bold text-slate-blue">
-                    {day.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric' })}
-                  </div>
-                </>
-              )}
+              <div className={`font-body text-xs font-semibold ${today ? 'text-teal' : 'text-slate-blue'}`}>
+                {day.toLocaleDateString('en-US', { weekday: 'short' })}
+              </div>
+              <div className={`font-heading text-sm font-bold ${today ? 'text-white' : 'text-slate-blue'}`}>
+                {day.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric' })}
+              </div>
             </div>
           )
         })}
@@ -168,7 +155,7 @@ export default function TimeGrid({
             >
               {slotLabel(slot)}
             </div>
-            {days.map((day) => {
+            {days.map((day, colIdx) => {
               const key = isoDateString(day)
               const jsDay = day.getDay()
               const dayName = DAYS_FULL[jsDay === 0 ? 6 : jsDay - 1]
@@ -179,7 +166,7 @@ export default function TimeGrid({
               return (
                 <div
                   key={`${key}-${slot}`}
-                  className={`border-b border-l border-border/50 ${slotBgClass(state, isHighlighted, isAssignMode, isToday(day))}`}
+                  className={`border-b border-l border-border/50 ${slotBgClass(state, isHighlighted, isAssignMode, colIdx === todayColIdx)}`}
                   style={{ height: SLOT_HEIGHT }}
                   onClick={() => {
                     if (isHighlighted) onSlotClick(key, slot)
