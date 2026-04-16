@@ -104,16 +104,16 @@ export default function TimeGrid({
         {days.map((day) => {
           const today = isToday(day)
           return (
-            <div key={isoDateString(day)} className="border-l border-border py-2 text-center">
+            <div key={isoDateString(day)} className={`flex flex-col items-center justify-center border-l border-border py-2 ${today ? 'bg-navy' : ''}`}>
               {today ? (
-                <div className="mx-auto inline-flex flex-col items-center justify-center rounded-lg bg-navy px-2.5 py-1.5 gap-0.5">
-                  <span className="font-body text-[10px] font-semibold leading-tight text-teal">
+                <>
+                  <div className="font-body text-xs font-semibold text-teal">
                     {day.toLocaleDateString('en-US', { weekday: 'short' })}
-                  </span>
-                  <span className="font-heading text-xs font-bold leading-tight text-white">
+                  </div>
+                  <div className="font-heading text-sm font-bold text-white">
                     {day.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric' })}
-                  </span>
-                </div>
+                  </div>
+                </>
               ) : (
                 <>
                   <div className="font-body text-xs font-semibold text-slate-blue">

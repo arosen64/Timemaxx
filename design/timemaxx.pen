@@ -9364,6 +9364,7 @@
                       "name": "d4h",
                       "width": "fill_container",
                       "height": "fill_container",
+                      "fill": "$--primary",
                       "stroke": {
                         "align": "inside",
                         "thickness": {
@@ -9377,40 +9378,24 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "frame",
-                          "id": "89mbk",
-                          "name": "todayPill",
-                          "fill": "$--primary",
-                          "cornerRadius": 8,
-                          "layout": "vertical",
-                          "gap": 2,
-                          "padding": [
-                            6,
-                            10
-                          ],
-                          "alignItems": "center",
-                          "children": [
-                            {
-                              "type": "text",
-                              "id": "XV3HT",
-                              "name": "weekday",
-                              "fill": "$--accent",
-                              "content": "THU",
-                              "fontFamily": "Inter",
-                              "fontSize": 10,
-                              "fontWeight": "600"
-                            },
-                            {
-                              "type": "text",
-                              "id": "WUMu3",
-                              "name": "date",
-                              "fill": "$--primary-foreground",
-                              "content": "4/15",
-                              "fontFamily": "Space Grotesk",
-                              "fontSize": 12,
-                              "fontWeight": "700"
-                            }
-                          ]
+                          "type": "text",
+                          "id": "QxVSU",
+                          "name": "weekday",
+                          "fill": "$--accent",
+                          "content": "THU",
+                          "fontFamily": "Inter",
+                          "fontSize": 10,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "DHXCv",
+                          "name": "date",
+                          "fill": "$--primary-foreground",
+                          "content": "4/15",
+                          "fontFamily": "Space Grotesk",
+                          "fontSize": 14,
+                          "fontWeight": "700"
                         }
                       ]
                     },
