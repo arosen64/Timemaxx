@@ -98,6 +98,7 @@ export default function DashboardPage() {
   >({})
   const [feedbackErrors, setFeedbackErrors] = useState<Record<string, string>>({})
   const [estimationError, setEstimationError] = useState<string | null>(null)
+  const [estimationRetry, setEstimationRetry] = useState<(() => void) | null>(null)
 
   // Clear tasks from estimatingTasks once their timeEstimate is populated by the server
   useEffect(() => {
@@ -151,6 +152,7 @@ export default function DashboardPage() {
       await requestEstimateSubtask({ subtaskId })
     } catch (err) {
       setEstimationError(parseEstimationError(err))
+      setEstimationRetry(() => () => handleEstimateSubtask(subtaskId))
     } finally {
       setEstimatingSubtasks((prev) => {
         const next = new Set(prev)
@@ -166,6 +168,7 @@ export default function DashboardPage() {
       await requestEstimate({ taskId })
     } catch (err) {
       setEstimationError(parseEstimationError(err))
+      setEstimationRetry(() => () => handleEstimateTask(taskId))
     } finally {
       setEstimatingTasks((prev) => {
         const next = new Set(prev)
@@ -297,7 +300,8 @@ export default function DashboardPage() {
       <EstimationErrorModal
         isOpen={estimationError !== null}
         message={estimationError ?? ''}
-        onClose={() => setEstimationError(null)}
+        onClose={() => { setEstimationError(null); setEstimationRetry(null) }}
+        onRetry={estimationRetry!}
       />
       <EditModal
         isOpen={editingTask !== null && editingSubtask === null}
