@@ -23229,6 +23229,96 @@
           ]
         }
       ]
+    },
+    {
+      "type": "frame",
+      "id": "MbTop1",
+      "x": 9200,
+      "y": 0,
+      "name": "MobileTopBar",
+      "reusable": true,
+      "width": 390,
+      "height": 56,
+      "fill": "$--navy-panel",
+      "layout": "horizontal",
+      "alignItems": "center",
+      "justifyContent": "space_between",
+      "padding": [0, 16],
+      "children": [
+        {
+          "type": "frame",
+          "id": "MbHmb1",
+          "name": "hamburger",
+          "width": 36,
+          "height": 36,
+          "justifyContent": "center",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "icon_font",
+              "id": "MbMnu1",
+              "name": "menuIcon",
+              "width": 20,
+              "height": 20,
+              "iconFontName": "menu",
+              "iconFontFamily": "lucide",
+              "fill": "#FFFFFF"
+            }
+          ]
+        },
+        {
+          "id": "MbLgo1",
+          "type": "ref",
+          "ref": "P9sB9",
+          "name": "logo",
+          "width": "fit_content",
+          "height": "fit_content",
+          "x": 0,
+          "descendants": {
+            "6YpiG": {
+              "fill": "#FFFFFF"
+            }
+          }
+        },
+        {
+          "type": "frame",
+          "id": "MbSpc1",
+          "name": "spacer",
+          "width": 36,
+          "height": 36
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "SbDrw1",
+      "x": 9200,
+      "y": 120,
+      "name": "SidebarDrawer",
+      "reusable": true,
+      "width": 390,
+      "height": 844,
+      "fill": "rgba(0,0,0,0)",
+      "layout": "horizontal",
+      "children": [
+        {
+          "id": "SbPnl1",
+          "type": "ref",
+          "ref": "GeaRV",
+          "name": "sidebarPanel",
+          "height": "fill_container",
+          "x": 0,
+          "y": 0
+        },
+        {
+          "type": "frame",
+          "id": "SbBdp1",
+          "name": "backdrop",
+          "width": "fill_container",
+          "height": "fill_container",
+          "fill": "rgba(0,0,0,0.5)"
+        }
+      ]
     }
   ],
   "variables": {
