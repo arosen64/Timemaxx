@@ -59,18 +59,16 @@ export const createSubtask = mutation({
     // so we never show stale explanations alongside a summed estimate.
     await ctx.db.patch(args.parentTaskId, { reasoning: undefined });
 
-    const isTest =
-      typeof process !== "undefined" && process.env.VITEST === "true";
-    if (!isTest) {
+    if (process.env.ANTHROPIC_API_KEY) {
       await ctx.scheduler.runAfter(0, internal.ai.estimateTaskTime.estimateTaskTime, {
         subtaskId,
       });
-      await ctx.scheduler.runAfter(0, internal.ai.embeddings.generateSubtaskEmbedding, {
-        subtaskId,
-        title: args.title,
-        description: args.description,
-      });
     }
+    await ctx.scheduler.runAfter(0, internal.ai.embeddings.generateSubtaskEmbedding, {
+      subtaskId,
+      title: args.title,
+      description: args.description,
+    });
 
     return subtaskId;
   },
@@ -106,18 +104,16 @@ export const updateSubtask = mutation({
       reasoning: undefined,
     });
 
-    const isTest =
-      typeof process !== "undefined" && process.env.VITEST === "true";
-    if (!isTest) {
+    if (process.env.ANTHROPIC_API_KEY) {
       await ctx.scheduler.runAfter(0, internal.ai.estimateTaskTime.estimateTaskTime, {
         subtaskId: args.subtaskId,
       });
-      await ctx.scheduler.runAfter(0, internal.ai.embeddings.generateSubtaskEmbedding, {
-        subtaskId: args.subtaskId,
-        title: args.title,
-        description: args.description,
-      });
     }
+    await ctx.scheduler.runAfter(0, internal.ai.embeddings.generateSubtaskEmbedding, {
+      subtaskId: args.subtaskId,
+      title: args.title,
+      description: args.description,
+    });
   },
 });
 
@@ -164,8 +160,10 @@ export const patchSubtaskEmbedding = internalMutation({
     subtaskId: v.id("subtasks"),
     embedding: v.array(v.float64()),
   },
+  returns: v.null(),
   handler: async (ctx, args) => {
     await ctx.db.patch(args.subtaskId, { embedding: args.embedding });
+    return null;
   },
 });
 

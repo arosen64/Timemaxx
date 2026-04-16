@@ -250,8 +250,10 @@ export const patchTaskEmbedding = internalMutation({
     taskId: v.id("tasks"),
     embedding: v.array(v.float64()),
   },
+  returns: v.null(),
   handler: async (ctx, args) => {
     await ctx.db.patch(args.taskId, { embedding: args.embedding });
+    return null;
   },
 });
 
