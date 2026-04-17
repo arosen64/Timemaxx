@@ -10,6 +10,8 @@ import {
   type WorkHoursRow,
 } from "../lib/scheduleSlots";
 
+const DEFAULT_DUE_FALLBACK_MS = 7 * 24 * 60 * 60 * 1000;
+
 function toDateStr(d: Date, timezone: string): string {
   return Intl.DateTimeFormat("en-CA", { timeZone: timezone }).format(d);
 }
@@ -55,7 +57,7 @@ export const scheduleBlock = action({
       });
       if (!subtask || subtask.userId !== userId) throw new Error("Unauthorized");
       taskTitle = subtask.title;
-      dueDate = subtask.suggestedCompletionAt ?? subtask.dueDate ?? Date.now() + 7 * 24 * 60 * 60 * 1000;
+      dueDate = subtask.suggestedCompletionAt ?? subtask.dueDate ?? Date.now() + DEFAULT_DUE_FALLBACK_MS;
       creationTime = subtask._creationTime;
     } else {
       const task = await ctx.runQuery(internal.queries.tasks.getTaskInternal, {
