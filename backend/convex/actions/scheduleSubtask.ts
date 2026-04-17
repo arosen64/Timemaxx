@@ -12,16 +12,8 @@ import {
 } from "../lib/scheduleSlots";
 import { fetch21DayCalendarEvents } from "../lib/calendarFetch";
 
-/**
- * AI-driven scheduling for a single subtask.
- *
- * Enumerates valid time slots for each unscheduled study block belonging to
- * the subtask, calls Gemini Flash to select the best slot, and places the block.
- * Uses `subtask.suggestedCompletionAt ?? subtask.dueDate` as the deadline.
- *
- * Returns { scheduled: number } on success, or { error: "no_slot_found" } if
- * no valid slot could be found for any block.
- */
+const DEFAULT_DUE_FALLBACK_MS = 7 * 24 * 60 * 60 * 1000;
+
 export const scheduleSubtask = action({
   args: {
     subtaskId: v.id("subtasks"),
@@ -66,8 +58,8 @@ export const scheduleSubtask = action({
         endMs: new Date(e.end).getTime(),
         title: e.summary,
       })),
-      ...(allUserBlocks as Array<{ _id: string; startTime?: string; studyBlockLength: number; title: string; subtaskId?: string }>)
-        .filter((b) => b.startTime && b.subtaskId !== args.subtaskId)
+      ...(allUserBlocks as Array<{ _id: string; startTime?: string; studyBlockLength: number; title: string }>)
+        .filter((b) => b.startTime)
         .map((b) => ({
           startMs: new Date(b.startTime!).getTime(),
           endMs: new Date(b.startTime!).getTime() + b.studyBlockLength * 60000,
@@ -77,7 +69,7 @@ export const scheduleSubtask = action({
 
     const nowMs = Date.now();
     const fromMs = Math.max(nowMs, subtask._creationTime);
-    const dueDateMs = subtask.suggestedCompletionAt ?? subtask.dueDate ?? Date.now() + 7 * 24 * 60 * 60 * 1000;
+    const dueDateMs = subtask.suggestedCompletionAt ?? subtask.dueDate ?? Date.now() + DEFAULT_DUE_FALLBACK_MS;
 
     const placeable = unscheduled
       .map((block) => ({
