@@ -263,6 +263,18 @@ export function MessageSquareIcon({ color = 'currentColor', size = 22 }: { color
   )
 }
 
+export function ListTreeIcon({ color = 'currentColor', size = 16 }: { color?: string; size?: number }) {
+  return (
+    <IconBase color={color} size={size}>
+      <path d="M21 12h-8" />
+      <path d="M21 6H8" />
+      <path d="M21 18h-8" />
+      <path d="M3 6v4c0 1.1.9 2 2 2h3" />
+      <path d="M3 10v6c0 1.1.9 2 2 2h3" />
+    </IconBase>
+  )
+}
+
 export function XIcon({ color = '#CF4520', size = 14 }: { color?: string; size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 14 14" fill="none" aria-hidden="true" style={{ flexShrink: 0 }}>
