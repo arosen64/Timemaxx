@@ -301,7 +301,7 @@ export default function DashboardPage() {
         isOpen={estimationError !== null}
         message={estimationError ?? ''}
         onClose={() => { setEstimationError(null); setEstimationRetry(null) }}
-        onRetry={estimationRetry!}
+        onRetry={estimationRetry ?? undefined}
       />
       <EditModal
         isOpen={editingTask !== null && editingSubtask === null}
