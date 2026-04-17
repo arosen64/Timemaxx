@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '../../../../backend/convex/_generated/api'
 import { PencilIcon, TrashIcon, SpinnerIcon, SparklesIcon, ChevronDownIcon } from '../icons'
@@ -88,12 +88,12 @@ export default function TaskCard({
   const hiddenCount = studyBlocks ? Math.max(0, studyBlocks.length - BLOCK_DISPLAY_LIMIT) : 0
 
   const hasSubtasks = subtasks.length > 0
-  const subtaskBlocksMap = new Map(
+  const subtaskBlocksMap = useMemo(() => new Map(
     subtasks.map((s) => [
       s._id,
       (subtaskBlocksRaw ?? []).filter((b) => b.subtaskId === s._id),
     ])
-  )
+  ), [subtasks, subtaskBlocksRaw])
 
   const anySubtaskPending = hasSubtasks && subtasks.some((s) => s.timeEstimate === undefined)
   const subtaskTotal = hasSubtasks

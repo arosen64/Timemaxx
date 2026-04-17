@@ -1,8 +1,10 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useAction } from 'convex/react'
 import { api } from '../../../../backend/convex/_generated/api'
 import type { Id } from '../../../../backend/convex/_generated/dataModel'
 import { CalendarIcon, SpinnerIcon } from '../icons'
+
+const DEFAULT_COURSE_COLOR = '#002D72'
 
 type TrayBlock = {
   _id: Id<'studyBlocks'>
@@ -66,7 +68,7 @@ export default function ScheduleTray({
   }
 
   // Group blocks by parent task, preserving the incoming due-date sort order
-  const groupedByTask = (() => {
+  const groupedByTask = useMemo(() => {
     const order: Id<'tasks'>[] = []
     const map = new Map<Id<'tasks'>, { taskTitle: string; taskDueDate: number; courseColor?: string; blocks: TrayBlock[] }>()
     for (const block of blocks) {
@@ -77,7 +79,7 @@ export default function ScheduleTray({
       map.get(block.taskId)!.blocks.push(block)
     }
     return order.map((id) => ({ taskId: id, ...map.get(id)! }))
-  })()
+  }, [blocks])
 
   const renderBlock = (block: TrayBlock) => {
     const isSelected = assigningBlockId === block._id
@@ -102,7 +104,7 @@ export default function ScheduleTray({
       >
         <span
           className="mt-1 inline-block h-2.5 w-2.5 shrink-0 rounded-full"
-          style={{ backgroundColor: block.courseColor ?? '#002D72' }}
+          style={{ backgroundColor: block.courseColor ?? DEFAULT_COURSE_COLOR }}
         />
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
           <span className="block truncate font-heading text-[11px] font-semibold text-navy">
@@ -163,14 +165,22 @@ export default function ScheduleTray({
             <div className="flex items-center gap-1.5 px-0.5 pt-1">
               <span
                 className="inline-block h-2 w-2 shrink-0 rounded-full"
-                style={{ backgroundColor: courseColor ?? '#002D72' }}
+                style={{ backgroundColor: courseColor ?? DEFAULT_COURSE_COLOR }}
               />
               <div className="flex min-w-0 flex-1 flex-col">
                 <span className="truncate font-heading text-[10px] font-semibold text-navy">
                   {taskTitle}
                 </span>
                 <span className="text-[9px] text-light-blue">
-                  Due {new Date(taskDueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  Due {new Date(taskDueDate).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    timeZone: timezone,
+                    ...(new Date(taskDueDate).toLocaleDateString('en-US', { year: 'numeric', timeZone: timezone }) !==
+                      new Date().toLocaleDateString('en-US', { year: 'numeric', timeZone: timezone })
+                      ? { year: 'numeric' }
+                      : {}),
+                  })}
                 </span>
               </div>
             </div>
