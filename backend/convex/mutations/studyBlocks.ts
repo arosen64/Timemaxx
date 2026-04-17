@@ -330,6 +330,44 @@ export const detectConflicts = internalMutation({
         }
       }
     }
+
+    // Also check subtask-linked blocks
+    const subtasks = await ctx.db
+      .query("subtasks")
+      .withIndex("by_userId", (q) => q.eq("userId", args.userId as Id<"users">))
+      .collect();
+
+    for (const subtask of subtasks) {
+      const blocks = await ctx.db
+        .query("studyBlocks")
+        .withIndex("by_subtaskId", (q) => q.eq("subtaskId", subtask._id))
+        .collect();
+
+      const dueDate = subtask.suggestedCompletionAt ?? subtask.dueDate;
+      if (!dueDate) continue;
+
+      for (const block of blocks) {
+        if (!block.startTime) {
+          if (block.isConflicted) {
+            await ctx.db.patch(block._id, { isConflicted: false });
+          }
+          continue;
+        }
+
+        const conflicted = isBlockConflicted(
+          { startTime: block.startTime, studyBlockLength: block.studyBlockLength, googleEventId: block.googleEventId },
+          { dueDate },
+          args.timedEvents,
+          args.workHoursGrid,
+          args.timezone,
+          nowMs,
+        );
+
+        if ((block.isConflicted ?? false) !== conflicted) {
+          await ctx.db.patch(block._id, { isConflicted: conflicted });
+        }
+      }
+    }
   },
 });
 

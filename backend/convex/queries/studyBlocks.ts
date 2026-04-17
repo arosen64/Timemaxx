@@ -15,6 +15,62 @@ export const getStudyBlocksByTask = query({
   },
 });
 
+export const getStudyBlocksBySubtask = query({
+  args: { subtaskId: v.id("subtasks") },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
+    const subtask = await ctx.db.get(args.subtaskId);
+    if (!subtask || subtask.userId !== userId) return [];
+    return await ctx.db
+      .query("studyBlocks")
+      .withIndex("by_subtaskId", (q) => q.eq("subtaskId", args.subtaskId))
+      .collect();
+  },
+});
+
+export const getStudyBlocksForTaskSubtasks = query({
+  args: { taskId: v.id("tasks") },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
+    const task = await ctx.db.get(args.taskId);
+    if (!task || task.userId !== userId) return [];
+    const subtasks = await ctx.db
+      .query("subtasks")
+      .withIndex("by_parentTaskId", (q) => q.eq("parentTaskId", args.taskId))
+      .collect();
+
+    const result: Array<{
+      _id: Id<"studyBlocks">;
+      subtaskId: Id<"subtasks">;
+      title: string;
+      startTime: string | undefined;
+      studyBlockLength: number;
+      isConflicted: boolean | undefined;
+    }> = [];
+
+    for (const subtask of subtasks) {
+      const blocks = await ctx.db
+        .query("studyBlocks")
+        .withIndex("by_subtaskId", (q) => q.eq("subtaskId", subtask._id))
+        .collect();
+      for (const block of blocks) {
+        result.push({
+          _id: block._id,
+          subtaskId: subtask._id,
+          title: block.title,
+          startTime: block.startTime,
+          studyBlockLength: block.studyBlockLength,
+          isConflicted: block.isConflicted,
+        });
+      }
+    }
+
+    return result;
+  },
+});
+
 export const getStudyBlockById = query({
   args: {
     studyBlockId: v.id("studyBlocks"),
@@ -125,6 +181,16 @@ export const getAllStudyBlocksWithTasksInternal = internalQuery({
   args: { userId: v.id("users") },
   handler: async (ctx, args) => {
     return await fetchAllStudyBlocksWithTasks(ctx, args.userId);
+  },
+});
+
+export const getAllStudyBlocksByUserInternal = internalQuery({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("studyBlocks")
+      .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+      .collect();
   },
 });
 
