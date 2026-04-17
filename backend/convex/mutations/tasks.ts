@@ -293,7 +293,16 @@ export const updateTaskStatus = mutation({
     const task = await ctx.db.get(args.taskId);
     if (!task || task.userId !== userId) throw new Error("Task not found");
 
-    await ctx.db.patch(args.taskId, { status: args.status });
+    // Clear feedback when reopening a task
+    if (args.status === "not_started" || args.status === "in_progress") {
+      await ctx.db.patch(args.taskId, {
+        status: args.status,
+        estimateFeedbackRating: undefined,
+        correctedEstimateMinutes: undefined,
+      });
+    } else {
+      await ctx.db.patch(args.taskId, { status: args.status });
+    }
 
     const subtasks = await ctx.db
       .query("subtasks")
