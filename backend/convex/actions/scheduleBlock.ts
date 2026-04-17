@@ -6,11 +6,10 @@ import { api, internal } from "../_generated/api";
 import {
   enumerateSlots,
   selectAllSlotsWithAI,
+  DEFAULT_DUE_FALLBACK_MS,
   type OccupiedInterval,
   type WorkHoursRow,
 } from "../lib/scheduleSlots";
-
-const DEFAULT_DUE_FALLBACK_MS = 7 * 24 * 60 * 60 * 1000;
 
 function toDateStr(d: Date, timezone: string): string {
   return Intl.DateTimeFormat("en-CA", { timeZone: timezone }).format(d);

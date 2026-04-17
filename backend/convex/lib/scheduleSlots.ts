@@ -13,6 +13,8 @@ import {
 // Types
 // ---------------------------------------------------------------------------
 
+export const DEFAULT_DUE_FALLBACK_MS = 7 * 24 * 60 * 60 * 1000;
+
 export type OccupiedInterval = { startMs: number; endMs: number; title: string };
 export type WorkHoursRow = { day: string; available: number[]; blocked: number[] };
 
