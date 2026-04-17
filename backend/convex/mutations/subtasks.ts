@@ -162,10 +162,6 @@ export const setSubtaskTimeEstimate = internalMutation({
   },
 });
 
-/**
- * Updates the status of a subtask and bubbles up to the parent task.
- * in_progress or completed → parent becomes in_progress (if not already).
- */
 export const updateSubtaskStatus = mutation({
   args: {
     subtaskId: v.id("subtasks"),
@@ -180,12 +176,30 @@ export const updateSubtaskStatus = mutation({
 
     await ctx.db.patch(args.subtaskId, { status: args.status });
 
-    // Bubble up: in_progress or completed subtask → parent becomes in_progress
-    if (args.status === "in_progress" || args.status === "completed") {
-      const parent = await ctx.db.get(subtask.parentTaskId);
-      if (parent && parent.status !== "in_progress") {
-        await ctx.db.patch(subtask.parentTaskId, { status: "in_progress" });
-      }
+    // Bubble up: derive parent status from all sibling statuses after this update
+    const siblings = await ctx.db
+      .query("subtasks")
+      .withIndex("by_parentTaskId", (q) => q.eq("parentTaskId", subtask.parentTaskId))
+      .collect();
+
+    const allDone = siblings.every((s) =>
+      s._id === args.subtaskId ? args.status === "completed" : s.status === "completed"
+    );
+    const anyActive = siblings.some((s) =>
+      s._id === args.subtaskId
+        ? args.status === "in_progress" || args.status === "completed"
+        : s.status === "in_progress" || s.status === "completed"
+    );
+
+    const newParentStatus = allDone
+      ? "completed"
+      : anyActive
+        ? "in_progress"
+        : "not_started";
+
+    const parent = await ctx.db.get(subtask.parentTaskId);
+    if (parent && parent.status !== newParentStatus) {
+      await ctx.db.patch(subtask.parentTaskId, { status: newParentStatus });
     }
   },
 });
