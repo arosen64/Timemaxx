@@ -111,6 +111,19 @@ export const updateUserCourse = mutation({
     if (args.description !== undefined) patch.description = args.description;
     if (args.prereqs !== undefined) patch.prereqs = args.prereqs;
     await ctx.db.patch(args.userCourseId, patch);
+
+    // Cascade color change to all subtasks linked to this course
+    if (args.color !== undefined && args.color !== record.color) {
+      const subtasks = await ctx.db
+        .query("subtasks")
+        .withIndex("by_userId", (q) => q.eq("userId", record.userId))
+        .collect();
+      for (const subtask of subtasks) {
+        if (subtask.courseId === args.userCourseId) {
+          await ctx.db.patch(subtask._id, { color: args.color as string });
+        }
+      }
+    }
   },
 });
 
