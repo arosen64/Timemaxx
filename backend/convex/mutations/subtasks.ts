@@ -161,7 +161,8 @@ export const setSubtaskTimeEstimate = internalMutation({
 });
 
 /**
- * Updates the status of a subtask. No propagation to parent task.
+ * Updates the status of a subtask and bubbles up to the parent task.
+ * in_progress or completed → parent becomes in_progress (if not already).
  */
 export const updateSubtaskStatus = mutation({
   args: {
@@ -176,6 +177,14 @@ export const updateSubtaskStatus = mutation({
     if (!subtask || subtask.userId !== userId) throw new Error("Subtask not found");
 
     await ctx.db.patch(args.subtaskId, { status: args.status });
+
+    // Bubble up: in_progress or completed subtask → parent becomes in_progress
+    if (args.status === "in_progress" || args.status === "completed") {
+      const parent = await ctx.db.get(subtask.parentTaskId);
+      if (parent && parent.status !== "in_progress") {
+        await ctx.db.patch(subtask.parentTaskId, { status: "in_progress" });
+      }
+    }
   },
 });
 
