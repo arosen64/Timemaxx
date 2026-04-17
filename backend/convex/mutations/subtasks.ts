@@ -153,8 +153,10 @@ export const setSubtaskTimeEstimate = internalMutation({
         .query("studyBlocks")
         .withIndex("by_taskId", (q) => q.eq("taskId", subtask.parentTaskId))
         .collect();
-      for (const block of staleTaskBlocks) {
-        await ctx.db.delete(block._id);
+      if (staleTaskBlocks.length > 0) {
+        for (const block of staleTaskBlocks) {
+          await ctx.db.delete(block._id);
+        }
       }
     }
   },
