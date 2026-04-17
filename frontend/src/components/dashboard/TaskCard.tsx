@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '../../../../backend/convex/_generated/api'
-import { PencilIcon, TrashIcon, SpinnerIcon, SparklesIcon, ChevronDownIcon } from '../icons'
+import { PencilIcon, TrashIcon, SpinnerIcon, SparklesIcon, ChevronDownIcon, ListTreeIcon } from '../icons'
 import { type TaskType, type SubtaskType, formatDueDateTimeDisplay, displayTitle, formatMinutes } from './types'
 import { type Id } from '../../../../backend/convex/_generated/dataModel'
 import { formatClassTagForDisplay } from '../../utils/classTagUtils'
@@ -26,6 +26,8 @@ type TaskCardProps = {
   onEditSubtask?: (subtask: SubtaskType) => void
   onDeleteSubtask?: (id: Id<'subtasks'>) => void
   onEstimateSubtask?: (id: Id<'subtasks'>) => void
+  isGeneratingSubtasks?: boolean
+  onGenerateSubtasks?: () => void
 }
 
 export default function TaskCard({
@@ -42,6 +44,8 @@ export default function TaskCard({
   onEditSubtask,
   onDeleteSubtask,
   onEstimateSubtask,
+  isGeneratingSubtasks = false,
+  onGenerateSubtasks,
 }: TaskCardProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [showAll, setShowAll] = useState(false)
@@ -168,6 +172,26 @@ export default function TaskCard({
                     aria-label="Estimate task time"
                   >
                     <SparklesIcon color="currentColor" size={16} />
+                  </button>
+                )
+              )}
+              {!hasSubtasks && (
+                isGeneratingSubtasks ? (
+                  <div className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-blue">
+                    <SpinnerIcon color="currentColor" size={16} />
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onGenerateSubtasks?.()
+                    }}
+                    className={iconBtnCls}
+                    aria-label="Generate subtasks"
+                    title='Generate subtasks'
+                  >
+                    <ListTreeIcon color="currentColor" size={16} />
                   </button>
                 )
               )}
