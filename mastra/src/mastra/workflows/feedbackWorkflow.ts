@@ -1,20 +1,12 @@
 import { createWorkflow, createStep } from "@mastra/core/workflows";
 import { z } from "zod";
 import { feedbackAgent } from "../agents/feedbackAgent";
+import {
+  feedbackAgentOutputSchema,
+  type FeedbackAgentOutput,
+} from "../lib/prompts/feedbackAgent.prompt";
 
-export const feedbackAgentOutputSchema = z.object({
-  message: z.string(),
-  intent: z.enum(["task_feedback", "class_feedback", "unknown"]),
-  needsTaskClarification: z.boolean(),
-  needsClassClarification: z.boolean(),
-  readyToRecord: z.boolean(),
-  effortRating: z.enum(["easier", "about_right", "harder"]).nullable(),
-  actualMinutes: z.number().nullable(),
-  whatWasHard: z.string().nullable(),
-  reasoning: z.string(),
-});
-
-export type FeedbackAgentOutput = z.infer<typeof feedbackAgentOutputSchema>;
+export { feedbackAgentOutputSchema, type FeedbackAgentOutput };
 
 const feedbackAgentStep = createStep({
   id: "feedback-agent",
