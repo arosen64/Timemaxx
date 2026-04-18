@@ -68,9 +68,16 @@ export const applyResolvedEntityToClarifyTriggerMessageInternal = internalMutati
     if (triggerId) {
       const msg = await ctx.db.get(triggerId);
       if (msg && msg.userId === args.userId && msg.role === "user") {
+        let courseId: Id<"userCourses"> | undefined = args.courseId;
+        if (courseId === undefined && args.taskId) {
+          const task = await ctx.db.get(args.taskId);
+          if (task && task.userId === args.userId && task.courseId) {
+            courseId = task.courseId;
+          }
+        }
         await ctx.db.patch(triggerId, {
           ...(args.taskId !== undefined ? { taskId: args.taskId } : {}),
-          ...(args.courseId !== undefined ? { courseId: args.courseId } : {}),
+          ...(courseId !== undefined ? { courseId } : {}),
         });
       }
     }
