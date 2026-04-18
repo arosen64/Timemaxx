@@ -4,6 +4,11 @@ import { internal } from "./_generated/api";
 import type { ActionCtx } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
 import type { HonoEnv } from "./lib/httpTypes";
+import {
+  buildFeedbackAgentContextPrompt,
+  buildPreferencesAgentContextPrompt,
+  buildTaskAgentContextPrompt,
+} from "./lib/prompts/mastraChatContext.prompt";
 
 const chatApp = new Hono<HonoEnv>();
 
@@ -32,6 +37,7 @@ type ChatSessionSnapshot = {
   taskAgentIntent?: "create" | "rud";
 };
 
+/** Mirrors `mastra/src/mastra/lib/prompts/feedbackAgent.prompt.ts` output schema. */
 type FeedbackAgentOutput = {
   message: string;
   intent: "task_feedback" | "class_feedback" | "unknown";
@@ -44,6 +50,7 @@ type FeedbackAgentOutput = {
   reasoning: string;
 };
 
+/** Mirrors `mastra/src/mastra/lib/prompts/taskAgent.prompt.ts` output schema. */
 type TaskAgentOutput = {
   message: string;
   intent: "create" | "rud" | "unknown";
@@ -252,8 +259,13 @@ async function handleTaskAgentMessage(
   const continueNote = message.trim()
     ? "Respond to the latest user message above."
     : "The user just selected an entity from the picker (no new text). Based on the conversation history and the now-resolved context, continue the conversation — e.g. proceed to the next missing field, confirm deletion, or summarise task details.";
-  const contextPrompt =
-    `Today is ${today}.\n\nConversation history (oldest first):\n${historyText}\n\n${resolvedTaskContext}\n${resolvedCourseContext}\n${continueNote}`;
+  const contextPrompt = buildTaskAgentContextPrompt({
+    todayIso: today,
+    historyText,
+    resolvedTaskContext,
+    resolvedCourseContext,
+    continueNote,
+  });
 
   const taskWf = client.getWorkflow("task-workflow");
   const run = await taskWf.startAsync({ inputData: { contextPrompt } });
@@ -434,8 +446,13 @@ async function handleFeedbackAgentMessage(
   const continueNote = message.trim()
     ? "Respond to the latest user message above."
     : "The user just selected an entity from the picker (no new text). Continue the conversation based on what is now resolved.";
-  const contextPrompt =
-    `Today is ${today}.\n\nConversation history (oldest first):\n${historyText}\n\n${resolvedTaskContext}\n${resolvedCourseContext}\n${continueNote}`;
+  const contextPrompt = buildFeedbackAgentContextPrompt({
+    todayIso: today,
+    historyText,
+    resolvedTaskContext,
+    resolvedCourseContext,
+    continueNote,
+  });
 
   const wf = client.getWorkflow("feedback-workflow");
   const run = await wf.startAsync({ inputData: { contextPrompt } });
@@ -548,8 +565,10 @@ async function handlePreferencesAgentMessage(
     .map((m) => `${m.role === "user" ? "User" : "Assistant"}: ${m.content}`)
     .join("\n");
 
-  const contextPrompt =
-    `Conversation history:\n${historyText}\n\nLatest user message: ${message}\nAcknowledge what they want to change and direct them to the Preferences page.`;
+  const contextPrompt = buildPreferencesAgentContextPrompt({
+    historyText,
+    latestUserMessage: message,
+  });
 
   const wf = client.getWorkflow("preferences-workflow");
   const run = await wf.startAsync({ inputData: { contextPrompt } });
