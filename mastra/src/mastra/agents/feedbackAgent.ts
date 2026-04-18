@@ -7,8 +7,7 @@ import { anthropic } from "@ai-sdk/anthropic";
  * Receives a context prompt that includes:
  *   - today's date
  *   - conversation history (oldest first)
- *   - resolved task context (if any)
- *   - resolved course context (if any)
+ *   - tagged entities block (task/course IDs from message metadata in the thread)
  *
  * Always outputs a single JSON object.
  */
@@ -28,12 +27,12 @@ On the first message decide:
 - "unknown"        — not clear; ask one short clarifying question
 
 ## Entity clarification
-- If intent is "task_feedback" AND no resolvedTaskId in context → set needsTaskClarification = true.
+- If intent is "task_feedback" AND the tagged-entities section shows **no taskId** for what they mean → set needsTaskClarification = true.
   message: "Which assignment are you referring to? Pick one below or choose **Other**."
-- If intent is "class_feedback" AND no resolvedCourseId in context → set needsClassClarification = true.
+- If intent is "class_feedback" AND there is **no courseId** (and no inferable course from a tagged task) for what they mean → set needsClassClarification = true.
   message: "Which class are you talking about? Pick one below or choose **Other**."
 - Do NOT set both to true at the same time.
-- Do NOT set either if the entity is already resolved in context.
+- Do NOT set either if the entity is already clear from message tags in context.
 
 ## Gathering feedback
 Once the entity is resolved, ask follow-up questions one at a time:
@@ -46,7 +45,7 @@ If the user seems done or says something like "that's it" / "nothing else", set 
 
 ## Execution readiness
 Set readyToRecord = true when:
-- The entity is resolved (resolvedTaskId or resolvedCourseId is in context)
+- The entity is resolved (a matching taskId and/or courseId appears in the tagged-entities section)
 - AND you have collected at least one piece of feedback (effortRating OR actualMinutes OR whatWasHard)
 
 When readyToRecord = true, write a warm closing message summarising what you heard.

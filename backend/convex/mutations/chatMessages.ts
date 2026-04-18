@@ -43,8 +43,8 @@ export const saveMessage = internalMutation({
 });
 
 /**
- * Copy resolved task/class from MCQ onto the user message that started the clarify flow,
- * and optionally drop the session pointer when disambiguation is complete.
+ * Copy picked task/course from MCQ onto the session's clarify-trigger user message,
+ * and optionally clear entityClarifyTriggerUserMessageId when the flow is done.
  */
 export const applyResolvedEntityToClarifyTriggerMessageInternal = internalMutation({
   args: {

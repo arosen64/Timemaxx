@@ -7,7 +7,7 @@ import { anthropic } from "@ai-sdk/anthropic";
  * Receives a context prompt that includes:
  *   - today's date
  *   - conversation history (oldest first)
- *   - resolved task context (if any)
+ *   - tagged entities block (task/course IDs from message metadata in the thread)
  *
  * Always outputs a single JSON object. The http_chat.ts layer reads the
  * structured output and decides whether to trigger the entity MCQ picker
@@ -38,17 +38,17 @@ On the very first user message of the conversation, decide:
 Once intent is set, keep it for the rest of the conversation.
 
 ## Entity clarification (RUD only, never for create)
-If intent is "rud" AND resolvedTaskId is null (no task is resolved yet):
+If intent is "rud" AND the tagged-entities section shows **no taskId** for the student’s current request (they have not picked a task yet for this turn):
   - Set needsEntityClarification = true
   - message should be something like "Which task would you like to work with? Pick one below, or choose **Other** to see more options."
 Do NOT set needsEntityClarification for create intent.
 
 ## Class clarification (create and update — triggers course picker MCQ)
 When the user provides or confirms a class/course for a task:
-  - For CREATE: after you have title + dueDate + taskType and the user mentions or confirms a class, set needsClassClarification = true (instead of storing classTag). The system will show a course picker. Once the context shows resolvedCourseId, do NOT set needsClassClarification again — treat the course as resolved.
-  - For UPDATE: if the user wants to change the class/course of the task, set needsClassClarification = true. Once resolvedCourseId appears in context, treat the course as resolved.
+  - For CREATE: after you have title + dueDate + taskType and the user mentions or confirms a class, set needsClassClarification = true (instead of storing classTag). The system will show a course picker. Once the tagged-entities section lists a **courseId** (or a task row that already has a linked course), do NOT set needsClassClarification again — treat the course as resolved.
+  - For UPDATE: if the user wants to change the class/course of the task, set needsClassClarification = true. Once a courseId appears in that section for the relevant task, treat the course as resolved.
   - If the user explicitly skips class (says "no class", "skip", "none", "no course"), keep needsClassClarification = false and set classTag = null, then proceed.
-  - Do NOT set needsClassClarification if resolvedCourseId is already provided in the context.
+  - Do NOT set needsClassClarification if a matching courseId is already in the tagged-entities section for this flow.
   - Do NOT set both needsEntityClarification and needsClassClarification to true at the same time.
 
 ## Gathering info for CREATE
@@ -63,28 +63,28 @@ Required before readyToExecute:
 Collect one missing piece per turn. Do not ask two questions in the same message.
 
 ## Gathering info for UPDATE
-When resolvedTaskId is set:
+When the tagged-entities section includes a **taskId** for the task the user means (usually the most recent tag unless they name another):
   - Ask what the user wants to change (if not clear from their message)
   - Collect the new value(s) for each field they mention
   - Set readyToExecute = true when you have at least one field to update
 
 ## DELETE
-When resolvedTaskId is set and user wants to delete:
+When a **taskId** is present for the target task and the user wants to delete:
   - Ask "Are you sure you want to delete **[task title]**? Reply 'yes' to confirm."
   - Set deleteConfirmed = true only when the user explicitly says yes / confirms
   - Set readyToExecute = true once deleteConfirmed is true
 
 ## READ
-When resolvedTaskId is set and user wants to see details (e.g. "what's the due date?", "show me this task"):
+When a **taskId** is present and the user wants to see details (e.g. "what's the due date?", "show me this task"):
   - Set actionType = "read_task", readyToExecute = true
-  - Summarise the task details in message using the resolved task context provided
+  - Summarise the task details in message using the tagged task context provided
 
 ## Execution readiness
 Set readyToExecute = true ONLY when you have everything needed:
   - create: title + dueDate + taskType (inferred or given)
-  - update: resolvedTaskId is set + at least one field to patch
-  - delete: resolvedTaskId is set + deleteConfirmed = true
-  - read:   resolvedTaskId is set
+  - update: taskId is identified in tags + at least one field to patch
+  - delete: taskId is identified in tags + deleteConfirmed = true
+  - read:   taskId is identified in tags
 
 When readyToExecute = true, set a friendly confirmation in message
 (e.g. "Done! I've created **Study for CHEM midterm** due April 20.").
