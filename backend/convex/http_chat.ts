@@ -5,6 +5,14 @@ import type { ActionCtx } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
 import type { HonoEnv } from "./lib/httpTypes";
 import {
+  collectUniqueTaggedIds,
+  getLastUserMessage,
+  shouldOfferTaskEntityMcq,
+  type TaggedMessageView,
+  walkLatestTaggedCourseId,
+  walkLatestTaggedTaskId,
+} from "./lib/messageTaggedScope";
+import {
   buildFeedbackAgentContextPrompt,
   buildPreferencesAgentContextPrompt,
   buildTaskAgentContextPrompt,
@@ -21,21 +29,76 @@ type WorkflowRouteOutput = {
 };
 
 type ChatSessionSnapshot = {
-  resolvedTaskId?: Id<"tasks">;
-  resolvedCourseId?: Id<"userCourses">;
   lastEntityQueryText?: string;
   activeEntityStep?: "task" | "class";
   needsClassAfterTask?: boolean;
   clarificationAttemptCount?: number;
   clarificationExhausted?: boolean;
   awaitingEntityResolution?: boolean;
-  awaitingScopeConfirm?: boolean;
   chatInputLocked?: boolean;
-  scopeBypassNextMessage?: boolean;
-  pendingScopeUserMessageId?: Id<"chatMessages">;
   activeAgent?: "task" | "feedback" | "preferences";
   taskAgentIntent?: "create" | "rud";
 };
+
+async function threadHasTaggedCourse(
+  ctx: ActionCtx,
+  userId: Id<"users">,
+  historyAsc: readonly TaggedMessageView[],
+): Promise<boolean> {
+  if (walkLatestTaggedCourseId(historyAsc) !== undefined) return true;
+  const tid = walkLatestTaggedTaskId(historyAsc);
+  if (tid === undefined) return false;
+  const task = await ctx.runQuery(internal.queries.tasks.getTaskInternal, { taskId: tid });
+  return !!(task && task.userId === userId && task.courseId);
+}
+
+/** Rich block for Mastra: all tagged tasks/courses in the sliding window + “most recent” tag. */
+async function buildTaggedEntitiesContextBlock(
+  ctx: ActionCtx,
+  userId: Id<"users">,
+  historyAsc: readonly TaggedMessageView[],
+): Promise<string> {
+  const { taskIds, courseIds } = collectUniqueTaggedIds(historyAsc);
+  const extraCourseIds = new Set<string>();
+  const lines: string[] = [];
+
+  if (taskIds.length === 0 && courseIds.length === 0) {
+    return "No task or course IDs are tagged on messages in this window yet.";
+  }
+
+  lines.push("Entities referenced by message tags in this thread:");
+  for (const tid of taskIds) {
+    const task = await ctx.runQuery(internal.queries.tasks.getTaskInternal, { taskId: tid });
+    if (task && task.userId === userId) {
+      lines.push(
+        `- Task "${task.title}" (${task.taskType}, due ${new Date(task.dueDate).toISOString().slice(0, 10)}${task.classTag ? `, class: ${task.classTag}` : ""}) → taskId ${String(tid)}`,
+      );
+      if (task.courseId) extraCourseIds.add(String(task.courseId));
+    }
+  }
+
+  const mergedCourse = new Set([...courseIds.map(String), ...extraCourseIds]);
+  for (const cid of mergedCourse) {
+    const courses = await ctx.runQuery(internal.queries.userCourses.getUserCoursesByIdsInternal, {
+      courseIds: [cid as Id<"userCourses">],
+    });
+    const c2 = courses[0];
+    if (c2 && c2.userId === userId) {
+      lines.push(`- Course "${c2.title}" (${c2.courseCode}) → courseId ${String(cid)}`);
+    }
+  }
+
+  const primaryTask = walkLatestTaggedTaskId(historyAsc);
+  const primaryCourse = walkLatestTaggedCourseId(historyAsc);
+  lines.push(
+    `Most recent tag in transcript (newest message first among tagged rows): ${primaryTask ? `taskId=${String(primaryTask)}` : "no task tag"}, ${primaryCourse ? `courseId=${String(primaryCourse)}` : "no course tag"}.`,
+  );
+  lines.push(
+    "Use these IDs for update/delete/read and for class on create when they match the user's latest request. Multiple tasks may appear — prefer the most recent tag unless the user clearly names a different assignment.",
+  );
+
+  return lines.join("\n");
+}
 
 /** Mirrors `mastra/src/mastra/lib/prompts/feedbackAgent.prompt.ts` output schema. */
 type FeedbackAgentOutput = {
@@ -117,15 +180,6 @@ const ENTITY_INTRO_CLASS =
   "Which class do you mean? Pick one below, or choose **Other** to see more options.";
 
 
-const SCOPE_DENY_FINAL_MSG =
-  "You can’t have two different task or class topics in the same chat. Please **close** this chat (× on the widget), then open Maxx again for a fresh session.";
-
-const SCOPE_USE_BUTTONS_MSG =
-  "Please tap **Yes** or **No** below so I know whether you’re still on the same task or class.";
-
-const SCOPE_YES_ACK_MSG =
-  "Got it — I’ll keep this chat on that same task/class. Go ahead with your next message.";
-
 const CHAT_INPUT_LOCKED_REPLY_MSG =
   "This chat was closed for new topics. Close the widget (×), then open Maxx again to start a fresh session.";
 
@@ -137,13 +191,16 @@ async function executeTaskAction(
   params: {
     userId: Id<"users">;
     sessionId: string;
-    session: ChatSessionSnapshot | null;
+    historyAsc: readonly TaggedMessageView[];
     output: TaskAgentOutput;
   },
 ): Promise<Response> {
-  const { userId, sessionId, session, output } = params;
+  const { userId, sessionId, historyAsc, output } = params;
   const { actionType } = output;
   let aiText = output.message;
+
+  const taggedTaskId = walkLatestTaggedTaskId(historyAsc);
+  const taggedCourseId = walkLatestTaggedCourseId(historyAsc);
 
   try {
     if (actionType === "create_task") {
@@ -156,28 +213,28 @@ async function executeTaskAction(
         description: output.description ?? output.title,
         taskType: output.taskType,
         dueDate: parseDueDateIso(output.dueDateIso),
-        ...(session?.resolvedCourseId ? { courseId: session.resolvedCourseId } : {}),
+        ...(taggedCourseId ? { courseId: taggedCourseId } : {}),
         ...(output.classTag ? { classTag: output.classTag } : {}),
       });
     } else if (actionType === "update_task") {
-      if (!session?.resolvedTaskId) throw new Error("No task selected.");
+      if (taggedTaskId === undefined) throw new Error("No task selected.");
       await ctx.runMutation(internal.mutations.tasks.patchTaskFieldsInternal, {
         userId,
-        taskId: session.resolvedTaskId,
+        taskId: taggedTaskId,
         ...(output.updatedTitle ? { title: output.updatedTitle } : {}),
         ...(output.updatedDescription ? { description: output.updatedDescription } : {}),
         ...(output.updatedTaskType ? { taskType: output.updatedTaskType } : {}),
         ...(output.updatedDueDateIso ? { dueDate: parseDueDateIso(output.updatedDueDateIso) } : {}),
-        ...(session?.resolvedCourseId ? { courseId: session.resolvedCourseId } : {}),
+        ...(taggedCourseId ? { courseId: taggedCourseId } : {}),
         ...(output.updatedClassTag !== undefined && output.updatedClassTag !== null
           ? { classTag: output.updatedClassTag }
           : {}),
       });
     } else if (actionType === "delete_task") {
-      if (!session?.resolvedTaskId) throw new Error("No task selected.");
+      if (taggedTaskId === undefined) throw new Error("No task selected.");
       await ctx.runMutation(internal.mutations.tasks.deleteTaskInternal, {
         userId,
-        taskId: session.resolvedTaskId,
+        taskId: taggedTaskId,
       });
     }
     // "read_task": no mutation, agent message already has details
@@ -195,8 +252,8 @@ async function executeTaskAction(
     sessionId,
     role: "assistant",
     content: aiText,
-    ...(session?.resolvedTaskId ? { taskId: session.resolvedTaskId } : {}),
-    ...(session?.resolvedCourseId ? { courseId: session.resolvedCourseId } : {}),
+    ...(taggedTaskId !== undefined ? { taskId: taggedTaskId } : {}),
+    ...(taggedCourseId !== undefined ? { courseId: taggedCourseId } : {}),
   });
   return c.json({ text: aiText, status: "routed", route: "tasks", entityKind: "none", messageTag: "none", tagConfidence: 0 });
 }
@@ -214,45 +271,23 @@ async function handleTaskAgentMessage(
     message: string;
     session: ChatSessionSnapshot | null;
     client: InstanceType<typeof MastraClient>;
+    /** User row that started this turn (for MCQ trigger tagging). */
+    triggerUserMessageId?: Id<"chatMessages">;
   },
 ): Promise<Response> {
-  const { userId, sessionId, message, session, client } = params;
+  const { userId, sessionId, message, session, client, triggerUserMessageId } = params;
 
   // Load chat history for context (last 20 messages)
-  const rawHistory = await ctx.runQuery(internal.queries.chatMessages.getChatHistoryInternal, {
+  const rawHistory = (await ctx.runQuery(internal.queries.chatMessages.getChatHistoryInternal, {
     userId,
     sessionId,
     limit: 20,
-  });
+  })) as TaggedMessageView[];
   const historyText = rawHistory
     .map((m) => `${m.role === "user" ? "User" : "Assistant"}: ${m.content}`)
     .join("\n");
 
-  // Get resolved task details if any
-  let resolvedTaskContext = "No task is resolved yet.";
-  if (session?.resolvedTaskId) {
-    const task = await ctx.runQuery(internal.queries.tasks.getTaskInternal, {
-      taskId: session.resolvedTaskId,
-    });
-    if (task) {
-      resolvedTaskContext = [
-        `Resolved task: "${task.title}" (type: ${task.taskType}, due: ${new Date(task.dueDate).toISOString().slice(0, 10)}${task.classTag ? `, class: ${task.classTag}` : ""})`,
-        `Task ID: ${String(session.resolvedTaskId)}`,
-      ].join("\n");
-    }
-  }
-
-  // Get resolved course details if any
-  let resolvedCourseContext = "No course is resolved yet.";
-  if (session?.resolvedCourseId) {
-    const courses = await ctx.runQuery(internal.queries.userCourses.getUserCoursesByIdsInternal, {
-      courseIds: [session.resolvedCourseId],
-    });
-    if (courses.length > 0) {
-      const c2 = courses[0];
-      resolvedCourseContext = `Resolved course: "${c2.title}" (code: ${c2.courseCode})\nCourse ID: ${String(session.resolvedCourseId)}`;
-    }
-  }
+  const taggedBlock = await buildTaggedEntitiesContextBlock(ctx, userId, rawHistory);
 
   const today = new Date().toISOString().slice(0, 10);
   // When message is empty the user just picked an entity from the MCQ — no new text.
@@ -262,8 +297,9 @@ async function handleTaskAgentMessage(
   const contextPrompt = buildTaskAgentContextPrompt({
     todayIso: today,
     historyText,
-    resolvedTaskContext,
-    resolvedCourseContext,
+    resolvedTaskContext: taggedBlock,
+    resolvedCourseContext:
+      "Course context is represented by tagged course IDs above (and by any tagged task that links to a course).",
     continueNote,
   });
 
@@ -295,8 +331,11 @@ async function handleTaskAgentMessage(
     });
   }
 
+  const mcqTriggerId = triggerUserMessageId ?? getLastUserMessage(rawHistory)?._id;
+
   // Class clarification needed (create or update) → show course MCQ
-  if (output.needsClassClarification && !session?.resolvedCourseId) {
+  const hasCourseTag = await threadHasTaggedCourse(ctx, userId, rawHistory);
+  if (output.needsClassClarification && !hasCourseTag) {
     const queryText = message.trim() || output.classTag || output.updatedClassTag || "class course";
     const { candidates, hasMore } = await ctx.runAction(
       internal.actions.entityResolution.searchCourseCandidates,
@@ -306,12 +345,13 @@ async function handleTaskAgentMessage(
       candidates.length === 0
         ? "I couldn't find any courses in your profile. Add courses from the Classes page, then try again."
         : "Which class is this for? Pick one below, or choose **Other** to see more options.";
+    const taskForIntro = walkLatestTaggedTaskId(rawHistory);
     await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
       userId,
       sessionId,
       role: "assistant",
       content: introText,
-      ...(session?.resolvedTaskId ? { taskId: session.resolvedTaskId } : {}),
+      ...(taskForIntro !== undefined ? { taskId: taskForIntro } : {}),
     });
     if (candidates.length > 0) {
       await ctx.runMutation(internal.mutations.chatSessions.setEntityPromptStateInternal, {
@@ -321,6 +361,7 @@ async function handleTaskAgentMessage(
         activeEntityStep: "class",
         needsClassAfterTask: false,
         awaitingEntityResolution: true,
+        ...(mcqTriggerId !== undefined ? { clarifyTriggerUserMessageId: mcqTriggerId } : {}),
       });
     }
     return c.json({
@@ -336,8 +377,8 @@ async function handleTaskAgentMessage(
     });
   }
 
-  // RUD + no task resolved → show entity MCQ
-  if (output.intent === "rud" && output.needsEntityClarification && !session?.resolvedTaskId) {
+  // RUD + no task tag for this turn → show entity MCQ
+  if (output.intent === "rud" && shouldOfferTaskEntityMcq(output.needsEntityClarification, rawHistory, message)) {
     const { candidates, hasMore } = await ctx.runAction(
       internal.actions.entityResolution.searchTaskCandidates,
       { userId, queryText: message, excludeIds: [] },
@@ -360,6 +401,7 @@ async function handleTaskAgentMessage(
         activeEntityStep: "task",
         needsClassAfterTask: false,
         awaitingEntityResolution: true,
+        ...(mcqTriggerId !== undefined ? { clarifyTriggerUserMessageId: mcqTriggerId } : {}),
       });
     }
     return c.json({
@@ -377,18 +419,20 @@ async function handleTaskAgentMessage(
 
   // Ready to execute a Convex mutation
   if (output.readyToExecute && output.actionType !== "none") {
-    return executeTaskAction(ctx, c, { userId, sessionId, session, output });
+    return executeTaskAction(ctx, c, { userId, sessionId, historyAsc: rawHistory, output });
   }
 
   // Still gathering info — relay agent's conversational message
   const aiText = output.message;
+  const tagTask = walkLatestTaggedTaskId(rawHistory);
+  const tagCourse = walkLatestTaggedCourseId(rawHistory);
   await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
     userId,
     sessionId,
     role: "assistant",
     content: aiText,
-    ...(session?.resolvedTaskId ? { taskId: session.resolvedTaskId } : {}),
-    ...(session?.resolvedCourseId ? { courseId: session.resolvedCourseId } : {}),
+    ...(tagTask !== undefined ? { taskId: tagTask } : {}),
+    ...(tagCourse !== undefined ? { courseId: tagCourse } : {}),
   });
   return c.json({ text: aiText, status: "routed", route: "tasks", entityKind: "none", messageTag: "none", tagConfidence: 0 });
 }
@@ -404,43 +448,22 @@ async function handleFeedbackAgentMessage(
     userId: Id<"users">;
     sessionId: string;
     message: string;
-    session: ChatSessionSnapshot | null;
     client: InstanceType<typeof MastraClient>;
+    triggerUserMessageId?: Id<"chatMessages">;
   },
 ): Promise<Response> {
-  const { userId, sessionId, message, session, client } = params;
+  const { userId, sessionId, message, client, triggerUserMessageId } = params;
 
-  const rawHistory = await ctx.runQuery(internal.queries.chatMessages.getChatHistoryInternal, {
+  const rawHistory = (await ctx.runQuery(internal.queries.chatMessages.getChatHistoryInternal, {
     userId,
     sessionId,
     limit: 20,
-  });
+  })) as TaggedMessageView[];
   const historyText = rawHistory
     .map((m) => `${m.role === "user" ? "User" : "Assistant"}: ${m.content}`)
     .join("\n");
 
-  // Resolved task context
-  let resolvedTaskContext = "No task is resolved yet.";
-  if (session?.resolvedTaskId) {
-    const task = await ctx.runQuery(internal.queries.tasks.getTaskInternal, {
-      taskId: session.resolvedTaskId,
-    });
-    if (task) {
-      resolvedTaskContext = `Resolved task: "${task.title}" (type: ${task.taskType}, due: ${new Date(task.dueDate).toISOString().slice(0, 10)})\nTask ID: ${String(session.resolvedTaskId)}`;
-    }
-  }
-
-  // Resolved course context
-  let resolvedCourseContext = "No course is resolved yet.";
-  if (session?.resolvedCourseId) {
-    const courses = await ctx.runQuery(internal.queries.userCourses.getUserCoursesByIdsInternal, {
-      courseIds: [session.resolvedCourseId],
-    });
-    if (courses.length > 0) {
-      const c2 = courses[0];
-      resolvedCourseContext = `Resolved course: "${c2.title}" (code: ${c2.courseCode})\nCourse ID: ${String(session.resolvedCourseId)}`;
-    }
-  }
+  const taggedBlock = await buildTaggedEntitiesContextBlock(ctx, userId, rawHistory);
 
   const today = new Date().toISOString().slice(0, 10);
   const continueNote = message.trim()
@@ -449,8 +472,9 @@ async function handleFeedbackAgentMessage(
   const contextPrompt = buildFeedbackAgentContextPrompt({
     todayIso: today,
     historyText,
-    resolvedTaskContext,
-    resolvedCourseContext,
+    resolvedTaskContext: taggedBlock,
+    resolvedCourseContext:
+      "Course context is represented by tagged course IDs above (and by any tagged task that links to a course).",
     continueNote,
   });
 
@@ -470,13 +494,13 @@ async function handleFeedbackAgentMessage(
   const output = (agentStep && "output" in agentStep ? agentStep.output : null) as FeedbackAgentOutput | null;
 
   if (!output) return c.json({ error: "feedback_agent_unavailable" }, 502);
+  const mcqTriggerId = triggerUserMessageId ?? getLastUserMessage(rawHistory)?._id;
 
   // Task entity needed — always show MCQ when agent asks, even if a task was previously resolved
   if (output.needsTaskClarification) {
-    const excludeTaskIds = session?.resolvedTaskId ? [session.resolvedTaskId] : [];
     const { candidates, hasMore } = await ctx.runAction(
       internal.actions.entityResolution.searchTaskCandidates,
-      { userId, queryText: message || "task assignment", excludeIds: excludeTaskIds },
+      { userId, queryText: message || "task assignment", excludeIds: [] },
     );
     const introText =
       candidates.length === 0
@@ -489,6 +513,7 @@ async function handleFeedbackAgentMessage(
       await ctx.runMutation(internal.mutations.chatSessions.setEntityPromptStateInternal, {
         userId, sessionId, lastEntityQueryText: message || "task assignment",
         activeEntityStep: "task", needsClassAfterTask: false, awaitingEntityResolution: true,
+        ...(mcqTriggerId !== undefined ? { clarifyTriggerUserMessageId: mcqTriggerId } : {}),
       });
     }
     return c.json({
@@ -510,14 +535,16 @@ async function handleFeedbackAgentMessage(
       candidates.length === 0
         ? "I don’t see any courses yet. Add classes from the Classes page first, then ask again."
         : "Which class are you talking about? Pick one below, or choose **Other** to see more options.";
+    const taskForClassIntro = walkLatestTaggedTaskId(rawHistory);
     await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
       userId, sessionId, role: "assistant", content: introText,
-      ...(session?.resolvedTaskId ? { taskId: session.resolvedTaskId } : {}),
+      ...(taskForClassIntro !== undefined ? { taskId: taskForClassIntro } : {}),
     });
     if (candidates.length > 0) {
       await ctx.runMutation(internal.mutations.chatSessions.setEntityPromptStateInternal, {
         userId, sessionId, lastEntityQueryText: message || "class course",
         activeEntityStep: "class", needsClassAfterTask: false, awaitingEntityResolution: true,
+        ...(mcqTriggerId !== undefined ? { clarifyTriggerUserMessageId: mcqTriggerId } : {}),
       });
     }
     return c.json({
@@ -537,10 +564,12 @@ async function handleFeedbackAgentMessage(
   }
 
   const aiText = output.message;
+  const tagTask = walkLatestTaggedTaskId(rawHistory);
+  const tagCourse = walkLatestTaggedCourseId(rawHistory);
   await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
     userId, sessionId, role: "assistant", content: aiText,
-    ...(session?.resolvedTaskId ? { taskId: session.resolvedTaskId } : {}),
-    ...(session?.resolvedCourseId ? { courseId: session.resolvedCourseId } : {}),
+    ...(tagTask !== undefined ? { taskId: tagTask } : {}),
+    ...(tagCourse !== undefined ? { courseId: tagCourse } : {}),
   });
   return c.json({ text: aiText, status: "routed", route: "feedback" });
 }
@@ -604,7 +633,7 @@ async function continueAfterSupervisorOutput(
     output: WorkflowRouteOutput;
   },
 ): Promise<Response> {
-  const { userId, sessionId, message, output } = params;
+  const { userId, sessionId, message, output, userMessageId } = params;
 
   // Domain not recognised — ask clarifying question
   if (output.needsDomainClarification && output.domainClarifyingQuestion) {
@@ -631,6 +660,7 @@ async function continueAfterSupervisorOutput(
       userId, sessionId, message,
       session: { ...session, activeAgent: "task" as const },
       client: subClient,
+      triggerUserMessageId: userMessageId,
     });
   }
 
@@ -639,13 +669,10 @@ async function continueAfterSupervisorOutput(
     await ctx.runMutation(internal.mutations.chatSessions.setTaskAgentStateInternal, {
       userId, sessionId, activeAgent: "feedback",
     });
-    const session = await ctx.runQuery(internal.queries.chatSessions.getChatSessionInternal, {
-      userId, sessionId,
-    });
     return handleFeedbackAgentMessage(ctx, c, {
       userId, sessionId, message,
-      session: { ...session, activeAgent: "feedback" as const },
       client: subClient,
+      triggerUserMessageId: userMessageId,
     });
   }
 
@@ -681,14 +708,7 @@ chatApp.post("/api/chat", async (c) => {
     message?: string;
     sessionId?: string;
     entity?: {
-      action:
-        | "pick_task"
-        | "pick_course"
-        | "other_tasks"
-        | "other_courses"
-        | "scope_confirm_yes"
-        | "scope_confirm_no"
-        | "menu_pick";
+      action: "pick_task" | "pick_course" | "other_tasks" | "other_courses" | "menu_pick";
       taskId?: string;
       courseId?: string;
       excludeTaskIds?: string[];
@@ -717,96 +737,18 @@ chatApp.post("/api/chat", async (c) => {
   const client = new MastraClient({ baseUrl: mastraUrl });
 
   // ── Entity UI actions (MCQ / Other) — no supervisor call ────────────────────
-  if (body.entity?.action === "scope_confirm_yes") {
-    if (session?.awaitingScopeConfirm !== true) {
-      return c.json({ error: "No pending scope confirmation" }, 400);
-    }
-    const pendingId = session.pendingScopeUserMessageId;
-    const replay =
-      pendingId !== undefined
-        ? await ctx.runQuery(internal.queries.chatMessages.getUserMessageForScopeReplayInternal, {
-            userId,
-            sessionId,
-            messageId: pendingId,
-          })
-        : null;
-
-    await ctx.runMutation(internal.mutations.chatSessions.resolveScopeConfirmYesInternal, {
-      userId,
-      sessionId,
-    });
-
-    if (replay && pendingId !== undefined) {
-      const workflow = client.getWorkflow("supervisor-workflow");
-      const run = await workflow.startAsync({ inputData: { query: replay.content } });
-
-      for (const step of Object.values(run.steps ?? {})) {
-        if (!("output" in step)) {
-          const errMsg = (step as { error?: string }).error ?? "";
-          if (errMsg.includes("quota") || errMsg.includes("RESOURCE_EXHAUSTED") || errMsg.includes("429")) {
-            return c.json({ error: "quota_exceeded" }, 429);
-          }
-        }
-      }
-
-      const routeStep = run.steps?.["route"];
-      const output = (routeStep && "output" in routeStep ? routeStep.output : null) as
-        | WorkflowRouteOutput
-        | null;
-
-      if (!output) {
-        return c.json({ error: "supervisor_unavailable" }, 502);
-      }
-
-      return continueAfterSupervisorOutput(ctx, c, {
-        userId,
-        sessionId,
-        message: replay.content,
-        userMessageId: pendingId,
-        output,
-      });
-    }
-
-    await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
-      userId,
-      sessionId,
-      role: "assistant",
-      content: SCOPE_YES_ACK_MSG,
-    });
-    return c.json({
-      text: SCOPE_YES_ACK_MSG,
-      status: "scope_confirm_yes",
-      route: null,
-    });
-  }
-
-  if (body.entity?.action === "scope_confirm_no") {
-    if (session?.awaitingScopeConfirm !== true) {
-      return c.json({ error: "No pending scope confirmation" }, 400);
-    }
-    await ctx.runMutation(internal.mutations.chatSessions.resolveScopeConfirmNoInternal, {
-      userId,
-      sessionId,
-    });
-    await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
-      userId,
-      sessionId,
-      role: "assistant",
-      content: SCOPE_DENY_FINAL_MSG,
-    });
-    return c.json({
-      text: SCOPE_DENY_FINAL_MSG,
-      status: "chat_input_locked",
-      route: null,
-    });
-  }
-
   if (body.entity?.action === "pick_task" && body.entity.taskId) {
     const taskId = body.entity.taskId as Id<"tasks">;
     const { needsClassNext } = await ctx.runMutation(
       internal.mutations.chatSessions.resolvePickedTaskInternal,
       { userId, sessionId, taskId },
     );
+    await ctx.runMutation(internal.mutations.chatMessages.applyResolvedEntityToClarifyTriggerMessageInternal, {
+      userId,
+      sessionId,
+      taskId,
+      clearTriggerPointer: !needsClassNext,
+    });
     const intro = needsClassNext ? ENTITY_INTRO_CLASS : "Got it — I’ll use that task.";
     await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
       userId,
@@ -857,7 +799,7 @@ chatApp.post("/api/chat", async (c) => {
     }
     if (sessionAfterPick?.activeAgent === "feedback") {
       return handleFeedbackAgentMessage(ctx, c, {
-        userId, sessionId, message: "", session: sessionAfterPick, client,
+        userId, sessionId, message: "", client,
       });
     }
 
@@ -878,6 +820,12 @@ chatApp.post("/api/chat", async (c) => {
       sessionId,
       courseId,
     });
+    await ctx.runMutation(internal.mutations.chatMessages.applyResolvedEntityToClarifyTriggerMessageInternal, {
+      userId,
+      sessionId,
+      courseId,
+      clearTriggerPointer: true,
+    });
     const sessionAfterCourse = await ctx.runQuery(
       internal.queries.chatSessions.getChatSessionInternal,
       { userId, sessionId },
@@ -894,7 +842,12 @@ chatApp.post("/api/chat", async (c) => {
       });
     }
 
-    const hadTaskAlready = !!sessionAfterCourse?.resolvedTaskId;
+    const recentForPick = (await ctx.runQuery(internal.queries.chatMessages.getChatHistoryInternal, {
+      userId,
+      sessionId,
+      limit: 15,
+    })) as TaggedMessageView[];
+    const hadTaskAlready = walkLatestTaggedTaskId(recentForPick) !== undefined;
     const labels = await ctx.runQuery(
       internal.queries.chatSessions.getResolvedEntityLabelsInternal,
       { userId, sessionId },
@@ -976,13 +929,11 @@ chatApp.post("/api/chat", async (c) => {
     const route = body.entity.route;
     const userLabel = MENU_USER_LABELS[route] ?? route;
 
-    await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
+    const menuUserMessageId = await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
       userId,
       sessionId,
       role: "user",
       content: userLabel,
-      ...(session?.resolvedTaskId ? { taskId: session.resolvedTaskId } : {}),
-      ...(session?.resolvedCourseId ? { courseId: session.resolvedCourseId } : {}),
     });
 
     // Schedule and preferences: canned response only
@@ -1011,12 +962,17 @@ chatApp.post("/api/chat", async (c) => {
         sessionId,
         activeAgent: "task",
       });
+      const sessionAfterMenu = await ctx.runQuery(internal.queries.chatSessions.getChatSessionInternal, {
+        userId,
+        sessionId,
+      });
       return handleTaskAgentMessage(ctx, c, {
         userId,
         sessionId,
         message: userLabel,
-        session,
+        session: sessionAfterMenu,
         client,
+        triggerUserMessageId: menuUserMessageId,
       });
     }
 
@@ -1029,8 +985,8 @@ chatApp.post("/api/chat", async (c) => {
         userId,
         sessionId,
         message: userLabel,
-        session: { ...session, activeAgent: "feedback" as const },
         client,
+        triggerUserMessageId: menuUserMessageId,
       });
     }
 
@@ -1064,21 +1020,11 @@ chatApp.post("/api/chat", async (c) => {
       route: null,
     });
   }
-  if (sessionBeforeUserMsg?.awaitingScopeConfirm === true) {
-    return c.json({
-      text: SCOPE_USE_BUTTONS_MSG,
-      status: "awaiting_scope_reply",
-      route: null,
-    });
-  }
-
   const userMessageId = await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
     userId,
     sessionId,
     role: "user",
     content: message,
-    ...(sessionBeforeUserMsg?.resolvedTaskId ? { taskId: sessionBeforeUserMsg.resolvedTaskId } : {}),
-    ...(sessionBeforeUserMsg?.resolvedCourseId ? { courseId: sessionBeforeUserMsg.resolvedCourseId } : {}),
   });
 
   // Check message limit — fetch one extra to detect overflow without counting everything.
@@ -1088,9 +1034,10 @@ chatApp.post("/api/chat", async (c) => {
     limit: CHAT_MESSAGE_LIMIT + 1,
   });
   if (recentMsgs.length > CHAT_MESSAGE_LIMIT) {
-    await ctx.runMutation(internal.mutations.chatSessions.resolveScopeConfirmNoInternal, {
+    await ctx.runMutation(internal.mutations.chatSessions.setChatInputLockedInternal, {
       userId,
       sessionId,
+      locked: true,
     });
     await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
       userId,
@@ -1129,12 +1076,12 @@ chatApp.post("/api/chat", async (c) => {
   // ── Subagent mode — bypass supervisor ─────────────────────────────────────
   if (sessionNow?.activeAgent === "task") {
     return handleTaskAgentMessage(ctx, c, {
-      userId, sessionId, message, session: sessionNow, client,
+      userId, sessionId, message, session: sessionNow, client, triggerUserMessageId: userMessageId,
     });
   }
   if (sessionNow?.activeAgent === "feedback") {
     return handleFeedbackAgentMessage(ctx, c, {
-      userId, sessionId, message, session: sessionNow, client,
+      userId, sessionId, message, client, triggerUserMessageId: userMessageId,
     });
   }
   if (sessionNow?.activeAgent === "preferences") {

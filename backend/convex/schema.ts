@@ -193,12 +193,10 @@ export default defineSchema({
     .index("by_taskId", ["taskId"])
     .index("by_courseId", ["courseId"]),
 
-  /** Chat widget session — resolved entities + clarification state (Part 2) */
+  /** Chat widget session — MCQ / subagent state (task & course scope live on chatMessages) */
   chatSessions: defineTable({
     userId: v.id("users"),
     sessionId: v.string(),
-    resolvedTaskId: v.optional(v.id("tasks")),
-    resolvedCourseId: v.optional(v.id("userCourses")),
     /** User message that started the active MCQ clarify flow — tagged when user picks task/class */
     entityClarifyTriggerUserMessageId: v.optional(v.id("chatMessages")),
     /** Last user utterance used for embedding search (MCQ / Other) */
@@ -212,17 +210,8 @@ export default defineSchema({
     clarificationAttemptCount: v.optional(v.number()),
     clarificationExhausted: v.optional(v.boolean()),
     awaitingEntityResolution: v.optional(v.boolean()),
-    /** User must answer Yes/No: still same scoped task/class? */
-    awaitingScopeConfirm: v.optional(v.boolean()),
-    /** Legacy / UI flags for scope confirmation (may exist on older session docs) */
-    scopeConfirmPendingTask: v.optional(v.boolean()),
-    scopeConfirmPendingClass: v.optional(v.boolean()),
-    /** After user answers No on scope — no more messages until new session */
+    /** Set when the thread hits the per-session message cap (no new user messages). */
     chatInputLocked: v.optional(v.boolean()),
-    /** One-shot: next user message skips scope-change block after Yes */
-    scopeBypassNextMessage: v.optional(v.boolean()),
-    /** User message to re-process after scope Yes (same chat turn as original question) */
-    pendingScopeUserMessageId: v.optional(v.id("chatMessages")),
     /** Which specialist agent is handling this session */
     activeAgent: v.optional(v.union(v.literal("task"), v.literal("feedback"), v.literal("preferences"))),
     /** Intent determined by task agent: "create" skips entity MCQ, "rud" triggers it */
