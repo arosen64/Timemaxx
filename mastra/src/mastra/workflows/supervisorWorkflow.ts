@@ -1,29 +1,18 @@
 import { createWorkflow, createStep } from "@mastra/core/workflows";
 import { z } from "zod";
 import { supervisorAgent } from "../agents/supervisorAgent";
-
-const routeEnum = z.enum(["tasks", "schedule", "preferences", "feedback", "classes"]);
+import { supervisorAgentOutputSchema } from "../lib/prompts/supervisorAgent.prompt";
 
 const routeStep = createStep({
   id: "route",
   inputSchema: z.object({
     query: z.string().describe("The user's raw input message"),
   }),
-  outputSchema: z.object({
-    route: routeEnum.nullable(),
-    needsDomainClarification: z.boolean(),
-    domainClarifyingQuestion: z.string().nullable(),
-    reasoning: z.string(),
-  }),
+  outputSchema: supervisorAgentOutputSchema,
   execute: async ({ inputData }) => {
     const response = await supervisorAgent.generate(inputData.query, {
       structuredOutput: {
-        schema: z.object({
-          route: routeEnum.nullable(),
-          needsDomainClarification: z.boolean(),
-          domainClarifyingQuestion: z.string().nullable(),
-          reasoning: z.string(),
-        }),
+        schema: supervisorAgentOutputSchema,
       },
     });
     return response.object;
@@ -35,12 +24,7 @@ export const supervisorWorkflow = createWorkflow({
   inputSchema: z.object({
     query: z.string().describe("The user's raw input message"),
   }),
-  outputSchema: z.object({
-    route: routeEnum.nullable(),
-    needsDomainClarification: z.boolean(),
-    domainClarifyingQuestion: z.string().nullable(),
-    reasoning: z.string(),
-  }),
+  outputSchema: supervisorAgentOutputSchema,
 })
   .then(routeStep)
   .commit();

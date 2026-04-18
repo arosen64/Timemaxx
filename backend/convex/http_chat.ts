@@ -8,10 +8,15 @@ import {
   collectUniqueTaggedIds,
   getLastUserMessage,
   shouldOfferTaskEntityMcq,
+  type TaggedMessageView,
   walkLatestTaggedCourseId,
   walkLatestTaggedTaskId,
-  type TaggedMessageView,
 } from "./lib/messageTaggedScope";
+import {
+  buildFeedbackAgentContextPrompt,
+  buildPreferencesAgentContextPrompt,
+  buildTaskAgentContextPrompt,
+} from "./lib/prompts/mastraChatContext.prompt";
 
 const chatApp = new Hono<HonoEnv>();
 
@@ -95,6 +100,7 @@ async function buildTaggedEntitiesContextBlock(
   return lines.join("\n");
 }
 
+/** Mirrors `mastra/src/mastra/lib/prompts/feedbackAgent.prompt.ts` output schema. */
 type FeedbackAgentOutput = {
   message: string;
   intent: "task_feedback" | "class_feedback" | "unknown";
@@ -107,6 +113,7 @@ type FeedbackAgentOutput = {
   reasoning: string;
 };
 
+/** Mirrors `mastra/src/mastra/lib/prompts/taskAgent.prompt.ts` output schema. */
 type TaskAgentOutput = {
   message: string;
   intent: "create" | "rud" | "unknown";
@@ -287,8 +294,14 @@ async function handleTaskAgentMessage(
   const continueNote = message.trim()
     ? "Respond to the latest user message above."
     : "The user just selected an entity from the picker (no new text). Based on the conversation history and the now-resolved context, continue the conversation — e.g. proceed to the next missing field, confirm deletion, or summarise task details.";
-  const contextPrompt =
-    `Today is ${today}.\n\nConversation history (oldest first):\n${historyText}\n\n${taggedBlock}\n\n${continueNote}`;
+  const contextPrompt = buildTaskAgentContextPrompt({
+    todayIso: today,
+    historyText,
+    resolvedTaskContext: taggedBlock,
+    resolvedCourseContext:
+      "Course context is represented by tagged course IDs above (and by any tagged task that links to a course).",
+    continueNote,
+  });
 
   const taskWf = client.getWorkflow("task-workflow");
   const run = await taskWf.startAsync({ inputData: { contextPrompt } });
@@ -456,10 +469,14 @@ async function handleFeedbackAgentMessage(
   const continueNote = message.trim()
     ? "Respond to the latest user message above."
     : "The user just selected an entity from the picker (no new text). Continue the conversation based on what is now resolved.";
-  const contextPrompt =
-    `Today is ${today}.\n\nConversation history (oldest first):\n${historyText}\n\n${taggedBlock}\n\n${continueNote}`;
-
-  const mcqTriggerId = triggerUserMessageId ?? getLastUserMessage(rawHistory)?._id;
+  const contextPrompt = buildFeedbackAgentContextPrompt({
+    todayIso: today,
+    historyText,
+    resolvedTaskContext: taggedBlock,
+    resolvedCourseContext:
+      "Course context is represented by tagged course IDs above (and by any tagged task that links to a course).",
+    continueNote,
+  });
 
   const wf = client.getWorkflow("feedback-workflow");
   const run = await wf.startAsync({ inputData: { contextPrompt } });
@@ -477,6 +494,7 @@ async function handleFeedbackAgentMessage(
   const output = (agentStep && "output" in agentStep ? agentStep.output : null) as FeedbackAgentOutput | null;
 
   if (!output) return c.json({ error: "feedback_agent_unavailable" }, 502);
+  const mcqTriggerId = triggerUserMessageId ?? getLastUserMessage(rawHistory)?._id;
 
   // Task entity needed — always show MCQ when agent asks, even if a task was previously resolved
   if (output.needsTaskClarification) {
@@ -576,8 +594,10 @@ async function handlePreferencesAgentMessage(
     .map((m) => `${m.role === "user" ? "User" : "Assistant"}: ${m.content}`)
     .join("\n");
 
-  const contextPrompt =
-    `Conversation history:\n${historyText}\n\nLatest user message: ${message}\nAcknowledge what they want to change and direct them to the Preferences page.`;
+  const contextPrompt = buildPreferencesAgentContextPrompt({
+    historyText,
+    latestUserMessage: message,
+  });
 
   const wf = client.getWorkflow("preferences-workflow");
   const run = await wf.startAsync({ inputData: { contextPrompt } });
