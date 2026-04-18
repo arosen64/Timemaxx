@@ -480,11 +480,9 @@ async function handleFeedbackAgentMessage(
 
   // Task entity needed — always show MCQ when agent asks, even if a task was previously resolved
   if (output.needsTaskClarification) {
-    const latestTask = walkLatestTaggedTaskId(rawHistory);
-    const excludeTaskIds = latestTask !== undefined ? [latestTask] : [];
     const { candidates, hasMore } = await ctx.runAction(
       internal.actions.entityResolution.searchTaskCandidates,
-      { userId, queryText: message || "task assignment", excludeIds: excludeTaskIds },
+      { userId, queryText: message || "task assignment", excludeIds: [] },
     );
     const introText =
       candidates.length === 0
