@@ -124,6 +124,7 @@ export default defineSchema({
     classTag: v.optional(v.string()),
     embedding: v.optional(v.array(v.float64())),
     reasoning: v.optional(reasoningTraceValidator),
+    status: v.optional(v.union(v.literal("not_started"), v.literal("in_progress"), v.literal("completed"))),
   })
     .index("by_userId", ["userId"])
     .index("by_userId_createdAt", ["userId", "createdAt"])
@@ -149,6 +150,7 @@ export default defineSchema({
     order: v.number(),
     createdAt: v.number(),
     embedding: v.optional(v.array(v.float64())),
+    status: v.optional(v.union(v.literal("not_started"), v.literal("in_progress"), v.literal("completed"))),
   })
     .index("by_parentTaskId", ["parentTaskId"])
     .index("by_userId", ["userId"])
