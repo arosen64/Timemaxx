@@ -23232,6 +23232,292 @@
     },
     {
       "type": "frame",
+      "id": "L6E63",
+      "x": 7700,
+      "y": 944,
+      "name": "StatusDropdown/NotStarted",
+      "reusable": true,
+      "fill": "$--success-bg",
+      "cornerRadius": 4,
+      "gap": 5,
+      "padding": [
+        4,
+        10
+      ],
+      "alignItems": "center",
+      "children": [
+        {
+          "type": "ellipse",
+          "id": "cyJuc",
+          "name": "dot",
+          "fill": "$--success",
+          "width": 6,
+          "height": 6
+        },
+        {
+          "type": "text",
+          "id": "37Pw7",
+          "name": "label",
+          "fill": "$--success",
+          "content": "Not Started",
+          "fontFamily": "Space Grotesk",
+          "fontSize": 11,
+          "fontWeight": "600"
+        },
+        {
+          "type": "icon_font",
+          "id": "JBZJ5",
+          "name": "chevron",
+          "width": 10,
+          "height": 10,
+          "iconFontName": "chevron-down",
+          "iconFontFamily": "lucide",
+          "fill": "$--success"
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "VMNeb",
+      "x": 7700,
+      "y": 980,
+      "name": "StatusDropdown/InProgress",
+      "reusable": true,
+      "fill": "$--info-bg",
+      "cornerRadius": 4,
+      "gap": 5,
+      "padding": [
+        4,
+        10
+      ],
+      "alignItems": "center",
+      "children": [
+        {
+          "type": "ellipse",
+          "id": "78NBI",
+          "name": "dot",
+          "fill": "$--info-emphasis",
+          "width": 6,
+          "height": 6
+        },
+        {
+          "type": "text",
+          "id": "xXF2g",
+          "name": "label",
+          "fill": "$--info-emphasis",
+          "content": "In Progress",
+          "fontFamily": "Space Grotesk",
+          "fontSize": 11,
+          "fontWeight": "600"
+        },
+        {
+          "type": "icon_font",
+          "id": "ntvib",
+          "name": "chevron",
+          "width": 10,
+          "height": 10,
+          "iconFontName": "chevron-down",
+          "iconFontFamily": "lucide",
+          "fill": "$--info-emphasis"
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "0VKuW",
+      "x": 7700,
+      "y": 1016,
+      "name": "StatusDropdown/Completed",
+      "reusable": true,
+      "fill": "$--background",
+      "cornerRadius": 4,
+      "stroke": {
+        "align": "center",
+        "thickness": 1,
+        "fill": "$--border"
+      },
+      "gap": 5,
+      "padding": [
+        4,
+        10
+      ],
+      "alignItems": "center",
+      "children": [
+        {
+          "type": "ellipse",
+          "id": "SJfpn",
+          "name": "dot",
+          "fill": "$--light-muted",
+          "width": 6,
+          "height": 6
+        },
+        {
+          "type": "text",
+          "id": "kMlCz",
+          "name": "label",
+          "fill": "$--muted-foreground",
+          "content": "Completed",
+          "fontFamily": "Space Grotesk",
+          "fontSize": 11,
+          "fontWeight": "600"
+        },
+        {
+          "type": "icon_font",
+          "id": "Thzle",
+          "name": "chevron",
+          "width": 10,
+          "height": 10,
+          "iconFontName": "chevron-down",
+          "iconFontFamily": "lucide",
+          "fill": "$--muted-foreground"
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "OMVL9",
+      "x": 7860,
+      "y": 944,
+      "name": "StatusDropdown/NotStarted/SM",
+      "reusable": true,
+      "fill": "$--success-bg",
+      "cornerRadius": 4,
+      "gap": 4,
+      "padding": [
+        3,
+        7
+      ],
+      "alignItems": "center",
+      "children": [
+        {
+          "type": "ellipse",
+          "id": "0BRij",
+          "name": "dot",
+          "fill": "$--success",
+          "width": 5,
+          "height": 5
+        },
+        {
+          "type": "text",
+          "id": "fHX82",
+          "name": "label",
+          "fill": "$--success",
+          "content": "Not Started",
+          "fontFamily": "Space Grotesk",
+          "fontSize": 10,
+          "fontWeight": "600"
+        },
+        {
+          "type": "icon_font",
+          "id": "7THcT",
+          "name": "chevron",
+          "width": 9,
+          "height": 9,
+          "iconFontName": "chevron-down",
+          "iconFontFamily": "lucide",
+          "fill": "$--success"
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "sBpPa",
+      "x": 7860,
+      "y": 976,
+      "name": "StatusDropdown/InProgress/SM",
+      "reusable": true,
+      "fill": "$--info-bg",
+      "cornerRadius": 4,
+      "gap": 4,
+      "padding": [
+        3,
+        7
+      ],
+      "alignItems": "center",
+      "children": [
+        {
+          "type": "ellipse",
+          "id": "SiyQc",
+          "name": "dot",
+          "fill": "$--info-emphasis",
+          "width": 5,
+          "height": 5
+        },
+        {
+          "type": "text",
+          "id": "hlbUK",
+          "name": "label",
+          "fill": "$--info-emphasis",
+          "content": "In Progress",
+          "fontFamily": "Space Grotesk",
+          "fontSize": 10,
+          "fontWeight": "600"
+        },
+        {
+          "type": "icon_font",
+          "id": "YaC9B",
+          "name": "chevron",
+          "width": 9,
+          "height": 9,
+          "iconFontName": "chevron-down",
+          "iconFontFamily": "lucide",
+          "fill": "$--info-emphasis"
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "F4S3e",
+      "x": 7860,
+      "y": 1008,
+      "name": "StatusDropdown/Completed/SM",
+      "reusable": true,
+      "fill": "$--background",
+      "cornerRadius": 4,
+      "stroke": {
+        "align": "center",
+        "thickness": 1,
+        "fill": "$--border"
+      },
+      "gap": 4,
+      "padding": [
+        3,
+        7
+      ],
+      "alignItems": "center",
+      "children": [
+        {
+          "type": "ellipse",
+          "id": "K5gBO",
+          "name": "dot",
+          "fill": "$--light-muted",
+          "width": 5,
+          "height": 5
+        },
+        {
+          "type": "text",
+          "id": "3PunJ",
+          "name": "label",
+          "fill": "$--muted-foreground",
+          "content": "Completed",
+          "fontFamily": "Space Grotesk",
+          "fontSize": 10,
+          "fontWeight": "600"
+        },
+        {
+          "type": "icon_font",
+          "id": "bQ8Hg",
+          "name": "chevron",
+          "width": 9,
+          "height": 9,
+          "iconFontName": "chevron-down",
+          "iconFontFamily": "lucide",
+          "fill": "$--muted-foreground"
+        }
+      ]
+    },
+    {
+      "type": "frame",
       "id": "DTPk1",
       "x": 8500,
       "y": 1200,

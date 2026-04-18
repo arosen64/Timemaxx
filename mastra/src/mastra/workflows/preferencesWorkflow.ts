@@ -1,13 +1,12 @@
 import { createWorkflow, createStep } from "@mastra/core/workflows";
 import { z } from "zod";
 import { preferencesAgent } from "../agents/preferencesAgent";
+import {
+  preferencesAgentOutputSchema,
+  type PreferencesAgentOutput,
+} from "../lib/prompts/preferencesAgent.prompt";
 
-export const preferencesAgentOutputSchema = z.object({
-  message: z.string(),
-  reasoning: z.string(),
-});
-
-export type PreferencesAgentOutput = z.infer<typeof preferencesAgentOutputSchema>;
+export { preferencesAgentOutputSchema, type PreferencesAgentOutput };
 
 const preferencesAgentStep = createStep({
   id: "preferences-agent",
