@@ -219,50 +219,28 @@ export default function TaskCard({
                   >
                     <TrashIcon />
                   </button>
+                  {!hasSubtasks && (
+                    isGeneratingSubtasks ? (
+                      <div className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-blue">
+                        <SpinnerIcon color="currentColor" size={16} />
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onGenerateSubtasks?.()
+                        }}
+                        className={iconBtnCls}
+                        aria-label="Generate subtasks"
+                        title="Generate subtasks"
+                      >
+                        <ListTreeIcon color="currentColor" size={16} />
+                      </button>
+                    )
+                  )}
                 </>
               )}
-              {!hasSubtasks && (
-                isGeneratingSubtasks ? (
-                  <div className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-blue">
-                    <SpinnerIcon color="currentColor" size={16} />
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      onGenerateSubtasks?.()
-                    }}
-                    className={iconBtnCls}
-                    aria-label="Generate subtasks"
-                    title='Generate subtasks'
-                  >
-                    <ListTreeIcon color="currentColor" size={16} />
-                  </button>
-                )
-              )}
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onEdit()
-                }}
-                className={iconBtnCls}
-                aria-label="Edit task"
-              >
-                <PencilIcon />
-              </button>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onDelete()
-                }}
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-blue hover:bg-urgent-red-light hover:text-urgent-red transition"
-                aria-label="Delete task"
-              >
-                <TrashIcon />
-              </button>
               <div
                 className={`text-slate-blue transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
               >
