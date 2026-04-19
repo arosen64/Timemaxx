@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, beforeEach, afterEach, vi } from "vitest";
 import { api, internal } from "../_generated/api";
 import { makeTestCtx, createTestUser } from "../../convex-tests/helpers";
 
@@ -48,6 +48,9 @@ async function seedSubtask(
 // ─── createSubtask ────────────────────────────────────────────────────────────
 
 describe("mutations/subtasks – createSubtask", () => {
+  beforeEach(() => { vi.useFakeTimers(); });
+  afterEach(() => { vi.useRealTimers(); });
+
   test("creates a subtask with valid input and returns its ID", async () => {
     const t = makeTestCtx();
     const { userId, withAuth } = await createTestUser(t);
@@ -128,6 +131,64 @@ describe("mutations/subtasks – createSubtask", () => {
         order: 0,
       })
     ).rejects.toThrow("Title cannot be empty");
+  });
+
+  test("schedules generateSubtaskEmbedding after createSubtask", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+    const parentTaskId = await seedTask(t, userId);
+
+    await withAuth.mutation(api.mutations.subtasks.createSubtask, {
+      parentTaskId,
+      title: "Write intro",
+      description: "Draft the introduction section",
+      taskType: "Essay",
+      color: "#2563eb",
+      order: 0,
+    });
+
+    const scheduled = await t.run((ctx) =>
+      ctx.db.system.query("_scheduled_functions").collect()
+    );
+    const embeddingJob = scheduled.find((f) =>
+      f.name.includes("generateSubtaskEmbedding")
+    );
+    expect(embeddingJob).toBeDefined();
+    const args = (embeddingJob!.args as [{ title: string; description: string }])[0];
+    expect(args.title).toBe("Write intro");
+    expect(args.description).toBe("Draft the introduction section");
+  });
+});
+
+// ─── updateSubtask ────────────────────────────────────────────────────────────
+
+describe("mutations/subtasks – updateSubtask", () => {
+  beforeEach(() => { vi.useFakeTimers(); });
+  afterEach(() => { vi.useRealTimers(); });
+
+  test("schedules generateSubtaskEmbedding after updateSubtask", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+    const parentTaskId = await seedTask(t, userId);
+    const subtaskId = await seedSubtask(t, userId, parentTaskId);
+
+    await withAuth.mutation(api.mutations.subtasks.updateSubtask, {
+      subtaskId,
+      title: "Revised intro",
+      description: "Updated draft",
+      taskType: "Essay",
+    });
+
+    const scheduled = await t.run((ctx) =>
+      ctx.db.system.query("_scheduled_functions").collect()
+    );
+    const embeddingJob = scheduled.find((f) =>
+      f.name.includes("generateSubtaskEmbedding")
+    );
+    expect(embeddingJob).toBeDefined();
+    const args = (embeddingJob!.args as [{ title: string; description: string }])[0];
+    expect(args.title).toBe("Revised intro");
+    expect(args.description).toBe("Updated draft");
   });
 });
 
