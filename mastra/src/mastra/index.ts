@@ -7,8 +7,9 @@ import { supervisorWorkflow } from "./workflows/supervisorWorkflow";
 import { taskWorkflow } from "./workflows/taskWorkflow";
 import { feedbackWorkflow } from "./workflows/feedbackWorkflow";
 import { preferencesWorkflow } from "./workflows/preferencesWorkflow";
+import { chatWorkflow } from "./workflows/chatWorkflow";
 
 export const mastra = new Mastra({
   agents: { supervisorAgent, taskAgent, feedbackAgent, preferencesAgent },
-  workflows: { supervisorWorkflow, taskWorkflow, feedbackWorkflow, preferencesWorkflow },
+  workflows: { supervisorWorkflow, taskWorkflow, feedbackWorkflow, preferencesWorkflow, chatWorkflow },
 });
