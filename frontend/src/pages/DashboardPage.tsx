@@ -517,7 +517,6 @@ export default function DashboardPage() {
                       key={task._id}
                       task={task}
                       barColor={getTaskBarColor(task)}
-                      badge={BADGE_MAP[task.taskType?.toLowerCase().replace(/\s+/g, '') ?? ''] ?? BADGE_MAP.default}
                       isEstimating={estimatingTasks.has(task._id)}
                       onStatusChange={(status: TaskStatus) => updateTaskStatus({ taskId: task._id, status })}
                       onEstimate={() => handleEstimateTask(task._id)}
@@ -562,7 +561,6 @@ export default function DashboardPage() {
                       key={task._id}
                       task={task}
                       barColor={getTaskBarColor(task)}
-                      badge={BADGE_MAP[task.taskType?.toLowerCase().replace(/\s+/g, '') ?? ''] ?? BADGE_MAP.default}
                       isEstimating={false}
                       isReadOnly
                       onStatusChange={() => {}}
