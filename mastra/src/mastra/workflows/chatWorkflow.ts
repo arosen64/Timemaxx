@@ -56,26 +56,27 @@ export const chatWorkflowOutputSchema = z.object({
 
 export type ChatWorkflowOutput = z.infer<typeof chatWorkflowOutputSchema>;
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
 
+// For task action clarifying
 const NO_ACTION = {
   actionType: null, title: null, description: null, taskType: null, dueDateIso: null,
   classTag: null, deleteConfirmed: false, updatedTitle: null, updatedDescription: null,
   updatedTaskType: null, updatedDueDateIso: null, updatedClassTag: null,
 } as const;
 
+// canned replies for routes
 const CANNED_REPLIES: Record<string, string> = {
   schedule: "To schedule or manage your study blocks, visit the **Schedule** page. To connect or revoke Google Calendar access, head to the **Profile** page.",
   classes: "To add or remove a course, or upload a syllabus, visit the **Classes** page.",
   preferences: "You can update your study preferences (focus length, work hours, and more) from the **Preferences** page.",
 };
 
+// Context formatting for agents
 function agentContextPrompt(p: { today: string; historyText: string; taggedEntitiesBlock: string; continueNote: string }): string {
   return `Today (ISO date): ${p.today}\n\n<conversation_history>\n${p.historyText}\n</conversation_history>\n\n<resolved_task_context>\n${p.taggedEntitiesBlock}\n</resolved_task_context>\n\n<resolved_course_context>\nCourse context is represented by tagged course IDs above (and by any tagged task that links to a course).\n</resolved_course_context>\n\n<turn_directive>\n${p.continueNote}\n</turn_directive>`;
 }
 
+// Task output formatting for chat workflow
 function taskOutput(output: TaskAgentOutput, ctx: {
   message: string; hasCourseTag: boolean; taggedTaskId: string | null; taskAgentIntent: "create" | "rud" | null;
 }): ChatWorkflowOutput {
@@ -95,6 +96,7 @@ function taskOutput(output: TaskAgentOutput, ctx: {
   return { reply: output.message, route: "tasks", status: "reply", mcqQueryText: null, needsClassAfterTask: false, newActiveAgent: "task", clearActiveAgent: false, newTaskAgentIntent: newIntent, readyToRecord: false, ...NO_ACTION };
 }
 
+// Feedback output formatting for chat workflow
 function feedbackOutput(output: FeedbackAgentOutput, ctx: { message: string }): ChatWorkflowOutput {
   const { message } = ctx;
   if (output.needsTaskClarification) {
@@ -106,10 +108,8 @@ function feedbackOutput(output: FeedbackAgentOutput, ctx: { message: string }): 
   return { reply: output.message, route: "feedback", status: "reply", mcqQueryText: null, needsClassAfterTask: false, newActiveAgent: output.readyToRecord ? null : "feedback", clearActiveAgent: output.readyToRecord, newTaskAgentIntent: null, readyToRecord: output.readyToRecord, ...NO_ACTION };
 }
 
-// ---------------------------------------------------------------------------
-// Step 1 — Router
-// Skips supervisor when activeAgent is already set (subagent owns the thread).
-// ---------------------------------------------------------------------------
+
+// Router step
 
 const routerStep = createStep({
   id: "router",
@@ -127,9 +127,7 @@ const routerStep = createStep({
   },
 });
 
-// ---------------------------------------------------------------------------
-// Step 2a — Task handler
-// ---------------------------------------------------------------------------
+//task step 
 
 const taskStep = createStep({
   id: "task_handler",
@@ -148,9 +146,7 @@ const taskStep = createStep({
   },
 });
 
-// ---------------------------------------------------------------------------
-// Step 2b — Feedback handler
-// ---------------------------------------------------------------------------
+// Feedback step
 
 const feedbackStep = createStep({
   id: "feedback_handler",
