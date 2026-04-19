@@ -195,6 +195,52 @@ describe("queries/studyBlocks – getFutureStudyBlocksForExport", () => {
     expect(result[0].title).toBe("Future");
   });
 
+  test("includes courseName when the task has an associated course", async () => {
+    const t = makeTestCtx();
+    const { userId } = await createTestUser(t);
+    const courseId = await t.run((ctx) =>
+      ctx.db.insert("userCourses", {
+        userId: userId as any,
+        courseCode: "EN.601.315",
+        title: "Databases",
+        term: "Fall 2025",
+      })
+    );
+    const taskId = await t.run((ctx) =>
+      ctx.db.insert("tasks", {
+        userId: userId as any,
+        title: "HW6",
+        description: "Database homework",
+        taskType: "Essay",
+        dueDate: Date.now() + 86_400_000,
+        createdAt: Date.now(),
+        courseId: courseId as any,
+      })
+    );
+    const futureStart = new Date(Date.now() + 3600_000).toISOString();
+    await seedStudyBlock(t, taskId, { startTime: futureStart });
+
+    const result = await t.query(internal.queries.studyBlocks.getFutureStudyBlocksForExport, {
+      userId: userId as any,
+    });
+    expect(result).toHaveLength(1);
+    expect(result[0].courseName).toBe("Databases");
+  });
+
+  test("courseName is undefined when the task has no associated course", async () => {
+    const t = makeTestCtx();
+    const { userId } = await createTestUser(t);
+    const taskId = await seedTask(t, userId);
+    const futureStart = new Date(Date.now() + 3600_000).toISOString();
+    await seedStudyBlock(t, taskId, { startTime: futureStart });
+
+    const result = await t.query(internal.queries.studyBlocks.getFutureStudyBlocksForExport, {
+      userId: userId as any,
+    });
+    expect(result).toHaveLength(1);
+    expect(result[0].courseName).toBeUndefined();
+  });
+
   test("does not return blocks belonging to another user", async () => {
     const t = makeTestCtx();
     const { userId: aliceId } = await createTestUser(t, { email: "alice@example.com" });

@@ -51,7 +51,7 @@ export default function AcademicProfileSummary({ profile, onChange }: AcademicPr
         <div>
           <h2 className="font-heading text-2xl font-bold text-navy">Academic Profile</h2>
           <p className="mt-1 font-body text-sm text-slate-blue">
-            A Gemini-generated summary based on your transcript.
+            An AI-generated summary based on your transcript.
           </p>
           <p className="mt-1 font-body text-xs text-light-blue">
             Tip: Rate your past courses' difficulty (1–5) for a more accurate profile.
@@ -85,7 +85,7 @@ export default function AcademicProfileSummary({ profile, onChange }: AcademicPr
             />
           ))}
           <p className="text-center font-body text-xs text-light-blue">
-            {userCourses === undefined || currUser === undefined ? 'Loading...' : 'Gemini is analyzing your transcript...'}
+            {userCourses === undefined || currUser === undefined ? 'Loading...' : 'Analyzing your transcript...'}
           </p>
         </div>
       )}

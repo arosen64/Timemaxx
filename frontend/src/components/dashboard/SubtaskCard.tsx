@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { SpinnerIcon, SparklesIcon, PencilIcon, TrashIcon } from '../icons'
-import { type SubtaskType, formatMinutes } from './types'
+import { type SubtaskType, type TaskStatus, formatMinutes } from './types'
 import { type Id } from '../../../../backend/convex/_generated/dataModel'
+import StatusDropdown from './StatusDropdown'
 
 type SubtaskCardProps = {
   subtask: SubtaskType
@@ -9,6 +10,8 @@ type SubtaskCardProps = {
   onEstimate: (id: Id<'subtasks'>) => void
   onEdit: (subtask: SubtaskType) => void
   onDelete: (id: Id<'subtasks'>) => void
+  onStatusChange: (id: Id<'subtasks'>, status: TaskStatus) => void
+  isReadOnly?: boolean
 }
 
 export default function SubtaskCard({
@@ -17,6 +20,8 @@ export default function SubtaskCard({
   onEstimate,
   onEdit,
   onDelete,
+  onStatusChange,
+  isReadOnly = false,
 }: SubtaskCardProps) {
   const [showReasoning, setShowReasoning] = useState(false)
 
@@ -68,37 +73,48 @@ export default function SubtaskCard({
 
         {/* Actions */}
         <div className="flex shrink-0 items-center gap-1.5">
-          {subtask.timeEstimate === undefined &&
-            (isEstimating ? (
-              <div className="flex h-7 w-7 items-center justify-center text-slate-blue">
-                <SpinnerIcon color="currentColor" size={14} />
-              </div>
-            ) : (
+          {!isReadOnly && (
+            <StatusDropdown
+              value={subtask.status ?? 'not_started'}
+              onChange={(s) => onStatusChange(subtask._id, s)}
+              size="sm"
+            />
+          )}
+          {!isReadOnly && (
+            <>
+              {subtask.timeEstimate === undefined &&
+                (isEstimating ? (
+                  <div className="flex h-7 w-7 items-center justify-center text-slate-blue">
+                    <SpinnerIcon color="currentColor" size={14} />
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => onEstimate(subtask._id)}
+                    className={iconBtnCls}
+                    aria-label="Estimate subtask time"
+                  >
+                    <SparklesIcon color="currentColor" size={14} />
+                  </button>
+                ))}
               <button
                 type="button"
-                onClick={() => onEstimate(subtask._id)}
+                onClick={() => onEdit(subtask)}
                 className={iconBtnCls}
-                aria-label="Estimate subtask time"
+                aria-label="Edit subtask"
               >
-                <SparklesIcon color="currentColor" size={14} />
+                <PencilIcon />
               </button>
-            ))}
-          <button
-            type="button"
-            onClick={() => onEdit(subtask)}
-            className={iconBtnCls}
-            aria-label="Edit subtask"
-          >
-            <PencilIcon />
-          </button>
-          <button
-            type="button"
-            onClick={() => onDelete(subtask._id)}
-            className="flex h-7 w-7 items-center justify-center rounded-md border border-border bg-bg-gray text-slate-blue transition hover:bg-urgent-red-light hover:text-urgent-red"
-            aria-label="Delete subtask"
-          >
-            <TrashIcon />
-          </button>
+              <button
+                type="button"
+                onClick={() => onDelete(subtask._id)}
+                className="flex h-7 w-7 items-center justify-center rounded-md border border-border bg-bg-gray text-slate-blue transition hover:bg-urgent-red-light hover:text-urgent-red"
+                aria-label="Delete subtask"
+              >
+                <TrashIcon />
+              </button>
+            </>
+          )}
         </div>
       </div>
 

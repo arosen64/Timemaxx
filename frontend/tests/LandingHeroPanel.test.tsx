@@ -12,7 +12,7 @@ describe('LandingHeroPanel', () => {
 
   it('lists the product feature bullets', () => {
     render(<LandingHeroPanel />)
-    expect(screen.getByText('Gemini-powered time estimation')).toBeInTheDocument()
+    expect(screen.getByText('AI-powered time estimation')).toBeInTheDocument()
     expect(screen.getByText('Personalized daily study windows')).toBeInTheDocument()
     expect(screen.getByText('Smart scheduling around your life')).toBeInTheDocument()
   })

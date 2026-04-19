@@ -53,9 +53,9 @@ describe('UpcomingSchedulePanel', () => {
     expect(screen.getByText('Study Session B')).toBeInTheDocument()
   })
 
-  it('renders "Powered by Google Gemini" footer', () => {
+  it('renders "AI-powered scheduling" footer', () => {
     mockUseQuery.mockReturnValue([] as never)
     renderWithProviders(<UpcomingSchedulePanel />)
-    expect(screen.getByText('Powered by Google Gemini')).toBeInTheDocument()
+    expect(screen.getByText('AI-powered scheduling')).toBeInTheDocument()
   })
 })

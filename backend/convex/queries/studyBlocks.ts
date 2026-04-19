@@ -54,6 +54,9 @@ async function fetchAllStudyBlocksWithTasks(ctx: any, userId: Id<"users">) {
   }
 
   for (const task of tasks) {
+    // Skip completed tasks — their blocks are unscheduled and should not appear on the calendar
+    if (task.status === "completed") continue;
+
     const course = task.courseId ? courseMap.get(task.courseId) : null;
     const courseColor: string | undefined = course?.color ?? undefined;
     const courseName: string | undefined = course?.title ?? undefined;
@@ -141,17 +144,21 @@ export const getFutureStudyBlocksForExport = internalQuery({
       studyBlockLength: number;
       googleEventId: string | undefined;
       courseColor: string | undefined;
+      courseName: string | undefined;
     }> = [];
 
     const uniqueCourseIds = [...new Set(tasks.map((t) => t.courseId).filter(Boolean))];
-    const courseMap = new Map<string, { color?: string }>();
+    const courseMap = new Map<string, { color?: string; title?: string }>();
     for (const courseId of uniqueCourseIds) {
       const course = await ctx.db.get(courseId as Id<"userCourses">);
       if (course) courseMap.set(courseId as string, course);
     }
 
     for (const task of tasks) {
-      const courseColor = task.courseId ? courseMap.get(task.courseId)?.color : undefined;
+      if (task.status === "completed") continue;
+      const course = task.courseId ? courseMap.get(task.courseId) : undefined;
+      const courseColor = course?.color;
+      const courseName = course?.title;
       const blocks = await ctx.db
         .query("studyBlocks")
         .withIndex("by_taskId", (q) => q.eq("taskId", task._id))
@@ -167,6 +174,7 @@ export const getFutureStudyBlocksForExport = internalQuery({
           studyBlockLength: block.studyBlockLength,
           googleEventId: block.googleEventId,
           courseColor,
+          courseName,
         });
       }
     }
