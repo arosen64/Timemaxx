@@ -275,6 +275,15 @@ export function ListTreeIcon({ color = 'currentColor', size = 16 }: { color?: st
   )
 }
 
+export function ClockIcon({ color = 'currentColor', size = 16 }: { color?: string; size?: number }) {
+  return (
+    <IconBase color={color} size={size}>
+      <circle cx="12" cy="12" r="10" />
+      <polyline points="12 6 12 12 16 14" />
+    </IconBase>
+  )
+}
+
 export function XIcon({ color = '#CF4520', size = 14 }: { color?: string; size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 14 14" fill="none" aria-hidden="true" style={{ flexShrink: 0 }}>
