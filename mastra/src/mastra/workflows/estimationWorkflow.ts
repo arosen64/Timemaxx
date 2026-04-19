@@ -15,18 +15,12 @@
 import { createWorkflow, createStep } from "@mastra/core/workflows";
 import { z } from "zod";
 import { estimationAgent } from "../agents/estimationAgent";
+import {
+  estimationAgentOutputSchema,
+  type EstimationAgentOutput,
+} from "../lib/prompts/estimationAgent.prompt";
 
-export const estimationAgentOutputSchema = z.object({
-  estimatedMinutes: z.number().int().positive(),
-  reasoningTrace: z.object({
-    classes: z.string().describe("1-2 sentences: how course context influenced the estimate"),
-    tasks: z.string().describe("1-2 sentences: how prior task history influenced the estimate"),
-    chats: z.string().describe("1-2 sentences: how chat history influenced the estimate"),
-    profile: z.string().describe("1-2 sentences: how the student profile influenced the estimate"),
-  }),
-});
-
-export type EstimationAgentOutput = z.infer<typeof estimationAgentOutputSchema>;
+export type { EstimationAgentOutput };
 
 /** Passes the assembled context prompt to the estimationAgent and returns its structured output. */
 const estimationAgentStep = createStep({
