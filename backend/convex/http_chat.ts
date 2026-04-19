@@ -153,8 +153,13 @@ async function runChatWorkflow(
     }
   }
 
-  const agentStep = run.steps?.["agent"];
-  return (agentStep && "output" in agentStep ? agentStep.output : null) as ChatWorkflowOutput | null;
+  // Only one branch step will have run — find whichever has output.
+  const branchStepIds = ["task_handler", "feedback_handler", "preferences_handler", "canned_handler"];
+  for (const id of branchStepIds) {
+    const step = run.steps?.[id];
+    if (step && "output" in step) return step.output as ChatWorkflowOutput;
+  }
+  return null;
 }
 
 async function executeTaskAction(
