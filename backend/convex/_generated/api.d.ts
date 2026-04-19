@@ -36,6 +36,8 @@ import type * as lib_anthropic from "../lib/anthropic.js";
 import type * as lib_calendarCrypto from "../lib/calendarCrypto.js";
 import type * as lib_calendarFetch from "../lib/calendarFetch.js";
 import type * as lib_chatChunking from "../lib/chatChunking.js";
+import type * as lib_chatEntityActions from "../lib/chatEntityActions.js";
+import type * as lib_chatEntityContext from "../lib/chatEntityContext.js";
 import type * as lib_classTagUtils from "../lib/classTagUtils.js";
 import type * as lib_courseColors from "../lib/courseColors.js";
 import type * as lib_gcalHelpers from "../lib/gcalHelpers.js";
@@ -106,6 +108,8 @@ declare const fullApi: ApiFromModules<{
   "lib/calendarCrypto": typeof lib_calendarCrypto;
   "lib/calendarFetch": typeof lib_calendarFetch;
   "lib/chatChunking": typeof lib_chatChunking;
+  "lib/chatEntityActions": typeof lib_chatEntityActions;
+  "lib/chatEntityContext": typeof lib_chatEntityContext;
   "lib/classTagUtils": typeof lib_classTagUtils;
   "lib/courseColors": typeof lib_courseColors;
   "lib/gcalHelpers": typeof lib_gcalHelpers;
