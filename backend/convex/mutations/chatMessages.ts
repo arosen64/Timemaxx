@@ -43,8 +43,8 @@ export const saveMessage = internalMutation({
 });
 
 /**
- * Copy resolved task/class from MCQ onto the user message that started the clarify flow,
- * and optionally drop the session pointer when disambiguation is complete.
+ * Copy picked task/course from MCQ onto the session's clarify-trigger user message,
+ * and optionally clear entityClarifyTriggerUserMessageId when the flow is done.
  */
 export const applyResolvedEntityToClarifyTriggerMessageInternal = internalMutation({
   args: {
@@ -68,9 +68,16 @@ export const applyResolvedEntityToClarifyTriggerMessageInternal = internalMutati
     if (triggerId) {
       const msg = await ctx.db.get(triggerId);
       if (msg && msg.userId === args.userId && msg.role === "user") {
+        let courseId: Id<"userCourses"> | undefined = args.courseId;
+        if (courseId === undefined && args.taskId) {
+          const task = await ctx.db.get(args.taskId);
+          if (task && task.userId === args.userId && task.courseId) {
+            courseId = task.courseId;
+          }
+        }
         await ctx.db.patch(triggerId, {
           ...(args.taskId !== undefined ? { taskId: args.taskId } : {}),
-          ...(args.courseId !== undefined ? { courseId: args.courseId } : {}),
+          ...(courseId !== undefined ? { courseId } : {}),
         });
       }
     }
