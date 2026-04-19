@@ -37,7 +37,7 @@ export default function DatetimePicker({ value, onChange, placeholder = 'Pick a 
     return h === 0 ? 12 : h > 12 ? h - 12 : h
   })
   const [minute, setMinute] = useState(value ? value.getMinutes() : 59)
-  const [ampm, setAmpm] = useState<'AM' | 'PM'>(value ? (value.getHours() >= 12 ? 'PM' : 'AM') : 'AM')
+  const [ampm, setAmpm] = useState<'AM' | 'PM'>(value ? (value.getHours() >= 12 ? 'PM' : 'AM') : 'PM')
 
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -51,7 +51,7 @@ export default function DatetimePicker({ value, onChange, placeholder = 'Pick a 
     const h = value ? value.getHours() : 11
     setHour(h === 0 ? 12 : h > 12 ? h - 12 : h)
     setMinute(value ? value.getMinutes() : 59)
-    setAmpm(value ? (value.getHours() >= 12 ? 'PM' : 'AM') : 'AM')
+    setAmpm(value ? (value.getHours() >= 12 ? 'PM' : 'AM') : 'PM')
   }
 
   useEffect(() => {
