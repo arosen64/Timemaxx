@@ -5,43 +5,38 @@ import { taskAgent } from "../agents/taskAgent";
 import { feedbackAgent } from "../agents/feedbackAgent";
 import { preferencesAgent } from "../agents/preferencesAgent";
 import { supervisorAgentOutputSchema } from "../lib/prompts/supervisorAgent.prompt";
-import { taskAgentOutputSchema } from "../lib/prompts/taskAgent.prompt";
-import { feedbackAgentOutputSchema } from "../lib/prompts/feedbackAgent.prompt";
+import { taskAgentOutputSchema, type TaskAgentOutput } from "../lib/prompts/taskAgent.prompt";
+import { feedbackAgentOutputSchema, type FeedbackAgentOutput } from "../lib/prompts/feedbackAgent.prompt";
 
 // ---------------------------------------------------------------------------
 // Schemas
 // ---------------------------------------------------------------------------
 
-const chatWorkflowInputSchema = z.object({
+const chatContextSchema = z.object({
   message: z.string(),
   historyText: z.string(),
   taggedEntitiesBlock: z.string(),
-  /** True when there's already a course tag (or a tagged task with a courseId) in history. */
   hasCourseTag: z.boolean(),
-  /** ID of the latest tagged task in history — null if none exists yet. */
   taggedTaskId: z.string().nullable(),
   today: z.string(),
   activeAgent: z.enum(["task", "feedback", "preferences"]).nullable(),
   taskAgentIntent: z.enum(["create", "rud"]).nullable(),
 });
 
+// supervisorStep passes all context through plus the routing decision
+const routedContextSchema = chatContextSchema.extend({
+  route: z.string().nullable(),
+  needsDomainClarification: z.boolean(),
+  domainClarifyingQuestion: z.string().nullable(),
+});
+
 export const chatWorkflowOutputSchema = z.object({
   reply: z.string(),
   route: z.string().nullable(),
-  status: z.enum([
-    "reply",
-    "domain_clarify",
-    "needs_task_mcq",
-    "needs_class_mcq",
-    "task_action",
-    "canned",
-  ]),
+  status: z.enum(["reply", "domain_clarify", "needs_task_mcq", "needs_class_mcq", "task_action", "canned"]),
   mcqQueryText: z.string().nullable(),
   needsClassAfterTask: z.boolean(),
-  // Task action fields (populated when status === "task_action")
-  actionType: z
-    .enum(["create_task", "update_task", "delete_task", "read_task", "none"])
-    .nullable(),
+  actionType: z.enum(["create_task", "update_task", "delete_task", "read_task", "none"]).nullable(),
   title: z.string().nullable(),
   description: z.string().nullable(),
   taskType: z.string().nullable(),
@@ -53,7 +48,6 @@ export const chatWorkflowOutputSchema = z.object({
   updatedTaskType: z.string().nullable(),
   updatedDueDateIso: z.string().nullable(),
   updatedClassTag: z.string().nullable(),
-  // Session state changes for Convex to apply
   newActiveAgent: z.enum(["task", "feedback", "preferences"]).nullable(),
   clearActiveAgent: z.boolean(),
   newTaskAgentIntent: z.enum(["create", "rud"]).nullable(),
@@ -66,7 +60,7 @@ export type ChatWorkflowOutput = z.infer<typeof chatWorkflowOutputSchema>;
 // Helpers
 // ---------------------------------------------------------------------------
 
-const nullActionFields = {
+const NO_ACTION = {
   actionType: null,
   title: null,
   description: null,
@@ -81,20 +75,22 @@ const nullActionFields = {
   updatedClassTag: null,
 } as const;
 
-function buildAgentContextPrompt(params: {
-  today: string;
-  historyText: string;
-  taggedEntitiesBlock: string;
-  continueNote: string;
-}): string {
-  return `Today (ISO date): ${params.today}
+const CANNED_REPLIES: Record<string, string> = {
+  schedule:
+    "To schedule or manage your study blocks, visit the **Schedule** page. To connect or revoke Google Calendar access, head to the **Profile** page.",
+  classes:
+    "To add or remove a course, or upload a syllabus, visit the **Classes** page.",
+};
+
+function agentContextPrompt(p: { today: string; historyText: string; taggedEntitiesBlock: string; continueNote: string }): string {
+  return `Today (ISO date): ${p.today}
 
 <conversation_history>
-${params.historyText}
+${p.historyText}
 </conversation_history>
 
 <resolved_task_context>
-${params.taggedEntitiesBlock}
+${p.taggedEntitiesBlock}
 </resolved_task_context>
 
 <resolved_course_context>
@@ -102,287 +98,183 @@ Course context is represented by tagged course IDs above (and by any tagged task
 </resolved_course_context>
 
 <turn_directive>
-${params.continueNote}
+${p.continueNote}
 </turn_directive>`;
 }
 
 // ---------------------------------------------------------------------------
-// Single step — supervisor routing + agent dispatch
+// Step 1 — Supervisor
+// Skipped when activeAgent is set — the subagent owns the conversation until
+// it signals clearActiveAgent: true (action complete / readyToRecord).
 // ---------------------------------------------------------------------------
 
-const chatStep = createStep({
-  id: "chat",
-  inputSchema: chatWorkflowInputSchema,
-  outputSchema: chatWorkflowOutputSchema,
+const supervisorStep = createStep({
+  id: "supervisor",
+  inputSchema: chatContextSchema,
+  outputSchema: routedContextSchema,
   execute: async ({ inputData }) => {
-    const {
-      message,
-      historyText,
-      taggedEntitiesBlock,
-      hasCourseTag,
-      taggedTaskId,
-      today,
-      activeAgent,
-      taskAgentIntent,
-    } = inputData;
+    const { message, activeAgent } = inputData;
 
-    // Step 1: Supervisor always runs — determines if we stay in the current subagent or switch
+    if (activeAgent) {
+      const route = activeAgent === "task" ? "tasks" : activeAgent;
+      return { ...inputData, route, needsDomainClarification: false, domainClarifyingQuestion: null };
+    }
+
     const sv = await supervisorAgent.generate(message, {
       structuredOutput: { schema: supervisorAgentOutputSchema },
     });
-    let { route, needsDomainClarification, domainClarifyingQuestion } = sv.object;
+    const { route, needsDomainClarification, domainClarifyingQuestion } = sv.object;
+    return { ...inputData, route, needsDomainClarification, domainClarifyingQuestion };
+  },
+});
 
-    // Stay in the active subagent only when the supervisor agrees with that domain.
-    const activeAgentRoute = activeAgent === "task" ? "tasks" : activeAgent;
-    const agentPivoted = activeAgent !== null && route !== activeAgentRoute;
-    if (!agentPivoted && activeAgent) {
-      // Supervisor agrees — keep current agent, no domain clarification noise.
-      route = activeAgentRoute;
-      needsDomainClarification = false;
-      domainClarifyingQuestion = null;
-    }
-    // If agentPivoted: fall through with the supervisor's new route and clear the old agent.
+// ---------------------------------------------------------------------------
+// Step 2 — Agent dispatch
+// ---------------------------------------------------------------------------
+
+function handleTaskAgent(
+  output: TaskAgentOutput,
+  ctx: { message: string; hasCourseTag: boolean; taggedTaskId: string | null; taskAgentIntent: "create" | "rud" | null },
+): ChatWorkflowOutput {
+  const { message, hasCourseTag, taggedTaskId, taskAgentIntent } = ctx;
+  const newIntent: "create" | "rud" | null =
+    output.intent !== "unknown" && !taskAgentIntent ? (output.intent as "create" | "rud") : taskAgentIntent;
+
+  if (output.needsClassClarification && !hasCourseTag) {
+    const queryText = message.trim() || output.classTag || output.updatedClassTag || "class course";
+    return {
+      reply: "Which class is this for? Pick one below, or choose **Other** to see more options.",
+      route: "tasks", status: "needs_class_mcq", mcqQueryText: String(queryText),
+      needsClassAfterTask: false, newActiveAgent: "task", clearActiveAgent: false,
+      newTaskAgentIntent: newIntent, readyToRecord: false, ...NO_ACTION,
+    };
+  }
+
+  if (output.intent === "rud" && taggedTaskId === null && output.needsEntityClarification) {
+    return {
+      reply: "Which task would you like to work with? Pick one below, or choose **Other** to see more options.",
+      route: "tasks", status: "needs_task_mcq", mcqQueryText: message.trim() || "task assignment",
+      needsClassAfterTask: false, newActiveAgent: "task", clearActiveAgent: false,
+      newTaskAgentIntent: newIntent, readyToRecord: false, ...NO_ACTION,
+    };
+  }
+
+  if (output.readyToExecute && output.actionType !== "none") {
+    return {
+      reply: output.message, route: "tasks", status: "task_action", mcqQueryText: null,
+      needsClassAfterTask: false, actionType: output.actionType, title: output.title,
+      description: output.description, taskType: output.taskType, dueDateIso: output.dueDateIso,
+      classTag: output.classTag, deleteConfirmed: output.deleteConfirmed,
+      updatedTitle: output.updatedTitle, updatedDescription: output.updatedDescription,
+      updatedTaskType: output.updatedTaskType, updatedDueDateIso: output.updatedDueDateIso,
+      updatedClassTag: output.updatedClassTag,
+      newActiveAgent: null, clearActiveAgent: true, newTaskAgentIntent: null, readyToRecord: false,
+    };
+  }
+
+  return {
+    reply: output.message, route: "tasks", status: "reply", mcqQueryText: null,
+    needsClassAfterTask: false, newActiveAgent: "task", clearActiveAgent: false,
+    newTaskAgentIntent: newIntent, readyToRecord: false, ...NO_ACTION,
+  };
+}
+
+function handleFeedbackAgent(output: FeedbackAgentOutput, ctx: { message: string }): ChatWorkflowOutput {
+  const { message } = ctx;
+
+  if (output.needsTaskClarification) {
+    return {
+      reply: "Which assignment are you referring to? Pick one below or choose **Other**.",
+      route: "feedback", status: "needs_task_mcq", mcqQueryText: message.trim() || "task assignment",
+      needsClassAfterTask: false, newActiveAgent: "feedback", clearActiveAgent: false,
+      newTaskAgentIntent: null, readyToRecord: false, ...NO_ACTION,
+    };
+  }
+
+  if (output.needsClassClarification) {
+    return {
+      reply: "Which class are you talking about? Pick one below or choose **Other**.",
+      route: "feedback", status: "needs_class_mcq", mcqQueryText: message.trim() || "class course",
+      needsClassAfterTask: false, newActiveAgent: "feedback", clearActiveAgent: false,
+      newTaskAgentIntent: null, readyToRecord: false, ...NO_ACTION,
+    };
+  }
+
+  return {
+    reply: output.message, route: "feedback", status: "reply", mcqQueryText: null,
+    needsClassAfterTask: false, newActiveAgent: output.readyToRecord ? null : "feedback",
+    clearActiveAgent: output.readyToRecord, newTaskAgentIntent: null,
+    readyToRecord: output.readyToRecord, ...NO_ACTION,
+  };
+}
+
+const agentStep = createStep({
+  id: "agent",
+  inputSchema: routedContextSchema,
+  outputSchema: chatWorkflowOutputSchema,
+  execute: async ({ inputData }) => {
+    const {
+      message, historyText, taggedEntitiesBlock, hasCourseTag, taggedTaskId,
+      today, taskAgentIntent, route, needsDomainClarification, domainClarifyingQuestion,
+    } = inputData;
 
     if (needsDomainClarification && domainClarifyingQuestion) {
       return {
-        reply: domainClarifyingQuestion,
-        route: null,
-        status: "domain_clarify" as const,
-        mcqQueryText: null,
-        needsClassAfterTask: false,
-        newActiveAgent: null,
-        clearActiveAgent: agentPivoted,
-        newTaskAgentIntent: null,
-        readyToRecord: false,
-        ...nullActionFields,
+        reply: domainClarifyingQuestion, route: null, status: "domain_clarify" as const,
+        mcqQueryText: null, needsClassAfterTask: false, newActiveAgent: null,
+        clearActiveAgent: false, newTaskAgentIntent: null, readyToRecord: false, ...NO_ACTION,
       };
     }
 
-    // Canned routes (schedule, classes) — no AI needed
     if (route === "schedule" || route === "classes") {
-      const CANNED: Record<string, string> = {
-        schedule:
-          "To schedule or manage your study blocks, visit the **Schedule** page. To connect or revoke Google Calendar access, head to the **Profile** page.",
-        classes:
-          "To add or remove a course, or upload a syllabus, visit the **Classes** page.",
-      };
       return {
-        reply: CANNED[route],
-        route,
-        status: "canned" as const,
-        mcqQueryText: null,
-        needsClassAfterTask: false,
-        newActiveAgent: null,
-        clearActiveAgent: agentPivoted,
-        newTaskAgentIntent: null,
-        readyToRecord: false,
-        ...nullActionFields,
+        reply: CANNED_REPLIES[route] ?? `Head to the **${route}** section.`,
+        route, status: "canned" as const, mcqQueryText: null, needsClassAfterTask: false,
+        newActiveAgent: null, clearActiveAgent: false, newTaskAgentIntent: null,
+        readyToRecord: false, ...NO_ACTION,
       };
     }
 
-    // ── Task agent ────────────────────────────────────────────────────────────
+    const continueNote = message.trim()
+      ? "Respond to the latest user message above."
+      : "The user just selected an entity from the picker (no new text). Based on the conversation history and the now-resolved context, continue the conversation — e.g. proceed to the next missing field, confirm deletion, or summarise task details.";
+
     if (route === "tasks") {
-      const continueNote = message.trim()
-        ? "Respond to the latest user message above."
-        : "The user just selected an entity from the picker (no new text). Based on the conversation history and the now-resolved context, continue the conversation — e.g. proceed to the next missing field, confirm deletion, or summarise task details.";
-
-      const contextPrompt = buildAgentContextPrompt({
-        today,
-        historyText,
-        taggedEntitiesBlock,
-        continueNote,
-      });
-
-      const taskResult = await taskAgent.generate(contextPrompt, {
-        structuredOutput: { schema: taskAgentOutputSchema },
-      });
-      const output = taskResult.object;
-
-      const newIntent: "create" | "rud" | null =
-        output.intent !== "unknown" && !taskAgentIntent
-          ? (output.intent as "create" | "rud")
-          : taskAgentIntent;
-
-      // Class MCQ: agent asked for class and no course is tagged yet
-      if (output.needsClassClarification && !hasCourseTag) {
-        const queryText =
-          message.trim() || output.classTag || output.updatedClassTag || "class course";
-        return {
-          reply:
-            "Which class is this for? Pick one below, or choose **Other** to see more options.",
-          route: "tasks",
-          status: "needs_class_mcq" as const,
-          mcqQueryText: String(queryText),
-          needsClassAfterTask: false,
-          newActiveAgent: "task" as const,
-          clearActiveAgent: false,
-          newTaskAgentIntent: newIntent,
-          readyToRecord: false,
-          ...nullActionFields,
-        };
-      }
-
-      // Task MCQ: RUD intent, agent needs entity, and no task is tagged yet
-      const shouldShowTaskMcq =
-        output.intent === "rud" && taggedTaskId === null && output.needsEntityClarification;
-      if (shouldShowTaskMcq) {
-        return {
-          reply:
-            "Which task would you like to work with? Pick one below, or choose **Other** to see more options.",
-          route: "tasks",
-          status: "needs_task_mcq" as const,
-          mcqQueryText: message.trim() || "task assignment",
-          needsClassAfterTask: false,
-          newActiveAgent: "task" as const,
-          clearActiveAgent: false,
-          newTaskAgentIntent: newIntent,
-          readyToRecord: false,
-          ...nullActionFields,
-        };
-      }
-
-      // Action ready — Convex will execute the mutation
-      if (output.readyToExecute && output.actionType !== "none") {
-        return {
-          reply: output.message,
-          route: "tasks",
-          status: "task_action" as const,
-          mcqQueryText: null,
-          needsClassAfterTask: false,
-          actionType: output.actionType,
-          title: output.title,
-          description: output.description,
-          taskType: output.taskType,
-          dueDateIso: output.dueDateIso,
-          classTag: output.classTag,
-          deleteConfirmed: output.deleteConfirmed,
-          updatedTitle: output.updatedTitle,
-          updatedDescription: output.updatedDescription,
-          updatedTaskType: output.updatedTaskType,
-          updatedDueDateIso: output.updatedDueDateIso,
-          updatedClassTag: output.updatedClassTag,
-          newActiveAgent: null,
-          clearActiveAgent: true,
-          newTaskAgentIntent: null,
-          readyToRecord: false,
-        };
-      }
-
-      // Conversational reply
-      return {
-        reply: output.message,
-        route: "tasks",
-        status: "reply" as const,
-        mcqQueryText: null,
-        needsClassAfterTask: false,
-        newActiveAgent: "task" as const,
-        clearActiveAgent: false,
-        newTaskAgentIntent: newIntent,
-        readyToRecord: false,
-        ...nullActionFields,
-      };
+      const result = await taskAgent.generate(
+        agentContextPrompt({ today, historyText, taggedEntitiesBlock, continueNote }),
+        { structuredOutput: { schema: taskAgentOutputSchema } },
+      );
+      return handleTaskAgent(result.object, { message, hasCourseTag, taggedTaskId, taskAgentIntent });
     }
 
-    // ── Feedback agent ────────────────────────────────────────────────────────
     if (route === "feedback") {
-      const continueNote = message.trim()
+      const fbNote = message.trim()
         ? "Respond to the latest user message above."
         : "The user just selected an entity. Continue based on what is now resolved.";
-
-      const contextPrompt = buildAgentContextPrompt({
-        today,
-        historyText,
-        taggedEntitiesBlock,
-        continueNote,
-      });
-
-      const fbResult = await feedbackAgent.generate(contextPrompt, {
-        structuredOutput: { schema: feedbackAgentOutputSchema },
-      });
-      const output = fbResult.object;
-
-      if (output.needsTaskClarification) {
-        return {
-          reply:
-            "Which assignment are you referring to? Pick one below or choose **Other**.",
-          route: "feedback",
-          status: "needs_task_mcq" as const,
-          mcqQueryText: message.trim() || "task assignment",
-          needsClassAfterTask: false,
-          newActiveAgent: "feedback" as const,
-          clearActiveAgent: false,
-          newTaskAgentIntent: null,
-          readyToRecord: false,
-          ...nullActionFields,
-        };
-      }
-
-      if (output.needsClassClarification) {
-        return {
-          reply:
-            "Which class are you talking about? Pick one below or choose **Other**.",
-          route: "feedback",
-          status: "needs_class_mcq" as const,
-          mcqQueryText: message.trim() || "class course",
-          needsClassAfterTask: false,
-          newActiveAgent: "feedback" as const,
-          clearActiveAgent: false,
-          newTaskAgentIntent: null,
-          readyToRecord: false,
-          ...nullActionFields,
-        };
-      }
-
-      return {
-        reply: output.message,
-        route: "feedback",
-        status: "reply" as const,
-        mcqQueryText: null,
-        needsClassAfterTask: false,
-        newActiveAgent: output.readyToRecord ? null : ("feedback" as const),
-        clearActiveAgent: output.readyToRecord,
-        newTaskAgentIntent: null,
-        readyToRecord: output.readyToRecord,
-        ...nullActionFields,
-      };
+      const result = await feedbackAgent.generate(
+        agentContextPrompt({ today, historyText, taggedEntitiesBlock, continueNote: fbNote }),
+        { structuredOutput: { schema: feedbackAgentOutputSchema } },
+      );
+      return handleFeedbackAgent(result.object, { message });
     }
 
-    // ── Preferences agent ─────────────────────────────────────────────────────
     if (route === "preferences") {
-      const contextPrompt = `<conversation_history>\n${historyText}\n</conversation_history>\n\n<latest_user_message>\n${message}\n</latest_user_message>\n\n<turn_directive>\nAcknowledge what they want to change and direct them to the Preferences page.\n</turn_directive>`;
-
-      const prefResult = await preferencesAgent.generate(contextPrompt, {
-        structuredOutput: {
-          schema: z.object({ message: z.string(), reasoning: z.string() }),
-        },
+      const prompt = `<conversation_history>\n${historyText}\n</conversation_history>\n\n<latest_user_message>\n${message}\n</latest_user_message>\n\n<turn_directive>\nAcknowledge what they want to change and direct them to the Preferences page.\n</turn_directive>`;
+      const result = await preferencesAgent.generate(prompt, {
+        structuredOutput: { schema: z.object({ message: z.string(), reasoning: z.string() }) },
       });
       return {
-        reply: prefResult.object.message,
-        route: "preferences",
-        status: "reply" as const,
-        mcqQueryText: null,
-        needsClassAfterTask: false,
-        newActiveAgent: null,
-        clearActiveAgent: true,
-        newTaskAgentIntent: null,
-        readyToRecord: false,
-        ...nullActionFields,
+        reply: result.object.message, route: "preferences", status: "reply" as const,
+        mcqQueryText: null, needsClassAfterTask: false, newActiveAgent: null,
+        clearActiveAgent: true, newTaskAgentIntent: null, readyToRecord: false, ...NO_ACTION,
       };
     }
 
-    // Unknown fallback
     return {
-      reply:
-        "I'm not sure which area that fits yet — try one more detail (tasks, schedule, classes, preferences, or feedback).",
-      route: null,
-      status: "reply" as const,
-      mcqQueryText: null,
-      needsClassAfterTask: false,
-      newActiveAgent: null,
-      clearActiveAgent: agentPivoted,
-      newTaskAgentIntent: null,
-      readyToRecord: false,
-      ...nullActionFields,
+      reply: "I'm not sure which area that fits yet — try one more detail (tasks, schedule, classes, preferences, or feedback).",
+      route: null, status: "reply" as const, mcqQueryText: null, needsClassAfterTask: false,
+      newActiveAgent: null, clearActiveAgent: false, newTaskAgentIntent: null,
+      readyToRecord: false, ...NO_ACTION,
     };
   },
 });
@@ -393,8 +285,9 @@ const chatStep = createStep({
 
 export const chatWorkflow = createWorkflow({
   id: "chat-workflow",
-  inputSchema: chatWorkflowInputSchema,
+  inputSchema: chatContextSchema,
   outputSchema: chatWorkflowOutputSchema,
 })
-  .then(chatStep)
+  .then(supervisorStep)
+  .then(agentStep)
   .commit();

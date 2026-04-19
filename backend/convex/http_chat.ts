@@ -153,8 +153,8 @@ async function runChatWorkflow(
     }
   }
 
-  const chatStep = run.steps?.["chat"];
-  return (chatStep && "output" in chatStep ? chatStep.output : null) as ChatWorkflowOutput | null;
+  const agentStep = run.steps?.["agent"];
+  return (agentStep && "output" in agentStep ? agentStep.output : null) as ChatWorkflowOutput | null;
 }
 
 async function executeTaskAction(
