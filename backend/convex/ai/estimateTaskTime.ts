@@ -3,12 +3,10 @@ import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { GenericActionCtx } from "convex/server";
 import { DataModel, Doc, Id } from "../_generated/dataModel";
-import { callAnthropic } from "../lib/anthropic";
+import { MastraClient } from "@mastra/client-js";
 import { sanitizeUserInput } from "../lib/sanitize";
 import {
-  TIME_ESTIMATE_SYSTEM,
   buildTimeEstimatePrompt,
-  timeEstimateResponseSchema,
 } from "../lib/prompts/estimateTaskTime.prompt";
 import { taskToTaskLike, subtaskToTaskLike, TaskLike } from "../lib/taskTypes";
 import { fetchRelevantContext } from "../lib/retrieval";
@@ -36,9 +34,9 @@ async function buildCourseContext(
 
   const lines = (courses as Doc<"userCourses">[]).map((c) => {
     const parts: string[] = [
-      `Code: ${c.courseCode}`,
+      `Code: ${sanitizeUserInput(c.courseCode, 100)}`,
       `Title: ${sanitizeUserInput(c.title, 500)}`,
-      `Term: ${c.term}`,
+      `Term: ${sanitizeUserInput(c.term, 100)}`,
     ];
     if (c.grade !== undefined) parts.push(`Grade: ${c.grade}`);
     if (c.credits !== undefined) parts.push(`Credits: ${c.credits}`);
@@ -68,7 +66,7 @@ async function buildTaskContext(
 
   const lines = (tasks as Doc<"tasks">[]).map((t) => {
     const parts: string[] = [
-      `Type: ${t.taskType}`,
+      `Type: ${sanitizeUserInput(t.taskType, 100)}`,
       `Title: "${sanitizeUserInput(t.title, 500)}"`,
       `Description: "${sanitizeUserInput(t.description, 1000)}"`,
     ];
@@ -127,7 +125,7 @@ function buildProfileContext(user: Doc<"users"> | null): string | null {
   const profile: Record<string, unknown> = {};
 
   if (user.major) profile.major = sanitizeUserInput(user.major, 200);
-  if (user.year) profile.year = user.year;
+  if (user.year) profile.year = sanitizeUserInput(user.year, 50);
   if (user.difficultSubjects?.length) {
     profile.difficultSubjects = user.difficultSubjects.map((s) =>
       sanitizeUserInput(s, 200)
@@ -234,32 +232,55 @@ export const estimateTaskTime = internalAction({
     ]);
     const profileContext = buildProfileContext(user as Doc<"users"> | null);
 
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) {
+    const mastraUrl = process.env.MASTRA_URL;
+    if (!mastraUrl) {
       if (process.env.VITEST !== "true") {
-        console.error("ANTHROPIC_API_KEY is not set");
+        console.error("MASTRA_URL is not set");
       }
       return;
     }
 
     try {
-      const result = await callAnthropic({
-        system: TIME_ESTIMATE_SYSTEM,
-        prompt: buildTimeEstimatePrompt({
-          title: sanitizeUserInput(item.title, 500),
-          taskType: item.taskType,
-          description: sanitizeUserInput(item.description ?? "", 5_000),
-          courseInfo: taskCourse
-            ? `${taskCourse.courseCode} - ${sanitizeUserInput(taskCourse.title, 500)}`
-            : undefined,
-          courseContext: courseContext ?? undefined,
-          taskContext: taskContext ?? undefined,
-          chatContext: chatContext ?? undefined,
-          profileContext: profileContext ?? undefined,
-        }),
-        schema: timeEstimateResponseSchema,
-        schemaName: "TimeEstimate",
+      const contextPrompt = buildTimeEstimatePrompt({
+        title: sanitizeUserInput(item.title, 500),
+        taskType: sanitizeUserInput(item.taskType, 100),
+        description: sanitizeUserInput(item.description ?? "", 5_000),
+        courseInfo: taskCourse
+          ? `${sanitizeUserInput(taskCourse.courseCode, 100)} - ${sanitizeUserInput(taskCourse.title, 500)}`
+          : undefined,
+        courseContext: courseContext ?? undefined,
+        taskContext: taskContext ?? undefined,
+        chatContext: chatContext ?? undefined,
+        profileContext: profileContext ?? undefined,
       });
+
+      const client = new MastraClient({ baseUrl: mastraUrl });
+      const wf = client.getWorkflow("estimation-workflow");
+      const run = await wf.startAsync({ inputData: { contextPrompt } });
+
+      for (const step of Object.values(run.steps ?? {})) {
+        if (!("output" in step)) {
+          const errMsg = (step as { error?: string }).error ?? "";
+          if (
+            errMsg.includes("quota") ||
+            errMsg.includes("RESOURCE_EXHAUSTED") ||
+            errMsg.includes("429")
+          ) {
+            throw new Error("quota_exceeded");
+          }
+          throw new Error(`Estimation workflow step failed: ${errMsg}`);
+        }
+      }
+
+      const stepOutput = run.steps?.["estimation-agent"];
+      const result =
+        stepOutput && "output" in stepOutput
+          ? (stepOutput.output as { estimatedMinutes: number; reasoningTrace: { classes: string; tasks: string; chats: string; profile: string } })
+          : null;
+
+      if (!result) {
+        throw new Error("No output from estimation workflow");
+      }
 
       await store(result.estimatedMinutes, result.reasoningTrace);
     } catch (err) {
