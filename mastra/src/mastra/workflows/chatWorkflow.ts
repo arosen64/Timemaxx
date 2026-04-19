@@ -3,7 +3,7 @@ import { z } from "zod";
 import { supervisorAgent } from "../agents/supervisorAgent";
 import { taskAgent } from "../agents/taskAgent";
 import { feedbackAgent } from "../agents/feedbackAgent";
-import { preferencesAgent } from "../agents/preferencesAgent";
+
 import { supervisorAgentOutputSchema } from "../lib/prompts/supervisorAgent.prompt";
 import { taskAgentOutputSchema, type TaskAgentOutput } from "../lib/prompts/taskAgent.prompt";
 import { feedbackAgentOutputSchema, type FeedbackAgentOutput } from "../lib/prompts/feedbackAgent.prompt";
@@ -69,6 +69,7 @@ const NO_ACTION = {
 const CANNED_REPLIES: Record<string, string> = {
   schedule: "To schedule or manage your study blocks, visit the **Schedule** page. To connect or revoke Google Calendar access, head to the **Profile** page.",
   classes: "To add or remove a course, or upload a syllabus, visit the **Classes** page.",
+  preferences: "You can update your study preferences (focus length, work hours, and more) from the **Preferences** page.",
 };
 
 function agentContextPrompt(p: { today: string; historyText: string; taggedEntitiesBlock: string; continueNote: string }): string {
@@ -169,25 +170,7 @@ const feedbackStep = createStep({
 });
 
 // ---------------------------------------------------------------------------
-// Step 2c — Preferences handler
-// ---------------------------------------------------------------------------
-
-const preferencesStep = createStep({
-  id: "preferences_handler",
-  inputSchema: routedContextSchema,
-  outputSchema: chatWorkflowOutputSchema,
-  execute: async ({ inputData }) => {
-    const { message, historyText } = inputData;
-    const prompt = `<conversation_history>\n${historyText}\n</conversation_history>\n\n<latest_user_message>\n${message}\n</latest_user_message>\n\n<turn_directive>\nAcknowledge what they want to change and direct them to the Preferences page.\n</turn_directive>`;
-    const result = await preferencesAgent.generate(prompt, {
-      structuredOutput: { schema: z.object({ message: z.string(), reasoning: z.string() }) },
-    });
-    return { reply: result.object.message, route: "preferences", status: "reply" as const, mcqQueryText: null, needsClassAfterTask: false, newActiveAgent: null, clearActiveAgent: true, newTaskAgentIntent: null, readyToRecord: false, ...NO_ACTION };
-  },
-});
-
-// ---------------------------------------------------------------------------
-// Step 2d — Canned / domain-clarify / fallback handler
+// Step 2c — Canned / domain-clarify / fallback handler
 // ---------------------------------------------------------------------------
 
 const cannedStep = createStep({
@@ -199,7 +182,7 @@ const cannedStep = createStep({
     if (needsDomainClarification && domainClarifyingQuestion) {
       return { reply: domainClarifyingQuestion, route: null, status: "domain_clarify" as const, mcqQueryText: null, needsClassAfterTask: false, newActiveAgent: null, clearActiveAgent: false, newTaskAgentIntent: null, readyToRecord: false, ...NO_ACTION };
     }
-    if (route === "schedule" || route === "classes") {
+    if (route && route in CANNED_REPLIES) {
       return { reply: CANNED_REPLIES[route], route, status: "canned" as const, mcqQueryText: null, needsClassAfterTask: false, newActiveAgent: null, clearActiveAgent: false, newTaskAgentIntent: null, readyToRecord: false, ...NO_ACTION };
     }
     return { reply: "I'm not sure which area that fits yet — try one more detail (tasks, schedule, classes, preferences, or feedback).", route: null, status: "reply" as const, mcqQueryText: null, needsClassAfterTask: false, newActiveAgent: null, clearActiveAgent: false, newTaskAgentIntent: null, readyToRecord: false, ...NO_ACTION };
@@ -219,7 +202,6 @@ export const chatWorkflow = createWorkflow({
   .branch([
     [async ({ inputData }) => inputData.route === "tasks", taskStep],
     [async ({ inputData }) => inputData.route === "feedback", feedbackStep],
-    [async ({ inputData }) => inputData.route === "preferences", preferencesStep],
     [async () => true, cannedStep], // schedule, classes, domain-clarify, unknown
   ])
   .commit();
