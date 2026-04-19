@@ -44,6 +44,23 @@ export const generateTaskEmbedding = internalAction({
   },
 });
 
+export const generateSubtaskEmbedding = internalAction({
+  args: {
+    subtaskId: v.id("subtasks"),
+    title: v.string(),
+    description: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const embedding = await computeEmbedding(args.title, args.description);
+    await ctx.runMutation(internal.mutations.subtasks.patchSubtaskEmbedding, {
+      subtaskId: args.subtaskId,
+      embedding,
+    });
+    return null;
+  },
+});
+
 /** Used by chat RAG retrieval; same model/dimensions as task/course/chunk embeddings. */
 export const embedRetrievalQueryInternal = internalAction({
   args: { text: v.string() },

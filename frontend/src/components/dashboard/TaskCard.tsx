@@ -2,25 +2,28 @@ import { useState } from 'react'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '../../../../backend/convex/_generated/api'
 import { PencilIcon, TrashIcon, SpinnerIcon, SparklesIcon, ChevronDownIcon, ListTreeIcon } from '../icons'
-import { type TaskType, type SubtaskType, formatDueDateTimeDisplay, displayTitle, formatMinutes } from './types'
+import { type TaskType, type SubtaskType, type TaskStatus, formatDueDateTimeDisplay, displayTitle, formatMinutes } from './types'
 import { type Id } from '../../../../backend/convex/_generated/dataModel'
 import { formatClassTagForDisplay } from '../../utils/classTagUtils'
 import TaskFeedbackForm, { type TaskFeedbackFormProps } from './TaskFeedbackForm'
 import EstimateBadge from './EstimateBadge'
 import SubtaskCard from './SubtaskCard'
 import StudyBlockRow from './StudyBlockRow'
+import StatusDropdown from './StatusDropdown'
 
 const BLOCK_DISPLAY_LIMIT = 5
 
 type TaskCardProps = {
   task: TaskType
   barColor: string
-  badge: { bg: string; text: string; label: string }
   isEstimating: boolean
   feedback: Omit<TaskFeedbackFormProps, 'task'>
+  onStatusChange?: (status: TaskStatus) => void
   onEstimate: () => void
   onEdit: () => void
   onDelete: () => void
+  onReopen?: () => void
+  isReadOnly?: boolean
   subtasks?: SubtaskType[]
   estimatingSubtasks?: Set<Id<'subtasks'>>
   onEditSubtask?: (subtask: SubtaskType) => void
@@ -28,17 +31,20 @@ type TaskCardProps = {
   onEstimateSubtask?: (id: Id<'subtasks'>) => void
   isGeneratingSubtasks?: boolean
   onGenerateSubtasks?: () => void
+  onSubtaskStatusChange?: (id: Id<'subtasks'>, status: TaskStatus) => void
 }
 
 export default function TaskCard({
   task,
   barColor,
-  badge,
   isEstimating,
   feedback,
+  onStatusChange,
   onEstimate,
   onEdit,
   onDelete,
+  onReopen,
+  isReadOnly = false,
   subtasks = [],
   estimatingSubtasks,
   onEditSubtask,
@@ -46,6 +52,7 @@ export default function TaskCard({
   onEstimateSubtask,
   isGeneratingSubtasks = false,
   onGenerateSubtasks,
+  onSubtaskStatusChange,
 }: TaskCardProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [showAll, setShowAll] = useState(false)
@@ -151,29 +158,68 @@ export default function TaskCard({
 
           <div className="flex w-[260px] shrink-0 flex-col items-end gap-2">
             <div className="flex items-center gap-2">
-              <div className={`rounded px-2.5 py-1 ${badge.bg}`}>
-                <span className={`font-heading text-[11px] font-semibold ${badge.text}`}>
-                  {badge.label}
-                </span>
-              </div>
-              {!hasSubtasks && displayedEstimate === undefined && (
-                showEstimateSpinner ? (
-                  <div className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-blue">
-                    <SpinnerIcon color="currentColor" size={16} />
-                  </div>
-                ) : (
+              {isReadOnly ? (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onReopen?.()
+                  }}
+                  className="rounded px-2.5 py-1 text-[11px] font-semibold font-heading text-slate-blue border border-border bg-bg-gray hover:bg-white transition"
+                >
+                  Reopen
+                </button>
+              ) : (
+                <>
+                  <StatusDropdown
+                    value={task.status ?? 'not_started'}
+                    onChange={(s) => {
+                      onStatusChange?.(s)
+                    }}
+                    size="md"
+                  />
+                  {!hasSubtasks && displayedEstimate === undefined && (
+                    showEstimateSpinner ? (
+                      <div className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-blue">
+                        <SpinnerIcon color="currentColor" size={16} />
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onEstimate()
+                        }}
+                        className={iconBtnCls}
+                        aria-label="Estimate task time"
+                      >
+                        <SparklesIcon color="currentColor" size={16} />
+                      </button>
+                    )
+                  )}
                   <button
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation()
-                      onEstimate()
+                      onEdit()
                     }}
                     className={iconBtnCls}
-                    aria-label="Estimate task time"
+                    aria-label="Edit task"
                   >
-                    <SparklesIcon color="currentColor" size={16} />
+                    <PencilIcon />
                   </button>
-                )
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onDelete()
+                    }}
+                    className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-blue hover:bg-urgent-red-light hover:text-urgent-red transition"
+                    aria-label="Delete task"
+                  >
+                    <TrashIcon />
+                  </button>
+                </>
               )}
               {!hasSubtasks && (
                 isGeneratingSubtasks ? (
@@ -224,7 +270,7 @@ export default function TaskCard({
               </div>
             </div>
 
-            {task.timeEstimate !== undefined &&
+            {!isReadOnly && task.timeEstimate !== undefined &&
               !task.isManualEstimate &&
               (!hasSubtasks || !anySubtaskPending) && (
                 <TaskFeedbackForm task={task} {...feedback} />
@@ -307,7 +353,7 @@ export default function TaskCard({
                     See less
                   </button>
                 )}
-                {studyBlocks.length > 0 && (
+                {!isReadOnly && studyBlocks.length > 0 && (
                   <div className="flex justify-end pt-1">
                     <button
                       type="button"
@@ -337,6 +383,8 @@ export default function TaskCard({
                     onEstimate={onEstimateSubtask ?? (() => {})}
                     onEdit={onEditSubtask ?? (() => {})}
                     onDelete={onDeleteSubtask ?? (() => {})}
+                    onStatusChange={onSubtaskStatusChange ?? (() => {})}
+                    isReadOnly={isReadOnly}
                   />
                 ))}
               </div>
