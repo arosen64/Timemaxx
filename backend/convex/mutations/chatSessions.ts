@@ -80,7 +80,6 @@ export const resolvePickedTaskInternal = internalMutation({
 
     const needsClassNext = row.needsClassAfterTask === true;
     await ctx.db.patch(row._id, {
-      resolvedTaskId: args.taskId,
       clarificationAttemptCount: 0,
       clarificationExhausted: false,
       needsClassAfterTask: false,
@@ -119,7 +118,6 @@ export const resolvePickedCourseInternal = internalMutation({
     if (!row) throw new Error("chat session missing");
 
     await ctx.db.patch(row._id, {
-      resolvedCourseId: args.courseId,
       activeEntityStep: undefined,
       awaitingEntityResolution: false,
       needsClassAfterTask: false,
@@ -153,11 +151,12 @@ export const clearEntityAwaitingInternal = internalMutation({
   },
 });
 
-export const beginAwaitingScopeConfirmInternal = internalMutation({
+/** Lock the thread after hitting the per-session message cap. */
+export const setChatInputLockedInternal = internalMutation({
   args: {
     userId: v.id("users"),
     sessionId: v.string(),
-    pendingScopeUserMessageId: v.optional(v.id("chatMessages")),
+    locked: v.boolean(),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -169,78 +168,7 @@ export const beginAwaitingScopeConfirmInternal = internalMutation({
       .unique();
     if (!row) throw new Error("chat session missing");
     await ctx.db.patch(row._id, {
-      awaitingScopeConfirm: true,
-      ...(args.pendingScopeUserMessageId !== undefined
-        ? { pendingScopeUserMessageId: args.pendingScopeUserMessageId }
-        : {}),
-    });
-    return null;
-  },
-});
-
-export const resolveScopeConfirmYesInternal = internalMutation({
-  args: {
-    userId: v.id("users"),
-    sessionId: v.string(),
-  },
-  returns: v.null(),
-  handler: async (ctx, args) => {
-    const row = await ctx.db
-      .query("chatSessions")
-      .withIndex("by_userId_sessionId", (q) =>
-        q.eq("userId", args.userId).eq("sessionId", args.sessionId),
-      )
-      .unique();
-    if (!row) throw new Error("chat session missing");
-    await ctx.db.patch(row._id, {
-      awaitingScopeConfirm: false,
-      scopeBypassNextMessage: true,
-      pendingScopeUserMessageId: undefined,
-    });
-    return null;
-  },
-});
-
-export const resolveScopeConfirmNoInternal = internalMutation({
-  args: {
-    userId: v.id("users"),
-    sessionId: v.string(),
-  },
-  returns: v.null(),
-  handler: async (ctx, args) => {
-    const row = await ctx.db
-      .query("chatSessions")
-      .withIndex("by_userId_sessionId", (q) =>
-        q.eq("userId", args.userId).eq("sessionId", args.sessionId),
-      )
-      .unique();
-    if (!row) throw new Error("chat session missing");
-    await ctx.db.patch(row._id, {
-      awaitingScopeConfirm: false,
-      scopeBypassNextMessage: false,
-      chatInputLocked: true,
-      pendingScopeUserMessageId: undefined,
-    });
-    return null;
-  },
-});
-
-export const consumeScopeBypassInternal = internalMutation({
-  args: {
-    userId: v.id("users"),
-    sessionId: v.string(),
-  },
-  returns: v.null(),
-  handler: async (ctx, args) => {
-    const row = await ctx.db
-      .query("chatSessions")
-      .withIndex("by_userId_sessionId", (q) =>
-        q.eq("userId", args.userId).eq("sessionId", args.sessionId),
-      )
-      .unique();
-    if (!row) return null;
-    await ctx.db.patch(row._id, {
-      scopeBypassNextMessage: false,
+      chatInputLocked: args.locked,
     });
     return null;
   },
@@ -284,13 +212,10 @@ export const clearTaskAgentStateInternal = internalMutation({
       )
       .unique();
     if (!row) return null;
-    // Clear agent state AND resolved entities — each subagent interaction is self-contained.
-    // The next invocation starts fresh so the user can act on a different task or class.
+    // Clear subagent mode so the next turn can route via supervisor again.
     await ctx.db.patch(row._id, {
       activeAgent: undefined,
       taskAgentIntent: undefined,
-      resolvedTaskId: undefined,
-      resolvedCourseId: undefined,
       awaitingEntityResolution: false,
       activeEntityStep: undefined,
       needsClassAfterTask: false,

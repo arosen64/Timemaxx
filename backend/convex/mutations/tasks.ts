@@ -250,8 +250,91 @@ export const patchTaskEmbedding = internalMutation({
     taskId: v.id("tasks"),
     embedding: v.array(v.float64()),
   },
+  returns: v.null(),
   handler: async (ctx, args) => {
     await ctx.db.patch(args.taskId, { embedding: args.embedding });
+    return null;
+  },
+});
+
+const taskStatusValidator = v.union(
+  v.literal("not_started"),
+  v.literal("in_progress"),
+  v.literal("completed"),
+);
+
+/** Unsets all calendar-scheduling fields on a study block, leaving the block itself intact. */
+async function unscheduleBlock(ctx: MutationCtx, blockId: Id<"studyBlocks">) {
+  await ctx.db.patch(blockId, {
+    startTime: undefined,
+    googleEventId: undefined,
+    isConflicted: undefined,
+    needsExport: undefined,
+  });
+}
+
+/**
+ * Updates the status of a task.
+ * When set to "completed":
+ *   - All child subtasks are also set to "completed"
+ *   - All study blocks for the task (and its subtasks) are unscheduled:
+ *     startTime, googleEventId, isConflicted, and needsExport are cleared.
+ *     Blocks are kept so they can be rescheduled if the task is reopened.
+ * When set to "not_started" or "in_progress" (reopen):
+ *   - Only the task's own status is updated; blocks remain unscheduled.
+ */
+export const updateTaskStatus = mutation({
+  args: {
+    taskId: v.id("tasks"),
+    status: taskStatusValidator,
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Unauthenticated");
+
+    const task = await ctx.db.get(args.taskId);
+    if (!task || task.userId !== userId) throw new Error("Task not found");
+
+    await ctx.db.patch(args.taskId, { status: args.status });
+
+    const subtasks = await ctx.db
+      .query("subtasks")
+      .withIndex("by_parentTaskId", (q) => q.eq("parentTaskId", args.taskId))
+      .collect();
+
+    if (args.status === "completed") {
+      // Cascade completion to all child subtasks
+      for (const subtask of subtasks) {
+        await ctx.db.patch(subtask._id, { status: "completed" });
+      }
+
+      // Unschedule task-level study blocks
+      const taskBlocks = await ctx.db
+        .query("studyBlocks")
+        .withIndex("by_taskId", (q) => q.eq("taskId", args.taskId))
+        .collect();
+      for (const block of taskBlocks) {
+        await unscheduleBlock(ctx, block._id);
+      }
+
+      // Unschedule subtask-level study blocks
+      for (const subtask of subtasks) {
+        const subtaskBlocks = await ctx.db
+          .query("studyBlocks")
+          .withIndex("by_subtaskId", (q) => q.eq("subtaskId", subtask._id))
+          .collect();
+        for (const block of subtaskBlocks) {
+          await unscheduleBlock(ctx, block._id);
+        }
+      }
+    } else {
+      // Cascade reopen: reset completed subtasks back to not_started
+      for (const subtask of subtasks) {
+        if (subtask.status === "completed") {
+          await ctx.db.patch(subtask._id, { status: "not_started" });
+        }
+      }
+    }
   },
 });
 

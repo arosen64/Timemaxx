@@ -117,6 +117,64 @@ function linkedCourseIdsFrom(messages: ChatMessageForChunking[]): Id<"userCourse
   return [...set];
 }
 
+/**
+ * Per-message effective task/course for chunk linking: explicit fields on a message
+ * update the active context; messages without tags inherit the previous active values.
+ */
+function effectiveTaskCoursePerMessage(
+  messages: ChatMessageForChunking[],
+): Array<{ taskId?: Id<"tasks">; courseId?: Id<"userCourses"> }> {
+  let activeTask: Id<"tasks"> | undefined;
+  let activeCourse: Id<"userCourses"> | undefined;
+  const out: Array<{ taskId?: Id<"tasks">; courseId?: Id<"userCourses"> }> = [];
+  for (const m of messages) {
+    const taskId = m.taskId ?? activeTask;
+    const courseId = m.courseId ?? activeCourse;
+    out.push({ taskId, courseId });
+    if (m.taskId !== undefined) activeTask = m.taskId;
+    if (m.courseId !== undefined) activeCourse = m.courseId;
+  }
+  return out;
+}
+
+function segmentIndicesByEffectivePair(
+  effective: Array<{ taskId?: Id<"tasks">; courseId?: Id<"userCourses"> }>,
+): number[][] {
+  const segments: number[][] = [];
+  if (effective.length === 0) return segments;
+
+  let prevKey = `${effective[0]!.taskId ?? ""}|${effective[0]!.courseId ?? ""}`;
+  let current: number[] = [0];
+  for (let i = 1; i < effective.length; i++) {
+    const e = effective[i]!;
+    const key = `${e.taskId ?? ""}|${e.courseId ?? ""}`;
+    if (key !== prevKey) {
+      segments.push(current);
+      current = [];
+      prevKey = key;
+    }
+    current.push(i);
+  }
+  segments.push(current);
+  return segments;
+}
+
+function messagesWithEffectiveTags(
+  messages: ChatMessageForChunking[],
+  indices: number[],
+  effective: Array<{ taskId?: Id<"tasks">; courseId?: Id<"userCourses"> }>,
+): ChatMessageForChunking[] {
+  return indices.map((i) => {
+    const m = messages[i]!;
+    const e = effective[i]!;
+    return {
+      ...m,
+      taskId: e.taskId,
+      courseId: e.courseId,
+    };
+  });
+}
+
 /** Do not emit chunks shorter than this after boundary snapping (unless it's the tail). */
 const MIN_CHUNK_CHARS = 100;
 /** Max how far we move `end` backward to land on a space / newline. */
@@ -193,8 +251,10 @@ function snapStartForward(transcript: string, rawStart: number): number {
  * like `Assistant:` are not cut in half. The next window starts at
  * `end - overlap` so there are no gaps when `end` moves backward.
  *
- * Messages are grouped by taskId first - messages with different taskIds
- * are never in the same chunk.
+ * Task/course tags inherit forward: an untagged message uses the last explicit
+ * taskId/courseId seen earlier in the session. The transcript is split into
+ * contiguous runs where the inherited (taskId, courseId) pair is constant so
+ * a chunk never mixes two different contexts.
  */
 export function buildChatChunkSpecs(
   messages: ChatMessageForChunking[],
@@ -202,22 +262,15 @@ export function buildChatChunkSpecs(
   const selected = selectMessagesForChunking(messages);
   if (selected.length === 0) return [];
 
-  // Group messages by taskId - messages with different taskIds go in separate chunks
-  const messagesByTask = new Map<Id<"tasks"> | null, ChatMessageForChunking[]>();
-  for (const message of selected) {
-    const taskId = message.taskId || null; // Use null for messages without taskId
-    if (!messagesByTask.has(taskId)) {
-      messagesByTask.set(taskId, []);
-    }
-    messagesByTask.get(taskId)!.push(message);
-  }
+  const effective = effectiveTaskCoursePerMessage(selected);
+  const indexSegments = segmentIndicesByEffectivePair(effective);
 
   const allSpecs: ChatChunkSpec[] = [];
   let globalChunkIndex = 0;
 
-  // Process each task group separately
-  for (const [_taskId, taskMessages] of messagesByTask) {
-    const specs = buildChunkSpecsForMessages(taskMessages, globalChunkIndex);
+  for (const indices of indexSegments) {
+    const tagged = messagesWithEffectiveTags(selected, indices, effective);
+    const specs = buildChunkSpecsForMessages(tagged, globalChunkIndex);
     allSpecs.push(...specs);
     globalChunkIndex += specs.length;
   }
@@ -226,7 +279,8 @@ export function buildChatChunkSpecs(
 }
 
 /**
- * Build chunk specs for a group of messages (already filtered to same taskId).
+ * Build chunk specs for a group of messages that already share the same
+ * inherited (taskId, courseId) context for linking.
  */
 function buildChunkSpecsForMessages(
   messages: ChatMessageForChunking[],
