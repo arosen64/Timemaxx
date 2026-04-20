@@ -29,13 +29,9 @@ function isBlockConflicted(
   timedEvents: TimedEventArg[],
   workHoursGrid: WorkHoursRow[],
   timezone: string,
-  nowMs: number,
 ): boolean {
   const startMs = new Date(block.startTime).getTime()
   const endMs = startMs + block.studyBlockLength * 60 * 1000
-
-  // 0. Block is entirely in the past
-  if (endMs <= nowMs) return true
 
   // 1. Due date violation
   if (startMs >= task.dueDate || endMs > task.dueDate) return true
@@ -316,13 +312,20 @@ export const detectConflicts = internalMutation({
           continue;
         }
 
+        const endMs = new Date(block.startTime).getTime() + block.studyBlockLength * 60 * 1000;
+        if (endMs <= nowMs) {
+          if (block.isConflicted) {
+            await ctx.db.patch(block._id, { isConflicted: false });
+          }
+          continue;
+        }
+
         const conflicted = isBlockConflicted(
           { startTime: block.startTime, studyBlockLength: block.studyBlockLength, googleEventId: block.googleEventId },
           { dueDate: task.dueDate },
           args.timedEvents,
           args.workHoursGrid,
           args.timezone,
-          nowMs,
         );
 
         if ((block.isConflicted ?? false) !== conflicted) {
