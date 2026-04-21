@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '../../../../backend/convex/_generated/api'
 import { PencilIcon, TrashIcon, SpinnerIcon, SparklesIcon, ChevronDownIcon } from '../icons'
@@ -72,6 +72,11 @@ export default function TaskCard({
     isExpanded ? { taskId: task._id } : 'skip',
   )
 
+  const subtaskBlocksRaw = useQuery(
+    api.queries.studyBlocks.getStudyBlocksForTaskSubtasks,
+    isExpanded && subtasks.length > 0 ? { taskId: task._id } : 'skip',
+  )
+
   const iconBtnCls =
     'flex items-center justify-center w-8 h-8 transition rounded-lg text-slate-blue hover:bg-bg-gray hover:text-navy'
 
@@ -83,6 +88,13 @@ export default function TaskCard({
   const hiddenCount = studyBlocks ? Math.max(0, studyBlocks.length - BLOCK_DISPLAY_LIMIT) : 0
 
   const hasSubtasks = subtasks.length > 0
+  const subtaskBlocksMap = useMemo(() => new Map(
+    subtasks.map((s) => [
+      s._id,
+      (subtaskBlocksRaw ?? []).filter((b) => b.subtaskId === s._id),
+    ])
+  ), [subtasks, subtaskBlocksRaw])
+
   const anySubtaskPending = hasSubtasks && subtasks.some(
     (s) => s.timeEstimate === undefined && (estimatingSubtasks?.has(s._id) ?? false)
   )
@@ -333,6 +345,7 @@ export default function TaskCard({
                   <SubtaskCard
                     key={subtask._id}
                     subtask={subtask}
+                    blocks={subtaskBlocksMap.get(subtask._id) ?? []}
                     isEstimating={estimatingSubtasks?.has(subtask._id) ?? false}
                     onEstimate={onEstimateSubtask ?? (() => {})}
                     onEdit={onEditSubtask ?? (() => {})}

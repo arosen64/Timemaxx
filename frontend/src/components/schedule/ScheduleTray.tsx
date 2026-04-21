@@ -1,8 +1,10 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useAction } from 'convex/react'
 import { api } from '../../../../backend/convex/_generated/api'
 import type { Id } from '../../../../backend/convex/_generated/dataModel'
 import { CalendarIcon, SpinnerIcon } from '../icons'
+
+const DEFAULT_COURSE_COLOR = '#002D72'
 
 type TrayBlock = {
   _id: Id<'studyBlocks'>
@@ -10,6 +12,7 @@ type TrayBlock = {
   title: string
   studyBlockLength: number
   taskTitle: string
+  taskDueDate: number
   courseColor?: string
   courseName?: string
 }
@@ -64,6 +67,76 @@ export default function ScheduleTray({
     }
   }
 
+  // Group blocks by parent task, preserving the incoming due-date sort order
+  const groupedByTask = useMemo(() => {
+    const order: Id<'tasks'>[] = []
+    const map = new Map<Id<'tasks'>, { taskTitle: string; taskDueDate: number; courseColor?: string; blocks: TrayBlock[] }>()
+    for (const block of blocks) {
+      if (!map.has(block.taskId)) {
+        order.push(block.taskId)
+        map.set(block.taskId, { taskTitle: block.taskTitle, taskDueDate: block.taskDueDate, courseColor: block.courseColor, blocks: [] })
+      }
+      map.get(block.taskId)!.blocks.push(block)
+    }
+    return order.map((id) => ({ taskId: id, ...map.get(id)! }))
+  }, [blocks])
+
+  const renderBlock = (block: TrayBlock) => {
+    const isSelected = assigningBlockId === block._id
+    const isBlockScheduling = schedulingBlockIds.has(block._id)
+    return (
+      <div
+        key={block._id}
+        role="button"
+        tabIndex={0}
+        onClick={() => onToggleAssign(block._id)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            onToggleAssign(block._id)
+          }
+        }}
+        className={`group relative flex items-start gap-2 rounded-lg border px-3 py-2.5 text-left transition cursor-pointer ${
+          isSelected
+            ? 'border-teal bg-teal/10 shadow-sm'
+            : 'border-border bg-white hover:border-teal/50 hover:bg-teal/5'
+        }`}
+      >
+        <span
+          className="mt-1 inline-block h-2.5 w-2.5 shrink-0 rounded-full"
+          style={{ backgroundColor: block.courseColor ?? DEFAULT_COURSE_COLOR }}
+        />
+        <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <span className="block truncate font-heading text-[11px] font-semibold text-navy">
+            {block.title}
+          </span>
+          <span className="text-[10px] text-slate-blue">{block.studyBlockLength} min</span>
+          {block.courseName && (
+            <span className="hidden group-hover:block truncate font-body text-[10px] font-medium text-teal">
+              {block.courseName}
+            </span>
+          )}
+        </span>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation()
+            handleScheduleBlock(block._id)
+          }}
+          disabled={isBlockScheduling}
+          className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded text-slate-blue opacity-0 transition hover:bg-navy/10 hover:text-navy group-hover:opacity-100 disabled:cursor-not-allowed disabled:opacity-50"
+          aria-label="Auto-schedule this block"
+          title="Auto-schedule"
+        >
+          {isBlockScheduling
+            ? <SpinnerIcon color="currentColor" size={10} />
+            : <CalendarIcon color="currentColor" size={10} />
+          }
+        </button>
+      </div>
+    )
+  }
+
   return (
     <aside className="flex w-[180px] shrink-0 flex-col gap-2 overflow-y-auto" data-tray>
       <div className="flex items-center justify-between gap-1">
@@ -87,62 +160,33 @@ export default function ScheduleTray({
           All blocks scheduled.
         </div>
       ) : (
-        blocks.map((block) => {
-          const isSelected = assigningBlockId === block._id
-          const isBlockScheduling = schedulingBlockIds.has(block._id)
-          return (
-            <div
-              key={block._id}
-              role="button"
-              tabIndex={0}
-              onClick={() => onToggleAssign(block._id)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault()
-                  onToggleAssign(block._id)
-                }
-              }}
-              className={`group relative flex items-start gap-2 rounded-lg border px-3 py-2.5 text-left transition cursor-pointer ${
-                isSelected
-                  ? 'border-teal bg-teal/10 shadow-sm'
-                  : 'border-border bg-white hover:border-teal/50 hover:bg-teal/5'
-              }`}
-            >
+        groupedByTask.map(({ taskId, taskTitle, taskDueDate, courseColor, blocks: taskBlocks }) => (
+          <div key={taskId} className="flex flex-col gap-1.5">
+            <div className="flex items-center gap-1.5 px-0.5 pt-1">
               <span
-                className="mt-1 inline-block h-2.5 w-2.5 shrink-0 rounded-full"
-                style={{ backgroundColor: block.courseColor ?? '#002D72' }}
+                className="inline-block h-2 w-2 shrink-0 rounded-full"
+                style={{ backgroundColor: courseColor ?? DEFAULT_COURSE_COLOR }}
               />
-              <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                <span className="block truncate font-heading text-[11px] font-semibold text-navy">
-                  {block.title}
+              <div className="flex min-w-0 flex-1 flex-col">
+                <span className="truncate font-heading text-[10px] font-semibold text-navy">
+                  {taskTitle}
                 </span>
-                <span className="text-[10px] text-slate-blue">{block.studyBlockLength} min</span>
-                <span className="text-[10px] text-light-blue truncate">{block.taskTitle}</span>
-                {block.courseName && (
-                  <span className="hidden group-hover:block truncate font-body text-[10px] font-medium text-teal">
-                    {block.courseName}
-                  </span>
-                )}
-              </span>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  handleScheduleBlock(block._id)
-                }}
-                disabled={isBlockScheduling}
-                className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded text-slate-blue opacity-0 transition hover:bg-navy/10 hover:text-navy group-hover:opacity-100 disabled:cursor-not-allowed disabled:opacity-50"
-                aria-label="Auto-schedule this block"
-                title="Auto-schedule"
-              >
-                {isBlockScheduling
-                  ? <SpinnerIcon color="currentColor" size={10} />
-                  : <CalendarIcon color="currentColor" size={10} />
-                }
-              </button>
+                <span className="text-[9px] text-light-blue">
+                  Due {new Date(taskDueDate).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    timeZone: timezone,
+                    ...(new Date(taskDueDate).toLocaleDateString('en-US', { year: 'numeric', timeZone: timezone }) !==
+                      new Date().toLocaleDateString('en-US', { year: 'numeric', timeZone: timezone })
+                      ? { year: 'numeric' }
+                      : {}),
+                  })}
+                </span>
+              </div>
             </div>
-          )
-        })
+            {taskBlocks.map(renderBlock)}
+          </div>
+        ))
       )}
     </aside>
   )
