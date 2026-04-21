@@ -8,7 +8,7 @@ const FEATURES = [
 
 export default function LandingHeroPanel() {
   return (
-    <div className="flex w-1/2 flex-col justify-between bg-navy px-16 py-20">
+    <div className="flex w-full md:w-1/2 flex-col justify-between bg-navy px-8 py-10 md:px-16 md:py-20">
       <div className="flex flex-col gap-10">
         <BrandLogo />
         <div className="flex flex-col gap-4">
