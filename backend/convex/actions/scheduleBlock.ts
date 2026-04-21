@@ -6,15 +6,11 @@ import { api, internal } from "../_generated/api";
 import {
   enumerateSlots,
   selectAllSlotsWithAI,
+  toDateStr,
+  DEFAULT_DUE_FALLBACK_MS,
   type OccupiedInterval,
   type WorkHoursRow,
 } from "../lib/scheduleSlots";
-
-const DEFAULT_DUE_FALLBACK_MS = 7 * 24 * 60 * 60 * 1000;
-
-function toDateStr(d: Date, timezone: string): string {
-  return Intl.DateTimeFormat("en-CA", { timeZone: timezone }).format(d);
-}
 
 /**
  * AI-driven scheduling for a single study block.
@@ -60,6 +56,7 @@ export const scheduleBlock = action({
       dueDate = subtask.suggestedCompletionAt ?? subtask.dueDate ?? Date.now() + DEFAULT_DUE_FALLBACK_MS;
       creationTime = subtask._creationTime;
     } else {
+      // block.taskId is non-null here: the guard above ensures at least one of taskId/subtaskId is set
       const task = await ctx.runQuery(internal.queries.tasks.getTaskInternal, {
         taskId: block.taskId!,
       });

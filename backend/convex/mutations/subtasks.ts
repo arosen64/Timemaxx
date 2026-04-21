@@ -144,19 +144,20 @@ export const setSubtaskTimeEstimate = internalMutation({
     const total = siblings.reduce((sum, s) => sum + (s.timeEstimate ?? 0), 0);
     await ctx.db.patch(subtask.parentTaskId, { timeEstimate: total });
 
+    // Delete any stale task-level blocks on the parent so they don't co-exist
+    // with subtask-owned blocks. Done unconditionally so a 0-estimate subtask
+    // still clears stale blocks.
+    const staleTaskBlocks = await ctx.db
+      .query("studyBlocks")
+      .withIndex("by_taskId", (q) => q.eq("taskId", subtask.parentTaskId))
+      .collect();
+    for (const block of staleTaskBlocks) {
+      await ctx.db.delete(block._id);
+    }
+
     // Build blocks for this subtask immediately — each subtask owns its own blocks.
-    // Delete any stale task-level blocks on the parent so they don't co-exist.
     if (args.timeEstimate > 0) {
       await rebuildStudyBlocksForSubtask(ctx, args.subtaskId, args.timeEstimate);
-      const staleTaskBlocks = await ctx.db
-        .query("studyBlocks")
-        .withIndex("by_taskId", (q) => q.eq("taskId", subtask.parentTaskId))
-        .collect();
-      if (staleTaskBlocks.length > 0) {
-        for (const block of staleTaskBlocks) {
-          await ctx.db.delete(block._id);
-        }
-      }
     }
   },
 });

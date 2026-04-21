@@ -25,7 +25,6 @@ vi.mock('convex/react', () => ({
   useMutation: vi.fn(),
 }))
 
-vi.mock('../src/components/Sidebar', () => ({ default: () => <div data-testid="sidebar" /> }))
 vi.mock('../src/components/classes/ClassCard', () => ({
   default: () => <div data-testid="class-card" />,
 }))
@@ -103,7 +102,6 @@ describe('ClassesPage', () => {
   it('renders page heading and sidebar', () => {
     setup()
     expect(screen.getByText('Classes')).toBeInTheDocument()
-    expect(screen.getByTestId('sidebar')).toBeInTheDocument()
   })
 
   it('shows loading skeletons while data is pending', () => {

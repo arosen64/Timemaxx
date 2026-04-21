@@ -3,7 +3,7 @@ import { useQuery } from "convex/react";
 import { api } from "../../../backend/convex/_generated/api";
 import { BookOpenIcon, DashboardIcon, CalendarIcon, ClassesIcon, SlidersHorizontalIcon } from "./icons";
 
-export default function Sidebar() {
+export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
     const { pathname } = useLocation();
     const user = useQuery(api.queries.users.getCurrUser);
     const allStudyBlocks = useQuery(api.queries.studyBlocks.getAllStudyBlocksWithTasks);
@@ -14,6 +14,7 @@ export default function Sidebar() {
         return (
             <Link
                 to={to}
+                onClick={onNavigate}
                 className={`relative flex items-center h-11 w-full gap-2.5 px-3.5 rounded-lg ${active
                         ? "text-navy bg-white"
                         : "text-sky-blue hover:bg-white/10"
@@ -52,7 +53,7 @@ export default function Sidebar() {
             </div>
 
             {/* Footer: User Info */}
-            <Link to="/profile" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
+            <Link to="/profile" onClick={onNavigate} className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
                 {user === undefined ? (
                     <div className="flex-shrink-0 h-9 w-9 bg-white/20 rounded-full animate-pulse" />
                 ) : user?.image ? (
