@@ -50,6 +50,7 @@ export const createTask = mutation({
     courseId: v.optional(v.id("userCourses")),
     classTag: v.optional(v.string()),
     timeEstimate: v.optional(v.number()),
+    assignmentWeight: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -68,6 +69,9 @@ export const createTask = mutation({
     if (args.dueDate <= now) {
       throw new Error("That due date and time are in the past. Choose a later deadline.");
     }
+    if (args.assignmentWeight !== undefined && (args.assignmentWeight < 0 || args.assignmentWeight > 100)) {
+      throw new Error("Assignment weight must be between 0 and 100");
+    }
 
     const isManualEstimate = args.timeEstimate !== undefined;
 
@@ -81,6 +85,7 @@ export const createTask = mutation({
       classTag: normalizeClassTag(args.classTag),
       timeEstimate: args.timeEstimate,
       isManualEstimate,
+      assignmentWeight: args.assignmentWeight,
       createdAt: Date.now(),
     });
 
@@ -110,6 +115,7 @@ export const updateTask = mutation({
     dueDate: v.number(),
     courseId: v.optional(v.id("userCourses")),
     classTag: v.optional(v.string()),
+    assignmentWeight: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -117,6 +123,10 @@ export const updateTask = mutation({
 
     const task = await ctx.db.get(args.taskId);
     if (!task || task.userId !== userId) throw new Error("Task not found");
+
+    if (args.assignmentWeight !== undefined && (args.assignmentWeight < 0 || args.assignmentWeight > 100)) {
+      throw new Error("Assignment weight must be between 0 and 100");
+    }
 
     await ctx.db.patch(args.taskId, {
       title: args.title,
@@ -127,6 +137,7 @@ export const updateTask = mutation({
       ...(args.classTag !== undefined
         ? { classTag: normalizeClassTag(args.classTag) }
         : {}),
+      assignmentWeight: args.assignmentWeight,
     });
 
     // Cascade dueDate change to child subtasks

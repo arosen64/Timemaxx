@@ -137,4 +137,52 @@ describe("mutations/tasks – createTask", () => {
     const task = await t.run((ctx) => ctx.db.get(taskId));
     expect(task!.classTag).toBeUndefined();
   });
+
+  test("stores assignmentWeight when provided", async () => {
+    const t = makeTestCtx();
+    const { withAuth } = await createTestUser(t);
+
+    const taskId = await withAuth.mutation(api.mutations.tasks.createTask, {
+      title: "Weighted assignment",
+      description: "desc",
+      taskType: "Essay",
+      dueDate: Date.now() + 86_400_000,
+      assignmentWeight: 20,
+    });
+
+    await t.finishAllScheduledFunctions(vi.runAllTimers);
+    const task = await t.run((ctx) => ctx.db.get(taskId));
+    expect(task!.assignmentWeight).toBe(20);
+  });
+
+  test("assignmentWeight is undefined when not provided", async () => {
+    const t = makeTestCtx();
+    const { withAuth } = await createTestUser(t);
+
+    const taskId = await withAuth.mutation(api.mutations.tasks.createTask, {
+      title: "No weight task",
+      description: "desc",
+      taskType: "Essay",
+      dueDate: Date.now() + 86_400_000,
+    });
+
+    await t.finishAllScheduledFunctions(vi.runAllTimers);
+    const task = await t.run((ctx) => ctx.db.get(taskId));
+    expect(task!.assignmentWeight).toBeUndefined();
+  });
+
+  test("throws when assignmentWeight is out of range", async () => {
+    const t = makeTestCtx();
+    const { withAuth } = await createTestUser(t);
+
+    await expect(
+      withAuth.mutation(api.mutations.tasks.createTask, {
+        title: "Bad weight",
+        description: "desc",
+        taskType: "Essay",
+        dueDate: Date.now() + 86_400_000,
+        assignmentWeight: 150,
+      })
+    ).rejects.toThrow("Assignment weight must be between 0 and 100");
+  });
 });
