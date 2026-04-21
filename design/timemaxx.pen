@@ -24235,6 +24235,552 @@
     },
     {
       "type": "frame",
+      "id": "MbDv1",
+      "x": 9200,
+      "y": 1020,
+      "name": "MobileDayView",
+      "reusable": true,
+      "width": 390,
+      "height": 560,
+      "fill": "$--background",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "MbDvH1",
+          "name": "navHeader",
+          "width": "fill_container",
+          "height": 48,
+          "fill": "$--card",
+          "stroke": {
+            "align": "inside",
+            "thickness": { "bottom": 1 },
+            "fill": "$--border"
+          },
+          "layout": "horizontal",
+          "alignItems": "center",
+          "justifyContent": "space_between",
+          "padding": [0, 12],
+          "children": [
+            {
+              "type": "frame",
+              "id": "MbDvPv1",
+              "name": "prevBtn",
+              "width": 32,
+              "height": 32,
+              "justifyContent": "center",
+              "alignItems": "center",
+              "cornerRadius": 6,
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "MbDvPvI1",
+                  "name": "prevIcon",
+                  "width": 16,
+                  "height": 16,
+                  "iconFontName": "chevron-left",
+                  "iconFontFamily": "lucide",
+                  "fill": "$--primary"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "MbDvDt1",
+              "name": "dateLabel",
+              "fill": "$--primary",
+              "content": "Tuesday, Apr 22",
+              "fontFamily": "Space Grotesk",
+              "fontSize": 15,
+              "fontWeight": "700"
+            },
+            {
+              "type": "frame",
+              "id": "MbDvNx1",
+              "name": "nextBtn",
+              "width": 32,
+              "height": 32,
+              "justifyContent": "center",
+              "alignItems": "center",
+              "cornerRadius": 6,
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "MbDvNxI1",
+                  "name": "nextIcon",
+                  "width": 16,
+                  "height": 16,
+                  "iconFontName": "chevron-right",
+                  "iconFontFamily": "lucide",
+                  "fill": "$--primary"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "MbDvAd1",
+          "name": "allDayRow",
+          "width": "fill_container",
+          "height": 28,
+          "fill": "$--background",
+          "stroke": {
+            "align": "inside",
+            "thickness": { "bottom": 1 },
+            "fill": "$--border"
+          },
+          "layout": "horizontal",
+          "alignItems": "center",
+          "gap": 6,
+          "padding": [0, 8],
+          "children": [
+            {
+              "type": "text",
+              "id": "MbDvAdL1",
+              "name": "allDayLabel",
+              "width": 40,
+              "fill": "$--light-muted",
+              "content": "all-day",
+              "fontFamily": "Inter",
+              "fontSize": 9
+            },
+            {
+              "type": "frame",
+              "id": "MbDvAdC1",
+              "name": "eventChip",
+              "height": 18,
+              "fill": "$--info-bg",
+              "cornerRadius": 3,
+              "layout": "horizontal",
+              "alignItems": "center",
+              "padding": [0, 6],
+              "children": [
+                {
+                  "type": "text",
+                  "id": "MbDvAdCT1",
+                  "name": "chipLabel",
+                  "fill": "$--info-emphasis",
+                  "content": "Study Session",
+                  "fontFamily": "Inter",
+                  "fontSize": 10,
+                  "fontWeight": "500"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "MbDvGd1",
+          "name": "timeGrid",
+          "width": "fill_container",
+          "height": "fill_container",
+          "fill": "$--card",
+          "layout": "vertical",
+          "children": [
+            {
+              "type": "frame",
+              "id": "MbDvR1",
+              "name": "slot-8am",
+              "width": "fill_container",
+              "height": 28,
+              "layout": "horizontal",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "MbDvT1",
+                  "name": "timeLabel",
+                  "width": 48,
+                  "height": 28,
+                  "fill": "$--light-muted",
+                  "content": "8 AM",
+                  "fontFamily": "Inter",
+                  "fontSize": 10,
+                  "textAlign": "right",
+                  "padding": [2, 4]
+                },
+                {
+                  "type": "frame",
+                  "id": "MbDvC1",
+                  "name": "daySlot",
+                  "width": "fill_container",
+                  "height": 28,
+                  "fill": "$--card",
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": { "bottom": 1, "left": 1 },
+                    "fill": "$--border"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "MbDvR2",
+              "name": "slot-8-30am",
+              "width": "fill_container",
+              "height": 28,
+              "layout": "horizontal",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "MbDvT2",
+                  "name": "timeLabel",
+                  "width": 48,
+                  "height": 28
+                },
+                {
+                  "type": "frame",
+                  "id": "MbDvC2",
+                  "name": "daySlot",
+                  "width": "fill_container",
+                  "height": 28,
+                  "fill": "$--card",
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": { "bottom": 1, "left": 1 },
+                    "fill": "$--border"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "MbDvR3",
+              "name": "slot-9am-preferred",
+              "width": "fill_container",
+              "height": 28,
+              "layout": "horizontal",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "MbDvT3",
+                  "name": "timeLabel",
+                  "width": 48,
+                  "height": 28,
+                  "fill": "$--light-muted",
+                  "content": "9 AM",
+                  "fontFamily": "Inter",
+                  "fontSize": 10,
+                  "textAlign": "right",
+                  "padding": [2, 4]
+                },
+                {
+                  "type": "frame",
+                  "id": "MbDvC3",
+                  "name": "daySlot",
+                  "width": "fill_container",
+                  "height": 28,
+                  "fill": "rgba(134,200,188,0.4)",
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": { "bottom": 1, "left": 1 },
+                    "fill": "$--border"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "MbDvR4",
+              "name": "slot-9-30am-preferred",
+              "width": "fill_container",
+              "height": 28,
+              "layout": "horizontal",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "MbDvT4",
+                  "name": "timeLabel",
+                  "width": 48,
+                  "height": 28
+                },
+                {
+                  "type": "frame",
+                  "id": "MbDvC4",
+                  "name": "daySlot",
+                  "width": "fill_container",
+                  "height": 28,
+                  "fill": "rgba(134,200,188,0.4)",
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": { "bottom": 1, "left": 1 },
+                    "fill": "$--border"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "MbDvR5",
+              "name": "slot-10am-preferred",
+              "width": "fill_container",
+              "height": 28,
+              "layout": "horizontal",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "MbDvT5",
+                  "name": "timeLabel",
+                  "width": 48,
+                  "height": 28,
+                  "fill": "$--light-muted",
+                  "content": "10 AM",
+                  "fontFamily": "Inter",
+                  "fontSize": 10,
+                  "textAlign": "right",
+                  "padding": [2, 4]
+                },
+                {
+                  "type": "frame",
+                  "id": "MbDvC5",
+                  "name": "daySlot",
+                  "width": "fill_container",
+                  "height": 28,
+                  "fill": "rgba(134,200,188,0.4)",
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": { "bottom": 1, "left": 1 },
+                    "fill": "$--border"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "MbDvR6",
+              "name": "slot-10-30am-preferred",
+              "width": "fill_container",
+              "height": 28,
+              "layout": "horizontal",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "MbDvT6",
+                  "name": "timeLabel",
+                  "width": 48,
+                  "height": 28
+                },
+                {
+                  "type": "frame",
+                  "id": "MbDvC6",
+                  "name": "daySlot",
+                  "width": "fill_container",
+                  "height": 28,
+                  "fill": "rgba(134,200,188,0.4)",
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": { "bottom": 1, "left": 1 },
+                    "fill": "$--border"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "MbDvR7",
+              "name": "slot-11am",
+              "width": "fill_container",
+              "height": 28,
+              "layout": "horizontal",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "MbDvT7",
+                  "name": "timeLabel",
+                  "width": 48,
+                  "height": 28,
+                  "fill": "$--light-muted",
+                  "content": "11 AM",
+                  "fontFamily": "Inter",
+                  "fontSize": 10,
+                  "textAlign": "right",
+                  "padding": [2, 4]
+                },
+                {
+                  "type": "frame",
+                  "id": "MbDvC7",
+                  "name": "daySlot",
+                  "width": "fill_container",
+                  "height": 28,
+                  "fill": "$--card",
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": { "bottom": 1, "left": 1 },
+                    "fill": "$--border"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "MbDvR8",
+              "name": "slot-11-30am",
+              "width": "fill_container",
+              "height": 28,
+              "layout": "horizontal",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "MbDvT8",
+                  "name": "timeLabel",
+                  "width": 48,
+                  "height": 28
+                },
+                {
+                  "type": "frame",
+                  "id": "MbDvC8",
+                  "name": "daySlot",
+                  "width": "fill_container",
+                  "height": 28,
+                  "fill": "$--card",
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": { "bottom": 1, "left": 1 },
+                    "fill": "$--border"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "MbDvR9",
+              "name": "slot-12pm",
+              "width": "fill_container",
+              "height": 28,
+              "layout": "horizontal",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "MbDvT9",
+                  "name": "timeLabel",
+                  "width": 48,
+                  "height": 28,
+                  "fill": "$--light-muted",
+                  "content": "12 PM",
+                  "fontFamily": "Inter",
+                  "fontSize": 10,
+                  "textAlign": "right",
+                  "padding": [2, 4]
+                },
+                {
+                  "type": "frame",
+                  "id": "MbDvC9",
+                  "name": "daySlot",
+                  "width": "fill_container",
+                  "height": 28,
+                  "fill": "$--card",
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": { "bottom": 1, "left": 1 },
+                    "fill": "$--border"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "MbDvR10",
+              "name": "slot-12-30pm",
+              "width": "fill_container",
+              "height": 28,
+              "layout": "horizontal",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "MbDvT10",
+                  "name": "timeLabel",
+                  "width": 48,
+                  "height": 28
+                },
+                {
+                  "type": "frame",
+                  "id": "MbDvC10",
+                  "name": "daySlot",
+                  "width": "fill_container",
+                  "height": 28,
+                  "fill": "$--card",
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": { "bottom": 1, "left": 1 },
+                    "fill": "$--border"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "MbDvOv1",
+              "name": "studyBlockOverlay",
+              "x": 48,
+              "y": 56,
+              "width": 330,
+              "height": 84,
+              "fill": "$--primary",
+              "cornerRadius": 6,
+              "layout": "vertical",
+              "gap": 3,
+              "padding": [6, 8],
+              "children": [
+                {
+                  "type": "text",
+                  "id": "MbDvOvT1",
+                  "name": "blockTime",
+                  "fill": "$--info",
+                  "content": "9:00 AM – 10:30 AM",
+                  "fontFamily": "Inter",
+                  "fontSize": 10,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "text",
+                  "id": "MbDvOvN1",
+                  "name": "blockTitle",
+                  "fill": "#FFFFFF",
+                  "content": "Problem Set 4",
+                  "fontFamily": "Space Grotesk",
+                  "fontSize": 12,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "text",
+                  "id": "MbDvOvD1",
+                  "name": "blockDuration",
+                  "fill": "$--info",
+                  "content": "90 min",
+                  "fontFamily": "Inter",
+                  "fontSize": 10
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "MbDvNwI1",
+              "name": "nowIndicator",
+              "x": 48,
+              "y": 168,
+              "width": 330,
+              "height": 2,
+              "fill": "#CF4520"
+            },
+            {
+              "type": "frame",
+              "id": "MbDvNwD1",
+              "name": "nowDot",
+              "x": 43,
+              "y": 163,
+              "width": 10,
+              "height": 10,
+              "fill": "#CF4520",
+              "cornerRadius": 5
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
       "id": "SbDrw1",
       "x": 9200,
       "y": 120,
