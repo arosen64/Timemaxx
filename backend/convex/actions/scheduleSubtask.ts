@@ -7,12 +7,11 @@ import {
   enumerateSlots,
   selectAllSlotsWithAI,
   isSlotValid,
+  DEFAULT_DUE_FALLBACK_MS,
   type OccupiedInterval,
   type WorkHoursRow,
 } from "../lib/scheduleSlots";
 import { fetch21DayCalendarEvents } from "../lib/calendarFetch";
-
-const DEFAULT_DUE_FALLBACK_MS = 7 * 24 * 60 * 60 * 1000;
 
 export const scheduleSubtask = action({
   args: {
@@ -69,7 +68,7 @@ export const scheduleSubtask = action({
 
     const nowMs = Date.now();
     const fromMs = Math.max(nowMs, subtask._creationTime);
-    const dueDateMs = subtask.suggestedCompletionAt ?? subtask.dueDate ?? Date.now() + DEFAULT_DUE_FALLBACK_MS;
+    const dueDateMs = subtask.suggestedCompletionAt ?? subtask.dueDate ?? nowMs + DEFAULT_DUE_FALLBACK_MS;
 
     const placeable = unscheduled
       .map((block) => ({
