@@ -122,6 +122,35 @@ describe("mutations/studyBlocks – createStudyBlock", () => {
     expect(block!.startTime).toBeUndefined();
   });
 
+  test("throws when studyBlockLength is below 15 minutes", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+    const taskId = await seedTask(t, userId);
+
+    await expect(
+      withAuth.mutation(api.mutations.studyBlocks.createStudyBlock, {
+        taskId,
+        title: "Too short",
+        studyBlockLength: 14,
+      })
+    ).rejects.toThrow("Study block length must be at least 15 minutes");
+  });
+
+  test("accepts a block at the minimum 15-minute length", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+    const taskId = await seedTask(t, userId);
+
+    const blockId = await withAuth.mutation(api.mutations.studyBlocks.createStudyBlock, {
+      taskId,
+      title: "Min block",
+      studyBlockLength: 15,
+    });
+
+    const block = await t.run((ctx) => ctx.db.get(blockId));
+    expect(block!.studyBlockLength).toBe(15);
+  });
+
   test("creates a block with a startTime when provided", async () => {
     const t = makeTestCtx();
     const { userId, withAuth } = await createTestUser(t);
@@ -154,6 +183,25 @@ describe("mutations/studyBlocks – createTaskBlocks", () => {
         blocks: [{ title: "B1", studyBlockLength: 60 }],
       })
     ).rejects.toThrow("Unauthenticated");
+  });
+
+  test("throws when any block has studyBlockLength below 15 minutes", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+    const taskId = await seedTask(t, userId);
+
+    await expect(
+      withAuth.mutation(api.mutations.studyBlocks.createTaskBlocks, {
+        taskId,
+        blocks: [
+          { title: "Valid block", studyBlockLength: 60 },
+          { title: "Too short", studyBlockLength: 10 },
+        ],
+      })
+    ).rejects.toThrow("Study block length must be at least 15 minutes");
+
+    const blocks = await t.run((ctx) => ctx.db.query("studyBlocks").collect());
+    expect(blocks).toHaveLength(0);
   });
 
   test("inserts all blocks when none exist for the task", async () => {
