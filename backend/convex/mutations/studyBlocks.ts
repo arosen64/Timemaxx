@@ -29,9 +29,12 @@ function isBlockConflicted(
   timedEvents: TimedEventArg[],
   workHoursGrid: WorkHoursRow[],
   timezone: string,
+  nowMs?: number,
 ): boolean {
   const startMs = new Date(block.startTime).getTime()
   const endMs = startMs + block.studyBlockLength * 60 * 1000
+
+  if (nowMs !== undefined && endMs <= nowMs) return false
 
   // 1. Due date violation
   if (startMs >= task.dueDate || endMs > task.dueDate) return true
