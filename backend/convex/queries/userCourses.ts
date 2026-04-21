@@ -47,37 +47,31 @@ export const getCourseMetadata = query({
       .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
 
-    const syllabi = await ctx.db
-      .query("syllabi")
-      .withIndex("by_userId", (q) => q.eq("userId", userId))
-      .collect();
+    const results = await Promise.all(
+      courses.map(async (course) => {
+        const [syllabus, tasks] = await Promise.all([
+          ctx.db
+            .query("syllabi")
+            .withIndex("by_courseId", (q) => q.eq("courseId", course._id))
+            .filter((q) => q.eq(q.field("status"), "confirmed"))
+            .first(),
+          ctx.db
+            .query("tasks")
+            .withIndex("by_userId_courseId", (q) =>
+              q.eq("userId", userId).eq("courseId", course._id)
+            )
+            .collect(),
+        ]);
 
-    const tasks = await ctx.db
-      .query("tasks")
-      .withIndex("by_userId", (q) => q.eq("userId", userId))
-      .collect();
-
-    const confirmedSyllabusIds = new Set(
-      syllabi
-        .filter((s) => s.status === "confirmed" && s.courseId !== undefined)
-        .map((s) => s.courseId as Id<"userCourses">)
+        return {
+          courseId: course._id,
+          hasSyllabus: syllabus !== null,
+          taskCount: tasks.length,
+        };
+      })
     );
 
-    const taskCountByCourse = new Map<string, number>();
-    for (const task of tasks) {
-      if (task.courseId) {
-        taskCountByCourse.set(
-          task.courseId,
-          (taskCountByCourse.get(task.courseId) ?? 0) + 1
-        );
-      }
-    }
-
-    return courses.map((course) => ({
-      courseId: course._id,
-      hasSyllabus: confirmedSyllabusIds.has(course._id),
-      taskCount: taskCountByCourse.get(course._id) ?? 0,
-    }));
+    return results;
   },
 });
 

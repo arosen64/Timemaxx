@@ -1,5 +1,4 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import Sidebar from "../components/Sidebar";
 import { useQuery, useAction } from "convex/react";
 import { api } from "../../../backend/convex/_generated/api";
 import ProfileActions from "../components/profile/ProfileActions";
@@ -29,11 +28,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="flex h-screen font-body bg-bg-gray">
-      <Sidebar />
-
-      {/* Main Content */}
-      <main className="flex flex-1 flex-col overflow-y-auto gap-8 p-10">
+    <main className="flex flex-1 flex-col overflow-y-auto gap-8 p-10 font-body bg-bg-gray">
         {/* Page Header */}
         <div className="flex flex-col gap-1">
           <h1 className="font-heading text-3xl font-bold text-navy">Profile</h1>
@@ -125,7 +120,6 @@ export default function ProfilePage() {
           <ProfileActions />
         </div>
       </main>
-    </div>
   );
 }
 

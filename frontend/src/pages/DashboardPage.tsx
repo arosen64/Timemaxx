@@ -2,7 +2,6 @@ import { useMemo, useState, useEffect } from 'react'
 import { useQuery, useMutation, useAction } from 'convex/react'
 import { api } from '../../../backend/convex/_generated/api'
 import { Id } from '../../../backend/convex/_generated/dataModel'
-import Sidebar from '../components/Sidebar'
 import { formatEstimatedTime } from '../utils/timeUtils'
 import { PlusIcon, SparklesIcon } from '../components/icons'
 import Button from '../components/ui/Button'
@@ -307,7 +306,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-bg-gray font-body text-slate-blue">
+    <div className="flex flex-1 min-h-0 overflow-hidden font-body text-slate-blue">
 
       {/* Modals */}
       <EstimationErrorModal
@@ -369,8 +368,6 @@ export default function DashboardPage() {
         onTaskCreated={(taskId) => handleEstimateTask(taskId as Id<'tasks'>)}
         classTagCourses={classTagCourses}
       />
-
-      <Sidebar />
 
       {/* ── Main ── */}
       <main className="flex flex-col flex-1 min-h-0 p-10 overflow-y-auto gap-7">

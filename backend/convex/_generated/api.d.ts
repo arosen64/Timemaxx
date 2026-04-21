@@ -20,6 +20,7 @@ import type * as actions_requestEstimateSubtaskTime from "../actions/requestEsti
 import type * as actions_requestGenerateSubtasks from "../actions/requestGenerateSubtasks.js";
 import type * as actions_scheduleAllTasks from "../actions/scheduleAllTasks.js";
 import type * as actions_scheduleBlock from "../actions/scheduleBlock.js";
+import type * as actions_scheduleSubtask from "../actions/scheduleSubtask.js";
 import type * as actions_scheduleTask from "../actions/scheduleTask.js";
 import type * as ai_embeddings from "../ai/embeddings.js";
 import type * as ai_estimateTaskTime from "../ai/estimateTaskTime.js";
@@ -92,6 +93,7 @@ declare const fullApi: ApiFromModules<{
   "actions/requestGenerateSubtasks": typeof actions_requestGenerateSubtasks;
   "actions/scheduleAllTasks": typeof actions_scheduleAllTasks;
   "actions/scheduleBlock": typeof actions_scheduleBlock;
+  "actions/scheduleSubtask": typeof actions_scheduleSubtask;
   "actions/scheduleTask": typeof actions_scheduleTask;
   "ai/embeddings": typeof ai_embeddings;
   "ai/estimateTaskTime": typeof ai_estimateTaskTime;

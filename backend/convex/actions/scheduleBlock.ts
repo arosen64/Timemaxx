@@ -6,13 +6,11 @@ import { api, internal } from "../_generated/api";
 import {
   enumerateSlots,
   selectAllSlotsWithAI,
+  toDateStr,
+  DEFAULT_DUE_FALLBACK_MS,
   type OccupiedInterval,
   type WorkHoursRow,
 } from "../lib/scheduleSlots";
-
-function toDateStr(d: Date, timezone: string): string {
-  return Intl.DateTimeFormat("en-CA", { timeZone: timezone }).format(d);
-}
 
 /**
  * AI-driven scheduling for a single study block.
@@ -41,13 +39,32 @@ export const scheduleBlock = action({
       { studyBlockId: args.studyBlockId },
     );
     if (!block) throw new Error("Study block not found");
-    if (!block.taskId) throw new Error("Block is not associated with a task");
-    if (block.startTime) return { scheduled: 0 }; // already scheduled
+    if (!block.taskId && !block.subtaskId) throw new Error("Block is not associated with a task or subtask");
+    // Allow rescheduling conflicted blocks that already have a startTime
+    if (block.startTime && !block.isConflicted) return { scheduled: 0 };
 
-    const task = await ctx.runQuery(internal.queries.tasks.getTaskInternal, {
-      taskId: block.taskId,
-    });
-    if (!task || task.userId !== userId) throw new Error("Unauthorized");
+    let taskTitle: string;
+    let dueDate: number;
+    let creationTime: number;
+
+    if (block.subtaskId) {
+      const subtask = await ctx.runQuery(internal.queries.subtasks.getSubtaskInternal, {
+        subtaskId: block.subtaskId,
+      });
+      if (!subtask || subtask.userId !== userId) throw new Error("Unauthorized");
+      taskTitle = subtask.title;
+      dueDate = subtask.suggestedCompletionAt ?? subtask.dueDate ?? Date.now() + DEFAULT_DUE_FALLBACK_MS;
+      creationTime = subtask._creationTime;
+    } else {
+      // block.taskId is non-null here: the guard above ensures at least one of taskId/subtaskId is set
+      const task = await ctx.runQuery(internal.queries.tasks.getTaskInternal, {
+        taskId: block.taskId!,
+      });
+      if (!task || task.userId !== userId) throw new Error("Unauthorized");
+      taskTitle = task.title;
+      dueDate = task.dueDate;
+      creationTime = task._creationTime;
+    }
 
     // Fetch user preferences
     const user = await ctx.runQuery(internal.queries.users.getUserInternal, { userId });
@@ -85,9 +102,9 @@ export const scheduleBlock = action({
       // No calendar connected — schedule against work hours only
     }
 
-    // Build occupied intervals from calendar events + all already-placed blocks
-    const allBlocks = await ctx.runQuery(
-      internal.queries.studyBlocks.getAllStudyBlocksWithTasksInternal,
+    // Build occupied intervals — use by_userId index to cover both task and subtask blocks
+    const allUserBlocks = await ctx.runQuery(
+      internal.queries.studyBlocks.getAllStudyBlocksByUserInternal,
       { userId },
     );
 
@@ -97,7 +114,7 @@ export const scheduleBlock = action({
         endMs: new Date(e.end).getTime(),
         title: e.summary,
       })),
-      ...(allBlocks as Array<{ _id: string; startTime?: string; studyBlockLength: number; title: string }>)
+      ...(allUserBlocks as Array<{ _id: string; startTime?: string; studyBlockLength: number; title: string }>)
         .filter((b) => b.startTime && b._id !== args.studyBlockId)
         .map((b) => ({
           startMs: new Date(b.startTime!).getTime(),
@@ -107,11 +124,11 @@ export const scheduleBlock = action({
     ];
 
     const nowMs = Date.now();
-    const fromMs = Math.max(nowMs, task._creationTime);
+    const fromMs = Math.max(nowMs, creationTime);
 
     const candidates = enumerateSlots({
       fromMs,
-      dueDateMs: task.dueDate,
+      dueDateMs: dueDate,
       durationMinutes: block.studyBlockLength,
       workHoursGrid,
       occupiedIntervals,
@@ -121,7 +138,7 @@ export const scheduleBlock = action({
     if (candidates.length === 0) return { error: "no_slot_found" };
 
     const [chosenIndex] = await selectAllSlotsWithAI(
-      [{ taskTitle: task.title, dueDate: task.dueDate, candidates }],
+      [{ taskTitle, dueDate, candidates }],
       productivityTraits,
     );
 
