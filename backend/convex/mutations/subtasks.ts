@@ -59,19 +59,16 @@ export const createSubtask = mutation({
     // so we never show stale explanations alongside a summed estimate.
     await ctx.db.patch(args.parentTaskId, { reasoning: undefined });
 
-    // Kick off time estimation on the backend immediately after creation.
-    // This runs regardless of frontend lifecycle (no component unmount risk).
-    // In convex-test (Node.js), process.env.VITEST is set; in production Convex
-    // (V8 isolate), `process` is undefined. Skip scheduling in tests to avoid
-    // a convex-test limitation where setTimeout callbacks fire after the test's
-    // global has been replaced, causing "Write outside of transaction" errors.
-    const isTest =
-      typeof process !== "undefined" && process.env.VITEST === "true";
-    if (!isTest) {
+    if (process.env.ANTHROPIC_API_KEY) {
       await ctx.scheduler.runAfter(0, internal.ai.estimateTaskTime.estimateTaskTime, {
         subtaskId,
       });
     }
+    await ctx.scheduler.runAfter(0, internal.ai.embeddings.generateSubtaskEmbedding, {
+      subtaskId,
+      title: args.title,
+      description: args.description,
+    });
 
     return subtaskId;
   },
@@ -107,14 +104,16 @@ export const updateSubtask = mutation({
       reasoning: undefined,
     });
 
-    // Re-schedule estimation since content changed.
-    const isTest =
-      typeof process !== "undefined" && process.env.VITEST === "true";
-    if (!isTest) {
+    if (process.env.ANTHROPIC_API_KEY) {
       await ctx.scheduler.runAfter(0, internal.ai.estimateTaskTime.estimateTaskTime, {
         subtaskId: args.subtaskId,
       });
     }
+    await ctx.scheduler.runAfter(0, internal.ai.embeddings.generateSubtaskEmbedding, {
+      subtaskId: args.subtaskId,
+      title: args.title,
+      description: args.description,
+    });
   },
 });
 
@@ -145,21 +144,33 @@ export const setSubtaskTimeEstimate = internalMutation({
     const total = siblings.reduce((sum, s) => sum + (s.timeEstimate ?? 0), 0);
     await ctx.db.patch(subtask.parentTaskId, { timeEstimate: total });
 
+    // Delete any stale task-level blocks on the parent so they don't co-exist
+    // with subtask-owned blocks. Done unconditionally so a 0-estimate subtask
+    // still clears stale blocks.
+    const staleTaskBlocks = await ctx.db
+      .query("studyBlocks")
+      .withIndex("by_taskId", (q) => q.eq("taskId", subtask.parentTaskId))
+      .collect();
+    for (const block of staleTaskBlocks) {
+      await ctx.db.delete(block._id);
+    }
+
     // Build blocks for this subtask immediately — each subtask owns its own blocks.
-    // Delete any stale task-level blocks on the parent so they don't co-exist.
     if (args.timeEstimate > 0) {
       await rebuildStudyBlocksForSubtask(ctx, args.subtaskId, args.timeEstimate);
-      // Only remove unscheduled task-level blocks; preserve any the user has already placed.
-      const staleTaskBlocks = await ctx.db
-        .query("studyBlocks")
-        .withIndex("by_taskId", (q) => q.eq("taskId", subtask.parentTaskId))
-        .collect();
-      for (const block of staleTaskBlocks) {
-        if (block.startTime === undefined) {
-          await ctx.db.delete(block._id);
-        }
-      }
     }
+  },
+});
+
+export const patchSubtaskEmbedding = internalMutation({
+  args: {
+    subtaskId: v.id("subtasks"),
+    embedding: v.array(v.float64()),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.subtaskId, { embedding: args.embedding });
+    return null;
   },
 });
 

@@ -263,10 +263,29 @@ export function MessageSquareIcon({ color = 'currentColor', size = 22 }: { color
   )
 }
 
+export function ClockIcon({ color = 'currentColor', size = 16 }: { color?: string; size?: number }) {
+  return (
+    <IconBase color={color} size={size}>
+      <circle cx="12" cy="12" r="10" />
+      <polyline points="12 6 12 12 16 14" />
+    </IconBase>
+  )
+}
+
 export function XIcon({ color = '#CF4520', size = 14 }: { color?: string; size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 14 14" fill="none" aria-hidden="true" style={{ flexShrink: 0 }}>
       <path d="M1 1l12 12M13 1L1 13" stroke={color} strokeWidth="2" strokeLinecap="round" />
     </svg>
+  )
+}
+
+export function MenuIcon({ color = 'currentColor', size = 20 }: { color?: string; size?: number }) {
+  return (
+    <IconBase color={color} size={size}>
+      <line x1="4" y1="6" x2="20" y2="6" />
+      <line x1="4" y1="12" x2="20" y2="12" />
+      <line x1="4" y1="18" x2="20" y2="18" />
+    </IconBase>
   )
 }

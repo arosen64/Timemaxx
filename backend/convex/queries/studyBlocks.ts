@@ -41,15 +41,17 @@ export const getStudyBlocksForTaskSubtasks = query({
       .withIndex("by_parentTaskId", (q) => q.eq("parentTaskId", args.taskId))
       .collect();
 
-    const subtaskIds = new Set(subtasks.map((s) => s._id as string));
-    const allBlocks = await ctx.db
-      .query("studyBlocks")
-      .withIndex("by_userId", (q) => q.eq("userId", userId))
-      .collect();
-
-    return allBlocks.filter(
-      (block) => block.subtaskId !== undefined && subtaskIds.has(block.subtaskId as string)
+    const blockArrays = await Promise.all(
+      subtasks.map((subtask) =>
+        ctx.db
+          .query("studyBlocks")
+          .withIndex("by_subtaskId", (q) => q.eq("subtaskId", subtask._id))
+          .collect()
+          .then((blocks) => blocks.map((block) => ({ ...block, subtaskId: subtask._id }))),
+      ),
     );
+
+    return blockArrays.flat();
   },
 });
 

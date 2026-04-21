@@ -29,6 +29,33 @@ describe("buildChatChunkSpecs", () => {
     expect(specs[0]!.startCreatedAt).toBe(1000);
   });
 
+  test("untagged messages inherit prior task/course for chunk links", () => {
+    const specs = buildChatChunkSpecs([
+      {
+        role: "user",
+        content: "About my homework",
+        createdAt: 1,
+        taskId: taskA,
+        courseId: courseA,
+      },
+      {
+        role: "assistant",
+        content: "Here is help.",
+        createdAt: 2,
+      },
+      {
+        role: "user",
+        content: "Thanks",
+        createdAt: 3,
+      },
+    ]);
+    expect(specs.length).toBeGreaterThanOrEqual(1);
+    for (const s of specs) {
+      expect(s.linkedTaskIds).toEqual([taskA]);
+      expect(s.linkedCourseIds).toEqual([courseA]);
+    }
+  });
+
   test("carries task and course ids from overlapping messages with same taskId", () => {
     const specs = buildChatChunkSpecs([
       {
