@@ -137,4 +137,37 @@ describe("mutations/tasks – createTask", () => {
     const task = await t.run((ctx) => ctx.db.get(taskId));
     expect(task!.classTag).toBeUndefined();
   });
+
+  test("stores weight when provided", async () => {
+    const t = makeTestCtx();
+    const { withAuth } = await createTestUser(t);
+
+    const taskId = await withAuth.mutation(api.mutations.tasks.createTask, {
+      title: "Weighted assignment",
+      description: "desc",
+      taskType: "Essay",
+      dueDate: Date.now() + 86_400_000,
+      weight: 20,
+    });
+
+    await t.finishAllScheduledFunctions(vi.runAllTimers);
+    const task = await t.run((ctx) => ctx.db.get(taskId));
+    expect(task!.weight).toBe(20);
+  });
+
+  test("weight is undefined when not provided", async () => {
+    const t = makeTestCtx();
+    const { withAuth } = await createTestUser(t);
+
+    const taskId = await withAuth.mutation(api.mutations.tasks.createTask, {
+      title: "No weight task",
+      description: "desc",
+      taskType: "Essay",
+      dueDate: Date.now() + 86_400_000,
+    });
+
+    await t.finishAllScheduledFunctions(vi.runAllTimers);
+    const task = await t.run((ctx) => ctx.db.get(taskId));
+    expect(task!.weight).toBeUndefined();
+  });
 });

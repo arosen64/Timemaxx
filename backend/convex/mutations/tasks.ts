@@ -50,6 +50,7 @@ export const createTask = mutation({
     courseId: v.optional(v.id("userCourses")),
     classTag: v.optional(v.string()),
     timeEstimate: v.optional(v.number()),
+    weight: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -81,6 +82,7 @@ export const createTask = mutation({
       classTag: normalizeClassTag(args.classTag),
       timeEstimate: args.timeEstimate,
       isManualEstimate,
+      weight: args.weight,
       createdAt: Date.now(),
     });
 
@@ -110,6 +112,7 @@ export const updateTask = mutation({
     dueDate: v.number(),
     courseId: v.optional(v.id("userCourses")),
     classTag: v.optional(v.string()),
+    weight: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -127,6 +130,7 @@ export const updateTask = mutation({
       ...(args.classTag !== undefined
         ? { classTag: normalizeClassTag(args.classTag) }
         : {}),
+      weight: args.weight,
     });
 
     // Cascade dueDate change to child subtasks
