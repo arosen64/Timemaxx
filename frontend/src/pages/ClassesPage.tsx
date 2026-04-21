@@ -32,7 +32,7 @@ export default function ClassesPage() {
   }
 
   return (
-    <main className="flex flex-1 flex-col overflow-y-auto gap-6 p-10 font-body bg-bg-gray">
+    <main className="flex flex-1 flex-col overflow-y-auto gap-6 p-4 sm:p-6 lg:p-10 font-body bg-bg-gray">
         {/* Page Header */}
         <div className="flex items-center justify-between">
           <div className="flex flex-col gap-1">

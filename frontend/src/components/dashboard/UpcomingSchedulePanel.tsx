@@ -7,7 +7,7 @@ export default function UpcomingSchedulePanel() {
   const upcomingBlocks = useQuery(api.queries.studyBlocks.getUpcomingStudyBlocks) as UpcomingBlock[] | undefined
 
   return (
-    <aside className="flex w-[300px] shrink-0 flex-col gap-4">
+    <aside className="flex w-full lg:w-[300px] lg:shrink-0 flex-col gap-4">
       <h2 className="text-base font-bold font-heading text-navy">Today's Schedule</h2>
 
       {upcomingBlocks === undefined ? (
