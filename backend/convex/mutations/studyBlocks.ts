@@ -333,6 +333,54 @@ export const detectConflicts = internalMutation({
         }
       }
     }
+
+    // Also check subtask-linked blocks — fetch all user blocks once to avoid N+1
+    const subtasks = await ctx.db
+      .query("subtasks")
+      .withIndex("by_userId", (q) => q.eq("userId", args.userId as Id<"users">))
+      .collect();
+
+    const allUserBlocks = await ctx.db
+      .query("studyBlocks")
+      .withIndex("by_userId", (q) => q.eq("userId", args.userId as Id<"users">))
+      .collect();
+
+    const blocksBySubtask = new Map<string, typeof allUserBlocks>();
+    for (const block of allUserBlocks) {
+      if (!block.subtaskId) continue;
+      const key = block.subtaskId as string;
+      if (!blocksBySubtask.has(key)) blocksBySubtask.set(key, []);
+      blocksBySubtask.get(key)!.push(block);
+    }
+
+    for (const subtask of subtasks) {
+      const blocks = blocksBySubtask.get(subtask._id as string) ?? [];
+
+      const dueDate = subtask.suggestedCompletionAt ?? subtask.dueDate;
+      if (!dueDate) continue;
+
+      for (const block of blocks) {
+        if (!block.startTime) {
+          if (block.isConflicted) {
+            await ctx.db.patch(block._id, { isConflicted: false });
+          }
+          continue;
+        }
+
+        const conflicted = isBlockConflicted(
+          { startTime: block.startTime, studyBlockLength: block.studyBlockLength, googleEventId: block.googleEventId },
+          { dueDate },
+          args.timedEvents,
+          args.workHoursGrid,
+          args.timezone,
+          nowMs,
+        );
+
+        if ((block.isConflicted ?? false) !== conflicted) {
+          await ctx.db.patch(block._id, { isConflicted: conflicted });
+        }
+      }
+    }
   },
 });
 
