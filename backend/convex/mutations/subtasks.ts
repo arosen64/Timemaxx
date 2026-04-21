@@ -149,12 +149,13 @@ export const setSubtaskTimeEstimate = internalMutation({
     // Delete any stale task-level blocks on the parent so they don't co-exist.
     if (args.timeEstimate > 0) {
       await rebuildStudyBlocksForSubtask(ctx, args.subtaskId, args.timeEstimate);
+      // Only remove unscheduled task-level blocks; preserve any the user has already placed.
       const staleTaskBlocks = await ctx.db
         .query("studyBlocks")
         .withIndex("by_taskId", (q) => q.eq("taskId", subtask.parentTaskId))
         .collect();
-      if (staleTaskBlocks.length > 0) {
-        for (const block of staleTaskBlocks) {
+      for (const block of staleTaskBlocks) {
+        if (block.startTime === undefined) {
           await ctx.db.delete(block._id);
         }
       }

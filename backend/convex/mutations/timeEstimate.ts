@@ -13,8 +13,13 @@ export async function rebuildStudyBlocksForSubtask(
     .query("studyBlocks")
     .withIndex("by_subtaskId", (q) => q.eq("subtaskId", subtaskId))
     .collect();
+
+  // Preserve blocks already placed on the calendar; only clear unscheduled ones.
+  const scheduledCount = existingBlocks.filter((b) => b.startTime !== undefined).length;
   for (const block of existingBlocks) {
-    await ctx.db.delete(block._id);
+    if (block.startTime === undefined) {
+      await ctx.db.delete(block._id);
+    }
   }
 
   const subtask = await ctx.db.get(subtaskId);
@@ -23,13 +28,12 @@ export async function rebuildStudyBlocksForSubtask(
   const user = await ctx.db.get(subtask.userId);
   const focusBlockLength = user?.focusBlockLength || 60;
 
-  const blockCount = Math.ceil(timeEstimate / focusBlockLength);
-  for (let i = 0; i < blockCount; i++) {
-    const isLastBlock = i === blockCount - 1;
-    const remainder = timeEstimate % focusBlockLength;
-    const studyBlockLength =
-      isLastBlock && remainder !== 0 ? remainder : focusBlockLength;
+  const totalBlockCount = Math.ceil(timeEstimate / focusBlockLength);
+  const remainder = timeEstimate % focusBlockLength;
 
+  for (let i = scheduledCount; i < totalBlockCount; i++) {
+    const isLastBlock = i === totalBlockCount - 1;
+    const studyBlockLength = isLastBlock && remainder !== 0 ? remainder : focusBlockLength;
     await ctx.db.insert("studyBlocks", {
       subtaskId,
       userId: subtask.userId,
