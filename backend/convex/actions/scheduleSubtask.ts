@@ -68,7 +68,7 @@ export const scheduleSubtask = action({
 
     const nowMs = Date.now();
     const fromMs = Math.max(nowMs, subtask._creationTime);
-    const dueDateMs = subtask.suggestedCompletionAt ?? subtask.dueDate ?? Date.now() + DEFAULT_DUE_FALLBACK_MS;
+    const dueDateMs = subtask.suggestedCompletionAt ?? subtask.dueDate ?? nowMs + DEFAULT_DUE_FALLBACK_MS;
 
     const placeable = unscheduled
       .map((block) => ({

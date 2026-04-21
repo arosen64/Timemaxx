@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '../../../backend/convex/_generated/api'
 import { Id } from '../../../backend/convex/_generated/dataModel'
-import Sidebar from '../components/Sidebar'
 import ClassCard from '../components/classes/ClassCard'
 import CourseSelector from '../components/CourseSelector'
 import TranscriptUpload from '../components/TranscriptUpload'
@@ -33,10 +32,7 @@ export default function ClassesPage() {
   }
 
   return (
-    <div className="flex h-screen font-body bg-bg-gray">
-      <Sidebar />
-
-      <main className="flex flex-1 flex-col overflow-y-auto gap-6 p-10">
+    <main className="flex flex-1 flex-col overflow-y-auto gap-6 p-10 font-body bg-bg-gray">
         {/* Page Header */}
         <div className="flex items-center justify-between">
           <div className="flex flex-col gap-1">
@@ -180,6 +176,5 @@ export default function ClassesPage() {
           </div>
         )}
       </main>
-    </div>
   )
 }
