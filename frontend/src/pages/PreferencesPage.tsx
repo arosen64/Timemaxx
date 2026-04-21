@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../backend/convex/_generated/api";
 import type { WorkHoursData } from "../types";
-import Sidebar from "../components/Sidebar";
 import { CalendarIcon, ChevronDownIcon } from "../components/icons";
 import ProfileForm from "../components/ProfileForm";
 import WorkHoursSelector, { DEFAULT_WORK_HOURS } from "../components/WorkHoursSelector";
@@ -164,10 +163,7 @@ export default function PreferencesPage() {
   );
 
   return (
-    <div className="flex h-screen font-body bg-bg-gray">
-      <Sidebar />
-
-      <main className="flex flex-1 flex-col overflow-y-auto gap-8 p-10">
+    <main className="flex flex-1 flex-col overflow-y-auto gap-8 p-10 font-body bg-bg-gray">
         <div className="flex flex-col gap-1">
           <h1 className="font-heading text-3xl font-bold text-navy">Preferences</h1>
           <p className="font-body text-sm text-slate-blue">
@@ -320,6 +316,5 @@ export default function PreferencesPage() {
           )}
         </div>
       </main>
-    </div>
   );
 }

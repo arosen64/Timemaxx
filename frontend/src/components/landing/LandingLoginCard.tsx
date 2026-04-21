@@ -5,8 +5,8 @@ export default function LandingLoginCard() {
   const { signIn } = useAuthActions();
 
   return (
-    <div className="flex w-1/2 items-center justify-center bg-bg-gray">
-      <div className="flex w-[440px] flex-col gap-8 rounded-xl border border-border bg-white p-12">
+    <div className="flex w-full md:w-1/2 items-center justify-center bg-bg-gray py-12 px-6 md:px-0">
+      <div className="flex w-full max-w-[440px] flex-col gap-8 rounded-xl border border-border bg-white p-8 md:p-12">
         <div className="flex flex-col gap-2">
           <h2 className="font-heading text-2xl font-bold text-navy">
             Welcome back

@@ -29,13 +29,9 @@ function isBlockConflicted(
   timedEvents: TimedEventArg[],
   workHoursGrid: WorkHoursRow[],
   timezone: string,
-  nowMs: number,
 ): boolean {
   const startMs = new Date(block.startTime).getTime()
   const endMs = startMs + block.studyBlockLength * 60 * 1000
-
-  // 0. Block is entirely in the past
-  if (endMs <= nowMs) return true
 
   // 1. Due date violation
   if (startMs >= task.dueDate || endMs > task.dueDate) return true
@@ -316,9 +312,64 @@ export const detectConflicts = internalMutation({
           continue;
         }
 
+        const endMs = new Date(block.startTime).getTime() + block.studyBlockLength * 60 * 1000;
+        if (endMs <= nowMs) {
+          if (block.isConflicted) {
+            await ctx.db.patch(block._id, { isConflicted: false });
+          }
+          continue;
+        }
+
         const conflicted = isBlockConflicted(
           { startTime: block.startTime, studyBlockLength: block.studyBlockLength, googleEventId: block.googleEventId },
           { dueDate: task.dueDate },
+          args.timedEvents,
+          args.workHoursGrid,
+          args.timezone,
+        );
+
+        if ((block.isConflicted ?? false) !== conflicted) {
+          await ctx.db.patch(block._id, { isConflicted: conflicted });
+        }
+      }
+    }
+
+    // Also check subtask-linked blocks — fetch all user blocks once to avoid N+1
+    const subtasks = await ctx.db
+      .query("subtasks")
+      .withIndex("by_userId", (q) => q.eq("userId", args.userId as Id<"users">))
+      .collect();
+
+    const allUserBlocks = await ctx.db
+      .query("studyBlocks")
+      .withIndex("by_userId", (q) => q.eq("userId", args.userId as Id<"users">))
+      .collect();
+
+    const blocksBySubtask = new Map<string, typeof allUserBlocks>();
+    for (const block of allUserBlocks) {
+      if (!block.subtaskId) continue;
+      const key = block.subtaskId as string;
+      if (!blocksBySubtask.has(key)) blocksBySubtask.set(key, []);
+      blocksBySubtask.get(key)!.push(block);
+    }
+
+    for (const subtask of subtasks) {
+      const blocks = blocksBySubtask.get(subtask._id as string) ?? [];
+
+      const dueDate = subtask.suggestedCompletionAt ?? subtask.dueDate;
+      if (!dueDate) continue;
+
+      for (const block of blocks) {
+        if (!block.startTime) {
+          if (block.isConflicted) {
+            await ctx.db.patch(block._id, { isConflicted: false });
+          }
+          continue;
+        }
+
+        const conflicted = isBlockConflicted(
+          { startTime: block.startTime, studyBlockLength: block.studyBlockLength, googleEventId: block.googleEventId },
+          { dueDate },
           args.timedEvents,
           args.workHoursGrid,
           args.timezone,

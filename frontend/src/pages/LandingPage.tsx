@@ -3,7 +3,7 @@ import LandingLoginCard from "../components/landing/LandingLoginCard";
 
 export default function LandingPage() {
   return (
-    <div className="flex min-h-screen w-full font-body">
+    <div className="flex flex-col md:flex-row min-h-screen w-full font-body">
       <LandingHeroPanel />
       <LandingLoginCard />
     </div>
