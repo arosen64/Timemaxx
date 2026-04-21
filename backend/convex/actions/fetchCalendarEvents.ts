@@ -59,7 +59,9 @@ export const fetchCalendarEvents = action({
     let calendarList: CalendarEntry[];
     try {
       accessToken = await resolveAccessToken(ctx, connection, userId, tokenSecret);
-      calendarList = await fetchCalendarList(accessToken);
+      calendarList = (await fetchCalendarList(accessToken)).filter(
+        (c) => c.id !== connection.timemaxxCalendarId,
+      );
     } catch {
       return { ...empty, error: true };
     }
