@@ -291,3 +291,13 @@ export function XIcon({ color = '#CF4520', size = 14 }: { color?: string; size?:
     </svg>
   )
 }
+
+export function MenuIcon({ color = 'currentColor', size = 20 }: { color?: string; size?: number }) {
+  return (
+    <IconBase color={color} size={size}>
+      <line x1="4" y1="6" x2="20" y2="6" />
+      <line x1="4" y1="12" x2="20" y2="12" />
+      <line x1="4" y1="18" x2="20" y2="18" />
+    </IconBase>
+  )
+}

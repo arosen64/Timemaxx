@@ -3,7 +3,7 @@ import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { taskTypeValidator } from "../lib/taskValidators";
 import { internal } from "../_generated/api";
-import { rebuildStudyBlocks } from "./timeEstimate";
+import { rebuildStudyBlocksForSubtask } from "./timeEstimate";
 import { Id } from "../_generated/dataModel";
 
 const reasoningTraceArgs = v.object({
@@ -211,13 +211,20 @@ export const setSubtaskTimeEstimate = internalMutation({
     const total = siblings.reduce((sum, s) => sum + (s.timeEstimate ?? 0), 0);
     await ctx.db.patch(subtask.parentTaskId, { timeEstimate: total });
 
-    // Only rebuild study blocks once all subtasks have been estimated.
-    // Rebuilding on every partial rollup would create blocks sized to an
-    // incomplete sum; waiting for the final tally ensures block count and
-    // lengths match the true total.
-    const allEstimated = siblings.every((s) => s.timeEstimate !== undefined);
-    if (allEstimated && total > 0) {
-      await rebuildStudyBlocks(ctx, subtask.parentTaskId, total);
+    // Delete any stale task-level blocks on the parent so they don't co-exist
+    // with subtask-owned blocks. Done unconditionally so a 0-estimate subtask
+    // still clears stale blocks.
+    const staleTaskBlocks = await ctx.db
+      .query("studyBlocks")
+      .withIndex("by_taskId", (q) => q.eq("taskId", subtask.parentTaskId))
+      .collect();
+    for (const block of staleTaskBlocks) {
+      await ctx.db.delete(block._id);
+    }
+
+    // Build blocks for this subtask immediately — each subtask owns its own blocks.
+    if (args.timeEstimate > 0) {
+      await rebuildStudyBlocksForSubtask(ctx, args.subtaskId, args.timeEstimate);
     }
   },
 });

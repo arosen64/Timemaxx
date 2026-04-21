@@ -2,6 +2,12 @@ import { screen, waitFor } from '@testing-library/react'
 import { renderWithProviders } from './utils'
 import App from '../src/App'
 
+// Mock AppLayout to render only the child route (Outlet) without sidebar/chatbot dependencies
+vi.mock('../src/components/AppLayout', async () => {
+  const { Outlet } = await import('react-router-dom')
+  return { default: () => <Outlet /> }
+})
+
 // Mock page components so routing tests stay focused on redirect logic
 vi.mock('../src/pages/LandingPage', () => ({ default: () => <div>Landing Page</div> }))
 vi.mock('../src/pages/OnboardingPage', () => ({ default: () => <div>Onboarding Page</div> }))

@@ -4,6 +4,42 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import type { MutationCtx } from "../_generated/server";
 import type { Id } from "../_generated/dataModel";
 
+export async function rebuildStudyBlocksForSubtask(
+  ctx: MutationCtx,
+  subtaskId: Id<"subtasks">,
+  timeEstimate: number
+) {
+  const existingBlocks = await ctx.db
+    .query("studyBlocks")
+    .withIndex("by_subtaskId", (q) => q.eq("subtaskId", subtaskId))
+    .collect();
+  for (const block of existingBlocks) {
+    await ctx.db.delete(block._id);
+  }
+
+  const subtask = await ctx.db.get(subtaskId);
+  if (!subtask) return;
+
+  const user = await ctx.db.get(subtask.userId);
+  const focusBlockLength = user?.focusBlockLength || 60;
+
+  const blockCount = Math.ceil(timeEstimate / focusBlockLength);
+  for (let i = 0; i < blockCount; i++) {
+    const isLastBlock = i === blockCount - 1;
+    const remainder = timeEstimate % focusBlockLength;
+    const studyBlockLength =
+      isLastBlock && remainder !== 0 ? remainder : focusBlockLength;
+
+    await ctx.db.insert("studyBlocks", {
+      subtaskId,
+      userId: subtask.userId,
+      title: subtask.title,
+      startTime: undefined,
+      studyBlockLength,
+    });
+  }
+}
+
 export async function rebuildStudyBlocks(
   ctx: MutationCtx,
   taskId: Id<"tasks">,
