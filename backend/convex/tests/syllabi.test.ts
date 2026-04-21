@@ -102,9 +102,7 @@ describe("mutations/syllabi – confirmSyllabusTasks", () => {
       }
     );
 
-    await t.finishAllScheduledFunctions(vi.runAllTimers.bind(vi));
-
-    expect(taskIds).toHaveLength(2);
+expect(taskIds).toHaveLength(2);
 
     const tasks = await t.run((ctx) =>
       Promise.all(taskIds.map((id) => ctx.db.get(id)))
@@ -191,9 +189,7 @@ describe("mutations/syllabi – confirmSyllabusTasks", () => {
       }
     );
 
-    await t.finishAllScheduledFunctions(vi.runAllTimers.bind(vi));
-
-    const tasks = await t.run((ctx) =>
+const tasks = await t.run((ctx) =>
       Promise.all(taskIds.map((id) => ctx.db.get(id)))
     );
 
@@ -224,9 +220,7 @@ describe("mutations/syllabi – confirmSyllabusTasks", () => {
       }
     );
 
-    await t.finishAllScheduledFunctions(vi.runAllTimers.bind(vi));
-
-    const task = await t.run((ctx) => ctx.db.get(taskId));
+const task = await t.run((ctx) => ctx.db.get(taskId));
     expect(task?.courseId).toBeUndefined();
     expect(task?.classTag).toBeUndefined();
   });
@@ -248,9 +242,7 @@ describe("mutations/syllabi – confirmSyllabusTasks", () => {
       { syllabusId, tasks }
     );
 
-    await t.finishAllScheduledFunctions(vi.runAllTimers.bind(vi));
-
-    expect(taskIds).toHaveLength(TASK_TYPES.length);
+expect(taskIds).toHaveLength(TASK_TYPES.length);
 
     const inserted = await t.run((ctx) =>
       Promise.all(taskIds.map((id) => ctx.db.get(id)))
@@ -281,9 +273,7 @@ describe("mutations/syllabi – confirmSyllabusTasks", () => {
       }
     );
 
-    await t.finishAllScheduledFunctions(vi.runAllTimers.bind(vi));
-
-    const task = await t.run((ctx) => ctx.db.get(taskId));
+const task = await t.run((ctx) => ctx.db.get(taskId));
     expect(task?.dueDate).toEqual(specificDate);
   });
 
@@ -307,9 +297,7 @@ describe("mutations/syllabi – confirmSyllabusTasks", () => {
       }
     );
 
-    await t.finishAllScheduledFunctions(vi.runAllTimers.bind(vi));
-
-    const task = await t.run((ctx) => ctx.db.get(taskIds[0]));
+const task = await t.run((ctx) => ctx.db.get(taskIds[0]));
     expect(task?.userId).toEqual(userId);
   });
 
@@ -342,7 +330,5 @@ describe("mutations/syllabi – confirmSyllabusTasks", () => {
 
     expect(scheduled).toHaveLength(2);
     expect(scheduled.every((fn) => fn.name.includes("estimateTaskTime"))).toBe(true);
-
-    await t.finishAllScheduledFunctions(vi.runAllTimers.bind(vi));
   });
 });
