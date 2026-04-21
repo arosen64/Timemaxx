@@ -243,7 +243,7 @@ describe('DashboardPage', () => {
 
     await waitFor(() => expect(screen.getByText('Estimation Failed')).toBeInTheDocument())
 
-    await user.click(screen.getByRole('button', { name: /dismiss/i }))
+    await user.click(screen.getByRole('button', { name: /cancel/i }))
 
     expect(screen.queryByText('Estimation Failed')).not.toBeInTheDocument()
   })
