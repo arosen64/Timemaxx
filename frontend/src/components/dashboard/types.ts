@@ -9,6 +9,8 @@ export type ReasoningTrace = {
   profile: string
 }
 
+export type TaskStatus = 'not_started' | 'in_progress' | 'completed'
+
 export type SubtaskType = {
   _id: Id<'subtasks'>
   parentTaskId: Id<'tasks'>
@@ -24,6 +26,7 @@ export type SubtaskType = {
   suggestedCompletionAt?: number
   createdAt: number
   reasoning?: ReasoningTrace
+  status?: TaskStatus
 }
 
 export type TaskType = {
@@ -41,6 +44,7 @@ export type TaskType = {
   classTag?: string
   courseId?: Id<'userCourses'>
   reasoning?: ReasoningTrace
+  status?: TaskStatus
 }
 
 export const BUILT_IN_TASK_TYPES = [
@@ -129,8 +133,3 @@ export function parseEstimationError(err: unknown): string {
   return 'Failed to estimate task time. Please try again.'
 }
 
-export const BADGE_MAP: Record<string, { bg: string; text: string; label: string }> = {
-  urgent: { bg: 'bg-urgent-red-light', text: 'text-urgent-red', label: 'Urgent' },
-  inprogress: { bg: 'bg-info-bg', text: 'text-info-emphasis', label: 'In Progress' },
-  default: { bg: 'bg-success-light', text: 'text-success', label: 'Not Started' },
-}

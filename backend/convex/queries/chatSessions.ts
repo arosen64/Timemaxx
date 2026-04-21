@@ -11,8 +11,6 @@ export const getChatSessionInternal = internalQuery({
     v.null(),
     v.object({
       _id: v.id("chatSessions"),
-      resolvedTaskId: v.optional(v.id("tasks")),
-      resolvedCourseId: v.optional(v.id("userCourses")),
       lastEntityQueryText: v.optional(v.string()),
       activeEntityStep: v.optional(
         v.union(v.literal("task"), v.literal("class")),
@@ -21,10 +19,7 @@ export const getChatSessionInternal = internalQuery({
       clarificationAttemptCount: v.optional(v.number()),
       clarificationExhausted: v.optional(v.boolean()),
       awaitingEntityResolution: v.optional(v.boolean()),
-      awaitingScopeConfirm: v.optional(v.boolean()),
       chatInputLocked: v.optional(v.boolean()),
-      scopeBypassNextMessage: v.optional(v.boolean()),
-      pendingScopeUserMessageId: v.optional(v.id("chatMessages")),
       activeAgent: v.optional(v.union(v.literal("task"), v.literal("feedback"), v.literal("preferences"))),
       taskAgentIntent: v.optional(v.union(v.literal("create"), v.literal("rud"))),
     }),
@@ -39,18 +34,13 @@ export const getChatSessionInternal = internalQuery({
     if (!row) return null;
     return {
       _id: row._id,
-      resolvedTaskId: row.resolvedTaskId,
-      resolvedCourseId: row.resolvedCourseId,
       lastEntityQueryText: row.lastEntityQueryText,
       activeEntityStep: row.activeEntityStep,
       needsClassAfterTask: row.needsClassAfterTask,
       clarificationAttemptCount: row.clarificationAttemptCount,
       clarificationExhausted: row.clarificationExhausted,
       awaitingEntityResolution: row.awaitingEntityResolution,
-      awaitingScopeConfirm: row.awaitingScopeConfirm,
       chatInputLocked: row.chatInputLocked,
-      scopeBypassNextMessage: row.scopeBypassNextMessage,
-      pendingScopeUserMessageId: row.pendingScopeUserMessageId,
       activeAgent: row.activeAgent,
       taskAgentIntent: row.taskAgentIntent,
     };
@@ -67,31 +57,35 @@ export const getResolvedEntityLabelsInternal = internalQuery({
     courseLabel: v.union(v.string(), v.null()),
   }),
   handler: async (ctx, args) => {
-    const row = await ctx.db
-      .query("chatSessions")
-      .withIndex("by_userId_sessionId", (q) =>
-        q.eq("userId", args.userId).eq("sessionId", args.sessionId),
-      )
-      .unique();
-    if (!row) return { taskTitle: null, courseLabel: null };
+    const msgs = await ctx.db
+      .query("chatMessages")
+      .withIndex("by_session", (q) => q.eq("sessionId", args.sessionId))
+      .order("desc")
+      .take(40);
 
     let taskTitle: string | null = null;
-    if (row.resolvedTaskId) {
-      const t = await ctx.db.get(row.resolvedTaskId);
-      if (t && t.userId === args.userId) taskTitle = t.title;
-    }
     let courseLabel: string | null = null;
-    if (row.resolvedCourseId) {
-      const c = await ctx.db.get(row.resolvedCourseId);
-      if (c && c.userId === args.userId) {
-        courseLabel = `${c.courseCode} · ${c.title}`;
+
+    for (const m of msgs) {
+      if (m.userId !== args.userId) continue;
+      if (taskTitle === null && m.taskId) {
+        const t = await ctx.db.get(m.taskId);
+        if (t && t.userId === args.userId) taskTitle = t.title;
       }
+      if (courseLabel === null && m.courseId) {
+        const c = await ctx.db.get(m.courseId);
+        if (c && c.userId === args.userId) {
+          courseLabel = `${c.courseCode} · ${c.title}`;
+        }
+      }
+      if (taskTitle !== null && courseLabel !== null) break;
     }
+
     return { taskTitle, courseLabel };
   },
 });
 
-/** Tags for the chat widget header: which entity IDs are locked for this session. */
+/** Tags for the chat widget header — derived from recent message taskId/courseId fields. */
 export const getChatSessionEntityScope = query({
   args: { sessionId: v.string() },
   returns: v.union(
@@ -101,9 +95,6 @@ export const getChatSessionEntityScope = query({
         v.union(v.literal("task_id_set"), v.literal("class_id_set")),
       ),
       chatInputLocked: v.boolean(),
-      awaitingScopeConfirm: v.boolean(),
-      scopeConfirmTaskLabel: v.union(v.string(), v.null()),
-      scopeConfirmClassLabel: v.union(v.string(), v.null()),
     }),
   ),
   handler: async (ctx, args) => {
@@ -118,31 +109,26 @@ export const getChatSessionEntityScope = query({
       .unique();
     if (!row) return null;
 
-    const entityScopeTags: Array<"task_id_set" | "class_id_set"> = [];
-    if (row.resolvedTaskId) entityScopeTags.push("task_id_set");
-    if (row.resolvedCourseId) entityScopeTags.push("class_id_set");
+    const msgs = await ctx.db
+      .query("chatMessages")
+      .withIndex("by_session", (q) => q.eq("sessionId", args.sessionId))
+      .order("desc")
+      .take(40);
 
-    let scopeConfirmTaskLabel: string | null = null;
-    let scopeConfirmClassLabel: string | null = null;
-    if (row.awaitingScopeConfirm === true) {
-      if (row.resolvedTaskId) {
-        const t = await ctx.db.get(row.resolvedTaskId);
-        if (t && t.userId === userId) scopeConfirmTaskLabel = t.title;
-      }
-      if (row.resolvedCourseId) {
-        const c = await ctx.db.get(row.resolvedCourseId);
-        if (c && c.userId === userId) {
-          scopeConfirmClassLabel = `${c.courseCode} · ${c.title}`;
-        }
-      }
+    const entityScopeTags: Array<"task_id_set" | "class_id_set"> = [];
+    let hasTask = false;
+    let hasClass = false;
+    for (const m of msgs) {
+      if (m.userId !== userId) continue;
+      if (m.taskId) hasTask = true;
+      if (m.courseId) hasClass = true;
     }
+    if (hasTask) entityScopeTags.push("task_id_set");
+    if (hasClass) entityScopeTags.push("class_id_set");
 
     return {
       entityScopeTags,
       chatInputLocked: row.chatInputLocked === true,
-      awaitingScopeConfirm: row.awaitingScopeConfirm === true,
-      scopeConfirmTaskLabel,
-      scopeConfirmClassLabel,
     };
   },
 });

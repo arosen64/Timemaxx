@@ -26,8 +26,6 @@ type ChatApiResponse = {
   entityCandidates?: EntityCandidate[]
   entityHasMore?: boolean
   phase?: 'task' | 'class'
-  scopeConfirmTaskLabel?: string | null
-  scopeConfirmClassLabel?: string | null
 }
 
 /** Assistant copy that introduces the task/class MCQ (must stay in sync with http_chat strings). */
@@ -104,7 +102,6 @@ export default function ChatBot() {
 
   const showSuggestions = messages.length === 0 && !isLoading
   const chatLocked = entityScope?.chatInputLocked === true
-  const scopeConfirmOpen = entityScope?.awaitingScopeConfirm === true
 
   const shouldShowEntityBlock = entityMcq !== null && entityMcq.candidates.length > 0
 
@@ -118,44 +115,8 @@ export default function ChatBot() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shouldShowEntityBlock, entityBlockAfterIndex, history.length, optimistic.length])
 
-  async function handleScopeConfirm(yes: boolean) {
-    if (isLoading || chatLocked) return
-    setIsLoading(true)
-    try {
-      await postChat(
-        {
-          sessionId,
-          entity: { action: yes ? 'scope_confirm_yes' : 'scope_confirm_no' },
-        },
-        null,
-      )
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err)
-      setOptimistic((prev) => [...prev, { role: 'assistant', content: `Error: ${msg}` }])
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
   function applyEntityResponse(data: ChatApiResponse, userEcho: string | null) {
     const aiText = data.text ?? ''
-    if (data.status === 'awaiting_scope_reply') {
-      setEntityMcq(null)
-      setEntityBlockAfterIndex(null)
-      if (userEcho !== null) setInput(userEcho)
-      setOptimistic([{ role: 'assistant', content: aiText }])
-      return
-    }
-    if (data.status === 'needs_scope_confirmation') {
-      setEntityMcq(null)
-      setEntityBlockAfterIndex(null)
-      if (userEcho !== null) {
-        setOptimistic([{ role: 'user', content: userEcho }])
-      } else {
-        setOptimistic([])
-      }
-      return
-    }
     if (data.status === 'entity_scope_locked' || data.status === 'chat_input_locked') {
       setEntityBlockAfterIndex(null)
     }
@@ -427,48 +388,6 @@ export default function ChatBot() {
                         {opt.label}
                       </button>
                     ))}
-                  </div>
-                )}
-
-                {scopeConfirmOpen && (
-                  <div className="rounded-xl border border-teal/40 bg-white p-3 space-y-2.5">
-                    <p className="text-[11px] font-heading font-semibold text-navy">
-                      Still the same task and class?
-                    </p>
-                    {(entityScope?.scopeConfirmTaskLabel || entityScope?.scopeConfirmClassLabel) && (
-                      <div className="rounded-lg bg-bg-gray/90 px-2.5 py-2 text-[12px] text-navy space-y-1">
-                        {entityScope?.scopeConfirmTaskLabel ? (
-                          <div>
-                            <span className="font-heading text-[10px] font-semibold text-teal">Task </span>
-                            <span className="font-medium">{entityScope.scopeConfirmTaskLabel}</span>
-                          </div>
-                        ) : null}
-                        {entityScope?.scopeConfirmClassLabel ? (
-                          <div>
-                            <span className="font-heading text-[10px] font-semibold text-teal">Class </span>
-                            <span className="font-medium">{entityScope.scopeConfirmClassLabel}</span>
-                          </div>
-                        ) : null}
-                      </div>
-                    )}
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        disabled={isLoading}
-                        onClick={() => void handleScopeConfirm(true)}
-                        className="flex-1 rounded-lg bg-teal py-2 text-[12px] font-semibold text-white hover:opacity-90 transition disabled:opacity-50"
-                      >
-                        Yes
-                      </button>
-                      <button
-                        type="button"
-                        disabled={isLoading}
-                        onClick={() => void handleScopeConfirm(false)}
-                        className="flex-1 rounded-lg border border-border py-2 text-[12px] font-semibold text-navy hover:bg-bg-gray transition disabled:opacity-50"
-                      >
-                        No
-                      </button>
-                    </div>
                   </div>
                 )}
 
