@@ -91,6 +91,8 @@ export const createStudyBlock = mutation({
     const task = await ctx.db.get(args.taskId);
     if (!task || task.userId !== userId) throw new Error("Unauthorized");
 
+    if (args.studyBlockLength < 15) throw new Error("Study block length must be at least 15 minutes");
+
     return await ctx.db.insert("studyBlocks", {
       taskId: args.taskId,
       userId,
@@ -117,6 +119,9 @@ export const createTaskBlocks = mutation({
 
     const task = await ctx.db.get(args.taskId);
     if (!task || task.userId !== userId) throw new Error("Unauthorized");
+
+    const invalidBlock = args.blocks.find((b) => b.studyBlockLength < 15);
+    if (invalidBlock) throw new Error("Study block length must be at least 15 minutes");
 
     const existing = await ctx.db
       .query("studyBlocks")
