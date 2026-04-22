@@ -16,9 +16,43 @@ export const saveMessage = internalMutation({
   },
   returns: v.id("chatMessages"),
   handler: async (ctx, args) => {
+    let taskId: Id<"tasks"> | undefined = args.taskId;
     let courseId: Id<"userCourses"> | undefined = args.courseId;
-    if (courseId === undefined && args.taskId) {
-      const task = await ctx.db.get(args.taskId);
+
+    if (taskId === undefined && courseId === undefined && args.sessionId) {
+      const sessionMessages = await ctx.db
+        .query("chatMessages")
+        .withIndex("by_session", (q) => q.eq("sessionId", args.sessionId))
+        .collect();
+
+      let latestTagged:
+        | {
+            taskId?: Id<"tasks">;
+            courseId?: Id<"userCourses">;
+            createdAt: number;
+          }
+        | null = null;
+
+      for (const message of sessionMessages) {
+        if (message.userId !== args.userId) continue;
+        if (message.taskId === undefined && message.courseId === undefined) continue;
+        if (latestTagged === null || message.createdAt > latestTagged.createdAt) {
+          latestTagged = {
+            taskId: message.taskId,
+            courseId: message.courseId,
+            createdAt: message.createdAt,
+          };
+        }
+      }
+
+      if (latestTagged) {
+        taskId = latestTagged.taskId;
+        courseId = latestTagged.courseId;
+      }
+    }
+
+    if (courseId === undefined && taskId) {
+      const task = await ctx.db.get(taskId);
       if (task && task.userId === args.userId && task.courseId) {
         courseId = task.courseId;
       }
@@ -29,7 +63,7 @@ export const saveMessage = internalMutation({
       role: args.role,
       content: args.content,
       createdAt: Date.now(),
-      ...(args.taskId !== undefined ? { taskId: args.taskId } : {}),
+      ...(taskId !== undefined ? { taskId } : {}),
       ...(courseId !== undefined ? { courseId } : {}),
     });
 
