@@ -178,7 +178,9 @@ export const setTaskAgentStateInternal = internalMutation({
   args: {
     userId: v.id("users"),
     sessionId: v.string(),
-    activeAgent: v.optional(v.union(v.literal("task"), v.literal("feedback"), v.literal("preferences"))),
+    activeAgent: v.optional(
+      v.union(v.literal("task"), v.literal("feedback"), v.literal("preferences"), v.literal("classes")),
+    ),
     taskAgentIntent: v.optional(v.union(v.literal("create"), v.literal("rud"))),
   },
   returns: v.null(),

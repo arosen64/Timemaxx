@@ -34,7 +34,7 @@ type ChatWorkflowOutput = {
   updatedTaskType: string | null;
   updatedDueDateIso: string | null;
   updatedClassTag: string | null;
-  newActiveAgent: "task" | "feedback" | "preferences" | null;
+  newActiveAgent: "task" | "feedback" | "preferences" | "classes" | null;
   clearActiveAgent: boolean;
   newTaskAgentIntent: "create" | "rud" | null;
   readyToRecord: boolean;
@@ -75,7 +75,7 @@ async function runChatWorkflow(
     hasCourseTag: boolean;
     taggedTaskId: string | null;
     today: string;
-    activeAgent: "task" | "feedback" | "preferences" | null;
+    activeAgent: "task" | "feedback" | "preferences" | "classes" | null;
     taskAgentIntent: "create" | "rud" | null;
   },
 ): Promise<ChatWorkflowOutput | "quota_exceeded" | null> {
@@ -92,7 +92,7 @@ async function runChatWorkflow(
   }
 
   // Only one branch step will have run — find whichever has output.
-  const branchStepIds = ["task_handler", "feedback_handler", "canned_handler"];
+  const branchStepIds = ["task_handler", "feedback_handler", "course_handler", "canned_handler"];
   for (const id of branchStepIds) {
     const step = run.steps?.[id];
     if (step && "output" in step) return step.output as ChatWorkflowOutput;
@@ -228,7 +228,7 @@ async function handleWorkflowTurn(
       : null;
 
   const today = new Date().toISOString().slice(0, 10);
-  const activeAgent = (session?.activeAgent as "task" | "feedback" | "preferences" | null) ?? null;
+  const activeAgent = (session?.activeAgent as "task" | "feedback" | "preferences" | "classes" | null) ?? null;
   const taskAgentIntent = (session?.taskAgentIntent as "create" | "rud" | null) ?? null;
 
   const result = await runChatWorkflow(client, {

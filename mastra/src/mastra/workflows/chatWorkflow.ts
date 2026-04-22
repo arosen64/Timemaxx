@@ -171,8 +171,22 @@ const courseStep = createStep({
   id: "course_handler",
   inputSchema: routedContextSchema,
   outputSchema: chatWorkflowOutputSchema,
-  execute: async ({ inputData }) => {
-    const { message, historyText, taggedEntitiesBlock, today } = inputData;
+  execute: async ({ inputData }): Promise<ChatWorkflowOutput> => {
+    const { message, historyText, taggedEntitiesBlock, hasCourseTag, today } = inputData;
+    if (!hasCourseTag) {
+      return {
+        reply: "Which class are you referring to? Pick one below, or choose **Other** to see more options.",
+        route: "classes",
+        status: "needs_class_mcq" as const,
+        mcqQueryText: message.trim() || "class course",
+        needsClassAfterTask: false,
+        newActiveAgent: "classes",
+        clearActiveAgent: false,
+        newTaskAgentIntent: null,
+        readyToRecord: false,
+        ...NO_ACTION,
+      };
+    }
     const continueNote = message.trim()
       ? "Respond to the latest user message above."
       : "The user selected an entity. Continue based on what is now resolved.";
@@ -182,10 +196,10 @@ const courseStep = createStep({
     return {
       reply: result.text,
       route: "classes",
-      status: "reply",
+      status: "reply" as const,
       mcqQueryText: null,
       needsClassAfterTask: false,
-      newActiveAgent: "classes",
+      newActiveAgent: "classes" as const,
       clearActiveAgent: false,
       newTaskAgentIntent: null,
       readyToRecord: false,
