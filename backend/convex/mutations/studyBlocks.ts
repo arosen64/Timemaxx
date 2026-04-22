@@ -381,7 +381,6 @@ export const detectConflicts = internalMutation({
           args.timedEvents,
           args.workHoursGrid,
           args.timezone,
-          nowMs,
         );
 
         if ((block.isConflicted ?? false) !== conflicted) {
