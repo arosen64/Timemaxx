@@ -7,6 +7,9 @@ import type { Id } from "../_generated/dataModel";
 type WorkHoursRow = { day: string; available: number[]; blocked: number[] }
 type TimedEventArg = { id: string; summary: string; start: string; end: string; calendarId: string }
 
+const MIN_STUDY_BLOCK_MINUTES = 15;
+const MIN_STUDY_BLOCK_ERROR = `Study block length must be at least ${MIN_STUDY_BLOCK_MINUTES} minutes`;
+
 
 function getLocalTimeInfo(isoString: string, timezone: string): { dayName: string; minutesFromMidnight: number } {
   const dt = new Date(isoString)
@@ -94,7 +97,7 @@ export const createStudyBlock = mutation({
     const task = await ctx.db.get(args.taskId);
     if (!task || task.userId !== userId) throw new Error("Unauthorized");
 
-    if (args.studyBlockLength < 15) throw new Error("Study block length must be at least 15 minutes");
+    if (args.studyBlockLength < MIN_STUDY_BLOCK_MINUTES) throw new Error(MIN_STUDY_BLOCK_ERROR);
 
     return await ctx.db.insert("studyBlocks", {
       taskId: args.taskId,
@@ -123,8 +126,8 @@ export const createTaskBlocks = mutation({
     const task = await ctx.db.get(args.taskId);
     if (!task || task.userId !== userId) throw new Error("Unauthorized");
 
-    const invalidBlock = args.blocks.find((b) => b.studyBlockLength < 15);
-    if (invalidBlock) throw new Error("Study block length must be at least 15 minutes");
+    const invalidBlock = args.blocks.find((b) => b.studyBlockLength < MIN_STUDY_BLOCK_MINUTES);
+    if (invalidBlock) throw new Error(MIN_STUDY_BLOCK_ERROR);
 
     const existing = await ctx.db
       .query("studyBlocks")
