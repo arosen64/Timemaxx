@@ -3,6 +3,7 @@ import { z } from "zod";
 import { supervisorAgent } from "../agents/supervisorAgent";
 import { taskAgent } from "../agents/taskAgent";
 import { feedbackAgent } from "../agents/feedbackAgent";
+import { courseAgent } from "../agents/courseAgent";
 
 import { supervisorAgentOutputSchema } from "../lib/prompts/supervisorAgent.prompt";
 import { taskAgentOutputSchema, type TaskAgentOutput } from "../lib/prompts/taskAgent.prompt";
@@ -19,7 +20,7 @@ const chatContextSchema = z.object({
   hasCourseTag: z.boolean(),
   taggedTaskId: z.string().nullable(),
   today: z.string(),
-  activeAgent: z.enum(["task", "feedback", "preferences"]).nullable(),
+  activeAgent: z.enum(["task", "feedback", "preferences", "classes"]).nullable(),
   taskAgentIntent: z.enum(["create", "rud"]).nullable(),
 });
 
@@ -48,7 +49,7 @@ export const chatWorkflowOutputSchema = z.object({
   updatedTaskType: z.string().nullable(),
   updatedDueDateIso: z.string().nullable(),
   updatedClassTag: z.string().nullable(),
-  newActiveAgent: z.enum(["task", "feedback", "preferences"]).nullable(),
+  newActiveAgent: z.enum(["task", "feedback", "preferences", "classes"]).nullable(),
   clearActiveAgent: z.boolean(),
   newTaskAgentIntent: z.enum(["create", "rud"]).nullable(),
   readyToRecord: z.boolean(),
@@ -165,6 +166,34 @@ const feedbackStep = createStep({
   },
 });
 
+// Course step
+const courseStep = createStep({
+  id: "course_handler",
+  inputSchema: routedContextSchema,
+  outputSchema: chatWorkflowOutputSchema,
+  execute: async ({ inputData }) => {
+    const { message, historyText, taggedEntitiesBlock, today } = inputData;
+    const continueNote = message.trim()
+      ? "Respond to the latest user message above."
+      : "The user selected an entity. Continue based on what is now resolved.";
+    const result = await courseAgent.generate(
+      agentContextPrompt({ today, historyText, taggedEntitiesBlock, continueNote }),
+    );
+    return {
+      reply: result.text,
+      route: "classes",
+      status: "reply",
+      mcqQueryText: null,
+      needsClassAfterTask: false,
+      newActiveAgent: "classes",
+      clearActiveAgent: false,
+      newTaskAgentIntent: null,
+      readyToRecord: false,
+      ...NO_ACTION,
+    };
+  },
+});
+
 // ---------------------------------------------------------------------------
 // Step 2c — Canned / domain-clarify / fallback handler
 // ---------------------------------------------------------------------------
@@ -198,6 +227,7 @@ export const chatWorkflow = createWorkflow({
   .branch([
     [async ({ inputData }) => inputData.route === "tasks", taskStep],
     [async ({ inputData }) => inputData.route === "feedback", feedbackStep],
-    [async () => true, cannedStep], // schedule, classes, domain-clarify, unknown
+    [async ({ inputData }) => inputData.route === "classes", courseStep],
+    [async () => true, cannedStep], // schedule, domain-clarify, unknown
   ])
   .commit();
