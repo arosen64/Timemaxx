@@ -420,8 +420,8 @@ export default function TaskModal({
           />
         </div>
 
-        {/* Time estimate override */}
-        <div className="flex w-full flex-col gap-1.5">
+        {/* Time estimate override — hidden when AI subtask generation is enabled */}
+        <div className={`flex w-full flex-col gap-1.5 ${generateSubtasks ? 'hidden' : ''}`}>
           <div className="flex items-start justify-between">
             <div>
               <label className="font-heading text-[13px] font-semibold text-navy">

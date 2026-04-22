@@ -117,6 +117,7 @@ export default function DashboardPage() {
   const [pendingSubtasks, setPendingSubtasks] = useState<GeneratedSubtask[] | null>(null)
   const [pendingSubtasksTaskId, setPendingSubtasksTaskId] = useState<Id<'tasks'> | null>(null)
   const [pendingSubtasksCourseId, setPendingSubtasksCourseId] = useState<Id<'userCourses'> | undefined>(undefined)
+  const [estimationRetry, setEstimationRetry] = useState<(() => void) | null>(null)
 
   // Clear tasks from estimatingTasks once their timeEstimate is populated by the server
   useEffect(() => {
@@ -170,6 +171,7 @@ export default function DashboardPage() {
       await requestEstimateSubtask({ subtaskId })
     } catch (err) {
       setEstimationError(parseEstimationError(err))
+      setEstimationRetry(() => () => handleEstimateSubtask(subtaskId))
     } finally {
       setEstimatingSubtasks((prev) => {
         const next = new Set(prev)
@@ -185,6 +187,7 @@ export default function DashboardPage() {
       await requestEstimate({ taskId })
     } catch (err) {
       setEstimationError(parseEstimationError(err))
+      setEstimationRetry(() => () => handleEstimateTask(taskId))
     } finally {
       setEstimatingTasks((prev) => {
         const next = new Set(prev)
@@ -349,7 +352,8 @@ export default function DashboardPage() {
       <EstimationErrorModal
         isOpen={estimationError !== null}
         message={estimationError ?? ''}
-        onClose={() => setEstimationError(null)}
+        onClose={() => { setEstimationError(null); setEstimationRetry(null) }}
+        onRetry={estimationRetry ?? undefined}
       />
       <EditModal
         isOpen={editingTask !== null && editingSubtask === null}
@@ -564,21 +568,28 @@ export default function DashboardPage() {
                       onEstimate={() => {}}
                       onEdit={() => {}}
                       onDelete={() => {}}
-                      onReopen={() => updateTaskStatus({ taskId: task._id, status: 'not_started' })}
+                      onReopen={() => {
+                        updateTaskStatus({ taskId: task._id, status: 'not_started' })
+                        setFeedbackDrafts((prev) => { const { [task._id]: _omit, ...rest } = prev; return rest })
+                        setFeedbackErrors((prev) => { const { [task._id]: _omit, ...rest } = prev; return rest })
+                        setEditingFeedbackTasks((prev) => { const next = new Set(prev); next.delete(task._id); return next })
+                      }}
                       subtasks={subtasksByTaskId.get(task._id) ?? []}
                       onSubtaskStatusChange={(subtaskId, status) => updateSubtaskStatus({ subtaskId, status })}
                       isGeneratingSubtasks={generatingSubtasksTasks.has(task._id)}
                       onGenerateSubtasks={() => handleGenerateSubtasks(task)}
                       feedback={{
-                        draft: { rating: undefined, hours: '', minutes: '' },
-                        error: undefined,
-                        isSubmitting: false,
-                        isEditing: false,
-                        onToggleRating: () => {},
-                        onHoursChange: () => {},
-                        onMinutesChange: () => {},
-                        onSubmit: () => {},
-                        onStartEdit: () => {},
+                        draft: getFeedbackDraft(task._id),
+                        error: feedbackErrors[task._id],
+                        isSubmitting: submittingFeedbackTasks.has(task._id),
+                        isEditing: editingFeedbackTasks.has(task._id),
+                        onToggleRating: (value) => updateFeedbackDraft(task._id, (curr) =>
+                          ({ ...curr, rating: curr.rating === value ? undefined : value })
+                        ),
+                        onHoursChange: (value) => updateFeedbackDraft(task._id, (curr) => ({ ...curr, hours: value })),
+                        onMinutesChange: (value) => updateFeedbackDraft(task._id, (curr) => ({ ...curr, minutes: value })),
+                        onSubmit: () => handleSubmitFeedback(task._id),
+                        onStartEdit: () => startEditFeedback(task),
                       }}
                     />
                   ))}

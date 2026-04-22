@@ -12,6 +12,7 @@ import {
   type WorkHoursRow,
 } from "../lib/scheduleSlots";
 
+
 /**
  * AI-driven scheduling for a single study block.
  *
