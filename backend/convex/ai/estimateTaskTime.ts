@@ -273,14 +273,13 @@ export const estimateTaskTime = internalAction({
       }
 
       const stepOutput = run.steps?.["estimation-agent"];
-      const result =
-        stepOutput && "output" in stepOutput
-          ? (stepOutput.output as { estimatedMinutes: number; reasoningTrace: { classes: string; tasks: string; chats: string; profile: string } })
-          : null;
-
-      if (!result) {
-        throw new Error("No output from estimation workflow");
+      if (!stepOutput || !("output" in stepOutput)) {
+        const availableKeys = Object.keys(run.steps ?? {}).join(", ") || "(none)";
+        throw new Error(
+          `No output from estimation workflow — expected step "estimation-agent", got: ${availableKeys}`
+        );
       }
+      const result = stepOutput.output as { estimatedMinutes: number; reasoningTrace: ReasoningTrace };
 
       await store(result.estimatedMinutes, result.reasoningTrace);
     } catch (err) {
