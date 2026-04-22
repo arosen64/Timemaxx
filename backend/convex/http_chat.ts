@@ -113,6 +113,7 @@ async function executeTaskAction(
   const taggedTaskId = walkLatestTaggedTaskId(historyAsc);
   const taggedCourseId = walkLatestTaggedCourseId(historyAsc);
   let aiText = output.reply;
+  let clearedScopeAfterAction = false;
 
   try {
     if (output.actionType === "create_task") {
@@ -142,14 +143,34 @@ async function executeTaskAction(
           ? { classTag: output.updatedClassTag }
           : {}),
       });
+      await ctx.runMutation(internal.mutations.chatSessions.setMessageScopeInternal, {
+        userId,
+        sessionId,
+        clear: true,
+      });
+      clearedScopeAfterAction = true;
     } else if (output.actionType === "delete_task") {
       if (taggedTaskId === undefined) throw new Error("No task selected.");
       await ctx.runMutation(internal.mutations.tasks.deleteTaskInternal, {
         userId,
         taskId: taggedTaskId,
       });
+      await ctx.runMutation(internal.mutations.chatSessions.setMessageScopeInternal, {
+        userId,
+        sessionId,
+        clear: true,
+      });
+      clearedScopeAfterAction = true;
+    } else if (output.actionType === "read_task") {
+      if (taggedTaskId !== undefined || taggedCourseId !== undefined) {
+        await ctx.runMutation(internal.mutations.chatSessions.setMessageScopeInternal, {
+          userId,
+          sessionId,
+          clear: true,
+        });
+        clearedScopeAfterAction = true;
+      }
     }
-    // "read_task": no mutation needed
   } catch (err) {
     aiText = `Sorry, I ran into an issue: ${err instanceof Error ? err.message : "Please try again."}`;
   }
@@ -163,8 +184,8 @@ async function executeTaskAction(
     sessionId,
     role: "assistant",
     content: aiText,
-    ...(taggedTaskId !== undefined ? { taskId: taggedTaskId } : {}),
-    ...(taggedCourseId !== undefined ? { courseId: taggedCourseId } : {}),
+    ...(taggedTaskId !== undefined && !clearedScopeAfterAction ? { taskId: taggedTaskId } : {}),
+    ...(taggedCourseId !== undefined && !clearedScopeAfterAction ? { courseId: taggedCourseId } : {}),
   });
   return aiText;
 }
@@ -199,7 +220,12 @@ async function handleWorkflowTurn(
     userId: Id<"users">;
     sessionId: string;
     message: string;
-    session: { activeAgent?: string; taskAgentIntent?: string } | null;
+    session: {
+      activeAgent?: string;
+      taskAgentIntent?: string;
+      activeTaskId?: Id<"tasks">;
+      activeCourseId?: Id<"userCourses">;
+    } | null;
     triggerUserMessageId?: Id<"chatMessages">;
   },
 ): Promise<Response> {
@@ -220,7 +246,7 @@ async function handleWorkflowTurn(
 
   // Pass null when shouldOfferTaskEntityMcq says we should show the picker
   // (meaning: the current user turn has no task tag yet)
-  const rawTaggedTaskId = walkLatestTaggedTaskId(rawHistory);
+  const rawTaggedTaskId = session?.activeTaskId;
   const taggedTaskId = shouldOfferTaskEntityMcq(true, rawHistory, message)
     ? null
     : rawTaggedTaskId !== undefined

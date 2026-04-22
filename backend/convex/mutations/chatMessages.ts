@@ -18,37 +18,26 @@ export const saveMessage = internalMutation({
   handler: async (ctx, args) => {
     let taskId: Id<"tasks"> | undefined = args.taskId;
     let courseId: Id<"userCourses"> | undefined = args.courseId;
-
-    if (taskId === undefined && courseId === undefined && args.sessionId) {
-      const sessionMessages = await ctx.db
-        .query("chatMessages")
-        .withIndex("by_session", (q) => q.eq("sessionId", args.sessionId))
-        .collect();
-
-      let latestTagged:
-        | {
-            taskId?: Id<"tasks">;
-            courseId?: Id<"userCourses">;
-            createdAt: number;
-          }
-        | null = null;
-
-      for (const message of sessionMessages) {
-        if (message.userId !== args.userId) continue;
-        if (message.taskId === undefined && message.courseId === undefined) continue;
-        if (latestTagged === null || message.createdAt > latestTagged.createdAt) {
-          latestTagged = {
-            taskId: message.taskId,
-            courseId: message.courseId,
-            createdAt: message.createdAt,
-          };
+    let sessionRow:
+      | {
+          _id: Id<"chatSessions">;
+          activeTaskId?: Id<"tasks">;
+          activeCourseId?: Id<"userCourses">;
         }
-      }
+      | null = null;
 
-      if (latestTagged) {
-        taskId = latestTagged.taskId;
-        courseId = latestTagged.courseId;
-      }
+    if (args.sessionId) {
+      sessionRow = await ctx.db
+        .query("chatSessions")
+        .withIndex("by_userId_sessionId", (q) =>
+          q.eq("userId", args.userId).eq("sessionId", args.sessionId),
+        )
+        .unique();
+    }
+
+    if (taskId === undefined && courseId === undefined && sessionRow) {
+      taskId = sessionRow.activeTaskId;
+      courseId = sessionRow.activeCourseId;
     }
 
     if (courseId === undefined && taskId) {
@@ -66,6 +55,13 @@ export const saveMessage = internalMutation({
       ...(taskId !== undefined ? { taskId } : {}),
       ...(courseId !== undefined ? { courseId } : {}),
     });
+
+    if (sessionRow && (taskId !== undefined || courseId !== undefined)) {
+      await ctx.db.patch(sessionRow._id, {
+        ...(taskId !== undefined ? { activeTaskId: taskId } : {}),
+        ...(courseId !== undefined ? { activeCourseId: courseId } : {}),
+      });
+    }
 
     await ctx.scheduler.runAfter(0, internal.mutations.chatChunks.rebuildChatChunksForSessionInternal, {
       userId: args.userId,
@@ -113,6 +109,10 @@ export const applyResolvedEntityToClarifyTriggerMessageInternal = internalMutati
           ...(args.taskId !== undefined ? { taskId: args.taskId } : {}),
           ...(courseId !== undefined ? { courseId } : {}),
         });
+        await ctx.db.patch(session._id, {
+          ...(args.taskId !== undefined ? { activeTaskId: args.taskId } : {}),
+          ...(courseId !== undefined ? { activeCourseId: courseId } : {}),
+        });
       }
     }
 
@@ -159,5 +159,76 @@ export const patchUserMessageClarificationIntent = internalMutation({
     }
 
     return null;
+  },
+});
+
+export const clearTaskTagForSessionInternal = internalMutation({
+  args: {
+    userId: v.id("users"),
+    sessionId: v.string(),
+    taskId: v.id("tasks"),
+  },
+  returns: v.number(),
+  handler: async (ctx, args) => {
+    const taggedMessages = await ctx.db
+      .query("chatMessages")
+      .withIndex("by_taskId", (q) => q.eq("taskId", args.taskId))
+      .collect();
+
+    let patchedCount = 0;
+    for (const message of taggedMessages) {
+      if (message.userId !== args.userId || message.sessionId !== args.sessionId) continue;
+      await ctx.db.patch(message._id, { taskId: undefined });
+      patchedCount += 1;
+    }
+
+    if (patchedCount > 0) {
+      await ctx.scheduler.runAfter(0, internal.mutations.chatChunks.rebuildChatChunksForSessionInternal, {
+        userId: args.userId,
+        sessionId: args.sessionId,
+      });
+    }
+
+    return patchedCount;
+  },
+});
+
+export const clearEntityTagsForSessionInternal = internalMutation({
+  args: {
+    userId: v.id("users"),
+    sessionId: v.string(),
+    taskId: v.optional(v.id("tasks")),
+    courseId: v.optional(v.id("userCourses")),
+  },
+  returns: v.number(),
+  handler: async (ctx, args) => {
+    const sessionMessages = await ctx.db
+      .query("chatMessages")
+      .withIndex("by_session", (q) => q.eq("sessionId", args.sessionId))
+      .collect();
+
+    let patchedCount = 0;
+    for (const message of sessionMessages) {
+      if (message.userId !== args.userId) continue;
+
+      const matchesTask = args.taskId !== undefined && message.taskId === args.taskId;
+      const matchesCourse = args.courseId !== undefined && message.courseId === args.courseId;
+      if (!matchesTask && !matchesCourse) continue;
+
+      await ctx.db.patch(message._id, {
+        taskId: undefined,
+        courseId: undefined,
+      });
+      patchedCount += 1;
+    }
+
+    if (patchedCount > 0) {
+      await ctx.scheduler.runAfter(0, internal.mutations.chatChunks.rebuildChatChunksForSessionInternal, {
+        userId: args.userId,
+        sessionId: args.sessionId,
+      });
+    }
+
+    return patchedCount;
   },
 });
