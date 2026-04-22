@@ -306,7 +306,16 @@ export const updateTaskStatus = mutation({
     const task = await ctx.db.get(args.taskId);
     if (!task || task.userId !== userId) throw new Error("Task not found");
 
-    await ctx.db.patch(args.taskId, { status: args.status });
+    // Clear feedback when reopening a task
+    if (args.status === "not_started" || args.status === "in_progress") {
+      await ctx.db.patch(args.taskId, {
+        status: args.status,
+        estimateFeedbackRating: undefined,
+        correctedEstimateMinutes: undefined,
+      });
+    } else {
+      await ctx.db.patch(args.taskId, { status: args.status });
+    }
 
     const subtasks = await ctx.db
       .query("subtasks")
@@ -328,14 +337,17 @@ export const updateTaskStatus = mutation({
         await unscheduleBlock(ctx, block._id);
       }
 
-      // Unschedule subtask-level study blocks
-      for (const subtask of subtasks) {
-        const subtaskBlocks = await ctx.db
+      // Unschedule subtask-level study blocks — single query filtered in memory
+      if (subtasks.length > 0) {
+        const subtaskIdSet = new Set<string>(subtasks.map((s) => s._id as string));
+        const allUserBlocks = await ctx.db
           .query("studyBlocks")
-          .withIndex("by_subtaskId", (q) => q.eq("subtaskId", subtask._id))
+          .withIndex("by_userId", (q) => q.eq("userId", userId))
           .collect();
-        for (const block of subtaskBlocks) {
-          await unscheduleBlock(ctx, block._id);
+        for (const block of allUserBlocks) {
+          if (block.subtaskId !== undefined && subtaskIdSet.has(block.subtaskId as string)) {
+            await unscheduleBlock(ctx, block._id);
+          }
         }
       }
     } else {

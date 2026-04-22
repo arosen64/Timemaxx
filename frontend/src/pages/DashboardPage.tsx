@@ -526,19 +526,26 @@ export default function DashboardPage() {
                       onEstimate={() => {}}
                       onEdit={() => {}}
                       onDelete={() => {}}
-                      onReopen={() => updateTaskStatus({ taskId: task._id, status: 'not_started' })}
+                      onReopen={() => {
+                        updateTaskStatus({ taskId: task._id, status: 'not_started' })
+                        setFeedbackDrafts((prev) => { const { [task._id]: _omit, ...rest } = prev; return rest })
+                        setFeedbackErrors((prev) => { const { [task._id]: _omit, ...rest } = prev; return rest })
+                        setEditingFeedbackTasks((prev) => { const next = new Set(prev); next.delete(task._id); return next })
+                      }}
                       subtasks={subtasksByTaskId.get(task._id) ?? []}
                       onSubtaskStatusChange={(subtaskId, status) => updateSubtaskStatus({ subtaskId, status })}
                       feedback={{
-                        draft: { rating: undefined, hours: '', minutes: '' },
-                        error: undefined,
-                        isSubmitting: false,
-                        isEditing: false,
-                        onToggleRating: () => {},
-                        onHoursChange: () => {},
-                        onMinutesChange: () => {},
-                        onSubmit: () => {},
-                        onStartEdit: () => {},
+                        draft: getFeedbackDraft(task._id),
+                        error: feedbackErrors[task._id],
+                        isSubmitting: submittingFeedbackTasks.has(task._id),
+                        isEditing: editingFeedbackTasks.has(task._id),
+                        onToggleRating: (value) => updateFeedbackDraft(task._id, (curr) =>
+                          ({ ...curr, rating: curr.rating === value ? undefined : value })
+                        ),
+                        onHoursChange: (value) => updateFeedbackDraft(task._id, (curr) => ({ ...curr, hours: value })),
+                        onMinutesChange: (value) => updateFeedbackDraft(task._id, (curr) => ({ ...curr, minutes: value })),
+                        onSubmit: () => handleSubmitFeedback(task._id),
+                        onStartEdit: () => startEditFeedback(task),
                       }}
                     />
                   ))}

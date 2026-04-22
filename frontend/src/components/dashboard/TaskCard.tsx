@@ -95,9 +95,7 @@ export default function TaskCard({
     ])
   ), [subtasks, subtaskBlocksRaw])
 
-  const anySubtaskPending = hasSubtasks && subtasks.some(
-    (s) => s.timeEstimate === undefined && (estimatingSubtasks?.has(s._id) ?? false)
-  )
+  const anySubtaskPending = hasSubtasks && subtasks.some((s) => s.timeEstimate === undefined)
   const subtaskTotal = hasSubtasks
     ? subtasks.reduce((sum, s) => sum + (s.timeEstimate ?? 0), 0)
     : undefined
@@ -186,7 +184,11 @@ export default function TaskCard({
                     }}
                     size="md"
                   />
-                  {!hasSubtasks && displayedEstimate === undefined && (
+                  {anySubtaskPending ? (
+                    <div className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-blue">
+                      <SpinnerIcon color="currentColor" size={16} />
+                    </div>
+                  ) : !hasSubtasks && displayedEstimate === undefined && (
                     showEstimateSpinner ? (
                       <div className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-blue">
                         <SpinnerIcon color="currentColor" size={16} />
@@ -236,7 +238,7 @@ export default function TaskCard({
               </div>
             </div>
 
-            {!isReadOnly && task.timeEstimate !== undefined &&
+            {isReadOnly && task.timeEstimate !== undefined &&
               !task.isManualEstimate &&
               (!hasSubtasks || !anySubtaskPending) && (
                 <TaskFeedbackForm task={task} {...feedback} />
