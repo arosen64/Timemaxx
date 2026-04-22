@@ -102,7 +102,7 @@ describe("mutations/syllabi – confirmSyllabusTasks", () => {
       }
     );
 
-expect(taskIds).toHaveLength(2);
+    expect(taskIds).toHaveLength(2);
 
     const tasks = await t.run((ctx) =>
       Promise.all(taskIds.map((id) => ctx.db.get(id)))
@@ -189,7 +189,7 @@ expect(taskIds).toHaveLength(2);
       }
     );
 
-const tasks = await t.run((ctx) =>
+    const tasks = await t.run((ctx) =>
       Promise.all(taskIds.map((id) => ctx.db.get(id)))
     );
 
@@ -220,7 +220,7 @@ const tasks = await t.run((ctx) =>
       }
     );
 
-const task = await t.run((ctx) => ctx.db.get(taskId));
+    const task = await t.run((ctx) => ctx.db.get(taskId));
     expect(task?.courseId).toBeUndefined();
     expect(task?.classTag).toBeUndefined();
   });
@@ -242,7 +242,7 @@ const task = await t.run((ctx) => ctx.db.get(taskId));
       { syllabusId, tasks }
     );
 
-expect(taskIds).toHaveLength(TASK_TYPES.length);
+    expect(taskIds).toHaveLength(TASK_TYPES.length);
 
     const inserted = await t.run((ctx) =>
       Promise.all(taskIds.map((id) => ctx.db.get(id)))
@@ -273,7 +273,7 @@ expect(taskIds).toHaveLength(TASK_TYPES.length);
       }
     );
 
-const task = await t.run((ctx) => ctx.db.get(taskId));
+    const task = await t.run((ctx) => ctx.db.get(taskId));
     expect(task?.dueDate).toEqual(specificDate);
   });
 
@@ -297,7 +297,7 @@ const task = await t.run((ctx) => ctx.db.get(taskId));
       }
     );
 
-const task = await t.run((ctx) => ctx.db.get(taskIds[0]));
+    const task = await t.run((ctx) => ctx.db.get(taskIds[0]));
     expect(task?.userId).toEqual(userId);
   });
 
