@@ -16,8 +16,6 @@ type Step = 1 | 2 | 3 | 4 | 5 | 6
 const DEFAULT_PROFILE: ProfileData = {
   major: '',
   year: '',
-  difficultSubjects: [],
-  enjoyedSubjects: [],
   courses: [],
 }
 
@@ -84,8 +82,6 @@ export default function OnboardingPage() {
       await saveOnboarding({
         major: profile.major,
         year: profile.year,
-        difficultSubjects: profile.difficultSubjects,
-        enjoyedSubjects: profile.enjoyedSubjects,
         workHoursGrid: Object.entries(workHours).map(([day, slots]) => ({
           day,
           blocked: slots.blocked,
