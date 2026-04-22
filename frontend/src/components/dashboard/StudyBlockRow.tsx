@@ -2,7 +2,9 @@ import type { Doc } from '../../../../backend/convex/_generated/dataModel'
 
 export type StudyBlock = Doc<'studyBlocks'>
 
-export function isBlockActive(block: StudyBlock): boolean {
+export type StudyBlockLike = Pick<StudyBlock, '_id' | 'title' | 'startTime' | 'studyBlockLength'>
+
+export function isBlockActive(block: StudyBlockLike): boolean {
   if (!block.startTime) return false
   const now = Date.now()
   const start = new Date(block.startTime).getTime()
@@ -17,7 +19,7 @@ function formatTimeRange(startTime: string, durationMins: number): string {
   return `${fmt(start)} – ${fmt(end)}`
 }
 
-export default function StudyBlockRow({ block }: { block: StudyBlock }) {
+export default function StudyBlockRow({ block }: { block: StudyBlockLike }) {
   const active = isBlockActive(block)
   const timeLabel = block.startTime
     ? formatTimeRange(block.startTime, block.studyBlockLength)

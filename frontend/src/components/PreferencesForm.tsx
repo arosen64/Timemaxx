@@ -231,7 +231,7 @@ export default function PreferencesForm({ data, onChange, readOnly = false }: Pr
         <p className="font-body text-xs text-light-blue">How long is your ideal uninterrupted study session?</p>
         <input
           type="number"
-          min={5}
+          min={15}
           max={480}
           value={data.focusBlockLength}
           readOnly={readOnly}
@@ -248,6 +248,9 @@ export default function PreferencesForm({ data, onChange, readOnly = false }: Pr
               : 'placeholder:text-light-blue focus:border-sky-blue focus:ring-2 focus:ring-sky-blue/20'
           }`}
         />
+        {!readOnly && typeof data.focusBlockLength === 'number' && data.focusBlockLength < 15 && (
+          <p className="font-body text-xs text-burnt-orange">Study block length must be at least 15 minutes.</p>
+        )}
       </div>
     </div>
   )

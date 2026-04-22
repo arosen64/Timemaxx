@@ -125,9 +125,11 @@ export default defineSchema({
     embedding: v.optional(v.array(v.float64())),
     reasoning: v.optional(reasoningTraceValidator),
     status: v.optional(v.union(v.literal("not_started"), v.literal("in_progress"), v.literal("completed"))),
+    assignmentWeight: v.optional(v.number()),
   })
     .index("by_userId", ["userId"])
     .index("by_userId_createdAt", ["userId", "createdAt"])
+    .index("by_userId_courseId", ["userId", "courseId"])
     .vectorIndex("by_embedding", { vectorField: "embedding", dimensions: 3072, filterFields: ["userId"] }),
 
   // Subtasks table — AI-generated or manually created subtasks linked to a parent task

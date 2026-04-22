@@ -7,6 +7,7 @@ const DEFAULT_PROPS = {
   isOpen: true,
   message: 'Unable to estimate task time.',
   onClose: vi.fn(),
+  onRetry: vi.fn(),
 }
 
 describe('EstimationErrorModal', () => {
@@ -28,10 +29,17 @@ describe('EstimationErrorModal', () => {
     expect(screen.queryByRole('dialog', { name: 'Estimation Failed modal' })).toBeNull()
   })
 
-  it('calls onClose when Dismiss button is clicked', async () => {
+  it('calls onClose when Cancel button is clicked', async () => {
     const user = userEvent.setup()
     renderWithProviders(<EstimationErrorModal {...DEFAULT_PROPS} />)
-    await user.click(screen.getByRole('button', { name: /dismiss/i }))
+    await user.click(screen.getByRole('button', { name: /cancel/i }))
     expect(DEFAULT_PROPS.onClose).toHaveBeenCalledTimes(1)
+  })
+
+  it('calls onRetry when Retry button is clicked', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<EstimationErrorModal {...DEFAULT_PROPS} />)
+    await user.click(screen.getByRole('button', { name: /retry/i }))
+    expect(DEFAULT_PROPS.onRetry).toHaveBeenCalledTimes(1)
   })
 })

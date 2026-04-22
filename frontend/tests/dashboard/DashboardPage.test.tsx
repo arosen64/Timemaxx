@@ -115,9 +115,13 @@ const MOCK_TASKS = [
   },
 ]
 
+// Completed version of task1 — feedback form only renders on completed (isReadOnly) cards
+const COMPLETED_TASK = { ...MOCK_TASKS[0], status: 'completed' as const }
+
 // task1 with feedback already submitted — used to test the saved-feedback "edit" flow
 const TASK_WITH_FEEDBACK = {
   ...MOCK_TASKS[0],
+  status: 'completed' as const,
   estimateFeedbackRating: 'up' as const,
   correctedEstimateMinutes: 60,
 }
@@ -243,7 +247,7 @@ describe('DashboardPage', () => {
 
     await waitFor(() => expect(screen.getByText('Estimation Failed')).toBeInTheDocument())
 
-    await user.click(screen.getByRole('button', { name: /dismiss/i }))
+    await user.click(screen.getByRole('button', { name: /cancel/i }))
 
     expect(screen.queryByText('Estimation Failed')).not.toBeInTheDocument()
   })
@@ -379,8 +383,9 @@ describe('DashboardPage', () => {
 
   it('shows time inputs after a thumbs-up rating is selected', async () => {
     const user = userEvent.setup()
-    setup()
+    setup([COMPLETED_TASK, MOCK_TASKS[1]])
 
+    await user.click(screen.getByRole('button', { name: /completed/i }))
     await user.click(screen.getByRole('button', { name: /rate estimate thumbs up/i }))
 
     expect(screen.getByPlaceholderText('hrs')).toBeInTheDocument()
@@ -389,8 +394,9 @@ describe('DashboardPage', () => {
 
   it('shows time inputs after a thumbs-down rating is selected', async () => {
     const user = userEvent.setup()
-    setup()
+    setup([COMPLETED_TASK, MOCK_TASKS[1]])
 
+    await user.click(screen.getByRole('button', { name: /completed/i }))
     await user.click(screen.getByRole('button', { name: /rate estimate thumbs down/i }))
 
     expect(screen.getByPlaceholderText('hrs')).toBeInTheDocument()
@@ -402,7 +408,7 @@ describe('DashboardPage', () => {
     const submitFeedbackMock = vi.fn().mockResolvedValue(undefined)
 
     mockUseQuery.mockImplementation(((query: string) => {
-      if (query === 'getAllTasks') return MOCK_TASKS
+      if (query === 'getAllTasks') return [COMPLETED_TASK, MOCK_TASKS[1]]
       if (query === 'getUpcomingStudyBlocks') return []
       if (query === 'getAllSubtasksForUser') return []
       if (query === 'getStudyBlocksByTask') return []
@@ -415,6 +421,7 @@ describe('DashboardPage', () => {
     mockUseAction.mockReturnValue(makeMutationFn() as never)
     renderWithProviders(<DashboardPage />)
 
+    await user.click(screen.getByRole('button', { name: /completed/i }))
     await user.click(screen.getByRole('button', { name: /rate estimate thumbs up/i }))
     await user.click(screen.getByRole('button', { name: /^save$/i }))
 
@@ -429,6 +436,8 @@ describe('DashboardPage', () => {
   it('re-enters the rating form when edit is clicked on saved feedback', async () => {
     const user = userEvent.setup()
     setup([TASK_WITH_FEEDBACK, MOCK_TASKS[1]])
+
+    await user.click(screen.getByRole('button', { name: /completed/i }))
 
     // Saved feedback summary is shown
     expect(screen.getByText(/feedback: helpful/i)).toBeInTheDocument()

@@ -129,7 +129,7 @@ describe('TaskCard', () => {
   })
 
   it('renders TaskFeedbackForm (thumbs-up button) when timeEstimate is defined', () => {
-    setup()
+    setup({ isReadOnly: true })
     expect(screen.getByRole('button', { name: 'Rate estimate thumbs up' })).toBeInTheDocument()
   })
 
@@ -140,6 +140,7 @@ describe('TaskCard', () => {
 
   it('renders TaskFeedbackForm when task has subtasks and rollup estimate is ready', () => {
     setup({
+      isReadOnly: true,
       task: { ...MOCK_TASK, timeEstimate: 90 },
       subtasks: [
         {
