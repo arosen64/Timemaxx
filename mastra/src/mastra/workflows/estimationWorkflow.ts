@@ -15,12 +15,7 @@
 import { createWorkflow, createStep } from "@mastra/core/workflows";
 import { z } from "zod";
 import { estimationAgent } from "../agents/estimationAgent";
-import {
-  estimationAgentOutputSchema,
-  type EstimationAgentOutput,
-} from "../lib/prompts/estimationAgent.prompt";
-
-export type { EstimationAgentOutput };
+import { estimationAgentOutputSchema } from "../lib/prompts/estimationAgent.prompt";
 
 /** Passes the assembled context prompt to the estimationAgent and returns its structured output. */
 const estimationAgentStep = createStep({
