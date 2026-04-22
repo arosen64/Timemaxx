@@ -3,6 +3,7 @@ import { z } from "zod";
 import { syllabusAgent } from "../agents/syllabusAgent";
 import { syllabusResponseSchema, buildSyllabusParsePrompt, type SyllabusResponse } from "../lib/prompts/syllabusAgent.prompt";
 
+// sanitizedText must have had sanitizeUserInput applied before reaching this workflow.
 const parseStep = createStep({
   id: "parse",
   inputSchema: z.object({

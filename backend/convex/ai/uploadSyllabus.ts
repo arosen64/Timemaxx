@@ -5,16 +5,20 @@ import { internal } from "../_generated/api";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { MastraClient } from "@mastra/client-js";
 import { sanitizeUserInput, validateLength } from "../lib/sanitize";
-import { TaskType } from "../lib/taskValidators";
+import { TaskType, TASK_TYPES } from "../lib/taskValidators";
 import { UploadSyllabusResult } from "../lib/syllabusTypes";
 
 /**
- * Parses a syllabus using two sequential Mastra workflow calls:
+ * Parses a syllabus using Mastra:
  *
- * 1. `syllabus-ocr-workflow`  — Mistral OCR extracts raw text from the file
- * 2. `sanitizeUserInput`      — existing prompt-injection sanitizer runs on
- *                               the OCR output before it reaches any LLM
+ * PDF path:
+ * 1. `syllabus-ocr-workflow`   — Mistral OCR extracts text from base64-encoded PDF bytes
+ * 2. `sanitizeUserInput`       — prompt-injection sanitizer runs on the OCR output
  * 3. `syllabus-parse-workflow` — Claude agent extracts structured task data
+ *
+ * Text path (mimeType !== "application/pdf"):
+ * 1. `sanitizeUserInput`       — prompt-injection sanitizer runs on the raw text
+ * 2. `syllabus-parse-workflow` — Claude agent extracts structured task data
  *
  * On success the syllabus record is patched to "confirmed" and
  * `{ syllabusId, extractedTasks }` is returned for review.
@@ -23,6 +27,7 @@ import { UploadSyllabusResult } from "../lib/syllabusTypes";
 export const uploadSyllabus = action({
   args: {
     fileContents: v.string(),
+    mimeType: v.optional(v.string()),
     courseId: v.optional(v.id("userCourses")),
   },
   handler: async (ctx, args): Promise<UploadSyllabusResult> => {
@@ -55,40 +60,67 @@ export const uploadSyllabus = action({
       );
     }
 
-    const mastraUrl = process.env.MASTRA_URL;
-    if (!mastraUrl) throw new Error("MASTRA_URL not configured");
-    const client = new MastraClient({ baseUrl: mastraUrl });
-
     try {
-      // Step 1: OCR — extract raw text via Mistral OCR
-      const ocrWf = client.getWorkflow("syllabus-ocr-workflow");
-      const ocrRun = await ocrWf.startAsync({
-        inputData: { fileContents: args.fileContents },
-      });
-      const ocrStep = ocrRun.steps?.["ocr"];
-      const rawText =
-        (ocrStep && "output" in ocrStep
-          ? (ocrStep.output as { extractedText?: string }).extractedText
-          : undefined) ?? args.fileContents;
+      const mastraUrl = process.env.MASTRA_URL;
+      if (!mastraUrl) throw new Error("MASTRA_URL not configured");
+      const client = new MastraClient({ baseUrl: mastraUrl });
 
-      // Step 2: Sanitize — prompt-injection protection between OCR and LLM
-      const sanitizedText = sanitizeUserInput(rawText, 200_000);
+      const TIMEOUT_MS = 30_000;
 
-      // Step 3: Parse — Claude agent extracts structured task data
+      function withTimeout<T>(promise: Promise<T>, label: string): Promise<T> {
+        return Promise.race([
+          promise,
+          new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error(`${label} timed out after 30s`)), TIMEOUT_MS)
+          ),
+        ]);
+      }
+
+      let textForParsing: string;
+
+      if (args.mimeType === "application/pdf") {
+        // PDF path: run Mistral OCR on the base64-encoded file bytes first
+        const ocrWf = client.getWorkflow("syllabus-ocr-workflow");
+        const ocrRun = await withTimeout(
+          ocrWf.startAsync({ inputData: { fileContents: args.fileContents } }),
+          "Syllabus OCR"
+        );
+        const ocrStep = ocrRun.steps?.["ocr"];
+        const ocrText =
+          ocrStep && "output" in ocrStep
+            ? (ocrStep.output as { extractedText?: string }).extractedText ?? ""
+            : "";
+        textForParsing = ocrText;
+      } else {
+        // Text path: content is already plain text
+        textForParsing = args.fileContents;
+      }
+
+      // Sanitize — prompt-injection protection before the LLM sees the text
+      const sanitizedText = sanitizeUserInput(textForParsing, 200_000);
+
+      // Parse — Claude agent extracts structured task data
+      // Workflow expects already-sanitized input; do not call without sanitizing first.
       const parseWf = client.getWorkflow("syllabus-parse-workflow");
-      const parseRun = await parseWf.startAsync({
-        inputData: { sanitizedText },
-      });
-      const parseStep = parseRun.steps?.["parse"];
-      const parseOutput =
-        parseStep && "output" in parseStep
-          ? (parseStep.output as { tasks: { title: string; description: string; dueDate: string; taskType: string }[] })
-          : undefined;
+      const parseRun = await withTimeout(
+        parseWf.startAsync({ inputData: { sanitizedText } }),
+        "Syllabus parse"
+      );
 
-      const rawTasks = parseOutput?.tasks ?? [];
+      const parseStep = parseRun.steps?.["parse"];
+      if (!parseStep || parseStep.status !== "success" || !("output" in parseStep)) {
+        throw new Error("Syllabus parse workflow did not complete successfully");
+      }
+      const parseOutput = parseStep.output as {
+        tasks: { title: string; description: string; dueDate: string; taskType: string }[];
+      };
+
+      const rawTasks = parseOutput.tasks ?? [];
       const now = Date.now();
+      const validTaskTypes = new Set<string>(TASK_TYPES);
 
       const extractedTasks = rawTasks
+        .filter((t) => validTaskTypes.has(t.taskType))
         .map((t) => ({
           title: t.title,
           description: t.description,

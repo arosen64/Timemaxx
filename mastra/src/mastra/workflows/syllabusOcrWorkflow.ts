@@ -5,6 +5,7 @@ import { Mistral } from "@mistralai/mistralai";
 const ocrStep = createStep({
   id: "ocr",
   inputSchema: z.object({
+    // Base64-encoded PDF bytes
     fileContents: z.string(),
   }),
   outputSchema: z.object({
@@ -12,28 +13,26 @@ const ocrStep = createStep({
   }),
   execute: async ({ inputData }) => {
     const apiKey = process.env.MISTRAL_API_KEY;
-    if (!apiKey) return { extractedText: inputData.fileContents };
+    if (!apiKey) throw new Error("MISTRAL_API_KEY is not set");
 
     const client = new Mistral({ apiKey });
-    try {
-      const blob = new Blob([inputData.fileContents], { type: "text/plain" });
-      const uploaded = await client.files.upload({
-        file: new File([blob], "syllabus.txt", { type: "text/plain" }),
-        purpose: "ocr",
-      });
+    const buffer = Buffer.from(inputData.fileContents, "base64");
+    const blob = new Blob([buffer], { type: "application/pdf" });
+    const uploaded = await client.files.upload({
+      file: new File([blob], "syllabus.pdf", { type: "application/pdf" }),
+      purpose: "ocr",
+    });
 
-      try {
-        const response = await client.ocr.process({
-          model: "mistral-ocr-latest",
-          document: { type: "file", fileId: uploaded.id },
-        });
-        const extractedText = response.pages?.map((p) => p.markdown).join("\n\n") ?? inputData.fileContents;
-        return { extractedText: extractedText || inputData.fileContents };
-      } finally {
-        await client.files.delete({ fileId: uploaded.id }).catch(() => {});
-      }
-    } catch {
-      return { extractedText: inputData.fileContents };
+    try {
+      const response = await client.ocr.process({
+        model: "mistral-ocr-latest",
+        document: { type: "file", fileId: uploaded.id },
+      });
+      const extractedText = response.pages?.map((p) => p.markdown).join("\n\n") ?? "";
+      if (!extractedText) throw new Error("Mistral OCR returned no text from the document");
+      return { extractedText };
+    } finally {
+      await client.files.delete({ fileId: uploaded.id }).catch(() => {});
     }
   },
 });

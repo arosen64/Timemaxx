@@ -4,7 +4,6 @@ import { api } from '../../../../backend/convex/_generated/api'
 import { Modal, FileUpload, Toggle } from '../ui'
 import { SpinnerIcon } from '../icons'
 import { Course, UploadSyllabusResult } from '../../types'
-import { extractPdfText } from '../../utils/pdf'
 
 type Mode = 'upload' | 'text'
 
@@ -47,9 +46,10 @@ export default function SyllabusUploadModal({
     onClose()
   }
 
-  async function submitToBackend(fileContents: string) {
+  async function submitToBackend(fileContents: string, mimeType?: string) {
     const result = await uploadSyllabus({
       fileContents,
+      mimeType,
       courseId: course.userCourseId as Parameters<typeof uploadSyllabus>[0]['courseId'],
     })
     onSuccess?.(result)
@@ -64,16 +64,19 @@ export default function SyllabusUploadModal({
           setError('Please select a file to upload.')
           return
         }
-        const fileContents = file.type === 'application/pdf'
-          ? await extractPdfText(file)
-          : await file.text()
-        await submitToBackend(fileContents)
+        if (file.type === 'application/pdf') {
+          const buffer = await file.arrayBuffer()
+          const base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)))
+          await submitToBackend(base64, 'application/pdf')
+        } else {
+          await submitToBackend(await file.text(), 'text/plain')
+        }
       } else {
         if (!text.trim()) {
           setError('Please enter some syllabus text.')
           return
         }
-        await submitToBackend(text)
+        await submitToBackend(text, 'text/plain')
       }
       handleClose()
     } catch {
