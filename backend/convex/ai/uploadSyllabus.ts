@@ -67,9 +67,9 @@ export const uploadSyllabus = action({
       });
       const ocrStep = ocrRun.steps?.["ocr"];
       const rawText =
-        ocrStep?.status === "success"
-          ? (ocrStep.output as { extractedText: string }).extractedText
-          : args.fileContents;
+        (ocrStep && "output" in ocrStep
+          ? (ocrStep.output as { extractedText?: string }).extractedText
+          : undefined) ?? args.fileContents;
 
       // Step 2: Sanitize — prompt-injection protection between OCR and LLM
       const sanitizedText = sanitizeUserInput(rawText, 200_000);
@@ -81,7 +81,7 @@ export const uploadSyllabus = action({
       });
       const parseStep = parseRun.steps?.["parse"];
       const parseOutput =
-        parseStep?.status === "success"
+        parseStep && "output" in parseStep
           ? (parseStep.output as { tasks: { title: string; description: string; dueDate: string; taskType: string }[] })
           : undefined;
 
