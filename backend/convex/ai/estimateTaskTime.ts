@@ -7,9 +7,13 @@ import { MastraClient } from "@mastra/client-js";
 import { sanitizeUserInput } from "../lib/sanitize";
 import {
   buildTimeEstimatePrompt,
+  estimationAgentOutputSchema,
+  EstimationAgentOutput,
 } from "../lib/prompts/estimateTaskTime.prompt";
 import { taskToTaskLike, subtaskToTaskLike, TaskLike } from "../lib/taskTypes";
 import { fetchRelevantContext } from "../lib/retrieval";
+
+const ESTIMATION_STEP_ID = "estimation-agent";
 
 type Ctx = GenericActionCtx<DataModel>;
 
@@ -178,7 +182,7 @@ export const estimateTaskTime = internalAction({
       return;
     }
 
-    type ReasoningTrace = { classes: string; tasks: string; chats: string; profile: string };
+    type ReasoningTrace = EstimationAgentOutput["reasoningTrace"];
     let item: TaskLike;
     let store: (minutes: number, reasoning: ReasoningTrace) => Promise<void>;
     let contextTaskId: Id<"tasks">;
@@ -272,14 +276,18 @@ export const estimateTaskTime = internalAction({
         }
       }
 
-      const stepOutput = run.steps?.["estimation-agent"];
+      const stepOutput = run.steps?.[ESTIMATION_STEP_ID];
       if (!stepOutput || !("output" in stepOutput)) {
         const availableKeys = Object.keys(run.steps ?? {}).join(", ") || "(none)";
         throw new Error(
-          `No output from estimation workflow — expected step "estimation-agent", got: ${availableKeys}`
+          `No output from estimation workflow — expected step "${ESTIMATION_STEP_ID}", got: ${availableKeys}`
         );
       }
-      const result = stepOutput.output as { estimatedMinutes: number; reasoningTrace: ReasoningTrace };
+      const parsed = estimationAgentOutputSchema.safeParse(stepOutput.output);
+      if (!parsed.success) {
+        throw new Error(`Unexpected estimation output: ${parsed.error.message}`);
+      }
+      const result = parsed.data;
 
       await store(result.estimatedMinutes, result.reasoningTrace);
     } catch (err) {

@@ -30,6 +30,7 @@ const estimationAgentStep = createStep({
     const response = await estimationAgent.generate(inputData.contextPrompt, {
       structuredOutput: { schema: estimationAgentOutputSchema },
     });
+    if (!response.object) throw new Error("estimationAgent returned no structured output");
     return response.object;
   },
 });

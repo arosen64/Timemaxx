@@ -1,3 +1,22 @@
+import { z } from "zod";
+
+// ---------------------------------------------------------------------------
+// Output schema — must stay in sync with estimationAgentOutputSchema in
+// mastra/src/mastra/lib/prompts/estimationAgent.prompt.ts
+// ---------------------------------------------------------------------------
+
+export const estimationAgentOutputSchema = z.object({
+  estimatedMinutes: z.number().int().positive(),
+  reasoningTrace: z.object({
+    classes: z.string(),
+    tasks: z.string(),
+    chats: z.string(),
+    profile: z.string(),
+  }),
+});
+
+export type EstimationAgentOutput = z.infer<typeof estimationAgentOutputSchema>;
+
 // ---------------------------------------------------------------------------
 // Context builder
 // ---------------------------------------------------------------------------
