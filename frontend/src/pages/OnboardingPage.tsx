@@ -88,7 +88,6 @@ export default function OnboardingPage() {
         enjoyedSubjects: profile.enjoyedSubjects,
         workHoursGrid: Object.entries(workHours).map(([day, slots]) => ({
           day,
-          available: slots.available,
           blocked: slots.blocked,
         })),
         productivityTraits: preferences.traits,
