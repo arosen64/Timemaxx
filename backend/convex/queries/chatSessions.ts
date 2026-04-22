@@ -20,7 +20,14 @@ export const getChatSessionInternal = internalQuery({
       clarificationExhausted: v.optional(v.boolean()),
       awaitingEntityResolution: v.optional(v.boolean()),
       chatInputLocked: v.optional(v.boolean()),
-      activeAgent: v.optional(v.union(v.literal("task"), v.literal("feedback"), v.literal("preferences"))),
+      activeAgent: v.optional(
+        v.union(
+          v.literal("task"),
+          v.literal("feedback"),
+          v.literal("preferences"),
+          v.literal("classes"),
+        ),
+      ),
       taskAgentIntent: v.optional(v.union(v.literal("create"), v.literal("rud"))),
     }),
   ),
