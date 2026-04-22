@@ -3,29 +3,22 @@ import { v } from "convex/values";
 import { Id } from "../_generated/dataModel";
 import { internal } from "../_generated/api";
 import { getAuthUserId } from "@convex-dev/auth/server";
-import { callGemini } from "../lib/gemini";
+import { MastraClient } from "@mastra/client-js";
 import { sanitizeUserInput, validateLength } from "../lib/sanitize";
 import { TaskType, TASK_TYPES } from "../lib/taskValidators";
 import { UploadSyllabusResult } from "../lib/syllabusTypes";
-import {
-  SYLLABUS_SYSTEM,
-  buildSyllabusPrompt,
-  syllabusResponseSchema,
-} from "../lib/prompts/uploadSyllabus.prompt";
 
 /**
- * Sends syllabus text to Gemini and returns extracted tasks.
+ * Parses a syllabus using two sequential Mastra workflow calls:
  *
- * Flow:
- * 1. Creates a `syllabi` row with status "pending".
- * 2. Calls Gemini (gemini-2.5-flash) with a 30s timeout to extract assignments
- *    as structured JSON — each task includes a Gemini-generated description.
- * 3. On success, patches the syllabus to status "confirmed" and returns
- *    `{ syllabusId, extractedTasks }` for the caller to review and confirm.
- * 4. On any error (including timeout), patches to status "failed" before re-throwing.
+ * 1. `syllabus-ocr-workflow`  — Mistral OCR extracts raw text from the file
+ * 2. `sanitizeUserInput`      — existing prompt-injection sanitizer runs on
+ *                               the OCR output before it reaches any LLM
+ * 3. `syllabus-parse-workflow` — Claude agent extracts structured task data
  *
- * Extracted tasks are NOT saved to the `tasks` table here — use
- * `confirmSyllabusTasks` mutation to persist the user-approved tasks.
+ * On success the syllabus record is patched to "confirmed" and
+ * `{ syllabusId, extractedTasks }` is returned for review.
+ * On any error the record is patched to "failed" before re-throwing.
  */
 export const uploadSyllabus = action({
   args: {
@@ -62,23 +55,40 @@ export const uploadSyllabus = action({
       );
     }
 
-    const sanitized = sanitizeUserInput(args.fileContents, 200_000);
+    const mastraUrl = process.env.MASTRA_URL;
+    if (!mastraUrl) throw new Error("MASTRA_URL not configured");
+    const client = new MastraClient({ baseUrl: mastraUrl });
 
     try {
-      const json = await callGemini({
-        system: SYLLABUS_SYSTEM,
-        prompt: buildSyllabusPrompt(sanitized),
-        schema: syllabusResponseSchema,
-        schemaName: "SyllabusExtraction",
-        timeoutMs: 30_000,
+      // Step 1: OCR — extract raw text via Mistral OCR
+      const ocrWf = client.getWorkflow("syllabus-ocr-workflow");
+      const ocrRun = await ocrWf.startAsync({
+        inputData: { fileContents: args.fileContents },
       });
+      const ocrStep = ocrRun.steps?.["ocr"];
+      const rawText =
+        ocrStep?.status === "success"
+          ? (ocrStep.output as { extractedText: string }).extractedText
+          : args.fileContents;
 
-      const rawTasks = json.tasks ?? [];
+      // Step 2: Sanitize — prompt-injection protection between OCR and LLM
+      const sanitizedText = sanitizeUserInput(rawText, 200_000);
 
-      // Belt-and-suspenders: filter even though Zod schema validates taskType
+      // Step 3: Parse — Claude agent extracts structured task data
+      const parseWf = client.getWorkflow("syllabus-parse-workflow");
+      const parseRun = await parseWf.startAsync({
+        inputData: { sanitizedText },
+      });
+      const parseStep = parseRun.steps?.["parse"];
+      const parseOutput =
+        parseStep?.status === "success"
+          ? (parseStep.output as { tasks: { title: string; description: string; dueDate: string; taskType: string }[] })
+          : undefined;
+
+      const rawTasks = parseOutput?.tasks ?? [];
       const validTaskTypes = new Set<string>(TASK_TYPES);
-
       const now = Date.now();
+
       const extractedTasks = rawTasks
         .filter((t) => validTaskTypes.has(t.taskType))
         .map((t) => ({
