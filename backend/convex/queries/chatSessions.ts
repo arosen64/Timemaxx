@@ -29,6 +29,8 @@ export const getChatSessionInternal = internalQuery({
         ),
       ),
       taskAgentIntent: v.optional(v.union(v.literal("create"), v.literal("rud"))),
+      activeTaskId: v.optional(v.id("tasks")),
+      activeCourseId: v.optional(v.id("userCourses")),
     }),
   ),
   handler: async (ctx, args) => {
@@ -50,6 +52,8 @@ export const getChatSessionInternal = internalQuery({
       chatInputLocked: row.chatInputLocked,
       activeAgent: row.activeAgent,
       taskAgentIntent: row.taskAgentIntent,
+      activeTaskId: row.activeTaskId,
+      activeCourseId: row.activeCourseId,
     };
   },
 });
@@ -92,7 +96,7 @@ export const getResolvedEntityLabelsInternal = internalQuery({
   },
 });
 
-/** Tags for the chat widget header — derived from recent message taskId/courseId fields. */
+/** Tags for the chat widget header — derived from chatSessions active scope. */
 export const getChatSessionEntityScope = query({
   args: { sessionId: v.string() },
   returns: v.union(
@@ -116,22 +120,9 @@ export const getChatSessionEntityScope = query({
       .unique();
     if (!row) return null;
 
-    const msgs = await ctx.db
-      .query("chatMessages")
-      .withIndex("by_session", (q) => q.eq("sessionId", args.sessionId))
-      .order("desc")
-      .take(40);
-
     const entityScopeTags: Array<"task_id_set" | "class_id_set"> = [];
-    let hasTask = false;
-    let hasClass = false;
-    for (const m of msgs) {
-      if (m.userId !== userId) continue;
-      if (m.taskId) hasTask = true;
-      if (m.courseId) hasClass = true;
-    }
-    if (hasTask) entityScopeTags.push("task_id_set");
-    if (hasClass) entityScopeTags.push("class_id_set");
+    if (row.activeTaskId) entityScopeTags.push("task_id_set");
+    if (row.activeCourseId) entityScopeTags.push("class_id_set");
 
     return {
       entityScopeTags,
