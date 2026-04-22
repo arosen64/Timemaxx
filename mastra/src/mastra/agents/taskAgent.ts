@@ -12,5 +12,5 @@ export const taskAgent = new Agent({
   id: "task-agent",
   name: "Maxx Task Agent",
   instructions: TASK_AGENT_SYSTEM,
-  model: anthropic("claude-sonnet-4-20250514"),
+  model: anthropic("claude-sonnet-4-6"),
 });

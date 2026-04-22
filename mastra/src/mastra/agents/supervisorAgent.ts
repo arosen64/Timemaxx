@@ -16,5 +16,5 @@ export const supervisorAgent = new Agent({
   id: "supervisor-agent",
   name: "Maxx Supervisor",
   instructions: SUPERVISOR_AGENT_SYSTEM,
-  model: anthropic("claude-sonnet-4-20250514"),
+  model: anthropic("claude-sonnet-4-6"),
 });
