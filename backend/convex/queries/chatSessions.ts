@@ -106,6 +106,13 @@ export const getChatSessionEntityScope = query({
         v.union(v.literal("task_id_set"), v.literal("class_id_set")),
       ),
       chatInputLocked: v.boolean(),
+      activeAgent: v.union(
+        v.literal("task"),
+        v.literal("feedback"),
+        v.literal("preferences"),
+        v.literal("classes"),
+        v.null(),
+      ),
     }),
   ),
   handler: async (ctx, args) => {
@@ -127,6 +134,7 @@ export const getChatSessionEntityScope = query({
     return {
       entityScopeTags,
       chatInputLocked: row.chatInputLocked === true,
+      activeAgent: row.activeAgent ?? null,
     };
   },
 });
