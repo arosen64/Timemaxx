@@ -4,12 +4,77 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { taskTypeValidator } from "../lib/taskValidators";
 import { internal } from "../_generated/api";
 import { rebuildStudyBlocksForSubtask } from "./timeEstimate";
+import { Id } from "../_generated/dataModel";
 
 const reasoningTraceArgs = v.object({
   classes: v.string(),
   tasks: v.string(),
   chats: v.string(),
   profile: v.string(),
+});
+
+// Batch variant: validates all subtasks before any inserts to avoid partial writes on failure.
+export const createSubtasksBatch = mutation({
+  args: {
+    parentTaskId: v.id("tasks"),
+    subtasks: v.array(
+      v.object({
+        title: v.string(),
+        description: v.string(),
+        taskType: taskTypeValidator,
+        color: v.string(),
+        order: v.number(),
+        suggestedCompletionAt: v.optional(v.number()),
+      })
+    ),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Unauthenticated");
+
+    const parent = await ctx.db.get(args.parentTaskId);
+    if (!parent || parent.userId !== userId) {
+      throw new Error("Parent task not found");
+    }
+
+    for (const s of args.subtasks) {
+      if (s.title.trim().length === 0) throw new Error("Title cannot be empty");
+      if (s.description.trim().length === 0) throw new Error("Description cannot be empty");
+    }
+
+    const now = Date.now();
+    const subtaskIds: Id<"subtasks">[] = [];
+
+    for (const s of args.subtasks) {
+      const subtaskId = await ctx.db.insert("subtasks", {
+        parentTaskId: args.parentTaskId,
+        userId,
+        title: s.title,
+        description: s.description,
+        taskType: s.taskType,
+        color: s.color,
+        order: s.order,
+        suggestedCompletionAt: s.suggestedCompletionAt,
+        courseId: parent.courseId,
+        classTag: parent.classTag,
+        dueDate: parent.dueDate,
+        createdAt: now,
+      });
+      subtaskIds.push(subtaskId);
+    }
+
+    await ctx.db.patch(args.parentTaskId, { reasoning: undefined });
+
+    if (process.env.ANTHROPIC_API_KEY) {
+      for (const subtaskId of subtaskIds) {
+        await ctx.scheduler.runAfter(0, internal.ai.estimateTaskTime.estimateTaskTime, {
+          subtaskId,
+        });
+      }
+    }
+
+    return subtaskIds;
+  },
 });
 
 /**
