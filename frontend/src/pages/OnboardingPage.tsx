@@ -122,7 +122,7 @@ export default function OnboardingPage() {
         <div className="flex flex-col gap-4">
           <div>
             <h2 className="font-heading text-2xl font-bold text-navy">Work Hours</h2>
-            <p className="mt-1 font-body text-sm text-slate-blue">Click or drag to mark when you're available to study or when you'll never work.</p>
+            <p className="mt-1 font-body text-sm text-slate-blue">Click or drag to mark your never-work hours.</p>
           </div>
           <WorkHoursSelector data={workHours} onChange={setWorkHours} />
         </div>
