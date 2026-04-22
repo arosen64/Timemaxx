@@ -65,9 +65,7 @@ export const createSubtasksBatch = mutation({
 
     await ctx.db.patch(args.parentTaskId, { reasoning: undefined });
 
-    const isTest =
-      typeof process !== "undefined" && process.env.VITEST === "true";
-    if (!isTest) {
+    if (process.env.ANTHROPIC_API_KEY) {
       for (const subtaskId of subtaskIds) {
         await ctx.scheduler.runAfter(0, internal.ai.estimateTaskTime.estimateTaskTime, {
           subtaskId,
