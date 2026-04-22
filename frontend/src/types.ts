@@ -34,7 +34,7 @@ export interface ProfileData {
 
 // Shape defined in issue #22
 export interface WorkHoursData {
-  [day: string]: { available: number[]; blocked: number[] }
+  [day: string]: { blocked: number[] }
 }
 
 // Shape defined in issue #23

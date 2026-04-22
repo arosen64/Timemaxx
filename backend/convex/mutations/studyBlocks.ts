@@ -69,7 +69,6 @@ const timedEventValidator = v.object({
 
 const workHoursRowValidator = v.object({
   day: v.string(),
-  available: v.array(v.number()),
   blocked: v.array(v.number()),
 })
 

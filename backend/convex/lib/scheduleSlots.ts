@@ -13,15 +13,13 @@ import {
 // Types
 // ---------------------------------------------------------------------------
 
-export const DEFAULT_DUE_FALLBACK_MS = 7 * 24 * 60 * 60 * 1000;
 
 export type OccupiedInterval = { startMs: number; endMs: number; title: string };
-export type WorkHoursRow = { day: string; available: number[]; blocked: number[] };
+export type WorkHoursRow = { day: string; blocked: number[] };
 
 export type CandidateSlot = ScheduleBlockSlot;
 
-/** A lightweight pool entry — just the start time and available-slot tag. */
-export type PoolSlot = { startMs: number; inAvailableSlot: boolean };
+export type PoolSlot = { startMs: number };
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -114,23 +112,6 @@ export function isSlotValid(
 }
 
 /**
- * Returns true if all 30-min slots spanned by the block are in the `available`
- * array for that day (i.e. the slot is explicitly preferred by the user).
- */
-export function isInAvailableSlot(
-  startMs: number,
-  durationMs: number,
-  workHoursGrid: WorkHoursRow[],
-  timezone: string,
-): boolean {
-  const { dayName, minutesFromMidnight } = getLocalTimeInfo(startMs, timezone);
-  const row = workHoursGrid.find((r) => r.day === dayName);
-  if (!row || row.available.length === 0) return false;
-  const spanned = getSpannedSlots(minutesFromMidnight, durationMs / 60000);
-  return spanned.every((s) => row.available.includes(s));
-}
-
-/**
  * Builds the surrounding-event context for a candidate slot.
  * Looks within a 12-hour window on each side.
  */
@@ -180,9 +161,6 @@ export function buildSlotContext(
  *  - Overlap any occupied interval (placed blocks + calendar events)
  *  - Start at or after the task's dueDate
  *  - Fall beyond 21 days from now
- *
- * Each passing slot is tagged `inAvailableSlot: true` if all its 30-min slots
- * are in the user's `available` array.
  */
 export function enumerateSlots(opts: {
   fromMs: number;
@@ -208,7 +186,6 @@ export function enumerateSlots(opts: {
       candidates.push({
         startMs: cursor,
         startISO: new Date(cursor).toISOString(),
-        inAvailableSlot: isInAvailableSlot(cursor, durationMs, workHoursGrid, timezone),
         ...buildSlotContext(cursor, endMs, occupiedIntervals),
       });
     }
@@ -229,9 +206,6 @@ export function enumerateSlots(opts: {
  * filtering — that happens at use time.
  *
  * Returns the new scan cursor position.
- *
- * Note: `inAvailableSlot` is computed at extension time with `focusBlockLength`.
- * When filtering for a block with a different duration, re-check validity.
  */
 export function extendSlotPool(opts: {
   pool: PoolSlot[];
@@ -251,10 +225,7 @@ export function extendSlotPool(opts: {
     if (endMs > targetMs) break;
 
     if (isSlotValid(cursor, blockMs, workHoursGrid, occupiedIntervals, timezone)) {
-      pool.push({
-        startMs: cursor,
-        inAvailableSlot: isInAvailableSlot(cursor, blockMs, workHoursGrid, timezone),
-      });
+      pool.push({ startMs: cursor });
     }
 
     cursor += FIFTEEN_MIN_MS;
@@ -289,7 +260,6 @@ export function filterPoolForBlock(opts: {
     candidates.push({
       startMs: slot.startMs,
       startISO: new Date(slot.startMs).toISOString(),
-      inAvailableSlot: isInAvailableSlot(slot.startMs, durationMs, workHoursGrid, timezone),
       ...buildSlotContext(slot.startMs, endMs, occupiedIntervals),
     });
   }
@@ -348,7 +318,6 @@ export async function selectSlotWithAI(opts: {
 const BATCH_SCHEDULE_SYSTEM = `You are a study scheduling assistant for a college student. You will receive a list of study blocks, each with a set of candidate time slots. For each block, select the best slot index based on the student's productivity preferences and the calendar context.
 
 Rules:
-- Slots marked inAvailableSlot: true are explicitly preferred by the user — all else equal, choose those.
 - Prefer slots with comfortable buffers around nearby events.
 - Respect the urgency of each task's due date.
 - Consider day-of-week and time relative to the user's productivity style.
