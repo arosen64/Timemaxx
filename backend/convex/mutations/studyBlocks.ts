@@ -433,6 +433,8 @@ export const splitStudyBlock = mutation({
 
     await ctx.db.delete(args.studyBlockId);
 
+    const needsExport = block.googleEventId ? true : undefined;
+
     const blockAId = await ctx.db.insert("studyBlocks", {
       taskId: block.taskId,
       subtaskId: block.subtaskId,
@@ -440,6 +442,7 @@ export const splitStudyBlock = mutation({
       title: block.title,
       startTime: block.startTime,
       studyBlockLength: splitAt,
+      needsExport,
     });
 
     const blockBId = await ctx.db.insert("studyBlocks", {
@@ -449,6 +452,7 @@ export const splitStudyBlock = mutation({
       title: block.title,
       startTime: startTimeB,
       studyBlockLength: remaining,
+      needsExport,
     });
 
     return { blockAId, blockBId };
