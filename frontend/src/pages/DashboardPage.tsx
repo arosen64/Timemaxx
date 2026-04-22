@@ -206,7 +206,7 @@ export default function DashboardPage() {
       } else {
         setPendingSubtasks(result.subtasks)
         setPendingSubtasksTaskId(task._id)
-        setPendingSubtasksCourseId(task.courseId as Id<'userCourses'> | undefined)
+        setPendingSubtasksCourseId(task.courseId)
       }
     } catch (err) {
       setEstimationError(parseEstimationError(err))
@@ -341,7 +341,7 @@ export default function DashboardPage() {
       <SubtaskReviewModal
         isOpen={pendingSubtasks !== null && pendingSubtasksTaskId !== null}
         subtasks={pendingSubtasks ?? []}
-        parentTaskId={pendingSubtasksTaskId ?? ('' as Id<'tasks'>)}
+        parentTaskId={pendingSubtasksTaskId!}
         courseId={pendingSubtasksCourseId}
         onClose={() => {
           setPendingSubtasks(null)
