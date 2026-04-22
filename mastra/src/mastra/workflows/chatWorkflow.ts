@@ -8,6 +8,7 @@ import { courseAgent } from "../agents/courseAgent";
 import { supervisorAgentOutputSchema } from "../lib/prompts/supervisorAgent.prompt";
 import { taskAgentOutputSchema, type TaskAgentOutput } from "../lib/prompts/taskAgent.prompt";
 import { feedbackAgentOutputSchema, type FeedbackAgentOutput } from "../lib/prompts/feedbackAgent.prompt";
+import { courseAgentOutputSchema, type CourseAgentOutput } from "../lib/prompts/courseAgent.prompt";
 
 // ---------------------------------------------------------------------------
 // Schemas
@@ -109,6 +110,15 @@ function feedbackOutput(output: FeedbackAgentOutput, ctx: { message: string }): 
   return { reply: output.message, route: "feedback", status: "reply", mcqQueryText: null, needsClassAfterTask: false, newActiveAgent: output.readyToRecord ? null : "feedback", clearActiveAgent: output.readyToRecord, newTaskAgentIntent: null, readyToRecord: output.readyToRecord, ...NO_ACTION };
 }
 
+// Course output formatting for chat workflow
+function courseOutput(output: CourseAgentOutput, ctx: { message: string; hasCourseTag: boolean }): ChatWorkflowOutput {
+  const { message, hasCourseTag } = ctx;
+  if (output.needsClassClarification && !hasCourseTag) {
+    return { reply: "Which class are you referring to? Pick one below, or choose **Other** to see more options.", route: "classes", status: "needs_class_mcq", mcqQueryText: message.trim() || output.courseName || output.sisQuery || "class course", needsClassAfterTask: false, newActiveAgent: "classes", clearActiveAgent: false, newTaskAgentIntent: null, readyToRecord: false, ...NO_ACTION };
+  }
+  return { reply: output.message, route: "classes", status: "reply", mcqQueryText: null, needsClassAfterTask: false, newActiveAgent: "classes", clearActiveAgent: false, newTaskAgentIntent: null, readyToRecord: false, ...NO_ACTION };
+}
+
 
 // Router step
 
@@ -192,19 +202,9 @@ const courseStep = createStep({
       : "The user selected an entity. Continue based on what is now resolved.";
     const result = await courseAgent.generate(
       agentContextPrompt({ today, historyText, taggedEntitiesBlock, continueNote }),
+      { structuredOutput: { schema: courseAgentOutputSchema } },
     );
-    return {
-      reply: result.text,
-      route: "classes",
-      status: "reply" as const,
-      mcqQueryText: null,
-      needsClassAfterTask: false,
-      newActiveAgent: "classes" as const,
-      clearActiveAgent: false,
-      newTaskAgentIntent: null,
-      readyToRecord: false,
-      ...NO_ACTION,
-    };
+    return courseOutput(result.object, { message, hasCourseTag });
   },
 });
 
