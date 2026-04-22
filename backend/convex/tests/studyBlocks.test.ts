@@ -36,6 +36,46 @@ async function seedStudyBlock(
   );
 }
 
+// Helper: seed a subtask and a study block linked to it (no taskId)
+async function seedSubtaskBlock(
+  t: ReturnType<typeof makeTestCtx>,
+  userId: string,
+  overrides: { studyBlockLength?: number } = {}
+) {
+  const parentTaskId = await t.run((ctx) =>
+    ctx.db.insert("tasks", {
+      userId: userId as any,
+      title: "Parent task",
+      description: "",
+      taskType: "Essay",
+      dueDate: Date.now() + 86_400_000,
+      createdAt: Date.now(),
+      isManualEstimate: false,
+    })
+  );
+  const subtaskId = await t.run((ctx) =>
+    ctx.db.insert("subtasks", {
+      parentTaskId: parentTaskId as any,
+      userId: userId as any,
+      title: "Sub task",
+      description: "",
+      taskType: "Essay",
+      color: "#000000",
+      order: 0,
+      createdAt: Date.now(),
+    })
+  );
+  const studyBlockId = await t.run((ctx) =>
+    ctx.db.insert("studyBlocks", {
+      subtaskId: subtaskId as any,
+      userId: userId as any,
+      title: "Subtask block",
+      studyBlockLength: overrides.studyBlockLength ?? 90,
+    })
+  );
+  return { subtaskId, studyBlockId };
+}
+
 // ─── googleEventId field ─────────────────────────────────────────────────────
 
 describe("studyBlocks schema – googleEventId field", () => {
@@ -502,6 +542,25 @@ describe("mutations/studyBlocks – splitStudyBlock", () => {
       expect(block!.userId).toBe(userId);
       expect(block!.title).toBe("Study session");
     }
+  });
+
+  test("succeeds and returns two blocks when block is owned via subtaskId", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+    const { subtaskId, studyBlockId } = await seedSubtaskBlock(t, userId, { studyBlockLength: 90 });
+
+    const { blockAId, blockBId } = await withAuth.mutation(
+      api.mutations.studyBlocks.splitStudyBlock,
+      { studyBlockId, splitAtMinutes: 45 }
+    );
+
+    const blockA = await t.run((ctx) => ctx.db.get(blockAId));
+    const blockB = await t.run((ctx) => ctx.db.get(blockBId));
+
+    expect(blockA!.subtaskId).toBe(subtaskId);
+    expect(blockB!.subtaskId).toBe(subtaskId);
+    expect(blockA!.studyBlockLength).toBe(45);
+    expect(blockB!.studyBlockLength).toBe(45);
   });
 });
 
