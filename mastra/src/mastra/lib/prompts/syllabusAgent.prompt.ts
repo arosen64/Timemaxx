@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const TASK_TYPES = ["assignment", "exam", "quiz", "project", "reading", "other"] as const;
+const TASK_TYPES = ["Essay", "Problem Set", "Exam Prep", "Coding", "Reading", "Lab", "Presentation"] as const;
 
 export const syllabusResponseSchema = z.object({
   tasks: z

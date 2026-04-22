@@ -12,7 +12,7 @@ const parseStep = createStep({
   execute: async ({ inputData }) => {
     const result = await syllabusAgent.generate(
       buildSyllabusParsePrompt(inputData.sanitizedText),
-      { output: syllabusResponseSchema },
+      { structuredOutput: { schema: syllabusResponseSchema } },
     );
     return result.object as SyllabusResponse;
   },

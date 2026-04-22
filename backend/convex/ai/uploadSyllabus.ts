@@ -5,7 +5,7 @@ import { internal } from "../_generated/api";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { MastraClient } from "@mastra/client-js";
 import { sanitizeUserInput, validateLength } from "../lib/sanitize";
-import { TaskType, TASK_TYPES } from "../lib/taskValidators";
+import { TaskType } from "../lib/taskValidators";
 import { UploadSyllabusResult } from "../lib/syllabusTypes";
 
 /**
@@ -86,18 +86,16 @@ export const uploadSyllabus = action({
           : undefined;
 
       const rawTasks = parseOutput?.tasks ?? [];
-      const validTaskTypes = new Set<string>(TASK_TYPES);
       const now = Date.now();
 
       const extractedTasks = rawTasks
-        .filter((t) => validTaskTypes.has(t.taskType))
         .map((t) => ({
           title: t.title,
           description: t.description,
           dueDate: new Date(t.dueDate).getTime(),
           taskType: t.taskType as TaskType,
         }))
-        .filter((t) => t.dueDate > now);
+        .filter((t) => !isNaN(t.dueDate) && t.dueDate > now);
 
       await ctx.runMutation(internal.mutations.syllabi.setSyllabusStatus, {
         syllabusId,
