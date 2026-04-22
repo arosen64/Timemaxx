@@ -128,16 +128,6 @@ function buildProfileContext(user: Doc<"users"> | null): string | null {
 
   if (user.major) profile.major = sanitizeUserInput(user.major, 200);
   if (user.year) profile.year = user.year;
-  if (user.difficultSubjects?.length) {
-    profile.difficultSubjects = user.difficultSubjects.map((s) =>
-      sanitizeUserInput(s, 200)
-    );
-  }
-  if (user.enjoyedSubjects?.length) {
-    profile.enjoyedSubjects = user.enjoyedSubjects.map((s) =>
-      sanitizeUserInput(s, 200)
-    );
-  }
   if (user.focusBlockLength !== undefined) {
     profile.focusBlockLengthMinutes = user.focusBlockLength;
   }
