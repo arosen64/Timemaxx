@@ -45,11 +45,14 @@ export const parseTranscript = action({
       ocrWf.startAsync({ inputData: { fileContents: args.fileContents } }),
       "Transcript OCR"
     );
-    const ocrStep = ocrRun.steps?.["ocr"];
-    const ocrText =
-      ocrStep && "output" in ocrStep
-        ? (ocrStep.output as { extractedText?: string }).extractedText ?? ""
-        : "";
+    const ocrStep = ocrRun.steps?.["ocr"] as
+      | { status: string; output?: { extractedText?: string }; error?: string | Error }
+      | undefined;
+    if (!ocrStep || ocrStep.status !== "success") {
+      const cause = ocrStep?.error ? String(ocrStep.error) : "step did not complete";
+      throw new Error(`Transcript OCR failed: ${cause}`);
+    }
+    const ocrText = ocrStep.output?.extractedText ?? "";
     if (!ocrText) {
       throw new Error("Transcript OCR did not return any text");
     }

@@ -14,7 +14,7 @@ vi.mock("@mastra/client-js", () => ({
 }));
 
 function makeOcrResponse(extractedText: string) {
-  return { steps: { ocr: { output: { extractedText } } } };
+  return { steps: { ocr: { status: "success", output: { extractedText } } } };
 }
 
 function makeParseResponse(isJhuTranscript: boolean, courses: object[]) {
@@ -102,7 +102,7 @@ describe("actions/parseTranscript", () => {
   });
 
   test("throws when OCR step returns no text", async () => {
-    mockStartAsync.mockResolvedValueOnce({ steps: { ocr: { output: { extractedText: "" } } } });
+    mockStartAsync.mockResolvedValueOnce({ steps: { ocr: { status: "success", output: { extractedText: "" } } } });
     const t = makeTestCtx();
     const { withAuth } = await createTestUser(t);
     await expect(
@@ -110,6 +110,17 @@ describe("actions/parseTranscript", () => {
         fileContents: FAKE_PDF_BASE64,
       })
     ).rejects.toThrow("Transcript OCR did not return any text");
+  });
+
+  test("throws when OCR step fails with an error", async () => {
+    mockStartAsync.mockResolvedValueOnce({ steps: { ocr: { status: "failed", error: "Status 401 Unauthorized" } } });
+    const t = makeTestCtx();
+    const { withAuth } = await createTestUser(t);
+    await expect(
+      withAuth.action(api.ai.parseTranscript.parseTranscript, {
+        fileContents: FAKE_PDF_BASE64,
+      })
+    ).rejects.toThrow("Transcript OCR failed: Status 401 Unauthorized");
   });
 
   test("throws when OCR step is missing from workflow result", async () => {
@@ -120,7 +131,7 @@ describe("actions/parseTranscript", () => {
       withAuth.action(api.ai.parseTranscript.parseTranscript, {
         fileContents: FAKE_PDF_BASE64,
       })
-    ).rejects.toThrow("Transcript OCR did not return any text");
+    ).rejects.toThrow("Transcript OCR failed: step did not complete");
   });
 
   test("throws NOT_JHU_TRANSCRIPT when Claude identifies a non-JHU document", async () => {

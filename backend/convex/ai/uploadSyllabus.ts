@@ -75,12 +75,14 @@ export const uploadSyllabus = action({
           ocrWf.startAsync({ inputData: { fileContents: args.fileContents } }),
           "Syllabus OCR"
         );
-        const ocrStep = ocrRun.steps?.["ocr"];
-        const ocrText =
-          ocrStep && "output" in ocrStep
-            ? (ocrStep.output as { extractedText?: string }).extractedText ?? ""
-            : "";
-        textForParsing = ocrText;
+        const ocrStep = ocrRun.steps?.["ocr"] as
+          | { status: string; output?: { extractedText?: string }; error?: string | Error }
+          | undefined;
+        if (!ocrStep || ocrStep.status !== "success") {
+          const cause = ocrStep?.error ? String(ocrStep.error) : "step did not complete";
+          throw new Error(`Syllabus OCR failed: ${cause}`);
+        }
+        textForParsing = ocrStep.output?.extractedText ?? "";
       } else {
         // Text path: content is already plain text
         textForParsing = args.fileContents;
