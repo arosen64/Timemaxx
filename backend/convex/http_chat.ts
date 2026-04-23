@@ -339,9 +339,16 @@ async function executeCourseAction(
       });
     } else if (output.actionType === "drop_course") {
       if (activeCourseId === undefined) throw new Error("No class selected.");
+      const existing = await ctx.runQuery(internal.queries.userCourses.getUserCoursesByIdsInternal, {
+        courseIds: [activeCourseId],
+      });
+      const target = existing[0];
       await ctx.runMutation(api.mutations.userCourses.deleteUserCourse, {
         userCourseId: activeCourseId,
       });
+      aiText = target
+        ? `Done! I removed **${target.title}** from your classes.`
+        : output.reply;
       await ctx.runMutation(internal.mutations.chatSessions.setMessageScopeInternal, {
         userId,
         sessionId,
@@ -393,12 +400,55 @@ async function executeCourseAction(
       clearedScopeAfterAction = true;
     } else if (output.actionType === "view_courses") {
       if (activeCourseId !== undefined) {
+        const selected = await ctx.runQuery(internal.queries.userCourses.getUserCoursesByIdsInternal, {
+          courseIds: [activeCourseId],
+        });
+        const c = selected[0];
+        if (c) {
+          const attrs: string[] = [];
+          if (c.term) attrs.push(`Term: ${c.term}`);
+          if (c.studyGoal) attrs.push(`Study goal: ${c.studyGoal}`);
+          if (c.grade) attrs.push(`Grade: ${c.grade}`);
+          if (c.difficultyRating !== undefined) attrs.push(`Difficulty: ${c.difficultyRating}/5`);
+          aiText = [
+            `Here are the details for **${c.title}**:`,
+            attrs.length > 0 ? attrs.map((a) => `- ${a}`).join("\n") : "- No additional details recorded yet.",
+          ].join("\n");
+        }
         await ctx.runMutation(internal.mutations.chatSessions.setMessageScopeInternal, {
           userId,
           sessionId,
           clear: true,
         });
         clearedScopeAfterAction = true;
+      } else {
+        const courses = await ctx.runQuery(internal.queries.userCourses.getUserCoursesInternal, {
+          userId,
+        });
+        if (courses.length === 0) {
+          aiText = "You don't have any classes added yet. Add one from the Classes page or ask me to add one.";
+        } else {
+          const current = courses.filter((c) => !isPastTerm(c.term ?? ""));
+          const past = courses.filter((c) => isPastTerm(c.term ?? ""));
+          const lines: string[] = [];
+          if (current.length > 0) {
+            lines.push("Current classes:");
+            for (const c of current.slice(0, 8)) {
+              lines.push(`- ${c.courseCode}: ${c.title}${c.term ? ` (${c.term})` : ""}`);
+            }
+          }
+          if (past.length > 0) {
+            lines.push(current.length > 0 ? "\nPast classes:" : "Past classes:");
+            for (const c of past.slice(0, 8)) {
+              lines.push(`- ${c.courseCode}: ${c.title}${c.term ? ` (${c.term})` : ""}`);
+            }
+          }
+          const hidden = Math.max(0, courses.length - 16);
+          if (hidden > 0) {
+            lines.push(`\n...and ${hidden} more.`);
+          }
+          aiText = lines.join("\n");
+        }
       }
     }
   } catch (err) {
