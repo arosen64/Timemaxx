@@ -30,6 +30,8 @@ export async function cascadeDeleteTask(ctx: MutationCtx, taskId: Id<"tasks">) {
   await ctx.db.delete(taskId);
 }
 
+const TWO_WEEKS_MS = 14 * 24 * 60 * 60 * 1000;
+
 function normalizeClassTag(value: string | undefined): string | undefined {
   if (value === undefined) return undefined;
   const trimmed = value.trim();
@@ -86,6 +88,7 @@ export const createTask = mutation({
       timeEstimate: args.timeEstimate,
       isManualEstimate,
       assignmentWeight: args.assignmentWeight,
+      recommended_start: args.dueDate - TWO_WEEKS_MS,
       createdAt: Date.now(),
     });
 
@@ -187,6 +190,7 @@ export const createTaskInternal = internalMutation({
       dueDate: args.dueDate,
       courseId: args.courseId,
       classTag,
+      recommended_start: args.dueDate - TWO_WEEKS_MS,
       createdAt: Date.now(),
       isManualEstimate: false,
     });
