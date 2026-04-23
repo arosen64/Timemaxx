@@ -344,6 +344,43 @@ async function executeCourseAction(
         clear: true,
       });
       clearedScopeAfterAction = true;
+    } else if (output.actionType === "update_course") {
+      if (activeCourseId === undefined) throw new Error("No class selected.");
+      const patch: {
+        userCourseId: Id<"userCourses">;
+        studyGoal?: string;
+        grade?: string;
+        difficultyRating?: number;
+      } = { userCourseId: activeCourseId };
+
+      if (output.studyGoal !== null) {
+        if (!STUDY_GOALS.has(output.studyGoal)) {
+          throw new Error("Study goal must be one of: Just pass, Do well, Ace it.");
+        }
+        patch.studyGoal = output.studyGoal;
+      }
+      if (output.grade !== null) {
+        if (!GRADES.has(output.grade)) {
+          throw new Error("Grade must match one of the app's allowed grade options.");
+        }
+        patch.grade = output.grade;
+      }
+      if (output.difficultyRating !== null) {
+        if (output.difficultyRating < 1 || output.difficultyRating > 5) {
+          throw new Error("Difficulty rating must be between 1 and 5.");
+        }
+        patch.difficultyRating = output.difficultyRating;
+      }
+
+      if (
+        patch.studyGoal === undefined &&
+        patch.grade === undefined &&
+        patch.difficultyRating === undefined
+      ) {
+        throw new Error("No supported course updates were provided.");
+      }
+
+      await ctx.runMutation(api.mutations.userCourses.updateUserCourse, patch);
     } else if (output.actionType === "view_courses") {
       // Read-only course view: keep assistant reply only.
     }

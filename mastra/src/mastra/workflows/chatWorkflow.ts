@@ -150,6 +150,7 @@ function feedbackOutput(output: FeedbackAgentOutput, ctx: { message: string }): 
 // Course output formatting for chat workflow
 function courseOutput(output: CourseAgentOutput, ctx: { message: string; hasCourseTag: boolean }): ChatWorkflowOutput {
   const { message, hasCourseTag } = ctx;
+  const courseQueryText = ((output.sisQuery ?? output.courseName ?? message.trim()) || "class course");
   // Enforce deterministic add-course field order in workflow (not prompt-dependent):
   // term -> school -> sisQuery -> class MCQ -> remaining options.
   if (output.intent === "add") {
@@ -196,12 +197,86 @@ function courseOutput(output: CourseAgentOutput, ctx: { message: string; hasCour
       };
     }
   }
+  // Enforce deterministic RUD entity resolution in workflow:
+  // - drop/update always require a resolved class
+  // - view can list all classes without a resolved class, but single-class view requires one
+  if ((output.intent === "drop" || output.intent === "update") && !hasCourseTag) {
+    return {
+      reply: "Which class are you referring to? Pick one below, or choose **Other** to see more options.",
+      route: "classes",
+      status: "needs_class_mcq",
+      mcqQueryText: courseQueryText,
+      needsClassAfterTask: false,
+      newActiveAgent: "classes",
+      clearActiveAgent: false,
+      newTaskAgentIntent: null,
+      readyToRecord: false,
+      actionType: "none",
+      title: null,
+      description: null,
+      taskType: null,
+      dueDateIso: null,
+      classTag: null,
+      deleteConfirmed: false,
+      updatedTitle: null,
+      updatedDescription: null,
+      updatedTaskType: null,
+      updatedDueDateIso: null,
+      updatedClassTag: null,
+      courseName: output.courseName,
+      sisQuery: output.sisQuery,
+      term: output.term,
+      school: output.school,
+      studyGoal: output.studyGoal,
+      grade: output.grade,
+      difficultyRating: output.difficultyRating,
+    };
+  }
+  if (output.intent === "view" && !hasCourseTag) {
+    const listingAllCourses =
+      output.readyToExecute &&
+      output.actionType === "view_courses" &&
+      output.courseName === null &&
+      output.sisQuery === null;
+    if (!listingAllCourses) {
+      return {
+        reply: "Which class are you referring to? Pick one below, or choose **Other** to see more options.",
+        route: "classes",
+        status: "needs_class_mcq",
+        mcqQueryText: courseQueryText,
+        needsClassAfterTask: false,
+        newActiveAgent: "classes",
+        clearActiveAgent: false,
+        newTaskAgentIntent: null,
+        readyToRecord: false,
+        actionType: "none",
+        title: null,
+        description: null,
+        taskType: null,
+        dueDateIso: null,
+        classTag: null,
+        deleteConfirmed: false,
+        updatedTitle: null,
+        updatedDescription: null,
+        updatedTaskType: null,
+        updatedDueDateIso: null,
+        updatedClassTag: null,
+        courseName: output.courseName,
+        sisQuery: output.sisQuery,
+        term: output.term,
+        school: output.school,
+        studyGoal: output.studyGoal,
+        grade: output.grade,
+        difficultyRating: output.difficultyRating,
+      };
+    }
+  }
   if (output.needsClassClarification && !hasCourseTag) {
     return {
       reply: "Which class are you referring to? Pick one below, or choose **Other** to see more options.",
       route: "classes",
       status: "needs_class_mcq",
-      mcqQueryText: ((output.sisQuery ?? output.courseName ?? message.trim()) || "class course"),
+      mcqQueryText: courseQueryText,
       needsClassAfterTask: false,
       newActiveAgent: "classes",
       clearActiveAgent: false,
