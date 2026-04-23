@@ -104,7 +104,6 @@ export async function handleEntityAction(
   }
 
   if (entity.action === "pick_course" && entity.courseId) {
-    const isTaskAgentActive = session?.activeAgent === "task";
     const courseId = entity.courseId as Id<"userCourses">;
 
     await ctx.runMutation(internal.mutations.chatSessions.resolvePickedCourseInternal, {
@@ -117,11 +116,11 @@ export async function handleEntityAction(
       { userId, sessionId, courseId, clearTriggerPointer: true },
     );
 
-    if (isTaskAgentActive) {
-      const sessionAfterCourse = await ctx.runQuery(
-        internal.queries.chatSessions.getChatSessionInternal,
-        { userId, sessionId },
-      );
+    const sessionAfterCourse = await ctx.runQuery(
+      internal.queries.chatSessions.getChatSessionInternal,
+      { userId, sessionId },
+    );
+    if (sessionAfterCourse?.activeAgent) {
       return handleWorkflowTurn(ctx, c, client, {
         userId,
         sessionId,
