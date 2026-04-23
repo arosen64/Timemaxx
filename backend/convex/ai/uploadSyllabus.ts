@@ -8,6 +8,17 @@ import { sanitizeUserInput, validateLength } from "../lib/sanitize";
 import { TaskType, TASK_TYPES } from "../lib/taskValidators";
 import { UploadSyllabusResult } from "../lib/syllabusTypes";
 
+const TIMEOUT_MS = 30_000;
+
+function withTimeout<T>(promise: Promise<T>, label: string): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error(`${label} timed out after 30s`)), TIMEOUT_MS)
+    ),
+  ]);
+}
+
 /**
  * Parses a syllabus using Mastra:
  *
@@ -64,17 +75,6 @@ export const uploadSyllabus = action({
       const mastraUrl = process.env.MASTRA_URL;
       if (!mastraUrl) throw new Error("MASTRA_URL not configured");
       const client = new MastraClient({ baseUrl: mastraUrl });
-
-      const TIMEOUT_MS = 30_000;
-
-      function withTimeout<T>(promise: Promise<T>, label: string): Promise<T> {
-        return Promise.race([
-          promise,
-          new Promise<never>((_, reject) =>
-            setTimeout(() => reject(new Error(`${label} timed out after 30s`)), TIMEOUT_MS)
-          ),
-        ]);
-      }
 
       let textForParsing: string;
 

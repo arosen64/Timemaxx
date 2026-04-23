@@ -99,7 +99,7 @@ export default function TranscriptUpload({ onCoursesAdded }: TranscriptUploadPro
       const message = err instanceof Error ? err.message : String(err)
       if (message.includes('NOT_JHU_TRANSCRIPT')) {
         setError("That doesn't look like a JHU transcript. Please upload your official Johns Hopkins transcript.")
-      } else if (message.includes('TRANSCRIPT_TOO_LARGE')) {
+      } else if (message.includes('maximum upload size')) {
         setError('This PDF is too large to process. Please upload a smaller transcript file.')
       } else {
         setError('Failed to parse transcript. Please try again.')
