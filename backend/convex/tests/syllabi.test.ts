@@ -302,6 +302,7 @@ describe("mutations/syllabi – confirmSyllabusTasks", () => {
   });
 
   test("schedules time estimation for each confirmed task", async () => {
+    vi.stubEnv("GEMINI_API_KEY", "");
     const t = makeTestCtx();
     const { userId, withAuth } = await createTestUser(t);
     const syllabusId = await createTestSyllabus(t, userId);
@@ -330,5 +331,36 @@ describe("mutations/syllabi – confirmSyllabusTasks", () => {
 
     expect(scheduled).toHaveLength(2);
     expect(scheduled.every((fn) => fn.name.includes("estimateTaskTime"))).toBe(true);
+
+    await t.finishAllScheduledFunctions(vi.runAllTimers.bind(vi));
+    vi.unstubAllEnvs();
+  });
+
+  test("schedules task embeddings for confirmed tasks when GEMINI_API_KEY is set", async () => {
+    vi.stubEnv("GEMINI_API_KEY", "test-api-key");
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+    const syllabusId = await createTestSyllabus(t, userId);
+
+    await withAuth.mutation(api.mutations.syllabi.confirmSyllabusTasks, {
+      syllabusId,
+      tasks: [
+        {
+          title: "Task A",
+          description: "Description A",
+          dueDate: FUTURE_DATE,
+          taskType: "Essay",
+        },
+      ],
+    });
+
+    const scheduled = await t.run((ctx) =>
+      ctx.db.system.query("_scheduled_functions").collect()
+    );
+
+    expect(scheduled).toHaveLength(2);
+    expect(scheduled.some((fn) => fn.name.includes("estimateTaskTime"))).toBe(true);
+    expect(scheduled.some((fn) => fn.name.includes("generateTaskEmbedding"))).toBe(true);
+    vi.unstubAllEnvs();
   });
 });
