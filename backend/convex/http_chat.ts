@@ -8,6 +8,7 @@ import type { HonoEnv } from "./lib/httpTypes";
 
 import {
   getLastUserMessage,
+  shouldOfferCourseEntityMcq,
   shouldOfferTaskEntityMcq,
   type TaggedMessageView,
 } from "./lib/messageTaggedScope";
@@ -43,6 +44,7 @@ type ChatWorkflowOutput = {
   newActiveAgent: "task" | "feedback" | "preferences" | "classes" | null;
   clearActiveAgent: boolean;
   newTaskAgentIntent: "create" | "rud" | null;
+  newCourseAgentIntent: "add" | "drop" | "view" | "update" | null;
   readyToRecord: boolean;
 };
 
@@ -141,9 +143,11 @@ async function runChatWorkflow(
     taggedEntitiesBlock: string;
     hasCourseTag: boolean;
     taggedTaskId: string | null;
+    taggedCourseId: string | null;
     today: string;
     activeAgent: "task" | "feedback" | "preferences" | "classes" | null;
     taskAgentIntent: "create" | "rud" | null;
+    courseAgentIntent: "add" | "drop" | "view" | "update" | null;
   },
 ): Promise<ChatWorkflowOutput | "quota_exceeded" | null> {
   const wf = client.getWorkflow("chat-workflow");
@@ -381,8 +385,21 @@ async function executeCourseAction(
       }
 
       await ctx.runMutation(api.mutations.userCourses.updateUserCourse, patch);
+      await ctx.runMutation(internal.mutations.chatSessions.setMessageScopeInternal, {
+        userId,
+        sessionId,
+        clear: true,
+      });
+      clearedScopeAfterAction = true;
     } else if (output.actionType === "view_courses") {
-      // Read-only course view: keep assistant reply only.
+      if (activeCourseId !== undefined) {
+        await ctx.runMutation(internal.mutations.chatSessions.setMessageScopeInternal, {
+          userId,
+          sessionId,
+          clear: true,
+        });
+        clearedScopeAfterAction = true;
+      }
     }
   } catch (err) {
     aiText = `Sorry, I ran into an issue: ${err instanceof Error ? err.message : "Please try again."}`;
@@ -417,12 +434,13 @@ async function applySessionStateChanges(
       userId,
       sessionId,
     });
-  } else if (output.newActiveAgent || output.newTaskAgentIntent) {
+  } else if (output.newActiveAgent || output.newTaskAgentIntent || output.newCourseAgentIntent) {
     await ctx.runMutation(internal.mutations.chatSessions.setTaskAgentStateInternal, {
       userId,
       sessionId,
       ...(output.newActiveAgent ? { activeAgent: output.newActiveAgent } : {}),
       ...(output.newTaskAgentIntent ? { taskAgentIntent: output.newTaskAgentIntent } : {}),
+      ...(output.newCourseAgentIntent ? { courseAgentIntent: output.newCourseAgentIntent } : {}),
     });
   }
 }
@@ -439,6 +457,7 @@ async function handleWorkflowTurn(
     session: {
       activeAgent?: string;
       taskAgentIntent?: string;
+      courseAgentIntent?: string;
       activeTaskId?: Id<"tasks">;
       activeCourseId?: Id<"userCourses">;
       lastEntityQueryText?: string;
@@ -471,10 +490,17 @@ async function handleWorkflowTurn(
     : rawTaggedTaskId !== undefined
       ? String(rawTaggedTaskId)
       : null;
+  const rawTaggedCourseId = session?.activeCourseId;
+  const taggedCourseId = shouldOfferCourseEntityMcq(true, rawHistory, message)
+    ? null
+    : rawTaggedCourseId !== undefined
+      ? String(rawTaggedCourseId)
+      : null;
 
   const today = new Date().toISOString().slice(0, 10);
   const activeAgent = (session?.activeAgent as "task" | "feedback" | "preferences" | "classes" | null) ?? null;
   const taskAgentIntent = (session?.taskAgentIntent as "create" | "rud" | null) ?? null;
+  const courseAgentIntent = (session?.courseAgentIntent as "add" | "drop" | "view" | "update" | null) ?? null;
 
   const result = await runChatWorkflow(client, {
     message,
@@ -482,9 +508,11 @@ async function handleWorkflowTurn(
     taggedEntitiesBlock,
     hasCourseTag,
     taggedTaskId,
+    taggedCourseId,
     today,
     activeAgent,
     taskAgentIntent,
+    courseAgentIntent,
   });
 
   if (result === "quota_exceeded") return c.json({ error: "quota_exceeded" }, 429);

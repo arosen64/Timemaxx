@@ -182,6 +182,9 @@ export const setTaskAgentStateInternal = internalMutation({
       v.union(v.literal("task"), v.literal("feedback"), v.literal("preferences"), v.literal("classes")),
     ),
     taskAgentIntent: v.optional(v.union(v.literal("create"), v.literal("rud"))),
+    courseAgentIntent: v.optional(
+      v.union(v.literal("add"), v.literal("drop"), v.literal("view"), v.literal("update")),
+    ),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -195,6 +198,7 @@ export const setTaskAgentStateInternal = internalMutation({
     await ctx.db.patch(row._id, {
       ...(args.activeAgent !== undefined ? { activeAgent: args.activeAgent } : {}),
       ...(args.taskAgentIntent !== undefined ? { taskAgentIntent: args.taskAgentIntent } : {}),
+      ...(args.courseAgentIntent !== undefined ? { courseAgentIntent: args.courseAgentIntent } : {}),
     });
     return null;
   },
@@ -218,8 +222,11 @@ export const clearTaskAgentStateInternal = internalMutation({
     await ctx.db.patch(row._id, {
       activeAgent: undefined,
       taskAgentIntent: undefined,
+      courseAgentIntent: undefined,
       awaitingEntityResolution: false,
       activeEntityStep: undefined,
+      lastEntityQueryText: undefined,
+      entityClarifyTriggerUserMessageId: undefined,
       needsClassAfterTask: false,
       clarificationAttemptCount: 0,
       clarificationExhausted: false,

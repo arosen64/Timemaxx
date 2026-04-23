@@ -222,6 +222,10 @@ export default defineSchema({
     ),
     /** Intent determined by task agent: "create" skips entity MCQ, "rud" triggers it */
     taskAgentIntent: v.optional(v.union(v.literal("create"), v.literal("rud"))),
+    /** Intent determined by course agent for multi-turn class conversations. */
+    courseAgentIntent: v.optional(
+      v.union(v.literal("add"), v.literal("drop"), v.literal("view"), v.literal("update")),
+    ),
     /** Current scope for future chat message tagging. */
     activeTaskId: v.optional(v.id("tasks")),
     activeCourseId: v.optional(v.id("userCourses")),
