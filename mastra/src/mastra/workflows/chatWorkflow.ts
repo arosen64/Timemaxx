@@ -35,10 +35,10 @@ const routedContextSchema = chatContextSchema.extend({
 export const chatWorkflowOutputSchema = z.object({
   reply: z.string(),
   route: z.string().nullable(),
-  status: z.enum(["reply", "domain_clarify", "needs_task_mcq", "needs_class_mcq", "task_action", "canned"]),
+  status: z.enum(["reply", "domain_clarify", "needs_task_mcq", "needs_class_mcq", "task_action", "course_action", "canned"]),
   mcqQueryText: z.string().nullable(),
   needsClassAfterTask: z.boolean(),
-  actionType: z.enum(["create_task", "update_task", "delete_task", "read_task", "none"]).nullable(),
+  actionType: z.enum(["create_task", "update_task", "delete_task", "read_task", "add_course", "drop_course", "update_course", "view_courses", "none"]).nullable(),
   title: z.string().nullable(),
   description: z.string().nullable(),
   taskType: z.string().nullable(),
@@ -50,6 +50,13 @@ export const chatWorkflowOutputSchema = z.object({
   updatedTaskType: z.string().nullable(),
   updatedDueDateIso: z.string().nullable(),
   updatedClassTag: z.string().nullable(),
+  courseName: z.string().nullable(),
+  sisQuery: z.string().nullable(),
+  term: z.string().nullable(),
+  school: z.string().nullable(),
+  studyGoal: z.string().nullable(),
+  grade: z.string().nullable(),
+  difficultyRating: z.number().nullable(),
   newActiveAgent: z.enum(["task", "feedback", "preferences", "classes"]).nullable(),
   clearActiveAgent: z.boolean(),
   newTaskAgentIntent: z.enum(["create", "rud"]).nullable(),
@@ -63,7 +70,8 @@ export type ChatWorkflowOutput = z.infer<typeof chatWorkflowOutputSchema>;
 const NO_ACTION = {
   actionType: null, title: null, description: null, taskType: null, dueDateIso: null,
   classTag: null, deleteConfirmed: false, updatedTitle: null, updatedDescription: null,
-  updatedTaskType: null, updatedDueDateIso: null, updatedClassTag: null,
+  updatedTaskType: null, updatedDueDateIso: null, updatedClassTag: null, courseName: null,
+  sisQuery: null, term: null, school: null, studyGoal: null, grade: null, difficultyRating: null,
 } as const;
 
 // canned replies for routes
@@ -115,6 +123,38 @@ function courseOutput(output: CourseAgentOutput, ctx: { message: string; hasCour
   const { message, hasCourseTag } = ctx;
   if (output.needsClassClarification && !hasCourseTag) {
     return { reply: "Which class are you referring to? Pick one below, or choose **Other** to see more options.", route: "classes", status: "needs_class_mcq", mcqQueryText: message.trim() || output.courseName || output.sisQuery || "class course", needsClassAfterTask: false, newActiveAgent: "classes", clearActiveAgent: false, newTaskAgentIntent: null, readyToRecord: false, ...NO_ACTION };
+  }
+  if (output.readyToExecute && output.actionType !== "none") {
+    return {
+      reply: output.message,
+      route: "classes",
+      status: "course_action",
+      mcqQueryText: null,
+      needsClassAfterTask: false,
+      actionType: output.actionType,
+      courseName: output.courseName,
+      sisQuery: output.sisQuery,
+      term: output.term,
+      school: output.school,
+      studyGoal: output.studyGoal,
+      grade: output.grade,
+      difficultyRating: output.difficultyRating,
+      newActiveAgent: null,
+      clearActiveAgent: true,
+      newTaskAgentIntent: null,
+      readyToRecord: false,
+      title: null,
+      description: null,
+      taskType: null,
+      dueDateIso: null,
+      classTag: null,
+      deleteConfirmed: false,
+      updatedTitle: null,
+      updatedDescription: null,
+      updatedTaskType: null,
+      updatedDueDateIso: null,
+      updatedClassTag: null,
+    };
   }
   return { reply: output.message, route: "classes", status: "reply", mcqQueryText: null, needsClassAfterTask: false, newActiveAgent: "classes", clearActiveAgent: false, newTaskAgentIntent: null, readyToRecord: false, ...NO_ACTION };
 }
@@ -183,20 +223,6 @@ const courseStep = createStep({
   outputSchema: chatWorkflowOutputSchema,
   execute: async ({ inputData }): Promise<ChatWorkflowOutput> => {
     const { message, historyText, taggedEntitiesBlock, hasCourseTag, today } = inputData;
-    if (!hasCourseTag) {
-      return {
-        reply: "Which class are you referring to? Pick one below, or choose **Other** to see more options.",
-        route: "classes",
-        status: "needs_class_mcq" as const,
-        mcqQueryText: message.trim() || "class course",
-        needsClassAfterTask: false,
-        newActiveAgent: "classes",
-        clearActiveAgent: false,
-        newTaskAgentIntent: null,
-        readyToRecord: false,
-        ...NO_ACTION,
-      };
-    }
     const continueNote = message.trim()
       ? "Respond to the latest user message above."
       : "The user selected an entity. Continue based on what is now resolved.";

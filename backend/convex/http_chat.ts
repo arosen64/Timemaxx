@@ -1,6 +1,7 @@
 import { Hono, type Context } from "hono";
 import { MastraClient } from "@mastra/client-js";
 import { internal } from "./_generated/api";
+import { api } from "./_generated/api";
 import type { ActionCtx } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
 import type { HonoEnv } from "./lib/httpTypes";
@@ -17,10 +18,10 @@ import { handleEntityAction } from "./lib/chatEntityActions";
 type ChatWorkflowOutput = {
   reply: string;
   route: string | null;
-  status: "reply" | "domain_clarify" | "needs_task_mcq" | "needs_class_mcq" | "task_action" | "canned";
+  status: "reply" | "domain_clarify" | "needs_task_mcq" | "needs_class_mcq" | "task_action" | "course_action" | "canned";
   mcqQueryText: string | null;
   needsClassAfterTask: boolean;
-  actionType: "create_task" | "update_task" | "delete_task" | "read_task" | "none" | null;
+  actionType: "create_task" | "update_task" | "delete_task" | "read_task" | "add_course" | "drop_course" | "update_course" | "view_courses" | "none" | null;
   title: string | null;
   description: string | null;
   taskType: string | null;
@@ -32,6 +33,13 @@ type ChatWorkflowOutput = {
   updatedTaskType: string | null;
   updatedDueDateIso: string | null;
   updatedClassTag: string | null;
+  courseName: string | null;
+  sisQuery: string | null;
+  term: string | null;
+  school: string | null;
+  studyGoal: string | null;
+  grade: string | null;
+  difficultyRating: number | null;
   newActiveAgent: "task" | "feedback" | "preferences" | "classes" | null;
   clearActiveAgent: boolean;
   newTaskAgentIntent: "create" | "rud" | null;
@@ -62,6 +70,40 @@ function parseDueDateIso(iso: string): number {
   const normalized = hasTime ? iso : `${iso}T23:59:59`;
   const ms = new Date(normalized).getTime();
   return isNaN(ms) ? Date.now() + 86_400_000 : ms;
+}
+
+const STUDY_GOALS = new Set(["Just pass", "Do well", "Ace it"]);
+const GRADES = new Set(["A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D+", "D", "D-", "F", "IP", "S", "U", "NG"]);
+
+function termToOrdinal(termName: string): number | null {
+  const lower = termName.toLowerCase();
+  const yearMatch = termName.match(/\d{4}/);
+  if (!yearMatch) return null;
+  const year = Number.parseInt(yearMatch[0], 10);
+  const season =
+    lower.includes("intersession") ? 0 :
+    lower.includes("spring") ? 1 :
+    lower.includes("summer") ? 2 :
+    lower.includes("fall") ? 3 : null;
+  if (season === null) return null;
+  return year * 10 + season;
+}
+
+function currentTermOrdinal(date = new Date()): number {
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+  const year = date.getFullYear();
+  const season =
+    month < 1 || (month === 1 && day < 15) ? 0 :
+    month < 6 ? 1 :
+    month < 8 || (month === 8 && day < 15) ? 2 : 3;
+  return year * 10 + season;
+}
+
+function isPastTerm(termName: string): boolean {
+  const ordinal = termToOrdinal(termName);
+  if (ordinal === null) return false;
+  return ordinal < currentTermOrdinal();
 }
 
 async function runChatWorkflow(
@@ -189,6 +231,113 @@ async function executeTaskAction(
   return aiText;
 }
 
+async function executeCourseAction(
+  ctx: ActionCtx,
+  params: {
+    userId: Id<"users">;
+    sessionId: string;
+    activeCourseId?: Id<"userCourses">;
+    output: ChatWorkflowOutput;
+  },
+): Promise<string> {
+  const { userId, sessionId, activeCourseId, output } = params;
+  let aiText = output.reply;
+  let clearedScopeAfterAction = false;
+
+  try {
+    if (output.actionType === "add_course") {
+      if (!output.sisQuery || !output.term || !output.school) {
+        throw new Error("Missing required course fields (query, term, or school).");
+      }
+      const sisResults = await ctx.runAction(api.actions.jhuCourses.getCoursesByTerm, {
+        term: output.term,
+        school: output.school,
+        courseTitle: output.sisQuery,
+      }) as Array<{ OfferingName?: string; Title?: string; Credits?: string }>;
+      if (!Array.isArray(sisResults) || sisResults.length === 0) {
+        throw new Error("I could not find a matching SIS course. Please provide a more specific code or title.");
+      }
+      const normalizedQuery = output.sisQuery.trim().toLowerCase();
+      const exact = sisResults.find((c) =>
+        `${c.OfferingName ?? ""} ${c.Title ?? ""}`.toLowerCase().includes(normalizedQuery),
+      ) ?? sisResults[0];
+      const offeringName = exact.OfferingName;
+      const titleText = exact.Title;
+      if (!offeringName || !titleText) {
+        throw new Error("SIS result is missing course code/title.");
+      }
+      const isPast = isPastTerm(output.term);
+      if (isPast) {
+        if (!output.grade || !GRADES.has(output.grade)) {
+          throw new Error("For past terms, grade must be one of the app's allowed grade options.");
+        }
+        if (output.difficultyRating === null || output.difficultyRating < 1 || output.difficultyRating > 5) {
+          throw new Error("For past terms, difficulty rating must be between 1 and 5.");
+        }
+      } else if (!output.studyGoal || !STUDY_GOALS.has(output.studyGoal)) {
+        throw new Error("For current/future terms, study goal must be one of: Just pass, Do well, Ace it.");
+      }
+
+      let description: string | undefined;
+      let prereqs: string[] | undefined;
+      try {
+        const details = await ctx.runAction(api.actions.jhuCourses.getCourseDetails, {
+          offeringName,
+          term: output.term,
+        }) as { description?: string; prereqs?: string[] } | null;
+        if (details) {
+          description = typeof details.description === "string" ? details.description : undefined;
+          prereqs = Array.isArray(details.prereqs) ? details.prereqs : undefined;
+        }
+      } catch {
+        // Best effort only: keep add flow resilient.
+      }
+
+      const fullTitle = `${offeringName}: ${titleText}`;
+      const credits = exact.Credits ? Number.parseFloat(exact.Credits) : undefined;
+      await ctx.runMutation(api.mutations.userCourses.addUserCourse, {
+        courseCode: offeringName,
+        title: fullTitle,
+        description,
+        prereqs,
+        credits,
+        term: output.term,
+        studyGoal: !isPast ? output.studyGoal ?? undefined : undefined,
+        grade: isPast ? output.grade ?? undefined : undefined,
+        difficultyRating: isPast ? output.difficultyRating ?? undefined : undefined,
+      });
+    } else if (output.actionType === "drop_course") {
+      if (activeCourseId === undefined) throw new Error("No class selected.");
+      await ctx.runMutation(api.mutations.userCourses.deleteUserCourse, {
+        userCourseId: activeCourseId,
+      });
+      await ctx.runMutation(internal.mutations.chatSessions.setMessageScopeInternal, {
+        userId,
+        sessionId,
+        clear: true,
+      });
+      clearedScopeAfterAction = true;
+    } else if (output.actionType === "view_courses") {
+      // Read-only course view: keep assistant reply only.
+    }
+  } catch (err) {
+    aiText = `Sorry, I ran into an issue: ${err instanceof Error ? err.message : "Please try again."}`;
+  }
+
+  await ctx.runMutation(internal.mutations.chatSessions.clearTaskAgentStateInternal, {
+    userId,
+    sessionId,
+  });
+  await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
+    userId,
+    sessionId,
+    role: "assistant",
+    content: aiText,
+    ...(activeCourseId !== undefined && !clearedScopeAfterAction ? { courseId: activeCourseId } : {}),
+  });
+  return aiText;
+}
+
 async function applySessionStateChanges(
   ctx: ActionCtx,
   userId: Id<"users">,
@@ -291,6 +440,23 @@ async function handleWorkflowTurn(
       text: aiText,
       status: "routed",
       route: "tasks",
+      entityKind: "none",
+      messageTag: "none",
+      tagConfidence: 0,
+    });
+  }
+
+  if (output.status === "course_action") {
+    const aiText = await executeCourseAction(ctx, {
+      userId,
+      sessionId,
+      activeCourseId: sessionActiveCourseId,
+      output,
+    });
+    return c.json({
+      text: aiText,
+      status: "routed",
+      route: "classes",
       entityKind: "none",
       messageTag: "none",
       tagConfidence: 0,
