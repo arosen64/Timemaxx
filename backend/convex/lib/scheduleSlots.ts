@@ -13,8 +13,6 @@ import {
 // Types
 // ---------------------------------------------------------------------------
 
-export const DEFAULT_DUE_FALLBACK_MS = 7 * 24 * 60 * 60 * 1000;
-
 export type OccupiedInterval = { startMs: number; endMs: number; title: string };
 export type WorkHoursRow = { day: string; available: number[]; blocked: number[] };
 
@@ -30,6 +28,7 @@ export type PoolSlot = { startMs: number; inAvailableSlot: boolean };
 export const SCHEDULE_HORIZON_MS = 21 * 24 * 60 * 60 * 1000; // 21 days
 const MAX_CANDIDATES = 20;
 export const FIFTEEN_MIN_MS = 15 * 60 * 1000;
+export const DEFAULT_DUE_FALLBACK_MS = 7 * 24 * 60 * 60 * 1000;
 
 // ---------------------------------------------------------------------------
 // Shared date utilities
