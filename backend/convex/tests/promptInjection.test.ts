@@ -25,7 +25,6 @@ vi.mock("@ai-sdk/anthropic", () => ({
 // ---------------------------------------------------------------------------
 // Prompt constants — used to verify system prompts are not overridden
 // ---------------------------------------------------------------------------
-import { TRANSCRIPT_SYSTEM } from "../lib/prompts/parseTranscript.prompt";
 import { TIME_ESTIMATE_SYSTEM } from "../lib/prompts/estimateTaskTime.prompt";
 import { internal } from "../_generated/api";
 
