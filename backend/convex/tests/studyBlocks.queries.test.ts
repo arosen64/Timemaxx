@@ -255,3 +255,49 @@ describe("queries/studyBlocks – getFutureStudyBlocksForExport", () => {
     expect(result).toHaveLength(0);
   });
 });
+
+// ─── getAllStudyBlocksWithTasksInternal (taskRecommendedStart) ────────────────
+
+describe("queries/studyBlocks – getAllStudyBlocksWithTasksInternal taskRecommendedStart", () => {
+  test("includes taskRecommendedStart when the task has recommended_start set", async () => {
+    const t = makeTestCtx();
+    const { userId } = await createTestUser(t);
+    const dueDate = Date.now() + 30 * 86_400_000;
+    const recommendedStart = dueDate - 14 * 24 * 60 * 60 * 1000;
+
+    const taskId = await t.run((ctx) =>
+      ctx.db.insert("tasks", {
+        userId: userId as any,
+        title: "Task with recommended start",
+        description: "desc",
+        taskType: "Essay",
+        dueDate,
+        recommended_start: recommendedStart,
+        createdAt: Date.now(),
+        isManualEstimate: false,
+      })
+    );
+    await seedStudyBlock(t, taskId);
+
+    const result = await t.query(internal.queries.studyBlocks.getAllStudyBlocksWithTasksInternal, {
+      userId: userId as any,
+    });
+
+    expect(result).toHaveLength(1);
+    expect(result[0].taskRecommendedStart).toBe(recommendedStart);
+  });
+
+  test("returns taskRecommendedStart as undefined when task has no recommended_start", async () => {
+    const t = makeTestCtx();
+    const { userId } = await createTestUser(t);
+    const taskId = await seedTask(t, userId);
+    await seedStudyBlock(t, taskId);
+
+    const result = await t.query(internal.queries.studyBlocks.getAllStudyBlocksWithTasksInternal, {
+      userId: userId as any,
+    });
+
+    expect(result).toHaveLength(1);
+    expect(result[0].taskRecommendedStart).toBeUndefined();
+  });
+});
