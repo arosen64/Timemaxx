@@ -92,6 +92,7 @@ export const scheduleTask = action({
         workHoursGrid,
         occupiedIntervals,
         timezone: args.timezone,
+        recommendedStartMs: task.recommended_start,
       })
     );
 
@@ -104,6 +105,7 @@ export const scheduleTask = action({
       unscheduled.map((_block, i) => ({
         taskTitle: task.title,
         dueDate: task.dueDate,
+        recommendedStart: task.recommended_start,
         candidates: blockCandidates[i],
       })),
       productivityTraits,

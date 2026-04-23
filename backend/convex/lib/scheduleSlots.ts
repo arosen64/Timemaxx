@@ -189,6 +189,7 @@ export function enumerateSlots(opts: {
   workHoursGrid: WorkHoursRow[];
   occupiedIntervals: OccupiedInterval[];
   timezone: string;
+  recommendedStartMs?: number;
 }): CandidateSlot[] {
   const { fromMs, dueDateMs, durationMinutes, workHoursGrid, occupiedIntervals, timezone } = opts;
   const durationMs = durationMinutes * 60000;
@@ -196,7 +197,10 @@ export function enumerateSlots(opts: {
   const limitMs = Math.min(dueDateMs, horizonMs);
 
   const candidates: CandidateSlot[] = [];
-  let cursor = roundUpTo15Min(fromMs);
+  const effectiveFromMs = opts.recommendedStartMs !== undefined
+    ? Math.max(fromMs, opts.recommendedStartMs)
+    : fromMs;
+  let cursor = roundUpTo15Min(effectiveFromMs);
 
   while (cursor < limitMs && candidates.length < MAX_CANDIDATES) {
     const endMs = cursor + durationMs;
@@ -272,12 +276,14 @@ export function filterPoolForBlock(opts: {
   workHoursGrid: WorkHoursRow[];
   occupiedIntervals: OccupiedInterval[];
   timezone: string;
+  recommendedStartMs?: number;
 }): CandidateSlot[] {
   const { pool, dueDateMs, durationMinutes, workHoursGrid, occupiedIntervals, timezone } = opts;
   const durationMs = durationMinutes * 60000;
   const candidates: CandidateSlot[] = [];
 
   for (const slot of pool) {
+    if (opts.recommendedStartMs !== undefined && slot.startMs < opts.recommendedStartMs) continue;
     if (slot.startMs >= dueDateMs) continue;
     const endMs = slot.startMs + durationMs;
     if (endMs > dueDateMs) continue;

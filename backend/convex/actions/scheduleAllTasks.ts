@@ -140,6 +140,7 @@ export const scheduleAllTasks = action({
           workHoursGrid,
           occupiedIntervals,
           timezone: args.timezone,
+          recommendedStartMs: task.recommended_start,
         });
 
         if (candidates.length === 0) break; // No slots — stop collecting for this task
@@ -152,11 +153,15 @@ export const scheduleAllTasks = action({
     // Phase 2: one Gemini call for all collected blocks
     const chosenIndices = entries.length > 0
       ? await selectAllSlotsWithAI(
-          entries.map((e) => ({
-            taskTitle: tasksToSchedule.find((t) => t._id === e.taskId)!.title,
-            dueDate: tasksToSchedule.find((t) => t._id === e.taskId)!.dueDate,
-            candidates: e.candidates,
-          })),
+          entries.map((e) => {
+            const t = tasksToSchedule.find((t) => t._id === e.taskId)!;
+            return {
+              taskTitle: t.title,
+              dueDate: t.dueDate,
+              recommendedStart: t.recommended_start,
+              candidates: e.candidates,
+            };
+          }),
           productivityTraits,
         )
       : [];
