@@ -59,11 +59,21 @@ Do NOT set needsClassClarification when:
   - The user is requesting a full list (e.g. "show all my classes")
   - resolvedCourseId is already provided in context
 
+For ADD flow specifically:
+  - First gather term and school before asking for course search text.
+  - Once term + school + sisQuery are known, set needsClassClarification = true to trigger SIS-based course options.
+  - This picker is used to choose a concrete SIS course candidate before execution.
+  - HARD RULE: do NOT ask for course code/name/sisQuery until BOTH term and school are known.
+  - HARD RULE: if term is missing, your next question MUST be about term only.
+  - HARD RULE: if term is known but school is missing, your next question MUST be about school only.
+  - HARD RULE: only after both term and school are known, ask for sisQuery.
+
 ## Gathering info for ADD
 Required before readyToExecute:
-  1. sisQuery (course code/name search text)
-  2. term
-  3. school
+  1. term
+  2. school
+  3. sisQuery (course code/name search text)
+  3.5 choose a specific SIS course via class clarification picker
   4. term-dependent option:
      - If term is current/future: studyGoal is required and MUST be one of allowed values
      - If term is past: grade is required (allowed values above) and difficultyRating required (1-5)
@@ -71,6 +81,16 @@ Required before readyToExecute:
 courseName is optional display text; do not require it for execution.
 If any required field is missing, ask one short follow-up.
 Collect one missing piece per turn. Do not ask two questions in the same message.
+
+Strict ADD question order:
+  - Step 1 ask term (if missing)
+  - Step 2 ask school (if missing)
+  - Step 3 ask course search text sisQuery (if missing)
+  - Step 4 trigger class clarification MCQ (needsClassClarification = true)
+  - Step 5 ask studyGoal OR grade+difficultyRating based on term timing
+
+If user says "want to add course" with no details, the correct next question is:
+"Which term is this course for? (for example, Spring 2026)"
 
 ## Gathering info for UPDATE
 When resolvedCourseId is set:

@@ -63,6 +63,7 @@ const MENU_USER_LABELS: Record<string, string> = {
   schedule: "Schedule something",
   preferences: "Change my preferences",
 };
+type EntityCandidate = { id: string; label: string; subtitle: string };
 
 function parseDueDateIso(iso: string): number {
   if (!iso) return Date.now() + 86_400_000;
@@ -74,6 +75,8 @@ function parseDueDateIso(iso: string): number {
 
 const STUDY_GOALS = new Set(["Just pass", "Do well", "Ace it"]);
 const GRADES = new Set(["A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D+", "D", "D-", "F", "IP", "S", "U", "NG"]);
+const SIS_CONTEXT_PREFIX = "__sis_ctx__|";
+const SIS_CANDIDATE_PREFIX = "__sis_pick__|";
 
 function termToOrdinal(termName: string): number | null {
   const lower = termName.toLowerCase();
@@ -104,6 +107,30 @@ function isPastTerm(termName: string): boolean {
   const ordinal = termToOrdinal(termName);
   if (ordinal === null) return false;
   return ordinal < currentTermOrdinal();
+}
+
+function encodeSisContext(input: { term: string; school: string; query: string }): string {
+  return `${SIS_CONTEXT_PREFIX}${input.term}||${input.school}||${input.query}`;
+}
+
+function decodeSisContext(s: string): { term: string; school: string; query: string } | null {
+  if (!s.startsWith(SIS_CONTEXT_PREFIX)) return null;
+  const body = s.slice(SIS_CONTEXT_PREFIX.length);
+  const [term, school, query] = body.split("||");
+  if (!term || !school || !query) return null;
+  return { term, school, query };
+}
+
+function encodeSisCandidate(input: { offeringName: string; title: string; term: string; school: string }): string {
+  return `${SIS_CANDIDATE_PREFIX}${input.offeringName}||${input.title}||${input.term}||${input.school}`;
+}
+
+function decodeSisCandidate(s: string): { offeringName: string; title: string; term: string; school: string } | null {
+  if (!s.startsWith(SIS_CANDIDATE_PREFIX)) return null;
+  const body = s.slice(SIS_CANDIDATE_PREFIX.length);
+  const [offeringName, title, term, school] = body.split("||");
+  if (!offeringName || !title || !term || !school) return null;
+  return { offeringName, title, term, school };
 }
 
 async function runChatWorkflow(
@@ -377,6 +404,7 @@ async function handleWorkflowTurn(
       taskAgentIntent?: string;
       activeTaskId?: Id<"tasks">;
       activeCourseId?: Id<"userCourses">;
+      lastEntityQueryText?: string;
     } | null;
     triggerUserMessageId?: Id<"chatMessages">;
   },
@@ -505,14 +533,59 @@ async function handleWorkflowTurn(
 
   if (output.status === "needs_class_mcq") {
     const queryText = output.mcqQueryText ?? (message.trim() || "class course");
-    const { candidates, hasMore } = await ctx.runAction(
-      internal.actions.entityResolution.searchCourseCandidates,
-      { userId, queryText, excludeIds: [] },
-    );
+    const sessionSisContext = decodeSisContext(session?.lastEntityQueryText ?? "");
+    const shouldUseSisMcq =
+      output.route === "classes" &&
+      (
+        (
+          output.term !== null &&
+          output.school !== null &&
+          (output.sisQuery !== null || output.courseName !== null)
+        ) ||
+        sessionSisContext !== null
+      );
+    let candidates: EntityCandidate[] = [];
+    let hasMore = false;
+    if (shouldUseSisMcq) {
+      const sisTerm = output.term ?? sessionSisContext?.term ?? null;
+      const sisSchool = output.school ?? sessionSisContext?.school ?? null;
+      const sisQuery = (output.sisQuery ?? output.courseName ?? sessionSisContext?.query ?? queryText).trim();
+      if (!sisTerm || !sisSchool) {
+        candidates = [];
+        hasMore = false;
+      } else {
+      const rows = (await ctx.runAction(api.actions.jhuCourses.getCoursesByTerm, {
+        term: sisTerm,
+        school: sisSchool,
+        courseTitle: sisQuery,
+      })) as Array<{ OfferingName?: string; Title?: string }>;
+      const filtered = rows.filter((r) => r.OfferingName && r.Title).slice(0, 5);
+      candidates = filtered.map((r) => ({
+        id: encodeSisCandidate({
+          offeringName: String(r.OfferingName),
+          title: String(r.Title),
+          term: sisTerm,
+          school: sisSchool,
+        }),
+        label: String(r.OfferingName),
+        subtitle: String(r.Title),
+      }));
+      hasMore = rows.length > candidates.length;
+      }
+    } else {
+      const vectorMatches = await ctx.runAction(
+        internal.actions.entityResolution.searchCourseCandidates,
+        { userId, queryText, excludeIds: [] },
+      );
+      candidates = vectorMatches.candidates as EntityCandidate[];
+      hasMore = vectorMatches.hasMore;
+    }
     const taskForIntro = sessionActiveTaskId;
     const introText =
       candidates.length === 0
-        ? "I couldn't find any courses in your profile. Add courses from the Classes page, then try again."
+        ? shouldUseSisMcq
+          ? "I couldn't find SIS matches for that term/school/query. Try a different keyword or course code."
+          : "I couldn't find any courses in your profile. Add courses from the Classes page, then try again."
         : output.reply;
     await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
       userId,
@@ -525,7 +598,13 @@ async function handleWorkflowTurn(
       await ctx.runMutation(internal.mutations.chatSessions.setEntityPromptStateInternal, {
         userId,
         sessionId,
-        lastEntityQueryText: queryText,
+        lastEntityQueryText: shouldUseSisMcq
+          ? encodeSisContext({
+              term: output.term ?? sessionSisContext?.term ?? "",
+              school: output.school ?? sessionSisContext?.school ?? "",
+              query: (output.sisQuery ?? output.courseName ?? sessionSisContext?.query ?? queryText).trim(),
+            })
+          : queryText,
         activeEntityStep: "class",
         needsClassAfterTask: false,
         awaitingEntityResolution: true,
@@ -613,6 +692,73 @@ chatApp.post("/api/chat", async (c) => {
     body.entity?.action === "other_tasks" ||
     body.entity?.action === "other_courses"
   ) {
+    if (
+      body.entity.action === "pick_course" &&
+      typeof body.entity.courseId === "string" &&
+      body.entity.courseId.startsWith(SIS_CANDIDATE_PREFIX)
+    ) {
+      const sis = decodeSisCandidate(body.entity.courseId);
+      if (!sis) return c.json({ error: "Invalid SIS selection" }, 400);
+      const synthetic = `I choose ${sis.offeringName}: ${sis.title} for ${sis.term} at ${sis.school}.`;
+      const syntheticUserMessageId = await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
+        userId,
+        sessionId,
+        role: "user",
+        content: synthetic,
+      });
+      const sessionAfterSynthetic = await ctx.runQuery(internal.queries.chatSessions.getChatSessionInternal, {
+        userId,
+        sessionId,
+      });
+      return handleWorkflowTurn(ctx, c, client, {
+        userId,
+        sessionId,
+        message: synthetic,
+        session: sessionAfterSynthetic,
+        triggerUserMessageId: syntheticUserMessageId,
+      });
+    }
+
+    if (body.entity.action === "other_courses") {
+      const sisCtx = decodeSisContext(session?.lastEntityQueryText ?? "");
+      if (sisCtx) {
+        const excludeTokens = (body.entity.excludeCourseIds ?? []) as string[];
+        const excludeOffering = new Set(
+          excludeTokens
+            .map((id) => decodeSisCandidate(id))
+            .filter((v): v is NonNullable<typeof v> => v !== null)
+            .map((v) => v.offeringName),
+        );
+        const rows = (await ctx.runAction(api.actions.jhuCourses.getCoursesByTerm, {
+          term: sisCtx.term,
+          school: sisCtx.school,
+          courseTitle: sisCtx.query,
+        })) as Array<{ OfferingName?: string; Title?: string }>;
+        const filtered = rows
+          .filter((r) => r.OfferingName && r.Title)
+          .filter((r) => !excludeOffering.has(String(r.OfferingName)))
+          .slice(0, 5);
+        const candidates = filtered.map((r) => ({
+          id: encodeSisCandidate({
+            offeringName: String(r.OfferingName),
+            title: String(r.Title),
+            term: sisCtx.term,
+            school: sisCtx.school,
+          }),
+          label: String(r.OfferingName),
+          subtitle: String(r.Title),
+        }));
+        return c.json({
+          text: "Which class are you referring to? Pick one below, or choose **Other** to see more options.",
+          status: "needs_entity_clarification",
+          phase: "class",
+          entityCandidates: candidates,
+          entityHasMore: rows.length > excludeOffering.size + candidates.length,
+          route: "classes",
+        });
+      }
+    }
+
     return handleEntityAction(
       ctx, c, client,
       { userId, sessionId, session, entity: body.entity as Parameters<typeof handleEntityAction>[3]["entity"] },

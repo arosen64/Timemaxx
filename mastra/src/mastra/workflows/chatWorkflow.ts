@@ -101,7 +101,36 @@ function taskOutput(output: TaskAgentOutput, ctx: {
     return { reply: "Which task would you like to work with? Pick one below, or choose **Other** to see more options.", route: "tasks", status: "needs_task_mcq", mcqQueryText: message.trim() || "task assignment", needsClassAfterTask: false, newActiveAgent: "task", clearActiveAgent: false, newTaskAgentIntent: newIntent, readyToRecord: false, ...NO_ACTION };
   }
   if (output.readyToExecute && output.actionType !== "none") {
-    return { reply: output.message, route: "tasks", status: "task_action", mcqQueryText: null, needsClassAfterTask: false, actionType: output.actionType, title: output.title, description: output.description, taskType: output.taskType, dueDateIso: output.dueDateIso, classTag: output.classTag, deleteConfirmed: output.deleteConfirmed, updatedTitle: output.updatedTitle, updatedDescription: output.updatedDescription, updatedTaskType: output.updatedTaskType, updatedDueDateIso: output.updatedDueDateIso, updatedClassTag: output.updatedClassTag, newActiveAgent: null, clearActiveAgent: true, newTaskAgentIntent: null, readyToRecord: false };
+    return {
+      reply: output.message,
+      route: "tasks",
+      status: "task_action",
+      mcqQueryText: null,
+      needsClassAfterTask: false,
+      actionType: output.actionType,
+      title: output.title,
+      description: output.description,
+      taskType: output.taskType,
+      dueDateIso: output.dueDateIso,
+      classTag: output.classTag,
+      deleteConfirmed: output.deleteConfirmed,
+      updatedTitle: output.updatedTitle,
+      updatedDescription: output.updatedDescription,
+      updatedTaskType: output.updatedTaskType,
+      updatedDueDateIso: output.updatedDueDateIso,
+      updatedClassTag: output.updatedClassTag,
+      courseName: null,
+      sisQuery: null,
+      term: null,
+      school: null,
+      studyGoal: null,
+      grade: null,
+      difficultyRating: null,
+      newActiveAgent: null,
+      clearActiveAgent: true,
+      newTaskAgentIntent: null,
+      readyToRecord: false,
+    };
   }
   return { reply: output.message, route: "tasks", status: "reply", mcqQueryText: null, needsClassAfterTask: false, newActiveAgent: "task", clearActiveAgent: false, newTaskAgentIntent: newIntent, readyToRecord: false, ...NO_ACTION };
 }
@@ -121,8 +150,83 @@ function feedbackOutput(output: FeedbackAgentOutput, ctx: { message: string }): 
 // Course output formatting for chat workflow
 function courseOutput(output: CourseAgentOutput, ctx: { message: string; hasCourseTag: boolean }): ChatWorkflowOutput {
   const { message, hasCourseTag } = ctx;
+  // Enforce deterministic add-course field order in workflow (not prompt-dependent):
+  // term -> school -> sisQuery -> class MCQ -> remaining options.
+  if (output.intent === "add") {
+    if (!output.term) {
+      return {
+        reply: "Which term is this course for? (for example, Spring 2026)",
+        route: "classes",
+        status: "reply",
+        mcqQueryText: null,
+        needsClassAfterTask: false,
+        newActiveAgent: "classes",
+        clearActiveAgent: false,
+        newTaskAgentIntent: null,
+        readyToRecord: false,
+        ...NO_ACTION,
+      };
+    }
+    if (!output.school) {
+      return {
+        reply: "Which school is this course in? (for example, Krieger School of Arts and Sciences or Whiting School of Engineering)",
+        route: "classes",
+        status: "reply",
+        mcqQueryText: null,
+        needsClassAfterTask: false,
+        newActiveAgent: "classes",
+        clearActiveAgent: false,
+        newTaskAgentIntent: null,
+        readyToRecord: false,
+        ...NO_ACTION,
+      };
+    }
+    if (!output.sisQuery && !output.courseName) {
+      return {
+        reply: "What course should I search for in SIS? You can share a course code or title keyword.",
+        route: "classes",
+        status: "reply",
+        mcqQueryText: null,
+        needsClassAfterTask: false,
+        newActiveAgent: "classes",
+        clearActiveAgent: false,
+        newTaskAgentIntent: null,
+        readyToRecord: false,
+        ...NO_ACTION,
+      };
+    }
+  }
   if (output.needsClassClarification && !hasCourseTag) {
-    return { reply: "Which class are you referring to? Pick one below, or choose **Other** to see more options.", route: "classes", status: "needs_class_mcq", mcqQueryText: message.trim() || output.courseName || output.sisQuery || "class course", needsClassAfterTask: false, newActiveAgent: "classes", clearActiveAgent: false, newTaskAgentIntent: null, readyToRecord: false, ...NO_ACTION };
+    return {
+      reply: "Which class are you referring to? Pick one below, or choose **Other** to see more options.",
+      route: "classes",
+      status: "needs_class_mcq",
+      mcqQueryText: ((output.sisQuery ?? output.courseName ?? message.trim()) || "class course"),
+      needsClassAfterTask: false,
+      newActiveAgent: "classes",
+      clearActiveAgent: false,
+      newTaskAgentIntent: null,
+      readyToRecord: false,
+      actionType: "none",
+      title: null,
+      description: null,
+      taskType: null,
+      dueDateIso: null,
+      classTag: null,
+      deleteConfirmed: false,
+      updatedTitle: null,
+      updatedDescription: null,
+      updatedTaskType: null,
+      updatedDueDateIso: null,
+      updatedClassTag: null,
+      courseName: output.courseName,
+      sisQuery: output.sisQuery,
+      term: output.term,
+      school: output.school,
+      studyGoal: output.studyGoal,
+      grade: output.grade,
+      difficultyRating: output.difficultyRating,
+    };
   }
   if (output.readyToExecute && output.actionType !== "none") {
     return {
