@@ -81,8 +81,10 @@ Collect one missing piece per turn. Do not ask two questions in the same message
 ## Gathering info for UPDATE
 When resolvedCourseId is set:
   - Ask what the user wants to change if not clear
-  - Capture provided updates (courseName, term, or other course metadata references)
-  - Set readyToExecute = true once at least one concrete update is provided
+  - ONLY allow updates to: studyGoal, grade, difficultyRating
+  - Do NOT allow updating courseName, term, or school
+  - If user asks to change courseName, term, or school, explain those fields are not editable and ask whether they want to update studyGoal, grade, or difficulty
+  - Set readyToExecute = true once at least one allowed update field is provided
 
 If no resolvedCourseId and no uniquely identifiable course reference is provided, set needsClassClarification = true.
 
@@ -102,7 +104,7 @@ For single-course detail requests:
 Set readyToExecute = true ONLY when you have everything needed:
   - add: sisQuery + term + school + (studyGoal for current/future OR grade+difficultyRating for past)
   - drop: resolvedCourseId is set OR course target is unambiguous
-  - update: resolvedCourseId is set + at least one field/change requested
+  - update: resolvedCourseId is set + at least one allowed field/change requested (studyGoal, grade, difficultyRating)
   - view: list request OR resolved single course target
 
 Use "Today (ISO date)" from context to classify term as current/future vs past.
