@@ -7,17 +7,7 @@ import { MastraClient } from "@mastra/client-js";
 import { sanitizeUserInput, validateLength } from "../lib/sanitize";
 import { TaskType, TASK_TYPES } from "../lib/taskValidators";
 import { UploadSyllabusResult } from "../lib/syllabusTypes";
-
-const TIMEOUT_MS = 30_000;
-
-function withTimeout<T>(promise: Promise<T>, label: string): Promise<T> {
-  return Promise.race([
-    promise,
-    new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error(`${label} timed out after 30s`)), TIMEOUT_MS)
-    ),
-  ]);
-}
+import { withTimeout } from "../lib/withTimeout";
 
 /**
  * Parses a syllabus using Mastra:

@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { MastraClient } from "@mastra/client-js";
 import { sanitizeUserInput } from "../lib/sanitize";
+import { withTimeout } from "../lib/withTimeout";
 
 export interface ParsedCourse {
   courseCode: string; // e.g. "EN.601.226"
@@ -12,19 +13,9 @@ export interface ParsedCourse {
   grade: string; // e.g. "A", "A-", "B+"
 }
 
-const TIMEOUT_MS = 30_000;
 const MAX_CHARS = 100_000;
 // ~10 MB of base64-encoded PDF bytes (~7.5 MB binary)
 const MAX_PDF_BASE64_CHARS = 10_000_000;
-
-function withTimeout<T>(promise: Promise<T>, label: string): Promise<T> {
-  return Promise.race([
-    promise,
-    new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error(`${label} timed out after 30s`)), TIMEOUT_MS)
-    ),
-  ]);
-}
 
 /**
  * Parses a JHU transcript using Mastra:

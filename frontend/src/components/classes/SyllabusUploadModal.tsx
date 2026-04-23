@@ -4,6 +4,7 @@ import { api } from '../../../../backend/convex/_generated/api'
 import { Modal, FileUpload, Toggle } from '../ui'
 import { SpinnerIcon } from '../icons'
 import { Course, UploadSyllabusResult } from '../../types'
+import { fileToBase64 } from '../../utils/fileToBase64'
 
 type Mode = 'upload' | 'text'
 
@@ -65,12 +66,7 @@ export default function SyllabusUploadModal({
           return
         }
         if (file.type === 'application/pdf') {
-          const buffer = await file.arrayBuffer()
-          const bytes = new Uint8Array(buffer)
-          let binary = ''
-          for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i])
-          const base64 = btoa(binary)
-          await submitToBackend(base64, 'application/pdf')
+          await submitToBackend(await fileToBase64(file), 'application/pdf')
         } else {
           await submitToBackend(await file.text(), 'text/plain')
         }

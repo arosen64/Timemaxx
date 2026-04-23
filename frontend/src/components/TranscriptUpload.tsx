@@ -8,6 +8,7 @@ import Modal from './ui/Modal'
 import Selector from './ui/Selector'
 import { SpinnerIcon } from './icons'
 import { STUDY_GOALS } from '../constants'
+import { fileToBase64 } from '../utils/fileToBase64'
 
 interface TranscriptUploadProps {
   onCoursesAdded: (courses: Course[]) => void
@@ -37,13 +38,7 @@ export default function TranscriptUpload({ onCoursesAdded }: TranscriptUploadPro
     setParsing(true)
 
     try {
-      const arrayBuffer = await f.arrayBuffer()
-      const bytes = new Uint8Array(arrayBuffer)
-      let binary = ''
-      for (let i = 0; i < bytes.length; i++) {
-        binary += String.fromCharCode(bytes[i])
-      }
-      const fileContents = btoa(binary)
+      const fileContents = await fileToBase64(f)
       const parsed: ParsedCourse[] = await parseTranscript({ fileContents })
 
       const pastCourses = parsed.filter((c) => c.grade && c.grade.trim().toUpperCase() !== 'X')
