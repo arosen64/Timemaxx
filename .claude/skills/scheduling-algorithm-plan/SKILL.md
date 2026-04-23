@@ -1,6 +1,6 @@
 ---
 name: scheduling-algorithm-plan
-description: Reference plan for the R19 scheduling algorithm improvements. Use when working on any scheduling-related issue (#395, #396, #397, #398, #506, #507, #508), asking about the algorithm architecture, or deciding how a new scheduling change should fit into the overall design.
+description: Reference plan for the R19 scheduling algorithm improvements. Use when working on any scheduling-related issue (#395, #396, #397, #398, #506, #507, #508, #510), asking about the algorithm architecture, or deciding how a new scheduling change should fit into the overall design.
 argument-hint: "issue number or scheduling topic"
 allowed-tools:
   - Read
@@ -19,7 +19,7 @@ The scheduling pipeline has three phases:
 - **Phase B — Slot enumeration:** `lib/scheduleSlots.ts` walks forward in 15-min steps, collecting valid candidate slots
 - **Phase C — AI selection:** `selectAllSlotsWithAI()` sends candidates + `productivityTraits` to Gemini Flash; Gemini returns one index per block
 
-Entry points: `actions/scheduleBlock.ts`, `actions/scheduleTask.ts`, `actions/scheduleAllTasks.ts`, `actions/scheduleSubtask.ts`
+Entry points: `actions/scheduleBlock.ts`, `actions/scheduleTask.ts`, `actions/scheduleAllTasks.ts` (**to be replaced by `scheduleAllBlocks` in #510**), `actions/scheduleSubtask.ts`
 
 ## Hard Constraints (enforced deterministically, before AI)
 
@@ -45,12 +45,23 @@ Entry points: `actions/scheduleBlock.ts`, `actions/scheduleTask.ts`, `actions/sc
 
 ## Implementation Order (R19 open issues)
 
+### Layer 0 — Bulk scheduling refactor (do first; all Layer 1 work targets the new action)
+
+**#510** — Replace `scheduleAllTasks` with block-first `scheduleAllBlocks`
+- New file: `actions/scheduleAllBlocks.ts`
+- Delete: `actions/scheduleAllTasks.ts`
+- Change: fetch all unscheduled blocks (task + subtask) directly; resolve parent for sort keys; sort blocks by `parent.dueDate ASC` → `parent.assignmentWeight DESC` → `recommended_start ASC` → `block._creationTime ASC`; run same pool + AI pipeline per block
+- Update all callers (frontend hooks, chatbot scheduling agent) to call `scheduleAllBlocks`
+- Subtask blocks (#440/#371) are included automatically — no separate action needed
+- `lib/scheduleSlots.ts` internals are unchanged; only the orchestration layer changes
+- **Do this before or alongside Layer 1 so all improvements land in the new action from the start**
+
 ### Layer 1 — Independent algorithm changes (parallelizable)
 
 **#395** — Add assignment weight to scheduling sort order
-- File: `actions/scheduleAllTasks.ts`
+- File: `actions/scheduleAllBlocks.ts` (new, from #510) — or `actions/scheduleAllTasks.ts` if #510 is not yet merged
 - Change: multi-key sort — `dueDate ASC`, then `assignmentWeight DESC`, then `recommended_start ASC`, then `_creationTime ASC`
-- Note: requires `assignmentWeight` on tasks (added in R22 #390 work)
+- Note: requires `assignmentWeight` on tasks (added in R22 #390 work); `recommended_start` requires #483/PR #509
 
 **#506** — Replace greedy-earliest candidate enumeration with deadline-window sampling
 - File: `lib/scheduleSlots.ts`
@@ -131,7 +142,8 @@ Entry points: `actions/scheduleBlock.ts`, `actions/scheduleTask.ts`, `actions/sc
 | `backend/convex/lib/scheduleSlots.ts` | Slot enumeration, validation, AI selection orchestration |
 | `backend/convex/lib/scoreSlots.ts` | **New** — deterministic candidate scorer (#507) |
 | `backend/convex/lib/prompts/scheduleBlock.prompt.ts` | Gemini prompt builders for single and batch scheduling |
-| `backend/convex/actions/scheduleAllTasks.ts` | Bulk scheduling action — task sort, pool extension, batch AI call |
+| `backend/convex/actions/scheduleAllTasks.ts` | **Deprecated** — bulk scheduling action to be replaced by `scheduleAllBlocks` (#510) |
+| `backend/convex/actions/scheduleAllBlocks.ts` | **New (#510)** — block-first bulk scheduling; handles task + subtask blocks in one pass |
 | `backend/convex/actions/scheduleTask.ts` | Single-task scheduling action |
 | `backend/convex/actions/scheduleBlock.ts` | Single-block scheduling action |
 | `backend/convex/actions/scheduleSubtask.ts` | Subtask-level block scheduling |
