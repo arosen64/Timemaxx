@@ -155,7 +155,7 @@ describe("prompt injection prevention — parseTranscript", () => {
 
     mockStartAsync
       .mockResolvedValueOnce({
-        steps: { ocr: { output: { extractedText: maliciousOcrText } } },
+        steps: { ocr: { status: "success", output: { extractedText: maliciousOcrText } } },
       })
       .mockResolvedValueOnce({
         steps: { parse: { status: "success", output: { isJhuTranscript: true, courses: [] } } },
@@ -178,7 +178,7 @@ describe("prompt injection prevention — parseTranscript", () => {
 
     mockStartAsync
       .mockResolvedValueOnce({
-        steps: { ocr: { output: { extractedText: maliciousOcrText } } },
+        steps: { ocr: { status: "success", output: { extractedText: maliciousOcrText } } },
       })
       .mockResolvedValueOnce({
         steps: { parse: { status: "success", output: { isJhuTranscript: true, courses: [] } } },
@@ -201,7 +201,7 @@ describe("prompt injection prevention — parseTranscript", () => {
 
     mockStartAsync
       .mockResolvedValueOnce({
-        steps: { ocr: { output: { extractedText: maliciousOcrText } } },
+        steps: { ocr: { status: "success", output: { extractedText: maliciousOcrText } } },
       })
       .mockResolvedValueOnce({
         steps: { parse: { status: "success", output: { isJhuTranscript: true, courses: [] } } },
