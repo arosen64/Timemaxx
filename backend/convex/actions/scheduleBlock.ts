@@ -47,6 +47,7 @@ export const scheduleBlock = action({
     let taskTitle: string;
     let dueDate: number;
     let creationTime: number;
+    let recommendedStart: number | undefined;
 
     if (block.subtaskId) {
       const subtask = await ctx.runQuery(internal.queries.subtasks.getSubtaskInternal, {
@@ -65,6 +66,7 @@ export const scheduleBlock = action({
       taskTitle = task.title;
       dueDate = task.dueDate;
       creationTime = task._creationTime;
+      recommendedStart = task.recommended_start;
     }
 
     // Fetch user preferences
@@ -134,12 +136,13 @@ export const scheduleBlock = action({
       workHoursGrid,
       occupiedIntervals,
       timezone: args.timezone,
+      recommendedStartMs: recommendedStart,
     });
 
     if (candidates.length === 0) return { error: "no_slot_found" };
 
     const [chosenIndex] = await selectAllSlotsWithAI(
-      [{ taskTitle, dueDate, candidates }],
+      [{ taskTitle, dueDate, recommendedStart, candidates }],
       productivityTraits,
     );
 
