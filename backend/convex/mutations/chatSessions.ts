@@ -178,7 +178,9 @@ export const setTaskAgentStateInternal = internalMutation({
   args: {
     userId: v.id("users"),
     sessionId: v.string(),
-    activeAgent: v.optional(v.union(v.literal("task"), v.literal("feedback"), v.literal("preferences"))),
+    activeAgent: v.optional(
+      v.union(v.literal("task"), v.literal("feedback"), v.literal("preferences"), v.literal("classes")),
+    ),
     taskAgentIntent: v.optional(v.union(v.literal("create"), v.literal("rud"))),
   },
   returns: v.null(),
@@ -221,6 +223,42 @@ export const clearTaskAgentStateInternal = internalMutation({
       needsClassAfterTask: false,
       clarificationAttemptCount: 0,
       clarificationExhausted: false,
+      activeTaskId: undefined,
+      activeCourseId: undefined,
+    });
+    return null;
+  },
+});
+
+export const setMessageScopeInternal = internalMutation({
+  args: {
+    userId: v.id("users"),
+    sessionId: v.string(),
+    taskId: v.optional(v.id("tasks")),
+    courseId: v.optional(v.id("userCourses")),
+    clear: v.boolean(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const row = await ctx.db
+      .query("chatSessions")
+      .withIndex("by_userId_sessionId", (q) =>
+        q.eq("userId", args.userId).eq("sessionId", args.sessionId),
+      )
+      .unique();
+    if (!row) return null;
+
+    if (args.clear) {
+      await ctx.db.patch(row._id, {
+        activeTaskId: undefined,
+        activeCourseId: undefined,
+      });
+      return null;
+    }
+
+    await ctx.db.patch(row._id, {
+      ...(args.taskId !== undefined ? { activeTaskId: args.taskId } : {}),
+      ...(args.courseId !== undefined ? { activeCourseId: args.courseId } : {}),
     });
     return null;
   },
