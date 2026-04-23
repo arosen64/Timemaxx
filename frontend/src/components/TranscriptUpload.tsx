@@ -8,7 +8,6 @@ import Modal from './ui/Modal'
 import Selector from './ui/Selector'
 import { SpinnerIcon } from './icons'
 import { STUDY_GOALS } from '../constants'
-import { extractPdfText } from '../utils/pdf'
 
 interface TranscriptUploadProps {
   onCoursesAdded: (courses: Course[]) => void
@@ -38,8 +37,14 @@ export default function TranscriptUpload({ onCoursesAdded }: TranscriptUploadPro
     setParsing(true)
 
     try {
-      const fileText = await extractPdfText(f)
-      const parsed: ParsedCourse[] = await parseTranscript({ fileText })
+      const arrayBuffer = await f.arrayBuffer()
+      const bytes = new Uint8Array(arrayBuffer)
+      let binary = ''
+      for (let i = 0; i < bytes.length; i++) {
+        binary += String.fromCharCode(bytes[i])
+      }
+      const fileContents = btoa(binary)
+      const parsed: ParsedCourse[] = await parseTranscript({ fileContents, mimeType: 'application/pdf' })
 
       const pastCourses = parsed.filter((c) => c.grade && c.grade.trim().toUpperCase() !== 'X')
       const currentCourses = parsed.filter((c) => !c.grade || c.grade.trim().toUpperCase() === 'X')
