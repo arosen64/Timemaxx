@@ -225,6 +225,44 @@ describe("enumerateSlots", () => {
     const first = candidates[0];
     expect(first.inAvailableSlot).toBe(true);
   });
+
+  test("excludes slots before recommendedStartMs when set", () => {
+    const recommendedStartMs = MONDAY_9AM_UTC + 2 * 24 * 60 * 60 * 1000;
+    const candidates = enumerateSlots({
+      fromMs: MONDAY_9AM_UTC,
+      dueDateMs: MONDAY_9AM_UTC + 5 * 24 * 60 * 60 * 1000,
+      durationMinutes,
+      workHoursGrid: [],
+      occupiedIntervals: [],
+      timezone: TIMEZONE,
+      recommendedStartMs,
+    });
+    expect(candidates.length).toBeGreaterThan(0);
+    for (const c of candidates) {
+      expect(c.startMs).toBeGreaterThanOrEqual(recommendedStartMs);
+    }
+  });
+
+  test("is unaffected when recommendedStartMs is not set", () => {
+    const withoutConstraint = enumerateSlots({
+      fromMs: MONDAY_9AM_UTC,
+      dueDateMs,
+      durationMinutes,
+      workHoursGrid: [],
+      occupiedIntervals: [],
+      timezone: TIMEZONE,
+    });
+    const withUndefined = enumerateSlots({
+      fromMs: MONDAY_9AM_UTC,
+      dueDateMs,
+      durationMinutes,
+      workHoursGrid: [],
+      occupiedIntervals: [],
+      timezone: TIMEZONE,
+      recommendedStartMs: undefined,
+    });
+    expect(withoutConstraint).toEqual(withUndefined);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -307,6 +345,43 @@ describe("filterPoolForBlock", () => {
       timezone: TIMEZONE,
     });
     expect(candidates).toHaveLength(0);
+  });
+
+  test("excludes slots before recommendedStartMs when set", () => {
+    const recommendedStartMs = MONDAY_9AM_UTC + 60 * 60 * 1000;
+    const pool: PoolSlot[] = [
+      { startMs: MONDAY_9AM_UTC, inAvailableSlot: true },
+      { startMs: recommendedStartMs, inAvailableSlot: true },
+      { startMs: MONDAY_9AM_UTC + 2 * 60 * 60 * 1000, inAvailableSlot: true },
+    ];
+    const candidates = filterPoolForBlock({
+      pool,
+      dueDateMs: MONDAY_9AM_UTC + 10 * 60 * 60 * 1000,
+      durationMinutes: 60,
+      workHoursGrid: [],
+      occupiedIntervals: [],
+      timezone: TIMEZONE,
+      recommendedStartMs,
+    });
+    expect(candidates.every((c) => c.startMs >= recommendedStartMs)).toBe(true);
+    expect(candidates.some((c) => c.startMs === MONDAY_9AM_UTC)).toBe(false);
+  });
+
+  test("is unaffected when recommendedStartMs is not set", () => {
+    const pool: PoolSlot[] = [
+      { startMs: MONDAY_9AM_UTC, inAvailableSlot: true },
+      { startMs: MONDAY_9AM_UTC + 60 * 60 * 1000, inAvailableSlot: true },
+    ];
+    const dueDateMs = MONDAY_9AM_UTC + 10 * 60 * 60 * 1000;
+    const candidates = filterPoolForBlock({
+      pool,
+      dueDateMs,
+      durationMinutes: 60,
+      workHoursGrid: [],
+      occupiedIntervals: [],
+      timezone: TIMEZONE,
+    });
+    expect(candidates).toHaveLength(2);
   });
 });
 

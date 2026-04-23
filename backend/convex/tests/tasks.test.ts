@@ -171,6 +171,23 @@ describe("mutations/tasks – createTask", () => {
     expect(task!.assignmentWeight).toBeUndefined();
   });
 
+  test("sets recommended_start to 14 days before dueDate", async () => {
+    const t = makeTestCtx();
+    const { withAuth } = await createTestUser(t);
+    const dueDate = Date.now() + 30 * 86_400_000;
+
+    const taskId = await withAuth.mutation(api.mutations.tasks.createTask, {
+      title: "Task with recommended start",
+      description: "desc",
+      taskType: "Essay",
+      dueDate,
+    });
+
+    await t.finishAllScheduledFunctions(vi.runAllTimers);
+    const task = await t.run((ctx) => ctx.db.get(taskId));
+    expect(task!.recommended_start).toBe(dueDate - 14 * 24 * 60 * 60 * 1000);
+  });
+
   test("throws when assignmentWeight is out of range", async () => {
     const t = makeTestCtx();
     const { withAuth } = await createTestUser(t);
