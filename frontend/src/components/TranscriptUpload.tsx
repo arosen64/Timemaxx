@@ -44,7 +44,7 @@ export default function TranscriptUpload({ onCoursesAdded }: TranscriptUploadPro
         binary += String.fromCharCode(bytes[i])
       }
       const fileContents = btoa(binary)
-      const parsed: ParsedCourse[] = await parseTranscript({ fileContents, mimeType: 'application/pdf' })
+      const parsed: ParsedCourse[] = await parseTranscript({ fileContents })
 
       const pastCourses = parsed.filter((c) => c.grade && c.grade.trim().toUpperCase() !== 'X')
       const currentCourses = parsed.filter((c) => !c.grade || c.grade.trim().toUpperCase() === 'X')

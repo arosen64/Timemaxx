@@ -12,65 +12,59 @@ export interface ParsedCourse {
   grade: string; // e.g. "A", "A-", "B+"
 }
 
+const TIMEOUT_MS = 30_000;
+const MAX_CHARS = 100_000;
+// ~10 MB of base64-encoded PDF bytes (~7.5 MB binary)
+const MAX_PDF_BASE64_CHARS = 10_000_000;
+
+function withTimeout<T>(promise: Promise<T>, label: string): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error(`${label} timed out after 30s`)), TIMEOUT_MS)
+    ),
+  ]);
+}
+
 /**
  * Parses a JHU transcript using Mastra:
- *
- * PDF path:
  * 1. `transcript-ocr-workflow`   — Mistral OCR extracts text from base64-encoded PDF bytes
  * 2. `sanitizeUserInput`         — prompt-injection sanitizer runs on the OCR output
  * 3. `transcript-parse-workflow` — Claude agent extracts structured course data
- *
- * Text path (mimeType !== "application/pdf"):
- * 1. `sanitizeUserInput`         — prompt-injection sanitizer runs on the raw text
- * 2. `transcript-parse-workflow` — Claude agent extracts structured course data
  */
 export const parseTranscript = action({
   args: {
     fileContents: v.string(),
-    mimeType: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<ParsedCourse[]> => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Unauthenticated");
 
+    if (args.fileContents.length > MAX_PDF_BASE64_CHARS) {
+      throw new Error("PDF exceeds maximum upload size of 10 MB");
+    }
+
     const mastraUrl = process.env.MASTRA_URL;
     if (!mastraUrl) throw new Error("MASTRA_URL not configured");
     const client = new MastraClient({ baseUrl: mastraUrl });
 
-    const TIMEOUT_MS = 30_000;
-    const MAX_CHARS = 100_000;
-
-    function withTimeout<T>(promise: Promise<T>, label: string): Promise<T> {
-      return Promise.race([
-        promise,
-        new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error(`${label} timed out after 30s`)), TIMEOUT_MS)
-        ),
-      ]);
+    // OCR: extract text from the base64-encoded PDF
+    const ocrWf = client.getWorkflow("transcript-ocr-workflow");
+    const ocrRun = await withTimeout(
+      ocrWf.startAsync({ inputData: { fileContents: args.fileContents } }),
+      "Transcript OCR"
+    );
+    const ocrStep = ocrRun.steps?.["ocr"];
+    const ocrText =
+      ocrStep && "output" in ocrStep
+        ? (ocrStep.output as { extractedText?: string }).extractedText ?? ""
+        : "";
+    if (!ocrText) {
+      throw new Error("Transcript OCR did not return any text");
     }
 
-    let textForParsing: string;
-
-    if (args.mimeType === "application/pdf") {
-      // PDF path: run Mistral OCR on the base64-encoded file bytes first
-      const ocrWf = client.getWorkflow("transcript-ocr-workflow");
-      const ocrRun = await withTimeout(
-        ocrWf.startAsync({ inputData: { fileContents: args.fileContents } }),
-        "Transcript OCR"
-      );
-      const ocrStep = ocrRun.steps?.["ocr"];
-      const ocrText =
-        ocrStep && "output" in ocrStep
-          ? (ocrStep.output as { extractedText?: string }).extractedText ?? ""
-          : "";
-      textForParsing = ocrText;
-    } else {
-      // Text path: content is already plain text
-      textForParsing = args.fileContents;
-    }
-
-    // Sanitize — same sanitizer and character limit as the original parseTranscript action
-    const sanitizedText = sanitizeUserInput(textForParsing, MAX_CHARS);
+    // Sanitize — prompt-injection guard before sending to Claude
+    const sanitizedText = sanitizeUserInput(ocrText, MAX_CHARS);
 
     // Parse — Claude agent extracts structured course data
     // Workflow expects already-sanitized input; do not call without sanitizing first.
