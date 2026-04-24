@@ -166,6 +166,7 @@ export default defineSchema({
     isConflicted: v.optional(v.boolean()),
     googleEventId: v.optional(v.string()),
     needsExport: v.optional(v.boolean()),
+    isCompleted: v.boolean(),
   })
     .index("by_taskId", ["taskId"])
     .index("by_subtaskId", ["subtaskId"])

@@ -1,21 +1,23 @@
-import { screen } from '@testing-library/react'
+import { screen, fireEvent } from '@testing-library/react'
 import { renderWithProviders } from '../utils'
 import UpcomingSchedulePanel from '../../src/components/dashboard/UpcomingSchedulePanel'
 
 vi.mock('../../../backend/convex/_generated/api', () => ({
-  api: { queries: { studyBlocks: { getAllStudyBlocksWithTasks: 'getAllStudyBlocksWithTasks' } } },
+  api: {
+    queries: { studyBlocks: { getAllStudyBlocksWithTasks: 'getAllStudyBlocksWithTasks' } },
+    mutations: { studyBlocks: { toggleStudyBlockComplete: 'toggleStudyBlockComplete' } },
+  },
 }))
-vi.mock('convex/react', () => ({ useQuery: vi.fn() }))
+vi.mock('convex/react', () => ({ useQuery: vi.fn(), useMutation: vi.fn() }))
 
-import { useQuery } from 'convex/react'
+import { useQuery, useMutation } from 'convex/react'
 const mockUseQuery = vi.mocked(useQuery)
+const mockUseMutation = vi.mocked(useMutation)
 
-// Build start times within today so blocks pass the today filter — use late-night times
-// so the blocks are almost never "completed" (ended) during test runs
 const todayMidnight = new Date()
 todayMidnight.setHours(0, 0, 0, 0)
-const block1Start = new Date(todayMidnight.getTime() + 22 * 60 * 60 * 1000).toISOString() // 22:00 today
-const block2Start = new Date(todayMidnight.getTime() + 23 * 60 * 60 * 1000).toISOString() // 23:00 today
+const block1Start = new Date(todayMidnight.getTime() + 22 * 60 * 60 * 1000).toISOString() // 22:00
+const block2Start = new Date(todayMidnight.getTime() + 23 * 60 * 60 * 1000).toISOString() // 23:00
 
 const MOCK_BLOCKS = [
   {
@@ -26,6 +28,7 @@ const MOCK_BLOCKS = [
     studyBlockLength: 60,
     taskTitle: 'Calculus',
     taskDueDate: new Date('2026-04-01').getTime(),
+    isCompleted: false,
   },
   {
     _id: 'b2',
@@ -35,12 +38,14 @@ const MOCK_BLOCKS = [
     studyBlockLength: 30,
     taskTitle: 'Biology',
     taskDueDate: new Date('2026-04-02').getTime(),
+    isCompleted: false,
   },
 ]
 
 describe('UpcomingSchedulePanel', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockUseMutation.mockReturnValue(vi.fn() as never)
   })
 
   it('shows "Loading…" when blocks are undefined', () => {
@@ -65,6 +70,7 @@ describe('UpcomingSchedulePanel', () => {
         studyBlockLength: 60,
         taskTitle: 'History',
         taskDueDate: new Date('2020-01-05').getTime(),
+        isCompleted: false,
       },
     ]
     mockUseQuery.mockReturnValue(pastBlocks as never)
@@ -96,6 +102,7 @@ describe('UpcomingSchedulePanel', () => {
         studyBlockLength: 60,
         taskTitle: 'Calculus',
         taskDueDate: new Date('2026-04-01').getTime(),
+        isCompleted: false,
       },
       {
         _id: 'b2',
@@ -105,14 +112,48 @@ describe('UpcomingSchedulePanel', () => {
         studyBlockLength: 30,
         taskTitle: 'Calculus',
         taskDueDate: new Date('2026-04-01').getTime(),
+        isCompleted: false,
       },
     ]
     mockUseQuery.mockReturnValue(sameTaskBlocks as never)
     renderWithProviders(<UpcomingSchedulePanel />)
-    // Only one task card for 'Calculus' (blocks grouped by task)
     expect(screen.getAllByText('Calculus')).toHaveLength(1)
-    // Total is 2 regardless of how many have completed
     expect(screen.getByText(/\d+ \/ 2 blocks done/)).toBeInTheDocument()
   })
 
+  it('renders individual block rows within each task card', () => {
+    mockUseQuery.mockReturnValue(MOCK_BLOCKS as never)
+    renderWithProviders(<UpcomingSchedulePanel />)
+    expect(screen.getByText('Study Session A')).toBeInTheDocument()
+    expect(screen.getByText('Study Session B')).toBeInTheDocument()
+  })
+
+  it('calls toggleStudyBlockComplete mutation when toggle button is clicked', () => {
+    const mockToggle = vi.fn()
+    mockUseMutation.mockReturnValue(mockToggle as never)
+    mockUseQuery.mockReturnValue(MOCK_BLOCKS as never)
+    renderWithProviders(<UpcomingSchedulePanel />)
+    const toggleButtons = screen.getAllByRole('button', { name: /mark complete/i })
+    fireEvent.click(toggleButtons[0])
+    expect(mockToggle).toHaveBeenCalledWith({ studyBlockId: 'b1' })
+  })
+
+  it('shows completed block with line-through style', () => {
+    const blocksWithCompleted = [
+      {
+        _id: 'b1',
+        taskId: 'task1',
+        title: 'Done Session',
+        startTime: block1Start,
+        studyBlockLength: 60,
+        taskTitle: 'Calculus',
+        taskDueDate: new Date('2026-04-01').getTime(),
+        isCompleted: true,
+      },
+    ]
+    mockUseQuery.mockReturnValue(blocksWithCompleted as never)
+    renderWithProviders(<UpcomingSchedulePanel />)
+    const blockTitle = screen.getByText('Done Session')
+    expect(blockTitle.className).toMatch(/line-through/)
+  })
 })

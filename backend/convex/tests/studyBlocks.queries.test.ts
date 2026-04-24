@@ -30,6 +30,7 @@ async function seedStudyBlock(
       title: overrides.title ?? "Block 1",
       startTime: overrides.startTime,
       studyBlockLength: overrides.studyBlockLength ?? 60,
+      isCompleted: false,
     })
   );
 }
@@ -169,6 +170,7 @@ describe("queries/studyBlocks – getFutureStudyBlocksForExport", () => {
         startTime: futureStart,
         studyBlockLength: 60,
         googleEventId: "existing_gcal_event",
+        isCompleted: false,
       })
     );
 
