@@ -22,7 +22,6 @@ type Props = {
   assigningBlockId: Id<'studyBlocks'> | null
   onToggleAssign: (id: Id<'studyBlocks'>) => void
   timezone: string
-  onScheduleAllMsg: (msg: string) => void
 }
 
 export default function ScheduleTray({
@@ -30,13 +29,10 @@ export default function ScheduleTray({
   assigningBlockId,
   onToggleAssign,
   timezone,
-  onScheduleAllMsg,
 }: Props) {
   const scheduleBlockAction = useAction(api.actions.scheduleBlock.scheduleBlock)
-  const scheduleAllBlocksAction = useAction(api.actions.scheduleAllBlocks.scheduleAllBlocks)
 
   const [schedulingBlockIds, setSchedulingBlockIds] = useState<Set<Id<'studyBlocks'>>>(new Set())
-  const [isSchedulingAll, setIsSchedulingAll] = useState(false)
 
   async function handleScheduleBlock(blockId: Id<'studyBlocks'>) {
     setSchedulingBlockIds((prev) => new Set(prev).add(blockId))
@@ -48,22 +44,6 @@ export default function ScheduleTray({
         next.delete(blockId)
         return next
       })
-    }
-  }
-
-  async function handleScheduleAll() {
-    setIsSchedulingAll(true)
-    try {
-      const result = await scheduleAllBlocksAction({ timezone })
-      onScheduleAllMsg(
-        result.skipped === 0
-          ? `All ${result.scheduled} block${result.scheduled !== 1 ? 's' : ''} scheduled.`
-          : `${result.scheduled} scheduled, ${result.skipped} skipped.`
-      )
-    } catch {
-      onScheduleAllMsg('Scheduling failed. Please try again.')
-    } finally {
-      setIsSchedulingAll(false)
     }
   }
 
@@ -141,18 +121,6 @@ export default function ScheduleTray({
     <aside className="flex w-[180px] shrink-0 flex-col gap-2 overflow-y-auto" data-tray>
       <div className="flex items-center justify-between gap-1">
         <h3 className="font-heading text-xs font-semibold text-navy">Unscheduled</h3>
-        {blocks.length > 0 && (
-          <button
-            type="button"
-            onClick={handleScheduleAll}
-            disabled={isSchedulingAll}
-            className="flex items-center gap-1 px-2 h-6 text-[10px] font-semibold font-heading rounded-md bg-navy text-white transition hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
-            aria-label="Schedule unscheduled blocks"
-          >
-            {isSchedulingAll && <SpinnerIcon color="currentColor" size={10} />}
-            Schedule
-          </button>
-        )}
       </div>
 
       {blocks.length === 0 ? (

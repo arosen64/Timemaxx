@@ -19,16 +19,18 @@ import { fetch21DayCalendarEvents } from "../lib/calendarFetch";
 const MAX_BLOCKS = 20;
 
 /**
- * AI-driven bulk scheduling for all unscheduled blocks (task and subtask).
+ * AI-driven bulk scheduling for all unscheduled blocks belonging to a task
+ * and its subtasks.
  *
- * Operates at the block level directly rather than grouping by parent task.
- * Blocks are sorted by parent due date ASC → parent assignment weight DESC →
- * block creation time ASC, then scheduled in one shared pool + AI pass.
+ * Operates at the block level directly. Blocks are sorted by parent due date
+ * ASC → parent assignment weight DESC → block creation time ASC, then
+ * scheduled in one shared pool + AI pass.
  *
  * Returns { scheduled, skipped } block counts.
  */
 export const scheduleAllBlocks = action({
   args: {
+    taskId: v.id("tasks"),
     timezone: v.string(),
   },
   handler: async (ctx, args): Promise<{ scheduled: number; skipped: number }> => {
@@ -80,7 +82,13 @@ export const scheduleAllBlocks = action({
     }>;
 
     const taskMap = new Map(allTasks.map((t) => [t._id, t]));
-    const subtaskMap = new Map(allSubtasks.map((s) => [s._id, s]));
+    // Only subtasks that belong to the target task
+    const subtaskMap = new Map(
+      allSubtasks
+        .filter((s) => s.parentTaskId === args.taskId)
+        .map((s) => [s._id, s]),
+    );
+    const subtaskIds = new Set(subtaskMap.keys());
 
     // Resolve parent context for each unscheduled block and build sortable entries
     type BlockEntry = {
@@ -91,7 +99,10 @@ export const scheduleAllBlocks = action({
       candidates: ReturnType<typeof filterPoolForBlock>;
     };
 
-    const unscheduled = allBlocks.filter((b) => !b.startTime);
+    // Only blocks belonging to this task or one of its subtasks
+    const unscheduled = allBlocks.filter(
+      (b) => !b.startTime && (b.taskId === args.taskId || (b.subtaskId && subtaskIds.has(b.subtaskId))),
+    );
 
     type ResolvedBlock = {
       block: (typeof allBlocks)[0];
