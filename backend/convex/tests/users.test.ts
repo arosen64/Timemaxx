@@ -5,8 +5,6 @@ import { makeTestCtx, createTestUser } from "../../convex-tests/helpers";
 const VALID_ONBOARDING_ARGS = {
   major: "Computer Science",
   year: "Junior",
-  difficultSubjects: ["Math", "Physics"],
-  enjoyedSubjects: ["History"],
   workHoursGrid: [
     { day: "Monday", blocked: [] },
   ],
@@ -374,9 +372,6 @@ describe("mutations/users – completeOnboarding", () => {
     const user = await t.run((ctx) => ctx.db.get(userId));
     expect(user!.major).toBe("Computer Science");
     expect(user!.year).toBe("Junior");
-    expect(user!.difficultSubjects).toEqual(["Math", "Physics"]);
-    expect(user!.enjoyedSubjects).toEqual(["History"]);
-
     expect(user!.focusBlockLength).toBe(50);
   });
 });

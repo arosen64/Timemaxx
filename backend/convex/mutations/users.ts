@@ -10,8 +10,6 @@ export const updateUserSettings = mutation({
   args: {
     major: v.optional(v.string()),
     year: v.optional(v.string()),
-    difficultSubjects: v.optional(v.array(v.string())),
-    enjoyedSubjects: v.optional(v.array(v.string())),
     courses: v.optional(v.array(v.object({ title: v.string(), studyGoal: v.string() }))),
     transcriptSummary: v.optional(v.array(v.object({ label: v.string(), text: v.string() }))),
     workHoursGrid: v.optional(v.array(v.object({
@@ -76,9 +74,6 @@ export const completeOnboarding = mutation({
   args: {
     major: v.string(),
     year: v.string(),
-    difficultSubjects: v.array(v.string()),
-    enjoyedSubjects: v.array(v.string()),
-
     workHoursGrid: v.array(v.object({
       day: v.string(),
       blocked: v.array(v.number()),
