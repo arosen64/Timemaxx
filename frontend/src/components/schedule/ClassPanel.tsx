@@ -110,7 +110,7 @@ export default function ClassPanel({
   const courseTasks = useQuery(api.queries.tasks.getTasksByCourseId, courseTasksArgs)
 
   const scheduleBlockAction = useAction(api.actions.scheduleBlock.scheduleBlock)
-  const scheduleAllTasksAction = useAction(api.actions.scheduleAllTasks.scheduleAllTasks)
+  const scheduleAllBlocksAction = useAction(api.actions.scheduleAllBlocks.scheduleAllBlocks)
 
   const subtasks = useQuery(
     api.queries.subtasks.getSubtasksForTask,
@@ -181,7 +181,7 @@ export default function ClassPanel({
     if (!selectedTaskId) return
     setIsSchedulingAll(true)
     try {
-      const result = await scheduleAllTasksAction({ timezone })
+      const result = await scheduleAllBlocksAction({ taskId: selectedTaskId, timezone })
       onScheduleAllMsg(
         result.skipped === 0
           ? `All ${result.scheduled} block${result.scheduled !== 1 ? 's' : ''} scheduled.`
