@@ -6,7 +6,7 @@ import { ChevronLeftIcon, ChevronRightIcon, SpinnerIcon, CalendarIcon } from '..
 import { isCurrentTerm } from '../../utils/termUtils'
 
 const DEFAULT_COURSE_COLOR = '#002D72'
-const OTHER_CLASS_ID = '__none__'
+const OTHER_COURSE_KEY = '__none__'
 
 type StudyBlockInPanel = {
   _id: Id<'studyBlocks'>
@@ -20,21 +20,6 @@ type StudyBlockInPanel = {
   courseName?: string
 }
 
-type Task = {
-  _id: Id<'tasks'>
-  title: string
-  dueDate: number
-  courseId?: Id<'userCourses'> | null
-}
-
-type ClassRow = {
-  id: string
-  courseCode: string
-  title: string
-  color: string
-  taskCount: number
-}
-
 type Props = {
   unscheduledBlocks: StudyBlockInPanel[]
   assigningBlockId: Id<'studyBlocks'> | null
@@ -43,6 +28,66 @@ type Props = {
   onScheduleAllMsg: (msg: string) => void
 }
 
+// ---------------------------------------------------------------------------
+// BlockRow — extracted to avoid duplication and fix nested-interactive lint
+// ---------------------------------------------------------------------------
+function BlockRow({
+  block,
+  isAssigning,
+  isScheduling,
+  onToggleAssign,
+  onSchedule,
+}: {
+  block: StudyBlockInPanel
+  isAssigning: boolean
+  isScheduling: boolean
+  onToggleAssign: (id: Id<'studyBlocks'>) => void
+  onSchedule: (id: Id<'studyBlocks'>) => void
+}) {
+  return (
+    // outer div handles the assign-mode toggle; inner button is a separate action
+    // div[role=button] + <button> is valid — avoids nested <button> elements
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={() => onToggleAssign(block._id)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onToggleAssign(block._id)
+        }
+      }}
+      className={`group flex items-center gap-2 rounded-lg border px-2.5 py-2 cursor-pointer transition-colors ${
+        isAssigning
+          ? 'border-teal bg-teal/10'
+          : 'border-border bg-bg-gray hover:border-teal/50 hover:bg-teal/5'
+      }`}
+    >
+      <span className="h-1 w-4 rounded-full bg-sky-blue shrink-0" />
+      <span className="flex-1 min-w-0 truncate text-[11px] font-medium text-navy">{block.title}</span>
+      <span className="text-[10px] text-light-blue shrink-0">{block.studyBlockLength} min</span>
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation()
+          onSchedule(block._id)
+        }}
+        disabled={isScheduling}
+        className="flex h-5 w-5 shrink-0 items-center justify-center rounded text-light-blue opacity-0 transition hover:bg-navy/10 hover:text-navy group-hover:opacity-100 disabled:cursor-not-allowed disabled:opacity-50"
+        aria-label="Auto-schedule this block"
+      >
+        {isScheduling
+          ? <SpinnerIcon color="currentColor" size={10} />
+          : <CalendarIcon color="currentColor" size={10} />
+        }
+      </button>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// ClassPanel
+// ---------------------------------------------------------------------------
 export default function ClassPanel({
   unscheduledBlocks,
   assigningBlockId,
@@ -50,34 +95,80 @@ export default function ClassPanel({
   timezone,
   onScheduleAllMsg,
 }: Props) {
-  const safeApi = api as any
-
-  const getUserCoursesRef = safeApi?.queries?.userCourses?.getUserCourses
-  const getAllTasksRef = safeApi?.queries?.tasks?.getAllTasks
-  const getSubtasksForTaskRef = safeApi?.queries?.subtasks?.getSubtasksForTask
-  const scheduleBlockRef = safeApi?.actions?.scheduleBlock?.scheduleBlock
-
-  const courses = useQuery(getUserCoursesRef ?? 'skip')
-  const allTasks = useQuery(getAllTasksRef ?? 'skip', getAllTasksRef ? {} : 'skip')
-
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null)
   const [selectedTaskId, setSelectedTaskId] = useState<Id<'tasks'> | null>(null)
-
-  const subtasks = useQuery(
-    getSubtasksForTaskRef ?? 'skip',
-    selectedTaskId && getSubtasksForTaskRef ? { parentTaskId: selectedTaskId } : 'skip'
-  )
-
-  const scheduleBlockAction = useAction(scheduleBlockRef ?? 'skip')
-
   const [schedulingBlockIds, setSchedulingBlockIds] = useState<Set<Id<'studyBlocks'>>>(new Set())
   const [isSchedulingAll, setIsSchedulingAll] = useState(false)
 
+  const courses = useQuery(api.queries.userCourses.getUserCourses)
+  // getTasksByCourseId drives the task-list drill-down; skipped until a course is selected.
+  // Passing no courseId returns tasks with no class (the OTHER bucket).
+  const courseTasksArgs: { courseId?: Id<'userCourses'> } | 'skip' = !selectedCourseId
+    ? 'skip'
+    : selectedCourseId === OTHER_COURSE_KEY
+      ? {}
+      : { courseId: selectedCourseId as Id<'userCourses'> }
+  const courseTasks = useQuery(api.queries.tasks.getTasksByCourseId, courseTasksArgs)
+
+  const scheduleBlockAction = useAction(api.actions.scheduleBlock.scheduleBlock)
+  const scheduleAllTasksAction = useAction(api.actions.scheduleAllTasks.scheduleAllTasks)
+
+  const subtasks = useQuery(
+    api.queries.subtasks.getSubtasksForTask,
+    selectedTaskId ? { parentTaskId: selectedTaskId } : 'skip'
+  )
+
+  // ---------------------------------------------------------------------------
+  // Derived data
+  // ---------------------------------------------------------------------------
+  const currentCourses = useMemo(
+    () => (courses ?? []).filter((c) => isCurrentTerm(c.term)),
+    [courses]
+  )
+
+  const tasksForSelectedCourse = (courseTasks ?? []).filter((t) => t.status !== 'completed')
+
+  const selectedTask = useMemo(
+    () => tasksForSelectedCourse.find((t) => t._id === selectedTaskId) ?? null,
+    [tasksForSelectedCourse, selectedTaskId]
+  )
+
+  const selectedCourse = useMemo(
+    () => currentCourses.find((c) => c._id === selectedCourseId) ?? null,
+    [currentCourses, selectedCourseId]
+  )
+
+  const selectedTaskBlocks = useMemo(
+    () => (selectedTaskId ? unscheduledBlocks.filter((b) => b.taskId === selectedTaskId) : []),
+    [selectedTaskId, unscheduledBlocks]
+  )
+
+  const blocksBySubtask = useMemo(() => {
+    const map = new Map<string, StudyBlockInPanel[]>()
+    for (const block of selectedTaskBlocks) {
+      if (!block.subtaskId) continue
+      const key = block.subtaskId as string
+      const bucket = map.get(key)
+      if (bucket) bucket.push(block)
+      else map.set(key, [block])
+    }
+    return map
+  }, [selectedTaskBlocks])
+
+  const taskLevelBlocks = useMemo(
+    () => selectedTaskBlocks.filter((b) => !b.subtaskId),
+    [selectedTaskBlocks]
+  )
+
+  // ---------------------------------------------------------------------------
+  // Actions
+  // ---------------------------------------------------------------------------
   async function handleScheduleBlock(blockId: Id<'studyBlocks'>) {
-    if (!scheduleBlockRef) return
     setSchedulingBlockIds((prev) => new Set(prev).add(blockId))
     try {
       await scheduleBlockAction({ studyBlockId: blockId, timezone })
+    } catch (err) {
+      onScheduleAllMsg(`Failed to schedule: ${err instanceof Error ? err.message : 'Unknown error'}`)
     } finally {
       setSchedulingBlockIds((prev) => {
         const next = new Set(prev)
@@ -88,400 +179,227 @@ export default function ClassPanel({
   }
 
   async function handleScheduleSelected() {
-    if (!selectedTaskId || !scheduleBlockRef) return
+    if (!selectedTaskId) return
     setIsSchedulingAll(true)
     try {
-      const unscheduledIds = selectedTaskBlocks.map((block) => block._id)
-      const results = await Promise.allSettled(
-        unscheduledIds.map((studyBlockId) => scheduleBlockAction({ studyBlockId, timezone })),
-      )
-      const scheduled = results.filter((result) => result.status === 'fulfilled').length
-      const skipped = results.length - scheduled
+      const result = await scheduleAllTasksAction({ timezone })
       onScheduleAllMsg(
-        skipped === 0
-          ? `All ${scheduled} block${scheduled !== 1 ? 's' : ''} scheduled.`
-          : `${scheduled} scheduled, ${skipped} skipped.`
+        result.skipped === 0
+          ? `All ${result.scheduled} block${result.scheduled !== 1 ? 's' : ''} scheduled.`
+          : `${result.scheduled} scheduled, ${result.skipped} skipped.`
       )
-    } catch {
-      onScheduleAllMsg('Scheduling failed. Please try again.')
+    } catch (err) {
+      onScheduleAllMsg(`Scheduling failed: ${err instanceof Error ? err.message : 'Unknown error'}`)
     } finally {
       setIsSchedulingAll(false)
     }
   }
 
-  const coursesList = Array.isArray(courses) ? courses : []
-  const tasksList = Array.isArray(allTasks) ? allTasks : []
-  const subtasksList = Array.isArray(subtasks) ? subtasks : []
-
-  const selectedTaskBlocks = selectedTaskId
-    ? unscheduledBlocks.filter((b) => b.taskId === selectedTaskId)
-    : []
-
-  const currentCourses = coursesList.filter((c) => isCurrentTerm(c.term))
-
-  const tasksByCourse = new Map<string, typeof allTasks>()
-  for (const task of tasksList) {
-    const key = task.courseId ?? '__none__'
-    if (!tasksByCourse.has(key)) tasksByCourse.set(key, [])
-    tasksByCourse.get(key)!.push(task)
+  function goBack() {
+    if (selectedTaskId) {
+      setSelectedTaskId(null)
+    } else {
+      setSelectedCourseId(null)
+    }
   }
 
-  const selectedTask = tasksList.find((t) => t._id === selectedTaskId)
-  const selectedCourse = currentCourses.find((course) => course._id === selectedCourseId) ?? null
+  // ---------------------------------------------------------------------------
+  // Render
+  // ---------------------------------------------------------------------------
 
-  const tasksForSelectedCourse = useMemo(() => {
-    if (!selectedCourseId) return []
-    return (tasksByCourse.get(selectedCourseId) ?? []) as Task[]
-  }, [selectedCourseId, tasksByCourse])
-
-  const classRows = useMemo(() => {
-    const rows: ClassRow[] = currentCourses.map((course) => ({
-      id: course._id,
-      courseCode: course.courseCode,
-      title: course.title,
-      color: course.color ?? DEFAULT_COURSE_COLOR,
-      taskCount: (tasksByCourse.get(course._id) ?? []).length,
-    }))
-    const otherTaskCount = (tasksByCourse.get(OTHER_CLASS_ID) ?? []).length
-    if (otherTaskCount > 0) {
-      rows.push({
-        id: OTHER_CLASS_ID,
-        courseCode: 'OTHER',
-        title: 'Tasks without class',
-        color: '#8EA5BC',
-        taskCount: otherTaskCount,
-      })
-    }
-    return rows
-  }, [currentCourses, tasksByCourse])
-
-  const blocksBySubtask = useMemo(() => {
-    const map = new Map<string, StudyBlockInPanel[]>()
-    for (const block of selectedTaskBlocks) {
-      if (!block.subtaskId) continue
-      const key = block.subtaskId as string
-      if (!map.has(key)) map.set(key, [])
-      map.get(key)!.push(block)
-    }
-    return map
-  }, [selectedTaskBlocks])
-
-  const taskLevelBlocks = useMemo(
-    () => selectedTaskBlocks.filter((block) => !block.subtaskId),
-    [selectedTaskBlocks],
-  )
-
-  return (
-    <aside
-      className="flex w-[280px] shrink-0 flex-col border-l border-border bg-white overflow-hidden"
-      data-tray
-    >
-      {!selectedCourseId ? (
+  // Level 0 — class list
+  if (!selectedCourseId) {
+    return (
+      <aside className="flex w-[280px] shrink-0 flex-col border-l border-border bg-white overflow-hidden" data-tray>
         <div className="flex-1 overflow-y-auto">
           <div className="px-4 py-2.5 border-b border-border">
             <span className="text-[10px] font-semibold text-light-blue tracking-wider">CLASSES</span>
           </div>
+
           {courses === undefined ? (
             <div className="flex items-center justify-center py-8">
               <SpinnerIcon color="#4E6A8C" size={14} />
             </div>
-          ) : classRows.length === 0 ? (
-            <div className="px-3 py-3">
-              {unscheduledBlocks.length === 0 ? (
-                <p className="px-1 py-1 text-xs text-light-blue">All blocks scheduled.</p>
-              ) : (
-                <div className="space-y-1.5">
-                  {unscheduledBlocks.map((block) => {
-                    const isAssigning = assigningBlockId === block._id
-                    const isBlockScheduling = schedulingBlockIds.has(block._id)
-                    return (
-                      <div
-                        key={block._id}
-                        role="button"
-                        tabIndex={0}
-                        onClick={() => onToggleAssign(block._id)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault()
-                            onToggleAssign(block._id)
-                          }
-                        }}
-                        className={`group flex items-center gap-2 rounded-lg border px-2.5 py-2 cursor-pointer transition-colors ${
-                          isAssigning
-                            ? 'border-teal bg-teal/10'
-                            : 'border-border bg-bg-gray hover:border-teal/50 hover:bg-teal/5'
-                        }`}
-                      >
-                        <span className="h-1 w-4 rounded-full bg-sky-blue shrink-0" />
-                        <span className="flex-1 min-w-0">
-                          <span className="block truncate text-[11px] font-medium text-navy">{block.title}</span>
-                          <span className="block truncate text-[10px] text-light-blue">{block.taskTitle}</span>
-                        </span>
-                        <span className="text-[10px] text-light-blue shrink-0">{block.studyBlockLength} min</span>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleScheduleBlock(block._id)
-                          }}
-                          disabled={isBlockScheduling}
-                          className="flex h-5 w-5 shrink-0 items-center justify-center rounded text-light-blue opacity-0 transition hover:bg-navy/10 hover:text-navy group-hover:opacity-100 disabled:cursor-not-allowed disabled:opacity-50"
-                          aria-label="Auto-schedule this block"
-                        >
-                          {isBlockScheduling
-                            ? <SpinnerIcon color="currentColor" size={10} />
-                            : <CalendarIcon color="currentColor" size={10} />
-                          }
-                        </button>
-                      </div>
-                    )
-                  })}
-                </div>
-              )}
-            </div>
+          ) : currentCourses.length === 0 ? (
+            <p className="px-4 py-4 text-xs text-light-blue">No current classes.</p>
           ) : (
-            classRows.map((course) => {
-              const taskCount = course.taskCount
-              return (
+            <>
+              {currentCourses.map((course) => (
                 <button
-                  key={course.id}
+                  key={course._id}
                   type="button"
-                  onClick={() => {
-                    setSelectedCourseId(course.id)
-                    setSelectedTaskId(null)
-                  }}
+                  onClick={() => { setSelectedCourseId(course._id); setSelectedTaskId(null) }}
                   className="flex w-full items-center gap-2.5 px-4 py-3 text-left hover:bg-bg-gray transition-colors border-b border-border"
                 >
-                  <span
-                    className="h-2.5 w-2.5 shrink-0 rounded-full"
-                    style={{ backgroundColor: course.color ?? DEFAULT_COURSE_COLOR }}
-                  />
+                  <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: course.color ?? DEFAULT_COURSE_COLOR }} />
                   <span className="flex flex-1 min-w-0 flex-col gap-0.5">
                     <span className="text-[10px] text-light-blue font-medium">{course.courseCode}</span>
                     <span className="truncate text-[12px] font-semibold text-navy">{course.title}</span>
                   </span>
-                  {taskCount > 0 && (
-                    <span className="text-[11px] text-light-blue font-medium shrink-0">{taskCount}</span>
-                  )}
-                  <span className="shrink-0 text-light-blue">
-                    <ChevronRightIcon size={12} />
-                  </span>
+                  <ChevronRightIcon size={12} />
                 </button>
-              )
-            })
+              ))}
+              <button
+                type="button"
+                onClick={() => { setSelectedCourseId(OTHER_COURSE_KEY); setSelectedTaskId(null) }}
+                className="flex w-full items-center gap-2.5 px-4 py-3 text-left hover:bg-bg-gray transition-colors border-b border-border"
+              >
+                <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-light-blue" />
+                <span className="flex flex-1 min-w-0 flex-col gap-0.5">
+                  <span className="text-[10px] text-light-blue font-medium">OTHER</span>
+                  <span className="truncate text-[12px] font-semibold text-navy">Other tasks</span>
+                </span>
+                <ChevronRightIcon size={12} />
+              </button>
+            </>
           )}
         </div>
-      ) : !selectedTask ? (
-        <div className="flex flex-1 min-h-0 flex-col">
-          <div className="flex items-center gap-2 border-b border-border px-3 py-2.5">
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedCourseId(null)
-                setSelectedTaskId(null)
-              }}
-              className="rounded p-1 text-light-blue hover:bg-bg-gray hover:text-slate-blue"
-              aria-label="Back to classes"
-            >
-              <ChevronLeftIcon size={14} />
-            </button>
-            <div className="min-w-0">
-              <p className="text-[10px] font-semibold text-light-blue tracking-wider">TASKS</p>
-              <p className="truncate text-[12px] font-semibold text-navy">
-                {selectedCourseId === OTHER_CLASS_ID ? 'Tasks without class' : selectedCourse?.title}
-              </p>
-            </div>
-          </div>
+      </aside>
+    )
+  }
 
-          <div className="flex-1 overflow-y-auto">
-            {tasksForSelectedCourse.length === 0 ? (
-              <p className="px-4 py-4 text-xs text-light-blue">No tasks for this class.</p>
-            ) : (
-              tasksForSelectedCourse.map((task: Task) => (
-                <button
-                  key={task._id}
-                  type="button"
-                  onClick={() => setSelectedTaskId(task._id)}
-                  className="flex w-full items-center gap-2 px-4 py-3 text-left transition-colors border-b border-border hover:bg-bg-gray"
-                >
-                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-light-blue" />
-                  <span className="flex-1 min-w-0 truncate text-[12px] font-medium text-slate-blue">
-                    {task.title}
-                  </span>
-                  <span className="shrink-0 text-[10px] text-light-blue">
-                    {new Date(task.dueDate).toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                      timeZone: timezone,
-                    })}
-                  </span>
-                  <ChevronRightIcon size={11} />
-                </button>
-              ))
-            )}
-          </div>
+  // Level 1 — task list for selected class
+  if (!selectedTask) {
+    const panelTitle = selectedCourseId === OTHER_COURSE_KEY ? 'Other tasks' : selectedCourse?.title ?? ''
+    return (
+      <aside className="flex w-[280px] shrink-0 flex-col border-l border-border bg-white overflow-hidden" data-tray>
+        <PanelHeader label="TASKS" title={panelTitle} onBack={goBack} />
+        <div className="flex-1 overflow-y-auto">
+          {tasksForSelectedCourse.length === 0 ? (
+            <p className="px-4 py-4 text-xs text-light-blue">No tasks for this class.</p>
+          ) : (
+            tasksForSelectedCourse.map((task) => (
+              <button
+                key={task._id}
+                type="button"
+                onClick={() => setSelectedTaskId(task._id as Id<'tasks'>)}
+                className="flex w-full items-center gap-2 px-4 py-3 text-left transition-colors border-b border-border hover:bg-bg-gray"
+              >
+                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-light-blue" />
+                <span className="flex-1 min-w-0 truncate text-[12px] font-medium text-slate-blue">{task.title}</span>
+                <span className="shrink-0 text-[10px] text-light-blue">
+                  {new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: timezone })}
+                </span>
+                <ChevronRightIcon size={11} />
+              </button>
+            ))
+          )}
         </div>
-      ) : (
-        <div className="flex flex-1 min-h-0 flex-col">
-          <div className="flex items-center gap-2 border-b border-border px-3 py-2.5">
-            <button
-              type="button"
-              onClick={() => setSelectedTaskId(null)}
-              className="rounded p-1 text-light-blue hover:bg-bg-gray hover:text-slate-blue"
-              aria-label="Back to tasks"
-            >
-              <ChevronLeftIcon size={14} />
-            </button>
-            <div className="min-w-0">
-              <p className="text-[10px] font-semibold text-light-blue tracking-wider">TASK DETAILS</p>
-              <p className="truncate text-[12px] font-semibold text-navy">{selectedTask.title}</p>
-            </div>
-          </div>
+      </aside>
+    )
+  }
 
-          <div className="flex-1 overflow-y-auto px-3 py-3">
-            {subtasks === undefined ? (
-              <div className="flex items-center justify-center py-8">
-                <SpinnerIcon color="#4E6A8C" size={14} />
-              </div>
-            ) : subtasksList.length === 0 ? (
-              <p className="mb-2 text-[11px] text-light-blue">No subtasks yet.</p>
-            ) : (
-              <div className="space-y-3">
-                {subtasksList.map((sub) => {
-                  const subtaskBlocks = blocksBySubtask.get(sub._id as string) ?? []
-                  return (
-                    <div key={sub._id} className="rounded-lg border border-border bg-white">
-                      <div className="flex items-center gap-2 border-b border-border px-3 py-2">
-                        <span className="h-3 w-3 shrink-0 rounded-full border border-light-blue" />
-                        <span className="flex-1 min-w-0 truncate text-[11px] font-medium text-navy">{sub.title}</span>
-                        {sub.timeEstimate && (
-                          <span className="shrink-0 text-[10px] text-light-blue">{sub.timeEstimate} min</span>
-                        )}
-                      </div>
-                      <div className="space-y-1.5 px-2.5 py-2">
-                        {subtaskBlocks.length === 0 ? (
-                          <p className="px-1 text-[10px] text-light-blue">No unscheduled study blocks.</p>
-                        ) : (
-                          subtaskBlocks.map((block) => {
-                            const isAssigning = assigningBlockId === block._id
-                            const isBlockScheduling = schedulingBlockIds.has(block._id)
-                            return (
-                              <div
-                                key={block._id}
-                                role="button"
-                                tabIndex={0}
-                                onClick={() => onToggleAssign(block._id)}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter' || e.key === ' ') {
-                                    e.preventDefault()
-                                    onToggleAssign(block._id)
-                                  }
-                                }}
-                                className={`group flex items-center gap-2 rounded-lg border px-2.5 py-2 cursor-pointer transition-colors ${
-                                  isAssigning
-                                    ? 'border-teal bg-teal/10'
-                                    : 'border-border bg-bg-gray hover:border-teal/50 hover:bg-teal/5'
-                                }`}
-                              >
-                                <span className="h-1 w-4 rounded-full bg-sky-blue shrink-0" />
-                                <span className="flex-1 min-w-0 truncate text-[11px] font-medium text-navy">{block.title}</span>
-                                <span className="text-[10px] text-light-blue shrink-0">{block.studyBlockLength} min</span>
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    handleScheduleBlock(block._id)
-                                  }}
-                                  disabled={isBlockScheduling}
-                                  className="flex h-5 w-5 shrink-0 items-center justify-center rounded text-light-blue opacity-0 transition hover:bg-navy/10 hover:text-navy group-hover:opacity-100 disabled:cursor-not-allowed disabled:opacity-50"
-                                  aria-label="Auto-schedule this block"
-                                >
-                                  {isBlockScheduling
-                                    ? <SpinnerIcon color="currentColor" size={10} />
-                                    : <CalendarIcon color="currentColor" size={10} />
-                                  }
-                                </button>
-                              </div>
-                            )
-                          })
-                        )}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
+  // Level 2 — task detail with subtasks + study blocks
+  const subtasksList = subtasks ?? []
+  return (
+    <aside className="flex w-[280px] shrink-0 flex-col border-l border-border bg-white overflow-hidden" data-tray>
+      <PanelHeader label="TASK" title={selectedTask.title} onBack={goBack} />
+
+      <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3">
+        {subtasks === undefined ? (
+          <div className="flex items-center justify-center py-8">
+            <SpinnerIcon color="#4E6A8C" size={14} />
+          </div>
+        ) : (
+          <>
+            {subtasksList.length === 0 && taskLevelBlocks.length === 0 && (
+              <p className="text-[11px] text-light-blue">No subtasks or unscheduled blocks.</p>
             )}
 
+            {/* Subtasks — each with their study blocks underneath */}
+            {subtasksList.map((sub) => {
+              const subBlocks = blocksBySubtask.get(sub._id as string) ?? []
+              return (
+                <div key={sub._id} className="rounded-lg border border-border bg-white">
+                  <div className="flex items-center gap-2 border-b border-border px-3 py-2">
+                    <span className="h-3 w-3 shrink-0 rounded-full border border-light-blue" />
+                    <span className="flex-1 min-w-0 text-[11px] font-medium text-navy">{sub.title}</span>
+                    {sub.timeEstimate !== undefined && (
+                      <span className="shrink-0 text-[10px] text-light-blue">{sub.timeEstimate} min</span>
+                    )}
+                  </div>
+                  <div className="space-y-1.5 px-2.5 py-2">
+                    {subBlocks.length === 0 ? (
+                      <p className="px-1 text-[10px] text-light-blue">No unscheduled blocks.</p>
+                    ) : (
+                      subBlocks.map((block) => (
+                        <BlockRow
+                          key={block._id}
+                          block={block}
+                          isAssigning={assigningBlockId === block._id}
+                          isScheduling={schedulingBlockIds.has(block._id)}
+                          onToggleAssign={onToggleAssign}
+                          onSchedule={handleScheduleBlock}
+                        />
+                      ))
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+
+            {/* Task-level blocks (no subtask association) */}
             {taskLevelBlocks.length > 0 && (
-              <div className="mt-3 rounded-lg border border-border bg-white">
+              <div className="rounded-lg border border-border bg-white">
                 <p className="border-b border-border px-3 py-2 text-[10px] font-semibold text-light-blue tracking-wider">
                   GENERAL BLOCKS
                 </p>
                 <div className="space-y-1.5 px-2.5 py-2">
-                  {taskLevelBlocks.map((block) => {
-                    const isAssigning = assigningBlockId === block._id
-                    const isBlockScheduling = schedulingBlockIds.has(block._id)
-                    return (
-                      <div
-                        key={block._id}
-                        role="button"
-                        tabIndex={0}
-                        onClick={() => onToggleAssign(block._id)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault()
-                            onToggleAssign(block._id)
-                          }
-                        }}
-                        className={`group flex items-center gap-2 rounded-lg border px-2.5 py-2 cursor-pointer transition-colors ${
-                          isAssigning
-                            ? 'border-teal bg-teal/10'
-                            : 'border-border bg-bg-gray hover:border-teal/50 hover:bg-teal/5'
-                        }`}
-                      >
-                        <span className="h-1 w-4 rounded-full bg-sky-blue shrink-0" />
-                        <span className="flex-1 min-w-0 truncate text-[11px] font-medium text-navy">{block.title}</span>
-                        <span className="text-[10px] text-light-blue shrink-0">{block.studyBlockLength} min</span>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleScheduleBlock(block._id)
-                          }}
-                          disabled={isBlockScheduling}
-                          className="flex h-5 w-5 shrink-0 items-center justify-center rounded text-light-blue opacity-0 transition hover:bg-navy/10 hover:text-navy group-hover:opacity-100 disabled:cursor-not-allowed disabled:opacity-50"
-                          aria-label="Auto-schedule this block"
-                        >
-                          {isBlockScheduling
-                            ? <SpinnerIcon color="currentColor" size={10} />
-                            : <CalendarIcon color="currentColor" size={10} />
-                          }
-                        </button>
-                      </div>
-                    )
-                  })}
+                  {taskLevelBlocks.map((block) => (
+                    <BlockRow
+                      key={block._id}
+                      block={block}
+                      isAssigning={assigningBlockId === block._id}
+                      isScheduling={schedulingBlockIds.has(block._id)}
+                      onToggleAssign={onToggleAssign}
+                      onSchedule={handleScheduleBlock}
+                    />
+                  ))}
                 </div>
               </div>
             )}
-          </div>
+          </>
+        )}
+      </div>
 
-          <div className="border-t border-border p-4">
-            <button
-              type="button"
-              onClick={handleScheduleSelected}
-              disabled={isSchedulingAll || selectedTaskBlocks.length === 0}
-              className="flex w-full items-center justify-center gap-2 rounded-lg bg-navy px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-navy/90 disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              {isSchedulingAll && <SpinnerIcon color="currentColor" size={12} />}
-              <CalendarIcon color="currentColor" size={13} />
-              Schedule
-            </button>
-            {selectedTaskBlocks.length === 0 && (
-              <p className="mt-1.5 text-center text-[10px] text-light-blue">All blocks scheduled</p>
-            )}
-          </div>
-        </div>
-      )}
+      {/* Schedule button */}
+      <div className="border-t border-border p-4 shrink-0">
+        <button
+          type="button"
+          onClick={handleScheduleSelected}
+          disabled={isSchedulingAll || selectedTaskBlocks.length === 0}
+          className="flex w-full items-center justify-center gap-2 rounded-lg bg-navy px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-navy/90 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          {isSchedulingAll && <SpinnerIcon color="currentColor" size={12} />}
+          <CalendarIcon color="currentColor" size={13} />
+          Schedule
+        </button>
+        {selectedTaskBlocks.length === 0 && !isSchedulingAll && (
+          <p className="mt-1.5 text-center text-[10px] text-light-blue">All blocks scheduled</p>
+        )}
+      </div>
     </aside>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// PanelHeader — shared drill-down header with back button
+// ---------------------------------------------------------------------------
+function PanelHeader({ label, title, onBack }: { label: string; title: string; onBack: () => void }) {
+  return (
+    <div className="flex items-center gap-2 border-b border-border px-3 py-2.5 shrink-0">
+      <button
+        type="button"
+        onClick={onBack}
+        className="rounded p-1 text-light-blue hover:bg-bg-gray hover:text-slate-blue"
+        aria-label="Back"
+      >
+        <ChevronLeftIcon size={14} />
+      </button>
+      <div className="min-w-0">
+        <p className="text-[10px] font-semibold text-light-blue tracking-wider">{label}</p>
+        <p className="truncate text-[12px] font-semibold text-navy">{title}</p>
+      </div>
+    </div>
   )
 }
