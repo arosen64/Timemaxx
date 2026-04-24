@@ -79,7 +79,7 @@ export default function OnboardingPage() {
   }
 
   const handleSaveAndContinue = async () => {
-    if (Number(preferences.focusBlockLength) < MIN_FOCUS_BLOCK_MINUTES) return
+    if (preferences.focusBlockLength !== '' && preferences.focusBlockLength < MIN_FOCUS_BLOCK_MINUTES) return
     setIsSubmitting(true)
     try {
       await saveOnboarding({
@@ -92,7 +92,7 @@ export default function OnboardingPage() {
           blocked: slots.blocked,
         })),
         productivityTraits: preferences.traits,
-        focusBlockLength: Number(preferences.focusBlockLength),
+        focusBlockLength: preferences.focusBlockLength === '' ? MIN_FOCUS_BLOCK_MINUTES : preferences.focusBlockLength,
       })
       setStep(6)
     } catch {
