@@ -23,6 +23,7 @@ type CalendarData = {
 type StudyBlockWithTask = {
   _id: Id<'studyBlocks'>
   taskId: Id<'tasks'>
+  subtaskId?: Id<'subtasks'>
   title: string
   startTime: string | undefined
   studyBlockLength: number
