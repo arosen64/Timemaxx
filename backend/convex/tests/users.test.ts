@@ -8,7 +8,7 @@ const VALID_ONBOARDING_ARGS = {
   difficultSubjects: ["Math", "Physics"],
   enjoyedSubjects: ["History"],
   workHoursGrid: [
-    { day: "Monday", available: [9, 10, 11], blocked: [] },
+    { day: "Monday", blocked: [] },
   ],
   productivityTraits: { morningPerson: true },
   focusBlockLength: 50,
@@ -249,7 +249,7 @@ describe("mutations/users – updateUserSettings", () => {
     const t = makeTestCtx();
     const { userId, withAuth } = await createTestUser(t);
 
-    const grid = [{ day: "Monday", available: [9, 10], blocked: [8] }];
+    const grid = [{ day: "Monday", blocked: [8] }];
     await withAuth.mutation(api.mutations.users.updateUserSettings, {
       workHoursGrid: grid,
     });

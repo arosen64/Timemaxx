@@ -16,7 +16,6 @@ export const updateUserSettings = mutation({
     transcriptSummary: v.optional(v.array(v.object({ label: v.string(), text: v.string() }))),
     workHoursGrid: v.optional(v.array(v.object({
       day: v.string(),
-      available: v.array(v.number()),
       blocked: v.array(v.number()),
     }))),
     productivityTraits: v.optional(v.any()),
@@ -82,7 +81,6 @@ export const completeOnboarding = mutation({
 
     workHoursGrid: v.array(v.object({
       day: v.string(),
-      available: v.array(v.number()),
       blocked: v.array(v.number()),
     })),
     productivityTraits: v.any(),
