@@ -56,8 +56,6 @@ const mockUseMutation = vi.mocked(useMutation)
 const MOCK_USER = {
   major: 'Computer Science',
   year: 'Junior',
-  difficultSubjects: ['Algorithms'],
-  enjoyedSubjects: ['Art History'],
   courses: [{ title: 'Data Structures', studyGoal: 'A' }],
   workHoursGrid: [{ day: 'Monday', available: [1, 2], blocked: [] }],
   productivityTraits: { timeOfDay: ['Morning (8–11am)'] },
@@ -70,11 +68,12 @@ function setup({
   calendarConnected = false,
 } = {}) {
   const updateSettings = makeMutationFn()
-  mockUseQuery.mockImplementation((key: unknown) => {
+  mockUseQuery.mockImplementation((...args: Parameters<typeof useQuery>) => {
+    const key = args[0] as unknown as string
     if (key === 'getCalendarConnectionStatus') {
-      return { connected: calendarConnected, hasEventsScope: calendarConnected }
+      return { connected: calendarConnected, hasEventsScope: calendarConnected } as never
     }
-    return user
+    return user as never
   })
   mockUseMutation.mockReturnValue(updateSettings as never)
   renderWithProviders(<PreferencesPage />)
