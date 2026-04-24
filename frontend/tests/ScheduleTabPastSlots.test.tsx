@@ -12,8 +12,7 @@
  * Only `Date` is faked — setTimeout/setInterval/Promise are real so that
  * waitFor and async React updates work normally.
  */
-import { act, screen, waitFor } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import { act, waitFor } from '@testing-library/react'
 import { renderWithProviders, makeMutationFn } from './utils'
 import ScheduleTab from '../src/components/schedule/ScheduleTab'
 
@@ -24,6 +23,9 @@ vi.mock('../../backend/convex/_generated/api', () => ({
     queries: {
       calendar: { getScheduleData: 'getScheduleData' },
       studyBlocks: { getAllStudyBlocksWithTasks: 'getAllStudyBlocksWithTasks' },
+      userCourses: { getUserCourses: 'getUserCourses' },
+      tasks: { getTasksByCourseId: 'getTasksByCourseId' },
+      subtasks: { getSubtasksForTask: 'getSubtasksForTask' },
     },
     mutations: {
       calendar: { saveSelectedCalendars: 'saveSelectedCalendars' },
@@ -104,6 +106,7 @@ type CapturedGridProps = {
   highlightedSlots: Set<string>
   onSlotClick: (dateStr: string, slot: number) => void
   onDrop: (dateStr: string, slot: number) => void
+  onDragStart: (id: string) => void
 }
 
 function getCaptured(): CapturedGridProps {
@@ -114,7 +117,9 @@ function getCaptured(): CapturedGridProps {
 
 function setup(editMutation = makeMutationFn()) {
   mockUseQuery.mockImplementation((...args: Parameters<typeof useQuery>) => {
-    if (args[0] === 'getAllStudyBlocksWithTasks') return [UNSCHEDULED_BLOCK] as never
+    const ref = args[0] as unknown as string
+    if (ref === 'getAllStudyBlocksWithTasks') return [UNSCHEDULED_BLOCK] as never
+    if (ref === 'getUserCourses' || ref === 'getTasksByCourseId' || ref === 'getSubtasksForTask') return [] as never
     return { workHoursGrid: WORK_HOURS_GRID, calendarConnected: false, selectedCalendarIds: null } as never
   })
   mockUseMutation.mockReturnValue(editMutation as never)
@@ -142,10 +147,10 @@ describe('ScheduleTab – past-slot guards', () => {
   // ── highlightedSlots filtering ──────────────────────────────────────────────
 
   it('does not highlight any slot from yesterday when in assign mode', async () => {
-    const user = userEvent.setup()
     setup()
+    await waitFor(() => expect(MockTimeGrid.mock.calls.length).toBeGreaterThan(0))
 
-    await user.click(screen.getByRole('button', { name: /Read Chapter 3/i }))
+    await act(async () => { getCaptured().onDragStart(UNSCHEDULED_BLOCK._id as string) })
 
     await waitFor(() => {
       const { highlightedSlots } = getCaptured()
@@ -156,10 +161,10 @@ describe('ScheduleTab – past-slot guards', () => {
   })
 
   it('highlights future slots from next week when in assign mode', async () => {
-    const user = userEvent.setup()
     setup()
+    await waitFor(() => expect(MockTimeGrid.mock.calls.length).toBeGreaterThan(0))
 
-    await user.click(screen.getByRole('button', { name: /Read Chapter 3/i }))
+    await act(async () => { getCaptured().onDragStart(UNSCHEDULED_BLOCK._id as string) })
 
     await waitFor(() => {
       const { highlightedSlots } = getCaptured()
@@ -169,10 +174,10 @@ describe('ScheduleTab – past-slot guards', () => {
   })
 
   it('every entry in highlightedSlots starts at or after Date.now()', async () => {
-    const user = userEvent.setup()
     setup()
+    await waitFor(() => expect(MockTimeGrid.mock.calls.length).toBeGreaterThan(0))
 
-    await user.click(screen.getByRole('button', { name: /Read Chapter 3/i }))
+    await act(async () => { getCaptured().onDragStart(UNSCHEDULED_BLOCK._id as string) })
 
     await waitFor(() => {
       const { highlightedSlots } = getCaptured()
@@ -189,12 +194,12 @@ describe('ScheduleTab – past-slot guards', () => {
   // ── handleSlotClick guard ──────────────────────────────────────────────────
 
   it('does not call editStudyBlockTime when onSlotClick is called with a past slot', async () => {
-    const user = userEvent.setup()
     const editMutation = makeMutationFn()
     setup(editMutation)
 
-    // Enter assign mode so assigningBlockId is non-null.
-    await user.click(screen.getByRole('button', { name: /Read Chapter 3/i }))
+    // Enter assign mode by triggering onDragStart with the unscheduled block.
+    await waitFor(() => expect(MockTimeGrid.mock.calls.length).toBeGreaterThan(0))
+    await act(async () => { getCaptured().onDragStart(UNSCHEDULED_BLOCK._id as string) })
     await waitFor(() => expect(MockTimeGrid.mock.calls.length).toBeGreaterThan(1))
 
     // Call with yesterday's slot 0 — guaranteed past in any timezone.
@@ -206,11 +211,11 @@ describe('ScheduleTab – past-slot guards', () => {
   })
 
   it('calls editStudyBlockTime when onSlotClick is called with a future slot', async () => {
-    const user = userEvent.setup()
     const editMutation = makeMutationFn()
     setup(editMutation)
 
-    await user.click(screen.getByRole('button', { name: /Read Chapter 3/i }))
+    await waitFor(() => expect(MockTimeGrid.mock.calls.length).toBeGreaterThan(0))
+    await act(async () => { getCaptured().onDragStart(UNSCHEDULED_BLOCK._id as string) })
     await waitFor(() => expect(MockTimeGrid.mock.calls.length).toBeGreaterThan(1))
 
     // Call with next week slot 0 — guaranteed future in any timezone.

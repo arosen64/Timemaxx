@@ -8,6 +8,9 @@ vi.mock('../../backend/convex/_generated/api', () => ({
     queries: {
       calendar: { getScheduleData: 'getScheduleData' },
       studyBlocks: { getAllStudyBlocksWithTasks: 'getAllStudyBlocksWithTasks' },
+      userCourses: { getUserCourses: 'getUserCourses' },
+      tasks: { getTasksByCourseId: 'getTasksByCourseId' },
+      subtasks: { getSubtasksForTask: 'getSubtasksForTask' },
     },
     mutations: {
       calendar: { saveSelectedCalendars: 'saveSelectedCalendars' },
@@ -52,7 +55,9 @@ const WORK_HOURS_GRID = [
 
 function makeQueryImpl(scheduleData: object, studyBlocks: unknown[] = []) {
   return (...args: Parameters<typeof useQuery>) => {
-    if (args[0] === 'getAllStudyBlocksWithTasks') return studyBlocks as never
+    const ref = args[0] as unknown as string
+    if (ref === 'getAllStudyBlocksWithTasks') return studyBlocks as never
+    if (ref === 'getUserCourses' || ref === 'getTasksByCourseId' || ref === 'getSubtasksForTask') return [] as never
     return scheduleData as never
   }
 }
