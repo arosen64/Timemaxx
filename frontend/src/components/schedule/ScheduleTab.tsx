@@ -7,7 +7,7 @@ import { CalendarIcon, SpinnerIcon, WarningIcon } from '../icons'
 import TimeGrid, { type StudyBlockOnGrid } from './TimeGrid'
 import CalendarSelectorPopup from './CalendarSelectorPopup'
 import ScheduleHeader from './ScheduleHeader'
-import ScheduleTray from './ScheduleTray'
+import ClassPanel from './ClassPanel'
 import { computeOverlapLayout } from './overlapLayout'
 import { offsetDate, isoDateString, minutesFromMidnight, SLOT_HEIGHT, MAX_OFFSET_DAYS, DAYS_FULL } from './utils'
 
@@ -424,8 +424,8 @@ export default function ScheduleTab() {
           </div>
         )}
 
-        <ScheduleTray
-          blocks={unscheduledBlocks}
+        <ClassPanel
+          unscheduledBlocks={unscheduledBlocks}
           assigningBlockId={assigningBlockId}
           onToggleAssign={(id) => setAssigningBlockId((prev) => (prev === id ? null : id))}
           timezone={timezone}
