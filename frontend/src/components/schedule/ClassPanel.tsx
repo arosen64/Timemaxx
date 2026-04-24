@@ -20,6 +20,13 @@ type StudyBlockInPanel = {
   courseName?: string
 }
 
+type Task = {
+  _id: Id<'tasks'>
+  title: string
+  dueDate: number
+  courseId?: Id<'userCourses'> | null
+}
+
 type ClassRow = {
   id: string
   courseCode: string
@@ -102,20 +109,24 @@ export default function ClassPanel({
     }
   }
 
+  const coursesList = Array.isArray(courses) ? courses : []
+  const tasksList = Array.isArray(allTasks) ? allTasks : []
+  const subtasksList = Array.isArray(subtasks) ? subtasks : []
+
   const selectedTaskBlocks = selectedTaskId
     ? unscheduledBlocks.filter((b) => b.taskId === selectedTaskId)
     : []
 
-  const currentCourses = (courses ?? []).filter((c) => isCurrentTerm(c.term))
+  const currentCourses = coursesList.filter((c) => isCurrentTerm(c.term))
 
   const tasksByCourse = new Map<string, typeof allTasks>()
-  for (const task of allTasks ?? []) {
+  for (const task of tasksList) {
     const key = task.courseId ?? '__none__'
     if (!tasksByCourse.has(key)) tasksByCourse.set(key, [])
     tasksByCourse.get(key)!.push(task)
   }
 
-  const selectedTask = allTasks?.find((t) => t._id === selectedTaskId)
+  const selectedTask = tasksList.find((t) => t._id === selectedTaskId)
   const selectedCourse = currentCourses.find((course) => course._id === selectedCourseId) ?? null
 
   const tasksForSelectedCourse = useMemo(() => {
@@ -175,7 +186,59 @@ export default function ClassPanel({
               <SpinnerIcon color="#4E6A8C" size={14} />
             </div>
           ) : classRows.length === 0 ? (
-            <p className="px-4 py-4 text-xs text-light-blue">No current classes.</p>
+            <div className="px-3 py-3">
+              {unscheduledBlocks.length === 0 ? (
+                <p className="px-1 py-1 text-xs text-light-blue">All blocks scheduled.</p>
+              ) : (
+                <div className="space-y-1.5">
+                  {unscheduledBlocks.map((block) => {
+                    const isAssigning = assigningBlockId === block._id
+                    const isBlockScheduling = schedulingBlockIds.has(block._id)
+                    return (
+                      <div
+                        key={block._id}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => onToggleAssign(block._id)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault()
+                            onToggleAssign(block._id)
+                          }
+                        }}
+                        className={`group flex items-center gap-2 rounded-lg border px-2.5 py-2 cursor-pointer transition-colors ${
+                          isAssigning
+                            ? 'border-teal bg-teal/10'
+                            : 'border-border bg-bg-gray hover:border-teal/50 hover:bg-teal/5'
+                        }`}
+                      >
+                        <span className="h-1 w-4 rounded-full bg-sky-blue shrink-0" />
+                        <span className="flex-1 min-w-0">
+                          <span className="block truncate text-[11px] font-medium text-navy">{block.title}</span>
+                          <span className="block truncate text-[10px] text-light-blue">{block.taskTitle}</span>
+                        </span>
+                        <span className="text-[10px] text-light-blue shrink-0">{block.studyBlockLength} min</span>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleScheduleBlock(block._id)
+                          }}
+                          disabled={isBlockScheduling}
+                          className="flex h-5 w-5 shrink-0 items-center justify-center rounded text-light-blue opacity-0 transition hover:bg-navy/10 hover:text-navy group-hover:opacity-100 disabled:cursor-not-allowed disabled:opacity-50"
+                          aria-label="Auto-schedule this block"
+                        >
+                          {isBlockScheduling
+                            ? <SpinnerIcon color="currentColor" size={10} />
+                            : <CalendarIcon color="currentColor" size={10} />
+                          }
+                        </button>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
           ) : (
             classRows.map((course) => {
               const taskCount = course.taskCount
@@ -234,7 +297,7 @@ export default function ClassPanel({
             {tasksForSelectedCourse.length === 0 ? (
               <p className="px-4 py-4 text-xs text-light-blue">No tasks for this class.</p>
             ) : (
-              tasksForSelectedCourse.map((task) => (
+              tasksForSelectedCourse.map((task: Task) => (
                 <button
                   key={task._id}
                   type="button"
@@ -280,11 +343,11 @@ export default function ClassPanel({
               <div className="flex items-center justify-center py-8">
                 <SpinnerIcon color="#4E6A8C" size={14} />
               </div>
-            ) : subtasks.length === 0 ? (
+            ) : subtasksList.length === 0 ? (
               <p className="mb-2 text-[11px] text-light-blue">No subtasks yet.</p>
             ) : (
               <div className="space-y-3">
-                {subtasks.map((sub) => {
+                {subtasksList.map((sub) => {
                   const subtaskBlocks = blocksBySubtask.get(sub._id as string) ?? []
                   return (
                     <div key={sub._id} className="rounded-lg border border-border bg-white">
