@@ -84,7 +84,7 @@ const CONFLICTED_BLOCK = {
 
 function makeQueryImpl(scheduleData: object, studyBlocks: unknown[] = []) {
   return (...args: Parameters<typeof useQuery>) => {
-    if (args[0] === 'getAllStudyBlocksWithTasks') return studyBlocks as never
+    if ((args[0] as unknown) === 'getAllStudyBlocksWithTasks') return studyBlocks as never
     return scheduleData as never
   }
 }

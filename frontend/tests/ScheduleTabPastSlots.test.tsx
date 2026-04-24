@@ -37,7 +37,6 @@ vi.mock('../../backend/convex/_generated/api', () => ({
       autoRescheduleConflicts: { autoRescheduleConflicts: 'autoRescheduleConflicts' },
       exportStudyBlocksToCalendar: { exportStudyBlocksToCalendar: 'exportStudyBlocksToCalendar' },
       scheduleBlock: { scheduleBlock: 'scheduleBlock' },
-      scheduleAllBlocks: { scheduleAllBlocks: 'scheduleAllBlocks' },
     },
   },
 }))
@@ -114,7 +113,7 @@ function getCaptured(): CapturedGridProps {
 
 function setup(editMutation = makeMutationFn()) {
   mockUseQuery.mockImplementation((...args: Parameters<typeof useQuery>) => {
-    if (args[0] === 'getAllStudyBlocksWithTasks') return [UNSCHEDULED_BLOCK] as never
+    if ((args[0] as unknown) === 'getAllStudyBlocksWithTasks') return [UNSCHEDULED_BLOCK] as never
     return { workHoursGrid: WORK_HOURS_GRID, calendarConnected: false, selectedCalendarIds: null } as never
   })
   mockUseMutation.mockReturnValue(editMutation as never)
