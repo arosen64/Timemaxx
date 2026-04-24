@@ -77,3 +77,24 @@ export function shouldOfferTaskEntityMcq(
   }
   return walkLatestTaggedTaskId(historyAsc) === undefined;
 }
+
+/**
+ * Whether to show the class entity picker for course RUD turns.
+ * Mirrors task logic: prioritize latest user line tags, else fallback to any tag in window.
+ */
+export function shouldOfferCourseEntityMcq(
+  needsEntityClarification: boolean,
+  historyAsc: readonly TaggedMessageView[],
+  message: string,
+): boolean {
+  if (!needsEntityClarification) return false;
+  const trimmed = message.trim();
+  if (!trimmed) {
+    return walkLatestTaggedCourseId(historyAsc) === undefined;
+  }
+  const lastUser = getLastUserMessage(historyAsc);
+  if (lastUser && lastUser.content.trim() === trimmed) {
+    return lastUser.courseId === undefined;
+  }
+  return walkLatestTaggedCourseId(historyAsc) === undefined;
+}

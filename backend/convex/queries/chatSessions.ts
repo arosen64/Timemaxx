@@ -29,6 +29,9 @@ export const getChatSessionInternal = internalQuery({
         ),
       ),
       taskAgentIntent: v.optional(v.union(v.literal("create"), v.literal("rud"))),
+      courseAgentIntent: v.optional(
+        v.union(v.literal("add"), v.literal("drop"), v.literal("view"), v.literal("update")),
+      ),
       activeTaskId: v.optional(v.id("tasks")),
       activeCourseId: v.optional(v.id("userCourses")),
     }),
@@ -52,6 +55,7 @@ export const getChatSessionInternal = internalQuery({
       chatInputLocked: row.chatInputLocked,
       activeAgent: row.activeAgent,
       taskAgentIntent: row.taskAgentIntent,
+      courseAgentIntent: row.courseAgentIntent,
       activeTaskId: row.activeTaskId,
       activeCourseId: row.activeCourseId,
     };
