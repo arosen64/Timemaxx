@@ -220,7 +220,7 @@ export default function PreferencesPage() {
             >
               <div className="flex flex-col gap-0.5">
                 <span className="font-heading text-lg font-bold text-navy">Work Hours</span>
-                <span className="font-body text-sm text-slate-blue">When you're available to study each week</span>
+                <span className="font-body text-sm text-slate-blue">Select times to block off</span>
               </div>
               <div className="flex items-center gap-3">
                 {openSection === "workhours" && (
