@@ -1202,26 +1202,6 @@
                       "name": "taskProgress3",
                       "width": "fill_container",
                       "height": "fit_content"
-                    },
-                    {
-                      "id": "Wbxq7",
-                      "type": "ref",
-                      "ref": "SO0nX",
-                      "name": "geminiChip",
-                      "width": "fill_container",
-                      "height": "fit_content",
-                      "x": 0,
-                      "y": 342,
-                      "descendants": {
-                        "K3qRc": {
-                          "x": 14,
-                          "y": 12
-                        },
-                        "xTJtL": {
-                          "x": 36,
-                          "y": 12.5
-                        }
-                      }
                     }
                   ]
                 }

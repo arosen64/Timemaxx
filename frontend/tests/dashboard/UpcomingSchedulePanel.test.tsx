@@ -115,9 +115,4 @@ describe('UpcomingSchedulePanel', () => {
     expect(screen.getByText(/\d+ \/ 2 blocks done/)).toBeInTheDocument()
   })
 
-  it('renders "AI-powered scheduling" footer', () => {
-    mockUseQuery.mockReturnValue([] as never)
-    renderWithProviders(<UpcomingSchedulePanel />)
-    expect(screen.getByText('AI-powered scheduling')).toBeInTheDocument()
-  })
 })
