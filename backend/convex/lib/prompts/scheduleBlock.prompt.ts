@@ -54,6 +54,7 @@ export interface ScheduleBlockPromptArgs {
   candidates: ScheduleBlockSlot[];
   taskTitle: string;
   dueDate: number;
+  recommendedStart?: number;
   productivityTraits: unknown;
 }
 
@@ -79,10 +80,11 @@ export function buildScheduleBlockPrompt(args: ScheduleBlockPromptArgs): string 
 
   const sections: string[] = [];
 
-  sections.push(`<task>
-Title: ${args.taskTitle}
-Due: ${dueDateStr}
-</task>`);
+  const taskLines = [`Title: ${args.taskTitle}`, `Due: ${dueDateStr}`];
+  if (args.recommendedStart !== undefined) {
+    taskLines.push(`Do not schedule before ${new Date(args.recommendedStart).toISOString()}`);
+  }
+  sections.push(`<task>\n${taskLines.join("\n")}\n</task>`);
 
   if (args.productivityTraits) {
     sections.push(`<productivity_preferences>
@@ -104,6 +106,7 @@ ${slotsJson}
 export interface BatchScheduleBlockEntry {
   taskTitle: string;
   dueDate: number;
+  recommendedStart?: number;
   candidates: ScheduleBlockSlot[];
 }
 
@@ -123,6 +126,9 @@ ${JSON.stringify(productivityTraits, null, 2)}
     blockIndex: bi,
     taskTitle: b.taskTitle,
     dueDate: new Date(b.dueDate).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" }),
+    ...(b.recommendedStart !== undefined
+      ? { doNotScheduleBefore: new Date(b.recommendedStart).toISOString() }
+      : {}),
     candidates: b.candidates.map((s, si) => ({
       index: si,
       startTime: s.startISO,

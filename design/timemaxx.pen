@@ -22728,6 +22728,1053 @@
           "fill": "rgba(0,0,0,0.5)"
         }
       ]
+    },
+    {
+      "type": "frame",
+      "id": "eX326",
+      "x": 12800,
+      "y": 600,
+      "name": "ClassAccordionRow",
+      "reusable": true,
+      "width": 260,
+      "height": 56,
+      "fill": "$--card",
+      "stroke": {
+        "align": "inside",
+        "thickness": {
+          "bottom": 1
+        },
+        "fill": "$--border"
+      },
+      "gap": 10,
+      "padding": [
+        10,
+        16
+      ],
+      "alignItems": "center",
+      "children": [
+        {
+          "type": "ellipse",
+          "id": "Qb8oO",
+          "name": "carDot",
+          "fill": "$--accent",
+          "width": 10,
+          "height": 10
+        },
+        {
+          "type": "frame",
+          "id": "S049y",
+          "name": "carInfo",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 2,
+          "children": [
+            {
+              "type": "text",
+              "id": "rUqML",
+              "name": "carCode",
+              "fill": "$--muted-foreground",
+              "content": "EN.601.421",
+              "fontFamily": "Inter",
+              "fontSize": 10,
+              "fontWeight": "500"
+            },
+            {
+              "type": "text",
+              "id": "4hPvm",
+              "name": "carName",
+              "fill": "$--primary",
+              "content": "Operating Systems",
+              "fontFamily": "Inter",
+              "fontSize": 13,
+              "fontWeight": "600"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "id": "WnrDM",
+          "name": "carCnt",
+          "fill": "$--muted-foreground",
+          "content": "3",
+          "fontFamily": "Inter",
+          "fontSize": 11,
+          "fontWeight": "500"
+        },
+        {
+          "type": "icon_font",
+          "id": "qtQKf",
+          "name": "carChev",
+          "width": 14,
+          "height": 14,
+          "iconFontName": "chevron-right",
+          "iconFontFamily": "lucide",
+          "fill": "$--muted-foreground"
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "On0SO",
+      "x": 12800,
+      "y": 680,
+      "name": "TaskAccordionRow",
+      "reusable": true,
+      "width": 260,
+      "height": 44,
+      "fill": "$--card",
+      "stroke": {
+        "align": "inside",
+        "thickness": {
+          "bottom": 1
+        },
+        "fill": "$--border"
+      },
+      "gap": 8,
+      "padding": [
+        8,
+        16,
+        8,
+        32
+      ],
+      "alignItems": "center",
+      "children": [
+        {
+          "type": "ellipse",
+          "id": "6UAM8",
+          "name": "tarDot",
+          "fill": "$--muted-foreground",
+          "width": 6,
+          "height": 6
+        },
+        {
+          "type": "text",
+          "id": "IoL0f",
+          "name": "tarTitle",
+          "fill": "$--primary",
+          "content": "Write Lab Report",
+          "fontFamily": "Inter",
+          "fontSize": 12,
+          "fontWeight": "500"
+        },
+        {
+          "type": "text",
+          "id": "isbF4",
+          "name": "tarDue",
+          "fill": "$--muted-foreground",
+          "content": "Apr 25",
+          "fontFamily": "Inter",
+          "fontSize": 10
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "2Dk5g",
+      "x": 12800,
+      "y": 740,
+      "name": "TaskAccordionRow/Selected",
+      "reusable": true,
+      "width": 260,
+      "height": 44,
+      "fill": "$--card",
+      "stroke": {
+        "align": "inside",
+        "thickness": {
+          "bottom": 1
+        },
+        "fill": "$--border"
+      },
+      "alignItems": "center",
+      "children": [
+        {
+          "type": "rectangle",
+          "id": "QV5UH",
+          "name": "tarsBar",
+          "fill": "$--accent",
+          "width": 3,
+          "height": 44
+        },
+        {
+          "type": "frame",
+          "id": "AcxL0",
+          "name": "tarsContent",
+          "width": "fill_container",
+          "height": 44,
+          "gap": 8,
+          "padding": [
+            0,
+            16,
+            0,
+            24
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "ellipse",
+              "id": "MTUZs",
+              "name": "tarsDot",
+              "fill": "$--accent",
+              "width": 6,
+              "height": 6
+            },
+            {
+              "type": "text",
+              "id": "ZG6jR",
+              "name": "tarsTitle",
+              "fill": "$--primary",
+              "content": "Write Lab Report",
+              "fontFamily": "Inter",
+              "fontSize": 12,
+              "fontWeight": "600"
+            },
+            {
+              "type": "text",
+              "id": "aGKhH",
+              "name": "tarsDue",
+              "fill": "$--accent",
+              "content": "Apr 25",
+              "fontFamily": "Inter",
+              "fontSize": 10
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "nqHtg",
+      "x": 12800,
+      "y": 820,
+      "name": "ScheduleTray/Empty",
+      "reusable": true,
+      "width": 300,
+      "height": 900,
+      "fill": "$--card",
+      "stroke": {
+        "align": "inside",
+        "thickness": {
+          "left": 1
+        },
+        "fill": "$--border"
+      },
+      "layout": "vertical",
+      "gap": 12,
+      "justifyContent": "center",
+      "alignItems": "center",
+      "children": [
+        {
+          "type": "icon_font",
+          "id": "H1b0R",
+          "name": "trayEmptyIcon",
+          "width": 32,
+          "height": 32,
+          "iconFontName": "calendar-clock",
+          "iconFontFamily": "lucide",
+          "fill": "$--muted-foreground"
+        },
+        {
+          "type": "text",
+          "id": "kzhEK",
+          "name": "trayEmptyHint",
+          "fill": "$--muted-foreground",
+          "content": "Select a task to schedule",
+          "fontFamily": "Inter",
+          "fontSize": 12
+        },
+        {
+          "type": "frame",
+          "id": "KOPbZ",
+          "name": "trayEmptyBtn",
+          "opacity": 0.3,
+          "width": 160,
+          "height": 40,
+          "fill": "$--primary",
+          "cornerRadius": 8,
+          "gap": 6,
+          "padding": [
+            10,
+            20
+          ],
+          "justifyContent": "center",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "rdoMq",
+              "name": "trayEmptyBtnTxt",
+              "fill": "#FFFFFF",
+              "content": "Schedule",
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "600"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "zbY6y",
+      "x": 12800,
+      "y": 1760,
+      "name": "ScheduleTray/Active",
+      "reusable": true,
+      "width": 300,
+      "height": 900,
+      "fill": "$--card",
+      "stroke": {
+        "align": "inside",
+        "thickness": {
+          "left": 1
+        },
+        "fill": "$--border"
+      },
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "CaxV2",
+          "name": "trayActiveHdr",
+          "width": "fill_container",
+          "stroke": {
+            "align": "inside",
+            "thickness": {
+              "bottom": 1
+            },
+            "fill": "$--border"
+          },
+          "layout": "vertical",
+          "gap": 4,
+          "padding": [
+            20,
+            20,
+            16,
+            20
+          ],
+          "children": [
+            {
+              "type": "text",
+              "id": "RLenq",
+              "name": "trayActiveLabel",
+              "fill": "$--muted-foreground",
+              "content": "Selected Task",
+              "fontFamily": "Inter",
+              "fontSize": 10,
+              "fontWeight": "500"
+            },
+            {
+              "type": "text",
+              "id": "WamrR",
+              "name": "trayActiveTitle",
+              "fill": "$--primary",
+              "content": "Write Lab Report",
+              "fontFamily": "Space Grotesk",
+              "fontSize": 15,
+              "fontWeight": "700"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "jtH9o",
+          "name": "trayActiveSubsec",
+          "width": "fill_container",
+          "height": "fill_container",
+          "layout": "vertical",
+          "children": [
+            {
+              "type": "frame",
+              "id": "B5kFZ",
+              "name": "traySubLabelWrap",
+              "width": "fill_container",
+              "padding": [
+                8,
+                20
+              ],
+              "children": [
+                {
+                  "type": "text",
+                  "id": "9PwDv",
+                  "name": "traySubLabel",
+                  "fill": "$--muted-foreground",
+                  "content": "SUBTASKS",
+                  "fontFamily": "Inter",
+                  "fontSize": 9,
+                  "fontWeight": "600"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "Chekm",
+              "name": "traySubRow1",
+              "width": "fill_container",
+              "gap": 8,
+              "padding": [
+                8,
+                20
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "ellipse",
+                  "id": "kuP1h",
+                  "name": "traySubChk1",
+                  "width": 12,
+                  "height": 12,
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "$--muted-foreground"
+                  }
+                },
+                {
+                  "type": "text",
+                  "id": "GC58W",
+                  "name": "traySubTxt1",
+                  "fill": "$--primary",
+                  "content": "Outline methodology",
+                  "fontFamily": "Inter",
+                  "fontSize": 12
+                },
+                {
+                  "type": "text",
+                  "id": "G9Ehi",
+                  "name": "traySubTime1",
+                  "fill": "$--muted-foreground",
+                  "content": "45 min",
+                  "fontFamily": "Inter",
+                  "fontSize": 10,
+                  "fontWeight": "500"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "1WvnX",
+              "name": "traySubRow2",
+              "width": "fill_container",
+              "gap": 8,
+              "padding": [
+                8,
+                20
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "ellipse",
+                  "id": "ofyPC",
+                  "name": "traySubChk2",
+                  "width": 12,
+                  "height": 12,
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "$--muted-foreground"
+                  }
+                },
+                {
+                  "type": "text",
+                  "id": "H9mnU",
+                  "name": "traySubTxt2",
+                  "fill": "$--primary",
+                  "content": "Write results section",
+                  "fontFamily": "Inter",
+                  "fontSize": 12
+                },
+                {
+                  "type": "text",
+                  "id": "H7dhW",
+                  "name": "traySubTime2",
+                  "fill": "$--muted-foreground",
+                  "content": "30 min",
+                  "fontFamily": "Inter",
+                  "fontSize": 10,
+                  "fontWeight": "500"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "zyN3d",
+          "name": "traySBSec",
+          "width": "fill_container",
+          "stroke": {
+            "align": "inside",
+            "thickness": {
+              "top": 1
+            },
+            "fill": "$--border"
+          },
+          "layout": "vertical",
+          "padding": [
+            12,
+            0,
+            0,
+            0
+          ],
+          "children": [
+            {
+              "type": "frame",
+              "id": "neiHM",
+              "name": "traySBLabelWrap",
+              "width": "fill_container",
+              "padding": [
+                0,
+                20,
+                8,
+                20
+              ],
+              "children": [
+                {
+                  "type": "text",
+                  "id": "K3Qlv",
+                  "name": "traySBLabel",
+                  "fill": "$--muted-foreground",
+                  "content": "STUDY BLOCKS",
+                  "fontFamily": "Inter",
+                  "fontSize": 9,
+                  "fontWeight": "600"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "Y2U42",
+              "name": "traySBRow",
+              "width": "fill_container",
+              "gap": 8,
+              "padding": [
+                8,
+                20
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "rectangle",
+                  "cornerRadius": 2,
+                  "id": "uu3OQ",
+                  "name": "traySBDot",
+                  "fill": "$--info",
+                  "width": 4,
+                  "height": 32
+                },
+                {
+                  "type": "frame",
+                  "id": "2mzrd",
+                  "name": "traySBInfo",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 2,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "9yKfT",
+                      "name": "traySBTime",
+                      "fill": "$--primary",
+                      "content": "Mon, Apr 28 · 2:00–3:00 PM",
+                      "fontFamily": "Inter",
+                      "fontSize": 11,
+                      "fontWeight": "500"
+                    },
+                    {
+                      "type": "text",
+                      "id": "YoCvf",
+                      "name": "traySBDur",
+                      "fill": "$--muted-foreground",
+                      "content": "60 min",
+                      "fontFamily": "Inter",
+                      "fontSize": 10
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "olfjZ",
+          "name": "trayBtnRow",
+          "width": "fill_container",
+          "stroke": {
+            "align": "inside",
+            "thickness": {
+              "top": 1
+            },
+            "fill": "$--border"
+          },
+          "padding": [
+            16,
+            20
+          ],
+          "justifyContent": "center",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "y9Mko",
+              "name": "traySchedBtn",
+              "width": "fill_container",
+              "height": 40,
+              "fill": "$--primary",
+              "cornerRadius": 8,
+              "gap": 6,
+              "padding": [
+                10,
+                0
+              ],
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "RgTHu",
+                  "name": "traySchedBtnIco",
+                  "width": 14,
+                  "height": 14,
+                  "iconFontName": "calendar-plus",
+                  "iconFontFamily": "lucide",
+                  "fill": "#FFFFFF"
+                },
+                {
+                  "type": "text",
+                  "id": "wFpQf",
+                  "name": "traySchedBtnTxt",
+                  "fill": "#FFFFFF",
+                  "content": "Schedule",
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "600"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "QeTVd",
+      "x": 1500,
+      "y": 5060,
+      "name": "Schedule (Redesigned)",
+      "width": 1440,
+      "height": 900,
+      "fill": "$--background",
+      "children": [
+        {
+          "id": "rAkh1",
+          "type": "ref",
+          "ref": "GeaRV",
+          "name": "sidebarRef",
+          "height": "fill_container"
+        },
+        {
+          "type": "frame",
+          "id": "4pJgz",
+          "name": "main",
+          "width": "fill_container",
+          "height": "fill_container",
+          "fill": "$--background",
+          "layout": "vertical",
+          "children": [
+            {
+              "type": "frame",
+              "id": "Stz2F",
+              "name": "pageHeader",
+              "width": "fill_container",
+              "height": 72,
+              "fill": "$--card",
+              "stroke": {
+                "align": "inside",
+                "thickness": {
+                  "bottom": 1
+                },
+                "fill": "$--border"
+              },
+              "padding": [
+                0,
+                32
+              ],
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "r52hA",
+                  "name": "title",
+                  "fill": "$--primary",
+                  "content": "My Schedule",
+                  "fontFamily": "Space Grotesk",
+                  "fontSize": 20,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "frame",
+                  "id": "FBp4E",
+                  "name": "weekNav",
+                  "gap": 8,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "dD4sp",
+                      "name": "hdrPrev2",
+                      "width": 16,
+                      "height": 16,
+                      "iconFontName": "chevron-left",
+                      "iconFontFamily": "lucide",
+                      "fill": "$--muted-foreground"
+                    },
+                    {
+                      "type": "text",
+                      "id": "UHbBt",
+                      "name": "weekLabel",
+                      "fill": "$--primary",
+                      "content": "Apr 21 – Apr 27, 2025",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "500"
+                    },
+                    {
+                      "type": "icon_font",
+                      "id": "3R8mE",
+                      "name": "hdrNext2",
+                      "width": 16,
+                      "height": 16,
+                      "iconFontName": "chevron-right",
+                      "iconFontFamily": "lucide",
+                      "fill": "$--muted-foreground"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "dLDzU",
+              "name": "body",
+              "width": "fill_container",
+              "height": "fill_container",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "iFw9o",
+                  "name": "calendarGrid",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "fill": "$--card",
+                  "layout": "vertical",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "WIWqK",
+                      "name": "dayHeaderRow",
+                      "width": "fill_container",
+                      "height": 40,
+                      "fill": "$--card",
+                      "stroke": {
+                        "align": "inside",
+                        "thickness": {
+                          "bottom": 1
+                        },
+                        "fill": "$--border"
+                      },
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "93Cw3",
+                          "name": "dayMon",
+                          "width": "fill_container",
+                          "height": "fill_container",
+                          "layout": "vertical",
+                          "gap": 2,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "XEO3F",
+                              "name": "gridDayMonLbl2",
+                              "fill": "$--muted-foreground",
+                              "content": "MON",
+                              "fontFamily": "Inter",
+                              "fontSize": 9,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "text",
+                              "id": "KQNVQ",
+                              "name": "gridDayMonNum2",
+                              "fill": "$--primary",
+                              "content": "21",
+                              "fontFamily": "Inter",
+                              "fontSize": 14,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "ryGdy",
+                      "name": "gridBody",
+                      "width": "fill_container",
+                      "height": "fill_container",
+                      "fill": "$--background"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "6A5If",
+                  "name": "classPanel",
+                  "width": 280,
+                  "height": "fill_container",
+                  "fill": "$--card",
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": {
+                      "left": 1
+                    },
+                    "fill": "$--border"
+                  },
+                  "layout": "vertical",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "azr5i",
+                      "name": "panelHeader",
+                      "width": "fill_container",
+                      "height": 40,
+                      "stroke": {
+                        "align": "inside",
+                        "thickness": {
+                          "bottom": 1
+                        },
+                        "fill": "$--border"
+                      },
+                      "padding": [
+                        12,
+                        16
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "ex0dB",
+                          "name": "panelTitle",
+                          "fill": "$--muted-foreground",
+                          "content": "CLASSES",
+                          "fontFamily": "Inter",
+                          "fontSize": 10,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "lI68t",
+                      "type": "ref",
+                      "ref": "eX326",
+                      "name": "classRow1",
+                      "descendants": {
+                        "Qb8oO": {
+                          "fill": "#3B82F6"
+                        },
+                        "rUqML": {
+                          "content": "EN.601.421"
+                        },
+                        "4hPvm": {
+                          "content": "Operating Systems"
+                        },
+                        "WnrDM": {
+                          "content": "3"
+                        },
+                        "qtQKf": {
+                          "iconFontName": "chevron-down"
+                        }
+                      }
+                    },
+                    {
+                      "id": "SN1Jr",
+                      "type": "ref",
+                      "ref": "On0SO",
+                      "name": "taskRow1",
+                      "descendants": {
+                        "IoL0f": {
+                          "content": "Kernel Module Assignment"
+                        },
+                        "isbF4": {
+                          "content": "Apr 28"
+                        }
+                      }
+                    },
+                    {
+                      "id": "couih",
+                      "type": "ref",
+                      "ref": "2Dk5g",
+                      "name": "taskRow2Sel",
+                      "descendants": {
+                        "ZG6jR": {
+                          "content": "Write Lab Report"
+                        },
+                        "aGKhH": {
+                          "content": "Apr 25"
+                        }
+                      }
+                    },
+                    {
+                      "id": "KpF63",
+                      "type": "ref",
+                      "ref": "On0SO",
+                      "name": "taskRow3",
+                      "descendants": {
+                        "IoL0f": {
+                          "content": "Midterm Review"
+                        },
+                        "isbF4": {
+                          "content": "May 2"
+                        }
+                      }
+                    },
+                    {
+                      "id": "rXu9q",
+                      "type": "ref",
+                      "ref": "eX326",
+                      "name": "classRow2",
+                      "descendants": {
+                        "Qb8oO": {
+                          "fill": "#8B5CF6"
+                        },
+                        "rUqML": {
+                          "content": "EN.553.420"
+                        },
+                        "4hPvm": {
+                          "content": "Probability & Stats"
+                        },
+                        "WnrDM": {
+                          "content": "2"
+                        }
+                      }
+                    },
+                    {
+                      "id": "EjrG4",
+                      "type": "ref",
+                      "ref": "eX326",
+                      "name": "classRow3",
+                      "descendants": {
+                        "Qb8oO": {
+                          "fill": "#F59E0B"
+                        },
+                        "rUqML": {
+                          "content": "EN.580.243"
+                        },
+                        "4hPvm": {
+                          "content": "Biomedical Eng. Design"
+                        },
+                        "WnrDM": {
+                          "content": "1"
+                        }
+                      }
+                    },
+                    {
+                      "type": "frame",
+                      "id": "dMNjN",
+                      "name": "spacer",
+                      "width": "fill_container",
+                      "height": "fill_container"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "yEs5K",
+                      "name": "trayDivider",
+                      "width": "fill_container",
+                      "height": 1,
+                      "fill": "$--border"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "tUF6Q",
+                      "name": "schedTray",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 10,
+                      "padding": 20,
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon_font",
+                          "id": "e03AS",
+                          "name": "trayIcon2",
+                          "width": 24,
+                          "height": 24,
+                          "iconFontName": "calendar-clock",
+                          "iconFontFamily": "lucide",
+                          "fill": "$--muted-foreground"
+                        },
+                        {
+                          "type": "text",
+                          "id": "6hsSZ",
+                          "name": "trayHint2",
+                          "fill": "$--muted-foreground",
+                          "content": "Select a task to schedule",
+                          "fontFamily": "Inter",
+                          "fontSize": 11
+                        },
+                        {
+                          "type": "frame",
+                          "id": "XRopT",
+                          "name": "schedBtn",
+                          "opacity": 0.3,
+                          "width": "fill_container",
+                          "height": 40,
+                          "fill": "$--primary",
+                          "cornerRadius": 8,
+                          "gap": 6,
+                          "padding": [
+                            10,
+                            0
+                          ],
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon_font",
+                              "id": "vAc4O",
+                              "name": "trayBtnIco2",
+                              "width": 14,
+                              "height": 14,
+                              "iconFontName": "calendar-plus",
+                              "iconFontFamily": "lucide",
+                              "fill": "#FFFFFF"
+                            },
+                            {
+                              "type": "text",
+                              "id": "6jfUl",
+                              "name": "trayBtnTxt2",
+                              "fill": "#FFFFFF",
+                              "content": "Schedule",
+                              "fontFamily": "Inter",
+                              "fontSize": 14,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
     }
   ],
   "variables": {

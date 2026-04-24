@@ -49,6 +49,7 @@ export const scheduleBlock = action({
     let taskTitle: string;
     let dueDate: number;
     let creationTime: number;
+    let recommendedStart: number | undefined;
 
     if (block.subtaskId) {
       const subtask = await ctx.runQuery(internal.queries.subtasks.getSubtaskInternal, {
@@ -58,6 +59,10 @@ export const scheduleBlock = action({
       taskTitle = subtask.title;
       dueDate = subtask.suggestedCompletionAt ?? subtask.dueDate ?? Date.now() + DEFAULT_DUE_FALLBACK_MS;
       creationTime = subtask._creationTime;
+      const parentTask = await ctx.runQuery(internal.queries.tasks.getTaskInternal, {
+        taskId: subtask.parentTaskId,
+      });
+      recommendedStart = parentTask?.recommendedStart;
     } else {
       // block.taskId is non-null here: the guard above ensures at least one of taskId/subtaskId is set
       const task = await ctx.runQuery(internal.queries.tasks.getTaskInternal, {
@@ -67,6 +72,7 @@ export const scheduleBlock = action({
       taskTitle = task.title;
       dueDate = task.dueDate;
       creationTime = task._creationTime;
+      recommendedStart = task.recommendedStart;
     }
 
     // Fetch user preferences and calendar events in parallel
@@ -112,12 +118,13 @@ export const scheduleBlock = action({
       timezone: args.timezone,
       dailyLoadMap,
       maxBlocksPerDayMap,
+      recommendedStartMs: recommendedStart,
     });
 
     if (candidates.length === 0) return { error: "no_slot_found" };
 
     const [chosenIndex] = await selectAllSlotsWithAI(
-      [{ taskTitle, dueDate, candidates }],
+      [{ taskTitle, dueDate, recommendedStart, candidates }],
       productivityTraits,
     );
 
