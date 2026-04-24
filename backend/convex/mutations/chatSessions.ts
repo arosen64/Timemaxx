@@ -204,7 +204,7 @@ export const setTaskAgentStateInternal = internalMutation({
   },
 });
 
-export const clearTaskAgentStateInternal = internalMutation({
+export const clearAgentStateInternal = internalMutation({
   args: {
     userId: v.id("users"),
     sessionId: v.string(),
@@ -236,6 +236,9 @@ export const clearTaskAgentStateInternal = internalMutation({
     return null;
   },
 });
+
+// Backwards-compatible alias for generated API/type references until next codegen.
+export const clearTaskAgentStateInternal = clearAgentStateInternal;
 
 export const setMessageScopeInternal = internalMutation({
   args: {

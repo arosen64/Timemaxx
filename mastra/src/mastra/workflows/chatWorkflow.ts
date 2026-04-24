@@ -77,6 +77,46 @@ const NO_ACTION = {
   sisQuery: null, term: null, school: null, studyGoal: null, grade: null, difficultyRating: null,
 } as const;
 
+function courseFields(output: CourseAgentOutput) {
+  return {
+    courseName: output.courseName,
+    sisQuery: output.sisQuery,
+    term: output.term,
+    school: output.school,
+    studyGoal: output.studyGoal,
+    grade: output.grade,
+    difficultyRating: output.difficultyRating,
+  } as const;
+}
+
+function courseReplyBase(newIntent: "add" | "drop" | "view" | "update" | null) {
+  return {
+    route: "classes" as const,
+    needsClassAfterTask: false,
+    newActiveAgent: "classes" as const,
+    clearActiveAgent: false,
+    newTaskAgentIntent: null,
+    newCourseAgentIntent: newIntent,
+    readyToRecord: false,
+  } as const;
+}
+
+function courseNeedsClassMcq(
+  output: CourseAgentOutput,
+  newIntent: "add" | "drop" | "view" | "update" | null,
+  courseQueryText: string,
+): ChatWorkflowOutput {
+  return {
+    reply: "Which class are you referring to? Pick one below, or choose **Other** to see more options.",
+    status: "needs_class_mcq",
+    mcqQueryText: courseQueryText,
+    ...courseReplyBase(newIntent),
+    ...NO_ACTION,
+    actionType: "none",
+    ...courseFields(output),
+  };
+}
+
 // canned replies for routes
 const CANNED_REPLIES: Record<string, string> = {
   schedule: "To schedule or manage your study blocks, visit the **Schedule** page. To connect or revoke Google Calendar access, head to the **Profile** page.",
@@ -168,45 +208,27 @@ function courseOutput(output: CourseAgentOutput, ctx: {
     if (!output.term) {
       return {
         reply: "Which term is this course for? (for example, Spring 2026)",
-        route: "classes",
         status: "reply",
         mcqQueryText: null,
-        needsClassAfterTask: false,
-        newActiveAgent: "classes",
-        clearActiveAgent: false,
-        newTaskAgentIntent: null,
-        newCourseAgentIntent: newIntent,
-        readyToRecord: false,
+        ...courseReplyBase(newIntent),
         ...NO_ACTION,
       };
     }
     if (!output.school) {
       return {
         reply: "Which school is this course in? (for example, Krieger School of Arts and Sciences or Whiting School of Engineering)",
-        route: "classes",
         status: "reply",
         mcqQueryText: null,
-        needsClassAfterTask: false,
-        newActiveAgent: "classes",
-        clearActiveAgent: false,
-        newTaskAgentIntent: null,
-        newCourseAgentIntent: newIntent,
-        readyToRecord: false,
+        ...courseReplyBase(newIntent),
         ...NO_ACTION,
       };
     }
     if (!output.sisQuery && !output.courseName) {
       return {
         reply: "What course should I search for in SIS? You can share a course code or title keyword.",
-        route: "classes",
         status: "reply",
         mcqQueryText: null,
-        needsClassAfterTask: false,
-        newActiveAgent: "classes",
-        clearActiveAgent: false,
-        newTaskAgentIntent: null,
-        newCourseAgentIntent: newIntent,
-        readyToRecord: false,
+        ...courseReplyBase(newIntent),
         ...NO_ACTION,
       };
     }
@@ -215,37 +237,7 @@ function courseOutput(output: CourseAgentOutput, ctx: {
   // - drop/update always require a resolved class
   // - view can list all classes without a resolved class, but single-class view requires one
   if ((effectiveIntent === "drop" || effectiveIntent === "update") && taggedCourseId === null) {
-    return {
-      reply: "Which class are you referring to? Pick one below, or choose **Other** to see more options.",
-      route: "classes",
-      status: "needs_class_mcq",
-      mcqQueryText: courseQueryText,
-      needsClassAfterTask: false,
-      newActiveAgent: "classes",
-      clearActiveAgent: false,
-      newTaskAgentIntent: null,
-      newCourseAgentIntent: newIntent,
-      readyToRecord: false,
-      actionType: "none",
-      title: null,
-      description: null,
-      taskType: null,
-      dueDateIso: null,
-      classTag: null,
-      deleteConfirmed: false,
-      updatedTitle: null,
-      updatedDescription: null,
-      updatedTaskType: null,
-      updatedDueDateIso: null,
-      updatedClassTag: null,
-      courseName: output.courseName,
-      sisQuery: output.sisQuery,
-      term: output.term,
-      school: output.school,
-      studyGoal: output.studyGoal,
-      grade: output.grade,
-      difficultyRating: output.difficultyRating,
-    };
+    return courseNeedsClassMcq(output, newIntent, courseQueryText);
   }
   if (effectiveIntent === "view" && taggedCourseId === null) {
     const listingAllCourses =
@@ -254,71 +246,11 @@ function courseOutput(output: CourseAgentOutput, ctx: {
       output.courseName === null &&
       output.sisQuery === null;
     if (!listingAllCourses) {
-      return {
-        reply: "Which class are you referring to? Pick one below, or choose **Other** to see more options.",
-        route: "classes",
-        status: "needs_class_mcq",
-        mcqQueryText: courseQueryText,
-        needsClassAfterTask: false,
-        newActiveAgent: "classes",
-        clearActiveAgent: false,
-        newTaskAgentIntent: null,
-        newCourseAgentIntent: newIntent,
-        readyToRecord: false,
-        actionType: "none",
-        title: null,
-        description: null,
-        taskType: null,
-        dueDateIso: null,
-        classTag: null,
-        deleteConfirmed: false,
-        updatedTitle: null,
-        updatedDescription: null,
-        updatedTaskType: null,
-        updatedDueDateIso: null,
-        updatedClassTag: null,
-        courseName: output.courseName,
-        sisQuery: output.sisQuery,
-        term: output.term,
-        school: output.school,
-        studyGoal: output.studyGoal,
-        grade: output.grade,
-        difficultyRating: output.difficultyRating,
-      };
+      return courseNeedsClassMcq(output, newIntent, courseQueryText);
     }
   }
   if (output.needsClassClarification && (effectiveIntent === "add" || taggedCourseId === null)) {
-    return {
-      reply: "Which class are you referring to? Pick one below, or choose **Other** to see more options.",
-      route: "classes",
-      status: "needs_class_mcq",
-      mcqQueryText: courseQueryText,
-      needsClassAfterTask: false,
-      newActiveAgent: "classes",
-      clearActiveAgent: false,
-      newTaskAgentIntent: null,
-      newCourseAgentIntent: newIntent,
-      readyToRecord: false,
-      actionType: "none",
-      title: null,
-      description: null,
-      taskType: null,
-      dueDateIso: null,
-      classTag: null,
-      deleteConfirmed: false,
-      updatedTitle: null,
-      updatedDescription: null,
-      updatedTaskType: null,
-      updatedDueDateIso: null,
-      updatedClassTag: null,
-      courseName: output.courseName,
-      sisQuery: output.sisQuery,
-      term: output.term,
-      school: output.school,
-      studyGoal: output.studyGoal,
-      grade: output.grade,
-      difficultyRating: output.difficultyRating,
-    };
+    return courseNeedsClassMcq(output, newIntent, courseQueryText);
   }
   if (output.readyToExecute && output.actionType !== "none") {
     return {
@@ -327,30 +259,14 @@ function courseOutput(output: CourseAgentOutput, ctx: {
       status: "course_action",
       mcqQueryText: null,
       needsClassAfterTask: false,
+      ...NO_ACTION,
       actionType: output.actionType,
-      courseName: output.courseName,
-      sisQuery: output.sisQuery,
-      term: output.term,
-      school: output.school,
-      studyGoal: output.studyGoal,
-      grade: output.grade,
-      difficultyRating: output.difficultyRating,
+      ...courseFields(output),
       newActiveAgent: null,
       clearActiveAgent: true,
       newTaskAgentIntent: null,
       newCourseAgentIntent: null,
       readyToRecord: false,
-      title: null,
-      description: null,
-      taskType: null,
-      dueDateIso: null,
-      classTag: null,
-      deleteConfirmed: false,
-      updatedTitle: null,
-      updatedDescription: null,
-      updatedTaskType: null,
-      updatedDueDateIso: null,
-      updatedClassTag: null,
     };
   }
   return { reply: output.message, route: "classes", status: "reply", mcqQueryText: null, needsClassAfterTask: false, newActiveAgent: "classes", clearActiveAgent: false, newTaskAgentIntent: null, newCourseAgentIntent: newIntent, readyToRecord: false, ...NO_ACTION };

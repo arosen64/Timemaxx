@@ -5,6 +5,22 @@ import { api } from "./_generated/api";
 import type { ActionCtx } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
 import type { HonoEnv } from "./lib/httpTypes";
+import { executeCourseAction } from "./lib/executeCourseAction";
+import type {
+  ActiveAgent,
+  ChatWorkflowOutput,
+  CourseAgentIntent,
+  SisResolvedPick,
+  TaskAgentIntent,
+} from "./lib/chatWorkflowHttpTypes";
+import type { EntityCandidate } from "./lib/entityCandidates";
+import {
+  decodeSisCandidate,
+  decodeSisContext,
+  encodeSisCandidate,
+  encodeSisContext,
+  isSisCandidateEntityId,
+} from "./lib/sisEntityTokens";
 
 import {
   getLastUserMessage,
@@ -14,39 +30,6 @@ import {
 } from "./lib/messageTaggedScope";
 import { threadHasTaggedCourse, buildTaggedEntitiesContextBlock } from "./lib/chatEntityContext";
 import { handleEntityAction } from "./lib/chatEntityActions";
-
-/** Mirrors the output schema of chatWorkflow in mastra/src/mastra/workflows/chatWorkflow.ts */
-type ChatWorkflowOutput = {
-  reply: string;
-  route: string | null;
-  status: "reply" | "domain_clarify" | "needs_task_mcq" | "needs_class_mcq" | "task_action" | "course_action" | "canned";
-  mcqQueryText: string | null;
-  needsClassAfterTask: boolean;
-  actionType: "create_task" | "update_task" | "delete_task" | "read_task" | "add_course" | "drop_course" | "update_course" | "view_courses" | "none" | null;
-  title: string | null;
-  description: string | null;
-  taskType: string | null;
-  dueDateIso: string | null;
-  classTag: string | null;
-  deleteConfirmed: boolean;
-  updatedTitle: string | null;
-  updatedDescription: string | null;
-  updatedTaskType: string | null;
-  updatedDueDateIso: string | null;
-  updatedClassTag: string | null;
-  courseName: string | null;
-  sisQuery: string | null;
-  term: string | null;
-  school: string | null;
-  studyGoal: string | null;
-  grade: string | null;
-  difficultyRating: number | null;
-  newActiveAgent: "task" | "feedback" | "preferences" | "classes" | null;
-  clearActiveAgent: boolean;
-  newTaskAgentIntent: "create" | "rud" | null;
-  newCourseAgentIntent: "add" | "drop" | "view" | "update" | null;
-  readyToRecord: boolean;
-};
 
 const chatApp = new Hono<HonoEnv>();
 
@@ -65,8 +48,6 @@ const MENU_USER_LABELS: Record<string, string> = {
   schedule: "Schedule something",
   preferences: "Change my preferences",
 };
-type EntityCandidate = { id: string; label: string; subtitle: string };
-
 function parseDueDateIso(iso: string): number {
   if (!iso) return Date.now() + 86_400_000;
   const hasTime = iso.includes("T") && iso.length > 10;
@@ -75,65 +56,6 @@ function parseDueDateIso(iso: string): number {
   return isNaN(ms) ? Date.now() + 86_400_000 : ms;
 }
 
-const STUDY_GOALS = new Set(["Just pass", "Do well", "Ace it"]);
-const GRADES = new Set(["A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D+", "D", "D-", "F", "IP", "S", "U", "NG"]);
-const SIS_CONTEXT_PREFIX = "__sis_ctx__|";
-const SIS_CANDIDATE_PREFIX = "__sis_pick__|";
-
-function termToOrdinal(termName: string): number | null {
-  const lower = termName.toLowerCase();
-  const yearMatch = termName.match(/\d{4}/);
-  if (!yearMatch) return null;
-  const year = Number.parseInt(yearMatch[0], 10);
-  const season =
-    lower.includes("intersession") ? 0 :
-    lower.includes("spring") ? 1 :
-    lower.includes("summer") ? 2 :
-    lower.includes("fall") ? 3 : null;
-  if (season === null) return null;
-  return year * 10 + season;
-}
-
-function currentTermOrdinal(date = new Date()): number {
-  const month = date.getMonth() + 1;
-  const day = date.getDate();
-  const year = date.getFullYear();
-  const season =
-    month < 1 || (month === 1 && day < 15) ? 0 :
-    month < 6 ? 1 :
-    month < 8 || (month === 8 && day < 15) ? 2 : 3;
-  return year * 10 + season;
-}
-
-function isPastTerm(termName: string): boolean {
-  const ordinal = termToOrdinal(termName);
-  if (ordinal === null) return false;
-  return ordinal < currentTermOrdinal();
-}
-
-function encodeSisContext(input: { term: string; school: string; query: string }): string {
-  return `${SIS_CONTEXT_PREFIX}${input.term}||${input.school}||${input.query}`;
-}
-
-function decodeSisContext(s: string): { term: string; school: string; query: string } | null {
-  if (!s.startsWith(SIS_CONTEXT_PREFIX)) return null;
-  const body = s.slice(SIS_CONTEXT_PREFIX.length);
-  const [term, school, query] = body.split("||");
-  if (!term || !school || !query) return null;
-  return { term, school, query };
-}
-
-function encodeSisCandidate(input: { offeringName: string; title: string; term: string; school: string }): string {
-  return `${SIS_CANDIDATE_PREFIX}${input.offeringName}||${input.title}||${input.term}||${input.school}`;
-}
-
-function decodeSisCandidate(s: string): { offeringName: string; title: string; term: string; school: string } | null {
-  if (!s.startsWith(SIS_CANDIDATE_PREFIX)) return null;
-  const body = s.slice(SIS_CANDIDATE_PREFIX.length);
-  const [offeringName, title, term, school] = body.split("||");
-  if (!offeringName || !title || !term || !school) return null;
-  return { offeringName, title, term, school };
-}
 
 async function runChatWorkflow(
   client: InstanceType<typeof MastraClient>,
@@ -247,7 +169,7 @@ async function executeTaskAction(
     aiText = `Sorry, I ran into an issue: ${err instanceof Error ? err.message : "Please try again."}`;
   }
 
-  await ctx.runMutation(internal.mutations.chatSessions.clearTaskAgentStateInternal, {
+  await ctx.runMutation(internal.mutations.chatSessions.clearAgentStateInternal, {
     userId,
     sessionId,
   });
@@ -258,213 +180,6 @@ async function executeTaskAction(
     content: aiText,
     ...(taggedTaskId !== undefined && !clearedScopeAfterAction ? { taskId: taggedTaskId } : {}),
     ...(taggedCourseId !== undefined && !clearedScopeAfterAction ? { courseId: taggedCourseId } : {}),
-  });
-  return aiText;
-}
-
-async function executeCourseAction(
-  ctx: ActionCtx,
-  params: {
-    userId: Id<"users">;
-    sessionId: string;
-    activeCourseId?: Id<"userCourses">;
-    output: ChatWorkflowOutput;
-  },
-): Promise<string> {
-  const { userId, sessionId, activeCourseId, output } = params;
-  let aiText = output.reply;
-  let clearedScopeAfterAction = false;
-
-  try {
-    if (output.actionType === "add_course") {
-      if (!output.sisQuery || !output.term || !output.school) {
-        throw new Error("Missing required course fields (query, term, or school).");
-      }
-      const sisResults = await ctx.runAction(api.actions.jhuCourses.getCoursesByTerm, {
-        term: output.term,
-        school: output.school,
-        courseTitle: output.sisQuery,
-      }) as Array<{ OfferingName?: string; Title?: string; Credits?: string }>;
-      if (!Array.isArray(sisResults) || sisResults.length === 0) {
-        throw new Error("I could not find a matching SIS course. Please provide a more specific code or title.");
-      }
-      const normalizedQuery = output.sisQuery.trim().toLowerCase();
-      const exact = sisResults.find((c) =>
-        `${c.OfferingName ?? ""} ${c.Title ?? ""}`.toLowerCase().includes(normalizedQuery),
-      ) ?? sisResults[0];
-      const offeringName = exact.OfferingName;
-      const titleText = exact.Title;
-      if (!offeringName || !titleText) {
-        throw new Error("SIS result is missing course code/title.");
-      }
-      const isPast = isPastTerm(output.term);
-      if (isPast) {
-        if (!output.grade || !GRADES.has(output.grade)) {
-          throw new Error("For past terms, grade must be one of the app's allowed grade options.");
-        }
-        if (output.difficultyRating === null || output.difficultyRating < 1 || output.difficultyRating > 5) {
-          throw new Error("For past terms, difficulty rating must be between 1 and 5.");
-        }
-      } else if (!output.studyGoal || !STUDY_GOALS.has(output.studyGoal)) {
-        throw new Error("For current/future terms, study goal must be one of: Just pass, Do well, Ace it.");
-      }
-
-      let description: string | undefined;
-      let prereqs: string[] | undefined;
-      try {
-        const details = await ctx.runAction(api.actions.jhuCourses.getCourseDetails, {
-          offeringName,
-          term: output.term,
-        }) as { description?: string; prereqs?: string[] } | null;
-        if (details) {
-          description = typeof details.description === "string" ? details.description : undefined;
-          prereqs = Array.isArray(details.prereqs) ? details.prereqs : undefined;
-        }
-      } catch {
-        // Best effort only: keep add flow resilient.
-      }
-
-      const fullTitle = `${offeringName}: ${titleText}`;
-      const credits = exact.Credits ? Number.parseFloat(exact.Credits) : undefined;
-      await ctx.runMutation(api.mutations.userCourses.addUserCourse, {
-        courseCode: offeringName,
-        title: fullTitle,
-        description,
-        prereqs,
-        credits,
-        term: output.term,
-        studyGoal: !isPast ? output.studyGoal ?? undefined : undefined,
-        grade: isPast ? output.grade ?? undefined : undefined,
-        difficultyRating: isPast ? output.difficultyRating ?? undefined : undefined,
-      });
-    } else if (output.actionType === "drop_course") {
-      if (activeCourseId === undefined) throw new Error("No class selected.");
-      const existing = await ctx.runQuery(internal.queries.userCourses.getUserCoursesByIdsInternal, {
-        courseIds: [activeCourseId],
-      });
-      const target = existing[0];
-      await ctx.runMutation(api.mutations.userCourses.deleteUserCourse, {
-        userCourseId: activeCourseId,
-      });
-      aiText = target
-        ? `Done! I removed **${target.title}** from your classes.`
-        : output.reply;
-      await ctx.runMutation(internal.mutations.chatSessions.setMessageScopeInternal, {
-        userId,
-        sessionId,
-        clear: true,
-      });
-      clearedScopeAfterAction = true;
-    } else if (output.actionType === "update_course") {
-      if (activeCourseId === undefined) throw new Error("No class selected.");
-      const patch: {
-        userCourseId: Id<"userCourses">;
-        studyGoal?: string;
-        grade?: string;
-        difficultyRating?: number;
-      } = { userCourseId: activeCourseId };
-
-      if (output.studyGoal !== null) {
-        if (!STUDY_GOALS.has(output.studyGoal)) {
-          throw new Error("Study goal must be one of: Just pass, Do well, Ace it.");
-        }
-        patch.studyGoal = output.studyGoal;
-      }
-      if (output.grade !== null) {
-        if (!GRADES.has(output.grade)) {
-          throw new Error("Grade must match one of the app's allowed grade options.");
-        }
-        patch.grade = output.grade;
-      }
-      if (output.difficultyRating !== null) {
-        if (output.difficultyRating < 1 || output.difficultyRating > 5) {
-          throw new Error("Difficulty rating must be between 1 and 5.");
-        }
-        patch.difficultyRating = output.difficultyRating;
-      }
-
-      if (
-        patch.studyGoal === undefined &&
-        patch.grade === undefined &&
-        patch.difficultyRating === undefined
-      ) {
-        throw new Error("No supported course updates were provided.");
-      }
-
-      await ctx.runMutation(api.mutations.userCourses.updateUserCourse, patch);
-      await ctx.runMutation(internal.mutations.chatSessions.setMessageScopeInternal, {
-        userId,
-        sessionId,
-        clear: true,
-      });
-      clearedScopeAfterAction = true;
-    } else if (output.actionType === "view_courses") {
-      if (activeCourseId !== undefined) {
-        const selected = await ctx.runQuery(internal.queries.userCourses.getUserCoursesByIdsInternal, {
-          courseIds: [activeCourseId],
-        });
-        const c = selected[0];
-        if (c) {
-          const attrs: string[] = [];
-          if (c.term) attrs.push(`Term: ${c.term}`);
-          if (c.studyGoal) attrs.push(`Study goal: ${c.studyGoal}`);
-          if (c.grade) attrs.push(`Grade: ${c.grade}`);
-          if (c.difficultyRating !== undefined) attrs.push(`Difficulty: ${c.difficultyRating}/5`);
-          aiText = [
-            `Here are the details for **${c.title}**:`,
-            attrs.length > 0 ? attrs.map((a) => `- ${a}`).join("\n") : "- No additional details recorded yet.",
-          ].join("\n");
-        }
-        await ctx.runMutation(internal.mutations.chatSessions.setMessageScopeInternal, {
-          userId,
-          sessionId,
-          clear: true,
-        });
-        clearedScopeAfterAction = true;
-      } else {
-        const courses = await ctx.runQuery(internal.queries.userCourses.getUserCoursesInternal, {
-          userId,
-        });
-        if (courses.length === 0) {
-          aiText = "You don't have any classes added yet. Add one from the Classes page or ask me to add one.";
-        } else {
-          const current = courses.filter((c) => !isPastTerm(c.term ?? ""));
-          const past = courses.filter((c) => isPastTerm(c.term ?? ""));
-          const lines: string[] = [];
-          if (current.length > 0) {
-            lines.push("Current classes:");
-            for (const c of current.slice(0, 8)) {
-              lines.push(`- ${c.courseCode}: ${c.title}${c.term ? ` (${c.term})` : ""}`);
-            }
-          }
-          if (past.length > 0) {
-            lines.push(current.length > 0 ? "\nPast classes:" : "Past classes:");
-            for (const c of past.slice(0, 8)) {
-              lines.push(`- ${c.courseCode}: ${c.title}${c.term ? ` (${c.term})` : ""}`);
-            }
-          }
-          const hidden = Math.max(0, courses.length - 16);
-          if (hidden > 0) {
-            lines.push(`\n...and ${hidden} more.`);
-          }
-          aiText = lines.join("\n");
-        }
-      }
-    }
-  } catch (err) {
-    aiText = `Sorry, I ran into an issue: ${err instanceof Error ? err.message : "Please try again."}`;
-  }
-
-  await ctx.runMutation(internal.mutations.chatSessions.clearTaskAgentStateInternal, {
-    userId,
-    sessionId,
-  });
-  await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
-    userId,
-    sessionId,
-    role: "assistant",
-    content: aiText,
-    ...(activeCourseId !== undefined && !clearedScopeAfterAction ? { courseId: activeCourseId } : {}),
   });
   return aiText;
 }
@@ -480,7 +195,7 @@ async function applySessionStateChanges(
     previousActiveAgent === "feedback" &&
     (output.readyToRecord || output.newActiveAgent !== "feedback");
   if (output.clearActiveAgent || feedbackAgentDone) {
-    await ctx.runMutation(internal.mutations.chatSessions.clearTaskAgentStateInternal, {
+    await ctx.runMutation(internal.mutations.chatSessions.clearAgentStateInternal, {
       userId,
       sessionId,
     });
@@ -505,12 +220,13 @@ async function handleWorkflowTurn(
     sessionId: string;
     message: string;
     session: {
-      activeAgent?: string;
-      taskAgentIntent?: string;
-      courseAgentIntent?: string;
+      activeAgent?: string | null;
+      taskAgentIntent?: string | null;
+      courseAgentIntent?: string | null;
       activeTaskId?: Id<"tasks">;
       activeCourseId?: Id<"userCourses">;
       lastEntityQueryText?: string;
+      resolvedSisPick?: SisResolvedPick;
     } | null;
     triggerUserMessageId?: Id<"chatMessages">;
   },
@@ -548,9 +264,9 @@ async function handleWorkflowTurn(
       : null;
 
   const today = new Date().toISOString().slice(0, 10);
-  const activeAgent = (session?.activeAgent as "task" | "feedback" | "preferences" | "classes" | null) ?? null;
-  const taskAgentIntent = (session?.taskAgentIntent as "create" | "rud" | null) ?? null;
-  const courseAgentIntent = (session?.courseAgentIntent as "add" | "drop" | "view" | "update" | null) ?? null;
+  const activeAgent: ActiveAgent = (session?.activeAgent as ActiveAgent) ?? null;
+  const taskAgentIntent: TaskAgentIntent = (session?.taskAgentIntent as TaskAgentIntent) ?? null;
+  const courseAgentIntent: CourseAgentIntent = (session?.courseAgentIntent as CourseAgentIntent) ?? null;
 
   const result = await runChatWorkflow(client, {
     message,
@@ -595,6 +311,7 @@ async function handleWorkflowTurn(
       sessionId,
       activeCourseId: sessionActiveCourseId,
       output,
+      resolvedSisPick: session?.resolvedSisPick,
     });
     return c.json({
       text: aiText,
@@ -810,7 +527,7 @@ chatApp.post("/api/chat", async (c) => {
     if (
       body.entity.action === "pick_course" &&
       typeof body.entity.courseId === "string" &&
-      body.entity.courseId.startsWith(SIS_CANDIDATE_PREFIX)
+      isSisCandidateEntityId(body.entity.courseId)
     ) {
       const sis = decodeSisCandidate(body.entity.courseId);
       if (!sis) return c.json({ error: "Invalid SIS selection" }, 400);
@@ -829,7 +546,10 @@ chatApp.post("/api/chat", async (c) => {
         userId,
         sessionId,
         message: synthetic,
-        session: sessionAfterSynthetic,
+        session: {
+          ...sessionAfterSynthetic,
+          resolvedSisPick: sis as SisResolvedPick,
+        },
         triggerUserMessageId: syntheticUserMessageId,
       });
     }
