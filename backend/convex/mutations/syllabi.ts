@@ -131,6 +131,17 @@ export const confirmSyllabusTasks = mutation({
       await ctx.scheduler.runAfter(0, internal.ai.estimateTaskTime.estimateTaskTime, { taskId });
     }
 
+    if (process.env.GEMINI_API_KEY) {
+      for (const [index, taskId] of taskIds.entries()) {
+        const task = args.tasks[index];
+        await ctx.scheduler.runAfter(0, internal.ai.embeddings.generateTaskEmbedding, {
+          taskId,
+          title: task.title,
+          description: task.description,
+        });
+      }
+    }
+
     return taskIds;
   },
 });

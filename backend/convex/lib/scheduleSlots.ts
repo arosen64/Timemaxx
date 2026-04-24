@@ -13,7 +13,6 @@ import {
 // Types
 // ---------------------------------------------------------------------------
 
-
 export type OccupiedInterval = { startMs: number; endMs: number; title: string };
 export type WorkHoursRow = { day: string; blocked: number[] };
 
