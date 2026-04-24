@@ -1,11 +1,11 @@
 import { Hono, type Context } from "hono";
 import { MastraClient } from "@mastra/client-js";
-import { internal } from "./_generated/api";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import type { ActionCtx } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
 import type { HonoEnv } from "./lib/httpTypes";
 import { executeCourseAction } from "./lib/executeCourseAction";
+import { executeScheduleAction } from "./lib/executeScheduleAction";
 import type {
   ActiveAgent,
   ChatWorkflowOutput,
@@ -85,7 +85,7 @@ async function runChatWorkflow(
   }
 
   // Only one branch step will have run — find whichever has output.
-  const branchStepIds = ["task_handler", "feedback_handler", "course_handler", "canned_handler"];
+  const branchStepIds = ["task_handler", "feedback_handler", "course_handler", "schedule_handler", "canned_handler"];
   for (const id of branchStepIds) {
     const step = run.steps?.[id];
     if (step && "output" in step) return step.output as ChatWorkflowOutput;
@@ -189,7 +189,7 @@ async function applySessionStateChanges(
   userId: Id<"users">,
   sessionId: string,
   output: ChatWorkflowOutput,
-  previousActiveAgent: "task" | "feedback" | "preferences" | "classes" | null,
+  previousActiveAgent: "task" | "feedback" | "preferences" | "classes" | "schedule" | null,
 ) {
   const feedbackAgentDone =
     previousActiveAgent === "feedback" &&
@@ -317,6 +317,23 @@ async function handleWorkflowTurn(
       text: aiText,
       status: "routed",
       route: "classes",
+      entityKind: "none",
+      messageTag: "none",
+      tagConfidence: 0,
+    });
+  }
+
+  if (output.status === "schedule_action") {
+    const aiText = await executeScheduleAction(ctx, {
+      userId,
+      sessionId,
+      activeTaskId: sessionActiveTaskId,
+      output,
+    });
+    return c.json({
+      text: aiText,
+      status: "routed",
+      route: "schedule",
       entityKind: "none",
       messageTag: "none",
       tagConfidence: 0,
