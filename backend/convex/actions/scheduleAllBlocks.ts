@@ -228,6 +228,7 @@ export const scheduleAllBlocks = action({
             entries.map((e) => ({
               taskTitle: e.parentTitle,
               dueDate: e.parentDueDate,
+              recommendedStart: e.recommendedStart,
               candidates: e.candidates,
             })),
             productivityTraits,
