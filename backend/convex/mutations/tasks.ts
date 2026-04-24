@@ -72,6 +72,9 @@ export const createTask = mutation({
     if (args.assignmentWeight !== undefined && (args.assignmentWeight < 0 || args.assignmentWeight > 100)) {
       throw new Error("Assignment weight must be between 0 and 100");
     }
+    if (args.timeEstimate !== undefined && args.timeEstimate < 15) {
+      throw new Error("Time estimate must be at least 15 minutes.");
+    }
 
     const isManualEstimate = args.timeEstimate !== undefined;
 

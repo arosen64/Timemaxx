@@ -104,7 +104,9 @@ export default function TaskCard({
     ? subtasks.reduce((sum, s) => sum + (s.timeEstimate ?? 0), 0)
     : undefined
 
-  const displayedEstimate = hasSubtasks ? subtaskTotal : task.timeEstimate
+  const displayedEstimate = hasSubtasks
+    ? (task.isManualEstimate ? task.timeEstimate : subtaskTotal)
+    : task.timeEstimate
   const showEstimateSpinner = hasSubtasks ? anySubtaskPending : (task.timeEstimate === undefined && isEstimating)
 
   return (
@@ -130,18 +132,22 @@ export default function TaskCard({
               <span>· {task.taskType}</span>
               {hasSubtasks ? (
                 <>
-                  {anySubtaskPending ? (
+                  {anySubtaskPending && !task.isManualEstimate ? (
                     <span className="flex items-center gap-1">
                       · <SpinnerIcon color="currentColor" size={11} /> Estimating subtasks…
                     </span>
-                  ) : subtaskTotal !== undefined && subtaskTotal > 0 ? (
-                    <span>· {formatMinutes(subtaskTotal)} total · {subtasks.length} subtask{subtasks.length !== 1 ? 's' : ''}</span>
+                  ) : displayedEstimate !== undefined && displayedEstimate > 0 ? (
+                    <>
+                      <span>· {formatMinutes(displayedEstimate)} total</span>
+                      <EstimateBadge isManual={task.isManualEstimate ?? false} />
+                      <span>· {subtasks.length} subtask{subtasks.length !== 1 ? 's' : ''}</span>
+                    </>
                   ) : null}
                 </>
               ) : task.timeEstimate !== undefined ? (
                 <>
                   <span>· {formatMinutes(task.timeEstimate)}</span>
-                  <EstimateBadge isManual={task.isManualEstimate} />
+                  <EstimateBadge isManual={task.isManualEstimate ?? false} />
                   {!task.isManualEstimate && task.reasoning && !isEstimating && (
                     <button
                       type="button"

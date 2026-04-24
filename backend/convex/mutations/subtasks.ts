@@ -3,7 +3,7 @@ import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { taskTypeValidator } from "../lib/taskValidators";
 import { internal } from "../_generated/api";
-import { rebuildStudyBlocksForSubtask } from "./timeEstimate";
+import { rebuildStudyBlocksForSubtask, normalizeSubtaskEstimates } from "./timeEstimate";
 import { Id } from "../_generated/dataModel";
 
 const reasoningTraceArgs = v.object({
@@ -206,8 +206,11 @@ export const setSubtaskTimeEstimate = internalMutation({
       .withIndex("by_parentTaskId", (q) => q.eq("parentTaskId", subtask.parentTaskId))
       .collect();
 
-    const total = siblings.reduce((sum, s) => sum + (s.timeEstimate ?? 0), 0);
-    await ctx.db.patch(subtask.parentTaskId, { timeEstimate: total });
+    const parent = await ctx.db.get(subtask.parentTaskId);
+    if (!parent?.isManualEstimate) {
+      const total = siblings.reduce((sum, s) => sum + (s.timeEstimate ?? 0), 0);
+      await ctx.db.patch(subtask.parentTaskId, { timeEstimate: total });
+    }
 
     // Delete any stale task-level blocks on the parent so they don't co-exist
     // with subtask-owned blocks. Done unconditionally so a 0-estimate subtask
@@ -218,6 +221,18 @@ export const setSubtaskTimeEstimate = internalMutation({
       .collect();
     for (const block of staleTaskBlocks) {
       await ctx.db.delete(block._id);
+    }
+
+    // When parent has a manual estimate and all siblings now have estimates,
+    // normalize so subtask times scale to match the manual total.
+    if (parent?.isManualEstimate && parent.timeEstimate !== undefined) {
+      const allEstimated = siblings.every((s) => s.timeEstimate !== undefined);
+      if (allEstimated) {
+        await normalizeSubtaskEstimates(ctx, parent.timeEstimate, siblings);
+        return;
+      }
+      // Not all estimated yet — skip building blocks; normalization will rebuild all.
+      return;
     }
 
     // Build blocks for this subtask immediately — each subtask owns its own blocks.
@@ -304,15 +319,18 @@ export const deleteSubtask = mutation({
 
     await ctx.db.delete(args.subtaskId);
 
-    // Recalculate parent task estimate from remaining siblings.
-    const remaining = await ctx.db
-      .query("subtasks")
-      .withIndex("by_parentTaskId", (q) => q.eq("parentTaskId", subtask.parentTaskId))
-      .collect();
+    // Recalculate parent task estimate from remaining siblings (skip if manual override).
+    const parentTask = await ctx.db.get(subtask.parentTaskId);
+    if (!parentTask?.isManualEstimate) {
+      const remaining = await ctx.db
+        .query("subtasks")
+        .withIndex("by_parentTaskId", (q) => q.eq("parentTaskId", subtask.parentTaskId))
+        .collect();
 
-    const newTotal = remaining.reduce((sum, s) => sum + (s.timeEstimate ?? 0), 0);
-    await ctx.db.patch(subtask.parentTaskId, {
-      timeEstimate: newTotal > 0 ? newTotal : undefined,
-    });
+      const newTotal = remaining.reduce((sum, s) => sum + (s.timeEstimate ?? 0), 0);
+      await ctx.db.patch(subtask.parentTaskId, {
+        timeEstimate: newTotal > 0 ? newTotal : undefined,
+      });
+    }
   },
 });

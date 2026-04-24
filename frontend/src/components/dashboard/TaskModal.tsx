@@ -215,6 +215,11 @@ export default function TaskModal({
           ? (isNaN(hrs) ? 0 : hrs) * 60 + (isNaN(mins) ? 0 : mins)
           : NaN
       const parsedEstimate = !useAiEstimate && !isNaN(totalMinutes) && totalMinutes > 0 ? totalMinutes : undefined
+      if (parsedEstimate !== undefined && parsedEstimate < 15) {
+        setError('Time estimate must be at least 15 minutes.')
+        setSubmitting(false)
+        return
+      }
       const form: EditForm = {
         title: taskName,
         description,
@@ -428,7 +433,7 @@ export default function TaskModal({
                 Time estimate <span className="font-normal text-light-blue">(optional)</span>
               </label>
               {!useAiEstimate && estimateHours.trim() === '' && estimateMinutes.trim() === '' && (
-                <p className="mt-0.5 font-body text-xs text-light-blue">Leave blank to let AI estimate</p>
+                <p className="mt-0.5 font-body text-xs text-light-blue">Leave blank to let AI estimate · minimum 15 min if set</p>
               )}
             </div>
             {showAiEstimateReset && !useAiEstimate && (
