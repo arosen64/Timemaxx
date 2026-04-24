@@ -13,9 +13,9 @@ export interface ParsedCourse {
   grade: string; // e.g. "A", "A-", "B+"
 }
 
-const MAX_CHARS = 100_000;
-// ~10 MB of base64-encoded PDF bytes (~7.5 MB binary)
-const MAX_PDF_BASE64_CHARS = 10_000_000;
+const MAX_CHARS = 1_000_000;
+// ~1 MB of base64-encoded PDF bytes (~750 KB binary)
+const MAX_PDF_BASE64_CHARS = 1_500_000;
 
 /**
  * Parses a JHU transcript using Mastra:
@@ -32,7 +32,7 @@ export const parseTranscript = action({
     if (!userId) throw new Error("Unauthenticated");
 
     if (args.fileContents.length > MAX_PDF_BASE64_CHARS) {
-      throw new Error("PDF exceeds maximum upload size of 10 MB");
+      throw new Error("PDF exceeds maximum upload size of 1 MB");
     }
 
     const mastraUrl = process.env.MASTRA_URL;

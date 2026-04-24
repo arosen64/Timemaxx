@@ -268,15 +268,15 @@ describe("actions/uploadSyllabus", () => {
     expect(syllabus?.fileContents).toBe(SYLLABUS_TEXT);
   });
 
-  test("throws when fileContents exceeds 200,000 characters", async () => {
+  test("throws when fileContents exceeds 1,500,000 characters", async () => {
     const t = makeTestCtx();
     const { withAuth } = await createTestUser(t);
 
     await expect(
       withAuth.action(api.ai.uploadSyllabus.uploadSyllabus, {
-        fileContents: "x".repeat(200_001),
+        fileContents: "x".repeat(1_500_001),
       })
-    ).rejects.toThrow("fileContents exceeds maximum length of 200000 characters");
+    ).rejects.toThrow("fileContents exceeds maximum length of 1500000 characters");
   });
 
   test("PDF path calls OCR workflow then parse workflow", async () => {

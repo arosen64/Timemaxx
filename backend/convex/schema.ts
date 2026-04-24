@@ -63,7 +63,6 @@ export default defineSchema({
       v.array(
         v.object({
           day: v.string(),
-          available: v.array(v.number()),
           blocked: v.array(v.number()),
         })
       )

@@ -13,7 +13,7 @@ import { TOTAL_SLOTS, SLOT_HEIGHT, DAYS_FULL, slotLabel, isoDateString, isToday,
 import type { Id } from '../../../../backend/convex/_generated/dataModel'
 import ScheduleBlockConflict from './ScheduleBlockConflict'
 
-type WorkHoursRow = { day: string; available: number[]; blocked: number[] }
+type WorkHoursRow = { day: string; blocked: number[] }
 
 export type StudyBlockOnGrid = {
   _id: Id<'studyBlocks'>
@@ -31,19 +31,17 @@ export type StudyBlockOnGrid = {
 function getSlotState(grid: WorkHoursRow[] | null, dayName: string, slot: number) {
   const row = grid?.find((r) => r.day === dayName)
   if (!row) return 'none'
-  if (row.available.includes(slot)) return 'preferred'
   if (row.blocked.includes(slot)) return 'unavailable'
   return 'none'
 }
 
 function slotBgClass(
-  state: 'preferred' | 'unavailable' | 'none',
+  state: 'unavailable' | 'none',
   isHighlighted: boolean,
-  isAssignMode: boolean,
+  _isAssignMode: boolean,
   isTodayCol: boolean = false,
 ) {
   if (isHighlighted) return 'bg-teal/60 cursor-pointer hover:bg-teal/80'
-  if (state === 'preferred') return isAssignMode ? 'bg-teal/20' : 'bg-teal/40'
   if (state === 'unavailable') return 'bg-slate-blue'
   return isTodayCol ? 'bg-today-col' : 'bg-white'
 }
