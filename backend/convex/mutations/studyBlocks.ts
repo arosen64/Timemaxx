@@ -481,17 +481,21 @@ export const toggleStudyBlockComplete = mutation({
         .withIndex("by_subtaskId", (q) => q.eq("subtaskId", block.subtaskId!))
         .collect();
 
-      const allComplete = allSubtaskBlocks.every((b) =>
+      const completedCount = allSubtaskBlocks.filter((b) =>
         b._id === args.studyBlockId ? nowCompleted : b.isCompleted
-      );
+      ).length;
 
       const subtask = await ctx.db.get(block.subtaskId);
       if (subtask && subtask.userId === userId) {
-        if (nowCompleted && allComplete) {
-          await ctx.db.patch(block.subtaskId, { status: "completed" as const });
-        } else if (!nowCompleted && subtask.status === "completed") {
-          await ctx.db.patch(block.subtaskId, { status: "in_progress" as const });
+        let newStatus: "not_started" | "in_progress" | "completed";
+        if (completedCount === allSubtaskBlocks.length) {
+          newStatus = "completed";
+        } else if (completedCount > 0) {
+          newStatus = "in_progress";
+        } else {
+          newStatus = "not_started";
         }
+        await ctx.db.patch(block.subtaskId, { status: newStatus });
       }
     }
   },
