@@ -131,7 +131,7 @@ export default function ClassPanel({
 
   const tasksForSelectedCourse = useMemo(() => {
     if (!selectedCourseId) return []
-    return tasksByCourse.get(selectedCourseId) ?? []
+    return (tasksByCourse.get(selectedCourseId) ?? []) as Task[]
   }, [selectedCourseId, tasksByCourse])
 
   const classRows = useMemo(() => {
