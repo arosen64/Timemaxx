@@ -1,3 +1,6 @@
+
+
+
 import { internalAction } from "../_generated/server";
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
@@ -252,9 +255,31 @@ export const estimateTaskTime = internalAction({
       const wf = client.getWorkflow("estimation-workflow");
       const run = await wf.startAsync({ inputData: { contextPrompt } });
 
-      for (const step of Object.values(run.steps ?? {})) {
+      // If the workflow itself reports a top-level failure, surface it before
+      // inspecting steps (steps may still be in running/pending state with no
+      // error field of their own, which previously produced an empty message).
+      const runStatus = (run as { status?: string }).status;
+      if (runStatus === "failed") {
+        const rawErr = (run as { error?: string | Error }).error;
+        const runErrMsg = rawErr instanceof Error ? rawErr.message : String(rawErr ?? "unknown");
+        console.error("Estimation workflow top-level failure:", runErrMsg, JSON.stringify(run.steps));
+        if (
+          runErrMsg.includes("quota") ||
+          runErrMsg.includes("RESOURCE_EXHAUSTED") ||
+          runErrMsg.includes("429")
+        ) {
+          throw new Error("quota_exceeded");
+        }
+        throw new Error(`Estimation workflow failed: ${runErrMsg}`);
+      }
+
+      for (const [stepId, step] of Object.entries(run.steps ?? {})) {
+        if (!("status" in step)) continue;
         if (!("output" in step)) {
-          const errMsg = (step as { error?: string }).error ?? "";
+          const rawErr = (step as { error?: string | Error }).error;
+          const stepStatus = (step as { status?: string }).status ?? "unknown";
+          const errMsg = rawErr instanceof Error ? rawErr.message : String(rawErr ?? "");
+          console.error(`Estimation step "${stepId}" has no output (status: ${stepStatus}):`, errMsg);
           if (
             errMsg.includes("quota") ||
             errMsg.includes("RESOURCE_EXHAUSTED") ||
@@ -262,7 +287,7 @@ export const estimateTaskTime = internalAction({
           ) {
             throw new Error("quota_exceeded");
           }
-          throw new Error(`Estimation workflow step failed: ${errMsg}`);
+          throw new Error(`Estimation workflow step "${stepId}" failed (status: ${stepStatus}): ${errMsg}`);
         }
       }
 
@@ -286,3 +311,4 @@ export const estimateTaskTime = internalAction({
     }
   },
 });
+
