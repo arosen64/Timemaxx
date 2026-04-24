@@ -45,8 +45,6 @@ export default function PreferencesPage() {
       setProfileDraft({
         major: user.major ?? "",
         year: user.year ?? "",
-        difficultSubjects: user.difficultSubjects ?? [],
-        enjoyedSubjects: user.enjoyedSubjects ?? [],
         courses: (user.courses ?? []).map((c) => ({ title: c.title, studyGoal: c.studyGoal })),
       });
     } else if (section === "workhours") {
@@ -74,8 +72,6 @@ export default function PreferencesPage() {
         await updateSettings({
           major: profileDraft.major,
           year: profileDraft.year,
-          difficultSubjects: profileDraft.difficultSubjects,
-          enjoyedSubjects: profileDraft.enjoyedSubjects,
           courses: profileDraft.courses.map((c) => ({
             title: c.title,
             studyGoal: c.studyGoal ?? "",
@@ -107,8 +103,6 @@ export default function PreferencesPage() {
   const profileData: ProfileData = {
     major: user?.major ?? "",
     year: user?.year ?? "",
-    difficultSubjects: user?.difficultSubjects ?? [],
-    enjoyedSubjects: user?.enjoyedSubjects ?? [],
     courses: (user?.courses ?? []).map((c) => ({ title: c.title, studyGoal: c.studyGoal })),
   };
   const workHoursData = dbToWorkHours(user?.workHoursGrid);

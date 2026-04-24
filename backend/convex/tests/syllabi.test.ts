@@ -102,8 +102,6 @@ describe("mutations/syllabi – confirmSyllabusTasks", () => {
       }
     );
 
-    await t.finishAllScheduledFunctions(vi.runAllTimers.bind(vi));
-
     expect(taskIds).toHaveLength(2);
 
     const tasks = await t.run((ctx) =>
@@ -191,8 +189,6 @@ describe("mutations/syllabi – confirmSyllabusTasks", () => {
       }
     );
 
-    await t.finishAllScheduledFunctions(vi.runAllTimers.bind(vi));
-
     const tasks = await t.run((ctx) =>
       Promise.all(taskIds.map((id) => ctx.db.get(id)))
     );
@@ -224,8 +220,6 @@ describe("mutations/syllabi – confirmSyllabusTasks", () => {
       }
     );
 
-    await t.finishAllScheduledFunctions(vi.runAllTimers.bind(vi));
-
     const task = await t.run((ctx) => ctx.db.get(taskId));
     expect(task?.courseId).toBeUndefined();
     expect(task?.classTag).toBeUndefined();
@@ -247,8 +241,6 @@ describe("mutations/syllabi – confirmSyllabusTasks", () => {
       api.mutations.syllabi.confirmSyllabusTasks,
       { syllabusId, tasks }
     );
-
-    await t.finishAllScheduledFunctions(vi.runAllTimers.bind(vi));
 
     expect(taskIds).toHaveLength(TASK_TYPES.length);
 
@@ -281,8 +273,6 @@ describe("mutations/syllabi – confirmSyllabusTasks", () => {
       }
     );
 
-    await t.finishAllScheduledFunctions(vi.runAllTimers.bind(vi));
-
     const task = await t.run((ctx) => ctx.db.get(taskId));
     expect(task?.dueDate).toEqual(specificDate);
   });
@@ -306,8 +296,6 @@ describe("mutations/syllabi – confirmSyllabusTasks", () => {
         ],
       }
     );
-
-    await t.finishAllScheduledFunctions(vi.runAllTimers.bind(vi));
 
     const task = await t.run((ctx) => ctx.db.get(taskIds[0]));
     expect(task?.userId).toEqual(userId);

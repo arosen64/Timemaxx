@@ -32,8 +32,6 @@ const mockUseAction = vi.mocked(useAction)
 const DEFAULT_PROFILE: ProfileData = {
   major: 'CS',
   year: 'Junior',
-  difficultSubjects: [],
-  enjoyedSubjects: [],
   courses: [],
 }
 
