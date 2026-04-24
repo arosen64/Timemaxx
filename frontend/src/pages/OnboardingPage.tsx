@@ -6,7 +6,7 @@ import { ProfileData, WorkHoursData, PreferencesData } from '../types'
 import ProfileForm from '../components/ProfileForm'
 import CoursesForm from '../components/CoursesForm'
 import WorkHoursSelector, { DEFAULT_WORK_HOURS } from '../components/WorkHoursSelector'
-import PreferencesForm, { DEFAULT_PREFERENCES } from '../components/PreferencesForm'
+import PreferencesForm, { DEFAULT_PREFERENCES, MIN_FOCUS_BLOCK_MINUTES } from '../components/PreferencesForm'
 import AcademicProfileSummary from '../components/AcademicProfileSummary'
 import OnboardingStepShell from '../components/onboarding/OnboardingStepShell'
 import OnboardingNav from '../components/onboarding/OnboardingNav'
@@ -79,6 +79,7 @@ export default function OnboardingPage() {
   }
 
   const handleSaveAndContinue = async () => {
+    if (Number(preferences.focusBlockLength) < MIN_FOCUS_BLOCK_MINUTES) return
     setIsSubmitting(true)
     try {
       await saveOnboarding({
@@ -88,7 +89,6 @@ export default function OnboardingPage() {
         enjoyedSubjects: profile.enjoyedSubjects,
         workHoursGrid: Object.entries(workHours).map(([day, slots]) => ({
           day,
-          available: slots.available,
           blocked: slots.blocked,
         })),
         productivityTraits: preferences.traits,
@@ -123,7 +123,7 @@ export default function OnboardingPage() {
         <div className="flex flex-col gap-4">
           <div>
             <h2 className="font-heading text-2xl font-bold text-navy">Work Hours</h2>
-            <p className="mt-1 font-body text-sm text-slate-blue">Click or drag to mark when you're available to study or when you'll never work.</p>
+            <p className="mt-1 font-body text-sm text-slate-blue">Click or drag to mark your never-work hours.</p>
           </div>
           <WorkHoursSelector data={workHours} onChange={setWorkHours} />
         </div>

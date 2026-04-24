@@ -1,42 +1,35 @@
 import { Hono, type Context } from "hono";
 import { MastraClient } from "@mastra/client-js";
 import { internal } from "./_generated/api";
+import { api } from "./_generated/api";
 import type { ActionCtx } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
 import type { HonoEnv } from "./lib/httpTypes";
+import { executeCourseAction } from "./lib/executeCourseAction";
+import type {
+  ActiveAgent,
+  ChatWorkflowOutput,
+  CourseAgentIntent,
+  SisResolvedPick,
+  TaskAgentIntent,
+} from "./lib/chatWorkflowHttpTypes";
+import type { EntityCandidate } from "./lib/entityCandidates";
+import {
+  decodeSisCandidate,
+  decodeSisContext,
+  encodeSisCandidate,
+  encodeSisContext,
+  isSisCandidateEntityId,
+} from "./lib/sisEntityTokens";
 
 import {
   getLastUserMessage,
+  shouldOfferCourseEntityMcq,
   shouldOfferTaskEntityMcq,
   type TaggedMessageView,
 } from "./lib/messageTaggedScope";
 import { threadHasTaggedCourse, buildTaggedEntitiesContextBlock } from "./lib/chatEntityContext";
 import { handleEntityAction } from "./lib/chatEntityActions";
-
-/** Mirrors the output schema of chatWorkflow in mastra/src/mastra/workflows/chatWorkflow.ts */
-type ChatWorkflowOutput = {
-  reply: string;
-  route: string | null;
-  status: "reply" | "domain_clarify" | "needs_task_mcq" | "needs_class_mcq" | "task_action" | "canned";
-  mcqQueryText: string | null;
-  needsClassAfterTask: boolean;
-  actionType: "create_task" | "update_task" | "delete_task" | "read_task" | "none" | null;
-  title: string | null;
-  description: string | null;
-  taskType: string | null;
-  dueDateIso: string | null;
-  classTag: string | null;
-  deleteConfirmed: boolean;
-  updatedTitle: string | null;
-  updatedDescription: string | null;
-  updatedTaskType: string | null;
-  updatedDueDateIso: string | null;
-  updatedClassTag: string | null;
-  newActiveAgent: "task" | "feedback" | "preferences" | "classes" | null;
-  clearActiveAgent: boolean;
-  newTaskAgentIntent: "create" | "rud" | null;
-  readyToRecord: boolean;
-};
 
 const chatApp = new Hono<HonoEnv>();
 
@@ -55,7 +48,6 @@ const MENU_USER_LABELS: Record<string, string> = {
   schedule: "Schedule something",
   preferences: "Change my preferences",
 };
-
 function parseDueDateIso(iso: string): number {
   if (!iso) return Date.now() + 86_400_000;
   const hasTime = iso.includes("T") && iso.length > 10;
@@ -63,6 +55,7 @@ function parseDueDateIso(iso: string): number {
   const ms = new Date(normalized).getTime();
   return isNaN(ms) ? Date.now() + 86_400_000 : ms;
 }
+
 
 async function runChatWorkflow(
   client: InstanceType<typeof MastraClient>,
@@ -72,9 +65,11 @@ async function runChatWorkflow(
     taggedEntitiesBlock: string;
     hasCourseTag: boolean;
     taggedTaskId: string | null;
+    taggedCourseId: string | null;
     today: string;
     activeAgent: "task" | "feedback" | "preferences" | "classes" | null;
     taskAgentIntent: "create" | "rud" | null;
+    courseAgentIntent: "add" | "drop" | "view" | "update" | null;
   },
 ): Promise<ChatWorkflowOutput | "quota_exceeded" | null> {
   const wf = client.getWorkflow("chat-workflow");
@@ -174,7 +169,7 @@ async function executeTaskAction(
     aiText = `Sorry, I ran into an issue: ${err instanceof Error ? err.message : "Please try again."}`;
   }
 
-  await ctx.runMutation(internal.mutations.chatSessions.clearTaskAgentStateInternal, {
+  await ctx.runMutation(internal.mutations.chatSessions.clearAgentStateInternal, {
     userId,
     sessionId,
   });
@@ -200,16 +195,17 @@ async function applySessionStateChanges(
     previousActiveAgent === "feedback" &&
     (output.readyToRecord || output.newActiveAgent !== "feedback");
   if (output.clearActiveAgent || feedbackAgentDone) {
-    await ctx.runMutation(internal.mutations.chatSessions.clearTaskAgentStateInternal, {
+    await ctx.runMutation(internal.mutations.chatSessions.clearAgentStateInternal, {
       userId,
       sessionId,
     });
-  } else if (output.newActiveAgent || output.newTaskAgentIntent) {
+  } else if (output.newActiveAgent || output.newTaskAgentIntent || output.newCourseAgentIntent) {
     await ctx.runMutation(internal.mutations.chatSessions.setTaskAgentStateInternal, {
       userId,
       sessionId,
       ...(output.newActiveAgent ? { activeAgent: output.newActiveAgent } : {}),
       ...(output.newTaskAgentIntent ? { taskAgentIntent: output.newTaskAgentIntent } : {}),
+      ...(output.newCourseAgentIntent ? { courseAgentIntent: output.newCourseAgentIntent } : {}),
     });
   }
 }
@@ -224,10 +220,13 @@ async function handleWorkflowTurn(
     sessionId: string;
     message: string;
     session: {
-      activeAgent?: string;
-      taskAgentIntent?: string;
+      activeAgent?: string | null;
+      taskAgentIntent?: string | null;
+      courseAgentIntent?: string | null;
       activeTaskId?: Id<"tasks">;
       activeCourseId?: Id<"userCourses">;
+      lastEntityQueryText?: string;
+      resolvedSisPick?: SisResolvedPick;
     } | null;
     triggerUserMessageId?: Id<"chatMessages">;
   },
@@ -257,10 +256,17 @@ async function handleWorkflowTurn(
     : rawTaggedTaskId !== undefined
       ? String(rawTaggedTaskId)
       : null;
+  const rawTaggedCourseId = session?.activeCourseId;
+  const taggedCourseId = shouldOfferCourseEntityMcq(true, rawHistory, message)
+    ? null
+    : rawTaggedCourseId !== undefined
+      ? String(rawTaggedCourseId)
+      : null;
 
   const today = new Date().toISOString().slice(0, 10);
-  const activeAgent = (session?.activeAgent as "task" | "feedback" | "preferences" | "classes" | null) ?? null;
-  const taskAgentIntent = (session?.taskAgentIntent as "create" | "rud" | null) ?? null;
+  const activeAgent: ActiveAgent = (session?.activeAgent as ActiveAgent) ?? null;
+  const taskAgentIntent: TaskAgentIntent = (session?.taskAgentIntent as TaskAgentIntent) ?? null;
+  const courseAgentIntent: CourseAgentIntent = (session?.courseAgentIntent as CourseAgentIntent) ?? null;
 
   const result = await runChatWorkflow(client, {
     message,
@@ -268,9 +274,11 @@ async function handleWorkflowTurn(
     taggedEntitiesBlock,
     hasCourseTag,
     taggedTaskId,
+    taggedCourseId,
     today,
     activeAgent,
     taskAgentIntent,
+    courseAgentIntent,
   });
 
   if (result === "quota_exceeded") return c.json({ error: "quota_exceeded" }, 429);
@@ -291,6 +299,24 @@ async function handleWorkflowTurn(
       text: aiText,
       status: "routed",
       route: "tasks",
+      entityKind: "none",
+      messageTag: "none",
+      tagConfidence: 0,
+    });
+  }
+
+  if (output.status === "course_action") {
+    const aiText = await executeCourseAction(ctx, {
+      userId,
+      sessionId,
+      activeCourseId: sessionActiveCourseId,
+      output,
+      resolvedSisPick: session?.resolvedSisPick,
+    });
+    return c.json({
+      text: aiText,
+      status: "routed",
+      route: "classes",
       entityKind: "none",
       messageTag: "none",
       tagConfidence: 0,
@@ -339,14 +365,59 @@ async function handleWorkflowTurn(
 
   if (output.status === "needs_class_mcq") {
     const queryText = output.mcqQueryText ?? (message.trim() || "class course");
-    const { candidates, hasMore } = await ctx.runAction(
-      internal.actions.entityResolution.searchCourseCandidates,
-      { userId, queryText, excludeIds: [] },
-    );
+    const sessionSisContext = decodeSisContext(session?.lastEntityQueryText ?? "");
+    const shouldUseSisMcq =
+      output.route === "classes" &&
+      (
+        (
+          output.term !== null &&
+          output.school !== null &&
+          (output.sisQuery !== null || output.courseName !== null)
+        ) ||
+        sessionSisContext !== null
+      );
+    let candidates: EntityCandidate[] = [];
+    let hasMore = false;
+    if (shouldUseSisMcq) {
+      const sisTerm = output.term ?? sessionSisContext?.term ?? null;
+      const sisSchool = output.school ?? sessionSisContext?.school ?? null;
+      const sisQuery = (output.sisQuery ?? output.courseName ?? sessionSisContext?.query ?? queryText).trim();
+      if (!sisTerm || !sisSchool) {
+        candidates = [];
+        hasMore = false;
+      } else {
+      const rows = (await ctx.runAction(api.actions.jhuCourses.getCoursesByTerm, {
+        term: sisTerm,
+        school: sisSchool,
+        courseTitle: sisQuery,
+      })) as Array<{ OfferingName?: string; Title?: string }>;
+      const filtered = rows.filter((r) => r.OfferingName && r.Title).slice(0, 5);
+      candidates = filtered.map((r) => ({
+        id: encodeSisCandidate({
+          offeringName: String(r.OfferingName),
+          title: String(r.Title),
+          term: sisTerm,
+          school: sisSchool,
+        }),
+        label: String(r.OfferingName),
+        subtitle: String(r.Title),
+      }));
+      hasMore = rows.length > candidates.length;
+      }
+    } else {
+      const vectorMatches = await ctx.runAction(
+        internal.actions.entityResolution.searchCourseCandidates,
+        { userId, queryText, excludeIds: [] },
+      );
+      candidates = vectorMatches.candidates as EntityCandidate[];
+      hasMore = vectorMatches.hasMore;
+    }
     const taskForIntro = sessionActiveTaskId;
     const introText =
       candidates.length === 0
-        ? "I couldn't find any courses in your profile. Add courses from the Classes page, then try again."
+        ? shouldUseSisMcq
+          ? "I couldn't find SIS matches for that term/school/query. Try a different keyword or course code."
+          : "I couldn't find any courses in your profile. Add courses from the Classes page, then try again."
         : output.reply;
     await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
       userId,
@@ -359,7 +430,13 @@ async function handleWorkflowTurn(
       await ctx.runMutation(internal.mutations.chatSessions.setEntityPromptStateInternal, {
         userId,
         sessionId,
-        lastEntityQueryText: queryText,
+        lastEntityQueryText: shouldUseSisMcq
+          ? encodeSisContext({
+              term: output.term ?? sessionSisContext?.term ?? "",
+              school: output.school ?? sessionSisContext?.school ?? "",
+              query: (output.sisQuery ?? output.courseName ?? sessionSisContext?.query ?? queryText).trim(),
+            })
+          : queryText,
         activeEntityStep: "class",
         needsClassAfterTask: false,
         awaitingEntityResolution: true,
@@ -447,6 +524,76 @@ chatApp.post("/api/chat", async (c) => {
     body.entity?.action === "other_tasks" ||
     body.entity?.action === "other_courses"
   ) {
+    if (
+      body.entity.action === "pick_course" &&
+      typeof body.entity.courseId === "string" &&
+      isSisCandidateEntityId(body.entity.courseId)
+    ) {
+      const sis = decodeSisCandidate(body.entity.courseId);
+      if (!sis) return c.json({ error: "Invalid SIS selection" }, 400);
+      const synthetic = `I choose ${sis.offeringName}: ${sis.title} for ${sis.term} at ${sis.school}.`;
+      const syntheticUserMessageId = await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
+        userId,
+        sessionId,
+        role: "user",
+        content: synthetic,
+      });
+      const sessionAfterSynthetic = await ctx.runQuery(internal.queries.chatSessions.getChatSessionInternal, {
+        userId,
+        sessionId,
+      });
+      return handleWorkflowTurn(ctx, c, client, {
+        userId,
+        sessionId,
+        message: synthetic,
+        session: {
+          ...sessionAfterSynthetic,
+          resolvedSisPick: sis as SisResolvedPick,
+        },
+        triggerUserMessageId: syntheticUserMessageId,
+      });
+    }
+
+    if (body.entity.action === "other_courses") {
+      const sisCtx = decodeSisContext(session?.lastEntityQueryText ?? "");
+      if (sisCtx) {
+        const excludeTokens = (body.entity.excludeCourseIds ?? []) as string[];
+        const excludeOffering = new Set(
+          excludeTokens
+            .map((id) => decodeSisCandidate(id))
+            .filter((v): v is NonNullable<typeof v> => v !== null)
+            .map((v) => v.offeringName),
+        );
+        const rows = (await ctx.runAction(api.actions.jhuCourses.getCoursesByTerm, {
+          term: sisCtx.term,
+          school: sisCtx.school,
+          courseTitle: sisCtx.query,
+        })) as Array<{ OfferingName?: string; Title?: string }>;
+        const filtered = rows
+          .filter((r) => r.OfferingName && r.Title)
+          .filter((r) => !excludeOffering.has(String(r.OfferingName)))
+          .slice(0, 5);
+        const candidates = filtered.map((r) => ({
+          id: encodeSisCandidate({
+            offeringName: String(r.OfferingName),
+            title: String(r.Title),
+            term: sisCtx.term,
+            school: sisCtx.school,
+          }),
+          label: String(r.OfferingName),
+          subtitle: String(r.Title),
+        }));
+        return c.json({
+          text: "Which class are you referring to? Pick one below, or choose **Other** to see more options.",
+          status: "needs_entity_clarification",
+          phase: "class",
+          entityCandidates: candidates,
+          entityHasMore: rows.length > excludeOffering.size + candidates.length,
+          route: "classes",
+        });
+      }
+    }
+
     return handleEntityAction(
       ctx, c, client,
       { userId, sessionId, session, entity: body.entity as Parameters<typeof handleEntityAction>[3]["entity"] },

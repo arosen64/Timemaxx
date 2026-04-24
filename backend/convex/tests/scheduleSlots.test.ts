@@ -2,7 +2,6 @@ import { describe, expect, test, vi } from "vitest";
 import {
   roundUpTo15Min,
   isSlotValid,
-  isInAvailableSlot,
   buildSlotContext,
   enumerateSlots,
   extendSlotPool,
@@ -27,7 +26,6 @@ const MONDAY_9AM_UTC = new Date("2025-01-06T14:00:00.000Z").getTime();
 const WORK_HOURS: WorkHoursRow[] = [
   {
     day: "Monday",
-    available: [18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31], // 9am–4pm slots
     blocked: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17], // midnight–9am
   },
 ];
@@ -80,28 +78,6 @@ describe("isSlotValid", () => {
   test("returns true when no workHoursGrid row exists for the day", () => {
     const sundayMs = new Date("2025-01-05T14:00:00.000Z").getTime(); // Sunday
     expect(isSlotValid(sundayMs, durationMs, WORK_HOURS, [], TIMEZONE)).toBe(true);
-  });
-});
-
-// ---------------------------------------------------------------------------
-// isInAvailableSlot
-// ---------------------------------------------------------------------------
-
-describe("isInAvailableSlot", () => {
-  const durationMs = 60 * 60 * 1000;
-
-  test("returns true when all spanned slots are in available", () => {
-    expect(isInAvailableSlot(MONDAY_9AM_UTC, durationMs, WORK_HOURS, TIMEZONE)).toBe(true);
-  });
-
-  test("returns false when spanned slots are not in available", () => {
-    const earlySlot = new Date("2025-01-06T09:00:00.000Z").getTime(); // 4 AM EST
-    expect(isInAvailableSlot(earlySlot, durationMs, WORK_HOURS, TIMEZONE)).toBe(false);
-  });
-
-  test("returns false when no workHoursGrid row for the day", () => {
-    const sundayMs = new Date("2025-01-05T14:00:00.000Z").getTime();
-    expect(isInAvailableSlot(sundayMs, durationMs, WORK_HOURS, TIMEZONE)).toBe(false);
   });
 });
 
@@ -212,7 +188,7 @@ describe("enumerateSlots", () => {
     expect(candidates.length).toBeLessThanOrEqual(20);
   });
 
-  test("tags inAvailableSlot correctly", () => {
+  test("returns candidates with context fields", () => {
     const candidates = enumerateSlots({
       fromMs: MONDAY_9AM_UTC,
       dueDateMs,
@@ -221,9 +197,11 @@ describe("enumerateSlots", () => {
       occupiedIntervals: [],
       timezone: TIMEZONE,
     });
-    // 9 AM slot should be in available (slots 18-19)
     const first = candidates[0];
-    expect(first.inAvailableSlot).toBe(true);
+    expect(first).toHaveProperty("startMs");
+    expect(first).toHaveProperty("startISO");
+    expect(first).toHaveProperty("previousEventTitle");
+    expect(first).toHaveProperty("nextEventTitle");
   });
 
   test("excludes slots before recommendedStartMs when set", () => {
@@ -316,9 +294,9 @@ describe("filterPoolForBlock", () => {
   test("excludes slots at or after due date", () => {
     const dueDateMs = MONDAY_9AM_UTC + 60 * 60 * 1000;
     const pool: PoolSlot[] = [
-      { startMs: MONDAY_9AM_UTC, inAvailableSlot: true },
-      { startMs: dueDateMs, inAvailableSlot: true },
-      { startMs: dueDateMs + 3600000, inAvailableSlot: true },
+      { startMs: MONDAY_9AM_UTC },
+      { startMs: dueDateMs },
+      { startMs: dueDateMs + 3600000 },
     ];
     const candidates = filterPoolForBlock({
       pool,
@@ -332,7 +310,7 @@ describe("filterPoolForBlock", () => {
   });
 
   test("excludes slots overlapping occupied intervals", () => {
-    const pool: PoolSlot[] = [{ startMs: MONDAY_9AM_UTC, inAvailableSlot: true }];
+    const pool: PoolSlot[] = [{ startMs: MONDAY_9AM_UTC }];
     const occupied: OccupiedInterval[] = [
       { startMs: MONDAY_9AM_UTC + 30 * 60 * 1000, endMs: MONDAY_9AM_UTC + 90 * 60 * 1000, title: "Busy" },
     ];

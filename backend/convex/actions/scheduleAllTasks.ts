@@ -73,7 +73,11 @@ export const scheduleAllTasks = action({
         const blocks = blocksByTask.get(t._id) ?? [];
         return blocks.some((b) => !b.startTime);
       })
-      .sort((a, b) => a.dueDate - b.dueDate || a._creationTime - b._creationTime)
+      .sort((a, b) =>
+        a.dueDate - b.dueDate ||
+        (b.assignmentWeight ?? 0) - (a.assignmentWeight ?? 0) ||
+        a._creationTime - b._creationTime
+      )
       .slice(0, MAX_TASKS);
 
     if (tasksToSchedule.length === 0) return { scheduled: 0, skipped: 0 };
