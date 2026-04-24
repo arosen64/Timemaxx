@@ -5,7 +5,7 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { taskTypeValidator } from "../lib/taskValidators";
 import { Id } from "../_generated/dataModel";
 import { rebuildStudyBlocks } from "./timeEstimate";
-import { TWO_WEEKS_MS } from "../lib/constants";
+import { TWO_WEEKS_MS } from "../lib/scheduleSlots";
 
 export async function cascadeDeleteTask(ctx: MutationCtx, taskId: Id<"tasks">) {
   const subtasks = await ctx.db
