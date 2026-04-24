@@ -64,14 +64,14 @@ describe("actions/parseTranscript", () => {
     ).rejects.toThrow("Unauthenticated");
   });
 
-  test("throws when PDF exceeds 10 MB", async () => {
+  test("throws when PDF exceeds 1 MB", async () => {
     const t = makeTestCtx();
     const { withAuth } = await createTestUser(t);
     await expect(
       withAuth.action(api.ai.parseTranscript.parseTranscript, {
-        fileContents: "x".repeat(10_000_001),
+        fileContents: "x".repeat(1_500_001),
       })
-    ).rejects.toThrow("PDF exceeds maximum upload size of 10 MB");
+    ).rejects.toThrow("PDF exceeds maximum upload size of 1 MB");
   });
 
   test("throws when MASTRA_URL is not set", async () => {

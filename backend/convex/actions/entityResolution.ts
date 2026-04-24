@@ -4,6 +4,7 @@ import { internalAction } from "../_generated/server";
 import { v } from "convex/values";
 import { embedGeminiText } from "../lib/geminiEmbedding";
 import type { Doc, Id } from "../_generated/dataModel";
+import { termBucket } from "../lib/terms";
 
 type TaskId = Id<"tasks">;
 type CourseId = Id<"userCourses">;
@@ -92,24 +93,33 @@ export const searchCourseCandidates = internalAction({
     const { internal } = await import("../_generated/api");
     const vector = await embedGeminiText(args.queryText);
     const exclude = new Set<string>(args.excludeIds.map(String));
+    const rawRank = new Map<string, number>();
     const raw = await ctx.vectorSearch("userCourses", "by_embedding", {
       vector,
       limit: VECTOR_LIMIT,
       filter: (q) => q.eq("userId", args.userId),
     });
     const matching: CourseId[] = [];
-    for (const r of raw) {
+    for (const [index, r] of raw.entries()) {
       if (exclude.has(String(r._id))) continue;
       matching.push(r._id);
+      rawRank.set(String(r._id), index);
     }
-    const pageIds = matching.slice(0, PAGE);
     const courses: Doc<"userCourses">[] = await ctx.runQuery(
       internal.queries.userCourses.getUserCoursesByIdsInternal,
-      {
-        courseIds: pageIds,
-      },
+      { courseIds: matching },
     );
     const byId = new Map<string, Doc<"userCourses">>(courses.map((c) => [String(c._id), c]));
+    const rankedIds = matching
+      .slice()
+      .sort((a, b) => {
+        const ac = byId.get(String(a));
+        const bc = byId.get(String(b));
+        const bucketDiff = termBucket(ac?.term) - termBucket(bc?.term);
+        if (bucketDiff !== 0) return bucketDiff;
+        return (rawRank.get(String(a)) ?? 9999) - (rawRank.get(String(b)) ?? 9999);
+      });
+    const pageIds = rankedIds.slice(0, PAGE);
     const candidates = pageIds.map((id) => {
       const c = byId.get(String(id))!;
       return {
@@ -118,7 +128,7 @@ export const searchCourseCandidates = internalAction({
         subtitle: c.title,
       };
     });
-    const hasMore = matching.length > PAGE;
+    const hasMore = rankedIds.length > PAGE;
     return { candidates, hasMore };
   },
 });

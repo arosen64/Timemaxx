@@ -86,8 +86,8 @@ export default function SyllabusUploadModal({
   }
 
   const subtitle = course.title
-    ? `Upload the syllabus for ${course.title}. Accepted formats: PDF, plain text (max 10 MB).`
-    : 'Upload a syllabus. Accepted formats: PDF, plain text (max 10 MB).'
+    ? `Upload the syllabus for ${course.title}. Accepted formats: PDF, plain text (max 1 MB).`
+    : 'Upload a syllabus. Accepted formats: PDF, plain text (max 1 MB).'
 
   return (
     <Modal
@@ -114,8 +114,8 @@ export default function SyllabusUploadModal({
         <FileUpload
           accept=".pdf,.txt"
           acceptedMimeTypes={['application/pdf', 'text/plain']}
-          maxBytes={10 * 1024 * 1024}
-          hint="PDF or .txt · max 10 MB"
+          maxBytes={1 * 1024 * 1024}
+          hint="PDF or .txt · max 1 MB"
           file={file}
           onFile={(f) => { setError(null); setFile(f) }}
           onError={(msg) => { setError(msg); setFile(null) }}

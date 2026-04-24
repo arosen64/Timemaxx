@@ -6011,7 +6011,7 @@
                   "fill": "$--muted-foreground",
                   "textGrowth": "fixed-width",
                   "width": "fill_container",
-                  "content": "Click or drag to mark when you're available to study or when you'll never work.",
+                  "content": "Click or drag to mark your never-work hours.",
                   "lineHeight": 1.5,
                   "fontFamily": "Inter",
                   "fontSize": 14,
@@ -6020,98 +6020,30 @@
                 {
                   "type": "frame",
                   "id": "FpYQm",
-                  "name": "modeToggle",
+                  "name": "instructionRow",
                   "width": "fill_container",
-                  "gap": 8,
+                  "justifyContent": "space_between",
                   "alignItems": "center",
                   "children": [
                     {
                       "type": "text",
                       "id": "2a1bS",
-                      "name": "modeLabel",
-                      "fill": "$--primary",
-                      "content": "Drawing:",
-                      "fontFamily": "Space Grotesk",
+                      "name": "instructionText",
+                      "fill": "$--muted-foreground",
+                      "content": "Click or drag to mark never-work hours",
+                      "fontFamily": "Inter",
                       "fontSize": 13,
-                      "fontWeight": "600"
+                      "fontWeight": "normal"
                     },
                     {
-                      "type": "frame",
-                      "id": "aZPg0",
-                      "name": "availBtn",
-                      "fill": "$--success-bg",
-                      "cornerRadius": 8,
-                      "stroke": {
-                        "align": "inside",
-                        "thickness": 1,
-                        "fill": "$--accent"
-                      },
-                      "gap": 6,
-                      "padding": [
-                        6,
-                        12
-                      ],
-                      "alignItems": "center",
-                      "children": [
-                        {
-                          "type": "frame",
-                          "id": "ql38O",
-                          "name": "availDot",
-                          "width": 12,
-                          "height": 12,
-                          "fill": "$--accent",
-                          "cornerRadius": 2
-                        },
-                        {
-                          "type": "text",
-                          "id": "IUuks",
-                          "name": "availLbl",
-                          "fill": "$--primary",
-                          "content": "Available",
-                          "fontFamily": "Inter",
-                          "fontSize": 13,
-                          "fontWeight": "500"
-                        }
-                      ]
-                    },
-                    {
-                      "type": "frame",
-                      "id": "UgswY",
-                      "name": "neverBtn",
-                      "fill": "$--card",
-                      "cornerRadius": 8,
-                      "stroke": {
-                        "align": "inside",
-                        "thickness": 1,
-                        "fill": "$--border"
-                      },
-                      "gap": 6,
-                      "padding": [
-                        6,
-                        12
-                      ],
-                      "alignItems": "center",
-                      "children": [
-                        {
-                          "type": "frame",
-                          "id": "h48Bg",
-                          "name": "neverDot",
-                          "width": 12,
-                          "height": 12,
-                          "fill": "$--muted-foreground",
-                          "cornerRadius": 2
-                        },
-                        {
-                          "type": "text",
-                          "id": "yrIcn",
-                          "name": "neverLbl",
-                          "fill": "$--muted-foreground",
-                          "content": "Never work",
-                          "fontFamily": "Inter",
-                          "fontSize": 13,
-                          "fontWeight": "normal"
-                        }
-                      ]
+                      "type": "text",
+                      "id": "IUuks",
+                      "name": "eraseHint",
+                      "fill": "$--info",
+                      "content": "Click a painted cell to erase it",
+                      "fontFamily": "Inter",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
                     }
                   ]
                 },
@@ -6288,7 +6220,7 @@
                           "name": "r8c1",
                           "width": "fill_container",
                           "height": "fill_container",
-                          "fill": "#D4EDEA"
+                          "fill": "$--card"
                         },
                         {
                           "type": "frame",
@@ -6296,7 +6228,7 @@
                           "name": "r8c2",
                           "width": "fill_container",
                           "height": "fill_container",
-                          "fill": "#D4EDEA"
+                          "fill": "$--card"
                         },
                         {
                           "type": "frame",
@@ -6312,7 +6244,7 @@
                           "name": "r8c4",
                           "width": "fill_container",
                           "height": "fill_container",
-                          "fill": "#D4EDEA"
+                          "fill": "$--card"
                         },
                         {
                           "type": "frame",
@@ -6320,7 +6252,7 @@
                           "name": "r8c5",
                           "width": "fill_container",
                           "height": "fill_container",
-                          "fill": "#D4EDEA"
+                          "fill": "$--card"
                         },
                         {
                           "type": "frame",
@@ -6381,7 +6313,7 @@
                           "name": "r11c1",
                           "width": "fill_container",
                           "height": "fill_container",
-                          "fill": "#D4EDEA"
+                          "fill": "$--card"
                         },
                         {
                           "type": "frame",
@@ -6389,7 +6321,7 @@
                           "name": "r11c2",
                           "width": "fill_container",
                           "height": "fill_container",
-                          "fill": "#D4EDEA"
+                          "fill": "$--card"
                         },
                         {
                           "type": "frame",
@@ -6397,7 +6329,7 @@
                           "name": "r11c3",
                           "width": "fill_container",
                           "height": "fill_container",
-                          "fill": "#D4EDEA"
+                          "fill": "$--card"
                         },
                         {
                           "type": "frame",
@@ -6413,7 +6345,7 @@
                           "name": "r11c5",
                           "width": "fill_container",
                           "height": "fill_container",
-                          "fill": "#D4EDEA"
+                          "fill": "$--card"
                         },
                         {
                           "type": "frame",
@@ -11004,7 +10936,7 @@
                   "fill": "$--muted-foreground",
                   "textGrowth": "fixed-width",
                   "width": "fill_container",
-                  "content": "Click or drag to mark when you're available to study or when you'll never work.",
+                  "content": "Click or drag to mark your never-work hours.",
                   "lineHeight": 1.5,
                   "fontFamily": "Inter",
                   "fontSize": 14,
@@ -11013,93 +10945,30 @@
                 {
                   "type": "frame",
                   "id": "EjrUA",
-                  "name": "modeToggle",
+                  "name": "instructionRow",
                   "width": "fill_container",
-                  "gap": 8,
+                  "justifyContent": "space_between",
                   "alignItems": "center",
                   "children": [
                     {
                       "type": "text",
                       "id": "rboiK",
-                      "fill": "$--primary",
-                      "content": "Drawing:",
-                      "fontFamily": "Space Grotesk",
+                      "name": "instructionText",
+                      "fill": "$--muted-foreground",
+                      "content": "Click or drag to mark never-work hours",
+                      "fontFamily": "Inter",
                       "fontSize": 13,
-                      "fontWeight": "600"
+                      "fontWeight": "normal"
                     },
                     {
-                      "type": "frame",
-                      "id": "yioId",
-                      "name": "availBtn",
-                      "fill": "$--success-bg",
-                      "cornerRadius": 8,
-                      "stroke": {
-                        "align": "inside",
-                        "thickness": 1,
-                        "fill": "$--accent"
-                      },
-                      "gap": 6,
-                      "padding": [
-                        6,
-                        12
-                      ],
-                      "alignItems": "center",
-                      "children": [
-                        {
-                          "type": "frame",
-                          "id": "i1mBE",
-                          "width": 12,
-                          "height": 12,
-                          "fill": "$--accent",
-                          "cornerRadius": 2
-                        },
-                        {
-                          "type": "text",
-                          "id": "XWKpT",
-                          "fill": "$--primary",
-                          "content": "Available",
-                          "fontFamily": "Inter",
-                          "fontSize": 13,
-                          "fontWeight": "500"
-                        }
-                      ]
-                    },
-                    {
-                      "type": "frame",
-                      "id": "ZyTHE",
-                      "name": "neverBtn",
-                      "fill": "$--card",
-                      "cornerRadius": 8,
-                      "stroke": {
-                        "align": "inside",
-                        "thickness": 1,
-                        "fill": "$--border"
-                      },
-                      "gap": 6,
-                      "padding": [
-                        6,
-                        12
-                      ],
-                      "alignItems": "center",
-                      "children": [
-                        {
-                          "type": "frame",
-                          "id": "VMYbR",
-                          "width": 12,
-                          "height": 12,
-                          "fill": "$--muted-foreground",
-                          "cornerRadius": 2
-                        },
-                        {
-                          "type": "text",
-                          "id": "tzFSy",
-                          "fill": "$--muted-foreground",
-                          "content": "Never work",
-                          "fontFamily": "Inter",
-                          "fontSize": 13,
-                          "fontWeight": "normal"
-                        }
-                      ]
+                      "type": "text",
+                      "id": "XWKpT",
+                      "name": "eraseHint",
+                      "fill": "$--info",
+                      "content": "Click a painted cell to erase it",
+                      "fontFamily": "Inter",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
                     }
                   ]
                 },
@@ -11266,14 +11135,14 @@
                           "id": "U5X5s",
                           "width": "fill_container",
                           "height": "fill_container",
-                          "fill": "#D4EDEA"
+                          "fill": "$--card"
                         },
                         {
                           "type": "frame",
                           "id": "4veIx",
                           "width": "fill_container",
                           "height": "fill_container",
-                          "fill": "#D4EDEA"
+                          "fill": "$--card"
                         },
                         {
                           "type": "frame",
@@ -11287,14 +11156,14 @@
                           "id": "kkkMd",
                           "width": "fill_container",
                           "height": "fill_container",
-                          "fill": "#D4EDEA"
+                          "fill": "$--card"
                         },
                         {
                           "type": "frame",
                           "id": "xpkLC",
                           "width": "fill_container",
                           "height": "fill_container",
-                          "fill": "#D4EDEA"
+                          "fill": "$--card"
                         },
                         {
                           "type": "frame",
@@ -11351,21 +11220,21 @@
                           "id": "FHL7I",
                           "width": "fill_container",
                           "height": "fill_container",
-                          "fill": "#D4EDEA"
+                          "fill": "$--card"
                         },
                         {
                           "type": "frame",
                           "id": "iKWYn",
                           "width": "fill_container",
                           "height": "fill_container",
-                          "fill": "#D4EDEA"
+                          "fill": "$--card"
                         },
                         {
                           "type": "frame",
                           "id": "CH5AR",
                           "width": "fill_container",
                           "height": "fill_container",
-                          "fill": "#D4EDEA"
+                          "fill": "$--card"
                         },
                         {
                           "type": "frame",
@@ -11379,7 +11248,7 @@
                           "id": "83r2m",
                           "width": "fill_container",
                           "height": "fill_container",
-                          "fill": "#D4EDEA"
+                          "fill": "$--card"
                         },
                         {
                           "type": "frame",
@@ -16369,7 +16238,7 @@
                           "fill": "$--muted-foreground",
                           "textGrowth": "fixed-width",
                           "width": "fill_container",
-                          "content": "Click or drag to mark when you're available to study or when you'll never work.",
+                          "content": "Click or drag to mark your never-work hours.",
                           "lineHeight": 1.5,
                           "fontFamily": "$--font-secondary",
                           "fontSize": 14,
@@ -16378,93 +16247,30 @@
                         {
                           "type": "frame",
                           "id": "B1ZaI",
-                          "name": "toggleCopy",
+                          "name": "instructionRow",
                           "width": "fill_container",
-                          "gap": 8,
+                          "justifyContent": "space_between",
                           "alignItems": "center",
                           "children": [
                             {
                               "type": "text",
                               "id": "yADhi",
-                              "fill": "$--primary",
-                              "content": "Drawing:",
-                              "fontFamily": "Space Grotesk",
+                              "name": "instructionText",
+                              "fill": "$--muted-foreground",
+                              "content": "Click or drag to mark never-work hours",
+                              "fontFamily": "Inter",
                               "fontSize": 13,
-                              "fontWeight": "600"
+                              "fontWeight": "normal"
                             },
                             {
-                              "type": "frame",
-                              "id": "TnuPS",
-                              "name": "availBtn",
-                              "fill": "$--success-bg",
-                              "cornerRadius": 8,
-                              "stroke": {
-                                "align": "inside",
-                                "thickness": 1,
-                                "fill": "$--accent"
-                              },
-                              "gap": 6,
-                              "padding": [
-                                6,
-                                12
-                              ],
-                              "alignItems": "center",
-                              "children": [
-                                {
-                                  "type": "frame",
-                                  "id": "nDyTV",
-                                  "width": 12,
-                                  "height": 12,
-                                  "fill": "$--accent",
-                                  "cornerRadius": 2
-                                },
-                                {
-                                  "type": "text",
-                                  "id": "XRwMw",
-                                  "fill": "$--primary",
-                                  "content": "Available",
-                                  "fontFamily": "Inter",
-                                  "fontSize": 13,
-                                  "fontWeight": "500"
-                                }
-                              ]
-                            },
-                            {
-                              "type": "frame",
-                              "id": "JRmae",
-                              "name": "neverBtn",
-                              "fill": "$--card",
-                              "cornerRadius": 8,
-                              "stroke": {
-                                "align": "inside",
-                                "thickness": 1,
-                                "fill": "$--border"
-                              },
-                              "gap": 6,
-                              "padding": [
-                                6,
-                                12
-                              ],
-                              "alignItems": "center",
-                              "children": [
-                                {
-                                  "type": "frame",
-                                  "id": "BypYL",
-                                  "width": 12,
-                                  "height": 12,
-                                  "fill": "$--muted-foreground",
-                                  "cornerRadius": 2
-                                },
-                                {
-                                  "type": "text",
-                                  "id": "nPFeS",
-                                  "fill": "$--muted-foreground",
-                                  "content": "Never work",
-                                  "fontFamily": "Inter",
-                                  "fontSize": 13,
-                                  "fontWeight": "normal"
-                                }
-                              ]
+                              "type": "text",
+                              "id": "XRwMw",
+                              "name": "eraseHint",
+                              "fill": "$--info",
+                              "content": "Click a painted cell to erase it",
+                              "fontFamily": "Inter",
+                              "fontSize": 11,
+                              "fontWeight": "normal"
                             }
                           ]
                         },
@@ -16631,14 +16437,14 @@
                                   "id": "D1ude",
                                   "width": "fill_container",
                                   "height": "fill_container",
-                                  "fill": "#D4EDEA"
+                                  "fill": "$--card"
                                 },
                                 {
                                   "type": "frame",
                                   "id": "gFBOS",
                                   "width": "fill_container",
                                   "height": "fill_container",
-                                  "fill": "#D4EDEA"
+                                  "fill": "$--card"
                                 },
                                 {
                                   "type": "frame",
@@ -16652,14 +16458,14 @@
                                   "id": "uYs9x",
                                   "width": "fill_container",
                                   "height": "fill_container",
-                                  "fill": "#D4EDEA"
+                                  "fill": "$--card"
                                 },
                                 {
                                   "type": "frame",
                                   "id": "A9fcg",
                                   "width": "fill_container",
                                   "height": "fill_container",
-                                  "fill": "#D4EDEA"
+                                  "fill": "$--card"
                                 },
                                 {
                                   "type": "frame",
@@ -16716,21 +16522,21 @@
                                   "id": "93eu7",
                                   "width": "fill_container",
                                   "height": "fill_container",
-                                  "fill": "#D4EDEA"
+                                  "fill": "$--card"
                                 },
                                 {
                                   "type": "frame",
                                   "id": "P6B18",
                                   "width": "fill_container",
                                   "height": "fill_container",
-                                  "fill": "#D4EDEA"
+                                  "fill": "$--card"
                                 },
                                 {
                                   "type": "frame",
                                   "id": "8DoVf",
                                   "width": "fill_container",
                                   "height": "fill_container",
-                                  "fill": "#D4EDEA"
+                                  "fill": "$--card"
                                 },
                                 {
                                   "type": "frame",
@@ -16744,7 +16550,7 @@
                                   "id": "K5CAW",
                                   "width": "fill_container",
                                   "height": "fill_container",
-                                  "fill": "#D4EDEA"
+                                  "fill": "$--card"
                                 },
                                 {
                                   "type": "frame",
@@ -19556,14 +19362,14 @@
                                   "id": "bt28K",
                                   "width": "fill_container",
                                   "height": "fill_container",
-                                  "fill": "#D4EDEA"
+                                  "fill": "$--card"
                                 },
                                 {
                                   "type": "frame",
                                   "id": "vGZwb",
                                   "width": "fill_container",
                                   "height": "fill_container",
-                                  "fill": "#D4EDEA"
+                                  "fill": "$--card"
                                 },
                                 {
                                   "type": "frame",
@@ -19577,14 +19383,14 @@
                                   "id": "t6uzA",
                                   "width": "fill_container",
                                   "height": "fill_container",
-                                  "fill": "#D4EDEA"
+                                  "fill": "$--card"
                                 },
                                 {
                                   "type": "frame",
                                   "id": "T6B3f",
                                   "width": "fill_container",
                                   "height": "fill_container",
-                                  "fill": "#D4EDEA"
+                                  "fill": "$--card"
                                 },
                                 {
                                   "type": "frame",
@@ -19641,21 +19447,21 @@
                                   "id": "g2eyM",
                                   "width": "fill_container",
                                   "height": "fill_container",
-                                  "fill": "#D4EDEA"
+                                  "fill": "$--card"
                                 },
                                 {
                                   "type": "frame",
                                   "id": "AEpJP",
                                   "width": "fill_container",
                                   "height": "fill_container",
-                                  "fill": "#D4EDEA"
+                                  "fill": "$--card"
                                 },
                                 {
                                   "type": "frame",
                                   "id": "YemXl",
                                   "width": "fill_container",
                                   "height": "fill_container",
-                                  "fill": "#D4EDEA"
+                                  "fill": "$--card"
                                 },
                                 {
                                   "type": "frame",
@@ -19669,7 +19475,7 @@
                                   "id": "95D0M",
                                   "width": "fill_container",
                                   "height": "fill_container",
-                                  "fill": "#D4EDEA"
+                                  "fill": "$--card"
                                 },
                                 {
                                   "type": "frame",
@@ -19862,93 +19668,30 @@
                         {
                           "type": "frame",
                           "id": "R9wPF",
-                          "name": "legendCopy",
+                          "name": "instructionRow",
                           "width": "fill_container",
-                          "gap": 8,
+                          "justifyContent": "space_between",
                           "alignItems": "center",
                           "children": [
                             {
                               "type": "text",
                               "id": "JYJJl",
-                              "fill": "$--primary",
-                              "content": "Drawing:",
-                              "fontFamily": "Space Grotesk",
+                              "name": "instructionText",
+                              "fill": "$--muted-foreground",
+                              "content": "Click or drag to mark never-work hours",
+                              "fontFamily": "Inter",
                               "fontSize": 13,
-                              "fontWeight": "600"
+                              "fontWeight": "normal"
                             },
                             {
-                              "type": "frame",
-                              "id": "1JB07",
-                              "name": "availBtn",
-                              "fill": "$--success-bg",
-                              "cornerRadius": 8,
-                              "stroke": {
-                                "align": "inside",
-                                "thickness": 1,
-                                "fill": "$--accent"
-                              },
-                              "gap": 6,
-                              "padding": [
-                                6,
-                                12
-                              ],
-                              "alignItems": "center",
-                              "children": [
-                                {
-                                  "type": "frame",
-                                  "id": "6CxkN",
-                                  "width": 12,
-                                  "height": 12,
-                                  "fill": "$--accent",
-                                  "cornerRadius": 2
-                                },
-                                {
-                                  "type": "text",
-                                  "id": "aCnDW",
-                                  "fill": "$--primary",
-                                  "content": "Available",
-                                  "fontFamily": "Inter",
-                                  "fontSize": 13,
-                                  "fontWeight": "500"
-                                }
-                              ]
-                            },
-                            {
-                              "type": "frame",
-                              "id": "areqg",
-                              "name": "neverBtn",
-                              "fill": "$--card",
-                              "cornerRadius": 8,
-                              "stroke": {
-                                "align": "inside",
-                                "thickness": 1,
-                                "fill": "$--border"
-                              },
-                              "gap": 6,
-                              "padding": [
-                                6,
-                                12
-                              ],
-                              "alignItems": "center",
-                              "children": [
-                                {
-                                  "type": "frame",
-                                  "id": "N3ToL",
-                                  "width": 12,
-                                  "height": 12,
-                                  "fill": "$--muted-foreground",
-                                  "cornerRadius": 2
-                                },
-                                {
-                                  "type": "text",
-                                  "id": "DNP4B",
-                                  "fill": "$--muted-foreground",
-                                  "content": "Never work",
-                                  "fontFamily": "Inter",
-                                  "fontSize": 13,
-                                  "fontWeight": "normal"
-                                }
-                              ]
+                              "type": "text",
+                              "id": "aCnDW",
+                              "name": "eraseHint",
+                              "fill": "$--info",
+                              "content": "Click a painted cell to erase it",
+                              "fontFamily": "Inter",
+                              "fontSize": 11,
+                              "fontWeight": "normal"
                             }
                           ]
                         }

@@ -4,7 +4,7 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 
-type WorkHoursRow = { day: string; available: number[]; blocked: number[] }
+type WorkHoursRow = { day: string; blocked: number[] }
 type TimedEventArg = { id: string; summary: string; start: string; end: string; calendarId: string }
 
 
@@ -69,7 +69,6 @@ const timedEventValidator = v.object({
 
 const workHoursRowValidator = v.object({
   day: v.string(),
-  available: v.array(v.number()),
   blocked: v.array(v.number()),
 })
 
