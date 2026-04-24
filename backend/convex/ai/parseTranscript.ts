@@ -29,7 +29,7 @@ export const parseTranscript = action({
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Unauthenticated");
 
-    const MAX_CHARS = 100_000;
+    const MAX_CHARS = 1_000_000;
     validateLength(args.fileText, MAX_CHARS, "fileText");
 
     const sanitized = sanitizeUserInput(args.fileText, MAX_CHARS);

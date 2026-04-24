@@ -193,8 +193,8 @@ export default function TranscriptUpload({ onCoursesAdded }: TranscriptUploadPro
       <FileUpload
         accept=".pdf"
         acceptedMimeTypes={['application/pdf']}
-        maxBytes={10 * 1024 * 1024}
-        hint="PDF · max 10 MB"
+        maxBytes={1 * 1024 * 1024}
+        hint="PDF · max 1 MB"
         file={file}
         onFile={handleFile}
         onError={(msg) => { setError(msg); setFile(null) }}

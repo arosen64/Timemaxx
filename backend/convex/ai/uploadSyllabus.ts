@@ -36,7 +36,8 @@ export const uploadSyllabus = action({
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Unauthenticated");
 
-    validateLength(args.fileContents, 200_000, "fileContents");
+    // 1 MB plain text ≈ 1,000,000 chars; 1 MB PDF base64-encoded ≈ 1,400,000 chars
+    validateLength(args.fileContents, 1_500_000, "fileContents");
 
     if (args.courseId) {
       try {
@@ -62,7 +63,7 @@ export const uploadSyllabus = action({
       );
     }
 
-    const sanitized = sanitizeUserInput(args.fileContents, 200_000);
+    const sanitized = sanitizeUserInput(args.fileContents, 1_500_000);
 
     try {
       const json = await callGemini({
