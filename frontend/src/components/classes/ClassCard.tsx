@@ -68,6 +68,15 @@ export default function ClassCard({
     setConfirmedGrade(initialGrade ?? '')
     setGradeValue(initialGrade ?? '')
   }, [initialGrade])
+  useEffect(() => {
+    setStudyGoalValue(initialStudyGoal ?? '')
+  }, [initialStudyGoal])
+  useEffect(() => {
+    setDifficultyValue(initialDifficultyRating ?? 3)
+  }, [initialDifficultyRating])
+  useEffect(() => {
+    setCurrentColor(initialColor ?? '')
+  }, [initialColor])
   const [isSavingGrade, setIsSavingGrade] = useState(false)
   const [gradeSaved, setGradeSaved] = useState(false)
   const [gradeError, setGradeError] = useState<string | null>(null)
