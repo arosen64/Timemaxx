@@ -48,8 +48,6 @@ export default defineSchema({
     focusBlockLength: v.optional(v.number()),
     major: v.optional(v.string()),
     year: v.optional(v.string()),
-    difficultSubjects: v.optional(v.array(v.string())),
-    enjoyedSubjects: v.optional(v.array(v.string())),
     courses: v.optional(
       v.array(
         v.object({
