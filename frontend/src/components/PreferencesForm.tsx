@@ -46,29 +46,6 @@ const CATEGORIES = [
       'Somewhere in between',
     ],
   },
-  {
-    key: 'breakPreferences',
-    label: '🔄 Break Preferences',
-    description: 'How you like to take breaks',
-    singleSelect: true,
-    options: [
-      'Frequent short breaks (every 25–30 min)',
-      'Occasional medium breaks (every hour)',
-      'Few long breaks (every 2+ hours)',
-      "I don't take planned breaks",
-    ],
-  },
-  {
-    key: 'subjectSwitching',
-    label: '📚 Subject/Task Switching',
-    description: 'How you prefer to switch between topics',
-    singleSelect: true,
-    options: [
-      'I prefer focusing on one subject per session',
-      'I like switching between subjects',
-      'Depends on the day',
-    ],
-  },
 ]
 
 interface CategorySectionProps {
