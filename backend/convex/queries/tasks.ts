@@ -105,19 +105,18 @@ export const getTasksByCourseId = query({
 
     const order = args.sortOrder ?? "desc";
 
-    // When no courseId is provided, return tasks not associated with any class.
     if (!args.courseId) {
-      const tasks = await ctx.db
+      return await ctx.db
         .query("tasks")
-        .withIndex("by_userId_createdAt", (q) => q.eq("userId", userId))
+        .withIndex("by_userId_courseId", (q) => q.eq("userId", userId).eq("courseId", undefined))
         .order(order)
         .collect();
-      return tasks.filter((t) => !t.courseId);
     }
 
     return await ctx.db
       .query("tasks")
       .withIndex("by_userId_courseId", (q) => q.eq("userId", userId).eq("courseId", args.courseId!))
+      .order(order)
       .collect();
   },
 });

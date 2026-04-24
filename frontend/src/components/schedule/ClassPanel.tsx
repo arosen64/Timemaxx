@@ -5,7 +5,6 @@ import type { Id } from '../../../../backend/convex/_generated/dataModel'
 import { ChevronLeftIcon, ChevronRightIcon, SpinnerIcon, CalendarIcon } from '../icons'
 import { isCurrentTerm } from '../../utils/termUtils'
 
-const DEFAULT_COURSE_COLOR = '#002D72'
 const OTHER_COURSE_KEY = '__none__'
 
 type StudyBlockInPanel = {
@@ -231,7 +230,7 @@ export default function ClassPanel({
                   onClick={() => { setSelectedCourseId(course._id); setSelectedTaskId(null) }}
                   className="flex w-full items-center gap-2.5 px-4 py-3 text-left hover:bg-bg-gray transition-colors border-b border-border"
                 >
-                  <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: course.color ?? DEFAULT_COURSE_COLOR }} />
+                  <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: course.color ?? "navy" }} />
                   <span className="flex flex-1 min-w-0 flex-col gap-0.5">
                     <span className="text-[10px] text-light-blue font-medium">{course.courseCode}</span>
                     <span className="truncate text-[12px] font-semibold text-navy">{course.title}</span>
