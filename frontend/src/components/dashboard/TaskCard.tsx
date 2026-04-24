@@ -262,7 +262,7 @@ export default function TaskCard({
               </div>
             </div>
 
-            {isReadOnly && task.timeEstimate !== undefined &&
+            {task.timeEstimate !== undefined &&
               !task.isManualEstimate &&
               (!hasSubtasks || !anySubtaskPending) && (
                 <TaskFeedbackForm task={task} {...feedback} />
