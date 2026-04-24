@@ -253,6 +253,20 @@ export const updateSubtaskStatus = mutation({
 
     await ctx.db.patch(args.subtaskId, { status: args.status });
 
+    // Sync study block completion when status is set to completed or not_started
+    if (args.status === "completed" || args.status === "not_started") {
+      const blocks = await ctx.db
+        .query("studyBlocks")
+        .withIndex("by_subtaskId", (q) => q.eq("subtaskId", args.subtaskId))
+        .collect();
+      const isCompleted = args.status === "completed";
+      for (const block of blocks) {
+        if (block.isCompleted !== isCompleted) {
+          await ctx.db.patch(block._id, { isCompleted });
+        }
+      }
+    }
+
     // Bubble up: derive parent status from all sibling statuses after this update
     const siblings = await ctx.db
       .query("subtasks")
