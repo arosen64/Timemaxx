@@ -80,6 +80,39 @@ export async function rebuildStudyBlocks(
   }
 }
 
+/** Deletes ALL study blocks for a subtask (including scheduled ones) then creates fresh unscheduled blocks sized to timeEstimate. */
+async function forceRebuildStudyBlocksForSubtask(
+  ctx: MutationCtx,
+  subtaskId: Id<"subtasks">,
+  timeEstimate: number
+) {
+  const existingBlocks = await ctx.db
+    .query("studyBlocks")
+    .withIndex("by_subtaskId", (q) => q.eq("subtaskId", subtaskId))
+    .collect();
+  for (const block of existingBlocks) await ctx.db.delete(block._id);
+
+  const subtask = await ctx.db.get(subtaskId);
+  if (!subtask) return;
+
+  const user = await ctx.db.get(subtask.userId);
+  const focusBlockLength = user?.focusBlockLength || 60;
+
+  const blockCount = Math.ceil(timeEstimate / focusBlockLength);
+  const remainder = timeEstimate % focusBlockLength;
+  for (let i = 0; i < blockCount; i++) {
+    const isLastBlock = i === blockCount - 1;
+    const studyBlockLength = isLastBlock && remainder !== 0 ? remainder : focusBlockLength;
+    await ctx.db.insert("studyBlocks", {
+      subtaskId,
+      userId: subtask.userId,
+      title: subtask.title,
+      startTime: undefined,
+      studyBlockLength,
+    });
+  }
+}
+
 /** Scales each subtask estimate proportionally so they sum to manualTotal, rounded to the nearest 5 min (min 5 min per subtask), then rebuilds their study blocks. */
 export async function normalizeSubtaskEstimates(
   ctx: MutationCtx,
@@ -92,7 +125,7 @@ export async function normalizeSubtaskEstimates(
     const raw = ((subtask.timeEstimate ?? 0) / sum) * manualTotal;
     const rounded = Math.max(5, Math.round(raw / 5) * 5);
     await ctx.db.patch(subtask._id, { timeEstimate: rounded });
-    await rebuildStudyBlocksForSubtask(ctx, subtask._id, rounded);
+    await forceRebuildStudyBlocksForSubtask(ctx, subtask._id, rounded);
   }
 }
 
