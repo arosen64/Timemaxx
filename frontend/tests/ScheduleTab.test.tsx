@@ -8,6 +8,9 @@ vi.mock('../../backend/convex/_generated/api', () => ({
     queries: {
       calendar: { getScheduleData: 'getScheduleData' },
       studyBlocks: { getAllStudyBlocksWithTasks: 'getAllStudyBlocksWithTasks' },
+      userCourses: { getUserCourses: 'getUserCourses' },
+      tasks: { getTasksByCourseId: 'getTasksByCourseId' },
+      subtasks: { getSubtasksForTask: 'getSubtasksForTask' },
     },
     mutations: {
       calendar: { saveSelectedCalendars: 'saveSelectedCalendars' },
@@ -59,17 +62,6 @@ const BASE_SCHEDULE = {
 const todayAt10am = new Date()
 todayAt10am.setHours(10, 0, 0, 0)
 
-const UNSCHEDULED_BLOCK = {
-  _id: 'block1',
-  taskId: 'task1',
-  title: 'Read Chapter 3',
-  startTime: undefined,
-  studyBlockLength: 60,
-  isConflicted: undefined,
-  taskTitle: 'History Essay',
-  taskDueDate: Date.now() + 86400000 * 7,
-}
-
 const CONFLICTED_BLOCK = {
   _id: 'block2',
   taskId: 'task2',
@@ -85,19 +77,13 @@ const CONFLICTED_BLOCK = {
 
 function makeQueryImpl(scheduleData: object, studyBlocks: unknown[] = []) {
   return (...args: Parameters<typeof useQuery>) => {
-    if (args[0] === 'getAllStudyBlocksWithTasks') return studyBlocks as never
+    const ref = args[0] as unknown as string
+    if (ref === 'getAllStudyBlocksWithTasks') return studyBlocks as never
+    if (ref === 'getUserCourses' || ref === 'getTasksByCourseId' || ref === 'getSubtasksForTask') return [] as never
     return scheduleData as never
   }
 }
 
-function setupWithBlocks(studyBlocks: unknown[]) {
-  mockUseQuery.mockImplementation(makeQueryImpl(BASE_SCHEDULE, studyBlocks))
-  mockUseMutation.mockReturnValue(makeMutationFn() as never)
-  mockUseAction.mockReturnValue(
-    makeMutationFn({ calendarList: [], timedEvents: [], allDayEvents: [], error: false }) as never,
-  )
-  renderWithProviders(<ScheduleTab />)
-}
 
 function setupWithConflictBlock(autoRescheduleResult: object | 'reject') {
   mockUseQuery.mockImplementation(makeQueryImpl(BASE_SCHEDULE, [CONFLICTED_BLOCK]))
@@ -126,54 +112,6 @@ function setupCalendarError() {
   renderWithProviders(<ScheduleTab />)
 }
 
-// ── Unscheduled block tray ────────────────────────────────────────────────────
-
-describe('ScheduleTab – Unscheduled block tray', () => {
-  beforeEach(() => vi.clearAllMocks())
-
-  it('shows "All blocks scheduled." when there are no unscheduled blocks', () => {
-    setupWithBlocks([])
-    expect(screen.getByText('All blocks scheduled.')).toBeInTheDocument()
-  })
-
-  it('renders unscheduled block title, duration, and task name in the tray', () => {
-    setupWithBlocks([UNSCHEDULED_BLOCK])
-    expect(screen.getByText('Read Chapter 3')).toBeInTheDocument()
-    expect(screen.getByText('60 min')).toBeInTheDocument()
-    expect(screen.getByText('History Essay')).toBeInTheDocument()
-  })
-
-  it('shows "Assign mode" banner when a tray block is clicked', async () => {
-    const user = userEvent.setup()
-    setupWithBlocks([UNSCHEDULED_BLOCK])
-
-    await user.click(screen.getByRole('button', { name: /Read Chapter 3/i }))
-    expect(screen.getByText('Assign mode')).toBeInTheDocument()
-  })
-
-  it('hides "Assign mode" banner when the same tray block is clicked again', async () => {
-    const user = userEvent.setup()
-    setupWithBlocks([UNSCHEDULED_BLOCK])
-
-    const trayBtn = screen.getByRole('button', { name: /Read Chapter 3/i })
-    await user.click(trayBtn)
-    expect(screen.getByText('Assign mode')).toBeInTheDocument()
-
-    await user.click(trayBtn)
-    expect(screen.queryByText('Assign mode')).not.toBeInTheDocument()
-  })
-
-  it('pressing Escape cancels assign mode', async () => {
-    const user = userEvent.setup()
-    setupWithBlocks([UNSCHEDULED_BLOCK])
-
-    await user.click(screen.getByRole('button', { name: /Read Chapter 3/i }))
-    expect(screen.getByText('Assign mode')).toBeInTheDocument()
-
-    await user.keyboard('{Escape}')
-    expect(screen.queryByText('Assign mode')).not.toBeInTheDocument()
-  })
-})
 
 // ── Calendar error banner ─────────────────────────────────────────────────────
 

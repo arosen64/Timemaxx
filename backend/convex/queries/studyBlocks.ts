@@ -73,6 +73,7 @@ async function fetchAllStudyBlocksWithTasks(ctx: any, userId: Id<"users">) {
   const result: Array<{
     _id: Id<"studyBlocks">;
     taskId: Id<"tasks">;
+    subtaskId: Id<"subtasks"> | undefined;
     title: string;
     startTime: string | undefined;
     studyBlockLength: number;
@@ -81,6 +82,7 @@ async function fetchAllStudyBlocksWithTasks(ctx: any, userId: Id<"users">) {
     needsExport: boolean | undefined;
     taskTitle: string;
     taskDueDate: number;
+    taskRecommendedStart: number | undefined;
     courseColor: string | undefined;
     courseName: string | undefined;
     isCompleted: boolean;
@@ -122,6 +124,7 @@ async function fetchAllStudyBlocksWithTasks(ctx: any, userId: Id<"users">) {
       result.push({
         _id: block._id,
         taskId: block.taskId,
+        subtaskId: undefined,
         title: block.title,
         startTime: block.startTime,
         studyBlockLength: block.studyBlockLength,
@@ -130,6 +133,7 @@ async function fetchAllStudyBlocksWithTasks(ctx: any, userId: Id<"users">) {
         needsExport: block.needsExport,
         taskTitle: task.title,
         taskDueDate: task.dueDate,
+        taskRecommendedStart: task.recommendedStart,
         courseColor,
         courseName,
         isCompleted: block.isCompleted,
@@ -147,6 +151,7 @@ async function fetchAllStudyBlocksWithTasks(ctx: any, userId: Id<"users">) {
         result.push({
           _id: block._id,
           taskId: task._id,
+          subtaskId: subtask._id,
           title: block.title,
           startTime: block.startTime,
           studyBlockLength: block.studyBlockLength,
