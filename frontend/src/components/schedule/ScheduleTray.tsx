@@ -33,7 +33,7 @@ export default function ScheduleTray({
   onScheduleAllMsg,
 }: Props) {
   const scheduleBlockAction = useAction(api.actions.scheduleBlock.scheduleBlock)
-  const scheduleAllTasksAction = useAction(api.actions.scheduleAllBlocks.scheduleAllBlocks)
+  const scheduleAllBlocksAction = useAction(api.actions.scheduleAllBlocks.scheduleAllBlocks)
 
   const [schedulingBlockIds, setSchedulingBlockIds] = useState<Set<Id<'studyBlocks'>>>(new Set())
   const [isSchedulingAll, setIsSchedulingAll] = useState(false)
@@ -54,7 +54,7 @@ export default function ScheduleTray({
   async function handleScheduleAll() {
     setIsSchedulingAll(true)
     try {
-      const result = await scheduleAllTasksAction({ timezone })
+      const result = await scheduleAllBlocksAction({ timezone })
       onScheduleAllMsg(
         result.skipped === 0
           ? `All ${result.scheduled} block${result.scheduled !== 1 ? 's' : ''} scheduled.`

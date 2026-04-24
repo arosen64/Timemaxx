@@ -9,7 +9,7 @@ type Props = {
 }
 
 export default function ScheduleAllButton({ disabled, overLimitWarning }: Props) {
-  const scheduleAllTasks = useAction(api.actions.scheduleAllBlocks.scheduleAllBlocks)
+  const scheduleAllBlocks = useAction(api.actions.scheduleAllBlocks.scheduleAllBlocks)
   const [isScheduling, setIsScheduling] = useState(false)
   const [result, setResult] = useState<{ scheduled: number; skipped: number } | null>(null)
 
@@ -18,7 +18,7 @@ export default function ScheduleAllButton({ disabled, overLimitWarning }: Props)
     setResult(null)
     try {
       const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
-      const r = await scheduleAllTasks({ timezone })
+      const r = await scheduleAllBlocks({ timezone })
       setResult(r)
     } finally {
       setIsScheduling(false)
