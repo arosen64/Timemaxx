@@ -93,6 +93,18 @@ async function fetchAllStudyBlocksWithTasks(ctx: any, userId: Id<"users">) {
     if (course) courseMap.set(courseId as string, course);
   }
 
+  // Batch-fetch all subtasks for user and group by parentTaskId (avoids N+1 per task)
+  const allSubtasks = await ctx.db
+    .query("subtasks")
+    .withIndex("by_userId", (q: any) => q.eq("userId", userId))
+    .collect();
+  const subtasksByTask = new Map<string, any[]>();
+  for (const subtask of allSubtasks) {
+    const key = subtask.parentTaskId as string;
+    if (!subtasksByTask.has(key)) subtasksByTask.set(key, []);
+    subtasksByTask.get(key)!.push(subtask);
+  }
+
   for (const task of tasks) {
     // Skip completed tasks — their blocks are unscheduled and should not appear on the calendar
     if (task.status === "completed") continue;
@@ -120,6 +132,31 @@ async function fetchAllStudyBlocksWithTasks(ctx: any, userId: Id<"users">) {
         courseColor,
         courseName,
       });
+    }
+
+    // Also include subtask-level blocks, grouped under the parent task
+    const subtasks = subtasksByTask.get(task._id as string) ?? [];
+    for (const subtask of subtasks) {
+      const subtaskBlocks = await ctx.db
+        .query("studyBlocks")
+        .withIndex("by_subtaskId", (q: any) => q.eq("subtaskId", subtask._id))
+        .collect();
+      for (const block of subtaskBlocks) {
+        result.push({
+          _id: block._id,
+          taskId: task._id,
+          title: block.title,
+          startTime: block.startTime,
+          studyBlockLength: block.studyBlockLength,
+          isConflicted: block.isConflicted,
+          googleEventId: block.googleEventId,
+          needsExport: block.needsExport,
+          taskTitle: task.title,
+          taskDueDate: task.dueDate,
+          courseColor,
+          courseName,
+        });
+      }
     }
   }
 
