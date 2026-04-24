@@ -451,9 +451,8 @@ export default function DashboardPage() {
             indicator={{ dotClass: 'bg-success', text: `${completedTasks.length} completed`, textClass: 'text-success' }}
           />
           <StatCard
-            label="Estimated Time"
+            label="Total Time"
             value={formatEstimatedTime(totalEstimatedMinutes)}
-            indicator={{ dotClass: 'bg-sky-blue', text: 'AI estimated', textClass: 'text-sky-blue' }}
           />
           <StatCard
             label="Study Streak"
