@@ -6,6 +6,7 @@ export type ExtractedTask = {
   description: string;
   dueDate: number;
   taskType: TaskType;
+  assignmentWeight?: number;
 };
 
 export type UploadSyllabusResult = {

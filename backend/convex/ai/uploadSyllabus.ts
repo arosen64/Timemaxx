@@ -119,6 +119,7 @@ export const uploadSyllabus = action({
           description: t.description,
           dueDate: new Date(t.dueDate).getTime(),
           taskType: t.taskType as TaskType,
+          ...(t.assignmentWeight !== undefined ? { assignmentWeight: t.assignmentWeight } : {}),
         }))
         .filter((t) => !isNaN(t.dueDate) && t.dueDate > now);
 
