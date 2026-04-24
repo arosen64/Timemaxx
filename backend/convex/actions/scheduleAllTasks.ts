@@ -8,9 +8,6 @@ import {
   filterPoolForBlock,
   isSlotValid,
   selectAllSlotsWithAI,
-  buildDailyLoadMap,
-  computeMaxBlocksPerDay,
-  toDateStr,
   roundUpTo15Min,
   SCHEDULE_HORIZON_MS,
   type OccupiedInterval,
@@ -45,7 +42,6 @@ export const scheduleAllTasks = action({
     const focusBlockLength: number = user.focusBlockLength ?? 60;
     const workHoursGrid = (user.workHoursGrid ?? []) as WorkHoursRow[];
     const productivityTraits: unknown = user.productivityTraits;
-    const preferredDays: string[] = (productivityTraits as any)?.dayOfWeek ?? [];
 
     // Fetch all tasks for user
     const allTasks = await ctx.runQuery(
@@ -104,9 +100,6 @@ export const scheduleAllTasks = action({
           title: b.title,
         })),
     ];
-
-    const maxBlocksPerDayMap = computeMaxBlocksPerDay(workHoursGrid, focusBlockLength, preferredDays);
-    const dailyLoadMap = buildDailyLoadMap(occupiedIntervals, args.timezone, focusBlockLength);
 
     // Shared slot pool — extended incrementally as tasks are processed
     const pool: PoolSlot[] = [];
