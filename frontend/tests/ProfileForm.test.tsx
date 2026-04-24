@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { screen, within } from '@testing-library/react'
+import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { render } from '@testing-library/react'
 import ProfileForm from '../src/components/ProfileForm'
@@ -33,8 +33,6 @@ vi.mock('convex/react', () => ({
 const DEFAULT_DATA: ProfileData = {
   major: '',
   year: '',
-  difficultSubjects: [],
-  enjoyedSubjects: [],
   courses: [],
 }
 
@@ -104,77 +102,11 @@ describe('ProfileForm', () => {
     })
   })
 
-  describe('difficult subjects tag input', () => {
-    it('adds a tag when Enter is pressed', async () => {
-      const user = userEvent.setup()
-      const { onChange } = setup()
-
-      // Find by placeholder directly
-      const tagInput = screen.getByPlaceholderText(/organic chemistry/i)
-      await user.type(tagInput, 'Calculus{Enter}')
-
-      expect(onChange).toHaveBeenLastCalledWith(
-        expect.objectContaining({ difficultSubjects: ['Calculus'] })
-      )
-    })
-
-    it('renders existing difficult subject tags', () => {
-      setup({ difficultSubjects: ['Organic Chemistry', 'Physics'] })
-      expect(screen.getByText('Organic Chemistry')).toBeInTheDocument()
-      expect(screen.getByText('Physics')).toBeInTheDocument()
-    })
-
-    it('removes a tag when its × button is clicked', async () => {
-      const user = userEvent.setup()
-      const { onChange } = setup({ difficultSubjects: ['Calculus', 'Physics'] })
-
-      // Find the remove button within the Calculus tag span
-      const calculusTag = screen.getByText('Calculus').closest('span')!
-      await user.click(within(calculusTag).getByRole('button'))
-
-      expect(onChange).toHaveBeenLastCalledWith(
-        expect.objectContaining({ difficultSubjects: ['Physics'] })
-      )
-    })
-  })
-
-  describe('enjoyed subjects tag input', () => {
-    it('adds a tag when comma is pressed', async () => {
-      const user = userEvent.setup()
-      const { onChange } = setup()
-
-      const tagInput = screen.getByPlaceholderText(/linear algebra/i)
-      await user.type(tagInput, 'Statistics,')
-
-      expect(onChange).toHaveBeenLastCalledWith(
-        expect.objectContaining({ enjoyedSubjects: ['Statistics'] })
-      )
-    })
-  })
-
   describe('readOnly mode', () => {
     it('renders the major value in a non-editable input', () => {
       setup({ major: 'Biology' }, {}, true)
       const input = screen.getByDisplayValue('Biology')
       expect(input).toHaveAttribute('readonly')
-    })
-
-    it('hides hint text for tag inputs', () => {
-      setup({}, {}, true)
-      expect(screen.queryByText(/press enter or comma/i)).not.toBeInTheDocument()
-    })
-
-    it('renders existing tags without remove buttons', () => {
-      setup({ difficultSubjects: ['Calculus', 'Physics'] }, {}, true)
-      expect(screen.getByText('Calculus')).toBeInTheDocument()
-      const calculusTag = screen.getByText('Calculus').closest('span')!
-      expect(within(calculusTag).queryByRole('button')).not.toBeInTheDocument()
-    })
-
-    it('shows "None" when a tag list is empty', () => {
-      setup({ difficultSubjects: [] }, {}, true)
-      // "None" appears for both difficult and enjoyed subjects
-      expect(screen.getAllByText('None').length).toBeGreaterThanOrEqual(1)
     })
 
     it('does not render the course remove button', () => {

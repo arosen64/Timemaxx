@@ -7,6 +7,9 @@ import type { Id } from "../_generated/dataModel";
 type WorkHoursRow = { day: string; blocked: number[] }
 type TimedEventArg = { id: string; summary: string; start: string; end: string; calendarId: string }
 
+const MIN_STUDY_BLOCK_MINUTES = 15;
+const MIN_STUDY_BLOCK_ERROR = `Study block length must be at least ${MIN_STUDY_BLOCK_MINUTES} minutes`;
+
 
 function getLocalTimeInfo(isoString: string, timezone: string): { dayName: string; minutesFromMidnight: number } {
   const dt = new Date(isoString)
@@ -90,6 +93,8 @@ export const createStudyBlock = mutation({
     const task = await ctx.db.get(args.taskId);
     if (!task || task.userId !== userId) throw new Error("Unauthorized");
 
+    if (args.studyBlockLength < MIN_STUDY_BLOCK_MINUTES) throw new Error(MIN_STUDY_BLOCK_ERROR);
+
     return await ctx.db.insert("studyBlocks", {
       taskId: args.taskId,
       userId,
@@ -116,6 +121,9 @@ export const createTaskBlocks = mutation({
 
     const task = await ctx.db.get(args.taskId);
     if (!task || task.userId !== userId) throw new Error("Unauthorized");
+
+    const invalidBlock = args.blocks.find((b) => b.studyBlockLength < MIN_STUDY_BLOCK_MINUTES);
+    if (invalidBlock) throw new Error(MIN_STUDY_BLOCK_ERROR);
 
     const existing = await ctx.db
       .query("studyBlocks")
@@ -366,6 +374,14 @@ export const detectConflicts = internalMutation({
           continue;
         }
 
+        const endMs = new Date(block.startTime).getTime() + block.studyBlockLength * 60 * 1000;
+        if (endMs <= nowMs) {
+          if (block.isConflicted) {
+            await ctx.db.patch(block._id, { isConflicted: false });
+          }
+          continue;
+        }
+
         const conflicted = isBlockConflicted(
           { startTime: block.startTime, studyBlockLength: block.studyBlockLength, googleEventId: block.googleEventId },
           { dueDate },
@@ -379,6 +395,66 @@ export const detectConflicts = internalMutation({
         }
       }
     }
+  },
+});
+
+export const splitStudyBlock = mutation({
+  args: {
+    studyBlockId: v.id("studyBlocks"),
+    splitAtMinutes: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Unauthenticated");
+
+    const block = await ctx.db.get(args.studyBlockId);
+    if (!block) throw new Error("Study block not found");
+
+    const ownerId = block.taskId
+      ? (await ctx.db.get(block.taskId))?.userId
+      : block.subtaskId
+        ? (await ctx.db.get(block.subtaskId))?.userId
+        : undefined;
+    if (ownerId !== userId) throw new Error("Unauthorized");
+
+    const splitAt = Math.floor(args.splitAtMinutes);
+    const remaining = block.studyBlockLength - splitAt;
+
+    if (splitAt < 30 || remaining < 30) {
+      throw new Error("Each resulting block must be at least 30 minutes");
+    }
+
+    let startTimeB: string | undefined;
+    if (block.startTime) {
+      const offsetMs = splitAt * 60 * 1000;
+      startTimeB = new Date(new Date(block.startTime).getTime() + offsetMs).toISOString();
+    }
+
+    await ctx.db.delete(args.studyBlockId);
+
+    const needsExport = block.googleEventId ? true : undefined;
+
+    const blockAId = await ctx.db.insert("studyBlocks", {
+      taskId: block.taskId,
+      subtaskId: block.subtaskId,
+      userId,
+      title: block.title,
+      startTime: block.startTime,
+      studyBlockLength: splitAt,
+      needsExport,
+    });
+
+    const blockBId = await ctx.db.insert("studyBlocks", {
+      taskId: block.taskId,
+      subtaskId: block.subtaskId,
+      userId,
+      title: block.title,
+      startTime: startTimeB,
+      studyBlockLength: remaining,
+      needsExport,
+    });
+
+    return { blockAId, blockBId };
   },
 });
 
