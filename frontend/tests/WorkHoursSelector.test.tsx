@@ -10,13 +10,13 @@ describe('WorkHoursSelector', () => {
   })
 
   describe('edit mode (default)', () => {
-    it('shows paint mode toggle buttons', () => {
+    it('does not show paint mode toggle buttons', () => {
       render(<WorkHoursSelector data={DEFAULT_WORK_HOURS} onChange={vi.fn()} />)
-      expect(screen.getByRole('button', { name: /available/i })).toBeInTheDocument()
-      expect(screen.getByRole('button', { name: /never work/i })).toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: /available/i })).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: /never work/i })).not.toBeInTheDocument()
     })
 
-    it('shows the erase hint', () => {
+    it('shows the instruction text', () => {
       render(<WorkHoursSelector data={DEFAULT_WORK_HOURS} onChange={vi.fn()} />)
       expect(screen.getByText(/click a painted cell to erase it/i)).toBeInTheDocument()
     })
@@ -42,9 +42,8 @@ describe('WorkHoursSelector', () => {
       expect(screen.queryByText(/click a painted cell to erase it/i)).not.toBeInTheDocument()
     })
 
-    it('shows a color legend', () => {
+    it('shows a color legend with Never work', () => {
       render(<WorkHoursSelector data={DEFAULT_WORK_HOURS} onChange={vi.fn()} readOnly />)
-      expect(screen.getByText('Available')).toBeInTheDocument()
       expect(screen.getByText('Never work')).toBeInTheDocument()
     })
 
@@ -58,21 +57,21 @@ describe('WorkHoursSelector', () => {
   })
 
   describe('data sync', () => {
-    it('updates displayed slots when the data prop changes', () => {
+    it('updates displayed slots when blocked data prop changes', () => {
       const onChange = vi.fn()
       const { container, rerender } = render(
-        <WorkHoursSelector data={DEFAULT_WORK_HOURS} onChange={onChange} readOnly />
+        <WorkHoursSelector data={DEFAULT_WORK_HOURS} onChange={onChange} />
       )
 
-      const initialTealCount = container.querySelectorAll('[class*="bg-teal"]').length
+      const initialBlockedCount = container.querySelectorAll('[class*="bg-slate-blue"]').length
 
       const updatedData: WorkHoursData = {
         ...DEFAULT_WORK_HOURS,
-        Monday: { available: [0, 1, 2], blocked: [] },
+        Monday: { blocked: [0, 1, 2] },
       }
-      rerender(<WorkHoursSelector data={updatedData} onChange={onChange} readOnly />)
+      rerender(<WorkHoursSelector data={updatedData} onChange={onChange} />)
 
-      expect(container.querySelectorAll('[class*="bg-teal"]').length).toBeGreaterThan(initialTealCount)
+      expect(container.querySelectorAll('[class*="bg-slate-blue"]').length).toBeGreaterThan(initialBlockedCount)
     })
   })
 })

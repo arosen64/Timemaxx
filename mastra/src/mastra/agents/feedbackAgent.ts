@@ -12,5 +12,5 @@ export const feedbackAgent = new Agent({
   id: "feedback-agent",
   name: "Maxx Feedback Agent",
   instructions: FEEDBACK_AGENT_SYSTEM,
-  model: anthropic("claude-sonnet-4-20250514"),
+  model: anthropic("claude-sonnet-4-6"),
 });
