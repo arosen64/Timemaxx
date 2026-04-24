@@ -93,6 +93,35 @@ export const getAllTasks = query({
   },
 });
 
+// Get tasks for one class/course. If courseId is omitted, returns uncategorized tasks.
+export const getTasksByCourseId = query({
+  args: {
+    courseId: v.optional(v.id("userCourses")),
+    sortOrder: v.optional(v.union(v.literal("asc"), v.literal("desc"))),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
+
+    const order = args.sortOrder ?? "desc";
+
+    // When no courseId is provided, return tasks not associated with any class.
+    if (!args.courseId) {
+      const tasks = await ctx.db
+        .query("tasks")
+        .withIndex("by_userId_createdAt", (q) => q.eq("userId", userId))
+        .order(order)
+        .collect();
+      return tasks.filter((t) => !t.courseId);
+    }
+
+    return await ctx.db
+      .query("tasks")
+      .withIndex("by_userId_courseId", (q) => q.eq("userId", userId).eq("courseId", args.courseId!))
+      .collect();
+  },
+});
+
 
 // Internal query for fetching all tasks for a user.
 // Used by the retrieval layer (slices to 10) and AI scheduling actions (needs all tasks).
