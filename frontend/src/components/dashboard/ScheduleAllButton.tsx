@@ -9,7 +9,7 @@ type Props = {
 }
 
 export default function ScheduleAllButton({ disabled, overLimitWarning }: Props) {
-  const scheduleAllTasks = useAction(api.actions.scheduleAllTasks.scheduleAllTasks)
+  const scheduleAllTasks = useAction(api.actions.scheduleAllBlocks.scheduleAllBlocks)
   const [isScheduling, setIsScheduling] = useState(false)
   const [result, setResult] = useState<{ scheduled: number; skipped: number } | null>(null)
 
@@ -51,8 +51,8 @@ export default function ScheduleAllButton({ disabled, overLimitWarning }: Props)
         <div className="rounded-lg border border-border bg-white px-4 py-2 text-sm text-navy flex items-center gap-4">
           <span>
             {result.skipped === 0
-              ? `All ${result.scheduled} task${result.scheduled !== 1 ? 's' : ''} scheduled.`
-              : `${result.scheduled} of ${result.scheduled + result.skipped} tasks scheduled, ${result.skipped} skipped.`}
+              ? `All ${result.scheduled} block${result.scheduled !== 1 ? 's' : ''} scheduled.`
+              : `${result.scheduled} of ${result.scheduled + result.skipped} blocks scheduled, ${result.skipped} skipped.`}
           </span>
           <button
             type="button"

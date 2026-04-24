@@ -33,7 +33,7 @@ export default function ScheduleTray({
   onScheduleAllMsg,
 }: Props) {
   const scheduleBlockAction = useAction(api.actions.scheduleBlock.scheduleBlock)
-  const scheduleAllTasksAction = useAction(api.actions.scheduleAllTasks.scheduleAllTasks)
+  const scheduleAllTasksAction = useAction(api.actions.scheduleAllBlocks.scheduleAllBlocks)
 
   const [schedulingBlockIds, setSchedulingBlockIds] = useState<Set<Id<'studyBlocks'>>>(new Set())
   const [isSchedulingAll, setIsSchedulingAll] = useState(false)
