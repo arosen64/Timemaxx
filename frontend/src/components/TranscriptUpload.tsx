@@ -8,7 +8,7 @@ import Modal from './ui/Modal'
 import Selector from './ui/Selector'
 import { SpinnerIcon } from './icons'
 import { STUDY_GOALS } from '../constants'
-import { extractPdfText } from '../utils/pdf'
+import { fileToBase64 } from '../utils/fileToBase64'
 
 interface TranscriptUploadProps {
   onCoursesAdded: (courses: Course[]) => void
@@ -38,8 +38,8 @@ export default function TranscriptUpload({ onCoursesAdded }: TranscriptUploadPro
     setParsing(true)
 
     try {
-      const fileText = await extractPdfText(f)
-      const parsed: ParsedCourse[] = await parseTranscript({ fileText })
+      const fileContents = await fileToBase64(f)
+      const parsed: ParsedCourse[] = await parseTranscript({ fileContents })
 
       const pastCourses = parsed.filter((c) => c.grade && c.grade.trim().toUpperCase() !== 'X')
       const currentCourses = parsed.filter((c) => !c.grade || c.grade.trim().toUpperCase() === 'X')
@@ -94,7 +94,7 @@ export default function TranscriptUpload({ onCoursesAdded }: TranscriptUploadPro
       const message = err instanceof Error ? err.message : String(err)
       if (message.includes('NOT_JHU_TRANSCRIPT')) {
         setError("That doesn't look like a JHU transcript. Please upload your official Johns Hopkins transcript.")
-      } else if (message.includes('TRANSCRIPT_TOO_LARGE')) {
+      } else if (message.includes('maximum upload size')) {
         setError('This PDF is too large to process. Please upload a smaller transcript file.')
       } else {
         setError('Failed to parse transcript. Please try again.')
