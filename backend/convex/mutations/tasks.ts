@@ -139,7 +139,9 @@ export const updateTask = mutation({
       ...(args.classTag !== undefined
         ? { classTag: normalizeClassTag(args.classTag) }
         : {}),
-      assignmentWeight: args.assignmentWeight,
+      ...(args.assignmentWeight !== undefined
+        ? { assignmentWeight: args.assignmentWeight }
+        : {}),
       recommendedStart: args.dueDate - TWO_WEEKS_MS,
     });
 
@@ -174,6 +176,7 @@ export const createTaskInternal = internalMutation({
     dueDate: v.number(),
     courseId: v.optional(v.id("userCourses")),
     classTag: v.optional(v.string()),
+    assignmentWeight: v.optional(v.number()),
   },
   returns: v.id("tasks"),
   handler: async (ctx, args) => {
@@ -190,6 +193,9 @@ export const createTaskInternal = internalMutation({
       dueDate: args.dueDate,
       courseId: args.courseId,
       classTag,
+      ...(args.assignmentWeight !== undefined
+        ? { assignmentWeight: args.assignmentWeight }
+        : {}),
       recommendedStart: args.dueDate - TWO_WEEKS_MS,
       createdAt: Date.now(),
       isManualEstimate: false,
@@ -216,6 +222,7 @@ export const patchTaskFieldsInternal = internalMutation({
     dueDate: v.optional(v.number()),
     courseId: v.optional(v.id("userCourses")),
     classTag: v.optional(v.string()),
+    assignmentWeight: v.optional(v.number()),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -236,6 +243,7 @@ export const patchTaskFieldsInternal = internalMutation({
     } else if (args.classTag !== undefined) {
       patch.classTag = normalizeClassTag(args.classTag);
     }
+    if (args.assignmentWeight !== undefined) patch.assignmentWeight = args.assignmentWeight;
     await ctx.db.patch(args.taskId, patch);
     if (process.env.GEMINI_API_KEY && (args.title !== undefined || args.description !== undefined)) {
       await ctx.scheduler.runAfter(0, internal.ai.embeddings.generateTaskEmbedding, {
