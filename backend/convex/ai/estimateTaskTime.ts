@@ -132,7 +132,7 @@ function buildProfileContext(user: Doc<"users"> | null): string | null {
   const profile: Record<string, unknown> = {};
 
   if (user.major) profile.major = sanitizeUserInput(user.major, 200);
-  if (user.year) profile.year = user.year;
+  if (user.year) profile.year = sanitizeUserInput(user.year, 50);
   if (user.focusBlockLength !== undefined) {
     profile.focusBlockLengthMinutes = user.focusBlockLength;
   }
