@@ -56,6 +56,7 @@ export default function ScheduleTab() {
   const [isRescheduling, setIsRescheduling] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   const [exportMsg, setExportMsg] = useState<string | null>(null)
+  const [scheduleAllMsg, setScheduleAllMsg] = useState<string | null>(null)
 
   const gridRef = useRef<HTMLDivElement>(null)
 
@@ -359,6 +360,13 @@ export default function ScheduleTab() {
         </div>
       )}
 
+      {scheduleAllMsg && (
+        <div className="mb-3 flex items-center justify-between gap-2 rounded-lg border border-border bg-bg-gray px-4 py-2 text-sm text-slate-blue">
+          <span>{scheduleAllMsg}</span>
+          <button type="button" onClick={() => setScheduleAllMsg(null)} className="text-light-blue hover:text-slate-blue">✕</button>
+        </div>
+      )}
+
 {pendingExportCount > 0 && (
         <div className="mb-3 flex items-center gap-2 rounded-lg border border-sky-blue bg-info-bg px-4 py-2 text-sm text-navy">
           <CalendarIcon color="#005A8E" size={14} />
@@ -422,6 +430,7 @@ export default function ScheduleTab() {
           assigningBlockId={assigningBlockId}
           onToggleAssign={(id) => setAssigningBlockId((prev) => (prev === id ? null : id))}
           timezone={timezone}
+          onScheduleAllMsg={setScheduleAllMsg}
         />
       </div>
 

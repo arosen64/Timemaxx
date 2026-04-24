@@ -182,11 +182,15 @@ export default function ClassPanel({
     setIsSchedulingAll(true)
     try {
       const result = await scheduleAllBlocksAction({ taskId: selectedTaskId, timezone })
-      onScheduleAllMsg(
+      const base =
         result.skipped === 0
           ? `All ${result.scheduled} block${result.scheduled !== 1 ? 's' : ''} scheduled.`
           : `${result.scheduled} scheduled, ${result.skipped} skipped.`
-      )
+      const conflictNote =
+        result.conflicted > 0
+          ? ` ${result.conflicted} conflicted block${result.conflicted !== 1 ? 's' : ''} need${result.conflicted === 1 ? 's' : ''} auto-reschedule.`
+          : ''
+      onScheduleAllMsg(base + conflictNote)
     } catch (err) {
       onScheduleAllMsg(`Scheduling failed: ${err instanceof Error ? err.message : 'Unknown error'}`)
     } finally {

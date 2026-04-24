@@ -33,7 +33,7 @@ export const scheduleAllBlocks = action({
     taskId: v.id("tasks"),
     timezone: v.string(),
   },
-  handler: async (ctx, args): Promise<{ scheduled: number; skipped: number }> => {
+  handler: async (ctx, args): Promise<{ scheduled: number; skipped: number; conflicted: number }> => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Unauthenticated");
 
@@ -54,6 +54,7 @@ export const scheduleAllBlocks = action({
       subtaskId?: string;
       title: string;
       startTime?: string;
+      isConflicted?: boolean;
       studyBlockLength: number;
       _creationTime: number;
     }>;
@@ -101,10 +102,13 @@ export const scheduleAllBlocks = action({
       candidates: ReturnType<typeof filterPoolForBlock>;
     };
 
-    // Only blocks belonging to this task or one of its subtasks
-    const unscheduled = allBlocks.filter(
-      (b) => !b.startTime && (b.taskId === args.taskId || (b.subtaskId && subtaskIds.has(b.subtaskId))),
-    );
+    const isTaskBlock = (b: { taskId?: string; subtaskId?: string }) =>
+      b.taskId === args.taskId || (b.subtaskId !== undefined && subtaskIds.has(b.subtaskId));
+
+    // Only unscheduled blocks belonging to this task or one of its subtasks
+    const unscheduled = allBlocks.filter((b) => !b.startTime && isTaskBlock(b));
+    // Conflicted blocks exist for this task but are handled by auto-reschedule, not this action
+    const conflictedCount = allBlocks.filter((b) => b.startTime && b.isConflicted && isTaskBlock(b)).length;
 
     type ResolvedBlock = {
       block: (typeof allBlocks)[0];
@@ -155,7 +159,7 @@ export const scheduleAllBlocks = action({
       )
       .slice(0, MAX_BLOCKS);
 
-    if (sorted.length === 0) return { scheduled: 0, skipped: 0 };
+    if (sorted.length === 0) return { scheduled: 0, skipped: 0, conflicted: conflictedCount };
 
     // Fetch calendar events once for the full 21-day window
     const timedEvents = await fetch21DayCalendarEvents(ctx, args.timezone);
@@ -271,6 +275,6 @@ export const scheduleAllBlocks = action({
       scheduled++;
     }
 
-    return { scheduled, skipped: skipped + (entries.length - scheduled) };
+    return { scheduled, skipped: skipped + (entries.length - scheduled), conflicted: conflictedCount };
   },
 });
