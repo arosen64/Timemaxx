@@ -57,6 +57,10 @@ export const scheduleBlock = action({
       taskTitle = subtask.title;
       dueDate = subtask.suggestedCompletionAt ?? subtask.dueDate ?? Date.now() + DEFAULT_DUE_FALLBACK_MS;
       creationTime = subtask._creationTime;
+      const parentTask = await ctx.runQuery(internal.queries.tasks.getTaskInternal, {
+        taskId: subtask.parentTaskId,
+      });
+      recommendedStart = parentTask?.recommendedStart;
     } else {
       // block.taskId is non-null here: the guard above ensures at least one of taskId/subtaskId is set
       const task = await ctx.runQuery(internal.queries.tasks.getTaskInternal, {
@@ -66,7 +70,7 @@ export const scheduleBlock = action({
       taskTitle = task.title;
       dueDate = task.dueDate;
       creationTime = task._creationTime;
-      recommendedStart = task.recommended_start;
+      recommendedStart = task.recommendedStart;
     }
 
     // Fetch user preferences

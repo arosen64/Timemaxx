@@ -171,7 +171,7 @@ describe("mutations/tasks – createTask", () => {
     expect(task!.assignmentWeight).toBeUndefined();
   });
 
-  test("sets recommended_start to 14 days before dueDate", async () => {
+  test("sets recommendedStart to 14 days before dueDate", async () => {
     const t = makeTestCtx();
     const { withAuth } = await createTestUser(t);
     const dueDate = Date.now() + 30 * 86_400_000;
@@ -185,7 +185,33 @@ describe("mutations/tasks – createTask", () => {
 
     await t.finishAllScheduledFunctions(vi.runAllTimers);
     const task = await t.run((ctx) => ctx.db.get(taskId));
-    expect(task!.recommended_start).toBe(dueDate - 14 * 24 * 60 * 60 * 1000);
+    expect(task!.recommendedStart).toBe(dueDate - 14 * 24 * 60 * 60 * 1000);
+  });
+
+  test("recomputes recommendedStart when dueDate is updated", async () => {
+    const t = makeTestCtx();
+    const { withAuth } = await createTestUser(t);
+    const originalDue = Date.now() + 30 * 86_400_000;
+
+    const taskId = await withAuth.mutation(api.mutations.tasks.createTask, {
+      title: "Rescheduled task",
+      description: "desc",
+      taskType: "Essay",
+      dueDate: originalDue,
+    });
+
+    const newDue = Date.now() + 60 * 86_400_000;
+    await withAuth.mutation(api.mutations.tasks.updateTask, {
+      taskId,
+      title: "Rescheduled task",
+      description: "desc",
+      taskType: "Essay",
+      dueDate: newDue,
+    });
+
+    await t.finishAllScheduledFunctions(vi.runAllTimers);
+    const task = await t.run((ctx) => ctx.db.get(taskId));
+    expect(task!.recommendedStart).toBe(newDue - 14 * 24 * 60 * 60 * 1000);
   });
 
   test("throws when assignmentWeight is out of range", async () => {

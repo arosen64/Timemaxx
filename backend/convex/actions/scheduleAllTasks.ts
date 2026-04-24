@@ -144,7 +144,7 @@ export const scheduleAllTasks = action({
           workHoursGrid,
           occupiedIntervals,
           timezone: args.timezone,
-          recommendedStartMs: task.recommended_start,
+          recommendedStartMs: task.recommendedStart,
         });
 
         if (candidates.length === 0) break; // No slots — stop collecting for this task
@@ -162,7 +162,7 @@ export const scheduleAllTasks = action({
             return {
               taskTitle: t.title,
               dueDate: t.dueDate,
-              recommendedStart: t.recommended_start,
+              recommendedStart: t.recommendedStart,
               candidates: e.candidates,
             };
           }),

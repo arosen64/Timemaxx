@@ -259,7 +259,7 @@ describe("queries/studyBlocks – getFutureStudyBlocksForExport", () => {
 // ─── getAllStudyBlocksWithTasksInternal (taskRecommendedStart) ────────────────
 
 describe("queries/studyBlocks – getAllStudyBlocksWithTasksInternal taskRecommendedStart", () => {
-  test("includes taskRecommendedStart when the task has recommended_start set", async () => {
+  test("includes taskRecommendedStart when the task has recommendedStart set", async () => {
     const t = makeTestCtx();
     const { userId } = await createTestUser(t);
     const dueDate = Date.now() + 30 * 86_400_000;
@@ -272,7 +272,7 @@ describe("queries/studyBlocks – getAllStudyBlocksWithTasksInternal taskRecomme
         description: "desc",
         taskType: "Essay",
         dueDate,
-        recommended_start: recommendedStart,
+        recommendedStart: recommendedStart,
         createdAt: Date.now(),
         isManualEstimate: false,
       })
@@ -287,7 +287,7 @@ describe("queries/studyBlocks – getAllStudyBlocksWithTasksInternal taskRecomme
     expect(result[0].taskRecommendedStart).toBe(recommendedStart);
   });
 
-  test("returns taskRecommendedStart as undefined when task has no recommended_start", async () => {
+  test("returns taskRecommendedStart as undefined when task has no recommendedStart", async () => {
     const t = makeTestCtx();
     const { userId } = await createTestUser(t);
     const taskId = await seedTask(t, userId);
