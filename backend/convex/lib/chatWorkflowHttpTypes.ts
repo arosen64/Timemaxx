@@ -3,7 +3,15 @@
 export type ChatWorkflowOutput = {
   reply: string;
   route: string | null;
-  status: "reply" | "domain_clarify" | "needs_task_mcq" | "needs_class_mcq" | "task_action" | "course_action" | "canned";
+  status: 
+    | "reply" 
+    | "domain_clarify" 
+    | "needs_task_mcq" 
+    | "needs_class_mcq" 
+    | "task_action" 
+    | "course_action" 
+    | "schedule_action" 
+    | "canned";
   mcqQueryText: string | null;
   needsClassAfterTask: boolean;
   actionType:
@@ -15,6 +23,11 @@ export type ChatWorkflowOutput = {
     | "drop_course"
     | "update_course"
     | "view_courses"
+    | "schedule_task"
+    | "schedule_block"
+    | "unschedule_task"
+    | "unschedule_block"
+    | "import_google_calendar"
     | "none"
     | null;
   title: string | null;
