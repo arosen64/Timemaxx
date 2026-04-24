@@ -36,6 +36,46 @@ async function seedStudyBlock(
   );
 }
 
+// Helper: seed a subtask and a study block linked to it (no taskId)
+async function seedSubtaskBlock(
+  t: ReturnType<typeof makeTestCtx>,
+  userId: string,
+  overrides: { studyBlockLength?: number } = {}
+) {
+  const parentTaskId = await t.run((ctx) =>
+    ctx.db.insert("tasks", {
+      userId: userId as any,
+      title: "Parent task",
+      description: "",
+      taskType: "Essay",
+      dueDate: Date.now() + 86_400_000,
+      createdAt: Date.now(),
+      isManualEstimate: false,
+    })
+  );
+  const subtaskId = await t.run((ctx) =>
+    ctx.db.insert("subtasks", {
+      parentTaskId: parentTaskId as any,
+      userId: userId as any,
+      title: "Sub task",
+      description: "",
+      taskType: "Essay",
+      color: "#000000",
+      order: 0,
+      createdAt: Date.now(),
+    })
+  );
+  const studyBlockId = await t.run((ctx) =>
+    ctx.db.insert("studyBlocks", {
+      subtaskId: subtaskId as any,
+      userId: userId as any,
+      title: "Subtask block",
+      studyBlockLength: overrides.studyBlockLength ?? 90,
+    })
+  );
+  return { subtaskId, studyBlockId };
+}
+
 // ─── googleEventId field ─────────────────────────────────────────────────────
 
 describe("studyBlocks schema – googleEventId field", () => {
@@ -340,6 +380,187 @@ describe("mutations/studyBlocks – editStudyBlockTime", () => {
 
     const block = await t.run((ctx) => ctx.db.get(studyBlockId));
     expect(block!.startTime).toBeUndefined();
+  });
+});
+
+// ─── splitStudyBlock ─────────────────────────────────────────────────────────
+
+describe("mutations/studyBlocks – splitStudyBlock", () => {
+  test("throws when unauthenticated", async () => {
+    const t = makeTestCtx();
+    const { userId } = await createTestUser(t);
+    const taskId = await seedTask(t, userId);
+    const studyBlockId = await seedStudyBlock(t, taskId, { studyBlockLength: 90 });
+
+    await expect(
+      t.mutation(api.mutations.studyBlocks.splitStudyBlock, {
+        studyBlockId,
+        splitAtMinutes: 45,
+      })
+    ).rejects.toThrow("Unauthenticated");
+  });
+
+  test("throws when user does not own the parent task", async () => {
+    const t = makeTestCtx();
+    const { userId } = await createTestUser(t);
+    const { withAuth: otherAuth } = await createTestUser(t, { email: "other@example.com" });
+    const taskId = await seedTask(t, userId);
+    const studyBlockId = await seedStudyBlock(t, taskId, { studyBlockLength: 90 });
+
+    await expect(
+      otherAuth.mutation(api.mutations.studyBlocks.splitStudyBlock, {
+        studyBlockId,
+        splitAtMinutes: 45,
+      })
+    ).rejects.toThrow("Unauthorized");
+  });
+
+  test("throws when split point would produce a block shorter than 30 minutes", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+    const taskId = await seedTask(t, userId);
+    const studyBlockId = await seedStudyBlock(t, taskId, { studyBlockLength: 90 });
+
+    await expect(
+      withAuth.mutation(api.mutations.studyBlocks.splitStudyBlock, {
+        studyBlockId,
+        splitAtMinutes: 20,
+      })
+    ).rejects.toThrow("Each resulting block must be at least 30 minutes");
+  });
+
+  test("throws when remainder would be shorter than 30 minutes", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+    const taskId = await seedTask(t, userId);
+    const studyBlockId = await seedStudyBlock(t, taskId, { studyBlockLength: 90 });
+
+    await expect(
+      withAuth.mutation(api.mutations.studyBlocks.splitStudyBlock, {
+        studyBlockId,
+        splitAtMinutes: 65,
+      })
+    ).rejects.toThrow("Each resulting block must be at least 30 minutes");
+  });
+
+  test("deletes original block and creates two blocks with correct lengths", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+    const taskId = await seedTask(t, userId);
+    const studyBlockId = await seedStudyBlock(t, taskId, { studyBlockLength: 90 });
+
+    const { blockAId, blockBId } = await withAuth.mutation(
+      api.mutations.studyBlocks.splitStudyBlock,
+      { studyBlockId, splitAtMinutes: 45 }
+    );
+
+    const original = await t.run((ctx) => ctx.db.get(studyBlockId));
+    expect(original).toBeNull();
+
+    const blockA = await t.run((ctx) => ctx.db.get(blockAId));
+    const blockB = await t.run((ctx) => ctx.db.get(blockBId));
+
+    expect(blockA!.studyBlockLength).toBe(45);
+    expect(blockB!.studyBlockLength).toBe(45);
+  });
+
+  test("floors fractional splitAtMinutes before splitting", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+    const taskId = await seedTask(t, userId);
+    const studyBlockId = await seedStudyBlock(t, taskId, { studyBlockLength: 89 });
+
+    const { blockAId, blockBId } = await withAuth.mutation(
+      api.mutations.studyBlocks.splitStudyBlock,
+      { studyBlockId, splitAtMinutes: 44.9 }
+    );
+
+    const blockA = await t.run((ctx) => ctx.db.get(blockAId));
+    const blockB = await t.run((ctx) => ctx.db.get(blockBId));
+
+    expect(blockA!.studyBlockLength).toBe(44);
+    expect(blockB!.studyBlockLength).toBe(45);
+  });
+
+  test("block A inherits original startTime; block B gets offset startTime", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+    const taskId = await seedTask(t, userId);
+    const startTime = new Date(Date.now() + 3600_000).toISOString();
+    const studyBlockId = await seedStudyBlock(t, taskId, { studyBlockLength: 90, startTime });
+
+    const { blockAId, blockBId } = await withAuth.mutation(
+      api.mutations.studyBlocks.splitStudyBlock,
+      { studyBlockId, splitAtMinutes: 45 }
+    );
+
+    const blockA = await t.run((ctx) => ctx.db.get(blockAId));
+    const blockB = await t.run((ctx) => ctx.db.get(blockBId));
+
+    expect(blockA!.startTime).toBe(startTime);
+    const expectedStartB = new Date(new Date(startTime).getTime() + 45 * 60 * 1000).toISOString();
+    expect(blockB!.startTime).toBe(expectedStartB);
+  });
+
+  test("block B has undefined startTime when original block is unplaced", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+    const taskId = await seedTask(t, userId);
+    const studyBlockId = await seedStudyBlock(t, taskId, { studyBlockLength: 90 });
+
+    const { blockAId, blockBId } = await withAuth.mutation(
+      api.mutations.studyBlocks.splitStudyBlock,
+      { studyBlockId, splitAtMinutes: 45 }
+    );
+
+    const blockA = await t.run((ctx) => ctx.db.get(blockAId));
+    const blockB = await t.run((ctx) => ctx.db.get(blockBId));
+
+    expect(blockA!.startTime).toBeUndefined();
+    expect(blockB!.startTime).toBeUndefined();
+  });
+
+  test("both blocks inherit taskId, userId, and title from original", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+    const taskId = await seedTask(t, userId);
+    const studyBlockId = await seedStudyBlock(t, taskId, {
+      title: "Study session",
+      studyBlockLength: 90,
+    });
+
+    const { blockAId, blockBId } = await withAuth.mutation(
+      api.mutations.studyBlocks.splitStudyBlock,
+      { studyBlockId, splitAtMinutes: 45 }
+    );
+
+    const blockA = await t.run((ctx) => ctx.db.get(blockAId));
+    const blockB = await t.run((ctx) => ctx.db.get(blockBId));
+
+    for (const block of [blockA, blockB]) {
+      expect(block!.taskId).toBe(taskId);
+      expect(block!.userId).toBe(userId);
+      expect(block!.title).toBe("Study session");
+    }
+  });
+
+  test("succeeds and returns two blocks when block is owned via subtaskId", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+    const { subtaskId, studyBlockId } = await seedSubtaskBlock(t, userId, { studyBlockLength: 90 });
+
+    const { blockAId, blockBId } = await withAuth.mutation(
+      api.mutations.studyBlocks.splitStudyBlock,
+      { studyBlockId, splitAtMinutes: 45 }
+    );
+
+    const blockA = await t.run((ctx) => ctx.db.get(blockAId));
+    const blockB = await t.run((ctx) => ctx.db.get(blockBId));
+
+    expect(blockA!.subtaskId).toBe(subtaskId);
+    expect(blockB!.subtaskId).toBe(subtaskId);
+    expect(blockA!.studyBlockLength).toBe(45);
+    expect(blockB!.studyBlockLength).toBe(45);
   });
 });
 
