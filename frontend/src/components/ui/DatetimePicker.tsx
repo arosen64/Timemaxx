@@ -38,6 +38,8 @@ export default function DatetimePicker({ value, onChange, placeholder = 'Pick a 
   })
   const [minute, setMinute] = useState(value ? value.getMinutes() : 59)
   const [ampm, setAmpm] = useState<'AM' | 'PM'>(value ? (value.getHours() >= 12 ? 'PM' : 'AM') : 'PM')
+  const [hourDraft, setHourDraft] = useState<string | null>(null)
+  const [minuteDraft, setMinuteDraft] = useState<string | null>(null)
 
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -52,6 +54,8 @@ export default function DatetimePicker({ value, onChange, placeholder = 'Pick a 
     setHour(h === 0 ? 12 : h > 12 ? h - 12 : h)
     setMinute(value ? value.getMinutes() : 59)
     setAmpm(value ? (value.getHours() >= 12 ? 'PM' : 'AM') : 'PM')
+    setHourDraft(null)
+    setMinuteDraft(null)
   }
 
   useEffect(() => {
@@ -92,16 +96,16 @@ export default function DatetimePicker({ value, onChange, placeholder = 'Pick a 
     return selectedDay === day && selectedMonth === viewMonth && selectedYear === viewYear
   }
 
-  function handleHourInput(raw: string) {
-    const n = parseInt(raw.replace(/\D/g, ''), 10)
-    if (isNaN(n)) return
-    setHour(Math.min(12, Math.max(1, n)))
+  function commitHour(draft: string) {
+    const n = parseInt(draft.replace(/\D/g, ''), 10)
+    setHour(isNaN(n) || n < 1 ? 12 : Math.min(12, n))
+    setHourDraft(null)
   }
 
-  function handleMinuteInput(raw: string) {
-    const n = parseInt(raw.replace(/\D/g, ''), 10)
-    if (isNaN(n)) return
-    setMinute(Math.min(59, Math.max(0, n)))
+  function commitMinute(draft: string) {
+    const n = parseInt(draft.replace(/\D/g, ''), 10)
+    setMinute(isNaN(n) ? 0 : Math.min(59, Math.max(0, n)))
+    setMinuteDraft(null)
   }
 
   function handleConfirm() {
@@ -195,16 +199,22 @@ export default function DatetimePicker({ value, onChange, placeholder = 'Pick a 
             <ClockIcon size={14} color="#8FA6C2" />
             <input
               type="text"
-              value={String(hour).padStart(2, '0')}
-              onChange={e => handleHourInput(e.target.value)}
+              value={hourDraft ?? String(hour).padStart(2, '0')}
+              onChange={e => setHourDraft(e.target.value.replace(/\D/g, ''))}
+              onFocus={e => e.target.select()}
+              onBlur={e => commitHour(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && commitHour((e.target as HTMLInputElement).value)}
               className="w-12 h-8 rounded-md border border-border bg-bg-gray text-center text-sm font-heading font-semibold text-navy outline-none focus:border-sky-blue"
               maxLength={2}
             />
             <span className="text-slate-blue font-heading font-bold text-base">:</span>
             <input
               type="text"
-              value={String(minute).padStart(2, '0')}
-              onChange={e => handleMinuteInput(e.target.value)}
+              value={minuteDraft ?? String(minute).padStart(2, '0')}
+              onChange={e => setMinuteDraft(e.target.value.replace(/\D/g, ''))}
+              onFocus={e => e.target.select()}
+              onBlur={e => commitMinute(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && commitMinute((e.target as HTMLInputElement).value)}
               className="w-12 h-8 rounded-md border border-border bg-bg-gray text-center text-sm font-heading font-semibold text-navy outline-none focus:border-sky-blue"
               maxLength={2}
             />

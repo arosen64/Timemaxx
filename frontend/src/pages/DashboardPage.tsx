@@ -11,6 +11,7 @@ import {
   DeleteModal,
   UpcomingSchedulePanel,
   EstimationErrorModal,
+  SubtaskReviewModal,
   StatCard,
   TaskCard,
   parseEstimationError,
@@ -20,6 +21,7 @@ import {
   type TaskStatus,
   type EditForm,
 } from '../components/dashboard'
+import { type GeneratedSubtask } from '../../../backend/convex/actions/generateSubtasks'
 import { FALLBACK_COURSE_COLOR } from '../utils/color'
 import { isCurrentTerm } from '../utils/termUtils'
 import { buildClassTag } from '../utils/classTagUtils'
@@ -41,6 +43,7 @@ export default function DashboardPage() {
   const submitEstimateFeedback = useMutation(api.mutations.timeEstimate.submitEstimateFeedback)
   const requestEstimate = useAction(api.ai.requestEstimateTaskTime.requestEstimateTaskTime)
   const requestEstimateSubtask = useAction(api.actions.requestEstimateSubtaskTime.requestEstimateSubtaskTime)
+  const requestGenerateSubtasks = useAction(api.actions.requestGenerateSubtasks.requestGenerateSubtasks)
   const user = useQuery(api.queries.users.getCurrUser)
 
   const taskRows = useMemo(() => tasks ?? [], [tasks])
@@ -110,6 +113,10 @@ export default function DashboardPage() {
   >({})
   const [feedbackErrors, setFeedbackErrors] = useState<Record<string, string>>({})
   const [estimationError, setEstimationError] = useState<string | null>(null)
+  const [generatingSubtasksTasks, setGeneratingSubtasksTasks] = useState<Set<Id<'tasks'>>>(new Set())
+  const [pendingSubtasks, setPendingSubtasks] = useState<GeneratedSubtask[] | null>(null)
+  const [pendingSubtasksTaskId, setPendingSubtasksTaskId] = useState<Id<'tasks'> | null>(null)
+  const [pendingSubtasksCourseId, setPendingSubtasksCourseId] = useState<Id<'userCourses'> | undefined>(undefined)
   const [estimationRetry, setEstimationRetry] = useState<(() => void) | null>(null)
 
   // Clear tasks from estimatingTasks once their timeEstimate is populated by the server
@@ -185,6 +192,28 @@ export default function DashboardPage() {
       setEstimatingTasks((prev) => {
         const next = new Set(prev)
         next.delete(taskId)
+        return next
+      })
+    }
+  }
+
+  async function handleGenerateSubtasks(task: TaskType) {
+    setGeneratingSubtasksTasks((prev) => new Set(prev).add(task._id))
+    try {
+      const result = await requestGenerateSubtasks({ taskId: task._id })
+      if ('error' in result) {
+        setEstimationError(result.error)
+      } else {
+        setPendingSubtasks(result.subtasks)
+        setPendingSubtasksTaskId(task._id)
+        setPendingSubtasksCourseId(task.courseId)
+      }
+    } catch (err) {
+      setEstimationError(parseEstimationError(err))
+    } finally {
+      setGeneratingSubtasksTasks((prev) => {
+        const next = new Set(prev)
+        next.delete(task._id)
         return next
       })
     }
@@ -309,6 +338,17 @@ export default function DashboardPage() {
     <div className="flex flex-1 min-h-0 overflow-hidden font-body text-slate-blue">
 
       {/* Modals */}
+      <SubtaskReviewModal
+        isOpen={pendingSubtasks !== null && pendingSubtasksTaskId !== null}
+        subtasks={pendingSubtasks ?? []}
+        parentTaskId={pendingSubtasksTaskId!}
+        courseId={pendingSubtasksCourseId}
+        onClose={() => {
+          setPendingSubtasks(null)
+          setPendingSubtasksTaskId(null)
+          setPendingSubtasksCourseId(undefined)
+        }}
+      />
       <EstimationErrorModal
         isOpen={estimationError !== null}
         message={estimationError ?? ''}
@@ -488,6 +528,8 @@ export default function DashboardPage() {
                       onEditSubtask={(subtask) => setEditingSubtask(subtask)}
                       onDeleteSubtask={(subtaskId) => deleteSubtask({ subtaskId })}
                       onEstimateSubtask={(subtaskId) => handleEstimateSubtask(subtaskId)}
+                      isGeneratingSubtasks={generatingSubtasksTasks.has(task._id)}
+                      onGenerateSubtasks={() => handleGenerateSubtasks(task)}
                       onSubtaskStatusChange={(subtaskId, status) => updateSubtaskStatus({ subtaskId, status })}
                       feedback={{
                         draft: getFeedbackDraft(task._id),
@@ -534,6 +576,8 @@ export default function DashboardPage() {
                       }}
                       subtasks={subtasksByTaskId.get(task._id) ?? []}
                       onSubtaskStatusChange={(subtaskId, status) => updateSubtaskStatus({ subtaskId, status })}
+                      isGeneratingSubtasks={generatingSubtasksTasks.has(task._id)}
+                      onGenerateSubtasks={() => handleGenerateSubtasks(task)}
                       feedback={{
                         draft: getFeedbackDraft(task._id),
                         error: feedbackErrors[task._id],
