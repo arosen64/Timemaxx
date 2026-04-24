@@ -82,6 +82,7 @@ async function fetchAllStudyBlocksWithTasks(ctx: any, userId: Id<"users">) {
     needsExport: boolean | undefined;
     taskTitle: string;
     taskDueDate: number;
+    taskRecommendedStart: number | undefined;
     courseColor: string | undefined;
     courseName: string | undefined;
   }> = [];
@@ -131,6 +132,7 @@ async function fetchAllStudyBlocksWithTasks(ctx: any, userId: Id<"users">) {
         needsExport: block.needsExport,
         taskTitle: task.title,
         taskDueDate: task.dueDate,
+        taskRecommendedStart: task.recommendedStart,
         courseColor,
         courseName,
       });

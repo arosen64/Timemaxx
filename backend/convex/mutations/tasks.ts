@@ -5,6 +5,7 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { taskTypeValidator } from "../lib/taskValidators";
 import { Id } from "../_generated/dataModel";
 import { rebuildStudyBlocks } from "./timeEstimate";
+import { TWO_WEEKS_MS } from "../lib/scheduleSlots";
 
 export async function cascadeDeleteTask(ctx: MutationCtx, taskId: Id<"tasks">) {
   const subtasks = await ctx.db
@@ -86,6 +87,7 @@ export const createTask = mutation({
       timeEstimate: args.timeEstimate,
       isManualEstimate,
       assignmentWeight: args.assignmentWeight,
+      recommendedStart: args.dueDate - TWO_WEEKS_MS,
       createdAt: Date.now(),
     });
 
@@ -138,6 +140,7 @@ export const updateTask = mutation({
         ? { classTag: normalizeClassTag(args.classTag) }
         : {}),
       assignmentWeight: args.assignmentWeight,
+      recommendedStart: args.dueDate - TWO_WEEKS_MS,
     });
 
     // Cascade dueDate change to child subtasks
@@ -187,6 +190,7 @@ export const createTaskInternal = internalMutation({
       dueDate: args.dueDate,
       courseId: args.courseId,
       classTag,
+      recommendedStart: args.dueDate - TWO_WEEKS_MS,
       createdAt: Date.now(),
       isManualEstimate: false,
     });
@@ -221,7 +225,10 @@ export const patchTaskFieldsInternal = internalMutation({
     if (args.title !== undefined) patch.title = args.title;
     if (args.description !== undefined) patch.description = args.description;
     if (args.taskType !== undefined) patch.taskType = args.taskType;
-    if (args.dueDate !== undefined) patch.dueDate = args.dueDate;
+    if (args.dueDate !== undefined) {
+      patch.dueDate = args.dueDate;
+      patch.recommendedStart = args.dueDate - TWO_WEEKS_MS;
+    }
     if (args.courseId !== undefined) {
       patch.courseId = args.courseId;
       const course = await ctx.db.get(args.courseId);
