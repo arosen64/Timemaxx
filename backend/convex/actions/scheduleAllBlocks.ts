@@ -66,6 +66,7 @@ export const scheduleAllBlocks = action({
       title: string;
       dueDate: number;
       assignmentWeight?: number;
+      recommendedStart?: number;
       _creationTime: number;
     }>;
 
@@ -96,6 +97,7 @@ export const scheduleAllBlocks = action({
       parentTitle: string;
       parentDueDate: number;
       parentWeight: number;
+      recommendedStart: number | undefined;
       candidates: ReturnType<typeof filterPoolForBlock>;
     };
 
@@ -109,6 +111,7 @@ export const scheduleAllBlocks = action({
       parentTitle: string;
       parentDueDate: number;
       parentWeight: number;
+      recommendedStart: number | undefined;
     };
 
     const resolved: ResolvedBlock[] = [];
@@ -122,6 +125,7 @@ export const scheduleAllBlocks = action({
           parentTitle: task.title,
           parentDueDate: task.dueDate,
           parentWeight: task.assignmentWeight ?? 0,
+          recommendedStart: task.recommendedStart,
         });
       } else if (block.subtaskId) {
         const subtask = subtaskMap.get(block.subtaskId);
@@ -137,6 +141,7 @@ export const scheduleAllBlocks = action({
           parentTitle: subtask.title,
           parentDueDate,
           parentWeight: parentTask?.assignmentWeight ?? 0,
+          recommendedStart: parentTask?.recommendedStart,
         });
       }
     }
@@ -201,6 +206,7 @@ export const scheduleAllBlocks = action({
         workHoursGrid,
         occupiedIntervals,
         timezone: args.timezone,
+        recommendedStartMs: item.recommendedStart,
       });
 
       if (candidates.length === 0) continue;
@@ -210,6 +216,7 @@ export const scheduleAllBlocks = action({
         parentTitle: item.parentTitle,
         parentDueDate: item.parentDueDate,
         parentWeight: item.parentWeight,
+        recommendedStart: item.recommendedStart,
         candidates,
       });
     }
