@@ -1174,91 +1174,34 @@
                       "id": "aatey",
                       "name": "schedColHeader",
                       "fill": "#002D72",
-                      "content": "Today's Schedule",
+                      "content": "Today's Tasks",
                       "fontFamily": "Space Grotesk",
                       "fontSize": 16,
                       "fontWeight": "700"
                     },
                     {
-                      "id": "DesS3",
+                      "id": "zeRlU",
                       "type": "ref",
-                      "ref": "mGYEk",
-                      "name": "schedBlock1",
+                      "ref": "IKlc7",
+                      "name": "taskProgress1",
                       "width": "fill_container",
-                      "height": "fit_content",
-                      "x": 0,
-                      "y": 36,
-                      "descendants": {
-                        "5gvFR": {
-                          "content": "9:00 AM – 10:30 AM",
-                          "x": 18,
-                          "y": 16
-                        },
-                        "TnhIo": {
-                          "content": "Calculus Problem Set 5",
-                          "x": 18,
-                          "y": 35
-                        },
-                        "HkeGx": {
-                          "content": "1.5 hrs · Focus block",
-                          "x": 18,
-                          "y": 58
-                        }
-                      }
+                      "height": "fit_content"
                     },
                     {
-                      "id": "80yoX",
+                      "id": "2yjTE",
                       "type": "ref",
-                      "ref": "kdXz7",
-                      "name": "schedBlock2",
+                      "ref": "IKlc7",
+                      "name": "taskProgress2",
                       "width": "fill_container",
-                      "height": "fit_content",
-                      "x": 0,
-                      "y": 141,
-                      "descendants": {
-                        "ephls": {
-                          "content": "2:00 PM – 3:00 PM",
-                          "x": 18,
-                          "y": 16
-                        },
-                        "s6t53": {
-                          "content": "History Essay",
-                          "x": 18,
-                          "y": 35
-                        },
-                        "G8o9F": {
-                          "content": "1 hr · Focus block",
-                          "x": 18,
-                          "y": 58
-                        }
-                      }
+                      "height": "fit_content"
                     },
                     {
-                      "id": "GgpmS",
+                      "id": "pfJE7",
                       "type": "ref",
-                      "ref": "kdXz7",
-                      "name": "schedBlock3",
+                      "ref": "IKlc7",
+                      "name": "taskProgress3",
                       "width": "fill_container",
-                      "height": "fit_content",
-                      "x": 0,
-                      "y": 246,
-                      "descendants": {
-                        "ephls": {
-                          "content": "6:00 PM – 7:00 PM",
-                          "x": 18,
-                          "y": 16
-                        },
-                        "s6t53": {
-                          "content": "Chemistry Lab Report",
-                          "x": 18,
-                          "y": 35
-                        },
-                        "G8o9F": {
-                          "content": "1 hr · Focus block",
-                          "x": 18,
-                          "y": 58
-                        }
-                      }
+                      "height": "fit_content"
                     },
                     {
                       "id": "Wbxq7",
@@ -1268,7 +1211,7 @@
                       "width": "fill_container",
                       "height": "fit_content",
                       "x": 0,
-                      "y": 351,
+                      "y": 342,
                       "descendants": {
                         "K3qRc": {
                           "x": 14,
@@ -22726,6 +22669,93 @@
           "width": "fill_container",
           "height": "fill_container",
           "fill": "rgba(0,0,0,0.5)"
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "IKlc7",
+      "x": 8500,
+      "y": 820,
+      "name": "TaskProgressCard",
+      "reusable": true,
+      "width": 300,
+      "fill": "$--card",
+      "cornerRadius": 10,
+      "stroke": {
+        "align": "inside",
+        "thickness": 1,
+        "fill": "$--border"
+      },
+      "layout": "vertical",
+      "gap": 8,
+      "padding": [
+        16,
+        18
+      ],
+      "children": [
+        {
+          "type": "text",
+          "id": "AWAqU",
+          "name": "title",
+          "fill": "$--primary",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "Task Title",
+          "fontFamily": "Space Grotesk",
+          "fontSize": 13,
+          "fontWeight": "600"
+        },
+        {
+          "type": "frame",
+          "id": "KICoh",
+          "name": "meta",
+          "width": "fill_container",
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "5Oe4X",
+              "name": "progress-label",
+              "fill": "$--muted-foreground",
+              "content": "0 / 3 blocks done",
+              "fontFamily": "Inter",
+              "fontSize": 12,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "C4qFw",
+              "name": "due-label",
+              "fill": "$--muted-foreground",
+              "content": "Due 04/01/2026",
+              "fontFamily": "Inter",
+              "fontSize": 12,
+              "fontWeight": "normal"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "EYcxw",
+          "name": "track",
+          "clip": true,
+          "width": "fill_container",
+          "height": 6,
+          "fill": "$--background",
+          "cornerRadius": 3,
+          "children": [
+            {
+              "type": "frame",
+              "id": "WV63Q",
+              "name": "bar",
+              "width": 132,
+              "height": "fill_container",
+              "fill": "$--info",
+              "cornerRadius": 3
+            }
+          ]
         }
       ]
     }

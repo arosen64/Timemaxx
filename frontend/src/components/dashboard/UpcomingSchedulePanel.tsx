@@ -64,7 +64,7 @@ function TaskProgressCard({ summary }: { summary: TaskSummary }) {
   const allDone = completed === total
 
   return (
-    <div className="flex flex-col gap-2 rounded-[10px] border border-border bg-white p-[18px]">
+    <div className="flex flex-col gap-2 rounded-[10px] border border-border bg-white py-4 px-[18px]">
       <span className="font-heading text-[13px] font-semibold text-navy">{taskTitle}</span>
       <div className="flex items-center justify-between">
         <span className={`text-xs ${allDone ? 'text-success' : 'text-slate-blue'}`}>
