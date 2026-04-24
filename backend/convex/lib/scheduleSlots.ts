@@ -38,6 +38,94 @@ export function toDateStr(d: Date, timezone: string): string {
   return Intl.DateTimeFormat("en-CA", { timeZone: timezone }).format(d);
 }
 
+/** Returns the local day-of-week name (e.g. "Monday") for a UTC timestamp. */
+function toDayName(ms: number, timezone: string): string {
+  return new Intl.DateTimeFormat("en-US", { timeZone: timezone, weekday: "long" }).format(
+    new Date(ms),
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Daily load cap
+// ---------------------------------------------------------------------------
+
+/**
+ * Counts how many study-block-equivalent units each calendar day is already
+ * carrying, based on all occupied intervals (placed study blocks + GCal events).
+ *
+ * Each interval contributes ⌈durationMinutes / focusBlockLengthMinutes⌉ units.
+ * A placed study block of exactly focusBlockLength contributes exactly 1.
+ * A 3-hour lecture with a 60-min focus block contributes 3.
+ */
+export function buildDailyLoadMap(
+  occupiedIntervals: OccupiedInterval[],
+  timezone: string,
+  focusBlockLengthMinutes: number,
+): Map<string, number> {
+  const map = new Map<string, number>();
+  for (const iv of occupiedIntervals) {
+    const durationMinutes = (iv.endMs - iv.startMs) / 60000;
+    const units = Math.ceil(durationMinutes / focusBlockLengthMinutes);
+    const dateStr = toDateStr(new Date(iv.startMs), timezone);
+    map.set(dateStr, (map.get(dateStr) ?? 0) + units);
+  }
+  return map;
+}
+
+/**
+ * Derives the maximum number of study blocks allowed on each day of the week.
+ *
+ * Base cap = Math.min(4, Math.floor(availableSlots * 30 / focusBlockLengthMinutes))
+ * where availableSlots = 48 − blocked.length for that day in workHoursGrid.
+ *
+ * Days listed in preferredDays (from productivityTraits.dayOfWeek) keep the
+ * base cap. Non-preferred days get base − 1, minimum 1.
+ *
+ * Fallback when a day is absent from workHoursGrid:
+ *   preferred → 3, non-preferred → 2.
+ */
+export function computeMaxBlocksPerDay(
+  workHoursGrid: WorkHoursRow[],
+  focusBlockLengthMinutes: number,
+  preferredDays: string[] = [],
+): Map<string, number> {
+  const ALL_DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+  const preferred = new Set(preferredDays);
+  const map = new Map<string, number>();
+
+  for (const day of ALL_DAYS) {
+    const row = workHoursGrid.find((r) => r.day === day);
+    let base: number;
+    if (row) {
+      const availableSlots = 48 - row.blocked.length;
+      base = Math.min(4, Math.floor((availableSlots * 30) / focusBlockLengthMinutes));
+    } else {
+      base = 3; // preferred-day fallback; non-preferred gets base − 1 below
+    }
+    const cap = preferred.has(day) ? base : Math.max(1, base - 1);
+    map.set(day, cap);
+  }
+
+  return map;
+}
+
+/**
+ * Returns true if the calendar day containing startMs has already reached its
+ * study-block cap and should not receive any more blocks.
+ */
+export function isDailyCapReached(
+  startMs: number,
+  timezone: string,
+  dailyLoadMap: Map<string, number>,
+  maxBlocksPerDayMap: Map<string, number>,
+): boolean {
+  const dateStr = toDateStr(new Date(startMs), timezone);
+  const dayName = toDayName(startMs, timezone);
+  const current = dailyLoadMap.get(dateStr) ?? 0;
+  const max = maxBlocksPerDayMap.get(dayName) ?? 2;
+  return current >= max;
+}
+
 // ---------------------------------------------------------------------------
 // Internal helpers
 // ---------------------------------------------------------------------------
@@ -168,8 +256,11 @@ export function enumerateSlots(opts: {
   workHoursGrid: WorkHoursRow[];
   occupiedIntervals: OccupiedInterval[];
   timezone: string;
+  dailyLoadMap?: Map<string, number>;
+  maxBlocksPerDayMap?: Map<string, number>;
 }): CandidateSlot[] {
-  const { fromMs, dueDateMs, durationMinutes, workHoursGrid, occupiedIntervals, timezone } = opts;
+  const { fromMs, dueDateMs, durationMinutes, workHoursGrid, occupiedIntervals, timezone,
+    dailyLoadMap, maxBlocksPerDayMap } = opts;
   const durationMs = durationMinutes * 60000;
   const horizonMs = Date.now() + SCHEDULE_HORIZON_MS;
   const limitMs = Math.min(dueDateMs, horizonMs);
@@ -180,6 +271,14 @@ export function enumerateSlots(opts: {
   while (cursor < limitMs && candidates.length < MAX_CANDIDATES) {
     const endMs = cursor + durationMs;
     if (endMs > limitMs) break;
+
+    if (
+      dailyLoadMap && maxBlocksPerDayMap &&
+      isDailyCapReached(cursor, timezone, dailyLoadMap, maxBlocksPerDayMap)
+    ) {
+      cursor += FIFTEEN_MIN_MS;
+      continue;
+    }
 
     if (isSlotValid(cursor, durationMs, workHoursGrid, occupiedIntervals, timezone)) {
       candidates.push({
@@ -244,8 +343,11 @@ export function filterPoolForBlock(opts: {
   workHoursGrid: WorkHoursRow[];
   occupiedIntervals: OccupiedInterval[];
   timezone: string;
+  dailyLoadMap?: Map<string, number>;
+  maxBlocksPerDayMap?: Map<string, number>;
 }): CandidateSlot[] {
-  const { pool, dueDateMs, durationMinutes, workHoursGrid, occupiedIntervals, timezone } = opts;
+  const { pool, dueDateMs, durationMinutes, workHoursGrid, occupiedIntervals, timezone,
+    dailyLoadMap, maxBlocksPerDayMap } = opts;
   const durationMs = durationMinutes * 60000;
   const candidates: CandidateSlot[] = [];
 
@@ -253,6 +355,10 @@ export function filterPoolForBlock(opts: {
     if (slot.startMs >= dueDateMs) continue;
     const endMs = slot.startMs + durationMs;
     if (endMs > dueDateMs) continue;
+    if (
+      dailyLoadMap && maxBlocksPerDayMap &&
+      isDailyCapReached(slot.startMs, timezone, dailyLoadMap, maxBlocksPerDayMap)
+    ) continue;
     if (!isSlotValid(slot.startMs, durationMs, workHoursGrid, occupiedIntervals, timezone)) continue;
     if (candidates.length >= MAX_CANDIDATES) break;
 
