@@ -5,6 +5,7 @@ import type { ChatWorkflowOutput } from "./chatWorkflowHttpTypes";
 
 type BlockMcqResult = {
   needsBlockMcq: true;
+  kind: "schedule_block" | "unschedule_block";
   blockCandidates: Array<{ id: string; label: string; subtitle: string }>;
   aiText: string;
 };
@@ -25,7 +26,7 @@ async function scheduleTaskFromOutput(
     return { aiText: "This task has no study blocks yet. Generate blocks from the task detail page first." };
   }
 
-  const unscheduledBefore = blocks.filter((b) => !b.startTime).length;
+  const unscheduledBefore = blocks.filter((b) => !b.startTime && !b.isCompleted).length;
   if (unscheduledBefore === 0) {
     return { aiText: "All blocks for this task are already scheduled!" };
   }
@@ -59,7 +60,16 @@ async function scheduleBlockFromOutput(
 ): Promise<ActionResult> {
   if (!activeTaskId) throw new Error("No task selected.");
 
+  const blocks = await ctx.runQuery(internal.queries.studyBlocks.getStudyBlocksByTaskInternal, {
+    taskId: activeTaskId,
+  });
+
   if (activeBlockId) {
+    // Defense in depth: a stale activeBlockId from an earlier flow must not act on the wrong task.
+    const picked = blocks.find((b) => b._id === activeBlockId);
+    if (!picked) {
+      return { aiText: "That block doesn't belong to the selected task." };
+    }
     const result = await ctx.runAction(api.actions.scheduleBlock.scheduleBlock, {
       studyBlockId: activeBlockId,
       timezone,
@@ -73,9 +83,6 @@ async function scheduleBlockFromOutput(
     return { aiText: "Done! I've scheduled that study block." };
   }
 
-  const blocks = await ctx.runQuery(internal.queries.studyBlocks.getStudyBlocksByTaskInternal, {
-    taskId: activeTaskId,
-  });
   const unscheduled = blocks.filter((b) => !b.startTime && !b.isCompleted);
 
   if (unscheduled.length === 0) {
@@ -96,12 +103,14 @@ async function scheduleBlockFromOutput(
     return { aiText: "Done! I've scheduled that study block." };
   }
 
+  const total = unscheduled.length;
   return {
     needsBlockMcq: true,
-    blockCandidates: unscheduled.map((b) => ({
+    kind: "schedule_block",
+    blockCandidates: unscheduled.map((b, i) => ({
       id: String(b._id),
       label: b.title,
-      subtitle: `${b.studyBlockLength} min`,
+      subtitle: `Block ${i + 1} of ${total} · ${b.studyBlockLength} min`,
     })),
     aiText: "Which study block would you like me to schedule? Pick one below.",
   };
@@ -131,11 +140,17 @@ async function unscheduleBlockFromOutput(
 ): Promise<ActionResult> {
   if (!activeTaskId) throw new Error("No task selected.");
 
+  const blocks = await ctx.runQuery(internal.queries.studyBlocks.getStudyBlocksByTaskInternal, {
+    taskId: activeTaskId,
+  });
+
   if (activeBlockId) {
-    const block = await ctx.runQuery(internal.queries.studyBlocks.getStudyBlockInternal, {
-      studyBlockId: activeBlockId,
-    });
-    if (!block?.startTime) {
+    // Defense in depth: a stale activeBlockId from an earlier flow must not act on the wrong task.
+    const picked = blocks.find((b) => b._id === activeBlockId);
+    if (!picked) {
+      return { aiText: "That block doesn't belong to the selected task." };
+    }
+    if (!picked.startTime) {
       return { aiText: "That block isn't scheduled." };
     }
     await ctx.runMutation(internal.mutations.studyBlocks.unscheduleBlockInternal, {
@@ -144,9 +159,6 @@ async function unscheduleBlockFromOutput(
     return { aiText: "Done! I've unscheduled that block." };
   }
 
-  const blocks = await ctx.runQuery(internal.queries.studyBlocks.getStudyBlocksByTaskInternal, {
-    taskId: activeTaskId,
-  });
   const scheduledIncomplete = blocks.filter((b) => b.startTime && !b.isCompleted);
 
   if (scheduledIncomplete.length === 0) {
@@ -162,11 +174,12 @@ async function unscheduleBlockFromOutput(
 
   return {
     needsBlockMcq: true,
+    kind: "unschedule_block",
     blockCandidates: scheduledIncomplete.map((b) => ({
       id: String(b._id),
       label: b.title,
       subtitle: b.startTime
-        ? `Scheduled ${new Date(b.startTime).toLocaleDateString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}`
+        ? `Scheduled ${new Date(b.startTime).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}`
         : "",
     })),
     aiText: "Which study block would you like me to unschedule? Pick one below.",

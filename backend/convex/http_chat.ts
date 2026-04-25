@@ -345,7 +345,7 @@ async function handleWorkflowTurn(
       await ctx.runMutation(internal.mutations.chatSessions.setBlockPromptStateInternal, {
         userId,
         sessionId,
-        pendingScheduleAction: output.actionType as "schedule_block" | "unschedule_block",
+        pendingScheduleAction: scheduleResult.kind,
       });
       return c.json({
         text: scheduleResult.aiText,
@@ -578,6 +578,9 @@ chatApp.post("/api/chat", async (c) => {
       internal.queries.chatSessions.getChatSessionInternal,
       { userId, sessionId },
     );
+    // The empty `message` here is safe only because `activeAgent === "schedule"` is still set,
+    // which routes this turn directly to the schedule agent and bypasses the supervisor (which
+    // would otherwise crash on `messages: at least one message is required`).
     return handleWorkflowTurn(ctx, c, client, {
       userId,
       sessionId,
