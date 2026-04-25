@@ -9,14 +9,14 @@ vi.mock('../../../backend/convex/_generated/api', () => ({
       users: { getCurrUser: 'getCurrUser' },
       tasks: { getAllTasks: 'getAllTasks' },
       subtasks: { getAllSubtasksForUser: 'getAllSubtasksForUser' },
-      studyBlocks: { getUpcomingStudyBlocks: 'getUpcomingStudyBlocks', getStudyBlocksByTask: 'getStudyBlocksByTask' },
+      studyBlocks: { getUpcomingStudyBlocks: 'getUpcomingStudyBlocks', getStudyBlocksByTask: 'getStudyBlocksByTask', getAllStudyBlocksWithTasks: 'getAllStudyBlocksWithTasks' },
       userCourses: { getUserCourses: 'getUserCourses' },
     },
     mutations: {
       tasks: { updateTask: 'updateTask', deleteTask: 'deleteTask' },
       subtasks: { deleteSubtask: 'deleteSubtask', updateSubtask: 'updateSubtask' },
       timeEstimate: { submitEstimateFeedback: 'submitEstimateFeedback' },
-      studyBlocks: { deleteStudyBlocksForTask: 'deleteStudyBlocksForTask' },
+      studyBlocks: { deleteStudyBlocksForTask: 'deleteStudyBlocksForTask', toggleStudyBlockComplete: 'toggleStudyBlockComplete' },
     },
     actions: {
       requestEstimateSubtaskTime: { requestEstimateSubtaskTime: 'requestEstimateSubtaskTime' },
@@ -131,6 +131,7 @@ function setup(tasks = MOCK_TASKS, user = MOCK_USER) {
     if (query === 'getAllTasks') return tasks
     if (query === 'getAllSubtasksForUser') return []
     if (query === 'getUpcomingStudyBlocks') return []
+      if (query === 'getAllStudyBlocksWithTasks') return []
     if (query === 'getUserCourses') return []
     if (query === 'getStudyBlocksByTask') return []
     return user
@@ -166,6 +167,7 @@ describe('DashboardPage', () => {
     mockUseQuery.mockImplementation(((query: string) => {
       if (query === 'getAllTasks') return undefined
       if (query === 'getUpcomingStudyBlocks') return []
+      if (query === 'getAllStudyBlocksWithTasks') return []
       if (query === 'getAllSubtasksForUser') return []
       if (query === 'getStudyBlocksByTask') return []
       return MOCK_USER
@@ -206,6 +208,7 @@ describe('DashboardPage', () => {
     mockUseQuery.mockImplementation(((query: string) => {
       if (query === 'getAllTasks') return tasksWithoutEstimate
       if (query === 'getUpcomingStudyBlocks') return []
+      if (query === 'getAllStudyBlocksWithTasks') return []
       if (query === 'getAllSubtasksForUser') return []
       if (query === 'getStudyBlocksByTask') return []
       return MOCK_USER
@@ -234,6 +237,7 @@ describe('DashboardPage', () => {
     mockUseQuery.mockImplementation(((query: string) => {
       if (query === 'getAllTasks') return tasksWithoutEstimate
       if (query === 'getUpcomingStudyBlocks') return []
+      if (query === 'getAllStudyBlocksWithTasks') return []
       if (query === 'getAllSubtasksForUser') return []
       if (query === 'getStudyBlocksByTask') return []
       return MOCK_USER
@@ -260,6 +264,7 @@ describe('DashboardPage', () => {
     mockUseQuery.mockImplementation(((query: string) => {
       if (query === 'getAllTasks') return tasksWithoutEstimate
       if (query === 'getUpcomingStudyBlocks') return []
+      if (query === 'getAllStudyBlocksWithTasks') return []
       if (query === 'getAllSubtasksForUser') return []
       if (query === 'getStudyBlocksByTask') return []
       return MOCK_USER
@@ -360,6 +365,7 @@ describe('DashboardPage', () => {
     mockUseQuery.mockImplementation(((query: string) => {
       if (query === 'getAllTasks') return MOCK_TASKS
       if (query === 'getUpcomingStudyBlocks') return []
+      if (query === 'getAllStudyBlocksWithTasks') return []
       if (query === 'getAllSubtasksForUser') return []
       if (query === 'getStudyBlocksByTask') return []
       return MOCK_USER
@@ -410,6 +416,7 @@ describe('DashboardPage', () => {
     mockUseQuery.mockImplementation(((query: string) => {
       if (query === 'getAllTasks') return [COMPLETED_TASK, MOCK_TASKS[1]]
       if (query === 'getUpcomingStudyBlocks') return []
+      if (query === 'getAllStudyBlocksWithTasks') return []
       if (query === 'getAllSubtasksForUser') return []
       if (query === 'getStudyBlocksByTask') return []
       return MOCK_USER

@@ -85,6 +85,7 @@ async function fetchAllStudyBlocksWithTasks(ctx: any, userId: Id<"users">) {
     taskRecommendedStart: number | undefined;
     courseColor: string | undefined;
     courseName: string | undefined;
+    isCompleted: boolean;
   }> = [];
 
   // Collect unique courseIds and batch-fetch them into a Map (avoids N+1)
@@ -135,6 +136,7 @@ async function fetchAllStudyBlocksWithTasks(ctx: any, userId: Id<"users">) {
         taskRecommendedStart: task.recommendedStart,
         courseColor,
         courseName,
+        isCompleted: block.isCompleted,
       });
     }
 
@@ -161,6 +163,7 @@ async function fetchAllStudyBlocksWithTasks(ctx: any, userId: Id<"users">) {
           taskRecommendedStart: task.recommendedStart,
           courseColor,
           courseName,
+          isCompleted: block.isCompleted,
         });
       }
     }
