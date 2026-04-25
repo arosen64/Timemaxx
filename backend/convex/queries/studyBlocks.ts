@@ -241,7 +241,7 @@ export const getTodayStudyBlockMinutes = query({
       )
       .collect();
 
-    return blocks.reduce((sum, b) => sum + (b.studyBlockLength ?? 0), 0);
+    return blocks.reduce((sum, b) => sum + b.studyBlockLength, 0);
   },
 });
 
