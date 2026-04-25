@@ -8,6 +8,8 @@ export interface ScoreBreakdown {
   difficultyBonus: number;   // 0 or +1 (high-difficulty course + time-of-day match)
 }
 
+const HIGH_DIFFICULTY_THRESHOLD = 4;
+
 // Label strings from PreferencesForm.tsx → [startMinFromMidnight, endMinFromMidnight)
 const TIME_OF_DAY_RANGES: Record<string, [number, number]> = {
   "Early Morning (5–8am)": [300, 480],
@@ -51,7 +53,8 @@ function getDayOfWeek(startMs: number, timezone: string): string {
  *   +1  day-of-week match (slot falls on a preferred day)
  *   +1  buffer comfort (>15 min gap on both sides of the slot)
  *   −1  per existing occupied interval on the same calendar date, max −3
- *   +1  difficulty bonus (course difficultyRating ≥ 4 AND time-of-day match)
+ *   +1  difficulty bonus (course difficultyRating ≥ HIGH_DIFFICULTY_THRESHOLD AND time-of-day match;
+ *       never fires when the user has no time-of-day preferences)
  */
 export function scoreCandidate(opts: {
   startMs: number;
@@ -84,7 +87,7 @@ export function scoreCandidate(opts: {
   const dailyLoadPenalty = opts.dailyLoadCount <= 0 ? 0 : Math.max(-3, -opts.dailyLoadCount);
 
   const difficultyBonus =
-    opts.difficultyRating !== undefined && opts.difficultyRating >= 4 && timeOfDayMatch > 0 ? 1 : 0;
+    opts.difficultyRating !== undefined && opts.difficultyRating >= HIGH_DIFFICULTY_THRESHOLD && timeOfDayMatch > 0 ? 1 : 0;
 
   const score = timeOfDayMatch + dayOfWeekMatch + bufferComfort + dailyLoadPenalty + difficultyBonus;
 
