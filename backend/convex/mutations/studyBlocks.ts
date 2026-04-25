@@ -501,7 +501,6 @@ export const toggleStudyBlockComplete = mutation({
   },
 });
 
-
 export const runDetectConflicts = mutation({
   args: {
     timedEvents: v.array(timedEventValidator),

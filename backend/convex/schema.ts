@@ -229,8 +229,7 @@ export default defineSchema({
     /** Current scope for future chat message tagging. */
     activeTaskId: v.optional(v.id("tasks")),
     activeCourseId: v.optional(v.id("userCourses")),
-    /** Block MCQ flow: waiting for user to pick a specific study block. */
-    awaitingBlockResolution: v.optional(v.boolean()),
+    /** Block MCQ flow: tracks the schedule sub-intent and chosen block while awaiting a pick. */
     pendingScheduleAction: v.optional(v.literal("schedule_block")),
     activeBlockId: v.optional(v.id("studyBlocks")),
   }).index("by_userId_sessionId", ["userId", "sessionId"]),
