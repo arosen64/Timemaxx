@@ -38,7 +38,7 @@ export default function SubtaskCard({
       className="flex flex-col border-t border-border bg-bg-gray"
       onClick={(e) => e.stopPropagation()}
     >
-      <div className="flex items-center gap-3 px-[18px] py-3">
+      <div className="flex items-start gap-3 px-[18px] py-3">
         {/* Indent + color bar */}
         <div className="ml-4 shrink-0">
           <div
@@ -47,37 +47,39 @@ export default function SubtaskCard({
           />
         </div>
 
-        {/* Content */}
-        <div className="flex flex-1 min-w-0 flex-col gap-0.5">
-          <span className="truncate font-heading text-[13px] font-semibold text-navy">
-            {subtask.title || 'Untitled subtask'}
-          </span>
-          <div className="flex flex-wrap items-center gap-1.5 font-body text-xs text-light-blue">
-            {subtask.timeEstimate !== undefined ? (
-              <>
-                <span>{formatMinutes(subtask.timeEstimate)}</span>
-                {subtask.reasoning && !isEstimating && (
-                  <button
-                    type="button"
-                    onClick={() => setShowReasoning((prev) => !prev)}
-                    className="flex items-center gap-1 text-info-emphasis hover:underline"
-                    aria-label="Toggle AI reasoning"
-                  >
-                    <SparklesIcon color="currentColor" size={11} />
-                    <span className="text-[11px] font-semibold">Why?</span>
-                  </button>
-                )}
-              </>
-            ) : isEstimating ? (
-              <span>Estimating…</span>
-            ) : (
-              <span>No estimate yet</span>
-            )}
+        {/* Content + actions */}
+        <div className="flex flex-col gap-2 flex-1 min-w-0 md:flex-row md:items-center">
+          {/* Content */}
+          <div className="flex flex-1 min-w-0 flex-col gap-0.5">
+            <span className="font-heading text-[13px] font-semibold text-navy">
+              {subtask.title || 'Untitled subtask'}
+            </span>
+            <div className="flex flex-wrap items-center gap-1.5 font-body text-xs text-light-blue">
+              {subtask.timeEstimate !== undefined ? (
+                <>
+                  <span>{formatMinutes(subtask.timeEstimate)}</span>
+                  {subtask.reasoning && !isEstimating && (
+                    <button
+                      type="button"
+                      onClick={() => setShowReasoning((prev) => !prev)}
+                      className="flex items-center gap-1 text-info-emphasis hover:underline"
+                      aria-label="Toggle AI reasoning"
+                    >
+                      <SparklesIcon color="currentColor" size={11} />
+                      <span className="text-[11px] font-semibold">Why?</span>
+                    </button>
+                  )}
+                </>
+              ) : isEstimating ? (
+                <span>Estimating…</span>
+              ) : (
+                <span>No estimate yet</span>
+              )}
+            </div>
           </div>
-        </div>
 
-        {/* Actions */}
-        <div className="flex shrink-0 items-center gap-1.5">
+          {/* Actions */}
+          <div className="flex shrink-0 items-center gap-1.5">
           {!isReadOnly && (
             <StatusDropdown
               value={subtask.status ?? 'not_started'}
@@ -120,6 +122,7 @@ export default function SubtaskCard({
               </button>
             </>
           )}
+        </div>
         </div>
       </div>
 
