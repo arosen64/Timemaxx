@@ -7,6 +7,7 @@ import { type Id } from '../../../../backend/convex/_generated/dataModel'
 import { formatClassTagForDisplay } from '../../utils/classTagUtils'
 import TaskFeedbackForm, { type TaskFeedbackFormProps } from './TaskFeedbackForm'
 import EstimateBadge from './EstimateBadge'
+import WeightBadge from './WeightBadge'
 import SubtaskCard from './SubtaskCard'
 import StudyBlockRow from './StudyBlockRow'
 import StatusDropdown from './StatusDropdown'
@@ -142,6 +143,7 @@ export default function TaskCard({
                 <>
                   <span>· {formatMinutes(task.timeEstimate)}</span>
                   <EstimateBadge isManual={task.isManualEstimate} />
+                  <WeightBadge weight={task.assignmentWeight} />
                   {!task.isManualEstimate && task.reasoning && !isEstimating && (
                     <button
                       type="button"

@@ -45,6 +45,7 @@ export type TaskType = {
   courseId?: Id<'userCourses'>
   reasoning?: ReasoningTrace
   status?: TaskStatus
+  assignmentWeight?: number
 }
 
 export const BUILT_IN_TASK_TYPES = [
