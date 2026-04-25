@@ -29,6 +29,23 @@ const MAX_CANDIDATES = 20;
 export const FIFTEEN_MIN_MS = 15 * 60 * 1000;
 export const DEFAULT_DUE_FALLBACK_MS = 7 * 24 * 60 * 60 * 1000;
 export const TWO_WEEKS_MS = 14 * 24 * 60 * 60 * 1000;
+const DAY_MS = 24 * 60 * 60 * 1000;
+const ASSUMED_DAILY_STUDY_MINUTES = 120;
+
+/**
+ * Returns the earliest sensible start date for a task, based on how much work
+ * it requires. Returns undefined when no estimate is known — callers should
+ * treat undefined as "no gate; start from now."
+ */
+export function computeRecommendedStart(
+  now: number,
+  dueDate: number,
+  timeEstimate: number | undefined
+): number | undefined {
+  if (timeEstimate === undefined) return undefined;
+  const daysNeeded = Math.ceil(timeEstimate / ASSUMED_DAILY_STUDY_MINUTES);
+  return Math.max(now, dueDate - daysNeeded * DAY_MS);
+}
 
 // ---------------------------------------------------------------------------
 // Shared date utilities

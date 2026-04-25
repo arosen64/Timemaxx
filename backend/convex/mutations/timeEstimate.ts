@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import type { MutationCtx } from "../_generated/server";
 import type { Id } from "../_generated/dataModel";
+import { computeRecommendedStart } from "../lib/scheduleSlots";
 
 export async function rebuildStudyBlocksForSubtask(
   ctx: MutationCtx,
@@ -101,6 +102,7 @@ export const setTimeEstimate = internalMutation({
     await ctx.db.patch(args.taskId, {
       timeEstimate: args.timeEstimate,
       reasoning: args.reasoning,
+      recommendedStart: computeRecommendedStart(Date.now(), task.dueDate, args.timeEstimate),
     });
 
     // When subtasks exist, block rebuilding is owned by the subtask rollup in
@@ -132,6 +134,7 @@ export const setManualTimeEstimate = mutation({
     await ctx.db.patch(args.taskId, {
       timeEstimate: args.timeEstimate,
       isManualEstimate: true,
+      recommendedStart: computeRecommendedStart(Date.now(), task.dueDate, args.timeEstimate),
     });
 
     await rebuildStudyBlocks(ctx, args.taskId, args.timeEstimate);
@@ -152,6 +155,7 @@ export const clearManualEstimate = mutation({
     await ctx.db.patch(args.taskId, {
       isManualEstimate: false,
       timeEstimate: undefined,
+      recommendedStart: undefined,
     });
 
     // Delete existing study blocks so AI can regenerate fresh
