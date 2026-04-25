@@ -1,6 +1,6 @@
 # Scheduling Algorithm — Source of Truth
 
-Last updated: issue #508 (daily load cap + spread)
+Last updated: issue #507 (deterministic pre-scoring layer)
 
 ---
 
@@ -61,13 +61,57 @@ After selecting a target day, `speculativeDailyLoadMap` is incremented for that 
 
 ### Candidate list
 
-Once the target day is chosen, `filterPoolForBlock()` is called on a **pool filtered to just that day**, with `reverseOrder: true`. This returns up to `MAX_CANDIDATES = 20` slots from that day, ordered **latest-first** (closest to due date). Gemini receives only these slots and picks the best time within the day.
+Once the target day is chosen, `filterPoolForBlock()` is called on a **pool filtered to just that day**, with `reverseOrder: true`. This returns up to `MAX_CANDIDATES = 20` slots from that day, ordered **latest-first** (closest to due date).
+
+Each candidate is then **scored and sorted** by `scoreCandidate()` (see [Pre-scoring layer](#pre-scoring-layer)) before being sent to Gemini. Gemini receives candidates in score-descending order and picks the best time within the day.
+
+---
+
+## Pre-scoring layer
+
+Before the AI call, every candidate slot is assigned a deterministic numeric score. Candidates are sorted by score descending so Gemini sees the best fits first. Implemented in `lib/scoreSlots.ts` (pure — no Convex deps).
+
+### Scoring rubric
+
+| Signal | Source | Points |
+|---|---|---|
+| Time-of-day match | Slot falls within any of the user's preferred time windows (`productivityTraits.timeOfDay`) | +2 |
+| Day-of-week match | Slot falls on a preferred day (`productivityTraits.dayOfWeek`) | +1 |
+| Buffer comfort | Both surrounding gaps > 15 min (or no surrounding event) | +1 |
+| Daily load penalty | Existing occupied intervals on the same calendar date | −1 each, max −3 |
+| Difficulty bonus | Task's `difficultyRating ≥ 4` AND time-of-day match | +1 |
+
+### Time-of-day label → minute range mapping
+
+| Label | Range (minutes from midnight) |
+|---|---|
+| Early Morning (5–8am) | [300, 480) |
+| Morning (8–11am) | [480, 660) |
+| Midday (11am–2pm) | [660, 840) |
+| Afternoon (2–5pm) | [840, 1020) |
+| Evening (5–8pm) | [1020, 1200) |
+| Night (8–11pm) | [1200, 1380) |
+| Late Night (11pm+) | [1380, 1440) |
+
+### Daily load for scoring vs. cap enforcement
+
+The **scoring penalty** uses `actualDailyLoadMap` (the baseline built from `occupiedIntervals` before phase 1 starts). It does not update during the run, so the penalty reflects pre-existing load only.
+
+This is distinct from the **cap enforcement** maps (`speculativeDailyLoadMap` and `actualDailyLoadMap`) used in day selection and phase 3 — those update as blocks are assigned.
+
+### Difficulty rating source
+
+`difficultyRating` comes from `userCourses` via the task's `courseId`. All three scheduling actions fetch user courses once at startup and build a `courseId → difficultyRating` map. For subtask blocks, the parent task's `courseId` is used.
+
+### What Gemini still decides
+
+Candidates are pre-sorted but Gemini is told it may override a lower-scored slot if surrounding calendar context makes it clearly better. The AI handles qualitative judgment (event titles, session flow, subject context) that the scorer can't capture numerically.
 
 ---
 
 ## Phase 2 — AI slot selection
 
-One Gemini Flash call covers all blocks in the run. Each block's candidate list and parent task context (title, due date, recommended start) are sent together. Gemini returns one candidate index per block. Falls back to index 0 if the API call fails or returns an invalid index.
+One Gemini Flash call covers all blocks in the run. Each block's pre-scored, sorted candidate list and parent task context (title, due date, recommended start) are sent together. The prompt includes `score` and `scoreBreakdown` per candidate so Gemini can see why each slot ranked as it did. Gemini returns one candidate index per block. Falls back to index 0 if the API call fails or returns an invalid index.
 
 ---
 
@@ -151,9 +195,11 @@ The cap is **soft**. It is respected whenever possible but overridden when there
 | `focusBlockLength` | `user.focusBlockLength` (default 60 min) |
 | `workHoursGrid` | `user.workHoursGrid` |
 | `preferredDays` | `user.productivityTraits.dayOfWeek` |
+| `timeOfDayPrefs` | `user.productivityTraits.timeOfDay` (array of label strings) |
 | `recommendedStart` | `task.recommendedStart` (hard lower bound on placement) |
 | `dueDate` | `task.dueDate` or `subtask.suggestedCompletionAt` |
 | `studyBlockLength` | `block.studyBlockLength` (set at block creation from `focusBlockLength`) |
+| `difficultyRating` | `userCourses[task.courseId].difficultyRating` (used in scoring bonus) |
 
 ---
 
