@@ -84,7 +84,7 @@ export default function DashboardPage() {
     return rows.sort((a, b) => a.courseCode.localeCompare(b.courseCode))
   }, [userCourses])
 
-  const { todayStartMs, todayEndMs, weekStartMs, weekEndMs } = useMemo(() => {
+  const getDateBoundaries = () => {
     const d = new Date();
     const todayStart = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
     const weekStart = new Date(d.getFullYear(), d.getMonth(), d.getDate() - d.getDay()).getTime();
@@ -94,7 +94,13 @@ export default function DashboardPage() {
       weekStartMs: weekStart,
       weekEndMs: weekStart + 7 * 24 * 60 * 60 * 1000,
     };
-  }, []);
+  };
+  const [{ todayStartMs, todayEndMs, weekStartMs, weekEndMs }, setDateBoundaries] = useState(getDateBoundaries);
+  useEffect(() => {
+    const msUntilMidnight = todayEndMs - Date.now();
+    const timer = setTimeout(() => setDateBoundaries(getDateBoundaries()), msUntilMidnight);
+    return () => clearTimeout(timer);
+  }, [todayEndMs]);
   const todayStudyMinutes = useQuery(api.queries.studyBlocks.getTodayStudyBlockMinutes, { todayStartMs, todayEndMs }) ?? 0
   const thisWeekBlocks = useQuery(api.queries.studyBlocks.getThisWeekStudyBlocks, { weekStartMs, weekEndMs }) ?? { total: 0, completed: 0 }
 

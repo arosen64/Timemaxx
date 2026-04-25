@@ -208,20 +208,19 @@ export const getThisWeekStudyBlocks = query({
     const userId = await getAuthUserId(ctx);
     if (!userId) return { total: 0, completed: 0 };
 
-    const allBlocks = await ctx.db
+    const weekStartIso = new Date(weekStartMs).toISOString();
+    const weekEndIso = new Date(weekEndMs).toISOString();
+
+    const blocks = await ctx.db
       .query("studyBlocks")
-      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .withIndex("by_userId_startTime", (q) =>
+        q.eq("userId", userId).gte("startTime", weekStartIso).lt("startTime", weekEndIso)
+      )
       .collect();
 
-    const thisWeek = allBlocks.filter((b) => {
-      if (!b.startTime) return false;
-      const t = new Date(b.startTime).getTime();
-      return t >= weekStartMs && t < weekEndMs;
-    });
-
     return {
-      total: thisWeek.length,
-      completed: thisWeek.filter((b) => b.isCompleted).length,
+      total: blocks.length,
+      completed: blocks.filter((b) => b.isCompleted).length,
     };
   },
 });
@@ -232,18 +231,17 @@ export const getTodayStudyBlockMinutes = query({
     const userId = await getAuthUserId(ctx);
     if (!userId) return 0;
 
-    const allBlocks = await ctx.db
+    const todayStartIso = new Date(todayStartMs).toISOString();
+    const todayEndIso = new Date(todayEndMs).toISOString();
+
+    const blocks = await ctx.db
       .query("studyBlocks")
-      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .withIndex("by_userId_startTime", (q) =>
+        q.eq("userId", userId).gte("startTime", todayStartIso).lt("startTime", todayEndIso)
+      )
       .collect();
 
-    return allBlocks
-      .filter((b) => {
-        if (!b.startTime) return false;
-        const t = new Date(b.startTime).getTime();
-        return t >= todayStartMs && t < todayEndMs;
-      })
-      .reduce((sum, b) => sum + b.studyBlockLength, 0);
+    return blocks.reduce((sum, b) => sum + (b.studyBlockLength ?? 0), 0);
   },
 });
 
