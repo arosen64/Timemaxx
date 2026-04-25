@@ -9,6 +9,9 @@ import {
   isSlotValid,
   selectAllSlotsWithAI,
   roundUpTo15Min,
+  buildDailyLoadMap,
+  computeMaxBlocksPerDay,
+  toDateStr,
   SCHEDULE_HORIZON_MS,
   type OccupiedInterval,
   type WorkHoursRow,
@@ -43,6 +46,7 @@ export const scheduleAllBlocks = action({
     const focusBlockLength: number = user.focusBlockLength ?? 60;
     const workHoursGrid = (user.workHoursGrid ?? []) as WorkHoursRow[];
     const productivityTraits: unknown = user.productivityTraits;
+    const preferredDays: string[] = (productivityTraits as any)?.dayOfWeek ?? [];
 
     // Fetch raw blocks, tasks, and subtasks
     const allBlocks = await ctx.runQuery(
@@ -180,6 +184,9 @@ export const scheduleAllBlocks = action({
         })),
     ];
 
+    const maxBlocksPerDayMap = computeMaxBlocksPerDay(workHoursGrid, focusBlockLength, preferredDays);
+    const dailyLoadMap = buildDailyLoadMap(occupiedIntervals, args.timezone, focusBlockLength);
+
     // Shared slot pool extended incrementally per block
     const pool: PoolSlot[] = [];
     const nowMs = Date.now();
@@ -210,6 +217,8 @@ export const scheduleAllBlocks = action({
         workHoursGrid,
         occupiedIntervals,
         timezone: args.timezone,
+        dailyLoadMap,
+        maxBlocksPerDayMap,
         recommendedStartMs: item.recommendedStart,
       });
 
@@ -271,6 +280,9 @@ export const scheduleAllBlocks = action({
         endMs: chosen.startMs + durationMs,
         title: block.title,
       });
+
+      const placedDateStr = toDateStr(new Date(chosen.startMs), args.timezone);
+      dailyLoadMap.set(placedDateStr, (dailyLoadMap.get(placedDateStr) ?? 0) + 1);
 
       scheduled++;
     }
