@@ -69,6 +69,21 @@ export default function TaskReviewCard({ task, onChange, onRemove }: TaskReviewC
             <TaskTypePills value={task.taskType} onChange={(taskType) => update({ taskType })} />
           </div>
         </div>
+
+        {/* Weight row */}
+        <div className="flex items-center gap-1.5">
+          <span className="font-body text-[11px] font-medium text-slate-blue">Grade weight</span>
+          <input
+            type="number"
+            min={0}
+            max={100}
+            value={task.assignmentWeight ?? ''}
+            onChange={(e) => update({ assignmentWeight: e.target.value === '' ? undefined : Number(e.target.value) })}
+            placeholder="—"
+            className="h-8 w-16 rounded-md border border-border bg-bg-gray px-2 font-body text-sm text-navy outline-none placeholder:text-light-blue focus:border-sky-blue"
+          />
+          <span className="font-body text-sm text-slate-blue">%</span>
+        </div>
       </div>
     </div>
   )
