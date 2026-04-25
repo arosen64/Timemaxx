@@ -318,10 +318,15 @@ export function extendSlotPool(opts: {
   workHoursGrid: WorkHoursRow[];
   occupiedIntervals: OccupiedInterval[];
   timezone: string;
+  recommendedStartMs?: number;
 }): number {
   const { pool, scanCursor, targetMs, focusBlockLengthMinutes, workHoursGrid, occupiedIntervals, timezone } = opts;
   const blockMs = focusBlockLengthMinutes * 60000;
-  let cursor = scanCursor;
+  const effectiveStart =
+    opts.recommendedStartMs !== undefined
+      ? Math.max(scanCursor, roundUpTo15Min(opts.recommendedStartMs))
+      : scanCursor;
+  let cursor = effectiveStart;
 
   while (cursor < targetMs) {
     const endMs = cursor + blockMs;

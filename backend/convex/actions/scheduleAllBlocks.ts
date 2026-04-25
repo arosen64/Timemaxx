@@ -211,6 +211,7 @@ export const scheduleAllBlocks = action({
           workHoursGrid,
           occupiedIntervals,
           timezone: args.timezone,
+          recommendedStartMs: item.recommendedStart,
         });
       }
 
