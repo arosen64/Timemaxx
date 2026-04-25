@@ -91,7 +91,7 @@ export const scheduleBlock = action({
 
     const focusBlockLength: number = user.focusBlockLength ?? 60;
     const workHoursGrid = (user.workHoursGrid ?? []) as WorkHoursRow[];
-    const { dayOfWeek: preferredDays, timeOfDay: timeOfDayPrefs } = getProductivityTraits(user.productivityTraits);
+    const { dayOfWeek: preferredDays, timeOfDay: timeOfDayPrefs, deadlineBehavior } = getProductivityTraits(user.productivityTraits);
     const timeOfDayRanges = parseTimeOfDayRanges(timeOfDayPrefs);
     const dayOfWeekPrefs: string[] = preferredDays;
     const difficultyRating = courseId
@@ -144,6 +144,9 @@ export const scheduleBlock = action({
         minutesUntilNextEvent: c.minutesUntilNextEvent,
         dailyLoadCount: dailyLoadMap.get(dateStr) ?? 0,
         difficultyRating,
+        deadlineBehavior,
+        dueDateMs: dueDate,
+        nowMs,
       });
       return { ...c, score, scoreBreakdown };
     });
