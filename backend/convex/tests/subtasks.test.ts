@@ -215,6 +215,35 @@ describe("mutations/subtasks – setSubtaskTimeEstimate", () => {
     expect(parent!.timeEstimate).toBe(45);
   });
 
+  test("clears parent recommendedStart when all subtask estimates are zero (no estimate = no gate)", async () => {
+    const t = makeTestCtx();
+    const { userId } = await createTestUser(t);
+    const DAY_MS = 24 * 60 * 60 * 1000;
+    const dueDate = Date.now() + 30 * DAY_MS;
+    const parentTaskId = await t.run((ctx) =>
+      ctx.db.insert("tasks", {
+        userId: userId as never,
+        title: "Parent Task",
+        description: "desc",
+        taskType: "Essay",
+        dueDate,
+        recommendedStart: dueDate - 2 * DAY_MS,
+        isManualEstimate: false,
+        createdAt: Date.now(),
+      })
+    );
+    const subtaskId = await seedSubtask(t, userId, parentTaskId);
+
+    await t.mutation(internal.mutations.subtasks.setSubtaskTimeEstimate, {
+      subtaskId,
+      timeEstimate: 0,
+      reasoning: makeReasoning(),
+    });
+
+    const parent = await t.run((ctx) => ctx.db.get(parentTaskId));
+    expect(parent!.recommendedStart).toBeUndefined();
+  });
+
   test("updates parent recommendedStart during subtask estimate rollup", async () => {
     const t = makeTestCtx();
     const { userId } = await createTestUser(t);

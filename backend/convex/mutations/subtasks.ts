@@ -207,11 +207,10 @@ export const setSubtaskTimeEstimate = internalMutation({
 
     const total = siblings.reduce((sum, s) => sum + (s.timeEstimate ?? 0), 0);
     const parent = await ctx.db.get(subtask.parentTaskId);
+    if (!parent) return;
     await ctx.db.patch(subtask.parentTaskId, {
       timeEstimate: total,
-      recommendedStart: parent
-        ? computeRecommendedStart(Date.now(), parent.dueDate, total)
-        : undefined,
+      recommendedStart: computeRecommendedStart(Date.now(), parent.dueDate, total),
     });
 
     // Delete any stale task-level blocks on the parent so they don't co-exist

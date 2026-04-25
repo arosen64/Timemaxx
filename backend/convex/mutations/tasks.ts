@@ -190,7 +190,7 @@ export const createTaskInternal = internalMutation({
       dueDate: args.dueDate,
       courseId: args.courseId,
       classTag,
-      recommendedStart: computeRecommendedStart(Date.now(), args.dueDate, undefined),
+      recommendedStart: undefined,
       createdAt: Date.now(),
       isManualEstimate: false,
     });

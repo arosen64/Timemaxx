@@ -28,7 +28,6 @@ export const SCHEDULE_HORIZON_MS = 21 * 24 * 60 * 60 * 1000; // 21 days
 const MAX_CANDIDATES = 20;
 export const FIFTEEN_MIN_MS = 15 * 60 * 1000;
 export const DEFAULT_DUE_FALLBACK_MS = 7 * 24 * 60 * 60 * 1000;
-export const TWO_WEEKS_MS = 14 * 24 * 60 * 60 * 1000;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const ASSUMED_DAILY_STUDY_MINUTES = 120;
 
