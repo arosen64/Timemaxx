@@ -231,6 +231,9 @@ export const clearAgentStateInternal = internalMutation({
       clarificationExhausted: false,
       activeTaskId: undefined,
       activeCourseId: undefined,
+      awaitingBlockResolution: false,
+      pendingScheduleAction: undefined,
+      activeBlockId: undefined,
     });
     return null;
   },
@@ -268,6 +271,58 @@ export const setMessageScopeInternal = internalMutation({
     await ctx.db.patch(row._id, {
       ...(args.taskId !== undefined ? { activeTaskId: args.taskId } : {}),
       ...(args.courseId !== undefined ? { activeCourseId: args.courseId } : {}),
+    });
+    return null;
+  },
+});
+
+export const setBlockPromptStateInternal = internalMutation({
+  args: {
+    userId: v.id("users"),
+    sessionId: v.string(),
+    pendingScheduleAction: v.union(v.literal("schedule_block"), v.literal("unschedule_block")),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const row = await ctx.db
+      .query("chatSessions")
+      .withIndex("by_userId_sessionId", (q) =>
+        q.eq("userId", args.userId).eq("sessionId", args.sessionId),
+      )
+      .unique();
+    if (!row) throw new Error("chat session missing");
+    await ctx.db.patch(row._id, {
+      awaitingBlockResolution: true,
+      pendingScheduleAction: args.pendingScheduleAction,
+      activeBlockId: undefined,
+    });
+    return null;
+  },
+});
+
+export const resolvePickedBlockInternal = internalMutation({
+  args: {
+    userId: v.id("users"),
+    sessionId: v.string(),
+    blockId: v.id("studyBlocks"),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const block = await ctx.db.get(args.blockId);
+    if (!block) throw new Error("Block not found");
+    const ownerId = block.taskId ? (await ctx.db.get(block.taskId))?.userId : undefined;
+    if (ownerId !== args.userId) throw new Error("Unauthorized");
+    const row = await ctx.db
+      .query("chatSessions")
+      .withIndex("by_userId_sessionId", (q) =>
+        q.eq("userId", args.userId).eq("sessionId", args.sessionId),
+      )
+      .unique();
+    if (!row) throw new Error("chat session missing");
+    await ctx.db.patch(row._id, {
+      activeBlockId: args.blockId,
+      awaitingBlockResolution: false,
+      pendingScheduleAction: undefined,
     });
     return null;
   },

@@ -28,6 +28,9 @@ export const getChatSessionInternal = internalQuery({
       ),
       activeTaskId: v.optional(v.id("tasks")),
       activeCourseId: v.optional(v.id("userCourses")),
+      awaitingBlockResolution: v.optional(v.boolean()),
+      pendingScheduleAction: v.optional(v.union(v.literal("schedule_block"), v.literal("unschedule_block"))),
+      activeBlockId: v.optional(v.id("studyBlocks")),
     }),
   ),
   handler: async (ctx, args) => {
@@ -52,6 +55,9 @@ export const getChatSessionInternal = internalQuery({
       courseAgentIntent: row.courseAgentIntent,
       activeTaskId: row.activeTaskId,
       activeCourseId: row.activeCourseId,
+      awaitingBlockResolution: row.awaitingBlockResolution,
+      pendingScheduleAction: row.pendingScheduleAction,
+      activeBlockId: row.activeBlockId,
     };
   },
 });

@@ -501,6 +501,33 @@ export const toggleStudyBlockComplete = mutation({
   },
 });
 
+export const unscheduleIncompleteBlocksForTask = internalMutation({
+  args: { taskId: v.id("tasks") },
+  returns: v.number(),
+  handler: async (ctx, { taskId }) => {
+    const blocks = await ctx.db
+      .query("studyBlocks")
+      .withIndex("by_taskId", (q) => q.eq("taskId", taskId))
+      .collect();
+    let count = 0;
+    for (const block of blocks) {
+      if (block.isCompleted || !block.startTime) continue;
+      await ctx.db.patch(block._id, { startTime: undefined, isConflicted: false, needsExport: false });
+      count++;
+    }
+    return count;
+  },
+});
+
+export const unscheduleBlockInternal = internalMutation({
+  args: { studyBlockId: v.id("studyBlocks") },
+  returns: v.null(),
+  handler: async (ctx, { studyBlockId }) => {
+    await ctx.db.patch(studyBlockId, { startTime: undefined, isConflicted: false, needsExport: false });
+    return null;
+  },
+});
+
 export const runDetectConflicts = mutation({
   args: {
     timedEvents: v.array(timedEventValidator),

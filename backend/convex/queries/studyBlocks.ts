@@ -224,6 +224,16 @@ export const getAllStudyBlocksByUserInternal = internalQuery({
   },
 });
 
+export const getStudyBlocksByTaskInternal = internalQuery({
+  args: { taskId: v.id("tasks") },
+  handler: async (ctx, { taskId }) => {
+    return await ctx.db
+      .query("studyBlocks")
+      .withIndex("by_taskId", (q) => q.eq("taskId", taskId))
+      .collect();
+  },
+});
+
 export const getFutureStudyBlocksForExport = internalQuery({
   args: { userId: v.id("users") },
   handler: async (ctx, args) => {
