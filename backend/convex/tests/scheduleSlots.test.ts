@@ -328,9 +328,9 @@ describe("filterPoolForBlock", () => {
   test("excludes slots before recommendedStartMs when set", () => {
     const recommendedStartMs = MONDAY_9AM_UTC + 60 * 60 * 1000;
     const pool: PoolSlot[] = [
-      { startMs: MONDAY_9AM_UTC, inAvailableSlot: true },
-      { startMs: recommendedStartMs, inAvailableSlot: true },
-      { startMs: MONDAY_9AM_UTC + 2 * 60 * 60 * 1000, inAvailableSlot: true },
+      { startMs: MONDAY_9AM_UTC },
+      { startMs: recommendedStartMs },
+      { startMs: MONDAY_9AM_UTC + 2 * 60 * 60 * 1000 },
     ];
     const candidates = filterPoolForBlock({
       pool,
@@ -347,8 +347,8 @@ describe("filterPoolForBlock", () => {
 
   test("is unaffected when recommendedStartMs is not set", () => {
     const pool: PoolSlot[] = [
-      { startMs: MONDAY_9AM_UTC, inAvailableSlot: true },
-      { startMs: MONDAY_9AM_UTC + 60 * 60 * 1000, inAvailableSlot: true },
+      { startMs: MONDAY_9AM_UTC },
+      { startMs: MONDAY_9AM_UTC + 60 * 60 * 1000 },
     ];
     const dueDateMs = MONDAY_9AM_UTC + 10 * 60 * 60 * 1000;
     const candidates = filterPoolForBlock({
