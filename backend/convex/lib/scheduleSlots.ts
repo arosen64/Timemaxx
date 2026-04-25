@@ -42,7 +42,7 @@ export function computeRecommendedStart(
   dueDate: number,
   timeEstimate: number | undefined
 ): number | undefined {
-  if (timeEstimate === undefined) return undefined;
+  if (!timeEstimate) return undefined;
   const daysNeeded = Math.ceil(timeEstimate / ASSUMED_DAILY_STUDY_MINUTES);
   return Math.max(now, dueDate - daysNeeded * DAY_MS);
 }

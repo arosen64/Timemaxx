@@ -214,6 +214,34 @@ describe("mutations/subtasks – setSubtaskTimeEstimate", () => {
     const parent = await t.run((ctx) => ctx.db.get(parentTaskId));
     expect(parent!.timeEstimate).toBe(45);
   });
+
+  test("updates parent recommendedStart during subtask estimate rollup", async () => {
+    const t = makeTestCtx();
+    const { userId } = await createTestUser(t);
+    const DAY_MS = 24 * 60 * 60 * 1000;
+    const dueDate = Date.now() + 30 * DAY_MS;
+    const parentTaskId = await t.run((ctx) =>
+      ctx.db.insert("tasks", {
+        userId: userId as never,
+        title: "Parent Task",
+        description: "desc",
+        taskType: "Essay",
+        dueDate,
+        isManualEstimate: false,
+        createdAt: Date.now(),
+      })
+    );
+    const subtaskId = await seedSubtask(t, userId, parentTaskId);
+
+    await t.mutation(internal.mutations.subtasks.setSubtaskTimeEstimate, {
+      subtaskId,
+      timeEstimate: 240,
+      reasoning: makeReasoning(),
+    });
+
+    const parent = await t.run((ctx) => ctx.db.get(parentTaskId));
+    expect(parent!.recommendedStart).toBe(dueDate - 2 * DAY_MS);
+  });
 });
 
 // ─── deleteSubtask ────────────────────────────────────────────────────────────

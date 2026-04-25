@@ -7,6 +7,7 @@ import {
   extendSlotPool,
   filterPoolForBlock,
   selectSlotWithAI,
+  computeRecommendedStart,
   SCHEDULE_HORIZON_MS,
   type OccupiedInterval,
   type WorkHoursRow,
@@ -397,5 +398,34 @@ describe("selectSlotWithAI", () => {
     // Should return the first candidate (index 0 fallback)
     expect(result).not.toBeNull();
     expect(result!.startISO).toBe(candidates[0].startISO);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// computeRecommendedStart
+// ---------------------------------------------------------------------------
+
+describe("computeRecommendedStart", () => {
+  const DAY_MS = 24 * 60 * 60 * 1000;
+  const now = new Date("2026-04-25T12:00:00Z").getTime();
+  const farDue = now + 30 * DAY_MS;
+
+  test("returns undefined when timeEstimate is undefined", () => {
+    expect(computeRecommendedStart(now, farDue, undefined)).toBeUndefined();
+  });
+
+  test("returns undefined when timeEstimate is 0", () => {
+    expect(computeRecommendedStart(now, farDue, 0)).toBeUndefined();
+  });
+
+  test("returns dueDate minus days needed when window is large enough", () => {
+    // 240 min → ceil(240/120) = 2 days needed
+    expect(computeRecommendedStart(now, farDue, 240)).toBe(farDue - 2 * DAY_MS);
+  });
+
+  test("clamps to now when estimate exceeds available window", () => {
+    const tightDue = now + 3 * DAY_MS;
+    // 1200 min → ceil(1200/120) = 10 days needed, but only 3 days available
+    expect(computeRecommendedStart(now, tightDue, 1200)).toBe(now);
   });
 });

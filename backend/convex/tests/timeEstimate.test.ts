@@ -183,6 +183,34 @@ describe("mutations/timeEstimate – setTimeEstimate auto-generates study blocks
     expect(uniqueIds.size).toBe(ids.length);
   });
 
+  test("updates recommendedStart based on the new estimate", async () => {
+    const t = makeTestCtx();
+    const { userId } = await createTestUser(t);
+    const DAY_MS = 24 * 60 * 60 * 1000;
+    const now = Date.now();
+    const dueDate = now + 30 * DAY_MS;
+    const taskId = await t.run((ctx) =>
+      ctx.db.insert("tasks", {
+        userId: userId as any,
+        title: "Test task",
+        description: "desc",
+        taskType: "Essay",
+        dueDate,
+        createdAt: now,
+        isManualEstimate: false,
+      })
+    );
+
+    await t.mutation(internal.mutations.timeEstimate.setTimeEstimate, {
+      taskId,
+      timeEstimate: 240,
+      reasoning: makeReasoning(),
+    });
+
+    const task = await t.run((ctx) => ctx.db.get(taskId));
+    expect(task!.recommendedStart).toBe(dueDate - 2 * DAY_MS);
+  });
+
   test("persists the reasoning trace on the task", async () => {
     const t = makeTestCtx();
     const { userId } = await createTestUser(t);
@@ -243,6 +271,33 @@ describe("mutations/timeEstimate – setManualTimeEstimate", () => {
 
     expect(blocks).toHaveLength(2);
     expect(blocks.every((b) => b.studyBlockLength === 60)).toBe(true);
+  });
+
+  test("updates recommendedStart based on the new estimate", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+    const DAY_MS = 24 * 60 * 60 * 1000;
+    const now = Date.now();
+    const dueDate = now + 30 * DAY_MS;
+    const taskId = await t.run((ctx) =>
+      ctx.db.insert("tasks", {
+        userId: userId as any,
+        title: "Test task",
+        description: "desc",
+        taskType: "Essay",
+        dueDate,
+        createdAt: now,
+        isManualEstimate: false,
+      })
+    );
+
+    await withAuth.mutation(api.mutations.timeEstimate.setManualTimeEstimate, {
+      taskId,
+      timeEstimate: 240,
+    });
+
+    const task = await t.run((ctx) => ctx.db.get(taskId));
+    expect(task!.recommendedStart).toBe(dueDate - 2 * DAY_MS);
   });
 
   test("throws when user does not own the task", async () => {
