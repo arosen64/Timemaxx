@@ -214,10 +214,40 @@ export const scheduleAllBlocks = action({
         });
       }
 
-      // Scan backwards from the due date so blocks land close to when they're
-      // needed rather than packing the nearest available day.
-      const allCandidates = filterPoolForBlock({
-        pool,
+      const blockDurationMs = item.block.studyBlockLength * 60000;
+
+      // Scan the full pool in reverse (latest slot first) to discover which days
+      // have at least one physically valid slot — not limited by MAX_CANDIDATES.
+      const dayAvailability = new Map<string, { load: number; repMs: number }>();
+      for (let pi = pool.length - 1; pi >= 0; pi--) {
+        const s = pool[pi];
+        if (s.startMs >= item.parentDueDate) continue;
+        if (s.startMs + blockDurationMs > item.parentDueDate) continue;
+        if (item.recommendedStart !== undefined && s.startMs < item.recommendedStart) continue;
+        const d = toDateStr(new Date(s.startMs), args.timezone);
+        if (dayAvailability.has(d)) continue;
+        if (isSlotValid(s.startMs, blockDurationMs, workHoursGrid, occupiedIntervals, args.timezone)) {
+          dayAvailability.set(d, { load: speculativeDailyLoadMap.get(d) ?? 0, repMs: s.startMs });
+        }
+      }
+
+      if (dayAvailability.size === 0) continue;
+
+      // Prefer days still within the cap; only use over-cap days when every
+      // available day is already at the limit.
+      const availEntries = [...dayAvailability.entries()];
+      const underCap = availEntries.filter(
+        ([, { repMs }]) => !isDailyCapReached(repMs, args.timezone, speculativeDailyLoadMap, maxBlocksPerDayMap),
+      );
+      const pool2 = underCap.length > 0 ? underCap : availEntries;
+      const [targetDate] = pool2.reduce((a, b) => (a[1].load <= b[1].load ? a : b));
+
+      // Pull up to MAX_CANDIDATES slots from just the target day, latest-first.
+      const targetPool = pool.filter(
+        (s) => toDateStr(new Date(s.startMs), args.timezone) === targetDate,
+      );
+      const candidates = filterPoolForBlock({
+        pool: targetPool,
         dueDateMs: item.parentDueDate,
         durationMinutes: item.block.studyBlockLength,
         workHoursGrid,
@@ -227,21 +257,7 @@ export const scheduleAllBlocks = action({
         reverseOrder: true,
       });
 
-      if (allCandidates.length === 0) continue;
-
-      // Among the visible days, pick the one with the lowest speculative load
-      // so blocks spread across days rather than concentrating on one.
-      const seenDays = new Map<string, number>();
-      for (const c of allCandidates) {
-        const d = toDateStr(new Date(c.startMs), args.timezone);
-        if (!seenDays.has(d)) seenDays.set(d, speculativeDailyLoadMap.get(d) ?? 0);
-      }
-      const [targetDate] = [...seenDays.entries()].reduce((a, b) => (a[1] <= b[1] ? a : b));
-
-      // Only show Gemini slots from the target day — it picks the best time, not the day.
-      const candidates = allCandidates.filter(
-        (c) => toDateStr(new Date(c.startMs), args.timezone) === targetDate,
-      );
+      if (candidates.length === 0) continue;
 
       // Reserve this day so the next block looks elsewhere first.
       speculativeDailyLoadMap.set(targetDate, (speculativeDailyLoadMap.get(targetDate) ?? 0) + 1);
