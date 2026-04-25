@@ -105,6 +105,21 @@ export const deleteAccount = mutation({
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated: must be logged in to delete account");
 
+    const subtasks = await ctx.db
+      .query("subtasks")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .collect();
+    await Promise.all(
+      subtasks.map(async (subtask) => {
+        const blocks = await ctx.db
+          .query("studyBlocks")
+          .withIndex("by_subtaskId", (q) => q.eq("subtaskId", subtask._id))
+          .collect();
+        await Promise.all(blocks.map((block) => ctx.db.delete(block._id)));
+      })
+    );
+    await Promise.all(subtasks.map((subtask) => ctx.db.delete(subtask._id)));
+
     const tasks = await ctx.db
       .query("tasks")
       .withIndex("by_userId", (q) => q.eq("userId", userId))
