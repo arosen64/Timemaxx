@@ -24,7 +24,7 @@ type Props = {
   assigningBlockId: Id<'studyBlocks'> | null
   onToggleAssign: (id: Id<'studyBlocks'>) => void
   timezone: string
-  onScheduleAllMsg: (msg: string) => void
+  onScheduleAllMsg: (msg: string, warn?: boolean) => void
 }
 
 // ---------------------------------------------------------------------------
@@ -241,7 +241,7 @@ export default function ClassPanel({
         result.conflicted > 0
           ? ` ${result.conflicted} conflicted block${result.conflicted !== 1 ? 's' : ''} need${result.conflicted === 1 ? 's' : ''} auto-reschedule.`
           : ''
-      onScheduleAllMsg(base + conflictNote)
+      onScheduleAllMsg(base + conflictNote, result.skipped > 0)
     } catch (err) {
       onScheduleAllMsg(`Scheduling failed: ${err instanceof Error ? err.message : 'Unknown error'}`)
     } finally {
