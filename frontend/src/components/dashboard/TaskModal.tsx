@@ -504,19 +504,21 @@ export default function TaskModal({
         {/* Grade weight */}
         <div className="flex w-full flex-col gap-1.5">
           <div>
-            <label className="font-heading text-[13px] font-semibold text-navy">
+            <label htmlFor="assignment-weight" className="font-heading text-[13px] font-semibold text-navy">
               Grade weight <span className="font-normal text-light-blue">(optional)</span>
             </label>
             <p className="mt-0.5 font-body text-xs text-light-blue">Percentage of final grade, 0–100</p>
           </div>
           <div className="flex items-center gap-2">
             <input
+              id="assignment-weight"
               type="number"
               min={0}
               max={100}
+              step="any"
               value={assignmentWeight}
               onChange={(e) => setAssignmentWeight(e.target.value)}
-              placeholder="e.g. 25"
+              placeholder="0–100"
               className="h-11 w-24 rounded-md border border-border bg-bg-gray px-3.5 font-body text-sm text-navy outline-none placeholder:text-light-blue"
             />
             <span className="font-body text-sm text-slate-blue">%</span>
