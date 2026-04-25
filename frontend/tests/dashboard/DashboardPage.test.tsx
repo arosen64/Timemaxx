@@ -9,7 +9,7 @@ vi.mock('../../../backend/convex/_generated/api', () => ({
       users: { getCurrUser: 'getCurrUser' },
       tasks: { getAllTasks: 'getAllTasks' },
       subtasks: { getAllSubtasksForUser: 'getAllSubtasksForUser' },
-      studyBlocks: { getUpcomingStudyBlocks: 'getUpcomingStudyBlocks', getStudyBlocksByTask: 'getStudyBlocksByTask', getAllStudyBlocksWithTasks: 'getAllStudyBlocksWithTasks' },
+      studyBlocks: { getUpcomingStudyBlocks: 'getUpcomingStudyBlocks', getStudyBlocksByTask: 'getStudyBlocksByTask', getAllStudyBlocksWithTasks: 'getAllStudyBlocksWithTasks', getTodayStudyBlockMinutes: 'getTodayStudyBlockMinutes', getThisWeekStudyBlocks: 'getThisWeekStudyBlocks' },
       userCourses: { getUserCourses: 'getUserCourses' },
     },
     mutations: {
@@ -131,9 +131,11 @@ function setup(tasks = MOCK_TASKS, user = MOCK_USER) {
     if (query === 'getAllTasks') return tasks
     if (query === 'getAllSubtasksForUser') return []
     if (query === 'getUpcomingStudyBlocks') return []
-      if (query === 'getAllStudyBlocksWithTasks') return []
+    if (query === 'getAllStudyBlocksWithTasks') return []
     if (query === 'getUserCourses') return []
     if (query === 'getStudyBlocksByTask') return []
+    if (query === 'getTodayStudyBlockMinutes') return 90
+    if (query === 'getThisWeekStudyBlocks') return { total: 2, completed: 1 }
     return user
   }) as never)
   mockUseMutation.mockReturnValue(makeMutationFn() as never)
@@ -170,6 +172,8 @@ describe('DashboardPage', () => {
       if (query === 'getAllStudyBlocksWithTasks') return []
       if (query === 'getAllSubtasksForUser') return []
       if (query === 'getStudyBlocksByTask') return []
+      if (query === 'getTodayStudyBlockMinutes') return 0
+      if (query === 'getThisWeekStudyBlocks') return { total: 0, completed: 0 }
       return MOCK_USER
     }) as never)
     mockUseMutation.mockReturnValue(makeMutationFn() as never)
@@ -300,16 +304,18 @@ describe('DashboardPage', () => {
 
   // ── Stat cards ───────────────────────────────────────────────────────────────
 
-  it('Tasks This Week stat card shows the task count', () => {
+  it('Study Blocks This Week stat card shows the block count and completed count', () => {
     setup()
-    expect(screen.getByText('Tasks This Week')).toBeInTheDocument()
+    expect(screen.getByText('Study Blocks This Week')).toBeInTheDocument()
     expect(screen.getByText('2')).toBeInTheDocument()
+    expect(screen.getByText('1 completed')).toBeInTheDocument()
   })
 
-  it('Estimated Time stat card shows the formatted total of estimated minutes', () => {
+  it('Study Time Today stat card shows the formatted total of scheduled study minutes', () => {
     setup()
-    // task1 has 90 min, task2 has undefined → total 90 min → "1h 30m"
-    expect(screen.getByText('1h 30m')).toBeInTheDocument()
+    // getTodayStudyBlockMinutes mock returns 90 → "1h 30m"
+    expect(screen.getByText('Study Time Today')).toBeInTheDocument()
+    expect(screen.getAllByText('1h 30m').length).toBeGreaterThan(0)
   })
 
   // ── Edit task flow ───────────────────────────────────────────────────────────

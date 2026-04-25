@@ -84,10 +84,8 @@ export default function DashboardPage() {
     return rows.sort((a, b) => a.courseCode.localeCompare(b.courseCode))
   }, [userCourses])
 
-  const totalEstimatedMinutes = useMemo(
-    () => taskRows.reduce((sum, t) => sum + (t.timeEstimate ?? 0), 0),
-    [taskRows]
-  )
+  const todayStudyMinutes = useQuery(api.queries.studyBlocks.getTodayStudyBlockMinutes) ?? 0
+  const thisWeekBlocks = useQuery(api.queries.studyBlocks.getThisWeekStudyBlocks) ?? { total: 0, completed: 0 }
 
   const [activeTab, setActiveTab] = useState<'active' | 'completed'>('active')
 
@@ -446,14 +444,14 @@ export default function DashboardPage() {
         {/* Stats Row */}
         <div className="flex gap-4">
           <StatCard
-            label="Tasks This Week"
-            value={taskRows.length}
-            indicator={{ dotClass: 'bg-success', text: `${completedTasks.length} completed`, textClass: 'text-success' }}
+            label="Study Blocks This Week"
+            value={thisWeekBlocks.total}
+            indicator={{ dotClass: 'bg-success', text: `${thisWeekBlocks.completed} completed`, textClass: 'text-success' }}
           />
           <StatCard
-            label="Estimated Time"
-            value={formatEstimatedTime(totalEstimatedMinutes)}
-            indicator={{ dotClass: 'bg-sky-blue', text: 'AI estimated', textClass: 'text-sky-blue' }}
+            label="Study Time Today"
+            value={formatEstimatedTime(todayStudyMinutes)}
+            indicator={{ dotClass: 'bg-sky-blue', text: 'scheduled today', textClass: 'text-sky-blue' }}
           />
         </div>
 

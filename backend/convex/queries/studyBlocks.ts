@@ -202,6 +202,55 @@ export const getAllStudyBlocksWithTasks = query({
   },
 });
 
+export const getThisWeekStudyBlocks = query({
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return { total: 0, completed: 0 };
+
+    const allBlocks = await ctx.db
+      .query("studyBlocks")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .collect();
+
+    const now = new Date();
+    const day = now.getDay(); // 0=Sun, 6=Sat
+    const weekStart = new Date(now);
+    weekStart.setHours(0, 0, 0, 0);
+    weekStart.setDate(now.getDate() - day);
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 7);
+
+    const thisWeek = allBlocks.filter((b) => {
+      if (!b.startTime) return false;
+      const t = new Date(b.startTime).getTime();
+      return t >= weekStart.getTime() && t < weekEnd.getTime();
+    });
+
+    return {
+      total: thisWeek.length,
+      completed: thisWeek.filter((b) => b.isCompleted).length,
+    };
+  },
+});
+
+export const getTodayStudyBlockMinutes = query({
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return 0;
+
+    const allBlocks = await ctx.db
+      .query("studyBlocks")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .collect();
+
+    const todayStr = new Date().toISOString().slice(0, 10);
+
+    return allBlocks
+      .filter((b) => b.startTime?.startsWith(todayStr))
+      .reduce((sum, b) => sum + b.studyBlockLength, 0);
+  },
+});
+
 export const getStudyBlockInternal = internalQuery({
   args: { studyBlockId: v.id("studyBlocks") },
   handler: async (ctx, args) => {
