@@ -4,7 +4,7 @@ export interface ScoreBreakdown {
   timeOfDayMatch: number;    // 0 or +2
   dayOfWeekMatch: number;    // 0 or +1
   bufferComfort: number;     // 0 or +1
-  dailyLoadPenalty: number;  // 0 to −3 (one per occupied interval on the day)
+  dailyLoadPenalty: number;  // 0 to −3 (one per placed block on the day)
   difficultyBonus: number;   // 0 or +1 (high-difficulty course + time-of-day match)
 }
 
@@ -60,7 +60,7 @@ function getDayOfWeek(startMs: number, timezone: string): string {
  *   +2  time-of-day match (slot falls within any preferred time window)
  *   +1  day-of-week match (slot falls on a preferred day)
  *   +1  buffer comfort (>15 min gap on both sides of the slot)
- *   −1  per existing occupied interval on the same calendar date, max −3
+ *   −1  per placed block on the same calendar date, max −3
  *   +1  difficulty bonus (course difficultyRating ≥ HIGH_DIFFICULTY_THRESHOLD AND time-of-day match;
  *       never fires when the user has no time-of-day preferences)
  */
