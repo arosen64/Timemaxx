@@ -52,6 +52,15 @@ function getDayOfWeek(startMs: number, timezone: string): string {
   );
 }
 
+/** Pre-computes the time-of-day fields for a slot so callers can cache them
+ *  across multiple blocks scored against the same pool. */
+export function getSlotTimeInfo(
+  startMs: number,
+  timezone: string,
+): { dayOfWeek: string; minutesFromMidnight: number } {
+  return { dayOfWeek: getDayOfWeek(startMs, timezone), minutesFromMidnight: getMinutesFromMidnight(startMs, timezone) };
+}
+
 /**
  * Scores a single candidate slot against the user's soft preferences.
  * Pure function — deterministic, no I/O, no Convex deps.
@@ -67,6 +76,7 @@ function getDayOfWeek(startMs: number, timezone: string): string {
 export function scoreCandidate(opts: {
   startMs: number;
   timezone: string;
+  precomputed?: { dayOfWeek: string; minutesFromMidnight: number };
   timeOfDayRanges: Array<[number, number]>;
   dayOfWeekPrefs: string[];
   minutesSincePreviousEvent: number | null;
@@ -74,8 +84,8 @@ export function scoreCandidate(opts: {
   dailyLoadCount: number;
   difficultyRating?: number;
 }): { score: number; scoreBreakdown: ScoreBreakdown } {
-  const minFromMidnight = getMinutesFromMidnight(opts.startMs, opts.timezone);
-  const dayOfWeek = getDayOfWeek(opts.startMs, opts.timezone);
+  const minFromMidnight = opts.precomputed?.minutesFromMidnight ?? getMinutesFromMidnight(opts.startMs, opts.timezone);
+  const dayOfWeek = opts.precomputed?.dayOfWeek ?? getDayOfWeek(opts.startMs, opts.timezone);
 
   const timeOfDayMatch =
     opts.timeOfDayRanges.length > 0 &&

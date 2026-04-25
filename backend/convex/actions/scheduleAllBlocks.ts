@@ -17,7 +17,7 @@ import {
   type WorkHoursRow,
   type PoolSlot,
 } from "../lib/scheduleSlots";
-import { parseTimeOfDayRanges, scoreCandidate, getProductivityTraits, type ScoreBreakdown } from "../lib/scoreSlots";
+import { parseTimeOfDayRanges, scoreCandidate, getProductivityTraits, getSlotTimeInfo, type ScoreBreakdown } from "../lib/scoreSlots";
 import { fetch21DayCalendarEvents } from "../lib/calendarFetch";
 
 const MAX_BLOCKS = 10;
@@ -209,6 +209,9 @@ export const scheduleAllBlocks = action({
     let scanCursor = roundUpTo15Min(nowMs);
 
     // Phase 1: score all physically valid slots globally; take top MAX_CANDIDATES by score
+    // slotTimeCache amortizes the two Intl.DateTimeFormat calls in scoreCandidate across
+    // all blocks scored against the same pool slot.
+    const slotTimeCache = new Map<number, { dayOfWeek: string; minutesFromMidnight: number }>();
     const entries: BlockEntry[] = [];
 
     for (const item of sorted) {
@@ -242,9 +245,14 @@ export const scheduleAllBlocks = action({
         const context = buildSlotContext(s.startMs, endMs, occupiedIntervals);
         const dateStr = toDateStr(new Date(s.startMs), args.timezone);
 
+        if (!slotTimeCache.has(s.startMs)) {
+          slotTimeCache.set(s.startMs, getSlotTimeInfo(s.startMs, args.timezone));
+        }
+
         const { score, scoreBreakdown } = scoreCandidate({
           startMs: s.startMs,
           timezone: args.timezone,
+          precomputed: slotTimeCache.get(s.startMs),
           timeOfDayRanges,
           dayOfWeekPrefs,
           minutesSincePreviousEvent: context.minutesSincePreviousEvent,
