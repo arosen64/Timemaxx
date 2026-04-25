@@ -277,7 +277,7 @@ export default function ClassPanel({
           ) : (
             <>
               {currentCourses.length === 0 && (
-                <p className="px-4 py-3 text-xs text-light-blue">No current classes.</p>
+                <p className="px-4 py-4 text-xs text-light-blue">No current classes.</p>
               )}
               {currentCourses.map((course) => (
                 <button

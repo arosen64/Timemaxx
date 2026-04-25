@@ -85,6 +85,7 @@ describe("mutations/userCourses – deleteUserCourse", () => {
         taskId: taskToRemove as never,
         title: "Block",
         studyBlockLength: 60,
+        isCompleted: false,
       })
     );
 

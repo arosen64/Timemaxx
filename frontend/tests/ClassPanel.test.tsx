@@ -18,6 +18,9 @@ vi.mock('../../backend/convex/_generated/api', () => ({
       scheduleBlock: { scheduleBlock: 'scheduleBlock' },
       scheduleAllBlocks: { scheduleAllBlocks: 'scheduleAllBlocks' },
     },
+    mutations: {
+      studyBlocks: { splitStudyBlock: 'splitStudyBlock' },
+    },
   },
 }))
 
@@ -119,6 +122,8 @@ function setupActions({
     if (ref === 'scheduleAllBlocks') return scheduleAllMock as never
     return scheduleBlockMock as never
   })
+
+  mockUseMutation.mockReturnValue(vi.fn().mockResolvedValue(undefined) as never)
 
   return { scheduleAllMock, scheduleBlockMock }
 }

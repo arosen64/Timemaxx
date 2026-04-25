@@ -32,6 +32,7 @@ async function seedStudyBlock(
       title: overrides.title ?? "Block 1",
       startTime: overrides.startTime,
       studyBlockLength: overrides.studyBlockLength ?? 60,
+      isCompleted: false,
     })
   );
 }
@@ -71,6 +72,7 @@ async function seedSubtaskBlock(
       userId: userId as any,
       title: "Subtask block",
       studyBlockLength: overrides.studyBlockLength ?? 90,
+      isCompleted: false,
     })
   );
   return { subtaskId, studyBlockId };
@@ -592,6 +594,7 @@ describe("mutations/studyBlocks – setGoogleEventId", () => {
         title: "Block",
         studyBlockLength: 60,
         googleEventId: "old_event_id",
+        isCompleted: false,
       })
     );
 
@@ -646,6 +649,7 @@ describe("mutations/studyBlocks – flagFutureBlocksForReexport", () => {
         studyBlockLength: 60,
         googleEventId: "gcal-evt-123",
         needsExport: false,
+        isCompleted: false,
       })
     );
 
@@ -670,6 +674,7 @@ describe("mutations/studyBlocks – flagFutureBlocksForReexport", () => {
         studyBlockLength: 60,
         googleEventId: "gcal-past-evt",
         needsExport: false,
+        isCompleted: false,
       })
     );
 
@@ -691,6 +696,7 @@ describe("mutations/studyBlocks – flagFutureBlocksForReexport", () => {
         title: "Unscheduled block",
         studyBlockLength: 60,
         googleEventId: "gcal-evt-unscheduled",
+        isCompleted: false,
       })
     );
 
@@ -712,6 +718,7 @@ describe("mutations/studyBlocks – flagFutureBlocksForReexport", () => {
         title: "Never exported",
         startTime: futureStart,
         studyBlockLength: 60,
+        isCompleted: false,
       })
     );
 
@@ -740,6 +747,7 @@ describe("mutations/studyBlocks – flagFutureBlocksForReexport", () => {
         studyBlockLength: 60,
         googleEventId: "evt-user1",
         needsExport: false,
+        isCompleted: false,
       })
     );
     const block2Id = await t.run((ctx) =>
@@ -751,6 +759,7 @@ describe("mutations/studyBlocks – flagFutureBlocksForReexport", () => {
         studyBlockLength: 60,
         googleEventId: "evt-user2",
         needsExport: false,
+        isCompleted: false,
       })
     );
 

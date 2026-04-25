@@ -33,6 +33,7 @@ async function seedBlock(
       userId: userId as any,
       title: "Block",
       studyBlockLength: 60,
+      isCompleted: false,
     })
   );
 }
@@ -69,6 +70,7 @@ async function seedSubtaskBlock(
       userId: userId as any,
       title: "Subtask Block",
       studyBlockLength: 60,
+      isCompleted: false,
     })
   );
 }

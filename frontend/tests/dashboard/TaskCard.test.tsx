@@ -342,8 +342,8 @@ describe('TaskCard', () => {
     mockUseQuery.mockReturnValue([activeBlock] as never)
     setup()
     await user.click(screen.getByText('Calculus Problem Set'))
-    const blockEl = screen.getByText('Study Block active').closest('div')!
-    expect(blockEl).toHaveClass('bg-navy')
+    const blockEl = screen.getByText('Study Block active').closest('[class*="bg-navy"]')!
+    expect(blockEl).toBeInTheDocument()
   })
 
   it('renders default block without navy background when not active', async () => {

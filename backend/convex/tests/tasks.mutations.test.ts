@@ -29,6 +29,7 @@ async function seedStudyBlock(
       taskId: taskId as any,
       title: "Block",
       studyBlockLength: 60,
+      isCompleted: false,
       ...(opts.googleEventId ? { googleEventId: opts.googleEventId } : {}),
     })
   );
@@ -63,6 +64,7 @@ async function seedSubtaskStudyBlock(
       subtaskId: subtaskId as any,
       title: "Subtask Block",
       studyBlockLength: 60,
+      isCompleted: false,
       ...(opts.googleEventId ? { googleEventId: opts.googleEventId } : {}),
     })
   );
