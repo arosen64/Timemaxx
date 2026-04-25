@@ -272,6 +272,11 @@ export const scheduleAllBlocks = action({
 
       // Increment speculative load for the top candidate's day so the next block
       // scores that day lower, spreading blocks across days.
+      // Slack: if Gemini picks a lower-scored candidate on a different day,
+      // this day gets one phantom load unit. Phase 3 will also increment the
+      // actually-placed day, so at most one day is slightly over-counted per
+      // block. The bias is toward spreading further rather than bunching, which
+      // is the desired behavior.
       const topDateStr = toDateStr(new Date(candidates[0].startMs), args.timezone);
       speculativeDailyLoadMap.set(topDateStr, (speculativeDailyLoadMap.get(topDateStr) ?? 0) + 1);
 
