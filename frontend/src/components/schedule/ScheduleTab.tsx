@@ -8,6 +8,7 @@ import TimeGrid, { type StudyBlockOnGrid } from './TimeGrid'
 import CalendarSelectorPopup from './CalendarSelectorPopup'
 import ScheduleHeader from './ScheduleHeader'
 import ClassPanel from './ClassPanel'
+import CalendarNudge from './CalendarNudge'
 import { computeOverlapLayout } from './overlapLayout'
 import { offsetDate, isoDateString, minutesFromMidnight, SLOT_HEIGHT, MAX_OFFSET_DAYS, DAYS_FULL } from './utils'
 
@@ -45,6 +46,7 @@ export default function ScheduleTab() {
   const autoRescheduleAction = useAction(api.actions.autoRescheduleConflicts.autoRescheduleConflicts)
   const fetchCalendarEventsAction = useAction(api.actions.fetchCalendarEvents.fetchCalendarEvents)
   const exportStudyBlocksAction = useAction(api.actions.exportStudyBlocksToCalendar.exportStudyBlocksToCalendar)
+  const initiateCalendarOAuth = useAction(api.actions.initiateGoogleCalendarOAuth.initiateGoogleCalendarOAuth)
 
   const [weekOffset, setWeekOffset] = useState(0)
   const [calendarData, setCalendarData] = useState<CalendarData | null>(null)
@@ -57,6 +59,9 @@ export default function ScheduleTab() {
   const [isExporting, setIsExporting] = useState(false)
   const [exportMsg, setExportMsg] = useState<string | null>(null)
   const [scheduleAllMsg, setScheduleAllMsg] = useState<string | null>(null)
+  const [nudgeDismissed, setNudgeDismissed] = useState(false)
+  const [showNudge, setShowNudge] = useState(false)
+  const [pendingSchedule, setPendingSchedule] = useState<(() => void) | null>(null)
 
   const gridRef = useRef<HTMLDivElement>(null)
 
@@ -291,6 +296,32 @@ export default function ScheduleTab() {
     }
   }, [exportStudyBlocksAction, fetchCalendarEventsAction, startDateStr, timezone])
 
+  function maybeNudge(proceed: () => void) {
+    if (calendarConnected || nudgeDismissed) {
+      proceed()
+    } else {
+      setPendingSchedule(() => proceed)
+      setShowNudge(true)
+    }
+  }
+
+  function handleNudgeConnect() {
+    initiateCalendarOAuth({}).then((url) => { window.location.href = url }).catch(() => {})
+  }
+
+  function handleNudgeScheduleAnyway() {
+    setShowNudge(false)
+    setNudgeDismissed(true)
+    pendingSchedule?.()
+    setPendingSchedule(null)
+  }
+
+  function handleNudgeDismiss() {
+    setShowNudge(false)
+    setNudgeDismissed(true)
+    setPendingSchedule(null)
+  }
+
   async function handleToggleCalendar(calId: string) {
     const current = selectedCalendarIds ?? []
     const next = current.includes(calId) ? current.filter((id) => id !== calId) : [...current, calId]
@@ -431,6 +462,7 @@ export default function ScheduleTab() {
           onToggleAssign={(id) => setAssigningBlockId((prev) => (prev === id ? null : id))}
           timezone={timezone}
           onScheduleAllMsg={setScheduleAllMsg}
+          onBeforeSchedule={maybeNudge}
         />
       </div>
 
@@ -440,6 +472,14 @@ export default function ScheduleTab() {
           selectedIds={selectedCalendarIds ?? []}
           onToggle={handleToggleCalendar}
           onClose={() => setSelectorOpen(false)}
+        />
+      )}
+
+      {showNudge && (
+        <CalendarNudge
+          onConnect={handleNudgeConnect}
+          onScheduleAnyway={handleNudgeScheduleAnyway}
+          onDismiss={handleNudgeDismiss}
         />
       )}
     </div>
