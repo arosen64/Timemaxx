@@ -64,7 +64,7 @@ function BlockRow({
             onToggleAssign(block._id)
           }
         }}
-        className={`group flex items-center gap-2 rounded-lg border px-2.5 py-2 cursor-pointer transition-colors ${
+        className={`flex items-center gap-2 rounded-lg border px-2.5 py-2 cursor-pointer transition-colors ${
           isAssigning
             ? 'border-teal bg-teal/10'
             : 'border-border bg-bg-gray hover:border-teal/50 hover:bg-teal/5'
@@ -73,23 +73,21 @@ function BlockRow({
         <span className="h-1 w-4 rounded-full bg-sky-blue shrink-0" />
         <span className="flex-1 min-w-0 truncate text-[11px] font-medium text-navy">{block.title}</span>
         <span className="text-[10px] text-light-blue shrink-0">{block.studyBlockLength} min</span>
-        {canSplit && (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation()
-              onSplit(block._id)
-            }}
-            disabled={isSplitting}
-            className="flex h-5 w-5 shrink-0 items-center justify-center rounded text-light-blue opacity-0 transition hover:bg-navy/10 hover:text-navy group-hover:opacity-100 disabled:cursor-not-allowed disabled:opacity-50"
-            aria-label="Split this block in two"
-          >
-            {isSplitting
-              ? <SpinnerIcon color="currentColor" size={10} />
-              : <SplitIcon color="currentColor" size={10} />
-            }
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation()
+            onSplit(block._id)
+          }}
+          disabled={!canSplit || isSplitting}
+          className="flex h-5 w-5 shrink-0 items-center justify-center rounded text-light-blue transition hover:bg-navy/10 hover:text-navy disabled:cursor-not-allowed disabled:opacity-30"
+          aria-label="Split this block in two"
+        >
+          {isSplitting
+            ? <SpinnerIcon color="currentColor" size={10} />
+            : <SplitIcon color="currentColor" size={10} />
+          }
+        </button>
         <button
           type="button"
           onClick={(e) => {
@@ -97,7 +95,7 @@ function BlockRow({
             onSchedule(block._id)
           }}
           disabled={isScheduling}
-          className="flex h-5 w-5 shrink-0 items-center justify-center rounded text-light-blue opacity-0 transition hover:bg-navy/10 hover:text-navy group-hover:opacity-100 disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex h-5 w-5 shrink-0 items-center justify-center rounded text-light-blue transition hover:bg-navy/10 hover:text-navy disabled:cursor-not-allowed disabled:opacity-30"
           aria-label="Auto-schedule this block"
         >
           {isScheduling
@@ -272,8 +270,6 @@ export default function ClassPanel({
             <div className="flex items-center justify-center py-8">
               <SpinnerIcon color="#4E6A8C" size={14} />
             </div>
-          ) : currentCourses.length === 0 ? (
-            <p className="px-4 py-4 text-xs text-light-blue">No current classes.</p>
           ) : (
             <>
               {currentCourses.map((course) => (
