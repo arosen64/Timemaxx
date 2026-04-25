@@ -48,7 +48,7 @@ export type ChatWorkflowOutput = {
   studyGoal: string | null;
   grade: string | null;
   difficultyRating: number | null;
-  newActiveAgent: "task" | "feedback" | "preferences" | "classes" | null;
+  newActiveAgent: "task" | "feedback" | "preferences" | "classes" | "schedule" | null;
   clearActiveAgent: boolean;
   newTaskAgentIntent: "create" | "rud" | null;
   newCourseAgentIntent: "add" | "drop" | "view" | "update" | null;

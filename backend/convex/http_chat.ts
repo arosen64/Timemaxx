@@ -67,7 +67,7 @@ async function runChatWorkflow(
     taggedTaskId: string | null;
     taggedCourseId: string | null;
     today: string;
-    activeAgent: "task" | "feedback" | "preferences" | "classes" | null;
+    activeAgent: "task" | "feedback" | "preferences" | "classes" | "schedule" | null;
     taskAgentIntent: "create" | "rud" | null;
     courseAgentIntent: "add" | "drop" | "view" | "update" | null;
   },
