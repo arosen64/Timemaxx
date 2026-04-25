@@ -406,8 +406,8 @@ export default function ScheduleTab() {
               highlightedSlots={highlightedSlots}
               isAssignMode={assigningBlockId !== null || draggingBlockId !== null}
               calendarConnected={calendarConnected}
-              onPrevWeek={() => setWeekOffset((o) => o - 7)}
-              onNextWeek={() => setWeekOffset((o) => o + 7)}
+              onPrevBoundary={() => setWeekOffset((o) => o - 7)}
+              onNextBoundary={() => setWeekOffset((o) => o + 7)}
               onSlotClick={handleSlotClick}
               onMoveBlock={handleMoveBlock}
               onAutoReschedule={handleAutoReschedule}

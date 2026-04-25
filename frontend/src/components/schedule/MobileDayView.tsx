@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { AllDayEvent } from '../../../../backend/convex/actions/fetchCalendarEvents'
 import type { LayoutEvent } from './overlapLayout'
 import type { StudyBlockOnGrid } from './TimeGrid'
@@ -26,8 +26,10 @@ interface MobileDayViewProps {
   highlightedSlots: Set<string>
   isAssignMode: boolean
   calendarConnected: boolean
-  onPrevWeek: () => void
-  onNextWeek: () => void
+  /** Called when navigating before the first day of the current week window */
+  onPrevBoundary: () => void
+  /** Called when navigating after the last day of the current week window */
+  onNextBoundary: () => void
   onSlotClick: (dateStr: string, slot: number) => void
   onMoveBlock: (studyBlockId: Id<'studyBlocks'>) => void
   onAutoReschedule: () => void
@@ -43,8 +45,8 @@ export default function MobileDayView({
   highlightedSlots,
   isAssignMode,
   calendarConnected,
-  onPrevWeek,
-  onNextWeek,
+  onPrevBoundary,
+  onNextBoundary,
   onSlotClick,
   onMoveBlock,
   onAutoReschedule,
@@ -52,6 +54,12 @@ export default function MobileDayView({
 }: MobileDayViewProps) {
   const todayIdx = days.findIndex((d) => isToday(d))
   const [dayIdx, setDayIdx] = useState(todayIdx >= 0 ? todayIdx : 0)
+
+  // Reset to today when the week window changes
+  useEffect(() => {
+    const idx = days.findIndex((d) => isToday(d))
+    setDayIdx(idx >= 0 ? idx : 0)
+  }, [days])
 
   const day = days[dayIdx]
   const dateStr = isoDateString(day)
@@ -65,7 +73,7 @@ export default function MobileDayView({
 
   function handlePrev() {
     if (dayIdx === 0) {
-      onPrevWeek()
+      onPrevBoundary()
       setDayIdx(6)
     } else {
       setDayIdx(dayIdx - 1)
@@ -74,7 +82,7 @@ export default function MobileDayView({
 
   function handleNext() {
     if (dayIdx === 6) {
-      onNextWeek()
+      onNextBoundary()
       setDayIdx(0)
     } else {
       setDayIdx(dayIdx + 1)
@@ -88,7 +96,7 @@ export default function MobileDayView({
         <button
           type="button"
           onClick={handlePrev}
-          className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-white text-slate-blue"
+          className="flex h-11 w-11 items-center justify-center rounded-lg border border-border bg-white text-slate-blue"
           aria-label="Previous day"
         >
           <ChevronLeftIcon size={14} />
@@ -104,7 +112,7 @@ export default function MobileDayView({
         <button
           type="button"
           onClick={handleNext}
-          className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-white text-slate-blue"
+          className="flex h-11 w-11 items-center justify-center rounded-lg border border-border bg-white text-slate-blue"
           aria-label="Next day"
         >
           <ChevronRightIcon size={14} />
