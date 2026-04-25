@@ -118,6 +118,15 @@ export default function TaskModal({
   const [pendingCourseId, setPendingCourseId] = useState<Id<'userCourses'> | undefined>(undefined)
   const requestGenerateSubtasks = useAction(api.actions.requestGenerateSubtasks.requestGenerateSubtasks)
 
+  // Manual mode = task is being/was set manually and the user hasn't switched to AI.
+  // For a task that already has a manual estimate (showAiEstimateReset), manual mode
+  // persists until the user explicitly clicks "Use AI Estimate". For all other cases
+  // (new task, AI-estimated task), manual mode activates as soon as the user types
+  // a value into the hours or minutes fields.
+  const isInManualMode = showAiEstimateReset
+    ? !useAiEstimate
+    : estimateHours.trim() !== '' || estimateMinutes.trim() !== ''
+
   const classTagSelectOptions = useMemo(
     () =>
       courses.map((c) => ({
@@ -383,7 +392,7 @@ export default function TaskModal({
                 </button>
               </div>
             </div>
-          ) : showAiEstimateReset ? (
+          ) : isInManualMode ? (
             <div className="flex flex-col gap-1">
               <label className="font-heading text-[13px] font-semibold text-navy">Subtasks</label>
               <p className="font-body text-xs text-light-blue">
@@ -479,7 +488,13 @@ export default function TaskModal({
                   type="number"
                   min="0"
                   value={estimateHours}
-                  onChange={(e) => setEstimateHours(e.target.value)}
+                  onChange={(e) => {
+                    setEstimateHours(e.target.value)
+                    if (e.target.value.trim() !== '') {
+                      setUseAiEstimate(false)
+                      setGenerateSubtasks(false)
+                    }
+                  }}
                   placeholder="0"
                   className="h-11 w-full rounded-md border border-border bg-bg-gray px-3.5 font-body text-sm text-navy outline-none placeholder:text-light-blue"
                 />
@@ -492,7 +507,13 @@ export default function TaskModal({
                   min="0"
                   max="59"
                   value={estimateMinutes}
-                  onChange={(e) => setEstimateMinutes(e.target.value)}
+                  onChange={(e) => {
+                    setEstimateMinutes(e.target.value)
+                    if (e.target.value.trim() !== '') {
+                      setUseAiEstimate(false)
+                      setGenerateSubtasks(false)
+                    }
+                  }}
                   placeholder="0"
                   className="h-11 w-full rounded-md border border-border bg-bg-gray px-3.5 font-body text-sm text-navy outline-none placeholder:text-light-blue"
                 />
