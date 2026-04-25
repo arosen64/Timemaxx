@@ -5,7 +5,6 @@ import type { ChatWorkflowOutput } from "./chatWorkflowHttpTypes";
 
 type BlockMcqResult = {
   needsBlockMcq: true;
-  kind: "schedule_block" | "unschedule_block";
   blockCandidates: Array<{ id: string; label: string; subtitle: string }>;
   aiText: string;
 };
@@ -106,83 +105,12 @@ async function scheduleBlockFromOutput(
   const total = unscheduled.length;
   return {
     needsBlockMcq: true,
-    kind: "schedule_block",
     blockCandidates: unscheduled.map((b, i) => ({
       id: String(b._id),
       label: b.title,
       subtitle: `Block ${i + 1} of ${total} · ${b.studyBlockLength} min`,
     })),
     aiText: "Which study block would you like me to schedule? Pick one below.",
-  };
-}
-
-async function unscheduleTaskFromOutput(
-  ctx: ActionCtx,
-  activeTaskId: Id<"tasks"> | undefined,
-): Promise<ActionResult> {
-  if (!activeTaskId) throw new Error("No task selected.");
-
-  const count = await ctx.runMutation(
-    internal.mutations.studyBlocks.unscheduleIncompleteBlocksForTask,
-    { taskId: activeTaskId },
-  );
-
-  if (count === 0) {
-    return { aiText: "None of this task's blocks are currently scheduled." };
-  }
-  return { aiText: `Done! Cleared the schedule for ${count} block(s).` };
-}
-
-async function unscheduleBlockFromOutput(
-  ctx: ActionCtx,
-  activeTaskId: Id<"tasks"> | undefined,
-  activeBlockId: Id<"studyBlocks"> | undefined,
-): Promise<ActionResult> {
-  if (!activeTaskId) throw new Error("No task selected.");
-
-  const blocks = await ctx.runQuery(internal.queries.studyBlocks.getStudyBlocksByTaskInternal, {
-    taskId: activeTaskId,
-  });
-
-  if (activeBlockId) {
-    // Defense in depth: a stale activeBlockId from an earlier flow must not act on the wrong task.
-    const picked = blocks.find((b) => b._id === activeBlockId);
-    if (!picked) {
-      return { aiText: "That block doesn't belong to the selected task." };
-    }
-    if (!picked.startTime) {
-      return { aiText: "That block isn't scheduled." };
-    }
-    await ctx.runMutation(internal.mutations.studyBlocks.unscheduleBlockInternal, {
-      studyBlockId: activeBlockId,
-    });
-    return { aiText: "Done! I've unscheduled that block." };
-  }
-
-  const scheduledIncomplete = blocks.filter((b) => b.startTime && !b.isCompleted);
-
-  if (scheduledIncomplete.length === 0) {
-    return { aiText: "None of this task's blocks are currently scheduled." };
-  }
-
-  if (scheduledIncomplete.length === 1) {
-    await ctx.runMutation(internal.mutations.studyBlocks.unscheduleBlockInternal, {
-      studyBlockId: scheduledIncomplete[0]._id,
-    });
-    return { aiText: "Done! I've unscheduled that block." };
-  }
-
-  return {
-    needsBlockMcq: true,
-    kind: "unschedule_block",
-    blockCandidates: scheduledIncomplete.map((b) => ({
-      id: String(b._id),
-      label: b.title,
-      subtitle: b.startTime
-        ? `Scheduled ${new Date(b.startTime).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}`
-        : "",
-    })),
-    aiText: "Which study block would you like me to unschedule? Pick one below.",
   };
 }
 
@@ -218,10 +146,6 @@ export async function executeScheduleAction(
       result = await scheduleTaskFromOutput(ctx, activeTaskId, timezone);
     } else if (output.actionType === "schedule_block") {
       result = await scheduleBlockFromOutput(ctx, activeTaskId, activeBlockId, timezone);
-    } else if (output.actionType === "unschedule_task") {
-      result = await unscheduleTaskFromOutput(ctx, activeTaskId);
-    } else if (output.actionType === "unschedule_block") {
-      result = await unscheduleBlockFromOutput(ctx, activeTaskId, activeBlockId);
     } else if (output.actionType === "import_google_calendar") {
       result = await importGoogleCalendarFromOutput(ctx, userId);
     }

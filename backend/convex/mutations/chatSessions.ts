@@ -280,7 +280,7 @@ export const setBlockPromptStateInternal = internalMutation({
   args: {
     userId: v.id("users"),
     sessionId: v.string(),
-    pendingScheduleAction: v.union(v.literal("schedule_block"), v.literal("unschedule_block")),
+    pendingScheduleAction: v.literal("schedule_block"),
   },
   returns: v.null(),
   handler: async (ctx, args) => {

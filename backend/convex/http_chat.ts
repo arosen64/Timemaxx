@@ -345,7 +345,7 @@ async function handleWorkflowTurn(
       await ctx.runMutation(internal.mutations.chatSessions.setBlockPromptStateInternal, {
         userId,
         sessionId,
-        pendingScheduleAction: scheduleResult.kind,
+        pendingScheduleAction: "schedule_block",
       });
       return c.json({
         text: scheduleResult.aiText,

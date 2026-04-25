@@ -231,7 +231,7 @@ export default defineSchema({
     activeCourseId: v.optional(v.id("userCourses")),
     /** Block MCQ flow: waiting for user to pick a specific study block. */
     awaitingBlockResolution: v.optional(v.boolean()),
-    pendingScheduleAction: v.optional(v.union(v.literal("schedule_block"), v.literal("unschedule_block"))),
+    pendingScheduleAction: v.optional(v.literal("schedule_block")),
     activeBlockId: v.optional(v.id("studyBlocks")),
   }).index("by_userId_sessionId", ["userId", "sessionId"]),
 
