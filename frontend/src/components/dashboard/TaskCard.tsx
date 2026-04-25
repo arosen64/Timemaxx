@@ -7,6 +7,7 @@ import { type Id } from '../../../../backend/convex/_generated/dataModel'
 import { formatClassTagForDisplay } from '../../utils/classTagUtils'
 import TaskFeedbackForm, { type TaskFeedbackFormProps } from './TaskFeedbackForm'
 import EstimateBadge from './EstimateBadge'
+import WeightBadge from './WeightBadge'
 import SubtaskCard from './SubtaskCard'
 import StudyBlockRow from './StudyBlockRow'
 import StatusDropdown from './StatusDropdown'
@@ -163,6 +164,7 @@ export default function TaskCard({
                   )}
                 </>
               ) : null}
+              <WeightBadge weight={task.assignmentWeight} />
             </div>
             {task.description.trim().length > 0 && (
               <div className="text-xs break-words text-light-blue line-clamp-4">
