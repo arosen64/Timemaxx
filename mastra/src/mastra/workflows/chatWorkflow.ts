@@ -1,73 +1,22 @@
 import { createWorkflow, createStep } from "@mastra/core/workflows";
-import { z } from "zod";
 import { supervisorAgent } from "../agents/supervisorAgent";
 import { taskAgent } from "../agents/taskAgent";
 import { feedbackAgent } from "../agents/feedbackAgent";
 import { courseAgent } from "../agents/courseAgent";
+import { scheduleAgent } from "../agents/scheduleAgent";
 
 import { supervisorAgentOutputSchema } from "../lib/prompts/supervisorAgent.prompt";
 import { taskAgentOutputSchema, type TaskAgentOutput } from "../lib/prompts/taskAgent.prompt";
 import { feedbackAgentOutputSchema, type FeedbackAgentOutput } from "../lib/prompts/feedbackAgent.prompt";
 import { courseAgentOutputSchema, type CourseAgentOutput } from "../lib/prompts/courseAgent.prompt";
+import { scheduleAgentOutputSchema, type ScheduleAgentOutput } from "../lib/prompts/scheduleAgent.prompt";
 
-// ---------------------------------------------------------------------------
-// Schemas
-// ---------------------------------------------------------------------------
-
-const chatContextSchema = z.object({
-  message: z.string(),
-  historyText: z.string(),
-  taggedEntitiesBlock: z.string(),
-  hasCourseTag: z.boolean(),
-  taggedTaskId: z.string().nullable(),
-  taggedCourseId: z.string().nullable(),
-  today: z.string(),
-  activeAgent: z.enum(["task", "feedback", "preferences", "classes"]).nullable(),
-  taskAgentIntent: z.enum(["create", "rud"]).nullable(),
-  courseAgentIntent: z.enum(["add", "drop", "view", "update"]).nullable(),
-});
-
-// routerStep passes all context through plus the routing decision
-const routedContextSchema = chatContextSchema.extend({
-  route: z.string().nullable(),
-  needsDomainClarification: z.boolean(),
-  domainClarifyingQuestion: z.string().nullable(),
-});
-
-export const chatWorkflowOutputSchema = z.object({
-  reply: z.string(),
-  route: z.string().nullable(),
-  status: z.enum(["reply", "domain_clarify", "needs_task_mcq", "needs_class_mcq", "task_action", "course_action", "canned"]),
-  mcqQueryText: z.string().nullable(),
-  needsClassAfterTask: z.boolean(),
-  actionType: z.enum(["create_task", "update_task", "delete_task", "read_task", "add_course", "drop_course", "update_course", "view_courses", "none"]).nullable(),
-  title: z.string().nullable(),
-  description: z.string().nullable(),
-  taskType: z.string().nullable(),
-  dueDateIso: z.string().nullable(),
-  classTag: z.string().nullable(),
-  deleteConfirmed: z.boolean(),
-  updatedTitle: z.string().nullable(),
-  updatedDescription: z.string().nullable(),
-  updatedTaskType: z.string().nullable(),
-  updatedDueDateIso: z.string().nullable(),
-  updatedClassTag: z.string().nullable(),
-  courseName: z.string().nullable(),
-  sisQuery: z.string().nullable(),
-  term: z.string().nullable(),
-  school: z.string().nullable(),
-  studyGoal: z.string().nullable(),
-  grade: z.string().nullable(),
-  difficultyRating: z.number().nullable(),
-  newActiveAgent: z.enum(["task", "feedback", "preferences", "classes"]).nullable(),
-  clearActiveAgent: z.boolean(),
-  newTaskAgentIntent: z.enum(["create", "rud"]).nullable(),
-  newCourseAgentIntent: z.enum(["add", "drop", "view", "update"]).nullable(),
-  readyToRecord: z.boolean(),
-});
-
-export type ChatWorkflowOutput = z.infer<typeof chatWorkflowOutputSchema>;
-
+import { 
+  chatContextSchema,
+  routedContextSchema,
+  chatWorkflowOutputSchema,
+  ChatWorkflowOutput
+ } from "../lib/schemas/chatSchemas";
 
 // For task action clarifying
 const NO_ACTION = {
@@ -119,7 +68,6 @@ function courseNeedsClassMcq(
 
 // canned replies for routes
 const CANNED_REPLIES: Record<string, string> = {
-  schedule: "To schedule or manage your study blocks, visit the **Schedule** page. To connect or revoke Google Calendar access, head to the **Profile** page.",
   classes: "To add or remove a course, or upload a syllabus, visit the **Classes** page.",
   preferences: "You can update your study preferences (focus length, work hours, and more) from the **Preferences** page.",
 };
@@ -272,6 +220,31 @@ function courseOutput(output: CourseAgentOutput, ctx: {
   return { reply: output.message, route: "classes", status: "reply", mcqQueryText: null, needsClassAfterTask: false, newActiveAgent: "classes", clearActiveAgent: false, newTaskAgentIntent: null, newCourseAgentIntent: newIntent, readyToRecord: false, ...NO_ACTION };
 }
 
+// Schedule output formatting for chat workflow
+function scheduleOutput(output: ScheduleAgentOutput, ctx: { message: string }): ChatWorkflowOutput {
+  const { message } = ctx;
+  if (output.needsTaskClarification) {
+    return { reply: "Which task would you like me to schedule? Pick one below, or choose **Other** to see more options.", route: "schedule", status: "needs_task_mcq", mcqQueryText: message.trim() || "task assignment", needsClassAfterTask: false, newActiveAgent: "schedule", clearActiveAgent: false, newTaskAgentIntent: null, newCourseAgentIntent: null, readyToRecord: false, ...NO_ACTION };
+  }
+  if (output.readyToExecute && output.actionType !== "none") {
+    return {
+      reply: output.message,
+      route: "schedule",
+      status: "schedule_action",
+      mcqQueryText: null,
+      needsClassAfterTask: false,
+      ...NO_ACTION,
+      actionType: output.actionType,
+      newActiveAgent: null,
+      clearActiveAgent: true,
+      newTaskAgentIntent: null,
+      newCourseAgentIntent: null,
+      readyToRecord: false,
+    };
+  }
+  return { reply: output.message, route: "schedule", status: "reply", mcqQueryText: null, needsClassAfterTask: false, newActiveAgent: "schedule", clearActiveAgent: false, newTaskAgentIntent: null, newCourseAgentIntent: null, readyToRecord: false, ...NO_ACTION };
+}
+
 
 // Router step
 
@@ -347,6 +320,24 @@ const courseStep = createStep({
   },
 });
 
+// Schedule step
+const scheduleStep = createStep({
+  id: "schedule_handler",
+  inputSchema: routedContextSchema,
+  outputSchema: chatWorkflowOutputSchema,
+  execute: async ({ inputData }) => {
+    const { message, historyText, taggedEntitiesBlock, today } = inputData;
+    const continueNote = message.trim()
+      ? "Respond to the latest user message above."
+      : "The user just selected an entity. Continue based on what is now resolved.";
+    const result = await scheduleAgent.generate(
+      agentContextPrompt({ today, historyText, taggedEntitiesBlock, continueNote }),
+      { structuredOutput: { schema: scheduleAgentOutputSchema } },
+    );
+    return scheduleOutput(result.object, { message });
+  },
+});
+
 // ---------------------------------------------------------------------------
 // Step 2c — Canned / domain-clarify / fallback handler
 // ---------------------------------------------------------------------------
@@ -381,6 +372,7 @@ export const chatWorkflow = createWorkflow({
     [async ({ inputData }) => inputData.route === "tasks", taskStep],
     [async ({ inputData }) => inputData.route === "feedback", feedbackStep],
     [async ({ inputData }) => inputData.route === "classes", courseStep],
-    [async () => true, cannedStep], // schedule, domain-clarify, unknown
+    [async ({ inputData }) => inputData.route === "schedule", scheduleStep],
+    [async () => true, cannedStep], // domain-clarify, unknown, preferences
   ])
   .commit();

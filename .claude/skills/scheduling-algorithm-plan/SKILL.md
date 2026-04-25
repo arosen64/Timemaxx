@@ -1,3 +1,4 @@
+
 ---
 name: scheduling-algorithm-plan
 description: Reference plan for the R19 scheduling algorithm improvements. Use when working on any scheduling-related issue (#395, #396, #397, #398, #506, #507, #508, #510), asking about the algorithm architecture, or deciding how a new scheduling change should fit into the overall design.

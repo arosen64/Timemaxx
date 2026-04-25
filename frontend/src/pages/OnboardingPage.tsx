@@ -16,8 +16,6 @@ type Step = 1 | 2 | 3 | 4 | 5 | 6
 const DEFAULT_PROFILE: ProfileData = {
   major: '',
   year: '',
-  difficultSubjects: [],
-  enjoyedSubjects: [],
   courses: [],
 }
 
@@ -79,20 +77,18 @@ export default function OnboardingPage() {
   }
 
   const handleSaveAndContinue = async () => {
-    if (Number(preferences.focusBlockLength) < MIN_FOCUS_BLOCK_MINUTES) return
+    if (preferences.focusBlockLength !== '' && preferences.focusBlockLength < MIN_FOCUS_BLOCK_MINUTES) return
     setIsSubmitting(true)
     try {
       await saveOnboarding({
         major: profile.major,
         year: profile.year,
-        difficultSubjects: profile.difficultSubjects,
-        enjoyedSubjects: profile.enjoyedSubjects,
         workHoursGrid: Object.entries(workHours).map(([day, slots]) => ({
           day,
           blocked: slots.blocked,
         })),
         productivityTraits: preferences.traits,
-        focusBlockLength: Number(preferences.focusBlockLength),
+        focusBlockLength: preferences.focusBlockLength === '' ? MIN_FOCUS_BLOCK_MINUTES : preferences.focusBlockLength,
       })
       setStep(6)
     } catch {
@@ -123,7 +119,6 @@ export default function OnboardingPage() {
         <div className="flex flex-col gap-4">
           <div>
             <h2 className="font-heading text-2xl font-bold text-navy">Work Hours</h2>
-            <p className="mt-1 font-body text-sm text-slate-blue">Click or drag to mark your never-work hours.</p>
           </div>
           <WorkHoursSelector data={workHours} onChange={setWorkHours} />
         </div>

@@ -1,6 +1,7 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { internalQuery, query } from "../_generated/server";
 import { v } from "convex/values";
+import { activeAgentValidator } from "../lib/chatValidators";
 
 export const getChatSessionInternal = internalQuery({
   args: {
@@ -20,14 +21,7 @@ export const getChatSessionInternal = internalQuery({
       clarificationExhausted: v.optional(v.boolean()),
       awaitingEntityResolution: v.optional(v.boolean()),
       chatInputLocked: v.optional(v.boolean()),
-      activeAgent: v.optional(
-        v.union(
-          v.literal("task"),
-          v.literal("feedback"),
-          v.literal("preferences"),
-          v.literal("classes"),
-        ),
-      ),
+      activeAgent: v.optional(activeAgentValidator),
       taskAgentIntent: v.optional(v.union(v.literal("create"), v.literal("rud"))),
       courseAgentIntent: v.optional(
         v.union(v.literal("add"), v.literal("drop"), v.literal("view"), v.literal("update")),
@@ -110,13 +104,7 @@ export const getChatSessionEntityScope = query({
         v.union(v.literal("task_id_set"), v.literal("class_id_set")),
       ),
       chatInputLocked: v.boolean(),
-      activeAgent: v.union(
-        v.literal("task"),
-        v.literal("feedback"),
-        v.literal("preferences"),
-        v.literal("classes"),
-        v.null(),
-      ),
+      activeAgent: v.union(activeAgentValidator, v.null()),
     }),
   ),
   handler: async (ctx, args) => {

@@ -26,8 +26,6 @@ export interface AcademicProfileSummaryProps {
 export interface ProfileData {
   major: string
   year: string
-  difficultSubjects: string[]
-  enjoyedSubjects: string[]
   courses: Course[]
   transcriptSummary?: AcademicInsight[]
 }
