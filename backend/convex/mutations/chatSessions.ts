@@ -1,5 +1,6 @@
 import { internalMutation } from "../_generated/server";
 import { v } from "convex/values";
+import { activeAgentValidator } from "../lib/chatValidators";
 
 export const getOrCreateChatSessionInternal = internalMutation({
   args: {
@@ -178,9 +179,7 @@ export const setTaskAgentStateInternal = internalMutation({
   args: {
     userId: v.id("users"),
     sessionId: v.string(),
-    activeAgent: v.optional(
-      v.union(v.literal("task"), v.literal("feedback"), v.literal("preferences"), v.literal("classes")),
-    ),
+    activeAgent: v.optional(activeAgentValidator),
     taskAgentIntent: v.optional(v.union(v.literal("create"), v.literal("rud"))),
     courseAgentIntent: v.optional(
       v.union(v.literal("add"), v.literal("drop"), v.literal("view"), v.literal("update")),
