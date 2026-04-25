@@ -420,8 +420,8 @@ export const splitStudyBlock = mutation({
     const splitAt = Math.floor(args.splitAtMinutes);
     const remaining = block.studyBlockLength - splitAt;
 
-    if (splitAt < 30 || remaining < 30) {
-      throw new Error("Each resulting block must be at least 30 minutes");
+    if (splitAt < 15 || remaining < 15) {
+      throw new Error("Each resulting block must be at least 15 minutes");
     }
 
     let startTimeB: string | undefined;

@@ -415,32 +415,32 @@ describe("mutations/studyBlocks – splitStudyBlock", () => {
     ).rejects.toThrow("Unauthorized");
   });
 
-  test("throws when split point would produce a block shorter than 30 minutes", async () => {
+  test("throws when split point would produce a block shorter than 15 minutes", async () => {
     const t = makeTestCtx();
     const { userId, withAuth } = await createTestUser(t);
     const taskId = await seedTask(t, userId);
-    const studyBlockId = await seedStudyBlock(t, taskId, { studyBlockLength: 90 });
+    const studyBlockId = await seedStudyBlock(t, taskId, { studyBlockLength: 45 });
 
     await expect(
       withAuth.mutation(api.mutations.studyBlocks.splitStudyBlock, {
         studyBlockId,
-        splitAtMinutes: 20,
+        splitAtMinutes: 10,
       })
-    ).rejects.toThrow("Each resulting block must be at least 30 minutes");
+    ).rejects.toThrow("Each resulting block must be at least 15 minutes");
   });
 
-  test("throws when remainder would be shorter than 30 minutes", async () => {
+  test("throws when remainder would be shorter than 15 minutes", async () => {
     const t = makeTestCtx();
     const { userId, withAuth } = await createTestUser(t);
     const taskId = await seedTask(t, userId);
-    const studyBlockId = await seedStudyBlock(t, taskId, { studyBlockLength: 90 });
+    const studyBlockId = await seedStudyBlock(t, taskId, { studyBlockLength: 45 });
 
     await expect(
       withAuth.mutation(api.mutations.studyBlocks.splitStudyBlock, {
         studyBlockId,
-        splitAtMinutes: 65,
+        splitAtMinutes: 35,
       })
-    ).rejects.toThrow("Each resulting block must be at least 30 minutes");
+    ).rejects.toThrow("Each resulting block must be at least 15 minutes");
   });
 
   test("deletes original block and creates two blocks with correct lengths", async () => {

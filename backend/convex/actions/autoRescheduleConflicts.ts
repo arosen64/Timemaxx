@@ -21,6 +21,7 @@ type StudyBlockWithTask = {
   isConflicted: boolean | undefined;
   taskTitle: string;
   taskDueDate: number;
+  taskRecommendedStart: number | undefined;
 };
 
 /**
@@ -89,6 +90,7 @@ export const autoRescheduleConflicts = action({
         workHoursGrid,
         occupiedIntervals,
         timezone: args.timezone,
+        recommendedStartMs: block.taskRecommendedStart,
       });
 
       if (candidates.length === 0) {
