@@ -18,6 +18,7 @@ import {
   type WorkHoursRow,
   type PoolSlot,
 } from "../lib/scheduleSlots";
+import { parseTimeOfDayRanges, scoreCandidate } from "../lib/scoreSlots";
 import { fetch21DayCalendarEvents } from "../lib/calendarFetch";
 
 const MAX_BLOCKS = 10;
@@ -48,6 +49,10 @@ export const scheduleAllBlocks = action({
     const workHoursGrid = (user.workHoursGrid ?? []) as WorkHoursRow[];
     const productivityTraits: unknown = user.productivityTraits;
     const preferredDays: string[] = (productivityTraits as any)?.dayOfWeek ?? [];
+    const timeOfDayRanges = parseTimeOfDayRanges(
+      Array.isArray((productivityTraits as any)?.timeOfDay) ? (productivityTraits as any).timeOfDay : [],
+    );
+    const dayOfWeekPrefs: string[] = preferredDays;
 
     // Fetch raw blocks, tasks, and subtasks
     const allBlocks = await ctx.runQuery(
@@ -64,31 +69,32 @@ export const scheduleAllBlocks = action({
       _creationTime: number;
     }>;
 
-    const allTasks = await ctx.runQuery(
-      internal.queries.tasks.getAllTasksInternal,
-      { userId },
-    ) as Array<{
-      _id: string;
-      title: string;
-      dueDate: number;
-      assignmentWeight?: number;
-      recommendedStart?: number;
-      _creationTime: number;
-    }>;
-
-    const allSubtasks = await ctx.runQuery(
-      internal.queries.subtasks.getAllSubtasksInternal,
-      { userId },
-    ) as Array<{
-      _id: string;
-      parentTaskId: string;
-      title: string;
-      dueDate?: number;
-      suggestedCompletionAt?: number;
-      _creationTime: number;
-    }>;
+    const [allTasks, allSubtasks, userCourses] = await Promise.all([
+      ctx.runQuery(internal.queries.tasks.getAllTasksInternal, { userId }) as Promise<Array<{
+        _id: string;
+        title: string;
+        dueDate: number;
+        courseId?: string;
+        assignmentWeight?: number;
+        recommendedStart?: number;
+        _creationTime: number;
+      }>>,
+      ctx.runQuery(internal.queries.subtasks.getAllSubtasksInternal, { userId }) as Promise<Array<{
+        _id: string;
+        parentTaskId: string;
+        title: string;
+        dueDate?: number;
+        suggestedCompletionAt?: number;
+        _creationTime: number;
+      }>>,
+      ctx.runQuery(internal.queries.userCourses.getUserCoursesInternal, { userId }) as Promise<Array<{
+        _id: string;
+        difficultyRating?: number;
+      }>>,
+    ]);
 
     const taskMap = new Map(allTasks.map((t) => [t._id, t]));
+    const difficultyMap = new Map(userCourses.map((c) => [c._id, c.difficultyRating]));
     // Only subtasks that belong to the target task
     const subtaskMap = new Map(
       allSubtasks
@@ -121,6 +127,7 @@ export const scheduleAllBlocks = action({
       parentDueDate: number;
       parentWeight: number;
       recommendedStart: number | undefined;
+      difficultyRating: number | undefined;
     };
 
     const resolved: ResolvedBlock[] = [];
@@ -135,6 +142,7 @@ export const scheduleAllBlocks = action({
           parentDueDate: task.dueDate,
           parentWeight: task.assignmentWeight ?? 0,
           recommendedStart: task.recommendedStart,
+          difficultyRating: task.courseId ? difficultyMap.get(task.courseId) : undefined,
         });
       } else if (block.subtaskId) {
         const subtask = subtaskMap.get(block.subtaskId);
@@ -151,6 +159,7 @@ export const scheduleAllBlocks = action({
           parentDueDate,
           parentWeight: parentTask?.assignmentWeight ?? 0,
           recommendedStart: parentTask?.recommendedStart,
+          difficultyRating: parentTask?.courseId ? difficultyMap.get(parentTask.courseId) : undefined,
         });
       }
     }
@@ -260,6 +269,23 @@ export const scheduleAllBlocks = action({
 
       if (candidates.length === 0) continue;
 
+      // Score and sort candidates by fit before passing to AI (#507)
+      const scoredCandidates = candidates.map((c) => {
+        const dateStr = toDateStr(new Date(c.startMs), args.timezone);
+        const { score, scoreBreakdown } = scoreCandidate({
+          startMs: c.startMs,
+          timezone: args.timezone,
+          timeOfDayRanges,
+          dayOfWeekPrefs,
+          minutesSincePreviousEvent: c.minutesSincePreviousEvent,
+          minutesUntilNextEvent: c.minutesUntilNextEvent,
+          dailyLoadCount: actualDailyLoadMap.get(dateStr) ?? 0,
+          difficultyRating: item.difficultyRating,
+        });
+        return { ...c, score, scoreBreakdown };
+      });
+      scoredCandidates.sort((a, b) => b.score - a.score);
+
       // Reserve this day so the next block looks elsewhere first.
       speculativeDailyLoadMap.set(targetDate, (speculativeDailyLoadMap.get(targetDate) ?? 0) + 1);
 
@@ -269,7 +295,7 @@ export const scheduleAllBlocks = action({
         parentDueDate: item.parentDueDate,
         parentWeight: item.parentWeight,
         recommendedStart: item.recommendedStart,
-        candidates,
+        candidates: scoredCandidates,
       });
     }
 

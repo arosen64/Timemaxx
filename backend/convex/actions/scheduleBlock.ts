@@ -8,10 +8,12 @@ import {
   selectAllSlotsWithAI,
   buildDailyLoadMap,
   computeMaxBlocksPerDay,
+  toDateStr,
   DEFAULT_DUE_FALLBACK_MS,
   type OccupiedInterval,
   type WorkHoursRow,
 } from "../lib/scheduleSlots";
+import { parseTimeOfDayRanges, scoreCandidate } from "../lib/scoreSlots";
 import { fetch21DayCalendarEvents } from "../lib/calendarFetch";
 
 

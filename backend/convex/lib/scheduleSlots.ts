@@ -436,6 +436,8 @@ export async function selectSlotWithAI(opts: {
 
 const BATCH_SCHEDULE_SYSTEM = `You are a study scheduling assistant for a college student. You will receive a list of study blocks, each with a set of candidate time slots. For each block, select the best slot index based on the student's productivity preferences and the calendar context.
 
+Candidates are pre-scored and sorted by fit (score descending). Prefer higher-scored slots but you may select a lower-scored one if surrounding calendar context makes it clearly better.
+
 Rules:
 - Prefer slots with comfortable buffers around nearby events.
 - Respect the urgency of each task's due date.
