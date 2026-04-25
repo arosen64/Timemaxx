@@ -33,7 +33,7 @@ describe('MobileDayView', () => {
     const days = makeDays(today)
     render(<MobileDayView {...baseProps} days={days} />)
 
-    const todayLabel = today.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    const todayLabel = today.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })
     expect(screen.getByText(todayLabel)).toBeInTheDocument()
   })
 
@@ -43,7 +43,7 @@ describe('MobileDayView', () => {
     const days = makeDays(future)
     render(<MobileDayView {...baseProps} days={days} />)
 
-    const day0Label = days[0].toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    const day0Label = days[0].toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })
     expect(screen.getByText(day0Label)).toBeInTheDocument()
   })
 
@@ -54,7 +54,7 @@ describe('MobileDayView', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Next day' }))
 
-    const nextDayLabel = days[1].toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    const nextDayLabel = days[1].toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })
     expect(screen.getByText(nextDayLabel)).toBeInTheDocument()
   })
 
@@ -65,7 +65,7 @@ describe('MobileDayView', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Next day' }))
     await userEvent.click(screen.getByRole('button', { name: 'Previous day' }))
 
-    const todayLabel = today.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    const todayLabel = today.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })
     expect(screen.getByText(todayLabel)).toBeInTheDocument()
   })
 

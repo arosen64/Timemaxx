@@ -20,8 +20,8 @@ type WorkHoursRow = { day: string; available: number[]; blocked: number[] }
 function getSlotState(grid: WorkHoursRow[] | null, dayName: string, slot: number) {
   const row = grid?.find((r) => r.day === dayName)
   if (!row) return 'none'
-  if (row.available.includes(slot)) return 'preferred'
-  if (row.blocked.includes(slot)) return 'unavailable'
+  if (row.available?.includes(slot)) return 'preferred'
+  if (row.blocked?.includes(slot)) return 'unavailable'
   return 'none'
 }
 
