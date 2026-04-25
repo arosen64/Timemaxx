@@ -2,6 +2,7 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 import { authTables } from "@convex-dev/auth/server";
 import { taskTypeValidator } from "./lib/taskValidators";
+import { activeAgentValidator } from "./lib/chatValidators";
 
 /** Per-category AI explanation for time estimates (tasks and subtasks). */
 const reasoningTraceValidator = v.object({
@@ -216,7 +217,7 @@ export default defineSchema({
     chatInputLocked: v.optional(v.boolean()),
     /** Which specialist agent is handling this session */
     activeAgent: v.optional(
-      v.union(v.literal("task"), v.literal("feedback"), v.literal("preferences"), v.literal("classes")),
+      activeAgentValidator,
     ),
     /** Intent determined by task agent: "create" skips entity MCQ, "rud" triggers it */
     taskAgentIntent: v.optional(v.union(v.literal("create"), v.literal("rud"))),
