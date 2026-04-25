@@ -121,6 +121,7 @@ async function fetchAllStudyBlocksWithTasks(ctx: any, userId: Id<"users">) {
       .withIndex("by_taskId", (q: any) => q.eq("taskId", task._id))
       .collect();
     for (const block of blocks) {
+      if (block.isCompleted) continue
       result.push({
         _id: block._id,
         taskId: block.taskId,
@@ -148,6 +149,7 @@ async function fetchAllStudyBlocksWithTasks(ctx: any, userId: Id<"users">) {
         .withIndex("by_subtaskId", (q: any) => q.eq("subtaskId", subtask._id))
         .collect();
       for (const block of subtaskBlocks) {
+        if (block.isCompleted) continue
         result.push({
           _id: block._id,
           taskId: task._id,
@@ -271,6 +273,7 @@ export const getFutureStudyBlocksForExport = internalQuery({
         .collect();
 
       for (const block of blocks) {
+        if (!block.isCompleted) continue;
         if (!block.startTime) continue;
         if (new Date(block.startTime).getTime() <= now) continue;
         result.push({
