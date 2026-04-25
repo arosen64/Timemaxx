@@ -23775,6 +23775,425 @@
           ]
         }
       ]
+    },
+    {
+      "type": "frame",
+      "id": "TRC01",
+      "x": 8900,
+      "y": 0,
+      "name": "TaskReviewCard",
+      "reusable": true,
+      "width": 700,
+      "fill": "$--card",
+      "cornerRadius": 10,
+      "stroke": {
+        "align": "inside",
+        "thickness": 1,
+        "fill": "$--border"
+      },
+      "gap": 14,
+      "padding": [16, 18],
+      "alignItems": "flex_start",
+      "children": [
+        {
+          "type": "frame",
+          "id": "TRC02",
+          "name": "accentBar",
+          "width": 4,
+          "fill": "$--accent",
+          "cornerRadius": 2,
+          "alignSelf": "stretch"
+        },
+        {
+          "type": "frame",
+          "id": "TRC03",
+          "name": "body",
+          "layout": "vertical",
+          "gap": 10,
+          "width": "fill_container",
+          "children": [
+            {
+              "type": "frame",
+              "id": "TRC04",
+              "name": "titleRow",
+              "gap": 8,
+              "alignItems": "center",
+              "width": "fill_container",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "TRC05",
+                  "name": "titleInput",
+                  "height": 36,
+                  "width": "fill_container",
+                  "fill": "$--background",
+                  "cornerRadius": 6,
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "$--border"
+                  },
+                  "padding": [0, 12],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "TRC06",
+                      "name": "placeholder",
+                      "fill": "$--light-muted",
+                      "content": "Task title",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "TRC07",
+                  "name": "removeBtn",
+                  "width": 28,
+                  "height": 28,
+                  "fill": "$--urgent-bg",
+                  "cornerRadius": 6,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "TRC08",
+                      "name": "icon",
+                      "width": 14,
+                      "height": 14,
+                      "iconFontName": "x",
+                      "iconFontFamily": "lucide",
+                      "fill": "$--destructive"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "TRC09",
+              "name": "dateTypeRow",
+              "gap": 10,
+              "alignItems": "flex_end",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "TRC10",
+                  "name": "dateSection",
+                  "layout": "vertical",
+                  "gap": 4,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "TRC11",
+                      "name": "dateLabel",
+                      "fill": "$--muted-foreground",
+                      "content": "Due date & time",
+                      "fontFamily": "Space Grotesk",
+                      "fontSize": 11,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "id": "TRC12",
+                      "type": "ref",
+                      "ref": "DTPk1",
+                      "name": "datetimePicker",
+                      "width": "fit_content",
+                      "height": "fit_content"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "TRC13",
+                  "name": "typePills",
+                  "height": 28,
+                  "fill": "$--background",
+                  "cornerRadius": 6,
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "$--border"
+                  },
+                  "padding": [0, 10],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "TRC14",
+                      "name": "typeLabel",
+                      "fill": "$--primary",
+                      "content": "Essay",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "600"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "TRC15",
+              "name": "weightRow",
+              "gap": 6,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "TRC16",
+                  "name": "weightLabel",
+                  "fill": "$--muted-foreground",
+                  "content": "Grade weight",
+                  "fontFamily": "Space Grotesk",
+                  "fontSize": 11,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "frame",
+                  "id": "TRC17",
+                  "name": "weightInput",
+                  "width": 64,
+                  "height": 32,
+                  "fill": "$--background",
+                  "cornerRadius": 6,
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "$--border"
+                  },
+                  "padding": [0, 8],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "TRC18",
+                      "name": "value",
+                      "fill": "$--primary",
+                      "content": "25",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "TRC19",
+                  "name": "percentSuffix",
+                  "fill": "$--muted-foreground",
+                  "content": "%",
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "SR001",
+      "x": 4560,
+      "y": 1500,
+      "name": "Classes – Syllabus Review",
+      "width": 1440,
+      "height": 900,
+      "fill": "$--background",
+      "children": [
+        {
+          "id": "SR002",
+          "type": "ref",
+          "ref": "GeaRV",
+          "name": "sidebar",
+          "width": "fit_content",
+          "height": "fill_container"
+        },
+        {
+          "type": "frame",
+          "id": "SR003",
+          "name": "main",
+          "layout": "vertical",
+          "gap": 28,
+          "padding": 40,
+          "width": "fill_container",
+          "height": "fill_container",
+          "children": [
+            {
+              "type": "frame",
+              "id": "SR004",
+              "name": "pageHeader",
+              "justifyContent": "space_between",
+              "alignItems": "flex_start",
+              "width": "fill_container",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "SR005",
+                  "name": "headerLeft",
+                  "layout": "vertical",
+                  "gap": 4,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "SR006",
+                      "name": "heading",
+                      "fill": "$--primary",
+                      "content": "Review Extracted Tasks",
+                      "fontFamily": "Space Grotesk",
+                      "fontSize": 24,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "text",
+                      "id": "SR007",
+                      "name": "subtitle",
+                      "fill": "$--muted-foreground",
+                      "content": "Review tasks extracted from your syllabus. Edit or remove any task before confirming.",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "SR008",
+                  "name": "readyBadge",
+                  "fill": "$--success-bg",
+                  "cornerRadius": 8,
+                  "padding": [6, 12],
+                  "gap": 6,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "SR009",
+                      "name": "checkIcon",
+                      "width": 14,
+                      "height": 14,
+                      "iconFontName": "check-circle",
+                      "iconFontFamily": "lucide",
+                      "fill": "$--success"
+                    },
+                    {
+                      "type": "text",
+                      "id": "SR010",
+                      "name": "readyLabel",
+                      "fill": "$--success",
+                      "content": "3 tasks ready to confirm",
+                      "fontFamily": "Space Grotesk",
+                      "fontSize": 13,
+                      "fontWeight": "600"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "SR011",
+              "name": "taskList",
+              "layout": "vertical",
+              "gap": 12,
+              "width": "fill_container",
+              "children": [
+                {
+                  "id": "SR012",
+                  "type": "ref",
+                  "ref": "TRC01",
+                  "name": "taskCard1",
+                  "width": "fill_container",
+                  "height": "fit_content",
+                  "descendants": {
+                    "TRC06": { "content": "Midterm Exam" },
+                    "TRC18": { "content": "25" }
+                  }
+                },
+                {
+                  "id": "SR013",
+                  "type": "ref",
+                  "ref": "TRC01",
+                  "name": "taskCard2",
+                  "width": "fill_container",
+                  "height": "fit_content",
+                  "descendants": {
+                    "TRC06": { "content": "Problem Set 3" },
+                    "TRC18": { "content": "5" }
+                  }
+                },
+                {
+                  "id": "SR014",
+                  "type": "ref",
+                  "ref": "tIwJu",
+                  "name": "addTaskBtn",
+                  "width": "fill_container",
+                  "height": "fit_content"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "SR015",
+              "name": "actionBar",
+              "fill": "$--card",
+              "cornerRadius": 8,
+              "stroke": {
+                "align": "inside",
+                "thickness": 1,
+                "fill": "$--border"
+              },
+              "padding": [16, 20],
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "width": "fill_container",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "SR016",
+                  "name": "infoText",
+                  "fill": "$--muted-foreground",
+                  "content": "3 tasks will be added to your dashboard",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "frame",
+                  "id": "SR017",
+                  "name": "actions",
+                  "gap": 10,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "SR018",
+                      "type": "ref",
+                      "ref": "Gux0S",
+                      "name": "cancelBtn",
+                      "width": "fit_content",
+                      "height": "fit_content"
+                    },
+                    {
+                      "id": "SR019",
+                      "type": "ref",
+                      "ref": "Xdrqk",
+                      "name": "confirmBtn",
+                      "width": "fit_content",
+                      "height": "fit_content"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
     }
   ],
   "variables": {
