@@ -25,6 +25,7 @@ vi.mock('../../backend/convex/_generated/api', () => ({
       exportStudyBlocksToCalendar: { exportStudyBlocksToCalendar: 'exportStudyBlocksToCalendar' },
       scheduleBlock: { scheduleBlock: 'scheduleBlock' },
       scheduleAllBlocks: { scheduleAllBlocks: 'scheduleAllBlocks' },
+      initiateGoogleCalendarOAuth: { initiateGoogleCalendarOAuth: 'initiateGoogleCalendarOAuth' },
     },
   },
 }))
