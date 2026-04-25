@@ -16,7 +16,6 @@ import type * as actions_generateSubtasks from "../actions/generateSubtasks.js";
 import type * as actions_getCalendarAvailability from "../actions/getCalendarAvailability.js";
 import type * as actions_initiateGoogleCalendarOAuth from "../actions/initiateGoogleCalendarOAuth.js";
 import type * as actions_jhuCourses from "../actions/jhuCourses.js";
-import type * as actions_pruneSubtasksToThreshold from "../actions/pruneSubtasksToThreshold.js";
 import type * as actions_requestEstimateSubtaskTime from "../actions/requestEstimateSubtaskTime.js";
 import type * as actions_requestGenerateSubtasks from "../actions/requestGenerateSubtasks.js";
 import type * as actions_scheduleAllTasks from "../actions/scheduleAllTasks.js";
@@ -96,7 +95,6 @@ declare const fullApi: ApiFromModules<{
   "actions/getCalendarAvailability": typeof actions_getCalendarAvailability;
   "actions/initiateGoogleCalendarOAuth": typeof actions_initiateGoogleCalendarOAuth;
   "actions/jhuCourses": typeof actions_jhuCourses;
-  "actions/pruneSubtasksToThreshold": typeof actions_pruneSubtasksToThreshold;
   "actions/requestEstimateSubtaskTime": typeof actions_requestEstimateSubtaskTime;
   "actions/requestGenerateSubtasks": typeof actions_requestGenerateSubtasks;
   "actions/scheduleAllTasks": typeof actions_scheduleAllTasks;

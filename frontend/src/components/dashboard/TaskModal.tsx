@@ -383,6 +383,13 @@ export default function TaskModal({
                 </button>
               </div>
             </div>
+          ) : showAiEstimateReset ? (
+            <div className="flex flex-col gap-1">
+              <label className="font-heading text-[13px] font-semibold text-navy">Subtasks</label>
+              <p className="font-body text-xs text-light-blue">
+                AI subtask generation is unavailable with a manual time estimate. Switch to AI estimate to enable it.
+              </p>
+            </div>
           ) : (
             <div className="flex flex-col gap-1">
               <label className="flex cursor-pointer items-center gap-2.5">

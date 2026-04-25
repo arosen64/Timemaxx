@@ -3,7 +3,7 @@ import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { taskTypeValidator } from "../lib/taskValidators";
 import { internal } from "../_generated/api";
-import { rebuildStudyBlocksForSubtask, normalizeSubtaskEstimates } from "./timeEstimate";
+import { rebuildStudyBlocksForSubtask } from "./timeEstimate";
 import { Id } from "../_generated/dataModel";
 
 const reasoningTraceArgs = v.object({
@@ -197,7 +197,6 @@ export const setSubtaskTimeEstimate = internalMutation({
       reasoning: args.reasoning,
     });
 
-    // Roll up: sum all sibling estimates and patch parent task
     const subtask = await ctx.db.get(args.subtaskId);
     if (!subtask) return;
 
@@ -206,15 +205,11 @@ export const setSubtaskTimeEstimate = internalMutation({
       .withIndex("by_parentTaskId", (q) => q.eq("parentTaskId", subtask.parentTaskId))
       .collect();
 
-    const parent = await ctx.db.get(subtask.parentTaskId);
-    if (!parent?.isManualEstimate) {
-      const total = siblings.reduce((sum, s) => sum + (s.timeEstimate ?? 0), 0);
-      await ctx.db.patch(subtask.parentTaskId, { timeEstimate: total });
-    }
+    // Roll up: sum all sibling estimates and patch parent task
+    const total = siblings.reduce((sum, s) => sum + (s.timeEstimate ?? 0), 0);
+    await ctx.db.patch(subtask.parentTaskId, { timeEstimate: total });
 
-    // Delete any stale task-level blocks on the parent so they don't co-exist
-    // with subtask-owned blocks. Done unconditionally so a 0-estimate subtask
-    // still clears stale blocks.
+    // Delete any stale task-level blocks so they don't co-exist with subtask-owned blocks
     const staleTaskBlocks = await ctx.db
       .query("studyBlocks")
       .withIndex("by_taskId", (q) => q.eq("taskId", subtask.parentTaskId))
@@ -223,19 +218,7 @@ export const setSubtaskTimeEstimate = internalMutation({
       await ctx.db.delete(block._id);
     }
 
-    // When parent has a manual estimate and all siblings now have estimates,
-    // normalize so subtask times scale to match the manual total.
-    if (parent?.isManualEstimate && parent.timeEstimate !== undefined) {
-      const allEstimated = siblings.every((s) => s.timeEstimate !== undefined);
-      if (allEstimated) {
-        await normalizeSubtaskEstimates(ctx, parent.timeEstimate, siblings);
-        return;
-      }
-      // Not all estimated yet — skip building blocks; normalization will rebuild all.
-      return;
-    }
-
-    // Build blocks for this subtask immediately — each subtask owns its own blocks.
+    // Build blocks for this subtask immediately — each subtask owns its own blocks
     if (args.timeEstimate > 0) {
       await rebuildStudyBlocksForSubtask(ctx, args.subtaskId, args.timeEstimate);
     }

@@ -239,7 +239,7 @@ export default function TaskCard({
                   >
                     <TrashIcon />
                   </button>
-                  {!hasSubtasks && (
+                  {!hasSubtasks && !task.isManualEstimate && (
                     isGeneratingSubtasks ? (
                       <div className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-blue">
                         <SpinnerIcon color="currentColor" size={16} />

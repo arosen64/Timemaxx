@@ -1,7 +1,6 @@
 import { internalMutation, mutation } from "../_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
-import { internal } from "../_generated/api";
 import type { MutationCtx } from "../_generated/server";
 import type { Id } from "../_generated/dataModel";
 
@@ -81,58 +80,6 @@ export async function rebuildStudyBlocks(
   }
 }
 
-/** Deletes ALL study blocks for a subtask (including scheduled ones) then creates fresh unscheduled blocks sized to timeEstimate. */
-async function forceRebuildStudyBlocksForSubtask(
-  ctx: MutationCtx,
-  subtaskId: Id<"subtasks">,
-  timeEstimate: number
-) {
-  const existingBlocks = await ctx.db
-    .query("studyBlocks")
-    .withIndex("by_subtaskId", (q) => q.eq("subtaskId", subtaskId))
-    .collect();
-  for (const block of existingBlocks) await ctx.db.delete(block._id);
-
-  const subtask = await ctx.db.get(subtaskId);
-  if (!subtask) return;
-
-  const user = await ctx.db.get(subtask.userId);
-  const focusBlockLength = user?.focusBlockLength || 60;
-
-  const blockCount = Math.ceil(timeEstimate / focusBlockLength);
-  const remainder = timeEstimate % focusBlockLength;
-  for (let i = 0; i < blockCount; i++) {
-    const isLastBlock = i === blockCount - 1;
-    const studyBlockLength = isLastBlock && remainder !== 0 ? remainder : focusBlockLength;
-    await ctx.db.insert("studyBlocks", {
-      subtaskId,
-      userId: subtask.userId,
-      title: subtask.title,
-      startTime: undefined,
-      studyBlockLength,
-    });
-  }
-}
-
-/** Scales each subtask estimate proportionally so they sum to manualTotal, rounded to the nearest 5 min (min 5 min per subtask), then rebuilds their study blocks. Returns the actual post-rounding sum. */
-export async function normalizeSubtaskEstimates(
-  ctx: MutationCtx,
-  manualTotal: number,
-  subtasks: Array<{ _id: Id<"subtasks">; timeEstimate?: number }>
-): Promise<number> {
-  const sum = subtasks.reduce((s, st) => s + (st.timeEstimate ?? 0), 0);
-  if (sum === 0) return 0;
-  let actualSum = 0;
-  for (const subtask of subtasks) {
-    const raw = ((subtask.timeEstimate ?? 0) / sum) * manualTotal;
-    const rounded = Math.max(5, Math.round(raw / 5) * 5);
-    await ctx.db.patch(subtask._id, { timeEstimate: rounded });
-    await forceRebuildStudyBlocksForSubtask(ctx, subtask._id, rounded);
-    actualSum += rounded;
-  }
-  return actualSum;
-}
-
 export const setTimeEstimate = internalMutation({
   args: {
     taskId: v.id("tasks"),
@@ -186,33 +133,28 @@ export const setManualTimeEstimate = mutation({
       throw new Error("Time estimate must be at least 15 minutes.");
     }
 
-    await ctx.db.patch(args.taskId, {
-      timeEstimate: args.timeEstimate,
-      isManualEstimate: true,
-    });
-
+    // Delete all existing subtasks and their study blocks
     const subtasks = await ctx.db
       .query("subtasks")
       .withIndex("by_parentTaskId", (q) => q.eq("parentTaskId", args.taskId))
       .collect();
-
-    if (subtasks.length === 0) {
-      await rebuildStudyBlocks(ctx, args.taskId, args.timeEstimate);
-    } else {
-      const allEstimated = subtasks.every((s) => s.timeEstimate !== undefined);
-      if (allEstimated) {
-        const actualSum = await normalizeSubtaskEstimates(ctx, args.timeEstimate, subtasks);
-        // If rounding caused the total to exceed the target by more than 10%, let the
-        // agent prune the least-important subtasks to bring it back within range.
-        if (actualSum > args.timeEstimate * 1.1) {
-          await ctx.scheduler.runAfter(0, internal.actions.pruneSubtasksToThreshold.pruneSubtasksToThreshold, {
-            taskId: args.taskId,
-            targetMinutes: args.timeEstimate,
-          });
-        }
-      }
-      // If not all estimated yet, normalization runs when the last estimate arrives.
+    for (const subtask of subtasks) {
+      const subtaskBlocks = await ctx.db
+        .query("studyBlocks")
+        .withIndex("by_subtaskId", (q) => q.eq("subtaskId", subtask._id))
+        .collect();
+      for (const block of subtaskBlocks) await ctx.db.delete(block._id);
+      await ctx.db.delete(subtask._id);
     }
+
+    await ctx.db.patch(args.taskId, {
+      timeEstimate: args.timeEstimate,
+      isManualEstimate: true,
+      reasoning: undefined,
+    });
+
+    // Rebuild task-level blocks sized to the manual estimate using user preferences
+    await rebuildStudyBlocks(ctx, args.taskId, args.timeEstimate);
   },
 });
 
@@ -227,60 +169,17 @@ export const clearManualEstimate = mutation({
     const task = await ctx.db.get(args.taskId);
     if (!task || task.userId !== userId) throw new Error("Task not found");
 
-    const subtasks = await ctx.db
-      .query("subtasks")
-      .withIndex("by_parentTaskId", (q) => q.eq("parentTaskId", args.taskId))
+    // Delete task-level blocks so AI can regenerate fresh
+    const existingBlocks = await ctx.db
+      .query("studyBlocks")
+      .withIndex("by_taskId", (q) => q.eq("taskId", args.taskId))
       .collect();
+    for (const block of existingBlocks) await ctx.db.delete(block._id);
 
-    if (subtasks.length > 0) {
-      // Restore the summed total from current (scaled) subtask estimates.
-      // Subtask study blocks remain unchanged.
-      const sum = subtasks.reduce((s, st) => s + (st.timeEstimate ?? 0), 0);
-      await ctx.db.patch(args.taskId, {
-        isManualEstimate: false,
-        timeEstimate: sum > 0 ? sum : undefined,
-      });
-    } else {
-      await ctx.db.patch(args.taskId, {
-        isManualEstimate: false,
-        timeEstimate: undefined,
-      });
-      // Delete task-level blocks so AI can regenerate fresh.
-      const existingBlocks = await ctx.db
-        .query("studyBlocks")
-        .withIndex("by_taskId", (q) => q.eq("taskId", args.taskId))
-        .collect();
-      for (const block of existingBlocks) await ctx.db.delete(block._id);
-    }
-  },
-});
-
-export const applySubtaskPruning = internalMutation({
-  args: {
-    taskId: v.id("tasks"),
-    subtaskIdsToRemove: v.array(v.id("subtasks")),
-    targetMinutes: v.number(),
-  },
-  returns: v.null(),
-  handler: async (ctx, args) => {
-    for (const subtaskId of args.subtaskIdsToRemove) {
-      const blocks = await ctx.db
-        .query("studyBlocks")
-        .withIndex("by_subtaskId", (q) => q.eq("subtaskId", subtaskId))
-        .collect();
-      for (const block of blocks) await ctx.db.delete(block._id);
-      await ctx.db.delete(subtaskId);
-    }
-
-    const remaining = await ctx.db
-      .query("subtasks")
-      .withIndex("by_parentTaskId", (q) => q.eq("parentTaskId", args.taskId))
-      .collect();
-
-    if (remaining.length > 0 && remaining.every((s) => s.timeEstimate !== undefined)) {
-      await normalizeSubtaskEstimates(ctx, args.targetMinutes, remaining);
-    }
-    return null;
+    await ctx.db.patch(args.taskId, {
+      isManualEstimate: false,
+      timeEstimate: undefined,
+    });
   },
 });
 
