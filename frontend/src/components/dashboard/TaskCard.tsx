@@ -143,7 +143,6 @@ export default function TaskCard({
                 <>
                   <span>· {formatMinutes(task.timeEstimate)}</span>
                   <EstimateBadge isManual={task.isManualEstimate} />
-                  <WeightBadge weight={task.assignmentWeight} />
                   {!task.isManualEstimate && task.reasoning && !isEstimating && (
                     <button
                       type="button"
@@ -160,6 +159,7 @@ export default function TaskCard({
                   )}
                 </>
               ) : null}
+              <WeightBadge weight={task.assignmentWeight} />
             </div>
             {task.description.trim().length > 0 && (
               <div className="text-xs break-words text-light-blue line-clamp-4">
