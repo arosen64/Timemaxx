@@ -11,9 +11,6 @@ vi.mock('../../backend/convex/_generated/api', () => ({
       tasks: { getTasksByCourseId: 'getTasksByCourseId' },
       subtasks: { getSubtasksForTask: 'getSubtasksForTask' },
     },
-    mutations: {
-      studyBlocks: { splitStudyBlock: 'splitStudyBlock' },
-    },
     actions: {
       scheduleBlock: { scheduleBlock: 'scheduleBlock' },
       scheduleAllBlocks: { scheduleAllBlocks: 'scheduleAllBlocks' },

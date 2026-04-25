@@ -203,7 +203,7 @@ export default function MobileDayView({
                 <div
                   className={`flex-1 border-b border-l border-border/50 ${slotBgClass(state, isHighlighted, isAssignMode)}`}
                   style={{ height: SLOT_HEIGHT }}
-                  onClick={() => { if (isHighlighted) onSlotClick(dateStr, slot) }}
+                  onClick={isHighlighted ? () => onSlotClick(dateStr, slot) : undefined}
                 />
               </div>
             )
@@ -262,7 +262,7 @@ export default function MobileDayView({
             return (
               <div
                 key={block._id}
-                className="absolute"
+                className="group absolute"
                 style={{ top: topPx, height: heightPx, left: 48, right: 2, zIndex: 5 }}
                 draggable={false}
               >
