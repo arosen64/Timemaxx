@@ -229,10 +229,26 @@ export const getAllStudyBlocksByUserInternal = internalQuery({
 export const getStudyBlocksByTaskInternal = internalQuery({
   args: { taskId: v.id("tasks") },
   handler: async (ctx, { taskId }) => {
-    return await ctx.db
+    const taskBlocks = await ctx.db
       .query("studyBlocks")
       .withIndex("by_taskId", (q) => q.eq("taskId", taskId))
       .collect();
+
+    const subtasks = await ctx.db
+      .query("subtasks")
+      .withIndex("by_parentTaskId", (q) => q.eq("parentTaskId", taskId))
+      .collect();
+
+    const subtaskBlockArrays = await Promise.all(
+      subtasks.map((s) =>
+        ctx.db
+          .query("studyBlocks")
+          .withIndex("by_subtaskId", (q) => q.eq("subtaskId", s._id))
+          .collect(),
+      ),
+    );
+
+    return [...taskBlocks, ...subtaskBlockArrays.flat()];
   },
 });
 

@@ -231,7 +231,6 @@ export const clearAgentStateInternal = internalMutation({
       clarificationExhausted: false,
       activeTaskId: undefined,
       activeCourseId: undefined,
-      awaitingBlockResolution: false,
       pendingScheduleAction: undefined,
       activeBlockId: undefined,
     });
@@ -292,7 +291,6 @@ export const setBlockPromptStateInternal = internalMutation({
       .unique();
     if (!row) throw new Error("chat session missing");
     await ctx.db.patch(row._id, {
-      awaitingBlockResolution: true,
       pendingScheduleAction: args.pendingScheduleAction,
       activeBlockId: undefined,
     });
@@ -310,7 +308,11 @@ export const resolvePickedBlockInternal = internalMutation({
   handler: async (ctx, args) => {
     const block = await ctx.db.get(args.blockId);
     if (!block) throw new Error("Block not found");
-    const ownerId = block.taskId ? (await ctx.db.get(block.taskId))?.userId : undefined;
+    const ownerId = block.taskId
+      ? (await ctx.db.get(block.taskId))?.userId
+      : block.subtaskId
+        ? (await ctx.db.get(block.subtaskId))?.userId
+        : undefined;
     if (ownerId !== args.userId) throw new Error("Unauthorized");
     const row = await ctx.db
       .query("chatSessions")
@@ -321,7 +323,6 @@ export const resolvePickedBlockInternal = internalMutation({
     if (!row) throw new Error("chat session missing");
     await ctx.db.patch(row._id, {
       activeBlockId: args.blockId,
-      awaitingBlockResolution: false,
       pendingScheduleAction: undefined,
     });
     return null;
