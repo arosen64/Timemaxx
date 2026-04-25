@@ -366,6 +366,7 @@ export default function ScheduleTab() {
         isExporting={isExporting}
         onPrevWeek={() => setWeekOffset((o) => o - 7)}
         onNextWeek={() => setWeekOffset((o) => o + 7)}
+        onGoToToday={() => setWeekOffset(0)}
         onExport={handleExport}
         onOpenSelector={() => setSelectorOpen((o) => !o)}
       />

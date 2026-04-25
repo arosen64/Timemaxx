@@ -23,6 +23,7 @@ import type * as actions_scheduleBlock from "../actions/scheduleBlock.js";
 import type * as actions_scheduleSubtask from "../actions/scheduleSubtask.js";
 import type * as actions_scheduleTask from "../actions/scheduleTask.js";
 import type * as ai_embeddings from "../ai/embeddings.js";
+import type * as ai_estimateSubtasksBatch from "../ai/estimateSubtasksBatch.js";
 import type * as ai_estimateTaskTime from "../ai/estimateTaskTime.js";
 import type * as ai_generateAcademicProfile from "../ai/generateAcademicProfile.js";
 import type * as ai_parseTranscript from "../ai/parseTranscript.js";
@@ -104,6 +105,7 @@ declare const fullApi: ApiFromModules<{
   "actions/scheduleSubtask": typeof actions_scheduleSubtask;
   "actions/scheduleTask": typeof actions_scheduleTask;
   "ai/embeddings": typeof ai_embeddings;
+  "ai/estimateSubtasksBatch": typeof ai_estimateSubtasksBatch;
   "ai/estimateTaskTime": typeof ai_estimateTaskTime;
   "ai/generateAcademicProfile": typeof ai_generateAcademicProfile;
   "ai/parseTranscript": typeof ai_parseTranscript;
