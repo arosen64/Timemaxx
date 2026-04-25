@@ -32,6 +32,7 @@ async function seedStudyBlock(
       title: overrides.title ?? "Block 1",
       startTime: overrides.startTime,
       studyBlockLength: overrides.studyBlockLength ?? 60,
+      isCompleted: false,
     })
   );
 }
@@ -71,6 +72,7 @@ async function seedSubtaskBlock(
       userId: userId as any,
       title: "Subtask block",
       studyBlockLength: overrides.studyBlockLength ?? 90,
+      isCompleted: false,
     })
   );
   return { subtaskId, studyBlockId };
@@ -415,32 +417,32 @@ describe("mutations/studyBlocks – splitStudyBlock", () => {
     ).rejects.toThrow("Unauthorized");
   });
 
-  test("throws when split point would produce a block shorter than 30 minutes", async () => {
+  test("throws when split point would produce a block shorter than 15 minutes", async () => {
     const t = makeTestCtx();
     const { userId, withAuth } = await createTestUser(t);
     const taskId = await seedTask(t, userId);
-    const studyBlockId = await seedStudyBlock(t, taskId, { studyBlockLength: 90 });
+    const studyBlockId = await seedStudyBlock(t, taskId, { studyBlockLength: 45 });
 
     await expect(
       withAuth.mutation(api.mutations.studyBlocks.splitStudyBlock, {
         studyBlockId,
-        splitAtMinutes: 20,
+        splitAtMinutes: 10,
       })
-    ).rejects.toThrow("Each resulting block must be at least 30 minutes");
+    ).rejects.toThrow("Each resulting block must be at least 15 minutes");
   });
 
-  test("throws when remainder would be shorter than 30 minutes", async () => {
+  test("throws when remainder would be shorter than 15 minutes", async () => {
     const t = makeTestCtx();
     const { userId, withAuth } = await createTestUser(t);
     const taskId = await seedTask(t, userId);
-    const studyBlockId = await seedStudyBlock(t, taskId, { studyBlockLength: 90 });
+    const studyBlockId = await seedStudyBlock(t, taskId, { studyBlockLength: 45 });
 
     await expect(
       withAuth.mutation(api.mutations.studyBlocks.splitStudyBlock, {
         studyBlockId,
-        splitAtMinutes: 65,
+        splitAtMinutes: 35,
       })
-    ).rejects.toThrow("Each resulting block must be at least 30 minutes");
+    ).rejects.toThrow("Each resulting block must be at least 15 minutes");
   });
 
   test("deletes original block and creates two blocks with correct lengths", async () => {
@@ -592,6 +594,7 @@ describe("mutations/studyBlocks – setGoogleEventId", () => {
         title: "Block",
         studyBlockLength: 60,
         googleEventId: "old_event_id",
+        isCompleted: false,
       })
     );
 
@@ -646,6 +649,7 @@ describe("mutations/studyBlocks – flagFutureBlocksForReexport", () => {
         studyBlockLength: 60,
         googleEventId: "gcal-evt-123",
         needsExport: false,
+        isCompleted: false,
       })
     );
 
@@ -670,6 +674,7 @@ describe("mutations/studyBlocks – flagFutureBlocksForReexport", () => {
         studyBlockLength: 60,
         googleEventId: "gcal-past-evt",
         needsExport: false,
+        isCompleted: false,
       })
     );
 
@@ -691,6 +696,7 @@ describe("mutations/studyBlocks – flagFutureBlocksForReexport", () => {
         title: "Unscheduled block",
         studyBlockLength: 60,
         googleEventId: "gcal-evt-unscheduled",
+        isCompleted: false,
       })
     );
 
@@ -712,6 +718,7 @@ describe("mutations/studyBlocks – flagFutureBlocksForReexport", () => {
         title: "Never exported",
         startTime: futureStart,
         studyBlockLength: 60,
+        isCompleted: false,
       })
     );
 
@@ -740,6 +747,7 @@ describe("mutations/studyBlocks – flagFutureBlocksForReexport", () => {
         studyBlockLength: 60,
         googleEventId: "evt-user1",
         needsExport: false,
+        isCompleted: false,
       })
     );
     const block2Id = await t.run((ctx) =>
@@ -751,6 +759,7 @@ describe("mutations/studyBlocks – flagFutureBlocksForReexport", () => {
         studyBlockLength: 60,
         googleEventId: "evt-user2",
         needsExport: false,
+        isCompleted: false,
       })
     );
 

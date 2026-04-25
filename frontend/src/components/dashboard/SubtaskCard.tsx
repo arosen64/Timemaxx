@@ -13,6 +13,7 @@ type SubtaskCardProps = {
   onEdit: (subtask: SubtaskType) => void
   onDelete: (id: Id<'subtasks'>) => void
   onStatusChange: (id: Id<'subtasks'>, status: TaskStatus) => void
+  onToggleBlock?: (id: string) => void
   isReadOnly?: boolean
 }
 
@@ -24,6 +25,7 @@ export default function SubtaskCard({
   onEdit,
   onDelete,
   onStatusChange,
+  onToggleBlock,
   isReadOnly = false,
 }: SubtaskCardProps) {
   const [showReasoning, setShowReasoning] = useState(false)
@@ -124,7 +126,7 @@ export default function SubtaskCard({
       {blocks.length > 0 && (
         <div className="flex flex-col gap-2 border-t border-border bg-bg-gray px-[18px] py-3 pl-[52px]">
           {blocks.map((block) => (
-            <StudyBlockRow key={block._id} block={block} />
+            <StudyBlockRow key={block._id} block={block} onToggle={onToggleBlock} />
           ))}
         </div>
       )}

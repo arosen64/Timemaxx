@@ -24,7 +24,7 @@ type Ctx = GenericActionCtx<DataModel>;
 /**
  * Batch-loads the given course IDs and formats a clean context block for the LLM.
  */
-async function buildCourseContext(
+export async function buildCourseContext(
   ctx: Ctx,
   courseIds: Id<"userCourses">[]
 ): Promise<string | null> {
@@ -56,7 +56,7 @@ async function buildCourseContext(
  * Batch-loads the given task IDs and formats a context block that includes
  * estimate history and feedback.
  */
-async function buildTaskContext(
+export async function buildTaskContext(
   ctx: Ctx,
   taskIds: Id<"tasks">[]
 ): Promise<string | null> {
@@ -95,7 +95,7 @@ async function buildTaskContext(
  * Loads `chatChunks` by id and formats transcript excerpts for the LLM.
  * When `preloadedChunks` matches `chunkIds` in length and order (from `fetchRelevantContext`), skips a second DB read.
  */
-async function buildChatContext(
+export async function buildChatContext(
   ctx: Ctx,
   userId: Id<"users">,
   chunkIds: Id<"chatChunks">[],
@@ -123,7 +123,7 @@ async function buildChatContext(
  * Builds a structured JSON profile from all user preferences and academic
  * insights that may influence study time estimation.
  */
-function buildProfileContext(user: Doc<"users"> | null): string | null {
+export function buildProfileContext(user: Doc<"users"> | null): string | null {
   if (!user) return null;
 
   const profile: Record<string, unknown> = {};

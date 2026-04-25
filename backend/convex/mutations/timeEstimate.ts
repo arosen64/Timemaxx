@@ -41,6 +41,7 @@ export async function rebuildStudyBlocksForSubtask(
       title: subtask.title,
       startTime: undefined,
       studyBlockLength,
+      isCompleted: false,
     });
   }
 }
@@ -77,6 +78,7 @@ export async function rebuildStudyBlocks(
       title: task.title,
       startTime: undefined,
       studyBlockLength,
+      isCompleted: false,
     });
   }
 }

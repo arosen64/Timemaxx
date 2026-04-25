@@ -258,6 +258,7 @@ describe("mutations/subtasks – deleteSubtask", () => {
         subtaskId: subtaskId as never,
         title: "Block",
         studyBlockLength: 30,
+        isCompleted: false,
       })
     );
 
@@ -296,6 +297,7 @@ describe("mutations/tasks – deleteTask cascade", () => {
         subtaskId: subtaskId as never,
         title: "Subtask block",
         studyBlockLength: 30,
+        isCompleted: false,
       })
     );
 
@@ -304,6 +306,7 @@ describe("mutations/tasks – deleteTask cascade", () => {
         taskId: taskId as never,
         title: "Task block",
         studyBlockLength: 60,
+        isCompleted: false,
       })
     );
 
@@ -352,6 +355,7 @@ describe("mutations/userCourses – deleteUserCourse cascade", () => {
         subtaskId: subtaskId as never,
         title: "Block",
         studyBlockLength: 30,
+        isCompleted: false,
       })
     );
 
