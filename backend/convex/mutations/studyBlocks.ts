@@ -497,6 +497,28 @@ export const toggleStudyBlockComplete = mutation({
         }
         await ctx.db.patch(block.subtaskId, { status: newStatus });
       }
+    } else if (block.taskId) {
+      const allTaskBlocks = await ctx.db
+        .query("studyBlocks")
+        .withIndex("by_taskId", (q) => q.eq("taskId", block.taskId!))
+        .collect();
+
+      const completedCount = allTaskBlocks.filter((b) =>
+        b._id === args.studyBlockId ? nowCompleted : b.isCompleted
+      ).length;
+
+      const task = await ctx.db.get(block.taskId);
+      if (task && task.userId === userId) {
+        let newStatus: "not_started" | "in_progress" | "completed";
+        if (completedCount === allTaskBlocks.length) {
+          newStatus = "completed";
+        } else if (completedCount > 0) {
+          newStatus = "in_progress";
+        } else {
+          newStatus = "not_started";
+        }
+        await ctx.db.patch(block.taskId, { status: newStatus });
+      }
     }
   },
 });

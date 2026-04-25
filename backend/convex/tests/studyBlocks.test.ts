@@ -774,3 +774,92 @@ describe("mutations/studyBlocks – flagFutureBlocksForReexport", () => {
     expect(block2!.googleEventId).toBe("evt-user2");
   });
 });
+
+// ─── toggleStudyBlockComplete – supertask status propagation ─────────────────
+
+describe("mutations/studyBlocks – toggleStudyBlockComplete supertask status", () => {
+  async function seedTaskWithBlocks(
+    t: ReturnType<typeof makeTestCtx>,
+    userId: string,
+    count: number
+  ) {
+    const taskId = await seedTask(t, userId);
+    const blockIds: any[] = [];
+    for (let i = 0; i < count; i++) {
+      const id = await t.run((ctx) =>
+        ctx.db.insert("studyBlocks", {
+          taskId: taskId as any,
+          userId: userId as any,
+          title: `Block ${i + 1}`,
+          studyBlockLength: 60,
+          isCompleted: false,
+        })
+      );
+      blockIds.push(id);
+    }
+    return { taskId, blockIds };
+  }
+
+  test("completing one of multiple blocks sets task to in_progress", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+    const { taskId, blockIds } = await seedTaskWithBlocks(t, userId, 3);
+
+    await withAuth.mutation(api.mutations.studyBlocks.toggleStudyBlockComplete, {
+      studyBlockId: blockIds[0],
+    });
+
+    const task = await t.run((ctx) => ctx.db.get(taskId));
+    expect(task!.status).toBe("in_progress");
+  });
+
+  test("completing all blocks sets task to completed", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+    const { taskId, blockIds } = await seedTaskWithBlocks(t, userId, 2);
+
+    for (const blockId of blockIds) {
+      await withAuth.mutation(api.mutations.studyBlocks.toggleStudyBlockComplete, {
+        studyBlockId: blockId,
+      });
+    }
+
+    const task = await t.run((ctx) => ctx.db.get(taskId));
+    expect(task!.status).toBe("completed");
+  });
+
+  test("uncompleting a block when others remain completed keeps task in_progress", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+    const { taskId, blockIds } = await seedTaskWithBlocks(t, userId, 2);
+
+    for (const blockId of blockIds) {
+      await withAuth.mutation(api.mutations.studyBlocks.toggleStudyBlockComplete, {
+        studyBlockId: blockId,
+      });
+    }
+
+    await withAuth.mutation(api.mutations.studyBlocks.toggleStudyBlockComplete, {
+      studyBlockId: blockIds[0],
+    });
+
+    const task = await t.run((ctx) => ctx.db.get(taskId));
+    expect(task!.status).toBe("in_progress");
+  });
+
+  test("uncompleting the only completed block sets task back to not_started", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+    const { taskId, blockIds } = await seedTaskWithBlocks(t, userId, 2);
+
+    await withAuth.mutation(api.mutations.studyBlocks.toggleStudyBlockComplete, {
+      studyBlockId: blockIds[0],
+    });
+    await withAuth.mutation(api.mutations.studyBlocks.toggleStudyBlockComplete, {
+      studyBlockId: blockIds[0],
+    });
+
+    const task = await t.run((ctx) => ctx.db.get(taskId));
+    expect(task!.status).toBe("not_started");
+  });
+});
