@@ -142,8 +142,8 @@ export default function MobileDayView({
             const isHighlighted = highlightedSlots.has(slotKey)
             let bgClass = today ? 'bg-today-col' : 'bg-white'
             if (isHighlighted) bgClass = 'bg-teal/60 cursor-pointer hover:bg-teal/80'
-            else if (row?.blocked.includes(slot)) bgClass = 'bg-slate-blue'
-            else if (row?.available.includes(slot)) bgClass = isAssignMode ? 'bg-teal/20' : 'bg-teal/40'
+            else if (row?.blocked?.includes(slot)) bgClass = 'bg-slate-blue'
+            else if (row?.available?.includes(slot)) bgClass = isAssignMode ? 'bg-teal/20' : 'bg-teal/40'
 
             return [
               <div
