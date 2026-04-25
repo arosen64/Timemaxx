@@ -84,8 +84,19 @@ export default function DashboardPage() {
     return rows.sort((a, b) => a.courseCode.localeCompare(b.courseCode))
   }, [userCourses])
 
-  const todayStudyMinutes = useQuery(api.queries.studyBlocks.getTodayStudyBlockMinutes) ?? 0
-  const thisWeekBlocks = useQuery(api.queries.studyBlocks.getThisWeekStudyBlocks) ?? { total: 0, completed: 0 }
+  const { todayStartMs, todayEndMs, weekStartMs, weekEndMs } = useMemo(() => {
+    const d = new Date();
+    const todayStart = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+    const weekStart = new Date(d.getFullYear(), d.getMonth(), d.getDate() - d.getDay()).getTime();
+    return {
+      todayStartMs: todayStart,
+      todayEndMs: todayStart + 24 * 60 * 60 * 1000,
+      weekStartMs: weekStart,
+      weekEndMs: weekStart + 7 * 24 * 60 * 60 * 1000,
+    };
+  }, []);
+  const todayStudyMinutes = useQuery(api.queries.studyBlocks.getTodayStudyBlockMinutes, { todayStartMs, todayEndMs }) ?? 0
+  const thisWeekBlocks = useQuery(api.queries.studyBlocks.getThisWeekStudyBlocks, { weekStartMs, weekEndMs }) ?? { total: 0, completed: 0 }
 
   const [activeTab, setActiveTab] = useState<'active' | 'completed'>('active')
 
