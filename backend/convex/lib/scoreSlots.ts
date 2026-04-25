@@ -42,32 +42,6 @@ function getDayOfWeek(startMs: number, timezone: string): string {
   );
 }
 
-// Returns YYYY-MM-DD in the given timezone.
-export function dateStrLocal(startMs: number, timezone: string): string {
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: timezone,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(new Date(startMs));
-}
-
-/**
- * Builds a date → occupied-interval-count map from any set of intervals.
- * Used to derive the daily load penalty for scoring.
- */
-export function buildSlotDailyLoadMap(
-  intervals: Array<{ startMs: number }>,
-  timezone: string,
-): Map<string, number> {
-  const map = new Map<string, number>();
-  for (const iv of intervals) {
-    const key = dateStrLocal(iv.startMs, timezone);
-    map.set(key, (map.get(key) ?? 0) + 1);
-  }
-  return map;
-}
-
 /**
  * Scores a single candidate slot against the user's soft preferences.
  * Pure function — deterministic, no I/O, no Convex deps.

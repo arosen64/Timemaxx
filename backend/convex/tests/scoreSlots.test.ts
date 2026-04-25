@@ -1,10 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  parseTimeOfDayRanges,
-  scoreCandidate,
-  buildSlotDailyLoadMap,
-  dateStrLocal,
-} from "../lib/scoreSlots";
+import { parseTimeOfDayRanges, scoreCandidate } from "../lib/scoreSlots";
 
 const TZ = "America/New_York";
 
@@ -16,16 +11,11 @@ function etMs(isoDate: string, hour: number, minute = 0): number {
 
 const MON = "2026-01-05"; // Monday
 const TUE = "2026-01-06"; // Tuesday
-const SAT = "2026-01-10"; // Saturday
 
 // Slot at 9am Monday — within "Morning (8–11am)" window, on a Monday
 const slot9amMon = etMs(MON, 9);
 // Slot at 2pm Tuesday — within "Afternoon (2–5pm)" window, on a Tuesday
 const slot2pmTue = etMs(TUE, 14);
-// Slot at 11pm Saturday — within "Night (8–11pm)" window (just before boundary)
-const slot10pmSat = etMs(SAT, 22);
-// Slot at 6am Monday — "Early Morning (5–8am)"
-const slot6amMon = etMs(MON, 6);
 
 describe("parseTimeOfDayRanges", () => {
   it("maps all known labels to correct minute ranges", () => {
@@ -56,30 +46,6 @@ describe("parseTimeOfDayRanges", () => {
 
   it("returns empty array for empty prefs", () => {
     expect(parseTimeOfDayRanges([])).toEqual([]);
-  });
-});
-
-describe("dateStrLocal", () => {
-  it("returns YYYY-MM-DD in the given timezone", () => {
-    // 2026-01-05 09:00 ET
-    expect(dateStrLocal(slot9amMon, TZ)).toBe("2026-01-05");
-  });
-});
-
-describe("buildSlotDailyLoadMap", () => {
-  it("counts intervals per date", () => {
-    const intervals = [
-      { startMs: slot9amMon },
-      { startMs: etMs(MON, 14) },
-      { startMs: slot2pmTue },
-    ];
-    const map = buildSlotDailyLoadMap(intervals, TZ);
-    expect(map.get("2026-01-05")).toBe(2);
-    expect(map.get("2026-01-06")).toBe(1);
-  });
-
-  it("returns empty map for no intervals", () => {
-    expect(buildSlotDailyLoadMap([], TZ).size).toBe(0);
   });
 });
 
