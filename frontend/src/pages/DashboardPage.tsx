@@ -455,12 +455,6 @@ export default function DashboardPage() {
             value={formatEstimatedTime(totalEstimatedMinutes)}
             indicator={{ dotClass: 'bg-sky-blue', text: 'AI estimated', textClass: 'text-sky-blue' }}
           />
-          <StatCard
-            label="Study Streak"
-            value="—"
-            indicator={{ dotClass: 'bg-teal', text: 'days in a row', textClass: 'text-white' }}
-            variant="dark"
-          />
         </div>
 
         {/* Columns */}

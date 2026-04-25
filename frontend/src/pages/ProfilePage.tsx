@@ -28,7 +28,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <main className="flex flex-1 flex-col overflow-y-auto gap-8 p-4 sm:p-6 lg:p-10 font-body bg-bg-gray">
+    <main className="flex flex-1 min-w-0 flex-col overflow-y-auto overflow-x-hidden gap-8 p-4 sm:p-6 lg:p-10 font-body bg-bg-gray">
         {/* Page Header */}
         <div className="flex flex-col gap-1">
           <h1 className="font-heading text-3xl font-bold text-navy">Profile</h1>

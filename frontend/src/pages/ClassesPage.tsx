@@ -32,9 +32,9 @@ export default function ClassesPage() {
   }
 
   return (
-    <main className="flex flex-1 flex-col overflow-y-auto gap-6 p-4 sm:p-6 lg:p-10 font-body bg-bg-gray">
+    <main className="flex flex-1 min-w-0 flex-col overflow-y-auto overflow-x-hidden gap-6 p-4 sm:p-6 lg:p-10 font-body bg-bg-gray">
         {/* Page Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-col gap-1">
             <h1 className="font-heading text-3xl font-bold text-navy">Classes</h1>
             <p className="font-body text-sm text-slate-blue">Manage your classes and syllabi</p>
@@ -155,7 +155,7 @@ export default function ClassesPage() {
             </Button>
           </div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
             {tabCourses.map((course) => (
               <ClassCard
                 key={course._id}
