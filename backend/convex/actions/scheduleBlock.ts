@@ -13,7 +13,7 @@ import {
   type OccupiedInterval,
   type WorkHoursRow,
 } from "../lib/scheduleSlots";
-import { parseTimeOfDayRanges, scoreCandidate } from "../lib/scoreSlots";
+import { parseTimeOfDayRanges, scoreCandidate, getProductivityTraits } from "../lib/scoreSlots";
 import { fetch21DayCalendarEvents } from "../lib/calendarFetch";
 
 
@@ -91,11 +91,8 @@ export const scheduleBlock = action({
 
     const focusBlockLength: number = user.focusBlockLength ?? 60;
     const workHoursGrid = (user.workHoursGrid ?? []) as WorkHoursRow[];
-    const productivityTraits: unknown = user.productivityTraits;
-    const preferredDays: string[] = (productivityTraits as any)?.dayOfWeek ?? [];
-    const timeOfDayRanges = parseTimeOfDayRanges(
-      Array.isArray((productivityTraits as any)?.timeOfDay) ? (productivityTraits as any).timeOfDay : [],
-    );
+    const { dayOfWeek: preferredDays, timeOfDay: timeOfDayPrefs } = getProductivityTraits(user.productivityTraits);
+    const timeOfDayRanges = parseTimeOfDayRanges(timeOfDayPrefs);
     const dayOfWeekPrefs: string[] = preferredDays;
     const difficultyRating = courseId
       ? userCourses.find((c) => c._id === courseId)?.difficultyRating
@@ -154,7 +151,7 @@ export const scheduleBlock = action({
 
     const [chosenIndex] = await selectAllSlotsWithAI(
       [{ taskTitle, dueDate, recommendedStart, candidates: scoredCandidates }],
-      productivityTraits,
+      user.productivityTraits,
     );
 
     const chosen = scoredCandidates[chosenIndex ?? 0];

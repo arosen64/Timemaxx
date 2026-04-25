@@ -25,6 +25,14 @@ export function parseTimeOfDayRanges(prefs: string[]): Array<[number, number]> {
   return prefs.flatMap((p) => (TIME_OF_DAY_RANGES[p] !== undefined ? [TIME_OF_DAY_RANGES[p]] : []));
 }
 
+export function getProductivityTraits(traits: unknown): { dayOfWeek: string[]; timeOfDay: string[] } {
+  const t = traits as Record<string, unknown> | null | undefined;
+  return {
+    dayOfWeek: Array.isArray(t?.dayOfWeek) ? (t!.dayOfWeek as string[]) : [],
+    timeOfDay: Array.isArray(t?.timeOfDay) ? (t!.timeOfDay as string[]) : [],
+  };
+}
+
 function getMinutesFromMidnight(startMs: number, timezone: string): number {
   const parts = new Intl.DateTimeFormat("en-US", {
     hour: "numeric",

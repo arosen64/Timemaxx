@@ -17,7 +17,7 @@ import {
   type WorkHoursRow,
   type PoolSlot,
 } from "../lib/scheduleSlots";
-import { parseTimeOfDayRanges, scoreCandidate, type ScoreBreakdown } from "../lib/scoreSlots";
+import { parseTimeOfDayRanges, scoreCandidate, getProductivityTraits, type ScoreBreakdown } from "../lib/scoreSlots";
 import { fetch21DayCalendarEvents } from "../lib/calendarFetch";
 
 const MAX_BLOCKS = 10;
@@ -52,11 +52,8 @@ export const scheduleAllBlocks = action({
 
     const focusBlockLength: number = user.focusBlockLength ?? 60;
     const workHoursGrid = (user.workHoursGrid ?? []) as WorkHoursRow[];
-    const productivityTraits: unknown = user.productivityTraits;
-    const preferredDays: string[] = (productivityTraits as any)?.dayOfWeek ?? [];
-    const timeOfDayRanges = parseTimeOfDayRanges(
-      Array.isArray((productivityTraits as any)?.timeOfDay) ? (productivityTraits as any).timeOfDay : [],
-    );
+    const { dayOfWeek: preferredDays, timeOfDay: timeOfDayPrefs } = getProductivityTraits(user.productivityTraits);
+    const timeOfDayRanges = parseTimeOfDayRanges(timeOfDayPrefs);
     const dayOfWeekPrefs: string[] = preferredDays;
 
     // Fetch raw blocks, tasks, and subtasks
@@ -300,7 +297,7 @@ export const scheduleAllBlocks = action({
               recommendedStart: e.recommendedStart,
               candidates: e.candidates,
             })),
-            productivityTraits,
+            user.productivityTraits,
           )
         : [];
 
