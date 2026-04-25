@@ -186,7 +186,10 @@ export const scheduleAllBlocks = action({
     ];
 
     const maxBlocksPerDayMap = computeMaxBlocksPerDay(workHoursGrid, focusBlockLength, preferredDays);
-    const dailyLoadMap = buildDailyLoadMap(occupiedIntervals, args.timezone, focusBlockLength);
+    // speculativeDailyLoadMap is mutated during phase 1 to spread blocks across days.
+    // actualDailyLoadMap tracks only real placements and is used for cap enforcement in phase 3.
+    const speculativeDailyLoadMap = buildDailyLoadMap(occupiedIntervals, args.timezone, focusBlockLength);
+    const actualDailyLoadMap = buildDailyLoadMap(occupiedIntervals, args.timezone, focusBlockLength);
 
     // Shared slot pool extended incrementally per block
     const pool: PoolSlot[] = [];
@@ -218,7 +221,7 @@ export const scheduleAllBlocks = action({
         workHoursGrid,
         occupiedIntervals,
         timezone: args.timezone,
-        dailyLoadMap,
+        dailyLoadMap: speculativeDailyLoadMap,
         maxBlocksPerDayMap,
         recommendedStartMs: item.recommendedStart,
       });
@@ -228,7 +231,7 @@ export const scheduleAllBlocks = action({
       // Speculatively reserve the first candidate's day so subsequent blocks
       // in this run see an updated load and spread across days.
       const reservedDate = toDateStr(new Date(candidates[0].startMs), args.timezone);
-      dailyLoadMap.set(reservedDate, (dailyLoadMap.get(reservedDate) ?? 0) + 1);
+      speculativeDailyLoadMap.set(reservedDate, (speculativeDailyLoadMap.get(reservedDate) ?? 0) + 1);
 
       entries.push({
         block: item.block,
@@ -265,7 +268,7 @@ export const scheduleAllBlocks = action({
       let chosen = candidates[chosenIndices[i] ?? 0];
       const isChosenValid = (c: { startMs: number }) =>
         isSlotValid(c.startMs, durationMs, workHoursGrid, occupiedIntervals, args.timezone) &&
-        !isDailyCapReached(c.startMs, args.timezone, dailyLoadMap, maxBlocksPerDayMap);
+        !isDailyCapReached(c.startMs, args.timezone, actualDailyLoadMap, maxBlocksPerDayMap);
       if (!isChosenValid(chosen)) {
         const fallback = candidates.find(isChosenValid);
         if (!fallback) continue;
@@ -287,7 +290,7 @@ export const scheduleAllBlocks = action({
       });
 
       const placedDateStr = toDateStr(new Date(chosen.startMs), args.timezone);
-      dailyLoadMap.set(placedDateStr, (dailyLoadMap.get(placedDateStr) ?? 0) + 1);
+      actualDailyLoadMap.set(placedDateStr, (actualDailyLoadMap.get(placedDateStr) ?? 0) + 1);
 
       scheduled++;
     }
