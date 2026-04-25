@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { api, internal } from "../_generated/api";
+import { Id } from "../_generated/dataModel";
 import { makeTestCtx, createTestUser } from "../../convex-tests/helpers";
 
 // Helper: seed a task directly in the db
@@ -784,7 +785,7 @@ describe("mutations/studyBlocks – toggleStudyBlockComplete supertask status", 
     count: number
   ) {
     const taskId = await seedTask(t, userId);
-    const blockIds: any[] = [];
+    const blockIds: Id<"studyBlocks">[] = [];
     for (let i = 0; i < count; i++) {
       const id = await t.run((ctx) =>
         ctx.db.insert("studyBlocks", {
@@ -909,12 +910,12 @@ describe("mutations/studyBlocks – toggleStudyBlockComplete supertask propagati
   test("completing one block on a subtask sets supertask to in_progress", async () => {
     const t = makeTestCtx();
     const { userId, withAuth } = await createTestUser(t);
-    const { parentTaskId, subtaskId: _s, blockId } = await seedSupertaskWithSubtaskBlock(t, userId);
+    const { parentTaskId, subtaskId, blockId } = await seedSupertaskWithSubtaskBlock(t, userId);
 
     // Add a second block so the subtask isn't fully complete after one toggle
     await t.run((ctx) =>
       ctx.db.insert("studyBlocks", {
-        subtaskId: _s as any,
+        subtaskId: subtaskId as any,
         userId: userId as any,
         title: "Block 2",
         studyBlockLength: 60,
