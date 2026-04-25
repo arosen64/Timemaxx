@@ -5,7 +5,7 @@
  * Input:  Array of { subtaskId, contextPrompt } — one entry per subtask.
  * Output: Array of { subtaskId, estimatedMinutes, reasoningTrace } — same order.
  *
- * Concurrency is set to 5 so that up to 5 LLM calls run simultaneously.
+ * Concurrency is set to 10 so that up to 10 LLM calls run simultaneously.
  * Triggered by the Convex `estimateSubtasksBatch` internal action.
  */
 
@@ -19,16 +19,7 @@ const batchItemSchema = z.object({
   contextPrompt: z.string(),
 });
 
-const batchResultSchema = z.object({
-  subtaskId: z.string(),
-  estimatedMinutes: z.number().int().positive(),
-  reasoningTrace: z.object({
-    classes: z.string(),
-    tasks: z.string(),
-    chats: z.string(),
-    profile: z.string(),
-  }),
-});
+const batchResultSchema = z.object({ subtaskId: z.string() }).merge(estimationAgentOutputSchema);
 
 /** Estimates one subtask; used as the foreach body. */
 const estimateSubtaskStep = createStep({

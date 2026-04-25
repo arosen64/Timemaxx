@@ -6,7 +6,10 @@ import { DataModel, Doc, Id } from "../_generated/dataModel";
 import { MastraClient } from "@mastra/client-js";
 import { z } from "zod";
 import { sanitizeUserInput } from "../lib/sanitize";
-import { buildTimeEstimatePrompt } from "../lib/prompts/estimateTaskTime.prompt";
+import {
+  buildTimeEstimatePrompt,
+  estimationAgentOutputSchema,
+} from "../lib/prompts/estimateTaskTime.prompt";
 import { subtaskToTaskLike } from "../lib/taskTypes";
 import { fetchRelevantContext } from "../lib/retrieval";
 import {
@@ -19,16 +22,7 @@ import {
 type Ctx = GenericActionCtx<DataModel>;
 
 const batchResultArraySchema = z.array(
-  z.object({
-    subtaskId: z.string(),
-    estimatedMinutes: z.number().int().positive(),
-    reasoningTrace: z.object({
-      classes: z.string(),
-      tasks: z.string(),
-      chats: z.string(),
-      profile: z.string(),
-    }),
-  })
+  z.object({ subtaskId: z.string() }).merge(estimationAgentOutputSchema)
 );
 
 /**
@@ -112,7 +106,24 @@ export const estimateSubtasksBatch = internalAction({
         const rawErr = (run as { error?: string | Error }).error;
         const msg = rawErr instanceof Error ? rawErr.message : String(rawErr ?? "unknown");
         console.error("Batch estimation workflow failed:", msg, JSON.stringify(run.steps));
+        if (msg.includes("quota") || msg.includes("RESOURCE_EXHAUSTED") || msg.includes("429")) {
+          throw new Error("quota_exceeded");
+        }
         throw new Error(`Batch estimation workflow failed: ${msg}`);
+      }
+
+      for (const [stepId, step] of Object.entries(run.steps ?? {})) {
+        if (!("status" in step)) continue;
+        if (!("output" in step)) {
+          const rawErr = (step as { error?: string | Error }).error;
+          const stepStatus = (step as { status?: string }).status ?? "unknown";
+          const errMsg = rawErr instanceof Error ? rawErr.message : String(rawErr ?? "");
+          console.error(`Batch estimation step "${stepId}" has no output (status: ${stepStatus}):`, errMsg);
+          if (errMsg.includes("quota") || errMsg.includes("RESOURCE_EXHAUSTED") || errMsg.includes("429")) {
+            throw new Error("quota_exceeded");
+          }
+          throw new Error(`Batch estimation step "${stepId}" failed (status: ${stepStatus}): ${errMsg}`);
+        }
       }
 
       const runResult = (run as { result?: unknown }).result;
