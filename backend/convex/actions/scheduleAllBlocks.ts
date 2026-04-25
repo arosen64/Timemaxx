@@ -7,6 +7,7 @@ import {
   extendSlotPool,
   filterPoolForBlock,
   isSlotValid,
+  isDailyCapReached,
   selectAllSlotsWithAI,
   roundUpTo15Min,
   buildDailyLoadMap,
@@ -224,6 +225,11 @@ export const scheduleAllBlocks = action({
 
       if (candidates.length === 0) continue;
 
+      // Speculatively reserve the first candidate's day so subsequent blocks
+      // in this run see an updated load and spread across days.
+      const reservedDate = toDateStr(new Date(candidates[0].startMs), args.timezone);
+      dailyLoadMap.set(reservedDate, (dailyLoadMap.get(reservedDate) ?? 0) + 1);
+
       entries.push({
         block: item.block,
         parentTitle: item.parentTitle,
@@ -257,12 +263,11 @@ export const scheduleAllBlocks = action({
       const durationMs = block.studyBlockLength * 60000;
 
       let chosen = candidates[chosenIndices[i] ?? 0];
-      if (
-        !isSlotValid(chosen.startMs, durationMs, workHoursGrid, occupiedIntervals, args.timezone)
-      ) {
-        const fallback = candidates.find((c) =>
-          isSlotValid(c.startMs, durationMs, workHoursGrid, occupiedIntervals, args.timezone),
-        );
+      const isChosenValid = (c: { startMs: number }) =>
+        isSlotValid(c.startMs, durationMs, workHoursGrid, occupiedIntervals, args.timezone) &&
+        !isDailyCapReached(c.startMs, args.timezone, dailyLoadMap, maxBlocksPerDayMap);
+      if (!isChosenValid(chosen)) {
+        const fallback = candidates.find(isChosenValid);
         if (!fallback) continue;
         chosen = fallback;
       }
