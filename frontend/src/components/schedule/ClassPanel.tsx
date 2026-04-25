@@ -25,6 +25,7 @@ type Props = {
   onToggleAssign: (id: Id<'studyBlocks'>) => void
   timezone: string
   onScheduleAllMsg: (msg: string) => void
+  onBeforeSchedule: (proceed: () => void) => void
 }
 
 // ---------------------------------------------------------------------------
@@ -93,6 +94,7 @@ export default function ClassPanel({
   onToggleAssign,
   timezone,
   onScheduleAllMsg,
+  onBeforeSchedule,
 }: Props) {
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null)
   const [selectedTaskId, setSelectedTaskId] = useState<Id<'tasks'> | null>(null)
@@ -162,7 +164,7 @@ export default function ClassPanel({
   // ---------------------------------------------------------------------------
   // Actions
   // ---------------------------------------------------------------------------
-  async function handleScheduleBlock(blockId: Id<'studyBlocks'>) {
+  async function doScheduleBlock(blockId: Id<'studyBlocks'>) {
     setSchedulingBlockIds((prev) => new Set(prev).add(blockId))
     try {
       await scheduleBlockAction({ studyBlockId: blockId, timezone })
@@ -177,7 +179,16 @@ export default function ClassPanel({
     }
   }
 
+  function handleScheduleBlock(blockId: Id<'studyBlocks'>) {
+    onBeforeSchedule(() => doScheduleBlock(blockId))
+  }
+
   async function handleScheduleSelected() {
+    if (!selectedTaskId) return
+    onBeforeSchedule(() => doScheduleAllBlocks())
+  }
+
+  async function doScheduleAllBlocks() {
     if (!selectedTaskId) return
     setIsSchedulingAll(true)
     try {
@@ -223,8 +234,6 @@ export default function ClassPanel({
             <div className="flex items-center justify-center py-8">
               <SpinnerIcon color="#4E6A8C" size={14} />
             </div>
-          ) : currentCourses.length === 0 ? (
-            <p className="px-4 py-4 text-xs text-light-blue">No current classes.</p>
           ) : (
             <>
               {currentCourses.map((course) => (
