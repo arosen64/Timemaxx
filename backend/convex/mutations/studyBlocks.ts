@@ -36,8 +36,9 @@ function isBlockConflicted(
   const startMs = new Date(block.startTime).getTime()
   const endMs = startMs + block.studyBlockLength * 60 * 1000
 
-  // 1. Due date violation
-  if (startMs >= task.dueDate || endMs > task.dueDate) return true
+  // 1. Due date violation — only flag if the task is not already overdue
+  const nowMs = Date.now()
+  if (task.dueDate > nowMs && (startMs >= task.dueDate || endMs > task.dueDate)) return true
 
   // 2. Calendar event overlap — skip the block's own exported GCal event
   for (const event of timedEvents) {

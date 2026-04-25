@@ -3,7 +3,7 @@ import { useQuery, useAction, useMutation } from 'convex/react'
 import { api } from '../../../../backend/convex/_generated/api'
 import type { Id } from '../../../../backend/convex/_generated/dataModel'
 import type { CalendarEntry, TimedEvent, AllDayEvent } from '../../../../backend/convex/actions/fetchCalendarEvents'
-import { CalendarIcon, SpinnerIcon, WarningIcon } from '../icons'
+import { CalendarIcon, SpinnerIcon, WarningIcon, XIcon } from '../icons'
 import TimeGrid, { type StudyBlockOnGrid } from './TimeGrid'
 import CalendarSelectorPopup from './CalendarSelectorPopup'
 import ScheduleHeader from './ScheduleHeader'
@@ -59,9 +59,9 @@ export default function ScheduleTab() {
   const [isExporting, setIsExporting] = useState(false)
   const [exportMsg, setExportMsg] = useState<string | null>(null)
   const [scheduleAllMsg, setScheduleAllMsg] = useState<string | null>(null)
-  const [nudgeDismissed, setNudgeDismissed] = useState(false)
   const [showNudge, setShowNudge] = useState(false)
   const [pendingSchedule, setPendingSchedule] = useState<(() => void) | null>(null)
+  const [noCalendarPending, setNoCalendarPending] = useState<(() => void) | null>(null)
 
   const gridRef = useRef<HTMLDivElement>(null)
 
@@ -296,12 +296,23 @@ export default function ScheduleTab() {
     }
   }, [exportStudyBlocksAction, fetchCalendarEventsAction, startDateStr, timezone])
 
+  // calendarList already excludes the timemaxx export calendar (filtered server-side),
+  // so any selectedCalendarId that appears in calendarList is a real user-visible calendar.
+  const noCalendarCondition =
+    calendarConnected &&
+    calendarData !== null &&
+    (selectedCalendarIds ?? []).filter(
+      (id) => calendarData.calendarList.some((c) => c.id === id)
+    ).length === 0
+
   function maybeNudge(proceed: () => void) {
-    if (calendarConnected || nudgeDismissed) {
-      proceed()
-    } else {
+    if (!calendarConnected) {
       setPendingSchedule(() => proceed)
       setShowNudge(true)
+    } else if (noCalendarCondition) {
+      setNoCalendarPending(() => proceed)
+    } else {
+      proceed()
     }
   }
 
@@ -311,15 +322,28 @@ export default function ScheduleTab() {
 
   function handleNudgeScheduleAnyway() {
     setShowNudge(false)
-    setNudgeDismissed(true)
     pendingSchedule?.()
     setPendingSchedule(null)
   }
 
   function handleNudgeDismiss() {
     setShowNudge(false)
-    setNudgeDismissed(true)
     setPendingSchedule(null)
+  }
+
+  function handleNoCalendarScheduleAnyway() {
+    const fn = noCalendarPending
+    setNoCalendarPending(null)
+    fn?.()
+  }
+
+  function handleNoCalendarSelectCalendars() {
+    setNoCalendarPending(null)
+    setSelectorOpen(true)
+  }
+
+  function handleNoCalendarDismiss() {
+    setNoCalendarPending(null)
   }
 
   async function handleToggleCalendar(calId: string) {
@@ -336,6 +360,7 @@ export default function ScheduleTab() {
   }
 
   const hasIndicator = calendarConnected && (!selectedCalendarIds || selectedCalendarIds.length === 0)
+
 
   const pendingExportCount = useMemo(() => {
     if (!calendarConnected) return 0
@@ -482,6 +507,53 @@ export default function ScheduleTab() {
           onScheduleAnyway={handleNudgeScheduleAnyway}
           onDismiss={handleNudgeDismiss}
         />
+      )}
+
+      {noCalendarPending !== null && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-navy/40"
+          onClick={handleNoCalendarDismiss}
+        >
+          <div
+            className="w-[420px] rounded-xl border border-border bg-white shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-5 pt-5">
+              <div className="flex items-center gap-2.5">
+                <CalendarIcon color="#0077D8" size={20} />
+                <span className="font-heading text-base font-bold text-navy">No Calendar Selected</span>
+              </div>
+              <button
+                type="button"
+                onClick={handleNoCalendarDismiss}
+                className="flex h-7 w-7 items-center justify-center rounded text-light-blue hover:bg-bg-gray hover:text-slate-blue transition"
+                aria-label="Dismiss"
+              >
+                <XIcon color="currentColor" size={14} />
+              </button>
+            </div>
+            <p className="px-5 pb-5 pt-3 font-body text-sm text-slate-blue">
+              You haven't selected which Google calendars to display. Pick your calendars so existing events appear on the schedule — or schedule anyway.
+            </p>
+            <div className="h-px bg-border" />
+            <div className="flex items-center justify-end gap-2.5 px-5 py-4">
+              <button
+                type="button"
+                onClick={handleNoCalendarScheduleAnyway}
+                className="flex h-10 items-center justify-center rounded-lg border border-border bg-white px-4 font-heading text-sm font-semibold text-navy hover:bg-bg-gray transition"
+              >
+                Schedule Anyway
+              </button>
+              <button
+                type="button"
+                onClick={handleNoCalendarSelectCalendars}
+                className="flex h-10 items-center justify-center rounded-lg bg-navy px-4 font-heading text-sm font-semibold text-white hover:bg-navy/90 transition"
+              >
+                Select Calendars
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
