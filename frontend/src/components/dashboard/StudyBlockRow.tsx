@@ -16,7 +16,18 @@ function formatTimeRange(startTime: string, durationMins: number): string {
   const start = new Date(startTime)
   const end = new Date(start.getTime() + durationMins * 60 * 1000)
   const fmt = (d: Date) => d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-  return `${fmt(start)} – ${fmt(end)}`
+  const timeRange = `${fmt(start)} – ${fmt(end)}`
+
+  const today = new Date()
+  const isToday =
+    start.getFullYear() === today.getFullYear() &&
+    start.getMonth() === today.getMonth() &&
+    start.getDate() === today.getDate()
+
+  if (isToday) return timeRange
+
+  const dateLabel = start.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+  return `${dateLabel}, ${timeRange}`
 }
 
 function CheckCircleIcon({ filled }: { filled: boolean }) {
