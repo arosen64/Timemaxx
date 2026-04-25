@@ -403,9 +403,9 @@ export default function ScheduleTab() {
               studyBlocksByDay={studyBlocksByDay}
               allDayEventsByDay={allDayEventsByDay}
               layoutByDay={layoutByDay}
+              calendarConnected={calendarConnected}
               highlightedSlots={highlightedSlots}
               isAssignMode={assigningBlockId !== null || draggingBlockId !== null}
-              calendarConnected={calendarConnected}
               onPrevBoundary={() => setWeekOffset((o) => o - 7)}
               onNextBoundary={() => setWeekOffset((o) => o + 7)}
               onSlotClick={handleSlotClick}
