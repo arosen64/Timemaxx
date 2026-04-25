@@ -496,6 +496,29 @@ export const toggleStudyBlockComplete = mutation({
           newStatus = "not_started";
         }
         await ctx.db.patch(block.subtaskId, { status: newStatus });
+
+        // Bubble up: derive parent task status from all sibling subtask statuses
+        const siblings = await ctx.db
+          .query("subtasks")
+          .withIndex("by_parentTaskId", (q) =>
+            q.eq("parentTaskId", subtask.parentTaskId)
+          )
+          .collect();
+
+        const allDone = siblings.every((s) =>
+          s._id === block.subtaskId ? newStatus === "completed" : s.status === "completed"
+        );
+        const anyActive = siblings.some((s) =>
+          s._id === block.subtaskId
+            ? newStatus === "in_progress" || newStatus === "completed"
+            : s.status === "in_progress" || s.status === "completed"
+        );
+
+        const newParentStatus = allDone ? "completed" : anyActive ? "in_progress" : "not_started";
+        const parent = await ctx.db.get(subtask.parentTaskId);
+        if (parent && parent.status !== newParentStatus) {
+          await ctx.db.patch(subtask.parentTaskId, { status: newParentStatus });
+        }
       }
     } else if (block.taskId) {
       const allTaskBlocks = await ctx.db

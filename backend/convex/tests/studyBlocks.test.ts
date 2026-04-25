@@ -863,3 +863,127 @@ describe("mutations/studyBlocks – toggleStudyBlockComplete supertask status", 
     expect(task!.status).toBe("not_started");
   });
 });
+
+// ─── toggleStudyBlockComplete – supertask propagation via subtask ─────────────
+
+describe("mutations/studyBlocks – toggleStudyBlockComplete supertask propagation via subtask", () => {
+  async function seedSupertaskWithSubtaskBlock(
+    t: ReturnType<typeof makeTestCtx>,
+    userId: string
+  ) {
+    const parentTaskId = await t.run((ctx) =>
+      ctx.db.insert("tasks", {
+        userId: userId as any,
+        title: "Parent task",
+        description: "",
+        taskType: "Essay",
+        dueDate: Date.now() + 86_400_000,
+        createdAt: Date.now(),
+        isManualEstimate: false,
+      })
+    );
+    const subtaskId = await t.run((ctx) =>
+      ctx.db.insert("subtasks", {
+        parentTaskId: parentTaskId as any,
+        userId: userId as any,
+        title: "Subtask",
+        description: "",
+        taskType: "Essay",
+        color: "#000000",
+        order: 0,
+        createdAt: Date.now(),
+      })
+    );
+    const blockId = await t.run((ctx) =>
+      ctx.db.insert("studyBlocks", {
+        subtaskId: subtaskId as any,
+        userId: userId as any,
+        title: "Block",
+        studyBlockLength: 60,
+        isCompleted: false,
+      })
+    );
+    return { parentTaskId, subtaskId, blockId };
+  }
+
+  test("completing one block on a subtask sets supertask to in_progress", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+    const { parentTaskId, subtaskId: _s, blockId } = await seedSupertaskWithSubtaskBlock(t, userId);
+
+    // Add a second block so the subtask isn't fully complete after one toggle
+    await t.run((ctx) =>
+      ctx.db.insert("studyBlocks", {
+        subtaskId: _s as any,
+        userId: userId as any,
+        title: "Block 2",
+        studyBlockLength: 60,
+        isCompleted: false,
+      })
+    );
+
+    await withAuth.mutation(api.mutations.studyBlocks.toggleStudyBlockComplete, {
+      studyBlockId: blockId,
+    });
+
+    const task = await t.run((ctx) => ctx.db.get(parentTaskId));
+    expect(task!.status).toBe("in_progress");
+  });
+
+  test("completing all blocks on the only subtask sets supertask to completed", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+    const { parentTaskId, blockId } = await seedSupertaskWithSubtaskBlock(t, userId);
+
+    await withAuth.mutation(api.mutations.studyBlocks.toggleStudyBlockComplete, {
+      studyBlockId: blockId,
+    });
+
+    const task = await t.run((ctx) => ctx.db.get(parentTaskId));
+    expect(task!.status).toBe("completed");
+  });
+
+  test("uncompleting the last block sets supertask back to not_started", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+    const { parentTaskId, blockId } = await seedSupertaskWithSubtaskBlock(t, userId);
+
+    await withAuth.mutation(api.mutations.studyBlocks.toggleStudyBlockComplete, {
+      studyBlockId: blockId,
+    });
+    await withAuth.mutation(api.mutations.studyBlocks.toggleStudyBlockComplete, {
+      studyBlockId: blockId,
+    });
+
+    const task = await t.run((ctx) => ctx.db.get(parentTaskId));
+    expect(task!.status).toBe("not_started");
+  });
+
+  test("only one subtask fully done does not complete supertask when sibling subtask is not_started", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+    const { parentTaskId, blockId } =
+      await seedSupertaskWithSubtaskBlock(t, userId);
+
+    // Second subtask with no blocks — status stays not_started
+    await t.run((ctx) =>
+      ctx.db.insert("subtasks", {
+        parentTaskId: parentTaskId as any,
+        userId: userId as any,
+        title: "Subtask 2",
+        description: "",
+        taskType: "Essay",
+        color: "#000000",
+        order: 1,
+        createdAt: Date.now(),
+      })
+    );
+
+    await withAuth.mutation(api.mutations.studyBlocks.toggleStudyBlockComplete, {
+      studyBlockId: blockId,
+    });
+
+    const task = await t.run((ctx) => ctx.db.get(parentTaskId));
+    expect(task!.status).toBe("in_progress");
+  });
+});
