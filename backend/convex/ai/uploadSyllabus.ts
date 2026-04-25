@@ -105,7 +105,7 @@ export const uploadSyllabus = action({
         throw new Error("Syllabus parse workflow did not complete successfully");
       }
       const parseOutput = parseStep.output as {
-        tasks: { title: string; description: string; dueDate: string; taskType: string }[];
+        tasks: { title: string; description: string; dueDate: string; taskType: string; assignmentWeight?: number }[];
       };
 
       const rawTasks = parseOutput.tasks ?? [];
@@ -119,6 +119,7 @@ export const uploadSyllabus = action({
           description: t.description,
           dueDate: new Date(t.dueDate).getTime(),
           taskType: t.taskType as TaskType,
+          ...(t.assignmentWeight !== undefined ? { assignmentWeight: t.assignmentWeight } : {}),
         }))
         .filter((t) => !isNaN(t.dueDate) && t.dueDate > now);
 

@@ -158,6 +158,7 @@ async function fetchAllStudyBlocksWithTasks(ctx: any, userId: Id<"users">) {
           needsExport: block.needsExport,
           taskTitle: task.title,
           taskDueDate: task.dueDate,
+          taskRecommendedStart: task.recommendedStart,
           courseColor,
           courseName,
         });
