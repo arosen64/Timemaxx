@@ -66,11 +66,9 @@ export const createSubtasksBatch = mutation({
     await ctx.db.patch(args.parentTaskId, { reasoning: undefined });
 
     if (process.env.ANTHROPIC_API_KEY) {
-      for (const subtaskId of subtaskIds) {
-        await ctx.scheduler.runAfter(0, internal.ai.estimateTaskTime.estimateTaskTime, {
-          subtaskId,
-        });
-      }
+      await ctx.scheduler.runAfter(0, internal.ai.estimateSubtasksBatch.estimateSubtasksBatch, {
+        subtaskIds,
+      });
     }
 
     return subtaskIds;
@@ -252,6 +250,20 @@ export const updateSubtaskStatus = mutation({
     if (!subtask || subtask.userId !== userId) throw new Error("Subtask not found");
 
     await ctx.db.patch(args.subtaskId, { status: args.status });
+
+    // Sync study block completion when status is set to completed or not_started
+    if (args.status === "completed" || args.status === "not_started") {
+      const blocks = await ctx.db
+        .query("studyBlocks")
+        .withIndex("by_subtaskId", (q) => q.eq("subtaskId", args.subtaskId))
+        .collect();
+      const isCompleted = args.status === "completed";
+      for (const block of blocks) {
+        if (block.isCompleted !== isCompleted) {
+          await ctx.db.patch(block._id, { isCompleted });
+        }
+      }
+    }
 
     // Bubble up: derive parent status from all sibling statuses after this update
     const siblings = await ctx.db

@@ -60,6 +60,11 @@ export default function TaskCard({
   const [showReasoning, setShowReasoning] = useState(false)
 
   const deleteStudyBlocksForTask = useMutation(api.mutations.studyBlocks.deleteStudyBlocksForTask)
+  const toggleStudyBlockComplete = useMutation(api.mutations.studyBlocks.toggleStudyBlockComplete)
+
+  function handleToggleBlock(studyBlockId: string) {
+    toggleStudyBlockComplete({ studyBlockId: studyBlockId as Id<'studyBlocks'> })
+  }
 
   async function handleCancelBlocks(e: React.MouseEvent) {
     e.stopPropagation()
@@ -319,7 +324,7 @@ export default function TaskCard({
             ) : (
               <>
                 {visibleBlocks.map((block) => (
-                  <StudyBlockRow key={block._id} block={block} />
+                  <StudyBlockRow key={block._id} block={block} onToggle={handleToggleBlock} />
                 ))}
                 {hiddenCount > 0 && !showAll && (
                   <button
@@ -377,6 +382,7 @@ export default function TaskCard({
                     onEdit={onEditSubtask ?? (() => {})}
                     onDelete={onDeleteSubtask ?? (() => {})}
                     onStatusChange={onSubtaskStatusChange ?? (() => {})}
+                    onToggleBlock={handleToggleBlock}
                     isReadOnly={isReadOnly}
                   />
                 ))}

@@ -101,6 +101,7 @@ export const createStudyBlock = mutation({
       title: args.title,
       startTime: args.startTime,
       studyBlockLength: args.studyBlockLength,
+      isCompleted: false,
     });
   },
 });
@@ -139,6 +140,7 @@ export const createTaskBlocks = mutation({
         title: block.title,
         startTime: undefined,
         studyBlockLength: block.studyBlockLength,
+        isCompleted: false,
       });
     }
   },
@@ -420,8 +422,8 @@ export const splitStudyBlock = mutation({
     const splitAt = Math.floor(args.splitAtMinutes);
     const remaining = block.studyBlockLength - splitAt;
 
-    if (splitAt < 30 || remaining < 30) {
-      throw new Error("Each resulting block must be at least 30 minutes");
+    if (splitAt < 15 || remaining < 15) {
+      throw new Error("Each resulting block must be at least 15 minutes");
     }
 
     let startTimeB: string | undefined;
@@ -442,6 +444,7 @@ export const splitStudyBlock = mutation({
       startTime: block.startTime,
       studyBlockLength: splitAt,
       needsExport,
+      isCompleted: false,
     });
 
     const blockBId = await ctx.db.insert("studyBlocks", {
@@ -452,9 +455,49 @@ export const splitStudyBlock = mutation({
       startTime: startTimeB,
       studyBlockLength: remaining,
       needsExport,
+      isCompleted: false,
     });
 
     return { blockAId, blockBId };
+  },
+});
+
+export const toggleStudyBlockComplete = mutation({
+  args: { studyBlockId: v.id("studyBlocks") },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Unauthenticated");
+
+    const block = await ctx.db.get(args.studyBlockId);
+    if (!block) throw new Error("Study block not found");
+    if (block.userId !== userId) throw new Error("Unauthorized");
+
+    const nowCompleted = !block.isCompleted;
+    await ctx.db.patch(args.studyBlockId, { isCompleted: nowCompleted });
+
+    if (block.subtaskId) {
+      const allSubtaskBlocks = await ctx.db
+        .query("studyBlocks")
+        .withIndex("by_subtaskId", (q) => q.eq("subtaskId", block.subtaskId!))
+        .collect();
+
+      const completedCount = allSubtaskBlocks.filter((b) =>
+        b._id === args.studyBlockId ? nowCompleted : b.isCompleted
+      ).length;
+
+      const subtask = await ctx.db.get(block.subtaskId);
+      if (subtask && subtask.userId === userId) {
+        let newStatus: "not_started" | "in_progress" | "completed";
+        if (completedCount === allSubtaskBlocks.length) {
+          newStatus = "completed";
+        } else if (completedCount > 0) {
+          newStatus = "in_progress";
+        } else {
+          newStatus = "not_started";
+        }
+        await ctx.db.patch(block.subtaskId, { status: newStatus });
+      }
+    }
   },
 });
 
