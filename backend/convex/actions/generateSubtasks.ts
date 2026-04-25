@@ -91,12 +91,13 @@ Return 1–6 subtasks ordered by when they should be completed. If the assignmen
 
       const nowMs = Date.now();
       const dueDateMs = task.dueDate;
+      const windowStart = Math.max(nowMs, task.recommendedStart ?? nowMs);
       const n = rawSubtasks.length;
 
       const subtasks: GeneratedSubtask[] = rawSubtasks.map((s, i) => ({
         ...s,
         suggestedCompletionAt: new Date(
-          nowMs + ((i + 1) / n) * (dueDateMs - nowMs)
+          windowStart + ((i + 1) / n) * (dueDateMs - windowStart)
         ).toISOString(),
       }));
 

@@ -117,6 +117,7 @@ export default function DashboardPage() {
   const [pendingSubtasks, setPendingSubtasks] = useState<GeneratedSubtask[] | null>(null)
   const [pendingSubtasksTaskId, setPendingSubtasksTaskId] = useState<Id<'tasks'> | null>(null)
   const [pendingSubtasksCourseId, setPendingSubtasksCourseId] = useState<Id<'userCourses'> | undefined>(undefined)
+  const [pendingSubtasksDueDate, setPendingSubtasksDueDate] = useState<number>(Date.now())
   const [estimationRetry, setEstimationRetry] = useState<(() => void) | null>(null)
 
   // Clear tasks from estimatingTasks once their timeEstimate is populated by the server
@@ -207,6 +208,7 @@ export default function DashboardPage() {
         setPendingSubtasks(result.subtasks)
         setPendingSubtasksTaskId(task._id)
         setPendingSubtasksCourseId(task.courseId)
+        setPendingSubtasksDueDate(task.dueDate)
       }
     } catch (err) {
       setEstimationError(parseEstimationError(err))
@@ -342,11 +344,13 @@ export default function DashboardPage() {
         isOpen={pendingSubtasks !== null && pendingSubtasksTaskId !== null}
         subtasks={pendingSubtasks ?? []}
         parentTaskId={pendingSubtasksTaskId!}
+        parentTaskDueDate={pendingSubtasksDueDate}
         courseId={pendingSubtasksCourseId}
         onClose={() => {
           setPendingSubtasks(null)
           setPendingSubtasksTaskId(null)
           setPendingSubtasksCourseId(undefined)
+          setPendingSubtasksDueDate(Date.now())
         }}
       />
       <EstimationErrorModal

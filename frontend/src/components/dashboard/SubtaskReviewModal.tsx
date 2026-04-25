@@ -14,6 +14,7 @@ interface SubtaskReviewModalProps {
   isOpen: boolean
   subtasks: GeneratedSubtask[]
   parentTaskId: Id<'tasks'>
+  parentTaskDueDate: number
   courseId?: Id<'userCourses'>
   onClose: () => void
 }
@@ -22,6 +23,7 @@ export default function SubtaskReviewModal({
   isOpen,
   subtasks: initialSubtasks,
   parentTaskId,
+  parentTaskDueDate,
   courseId,
   onClose,
 }: SubtaskReviewModalProps) {
@@ -59,7 +61,7 @@ export default function SubtaskReviewModal({
         title: '',
         description: '',
         taskType: 'Essay',
-        suggestedCompletionAt: new Date(Date.now() + 86_400_000).toISOString(),
+        suggestedCompletionAt: new Date(parentTaskDueDate).toISOString(),
       },
     ])
   }

@@ -531,6 +531,7 @@ export default function TaskModal({
         isOpen={true}
         subtasks={pendingSubtasks}
         parentTaskId={pendingTaskId}
+        parentTaskDueDate={dueDatetime?.getTime() ?? Date.now()}
         courseId={pendingCourseId}
         onClose={() => {
           setPendingSubtasks(null)
