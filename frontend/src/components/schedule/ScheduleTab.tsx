@@ -1,17 +1,6 @@
-import { useRef, useEffect, useState, useMemo, useCallback, useSyncExternalStore } from 'react'
-
-function useIsMobile() {
-  return useSyncExternalStore(
-    (cb) => {
-      const mq = window.matchMedia('(max-width: 767px)')
-      mq.addEventListener('change', cb)
-      return () => mq.removeEventListener('change', cb)
-    },
-    () => window.matchMedia('(max-width: 767px)').matches,
-    () => false,
-  )
-}
+import { useRef, useEffect, useState, useMemo, useCallback } from 'react'
 import { useQuery, useAction, useMutation } from 'convex/react'
+import { useIsMobile } from '../../hooks/useIsMobile'
 import { api } from '../../../../backend/convex/_generated/api'
 import type { Id } from '../../../../backend/convex/_generated/dataModel'
 import type { CalendarEntry, TimedEvent, AllDayEvent } from '../../../../backend/convex/actions/fetchCalendarEvents'

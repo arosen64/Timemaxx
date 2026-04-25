@@ -66,6 +66,7 @@ export default function ScheduleHeader({
             disabled={isExporting}
             icon={isExporting ? <SpinnerIcon color="#4E6A8C" size={14} /> : <CalendarIcon color="#4E6A8C" size={14} />}
             className="h-9 px-2 sm:px-4 text-sm"
+            aria-label="Export to Google Calendar"
           >
             <span className="hidden sm:inline">{isExporting ? 'Exporting…' : 'Export to GCal'}</span>
           </Button>
