@@ -5,10 +5,8 @@ import { makeTestCtx, createTestUser } from "../../convex-tests/helpers";
 const VALID_ONBOARDING_ARGS = {
   major: "Computer Science",
   year: "Junior",
-  difficultSubjects: ["Math", "Physics"],
-  enjoyedSubjects: ["History"],
   workHoursGrid: [
-    { day: "Monday", available: [9, 10, 11], blocked: [] },
+    { day: "Monday", blocked: [] },
   ],
   productivityTraits: { morningPerson: true },
   focusBlockLength: 50,
@@ -249,7 +247,7 @@ describe("mutations/users – updateUserSettings", () => {
     const t = makeTestCtx();
     const { userId, withAuth } = await createTestUser(t);
 
-    const grid = [{ day: "Monday", available: [9, 10], blocked: [8] }];
+    const grid = [{ day: "Monday", blocked: [8] }];
     await withAuth.mutation(api.mutations.users.updateUserSettings, {
       workHoursGrid: grid,
     });
@@ -374,9 +372,6 @@ describe("mutations/users – completeOnboarding", () => {
     const user = await t.run((ctx) => ctx.db.get(userId));
     expect(user!.major).toBe("Computer Science");
     expect(user!.year).toBe("Junior");
-    expect(user!.difficultSubjects).toEqual(["Math", "Physics"]);
-    expect(user!.enjoyedSubjects).toEqual(["History"]);
-
     expect(user!.focusBlockLength).toBe(50);
   });
 });

@@ -9,7 +9,7 @@ import TimeGrid, { type StudyBlockOnGrid } from './TimeGrid'
 import MobileDayView from './MobileDayView'
 import CalendarSelectorPopup from './CalendarSelectorPopup'
 import ScheduleHeader from './ScheduleHeader'
-import ScheduleTray from './ScheduleTray'
+import ClassPanel from './ClassPanel'
 import { computeOverlapLayout } from './overlapLayout'
 import { offsetDate, isoDateString, minutesFromMidnight, SLOT_HEIGHT, MAX_OFFSET_DAYS, DAYS_FULL } from './utils'
 
@@ -25,6 +25,7 @@ type CalendarData = {
 type StudyBlockWithTask = {
   _id: Id<'studyBlocks'>
   taskId: Id<'tasks'>
+  subtaskId?: Id<'subtasks'>
   title: string
   startTime: string | undefined
   studyBlockLength: number
@@ -337,6 +338,7 @@ export default function ScheduleTab() {
         isExporting={isExporting}
         onPrevWeek={() => setWeekOffset((o) => o - 7)}
         onNextWeek={() => setWeekOffset((o) => o + 7)}
+        onGoToToday={() => setWeekOffset(0)}
         onExport={handleExport}
         onOpenSelector={() => setSelectorOpen((o) => !o)}
       />
@@ -369,7 +371,7 @@ export default function ScheduleTab() {
         </div>
       )}
 
-      {pendingExportCount > 0 && (
+{pendingExportCount > 0 && (
         <div className="mb-3 flex items-center gap-2 rounded-lg border border-sky-blue bg-info-bg px-4 py-2 text-sm text-navy">
           <CalendarIcon color="#005A8E" size={14} />
           <span>
@@ -446,8 +448,8 @@ export default function ScheduleTab() {
           </div>
         )}
 
-        <ScheduleTray
-          blocks={unscheduledBlocks}
+        <ClassPanel
+          unscheduledBlocks={unscheduledBlocks}
           assigningBlockId={assigningBlockId}
           onToggleAssign={(id) => setAssigningBlockId((prev) => (prev === id ? null : id))}
           timezone={timezone}

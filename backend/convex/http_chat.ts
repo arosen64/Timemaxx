@@ -1,44 +1,35 @@
 import { Hono, type Context } from "hono";
 import { MastraClient } from "@mastra/client-js";
-import { internal } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import type { ActionCtx } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
 import type { HonoEnv } from "./lib/httpTypes";
+import { executeCourseAction } from "./lib/executeCourseAction";
+import { executeScheduleAction } from "./lib/executeScheduleAction";
+import type {
+  ActiveAgent,
+  ChatWorkflowOutput,
+  CourseAgentIntent,
+  SisResolvedPick,
+  TaskAgentIntent,
+} from "./lib/chatWorkflowHttpTypes";
+import type { EntityCandidate } from "./lib/entityCandidates";
+import {
+  decodeSisCandidate,
+  decodeSisContext,
+  encodeSisCandidate,
+  encodeSisContext,
+  isSisCandidateEntityId,
+} from "./lib/sisEntityTokens";
 
 import {
   getLastUserMessage,
+  shouldOfferCourseEntityMcq,
   shouldOfferTaskEntityMcq,
   type TaggedMessageView,
-  walkLatestTaggedCourseId,
-  walkLatestTaggedTaskId,
 } from "./lib/messageTaggedScope";
 import { threadHasTaggedCourse, buildTaggedEntitiesContextBlock } from "./lib/chatEntityContext";
 import { handleEntityAction } from "./lib/chatEntityActions";
-
-/** Mirrors the output schema of chatWorkflow in mastra/src/mastra/workflows/chatWorkflow.ts */
-type ChatWorkflowOutput = {
-  reply: string;
-  route: string | null;
-  status: "reply" | "domain_clarify" | "needs_task_mcq" | "needs_class_mcq" | "task_action" | "canned";
-  mcqQueryText: string | null;
-  needsClassAfterTask: boolean;
-  actionType: "create_task" | "update_task" | "delete_task" | "read_task" | "none" | null;
-  title: string | null;
-  description: string | null;
-  taskType: string | null;
-  dueDateIso: string | null;
-  classTag: string | null;
-  deleteConfirmed: boolean;
-  updatedTitle: string | null;
-  updatedDescription: string | null;
-  updatedTaskType: string | null;
-  updatedDueDateIso: string | null;
-  updatedClassTag: string | null;
-  newActiveAgent: "task" | "feedback" | "preferences" | null;
-  clearActiveAgent: boolean;
-  newTaskAgentIntent: "create" | "rud" | null;
-  readyToRecord: boolean;
-};
 
 const chatApp = new Hono<HonoEnv>();
 
@@ -57,7 +48,6 @@ const MENU_USER_LABELS: Record<string, string> = {
   schedule: "Schedule something",
   preferences: "Change my preferences",
 };
-
 function parseDueDateIso(iso: string): number {
   if (!iso) return Date.now() + 86_400_000;
   const hasTime = iso.includes("T") && iso.length > 10;
@@ -65,6 +55,7 @@ function parseDueDateIso(iso: string): number {
   const ms = new Date(normalized).getTime();
   return isNaN(ms) ? Date.now() + 86_400_000 : ms;
 }
+
 
 async function runChatWorkflow(
   client: InstanceType<typeof MastraClient>,
@@ -74,9 +65,11 @@ async function runChatWorkflow(
     taggedEntitiesBlock: string;
     hasCourseTag: boolean;
     taggedTaskId: string | null;
+    taggedCourseId: string | null;
     today: string;
-    activeAgent: "task" | "feedback" | "preferences" | null;
+    activeAgent: "task" | "feedback" | "preferences" | "classes" | "schedule" | null;
     taskAgentIntent: "create" | "rud" | null;
+    courseAgentIntent: "add" | "drop" | "view" | "update" | null;
   },
 ): Promise<ChatWorkflowOutput | "quota_exceeded" | null> {
   const wf = client.getWorkflow("chat-workflow");
@@ -92,7 +85,7 @@ async function runChatWorkflow(
   }
 
   // Only one branch step will have run — find whichever has output.
-  const branchStepIds = ["task_handler", "feedback_handler", "canned_handler"];
+  const branchStepIds = ["task_handler", "feedback_handler", "course_handler", "schedule_handler", "canned_handler"];
   for (const id of branchStepIds) {
     const step = run.steps?.[id];
     if (step && "output" in step) return step.output as ChatWorkflowOutput;
@@ -105,14 +98,16 @@ async function executeTaskAction(
   params: {
     userId: Id<"users">;
     sessionId: string;
-    historyAsc: readonly TaggedMessageView[];
+    activeTaskId?: Id<"tasks">;
+    activeCourseId?: Id<"userCourses">;
     output: ChatWorkflowOutput;
   },
 ): Promise<string> {
-  const { userId, sessionId, historyAsc, output } = params;
-  const taggedTaskId = walkLatestTaggedTaskId(historyAsc);
-  const taggedCourseId = walkLatestTaggedCourseId(historyAsc);
+  const { userId, sessionId, activeTaskId, activeCourseId, output } = params;
+  const taggedTaskId = activeTaskId;
+  const taggedCourseId = activeCourseId;
   let aiText = output.reply;
+  let clearedScopeAfterAction = false;
 
   try {
     if (output.actionType === "create_task") {
@@ -142,19 +137,39 @@ async function executeTaskAction(
           ? { classTag: output.updatedClassTag }
           : {}),
       });
+      await ctx.runMutation(internal.mutations.chatSessions.setMessageScopeInternal, {
+        userId,
+        sessionId,
+        clear: true,
+      });
+      clearedScopeAfterAction = true;
     } else if (output.actionType === "delete_task") {
       if (taggedTaskId === undefined) throw new Error("No task selected.");
       await ctx.runMutation(internal.mutations.tasks.deleteTaskInternal, {
         userId,
         taskId: taggedTaskId,
       });
+      await ctx.runMutation(internal.mutations.chatSessions.setMessageScopeInternal, {
+        userId,
+        sessionId,
+        clear: true,
+      });
+      clearedScopeAfterAction = true;
+    } else if (output.actionType === "read_task") {
+      if (taggedTaskId !== undefined || taggedCourseId !== undefined) {
+        await ctx.runMutation(internal.mutations.chatSessions.setMessageScopeInternal, {
+          userId,
+          sessionId,
+          clear: true,
+        });
+        clearedScopeAfterAction = true;
+      }
     }
-    // "read_task": no mutation needed
   } catch (err) {
     aiText = `Sorry, I ran into an issue: ${err instanceof Error ? err.message : "Please try again."}`;
   }
 
-  await ctx.runMutation(internal.mutations.chatSessions.clearTaskAgentStateInternal, {
+  await ctx.runMutation(internal.mutations.chatSessions.clearAgentStateInternal, {
     userId,
     sessionId,
   });
@@ -163,8 +178,8 @@ async function executeTaskAction(
     sessionId,
     role: "assistant",
     content: aiText,
-    ...(taggedTaskId !== undefined ? { taskId: taggedTaskId } : {}),
-    ...(taggedCourseId !== undefined ? { courseId: taggedCourseId } : {}),
+    ...(taggedTaskId !== undefined && !clearedScopeAfterAction ? { taskId: taggedTaskId } : {}),
+    ...(taggedCourseId !== undefined && !clearedScopeAfterAction ? { courseId: taggedCourseId } : {}),
   });
   return aiText;
 }
@@ -174,18 +189,23 @@ async function applySessionStateChanges(
   userId: Id<"users">,
   sessionId: string,
   output: ChatWorkflowOutput,
+  previousActiveAgent: "task" | "feedback" | "preferences" | "classes" | "schedule" | null,
 ) {
-  if (output.clearActiveAgent) {
-    await ctx.runMutation(internal.mutations.chatSessions.clearTaskAgentStateInternal, {
+  const feedbackAgentDone =
+    previousActiveAgent === "feedback" &&
+    (output.readyToRecord || output.newActiveAgent !== "feedback");
+  if (output.clearActiveAgent || feedbackAgentDone) {
+    await ctx.runMutation(internal.mutations.chatSessions.clearAgentStateInternal, {
       userId,
       sessionId,
     });
-  } else if (output.newActiveAgent || output.newTaskAgentIntent) {
+  } else if (output.newActiveAgent || output.newTaskAgentIntent || output.newCourseAgentIntent) {
     await ctx.runMutation(internal.mutations.chatSessions.setTaskAgentStateInternal, {
       userId,
       sessionId,
       ...(output.newActiveAgent ? { activeAgent: output.newActiveAgent } : {}),
       ...(output.newTaskAgentIntent ? { taskAgentIntent: output.newTaskAgentIntent } : {}),
+      ...(output.newCourseAgentIntent ? { courseAgentIntent: output.newCourseAgentIntent } : {}),
     });
   }
 }
@@ -199,11 +219,21 @@ async function handleWorkflowTurn(
     userId: Id<"users">;
     sessionId: string;
     message: string;
-    session: { activeAgent?: string; taskAgentIntent?: string } | null;
+    session: {
+      activeAgent?: string | null;
+      taskAgentIntent?: string | null;
+      courseAgentIntent?: string | null;
+      activeTaskId?: Id<"tasks">;
+      activeCourseId?: Id<"userCourses">;
+      lastEntityQueryText?: string;
+      resolvedSisPick?: SisResolvedPick;
+    } | null;
     triggerUserMessageId?: Id<"chatMessages">;
   },
 ): Promise<Response> {
   const { userId, sessionId, message, session, triggerUserMessageId } = params;
+  const sessionActiveTaskId = session?.activeTaskId;
+  const sessionActiveCourseId = session?.activeCourseId;
 
   const rawHistory = (await ctx.runQuery(internal.queries.chatMessages.getChatHistoryInternal, {
     userId,
@@ -220,16 +250,23 @@ async function handleWorkflowTurn(
 
   // Pass null when shouldOfferTaskEntityMcq says we should show the picker
   // (meaning: the current user turn has no task tag yet)
-  const rawTaggedTaskId = walkLatestTaggedTaskId(rawHistory);
+  const rawTaggedTaskId = session?.activeTaskId;
   const taggedTaskId = shouldOfferTaskEntityMcq(true, rawHistory, message)
     ? null
     : rawTaggedTaskId !== undefined
       ? String(rawTaggedTaskId)
       : null;
+  const rawTaggedCourseId = session?.activeCourseId;
+  const taggedCourseId = shouldOfferCourseEntityMcq(true, rawHistory, message)
+    ? null
+    : rawTaggedCourseId !== undefined
+      ? String(rawTaggedCourseId)
+      : null;
 
   const today = new Date().toISOString().slice(0, 10);
-  const activeAgent = (session?.activeAgent as "task" | "feedback" | "preferences" | null) ?? null;
-  const taskAgentIntent = (session?.taskAgentIntent as "create" | "rud" | null) ?? null;
+  const activeAgent: ActiveAgent = (session?.activeAgent as ActiveAgent) ?? null;
+  const taskAgentIntent: TaskAgentIntent = (session?.taskAgentIntent as TaskAgentIntent) ?? null;
+  const courseAgentIntent: CourseAgentIntent = (session?.courseAgentIntent as CourseAgentIntent) ?? null;
 
   const result = await runChatWorkflow(client, {
     message,
@@ -237,9 +274,11 @@ async function handleWorkflowTurn(
     taggedEntitiesBlock,
     hasCourseTag,
     taggedTaskId,
+    taggedCourseId,
     today,
     activeAgent,
     taskAgentIntent,
+    courseAgentIntent,
   });
 
   if (result === "quota_exceeded") return c.json({ error: "quota_exceeded" }, 429);
@@ -249,11 +288,52 @@ async function handleWorkflowTurn(
   const mcqTriggerId = triggerUserMessageId ?? getLastUserMessage(rawHistory)?._id;
 
   if (output.status === "task_action") {
-    const aiText = await executeTaskAction(ctx, { userId, sessionId, historyAsc: rawHistory, output });
+    const aiText = await executeTaskAction(ctx, {
+      userId,
+      sessionId,
+      activeTaskId: sessionActiveTaskId,
+      activeCourseId: sessionActiveCourseId,
+      output,
+    });
     return c.json({
       text: aiText,
       status: "routed",
       route: "tasks",
+      entityKind: "none",
+      messageTag: "none",
+      tagConfidence: 0,
+    });
+  }
+
+  if (output.status === "course_action") {
+    const aiText = await executeCourseAction(ctx, {
+      userId,
+      sessionId,
+      activeCourseId: sessionActiveCourseId,
+      output,
+      resolvedSisPick: session?.resolvedSisPick,
+    });
+    return c.json({
+      text: aiText,
+      status: "routed",
+      route: "classes",
+      entityKind: "none",
+      messageTag: "none",
+      tagConfidence: 0,
+    });
+  }
+
+  if (output.status === "schedule_action") {
+    const aiText = await executeScheduleAction(ctx, {
+      userId,
+      sessionId,
+      activeTaskId: sessionActiveTaskId,
+      output,
+    });
+    return c.json({
+      text: aiText,
+      status: "routed",
+      route: "schedule",
       entityKind: "none",
       messageTag: "none",
       tagConfidence: 0,
@@ -287,7 +367,7 @@ async function handleWorkflowTurn(
         ...(mcqTriggerId !== undefined ? { clarifyTriggerUserMessageId: mcqTriggerId } : {}),
       });
     }
-    await applySessionStateChanges(ctx, userId, sessionId, output);
+    await applySessionStateChanges(ctx, userId, sessionId, output, activeAgent);
     return c.json({
       text: introText,
       status: candidates.length > 0 ? "needs_entity_clarification" : "routed",
@@ -302,14 +382,59 @@ async function handleWorkflowTurn(
 
   if (output.status === "needs_class_mcq") {
     const queryText = output.mcqQueryText ?? (message.trim() || "class course");
-    const { candidates, hasMore } = await ctx.runAction(
-      internal.actions.entityResolution.searchCourseCandidates,
-      { userId, queryText, excludeIds: [] },
-    );
-    const taskForIntro = walkLatestTaggedTaskId(rawHistory);
+    const sessionSisContext = decodeSisContext(session?.lastEntityQueryText ?? "");
+    const shouldUseSisMcq =
+      output.route === "classes" &&
+      (
+        (
+          output.term !== null &&
+          output.school !== null &&
+          (output.sisQuery !== null || output.courseName !== null)
+        ) ||
+        sessionSisContext !== null
+      );
+    let candidates: EntityCandidate[] = [];
+    let hasMore = false;
+    if (shouldUseSisMcq) {
+      const sisTerm = output.term ?? sessionSisContext?.term ?? null;
+      const sisSchool = output.school ?? sessionSisContext?.school ?? null;
+      const sisQuery = (output.sisQuery ?? output.courseName ?? sessionSisContext?.query ?? queryText).trim();
+      if (!sisTerm || !sisSchool) {
+        candidates = [];
+        hasMore = false;
+      } else {
+      const rows = (await ctx.runAction(api.actions.jhuCourses.getCoursesByTerm, {
+        term: sisTerm,
+        school: sisSchool,
+        courseTitle: sisQuery,
+      })) as Array<{ OfferingName?: string; Title?: string }>;
+      const filtered = rows.filter((r) => r.OfferingName && r.Title).slice(0, 5);
+      candidates = filtered.map((r) => ({
+        id: encodeSisCandidate({
+          offeringName: String(r.OfferingName),
+          title: String(r.Title),
+          term: sisTerm,
+          school: sisSchool,
+        }),
+        label: String(r.OfferingName),
+        subtitle: String(r.Title),
+      }));
+      hasMore = rows.length > candidates.length;
+      }
+    } else {
+      const vectorMatches = await ctx.runAction(
+        internal.actions.entityResolution.searchCourseCandidates,
+        { userId, queryText, excludeIds: [] },
+      );
+      candidates = vectorMatches.candidates as EntityCandidate[];
+      hasMore = vectorMatches.hasMore;
+    }
+    const taskForIntro = sessionActiveTaskId;
     const introText =
       candidates.length === 0
-        ? "I couldn't find any courses in your profile. Add courses from the Classes page, then try again."
+        ? shouldUseSisMcq
+          ? "I couldn't find SIS matches for that term/school/query. Try a different keyword or course code."
+          : "I couldn't find any courses in your profile. Add courses from the Classes page, then try again."
         : output.reply;
     await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
       userId,
@@ -322,14 +447,20 @@ async function handleWorkflowTurn(
       await ctx.runMutation(internal.mutations.chatSessions.setEntityPromptStateInternal, {
         userId,
         sessionId,
-        lastEntityQueryText: queryText,
+        lastEntityQueryText: shouldUseSisMcq
+          ? encodeSisContext({
+              term: output.term ?? sessionSisContext?.term ?? "",
+              school: output.school ?? sessionSisContext?.school ?? "",
+              query: (output.sisQuery ?? output.courseName ?? sessionSisContext?.query ?? queryText).trim(),
+            })
+          : queryText,
         activeEntityStep: "class",
         needsClassAfterTask: false,
         awaitingEntityResolution: true,
         ...(mcqTriggerId !== undefined ? { clarifyTriggerUserMessageId: mcqTriggerId } : {}),
       });
     }
-    await applySessionStateChanges(ctx, userId, sessionId, output);
+    await applySessionStateChanges(ctx, userId, sessionId, output, activeAgent);
     return c.json({
       text: introText,
       status: candidates.length > 0 ? "needs_entity_clarification" : "routed",
@@ -344,8 +475,8 @@ async function handleWorkflowTurn(
   }
 
   // reply / domain_clarify / canned
-  const tagTask = walkLatestTaggedTaskId(rawHistory);
-  const tagCourse = walkLatestTaggedCourseId(rawHistory);
+  const tagTask = sessionActiveTaskId;
+  const tagCourse = sessionActiveCourseId;
   await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
     userId,
     sessionId,
@@ -354,7 +485,7 @@ async function handleWorkflowTurn(
     ...(tagTask !== undefined ? { taskId: tagTask } : {}),
     ...(tagCourse !== undefined ? { courseId: tagCourse } : {}),
   });
-  await applySessionStateChanges(ctx, userId, sessionId, output);
+  await applySessionStateChanges(ctx, userId, sessionId, output, activeAgent);
   return c.json({
     text: output.reply,
     status: output.status === "domain_clarify" ? "needs_domain_clarification" : "routed",
@@ -410,6 +541,76 @@ chatApp.post("/api/chat", async (c) => {
     body.entity?.action === "other_tasks" ||
     body.entity?.action === "other_courses"
   ) {
+    if (
+      body.entity.action === "pick_course" &&
+      typeof body.entity.courseId === "string" &&
+      isSisCandidateEntityId(body.entity.courseId)
+    ) {
+      const sis = decodeSisCandidate(body.entity.courseId);
+      if (!sis) return c.json({ error: "Invalid SIS selection" }, 400);
+      const synthetic = `I choose ${sis.offeringName}: ${sis.title} for ${sis.term} at ${sis.school}.`;
+      const syntheticUserMessageId = await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
+        userId,
+        sessionId,
+        role: "user",
+        content: synthetic,
+      });
+      const sessionAfterSynthetic = await ctx.runQuery(internal.queries.chatSessions.getChatSessionInternal, {
+        userId,
+        sessionId,
+      });
+      return handleWorkflowTurn(ctx, c, client, {
+        userId,
+        sessionId,
+        message: synthetic,
+        session: {
+          ...sessionAfterSynthetic,
+          resolvedSisPick: sis as SisResolvedPick,
+        },
+        triggerUserMessageId: syntheticUserMessageId,
+      });
+    }
+
+    if (body.entity.action === "other_courses") {
+      const sisCtx = decodeSisContext(session?.lastEntityQueryText ?? "");
+      if (sisCtx) {
+        const excludeTokens = (body.entity.excludeCourseIds ?? []) as string[];
+        const excludeOffering = new Set(
+          excludeTokens
+            .map((id) => decodeSisCandidate(id))
+            .filter((v): v is NonNullable<typeof v> => v !== null)
+            .map((v) => v.offeringName),
+        );
+        const rows = (await ctx.runAction(api.actions.jhuCourses.getCoursesByTerm, {
+          term: sisCtx.term,
+          school: sisCtx.school,
+          courseTitle: sisCtx.query,
+        })) as Array<{ OfferingName?: string; Title?: string }>;
+        const filtered = rows
+          .filter((r) => r.OfferingName && r.Title)
+          .filter((r) => !excludeOffering.has(String(r.OfferingName)))
+          .slice(0, 5);
+        const candidates = filtered.map((r) => ({
+          id: encodeSisCandidate({
+            offeringName: String(r.OfferingName),
+            title: String(r.Title),
+            term: sisCtx.term,
+            school: sisCtx.school,
+          }),
+          label: String(r.OfferingName),
+          subtitle: String(r.Title),
+        }));
+        return c.json({
+          text: "Which class are you referring to? Pick one below, or choose **Other** to see more options.",
+          status: "needs_entity_clarification",
+          phase: "class",
+          entityCandidates: candidates,
+          entityHasMore: rows.length > excludeOffering.size + candidates.length,
+          route: "classes",
+        });
+      }
+    }
+
     return handleEntityAction(
       ctx, c, client,
       { userId, sessionId, session, entity: body.entity as Parameters<typeof handleEntityAction>[3]["entity"] },

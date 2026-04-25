@@ -11,6 +11,7 @@ type Props = {
   isExporting: boolean
   onPrevWeek: () => void
   onNextWeek: () => void
+  onGoToToday: () => void
   onExport: () => void
   onOpenSelector: () => void
 }
@@ -24,14 +25,15 @@ export default function ScheduleHeader({
   isExporting,
   onPrevWeek,
   onNextWeek,
+  onGoToToday,
   onExport,
   onOpenSelector,
 }: Props) {
   return (
-    <div className="flex items-center justify-between mb-4 rounded-xl bg-white border border-border px-3 py-3 sm:px-6 sm:py-4">
-      <h1 className="font-heading text-xl font-bold text-navy">Schedule</h1>
+    <div className="flex items-center justify-between mb-4 rounded-xl bg-white border border-border px-4 py-3 lg:px-6 lg:py-4">
+      <h1 className="font-heading text-lg font-bold text-navy lg:text-xl">Schedule</h1>
 
-      <div className="hidden md:flex items-center gap-2">
+      <div className="hidden md:flex items-center gap-1.5 lg:gap-2">
         <button
           type="button"
           onClick={onPrevWeek}
@@ -41,7 +43,7 @@ export default function ScheduleHeader({
         >
           <ChevronLeftIcon size={14} />
         </button>
-        <span className="text-center font-body text-sm font-medium text-navy">
+        <span className="min-w-[130px] text-center font-body text-xs font-medium text-navy lg:min-w-[148px] lg:text-sm">
           {days[0].toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
           {' – '}
           {days[6].toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
@@ -55,6 +57,15 @@ export default function ScheduleHeader({
         >
           <ChevronRightIcon size={14} />
         </button>
+        {weekOffset !== 0 && (
+          <button
+            type="button"
+            onClick={onGoToToday}
+            className="flex h-8 items-center justify-center rounded-lg border border-border bg-white px-2.5 font-heading text-xs font-semibold text-slate-blue transition hover:bg-bg-gray lg:px-3"
+          >
+            Today
+          </button>
+        )}
         {isFetchingEvents && <SpinnerIcon color="#4E6A8C" size={14} />}
       </div>
 
@@ -65,17 +76,17 @@ export default function ScheduleHeader({
             onClick={onExport}
             disabled={isExporting}
             icon={isExporting ? <SpinnerIcon color="#4E6A8C" size={14} /> : <CalendarIcon color="#4E6A8C" size={14} />}
-            className="h-9 px-2 sm:px-4 text-sm"
+            className="h-9 px-3 text-xs lg:px-4 lg:text-sm"
             aria-label="Export to Google Calendar"
           >
             <span className="hidden sm:inline">{isExporting ? 'Exporting…' : 'Export to GCal'}</span>
           </Button>
         )}
-        {calendarConnected ? (
+        {calendarConnected && (
           <button
             type="button"
             onClick={onOpenSelector}
-            className={`flex items-center gap-2 rounded-lg px-2 sm:px-4 h-9 font-heading text-sm font-semibold text-white transition hover:opacity-90 ${hasCalendarIndicator ? 'bg-info-bg text-navy' : 'bg-navy'}`}
+            className={`flex items-center gap-2 rounded-lg px-3 h-9 font-heading text-xs font-semibold text-white transition hover:opacity-90 lg:px-4 lg:text-sm ${hasCalendarIndicator ? 'bg-info-bg text-navy' : 'bg-navy'}`}
             aria-label="Select calendars"
           >
             <CalendarIcon color="#86C8BC" size={14} />
@@ -84,8 +95,6 @@ export default function ScheduleHeader({
               <span className="flex h-2 w-2 rounded-full bg-sky-blue" aria-hidden="true" />
             )}
           </button>
-        ) : (
-          <div className="hidden sm:block w-[110px]" />
         )}
       </div>
     </div>

@@ -2,12 +2,14 @@ import { describe, expect, test, vi } from "vitest";
 import {
   roundUpTo15Min,
   isSlotValid,
-  isInAvailableSlot,
   buildSlotContext,
   enumerateSlots,
   extendSlotPool,
   filterPoolForBlock,
   selectSlotWithAI,
+  buildDailyLoadMap,
+  computeMaxBlocksPerDay,
+  isDailyCapReached,
   SCHEDULE_HORIZON_MS,
   type OccupiedInterval,
   type WorkHoursRow,
@@ -27,7 +29,6 @@ const MONDAY_9AM_UTC = new Date("2025-01-06T14:00:00.000Z").getTime();
 const WORK_HOURS: WorkHoursRow[] = [
   {
     day: "Monday",
-    available: [18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31], // 9am–4pm slots
     blocked: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17], // midnight–9am
   },
 ];
@@ -80,28 +81,6 @@ describe("isSlotValid", () => {
   test("returns true when no workHoursGrid row exists for the day", () => {
     const sundayMs = new Date("2025-01-05T14:00:00.000Z").getTime(); // Sunday
     expect(isSlotValid(sundayMs, durationMs, WORK_HOURS, [], TIMEZONE)).toBe(true);
-  });
-});
-
-// ---------------------------------------------------------------------------
-// isInAvailableSlot
-// ---------------------------------------------------------------------------
-
-describe("isInAvailableSlot", () => {
-  const durationMs = 60 * 60 * 1000;
-
-  test("returns true when all spanned slots are in available", () => {
-    expect(isInAvailableSlot(MONDAY_9AM_UTC, durationMs, WORK_HOURS, TIMEZONE)).toBe(true);
-  });
-
-  test("returns false when spanned slots are not in available", () => {
-    const earlySlot = new Date("2025-01-06T09:00:00.000Z").getTime(); // 4 AM EST
-    expect(isInAvailableSlot(earlySlot, durationMs, WORK_HOURS, TIMEZONE)).toBe(false);
-  });
-
-  test("returns false when no workHoursGrid row for the day", () => {
-    const sundayMs = new Date("2025-01-05T14:00:00.000Z").getTime();
-    expect(isInAvailableSlot(sundayMs, durationMs, WORK_HOURS, TIMEZONE)).toBe(false);
   });
 });
 
@@ -212,7 +191,7 @@ describe("enumerateSlots", () => {
     expect(candidates.length).toBeLessThanOrEqual(20);
   });
 
-  test("tags inAvailableSlot correctly", () => {
+  test("returns candidates with context fields", () => {
     const candidates = enumerateSlots({
       fromMs: MONDAY_9AM_UTC,
       dueDateMs,
@@ -221,9 +200,49 @@ describe("enumerateSlots", () => {
       occupiedIntervals: [],
       timezone: TIMEZONE,
     });
-    // 9 AM slot should be in available (slots 18-19)
     const first = candidates[0];
-    expect(first.inAvailableSlot).toBe(true);
+    expect(first).toHaveProperty("startMs");
+    expect(first).toHaveProperty("startISO");
+    expect(first).toHaveProperty("previousEventTitle");
+    expect(first).toHaveProperty("nextEventTitle");
+  });
+
+  test("excludes slots before recommendedStartMs when set", () => {
+    const recommendedStartMs = MONDAY_9AM_UTC + 2 * 24 * 60 * 60 * 1000;
+    const candidates = enumerateSlots({
+      fromMs: MONDAY_9AM_UTC,
+      dueDateMs: MONDAY_9AM_UTC + 5 * 24 * 60 * 60 * 1000,
+      durationMinutes,
+      workHoursGrid: [],
+      occupiedIntervals: [],
+      timezone: TIMEZONE,
+      recommendedStartMs,
+    });
+    expect(candidates.length).toBeGreaterThan(0);
+    for (const c of candidates) {
+      expect(c.startMs).toBeGreaterThanOrEqual(recommendedStartMs);
+    }
+  });
+
+  test("is unaffected when recommendedStartMs is not set", () => {
+    const withoutConstraint = enumerateSlots({
+      fromMs: MONDAY_9AM_UTC,
+      dueDateMs,
+      durationMinutes,
+      workHoursGrid: [],
+      occupiedIntervals: [],
+      timezone: TIMEZONE,
+    });
+    const withUndefined = enumerateSlots({
+      fromMs: MONDAY_9AM_UTC,
+      dueDateMs,
+      durationMinutes,
+      workHoursGrid: [],
+      occupiedIntervals: [],
+      timezone: TIMEZONE,
+      recommendedStartMs: undefined,
+    });
+    expect(withoutConstraint).toEqual(withUndefined);
   });
 });
 
@@ -278,9 +297,9 @@ describe("filterPoolForBlock", () => {
   test("excludes slots at or after due date", () => {
     const dueDateMs = MONDAY_9AM_UTC + 60 * 60 * 1000;
     const pool: PoolSlot[] = [
-      { startMs: MONDAY_9AM_UTC, inAvailableSlot: true },
-      { startMs: dueDateMs, inAvailableSlot: true },
-      { startMs: dueDateMs + 3600000, inAvailableSlot: true },
+      { startMs: MONDAY_9AM_UTC },
+      { startMs: dueDateMs },
+      { startMs: dueDateMs + 3600000 },
     ];
     const candidates = filterPoolForBlock({
       pool,
@@ -294,7 +313,7 @@ describe("filterPoolForBlock", () => {
   });
 
   test("excludes slots overlapping occupied intervals", () => {
-    const pool: PoolSlot[] = [{ startMs: MONDAY_9AM_UTC, inAvailableSlot: true }];
+    const pool: PoolSlot[] = [{ startMs: MONDAY_9AM_UTC }];
     const occupied: OccupiedInterval[] = [
       { startMs: MONDAY_9AM_UTC + 30 * 60 * 1000, endMs: MONDAY_9AM_UTC + 90 * 60 * 1000, title: "Busy" },
     ];
@@ -307,6 +326,43 @@ describe("filterPoolForBlock", () => {
       timezone: TIMEZONE,
     });
     expect(candidates).toHaveLength(0);
+  });
+
+  test("excludes slots before recommendedStartMs when set", () => {
+    const recommendedStartMs = MONDAY_9AM_UTC + 60 * 60 * 1000;
+    const pool: PoolSlot[] = [
+      { startMs: MONDAY_9AM_UTC },
+      { startMs: recommendedStartMs },
+      { startMs: MONDAY_9AM_UTC + 2 * 60 * 60 * 1000 },
+    ];
+    const candidates = filterPoolForBlock({
+      pool,
+      dueDateMs: MONDAY_9AM_UTC + 10 * 60 * 60 * 1000,
+      durationMinutes: 60,
+      workHoursGrid: [],
+      occupiedIntervals: [],
+      timezone: TIMEZONE,
+      recommendedStartMs,
+    });
+    expect(candidates.every((c) => c.startMs >= recommendedStartMs)).toBe(true);
+    expect(candidates.some((c) => c.startMs === MONDAY_9AM_UTC)).toBe(false);
+  });
+
+  test("is unaffected when recommendedStartMs is not set", () => {
+    const pool: PoolSlot[] = [
+      { startMs: MONDAY_9AM_UTC },
+      { startMs: MONDAY_9AM_UTC + 60 * 60 * 1000 },
+    ];
+    const dueDateMs = MONDAY_9AM_UTC + 10 * 60 * 60 * 1000;
+    const candidates = filterPoolForBlock({
+      pool,
+      dueDateMs,
+      durationMinutes: 60,
+      workHoursGrid: [],
+      occupiedIntervals: [],
+      timezone: TIMEZONE,
+    });
+    expect(candidates).toHaveLength(2);
   });
 });
 
@@ -344,5 +400,231 @@ describe("selectSlotWithAI", () => {
     // Should return the first candidate (index 0 fallback)
     expect(result).not.toBeNull();
     expect(result!.startISO).toBe(candidates[0].startISO);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// buildDailyLoadMap
+// ---------------------------------------------------------------------------
+
+describe("buildDailyLoadMap", () => {
+  // Monday 2025-01-06 14:00 UTC = 09:00 EST
+  const BASE_MS = MONDAY_9AM_UTC;
+  const FOCUS = 60; // minutes
+
+  test("a placed study block (exactly focusBlockLength) counts as 1 unit", () => {
+    const intervals: OccupiedInterval[] = [
+      { startMs: BASE_MS, endMs: BASE_MS + 60 * 60000, title: "Study" },
+    ];
+    const map = buildDailyLoadMap(intervals, TIMEZONE, FOCUS);
+    expect(map.get("2025-01-06")).toBe(1);
+  });
+
+  test("a 3-hour GCal event counts as 3 units with 60-min focus block", () => {
+    const intervals: OccupiedInterval[] = [
+      { startMs: BASE_MS, endMs: BASE_MS + 180 * 60000, title: "Lecture" },
+    ];
+    const map = buildDailyLoadMap(intervals, TIMEZONE, FOCUS);
+    expect(map.get("2025-01-06")).toBe(3);
+  });
+
+  test("a 90-min event with 60-min focus block rounds up to 2 units", () => {
+    const intervals: OccupiedInterval[] = [
+      { startMs: BASE_MS, endMs: BASE_MS + 90 * 60000, title: "Lab" },
+    ];
+    const map = buildDailyLoadMap(intervals, TIMEZONE, FOCUS);
+    expect(map.get("2025-01-06")).toBe(2);
+  });
+
+  test("multiple intervals on the same day accumulate", () => {
+    const intervals: OccupiedInterval[] = [
+      { startMs: BASE_MS, endMs: BASE_MS + 60 * 60000, title: "Block 1" },
+      { startMs: BASE_MS + 120 * 60000, endMs: BASE_MS + 180 * 60000, title: "Block 2" },
+    ];
+    const map = buildDailyLoadMap(intervals, TIMEZONE, FOCUS);
+    expect(map.get("2025-01-06")).toBe(2);
+  });
+
+  test("intervals on different days are tracked separately", () => {
+    const TUESDAY_MS = BASE_MS + 24 * 60 * 60000;
+    const intervals: OccupiedInterval[] = [
+      { startMs: BASE_MS, endMs: BASE_MS + 60 * 60000, title: "Monday block" },
+      { startMs: TUESDAY_MS, endMs: TUESDAY_MS + 60 * 60000, title: "Tuesday block" },
+    ];
+    const map = buildDailyLoadMap(intervals, TIMEZONE, FOCUS);
+    expect(map.get("2025-01-06")).toBe(1);
+    expect(map.get("2025-01-07")).toBe(1);
+  });
+
+  test("empty intervals returns empty map", () => {
+    const map = buildDailyLoadMap([], TIMEZONE, FOCUS);
+    expect(map.size).toBe(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// computeMaxBlocksPerDay
+// ---------------------------------------------------------------------------
+
+describe("computeMaxBlocksPerDay", () => {
+  test("preferred days keep the base cap", () => {
+    // Monday: 18 blocked (midnight–9am) → 30 available → floor(30*30/60) = 15 → capped at 4
+    const map = computeMaxBlocksPerDay(WORK_HOURS, 60, ["Monday"]);
+    expect(map.get("Monday")).toBe(4);
+  });
+
+  test("non-preferred days get base − 1", () => {
+    // Monday base = 4, not preferred → 4 − 1 = 3
+    const map = computeMaxBlocksPerDay(WORK_HOURS, 60, []);
+    expect(map.get("Monday")).toBe(3);
+  });
+
+  test("cap never exceeds 4 even with many available slots", () => {
+    const map = computeMaxBlocksPerDay([], 15, ["Monday"]);
+    expect(map.get("Monday")).toBeLessThanOrEqual(4);
+  });
+
+  test("non-preferred cap is at least 1", () => {
+    // A day fully blocked (48 slots) → base = 0 → non-preferred = max(1, -1) = 1
+    const fullyBlocked: WorkHoursRow[] = [
+      { day: "Monday", blocked: Array.from({ length: 48 }, (_, i) => i) },
+    ];
+    const map = computeMaxBlocksPerDay(fullyBlocked, 60, []);
+    expect(map.get("Monday")).toBe(1);
+  });
+
+  test("days absent from workHoursGrid use fallback: preferred → 3, non-preferred → 2", () => {
+    const map = computeMaxBlocksPerDay([], 60, ["Wednesday"]);
+    expect(map.get("Wednesday")).toBe(3);
+    expect(map.get("Thursday")).toBe(2);
+  });
+
+  test("longer focus block yields fewer allowed blocks per day", () => {
+    // 44 slots blocked → only 4 available: floor(4*30/30)=4 vs floor(4*30/60)=2
+    const sparseGrid: WorkHoursRow[] = [
+      { day: "Monday", blocked: Array.from({ length: 44 }, (_, i) => i) },
+    ];
+    const mapShort = computeMaxBlocksPerDay(sparseGrid, 30, ["Monday"]);
+    const mapLong = computeMaxBlocksPerDay(sparseGrid, 60, ["Monday"]);
+    expect(mapShort.get("Monday")!).toBeGreaterThan(mapLong.get("Monday")!);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// isDailyCapReached
+// ---------------------------------------------------------------------------
+
+describe("isDailyCapReached", () => {
+  // Monday 2025-01-06 14:00 UTC = 09:00 EST
+  const BASE_MS = MONDAY_9AM_UTC;
+
+  test("returns false when load is below cap", () => {
+    const loadMap = new Map([["2025-01-06", 1]]);
+    const capMap = new Map([["Monday", 3]]);
+    expect(isDailyCapReached(BASE_MS, TIMEZONE, loadMap, capMap)).toBe(false);
+  });
+
+  test("returns true when load equals cap", () => {
+    const loadMap = new Map([["2025-01-06", 3]]);
+    const capMap = new Map([["Monday", 3]]);
+    expect(isDailyCapReached(BASE_MS, TIMEZONE, loadMap, capMap)).toBe(true);
+  });
+
+  test("returns true when load exceeds cap", () => {
+    const loadMap = new Map([["2025-01-06", 5]]);
+    const capMap = new Map([["Monday", 3]]);
+    expect(isDailyCapReached(BASE_MS, TIMEZONE, loadMap, capMap)).toBe(true);
+  });
+
+  test("uses default cap of 2 when day is absent from maxBlocksPerDayMap", () => {
+    const loadMap = new Map([["2025-01-06", 2]]);
+    expect(isDailyCapReached(BASE_MS, TIMEZONE, loadMap, new Map())).toBe(true);
+  });
+
+  test("returns false when date has no load entry", () => {
+    const capMap = new Map([["Monday", 3]]);
+    expect(isDailyCapReached(BASE_MS, TIMEZONE, new Map(), capMap)).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// enumerateSlots with daily load cap
+// ---------------------------------------------------------------------------
+
+describe("enumerateSlots with dailyLoadMap / maxBlocksPerDayMap", () => {
+  const durationMinutes = 60;
+  const dueDateMs = MONDAY_9AM_UTC + 5 * 24 * 60 * 60 * 1000;
+
+  test("excludes slots on days already at cap", () => {
+    // Mark Monday 2025-01-06 as fully loaded (cap = 1, load = 1)
+    const loadMap = new Map([["2025-01-06", 1]]);
+    const capMap = new Map([
+      ["Monday", 1],
+      ["Tuesday", 3], ["Wednesday", 3], ["Thursday", 3], ["Friday", 3],
+      ["Saturday", 3], ["Sunday", 3],
+    ]);
+    const candidates = enumerateSlots({
+      fromMs: MONDAY_9AM_UTC,
+      dueDateMs,
+      durationMinutes,
+      workHoursGrid: [],
+      occupiedIntervals: [],
+      timezone: TIMEZONE,
+      dailyLoadMap: loadMap,
+      maxBlocksPerDayMap: capMap,
+    });
+    const mondayDate = "2025-01-06";
+    const hasMondaySlot = candidates.some(
+      (c) => new Intl.DateTimeFormat("en-CA", { timeZone: TIMEZONE }).format(new Date(c.startMs)) === mondayDate,
+    );
+    expect(hasMondaySlot).toBe(false);
+    expect(candidates.length).toBeGreaterThan(0); // other days still have slots
+  });
+
+  test("behaves identically to uncapped version when no cap params provided", () => {
+    const withCap = enumerateSlots({
+      fromMs: MONDAY_9AM_UTC,
+      dueDateMs,
+      durationMinutes,
+      workHoursGrid: [],
+      occupiedIntervals: [],
+      timezone: TIMEZONE,
+    });
+    const withoutCap = enumerateSlots({
+      fromMs: MONDAY_9AM_UTC,
+      dueDateMs,
+      durationMinutes,
+      workHoursGrid: [],
+      occupiedIntervals: [],
+      timezone: TIMEZONE,
+    });
+    expect(withCap.length).toBe(withoutCap.length);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// filterPoolForBlock with daily load cap
+// ---------------------------------------------------------------------------
+
+describe("filterPoolForBlock with dailyLoadMap / maxBlocksPerDayMap", () => {
+  test("excludes pool slots on days at cap", () => {
+    const pool: PoolSlot[] = [
+      { startMs: MONDAY_9AM_UTC },                           // Monday — at cap
+      { startMs: MONDAY_9AM_UTC + 24 * 60 * 60 * 1000 },    // Tuesday — under cap
+    ];
+    const loadMap = new Map([["2025-01-06", 3]]);
+    const capMap = new Map([["Monday", 3], ["Tuesday", 3]]);
+    const candidates = filterPoolForBlock({
+      pool,
+      dueDateMs: MONDAY_9AM_UTC + 5 * 24 * 60 * 60 * 1000,
+      durationMinutes: 60,
+      workHoursGrid: [],
+      occupiedIntervals: [],
+      timezone: TIMEZONE,
+      dailyLoadMap: loadMap,
+      maxBlocksPerDayMap: capMap,
+    });
+    expect(candidates.every((c) => c.startMs !== MONDAY_9AM_UTC)).toBe(true);
+    expect(candidates.some((c) => c.startMs === MONDAY_9AM_UTC + 24 * 60 * 60 * 1000)).toBe(true);
   });
 });

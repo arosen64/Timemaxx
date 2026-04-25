@@ -1,6 +1,8 @@
 import { useState, KeyboardEvent } from 'react'
 import { PreferencesData } from '../types'
 
+export const MIN_FOCUS_BLOCK_MINUTES = 15;
+
 const CATEGORIES = [
   {
     key: 'timeOfDay',
@@ -42,29 +44,6 @@ const CATEGORIES = [
       'I work best well in advance',
       'I need the pressure of a deadline',
       'Somewhere in between',
-    ],
-  },
-  {
-    key: 'breakPreferences',
-    label: '🔄 Break Preferences',
-    description: 'How you like to take breaks',
-    singleSelect: true,
-    options: [
-      'Frequent short breaks (every 25–30 min)',
-      'Occasional medium breaks (every hour)',
-      'Few long breaks (every 2+ hours)',
-      "I don't take planned breaks",
-    ],
-  },
-  {
-    key: 'subjectSwitching',
-    label: '📚 Subject/Task Switching',
-    description: 'How you prefer to switch between topics',
-    singleSelect: true,
-    options: [
-      'I prefer focusing on one subject per session',
-      'I like switching between subjects',
-      'Depends on the day',
     ],
   },
 ]
@@ -231,7 +210,7 @@ export default function PreferencesForm({ data, onChange, readOnly = false }: Pr
         <p className="font-body text-xs text-light-blue">How long is your ideal uninterrupted study session?</p>
         <input
           type="number"
-          min={5}
+          min={MIN_FOCUS_BLOCK_MINUTES}
           max={480}
           value={data.focusBlockLength}
           readOnly={readOnly}
@@ -248,6 +227,9 @@ export default function PreferencesForm({ data, onChange, readOnly = false }: Pr
               : 'placeholder:text-light-blue focus:border-sky-blue focus:ring-2 focus:ring-sky-blue/20'
           }`}
         />
+        {!readOnly && typeof data.focusBlockLength === 'number' && data.focusBlockLength < MIN_FOCUS_BLOCK_MINUTES && (
+          <p className="font-body text-xs text-burnt-orange">Study block length must be at least {MIN_FOCUS_BLOCK_MINUTES} minutes.</p>
+        )}
       </div>
     </div>
   )

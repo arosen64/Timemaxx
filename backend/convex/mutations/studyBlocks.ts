@@ -4,8 +4,11 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 
-type WorkHoursRow = { day: string; available: number[]; blocked: number[] }
+type WorkHoursRow = { day: string; blocked: number[] }
 type TimedEventArg = { id: string; summary: string; start: string; end: string; calendarId: string }
+
+const MIN_STUDY_BLOCK_MINUTES = 15;
+const MIN_STUDY_BLOCK_ERROR = `Study block length must be at least ${MIN_STUDY_BLOCK_MINUTES} minutes`;
 
 
 function getLocalTimeInfo(isoString: string, timezone: string): { dayName: string; minutesFromMidnight: number } {
@@ -69,7 +72,6 @@ const timedEventValidator = v.object({
 
 const workHoursRowValidator = v.object({
   day: v.string(),
-  available: v.array(v.number()),
   blocked: v.array(v.number()),
 })
 
@@ -91,12 +93,15 @@ export const createStudyBlock = mutation({
     const task = await ctx.db.get(args.taskId);
     if (!task || task.userId !== userId) throw new Error("Unauthorized");
 
+    if (args.studyBlockLength < MIN_STUDY_BLOCK_MINUTES) throw new Error(MIN_STUDY_BLOCK_ERROR);
+
     return await ctx.db.insert("studyBlocks", {
       taskId: args.taskId,
       userId,
       title: args.title,
       startTime: args.startTime,
       studyBlockLength: args.studyBlockLength,
+      isCompleted: false,
     });
   },
 });
@@ -118,6 +123,9 @@ export const createTaskBlocks = mutation({
     const task = await ctx.db.get(args.taskId);
     if (!task || task.userId !== userId) throw new Error("Unauthorized");
 
+    const invalidBlock = args.blocks.find((b) => b.studyBlockLength < MIN_STUDY_BLOCK_MINUTES);
+    if (invalidBlock) throw new Error(MIN_STUDY_BLOCK_ERROR);
+
     const existing = await ctx.db
       .query("studyBlocks")
       .withIndex("by_taskId", (q) => q.eq("taskId", args.taskId))
@@ -132,6 +140,7 @@ export const createTaskBlocks = mutation({
         title: block.title,
         startTime: undefined,
         studyBlockLength: block.studyBlockLength,
+        isCompleted: false,
       });
     }
   },
@@ -367,6 +376,14 @@ export const detectConflicts = internalMutation({
           continue;
         }
 
+        const endMs = new Date(block.startTime).getTime() + block.studyBlockLength * 60 * 1000;
+        if (endMs <= nowMs) {
+          if (block.isConflicted) {
+            await ctx.db.patch(block._id, { isConflicted: false });
+          }
+          continue;
+        }
+
         const conflicted = isBlockConflicted(
           { startTime: block.startTime, studyBlockLength: block.studyBlockLength, googleEventId: block.googleEventId },
           { dueDate },
@@ -378,6 +395,107 @@ export const detectConflicts = internalMutation({
         if ((block.isConflicted ?? false) !== conflicted) {
           await ctx.db.patch(block._id, { isConflicted: conflicted });
         }
+      }
+    }
+  },
+});
+
+export const splitStudyBlock = mutation({
+  args: {
+    studyBlockId: v.id("studyBlocks"),
+    splitAtMinutes: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Unauthenticated");
+
+    const block = await ctx.db.get(args.studyBlockId);
+    if (!block) throw new Error("Study block not found");
+
+    const ownerId = block.taskId
+      ? (await ctx.db.get(block.taskId))?.userId
+      : block.subtaskId
+        ? (await ctx.db.get(block.subtaskId))?.userId
+        : undefined;
+    if (ownerId !== userId) throw new Error("Unauthorized");
+
+    const splitAt = Math.floor(args.splitAtMinutes);
+    const remaining = block.studyBlockLength - splitAt;
+
+    if (splitAt < 15 || remaining < 15) {
+      throw new Error("Each resulting block must be at least 15 minutes");
+    }
+
+    let startTimeB: string | undefined;
+    if (block.startTime) {
+      const offsetMs = splitAt * 60 * 1000;
+      startTimeB = new Date(new Date(block.startTime).getTime() + offsetMs).toISOString();
+    }
+
+    await ctx.db.delete(args.studyBlockId);
+
+    const needsExport = block.googleEventId ? true : undefined;
+
+    const blockAId = await ctx.db.insert("studyBlocks", {
+      taskId: block.taskId,
+      subtaskId: block.subtaskId,
+      userId,
+      title: block.title,
+      startTime: block.startTime,
+      studyBlockLength: splitAt,
+      needsExport,
+      isCompleted: false,
+    });
+
+    const blockBId = await ctx.db.insert("studyBlocks", {
+      taskId: block.taskId,
+      subtaskId: block.subtaskId,
+      userId,
+      title: block.title,
+      startTime: startTimeB,
+      studyBlockLength: remaining,
+      needsExport,
+      isCompleted: false,
+    });
+
+    return { blockAId, blockBId };
+  },
+});
+
+export const toggleStudyBlockComplete = mutation({
+  args: { studyBlockId: v.id("studyBlocks") },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Unauthenticated");
+
+    const block = await ctx.db.get(args.studyBlockId);
+    if (!block) throw new Error("Study block not found");
+    if (block.userId !== userId) throw new Error("Unauthorized");
+
+    const nowCompleted = !block.isCompleted;
+    await ctx.db.patch(args.studyBlockId, { isCompleted: nowCompleted });
+
+    if (block.subtaskId) {
+      const allSubtaskBlocks = await ctx.db
+        .query("studyBlocks")
+        .withIndex("by_subtaskId", (q) => q.eq("subtaskId", block.subtaskId!))
+        .collect();
+
+      const completedCount = allSubtaskBlocks.filter((b) =>
+        b._id === args.studyBlockId ? nowCompleted : b.isCompleted
+      ).length;
+
+      const subtask = await ctx.db.get(block.subtaskId);
+      if (subtask && subtask.userId === userId) {
+        let newStatus: "not_started" | "in_progress" | "completed";
+        if (completedCount === allSubtaskBlocks.length) {
+          newStatus = "completed";
+        } else if (completedCount > 0) {
+          newStatus = "in_progress";
+        } else {
+          newStatus = "not_started";
+        }
+        await ctx.db.patch(block.subtaskId, { status: newStatus });
       }
     }
   },

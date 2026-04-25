@@ -2,15 +2,18 @@
 import { action } from "../_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
-import { api, internal } from "../_generated/api";
+import { internal } from "../_generated/api";
 import {
   enumerateSlots,
   selectAllSlotsWithAI,
-  toDateStr,
+  buildDailyLoadMap,
+  computeMaxBlocksPerDay,
   DEFAULT_DUE_FALLBACK_MS,
   type OccupiedInterval,
   type WorkHoursRow,
 } from "../lib/scheduleSlots";
+import { fetch21DayCalendarEvents } from "../lib/calendarFetch";
+
 
 /**
  * AI-driven scheduling for a single study block.
@@ -46,6 +49,7 @@ export const scheduleBlock = action({
     let taskTitle: string;
     let dueDate: number;
     let creationTime: number;
+    let recommendedStart: number | undefined;
 
     if (block.subtaskId) {
       const subtask = await ctx.runQuery(internal.queries.subtasks.getSubtaskInternal, {
@@ -55,6 +59,10 @@ export const scheduleBlock = action({
       taskTitle = subtask.title;
       dueDate = subtask.suggestedCompletionAt ?? subtask.dueDate ?? Date.now() + DEFAULT_DUE_FALLBACK_MS;
       creationTime = subtask._creationTime;
+      const parentTask = await ctx.runQuery(internal.queries.tasks.getTaskInternal, {
+        taskId: subtask.parentTaskId,
+      });
+      recommendedStart = parentTask?.recommendedStart;
     } else {
       // block.taskId is non-null here: the guard above ensures at least one of taskId/subtaskId is set
       const task = await ctx.runQuery(internal.queries.tasks.getTaskInternal, {
@@ -64,49 +72,21 @@ export const scheduleBlock = action({
       taskTitle = task.title;
       dueDate = task.dueDate;
       creationTime = task._creationTime;
+      recommendedStart = task.recommendedStart;
     }
 
-    // Fetch user preferences
-    const user = await ctx.runQuery(internal.queries.users.getUserInternal, { userId });
+    // Fetch user preferences and calendar events in parallel
+    const [user, timedEvents, allUserBlocks] = await Promise.all([
+      ctx.runQuery(internal.queries.users.getUserInternal, { userId }),
+      fetch21DayCalendarEvents(ctx, args.timezone),
+      ctx.runQuery(internal.queries.studyBlocks.getAllStudyBlocksByUserInternal, { userId }),
+    ]);
     if (!user) throw new Error("User not found");
 
+    const focusBlockLength: number = user.focusBlockLength ?? 60;
     const workHoursGrid = (user.workHoursGrid ?? []) as WorkHoursRow[];
     const productivityTraits: unknown = user.productivityTraits;
-
-    // Fetch calendar events for the 21-day window (best effort)
-    const today = new Date();
-    const week2Start = new Date(today);
-    week2Start.setDate(today.getDate() + 7);
-    const week3Start = new Date(today);
-    week3Start.setDate(today.getDate() + 14);
-
-    type TimedEvent = { id: string; summary: string; start: string; end: string; calendarId: string };
-    let timedEvents: TimedEvent[] = [];
-    try {
-      const [r1, r2, r3] = await Promise.all([
-        ctx.runAction(api.actions.fetchCalendarEvents.fetchCalendarEvents, {
-          startDate: toDateStr(today, args.timezone),
-          timezone: args.timezone,
-        }),
-        ctx.runAction(api.actions.fetchCalendarEvents.fetchCalendarEvents, {
-          startDate: toDateStr(week2Start, args.timezone),
-          timezone: args.timezone,
-        }),
-        ctx.runAction(api.actions.fetchCalendarEvents.fetchCalendarEvents, {
-          startDate: toDateStr(week3Start, args.timezone),
-          timezone: args.timezone,
-        }),
-      ]);
-      timedEvents = [...r1.timedEvents, ...r2.timedEvents, ...r3.timedEvents];
-    } catch {
-      // No calendar connected — schedule against work hours only
-    }
-
-    // Build occupied intervals — use by_userId index to cover both task and subtask blocks
-    const allUserBlocks = await ctx.runQuery(
-      internal.queries.studyBlocks.getAllStudyBlocksByUserInternal,
-      { userId },
-    );
+    const preferredDays: string[] = (productivityTraits as any)?.dayOfWeek ?? [];
 
     const occupiedIntervals: OccupiedInterval[] = [
       ...timedEvents.map((e) => ({
@@ -123,6 +103,9 @@ export const scheduleBlock = action({
         })),
     ];
 
+    const maxBlocksPerDayMap = computeMaxBlocksPerDay(workHoursGrid, focusBlockLength, preferredDays);
+    const dailyLoadMap = buildDailyLoadMap(occupiedIntervals, args.timezone, focusBlockLength);
+
     const nowMs = Date.now();
     const fromMs = Math.max(nowMs, creationTime);
 
@@ -133,12 +116,15 @@ export const scheduleBlock = action({
       workHoursGrid,
       occupiedIntervals,
       timezone: args.timezone,
+      dailyLoadMap,
+      maxBlocksPerDayMap,
+      recommendedStartMs: recommendedStart,
     });
 
     if (candidates.length === 0) return { error: "no_slot_found" };
 
     const [chosenIndex] = await selectAllSlotsWithAI(
-      [{ taskTitle, dueDate, candidates }],
+      [{ taskTitle, dueDate, recommendedStart, candidates }],
       productivityTraits,
     );
 

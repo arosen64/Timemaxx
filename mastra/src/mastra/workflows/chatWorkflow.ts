@@ -1,72 +1,73 @@
 import { createWorkflow, createStep } from "@mastra/core/workflows";
-import { z } from "zod";
 import { supervisorAgent } from "../agents/supervisorAgent";
 import { taskAgent } from "../agents/taskAgent";
 import { feedbackAgent } from "../agents/feedbackAgent";
+import { courseAgent } from "../agents/courseAgent";
+import { scheduleAgent } from "../agents/scheduleAgent";
 
 import { supervisorAgentOutputSchema } from "../lib/prompts/supervisorAgent.prompt";
 import { taskAgentOutputSchema, type TaskAgentOutput } from "../lib/prompts/taskAgent.prompt";
 import { feedbackAgentOutputSchema, type FeedbackAgentOutput } from "../lib/prompts/feedbackAgent.prompt";
+import { courseAgentOutputSchema, type CourseAgentOutput } from "../lib/prompts/courseAgent.prompt";
+import { scheduleAgentOutputSchema, type ScheduleAgentOutput } from "../lib/prompts/scheduleAgent.prompt";
 
-// ---------------------------------------------------------------------------
-// Schemas
-// ---------------------------------------------------------------------------
-
-const chatContextSchema = z.object({
-  message: z.string(),
-  historyText: z.string(),
-  taggedEntitiesBlock: z.string(),
-  hasCourseTag: z.boolean(),
-  taggedTaskId: z.string().nullable(),
-  today: z.string(),
-  activeAgent: z.enum(["task", "feedback", "preferences"]).nullable(),
-  taskAgentIntent: z.enum(["create", "rud"]).nullable(),
-});
-
-// routerStep passes all context through plus the routing decision
-const routedContextSchema = chatContextSchema.extend({
-  route: z.string().nullable(),
-  needsDomainClarification: z.boolean(),
-  domainClarifyingQuestion: z.string().nullable(),
-});
-
-export const chatWorkflowOutputSchema = z.object({
-  reply: z.string(),
-  route: z.string().nullable(),
-  status: z.enum(["reply", "domain_clarify", "needs_task_mcq", "needs_class_mcq", "task_action", "canned"]),
-  mcqQueryText: z.string().nullable(),
-  needsClassAfterTask: z.boolean(),
-  actionType: z.enum(["create_task", "update_task", "delete_task", "read_task", "none"]).nullable(),
-  title: z.string().nullable(),
-  description: z.string().nullable(),
-  taskType: z.string().nullable(),
-  dueDateIso: z.string().nullable(),
-  classTag: z.string().nullable(),
-  deleteConfirmed: z.boolean(),
-  updatedTitle: z.string().nullable(),
-  updatedDescription: z.string().nullable(),
-  updatedTaskType: z.string().nullable(),
-  updatedDueDateIso: z.string().nullable(),
-  updatedClassTag: z.string().nullable(),
-  newActiveAgent: z.enum(["task", "feedback", "preferences"]).nullable(),
-  clearActiveAgent: z.boolean(),
-  newTaskAgentIntent: z.enum(["create", "rud"]).nullable(),
-  readyToRecord: z.boolean(),
-});
-
-export type ChatWorkflowOutput = z.infer<typeof chatWorkflowOutputSchema>;
-
+import { 
+  chatContextSchema,
+  routedContextSchema,
+  chatWorkflowOutputSchema,
+  ChatWorkflowOutput
+ } from "../lib/schemas/chatSchemas";
 
 // For task action clarifying
 const NO_ACTION = {
   actionType: null, title: null, description: null, taskType: null, dueDateIso: null,
   classTag: null, deleteConfirmed: false, updatedTitle: null, updatedDescription: null,
-  updatedTaskType: null, updatedDueDateIso: null, updatedClassTag: null,
+  updatedTaskType: null, updatedDueDateIso: null, updatedClassTag: null, courseName: null,
+  sisQuery: null, term: null, school: null, studyGoal: null, grade: null, difficultyRating: null,
 } as const;
+
+function courseFields(output: CourseAgentOutput) {
+  return {
+    courseName: output.courseName,
+    sisQuery: output.sisQuery,
+    term: output.term,
+    school: output.school,
+    studyGoal: output.studyGoal,
+    grade: output.grade,
+    difficultyRating: output.difficultyRating,
+  } as const;
+}
+
+function courseReplyBase(newIntent: "add" | "drop" | "view" | "update" | null) {
+  return {
+    route: "classes" as const,
+    needsClassAfterTask: false,
+    newActiveAgent: "classes" as const,
+    clearActiveAgent: false,
+    newTaskAgentIntent: null,
+    newCourseAgentIntent: newIntent,
+    readyToRecord: false,
+  } as const;
+}
+
+function courseNeedsClassMcq(
+  output: CourseAgentOutput,
+  newIntent: "add" | "drop" | "view" | "update" | null,
+  courseQueryText: string,
+): ChatWorkflowOutput {
+  return {
+    reply: "Which class are you referring to? Pick one below, or choose **Other** to see more options.",
+    status: "needs_class_mcq",
+    mcqQueryText: courseQueryText,
+    ...courseReplyBase(newIntent),
+    ...NO_ACTION,
+    actionType: "none",
+    ...courseFields(output),
+  };
+}
 
 // canned replies for routes
 const CANNED_REPLIES: Record<string, string> = {
-  schedule: "To schedule or manage your study blocks, visit the **Schedule** page. To connect or revoke Google Calendar access, head to the **Profile** page.",
   classes: "To add or remove a course, or upload a syllabus, visit the **Classes** page.",
   preferences: "You can update your study preferences (focus length, work hours, and more) from the **Preferences** page.",
 };
@@ -85,27 +86,163 @@ function taskOutput(output: TaskAgentOutput, ctx: {
     output.intent !== "unknown" && !taskAgentIntent ? (output.intent as "create" | "rud") : taskAgentIntent;
 
   if (output.needsClassClarification && !hasCourseTag) {
-    return { reply: "Which class is this for? Pick one below, or choose **Other** to see more options.", route: "tasks", status: "needs_class_mcq", mcqQueryText: String(message.trim() || output.classTag || output.updatedClassTag || "class course"), needsClassAfterTask: false, newActiveAgent: "task", clearActiveAgent: false, newTaskAgentIntent: newIntent, readyToRecord: false, ...NO_ACTION };
+    return { reply: "Which class is this for? Pick one below, or choose **Other** to see more options.", route: "tasks", status: "needs_class_mcq", mcqQueryText: String(message.trim() || output.classTag || output.updatedClassTag || "class course"), needsClassAfterTask: false, newActiveAgent: "task", clearActiveAgent: false, newTaskAgentIntent: newIntent, newCourseAgentIntent: null, readyToRecord: false, ...NO_ACTION };
   }
   if (output.intent === "rud" && taggedTaskId === null && output.needsEntityClarification) {
-    return { reply: "Which task would you like to work with? Pick one below, or choose **Other** to see more options.", route: "tasks", status: "needs_task_mcq", mcqQueryText: message.trim() || "task assignment", needsClassAfterTask: false, newActiveAgent: "task", clearActiveAgent: false, newTaskAgentIntent: newIntent, readyToRecord: false, ...NO_ACTION };
+    return { reply: "Which task would you like to work with? Pick one below, or choose **Other** to see more options.", route: "tasks", status: "needs_task_mcq", mcqQueryText: message.trim() || "task assignment", needsClassAfterTask: false, newActiveAgent: "task", clearActiveAgent: false, newTaskAgentIntent: newIntent, newCourseAgentIntent: null, readyToRecord: false, ...NO_ACTION };
   }
   if (output.readyToExecute && output.actionType !== "none") {
-    return { reply: output.message, route: "tasks", status: "task_action", mcqQueryText: null, needsClassAfterTask: false, actionType: output.actionType, title: output.title, description: output.description, taskType: output.taskType, dueDateIso: output.dueDateIso, classTag: output.classTag, deleteConfirmed: output.deleteConfirmed, updatedTitle: output.updatedTitle, updatedDescription: output.updatedDescription, updatedTaskType: output.updatedTaskType, updatedDueDateIso: output.updatedDueDateIso, updatedClassTag: output.updatedClassTag, newActiveAgent: null, clearActiveAgent: true, newTaskAgentIntent: null, readyToRecord: false };
+    return {
+      reply: output.message,
+      route: "tasks",
+      status: "task_action",
+      mcqQueryText: null,
+      needsClassAfterTask: false,
+      actionType: output.actionType,
+      title: output.title,
+      description: output.description,
+      taskType: output.taskType,
+      dueDateIso: output.dueDateIso,
+      classTag: output.classTag,
+      deleteConfirmed: output.deleteConfirmed,
+      updatedTitle: output.updatedTitle,
+      updatedDescription: output.updatedDescription,
+      updatedTaskType: output.updatedTaskType,
+      updatedDueDateIso: output.updatedDueDateIso,
+      updatedClassTag: output.updatedClassTag,
+      courseName: null,
+      sisQuery: null,
+      term: null,
+      school: null,
+      studyGoal: null,
+      grade: null,
+      difficultyRating: null,
+      newActiveAgent: null,
+      clearActiveAgent: true,
+      newTaskAgentIntent: null,
+      newCourseAgentIntent: null,
+      readyToRecord: false,
+    };
   }
-  return { reply: output.message, route: "tasks", status: "reply", mcqQueryText: null, needsClassAfterTask: false, newActiveAgent: "task", clearActiveAgent: false, newTaskAgentIntent: newIntent, readyToRecord: false, ...NO_ACTION };
+  return { reply: output.message, route: "tasks", status: "reply", mcqQueryText: null, needsClassAfterTask: false, newActiveAgent: "task", clearActiveAgent: false, newTaskAgentIntent: newIntent, newCourseAgentIntent: null, readyToRecord: false, ...NO_ACTION };
 }
 
 // Feedback output formatting for chat workflow
 function feedbackOutput(output: FeedbackAgentOutput, ctx: { message: string }): ChatWorkflowOutput {
   const { message } = ctx;
   if (output.needsTaskClarification) {
-    return { reply: "Which assignment are you referring to? Pick one below or choose **Other**.", route: "feedback", status: "needs_task_mcq", mcqQueryText: message.trim() || "task assignment", needsClassAfterTask: false, newActiveAgent: "feedback", clearActiveAgent: false, newTaskAgentIntent: null, readyToRecord: false, ...NO_ACTION };
+    return { reply: "Which assignment are you referring to? Pick one below or choose **Other**.", route: "feedback", status: "needs_task_mcq", mcqQueryText: message.trim() || "task assignment", needsClassAfterTask: false, newActiveAgent: "feedback", clearActiveAgent: false, newTaskAgentIntent: null, newCourseAgentIntent: null, readyToRecord: false, ...NO_ACTION };
   }
   if (output.needsClassClarification) {
-    return { reply: "Which class are you talking about? Pick one below or choose **Other**.", route: "feedback", status: "needs_class_mcq", mcqQueryText: message.trim() || "class course", needsClassAfterTask: false, newActiveAgent: "feedback", clearActiveAgent: false, newTaskAgentIntent: null, readyToRecord: false, ...NO_ACTION };
+    return { reply: "Which class are you talking about? Pick one below or choose **Other**.", route: "feedback", status: "needs_class_mcq", mcqQueryText: message.trim() || "class course", needsClassAfterTask: false, newActiveAgent: "feedback", clearActiveAgent: false, newTaskAgentIntent: null, newCourseAgentIntent: null, readyToRecord: false, ...NO_ACTION };
   }
-  return { reply: output.message, route: "feedback", status: "reply", mcqQueryText: null, needsClassAfterTask: false, newActiveAgent: output.readyToRecord ? null : "feedback", clearActiveAgent: output.readyToRecord, newTaskAgentIntent: null, readyToRecord: output.readyToRecord, ...NO_ACTION };
+  return { reply: output.message, route: "feedback", status: "reply", mcqQueryText: null, needsClassAfterTask: false, newActiveAgent: output.readyToRecord ? null : "feedback", clearActiveAgent: output.readyToRecord, newTaskAgentIntent: null, newCourseAgentIntent: null, readyToRecord: output.readyToRecord, ...NO_ACTION };
+}
+
+// Course output formatting for chat workflow
+function courseOutput(output: CourseAgentOutput, ctx: {
+  message: string; taggedCourseId: string | null; courseAgentIntent: "add" | "drop" | "view" | "update" | null;
+}): ChatWorkflowOutput {
+  const { message, taggedCourseId, courseAgentIntent } = ctx;
+  const newIntent: "add" | "drop" | "view" | "update" | null =
+    output.intent !== "unknown" && !courseAgentIntent
+      ? (output.intent as "add" | "drop" | "view" | "update")
+      : courseAgentIntent;
+  const effectiveIntent = output.intent === "unknown" ? newIntent : output.intent;
+  const courseQueryText = ((output.sisQuery ?? output.courseName ?? message.trim()) || "class course");
+  // Enforce deterministic add-course field order in workflow (not prompt-dependent):
+  // term -> school -> sisQuery -> class MCQ -> remaining options.
+  if (effectiveIntent === "add") {
+    if (!output.term) {
+      return {
+        reply: "Which term is this course for? (for example, Spring 2026)",
+        status: "reply",
+        mcqQueryText: null,
+        ...courseReplyBase(newIntent),
+        ...NO_ACTION,
+      };
+    }
+    if (!output.school) {
+      return {
+        reply: "Which school is this course in? (for example, Krieger School of Arts and Sciences or Whiting School of Engineering)",
+        status: "reply",
+        mcqQueryText: null,
+        ...courseReplyBase(newIntent),
+        ...NO_ACTION,
+      };
+    }
+    if (!output.sisQuery && !output.courseName) {
+      return {
+        reply: "What course should I search for in SIS? You can share a course code or title keyword.",
+        status: "reply",
+        mcqQueryText: null,
+        ...courseReplyBase(newIntent),
+        ...NO_ACTION,
+      };
+    }
+  }
+  // Enforce deterministic RUD entity resolution in workflow:
+  // - drop/update always require a resolved class
+  // - view can list all classes without a resolved class, but single-class view requires one
+  if ((effectiveIntent === "drop" || effectiveIntent === "update") && taggedCourseId === null) {
+    return courseNeedsClassMcq(output, newIntent, courseQueryText);
+  }
+  if (effectiveIntent === "view" && taggedCourseId === null) {
+    const listingAllCourses =
+      output.readyToExecute &&
+      output.actionType === "view_courses" &&
+      output.courseName === null &&
+      output.sisQuery === null;
+    if (!listingAllCourses) {
+      return courseNeedsClassMcq(output, newIntent, courseQueryText);
+    }
+  }
+  if (output.needsClassClarification && (effectiveIntent === "add" || taggedCourseId === null)) {
+    return courseNeedsClassMcq(output, newIntent, courseQueryText);
+  }
+  if (output.readyToExecute && output.actionType !== "none") {
+    return {
+      reply: output.message,
+      route: "classes",
+      status: "course_action",
+      mcqQueryText: null,
+      needsClassAfterTask: false,
+      ...NO_ACTION,
+      actionType: output.actionType,
+      ...courseFields(output),
+      newActiveAgent: null,
+      clearActiveAgent: true,
+      newTaskAgentIntent: null,
+      newCourseAgentIntent: null,
+      readyToRecord: false,
+    };
+  }
+  return { reply: output.message, route: "classes", status: "reply", mcqQueryText: null, needsClassAfterTask: false, newActiveAgent: "classes", clearActiveAgent: false, newTaskAgentIntent: null, newCourseAgentIntent: newIntent, readyToRecord: false, ...NO_ACTION };
+}
+
+// Schedule output formatting for chat workflow
+function scheduleOutput(output: ScheduleAgentOutput, ctx: { message: string }): ChatWorkflowOutput {
+  const { message } = ctx;
+  if (output.needsTaskClarification) {
+    return { reply: "Which task would you like me to schedule? Pick one below, or choose **Other** to see more options.", route: "schedule", status: "needs_task_mcq", mcqQueryText: message.trim() || "task assignment", needsClassAfterTask: false, newActiveAgent: "schedule", clearActiveAgent: false, newTaskAgentIntent: null, newCourseAgentIntent: null, readyToRecord: false, ...NO_ACTION };
+  }
+  if (output.readyToExecute && output.actionType !== "none") {
+    return {
+      reply: output.message,
+      route: "schedule",
+      status: "schedule_action",
+      mcqQueryText: null,
+      needsClassAfterTask: false,
+      ...NO_ACTION,
+      actionType: output.actionType,
+      newActiveAgent: null,
+      clearActiveAgent: true,
+      newTaskAgentIntent: null,
+      newCourseAgentIntent: null,
+      readyToRecord: false,
+    };
+  }
+  return { reply: output.message, route: "schedule", status: "reply", mcqQueryText: null, needsClassAfterTask: false, newActiveAgent: "schedule", clearActiveAgent: false, newTaskAgentIntent: null, newCourseAgentIntent: null, readyToRecord: false, ...NO_ACTION };
 }
 
 
@@ -165,6 +302,42 @@ const feedbackStep = createStep({
   },
 });
 
+// Course step
+const courseStep = createStep({
+  id: "course_handler",
+  inputSchema: routedContextSchema,
+  outputSchema: chatWorkflowOutputSchema,
+  execute: async ({ inputData }): Promise<ChatWorkflowOutput> => {
+    const { message, historyText, taggedEntitiesBlock, taggedCourseId, today, courseAgentIntent } = inputData;
+    const continueNote = message.trim()
+      ? "Respond to the latest user message above."
+      : "The user selected an entity. Continue based on what is now resolved.";
+    const result = await courseAgent.generate(
+      agentContextPrompt({ today, historyText, taggedEntitiesBlock, continueNote }),
+      { structuredOutput: { schema: courseAgentOutputSchema } },
+    );
+    return courseOutput(result.object, { message, taggedCourseId, courseAgentIntent });
+  },
+});
+
+// Schedule step
+const scheduleStep = createStep({
+  id: "schedule_handler",
+  inputSchema: routedContextSchema,
+  outputSchema: chatWorkflowOutputSchema,
+  execute: async ({ inputData }) => {
+    const { message, historyText, taggedEntitiesBlock, today } = inputData;
+    const continueNote = message.trim()
+      ? "Respond to the latest user message above."
+      : "The user just selected an entity. Continue based on what is now resolved.";
+    const result = await scheduleAgent.generate(
+      agentContextPrompt({ today, historyText, taggedEntitiesBlock, continueNote }),
+      { structuredOutput: { schema: scheduleAgentOutputSchema } },
+    );
+    return scheduleOutput(result.object, { message });
+  },
+});
+
 // ---------------------------------------------------------------------------
 // Step 2c — Canned / domain-clarify / fallback handler
 // ---------------------------------------------------------------------------
@@ -176,12 +349,12 @@ const cannedStep = createStep({
   execute: async ({ inputData }) => {
     const { route, needsDomainClarification, domainClarifyingQuestion } = inputData;
     if (needsDomainClarification && domainClarifyingQuestion) {
-      return { reply: domainClarifyingQuestion, route: null, status: "domain_clarify" as const, mcqQueryText: null, needsClassAfterTask: false, newActiveAgent: null, clearActiveAgent: false, newTaskAgentIntent: null, readyToRecord: false, ...NO_ACTION };
+      return { reply: domainClarifyingQuestion, route: null, status: "domain_clarify" as const, mcqQueryText: null, needsClassAfterTask: false, newActiveAgent: null, clearActiveAgent: false, newTaskAgentIntent: null, newCourseAgentIntent: null, readyToRecord: false, ...NO_ACTION };
     }
     if (route && route in CANNED_REPLIES) {
-      return { reply: CANNED_REPLIES[route], route, status: "canned" as const, mcqQueryText: null, needsClassAfterTask: false, newActiveAgent: null, clearActiveAgent: false, newTaskAgentIntent: null, readyToRecord: false, ...NO_ACTION };
+      return { reply: CANNED_REPLIES[route], route, status: "canned" as const, mcqQueryText: null, needsClassAfterTask: false, newActiveAgent: null, clearActiveAgent: false, newTaskAgentIntent: null, newCourseAgentIntent: null, readyToRecord: false, ...NO_ACTION };
     }
-    return { reply: "I'm not sure which area that fits yet — try one more detail (tasks, schedule, classes, preferences, or feedback).", route: null, status: "reply" as const, mcqQueryText: null, needsClassAfterTask: false, newActiveAgent: null, clearActiveAgent: false, newTaskAgentIntent: null, readyToRecord: false, ...NO_ACTION };
+    return { reply: "I'm not sure which area that fits yet — try one more detail (tasks, schedule, classes, preferences, or feedback).", route: null, status: "reply" as const, mcqQueryText: null, needsClassAfterTask: false, newActiveAgent: null, clearActiveAgent: false, newTaskAgentIntent: null, newCourseAgentIntent: null, readyToRecord: false, ...NO_ACTION };
   },
 });
 
@@ -198,6 +371,8 @@ export const chatWorkflow = createWorkflow({
   .branch([
     [async ({ inputData }) => inputData.route === "tasks", taskStep],
     [async ({ inputData }) => inputData.route === "feedback", feedbackStep],
-    [async () => true, cannedStep], // schedule, classes, domain-clarify, unknown
+    [async ({ inputData }) => inputData.route === "classes", courseStep],
+    [async ({ inputData }) => inputData.route === "schedule", scheduleStep],
+    [async () => true, cannedStep], // domain-clarify, unknown, preferences
   ])
   .commit();

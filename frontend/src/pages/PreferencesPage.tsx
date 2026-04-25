@@ -10,11 +10,11 @@ import AcademicProfileSummary from "../components/AcademicProfileSummary";
 import { ProfileData, PreferencesData } from "../types";
 
 function dbToWorkHours(
-  grid: { day: string; available: number[]; blocked: number[] }[] | undefined
+  grid: { day: string; blocked: number[] }[] | undefined
 ): WorkHoursData {
   if (!grid) return DEFAULT_WORK_HOURS;
   return Object.fromEntries(
-    grid.map(({ day, available, blocked }) => [day, { available, blocked }])
+    grid.map(({ day, blocked }) => [day, { blocked }])
   );
 }
 
@@ -45,12 +45,10 @@ export default function PreferencesPage() {
       setProfileDraft({
         major: user.major ?? "",
         year: user.year ?? "",
-        difficultSubjects: user.difficultSubjects ?? [],
-        enjoyedSubjects: user.enjoyedSubjects ?? [],
         courses: (user.courses ?? []).map((c) => ({ title: c.title, studyGoal: c.studyGoal })),
       });
     } else if (section === "workhours") {
-      setWorkHoursDraft(dbToWorkHours(user.workHoursGrid));
+      setWorkHoursDraft(dbToWorkHours(user.workHoursGrid as { day: string; blocked: number[] }[] | undefined));
     } else if (section === "productivity") {
       setPreferencesDraft({
         traits: (user.productivityTraits as PreferencesData["traits"]) ?? {},
@@ -74,8 +72,6 @@ export default function PreferencesPage() {
         await updateSettings({
           major: profileDraft.major,
           year: profileDraft.year,
-          difficultSubjects: profileDraft.difficultSubjects,
-          enjoyedSubjects: profileDraft.enjoyedSubjects,
           courses: profileDraft.courses.map((c) => ({
             title: c.title,
             studyGoal: c.studyGoal ?? "",
@@ -84,7 +80,6 @@ export default function PreferencesPage() {
       } else if (editingSection === "workhours" && workHoursDraft) {
         const newGrid = Object.entries(workHoursDraft).map(([day, slots]) => ({
           day,
-          available: slots.available,
           blocked: slots.blocked,
         }));
         await updateSettings({ workHoursGrid: newGrid });
@@ -108,8 +103,6 @@ export default function PreferencesPage() {
   const profileData: ProfileData = {
     major: user?.major ?? "",
     year: user?.year ?? "",
-    difficultSubjects: user?.difficultSubjects ?? [],
-    enjoyedSubjects: user?.enjoyedSubjects ?? [],
     courses: (user?.courses ?? []).map((c) => ({ title: c.title, studyGoal: c.studyGoal })),
   };
   const workHoursData = dbToWorkHours(user?.workHoursGrid);
@@ -221,7 +214,7 @@ export default function PreferencesPage() {
             >
               <div className="flex flex-col gap-0.5">
                 <span className="font-heading text-lg font-bold text-navy">Work Hours</span>
-                <span className="font-body text-sm text-slate-blue">When you're available to study each week</span>
+                <span className="font-body text-sm text-slate-blue">Select times to block off</span>
               </div>
               <div className="flex items-center gap-3">
                 {openSection === "workhours" && (

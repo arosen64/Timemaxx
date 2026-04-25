@@ -73,6 +73,7 @@ async function fetchAllStudyBlocksWithTasks(ctx: any, userId: Id<"users">) {
   const result: Array<{
     _id: Id<"studyBlocks">;
     taskId: Id<"tasks">;
+    subtaskId: Id<"subtasks"> | undefined;
     title: string;
     startTime: string | undefined;
     studyBlockLength: number;
@@ -81,8 +82,10 @@ async function fetchAllStudyBlocksWithTasks(ctx: any, userId: Id<"users">) {
     needsExport: boolean | undefined;
     taskTitle: string;
     taskDueDate: number;
+    taskRecommendedStart: number | undefined;
     courseColor: string | undefined;
     courseName: string | undefined;
+    isCompleted: boolean;
   }> = [];
 
   // Collect unique courseIds and batch-fetch them into a Map (avoids N+1)
@@ -91,6 +94,18 @@ async function fetchAllStudyBlocksWithTasks(ctx: any, userId: Id<"users">) {
   for (const courseId of uniqueCourseIds) {
     const course = await ctx.db.get(courseId as Id<"userCourses">);
     if (course) courseMap.set(courseId as string, course);
+  }
+
+  // Batch-fetch all subtasks for user and group by parentTaskId (avoids N+1 per task)
+  const allSubtasks = await ctx.db
+    .query("subtasks")
+    .withIndex("by_userId", (q: any) => q.eq("userId", userId))
+    .collect();
+  const subtasksByTask = new Map<string, any[]>();
+  for (const subtask of allSubtasks) {
+    const key = subtask.parentTaskId as string;
+    if (!subtasksByTask.has(key)) subtasksByTask.set(key, []);
+    subtasksByTask.get(key)!.push(subtask);
   }
 
   for (const task of tasks) {
@@ -106,9 +121,11 @@ async function fetchAllStudyBlocksWithTasks(ctx: any, userId: Id<"users">) {
       .withIndex("by_taskId", (q: any) => q.eq("taskId", task._id))
       .collect();
     for (const block of blocks) {
+      if (block.isCompleted) continue
       result.push({
         _id: block._id,
         taskId: block.taskId,
+        subtaskId: undefined,
         title: block.title,
         startTime: block.startTime,
         studyBlockLength: block.studyBlockLength,
@@ -117,9 +134,40 @@ async function fetchAllStudyBlocksWithTasks(ctx: any, userId: Id<"users">) {
         needsExport: block.needsExport,
         taskTitle: task.title,
         taskDueDate: task.dueDate,
+        taskRecommendedStart: task.recommendedStart,
         courseColor,
         courseName,
+        isCompleted: block.isCompleted,
       });
+    }
+
+    // Also include subtask-level blocks, grouped under the parent task
+    const subtasks = subtasksByTask.get(task._id as string) ?? [];
+    for (const subtask of subtasks) {
+      const subtaskBlocks = await ctx.db
+        .query("studyBlocks")
+        .withIndex("by_subtaskId", (q: any) => q.eq("subtaskId", subtask._id))
+        .collect();
+      for (const block of subtaskBlocks) {
+        if (block.isCompleted) continue
+        result.push({
+          _id: block._id,
+          taskId: task._id,
+          subtaskId: subtask._id,
+          title: block.title,
+          startTime: block.startTime,
+          studyBlockLength: block.studyBlockLength,
+          isConflicted: block.isConflicted,
+          googleEventId: block.googleEventId,
+          needsExport: block.needsExport,
+          taskTitle: task.title,
+          taskDueDate: task.dueDate,
+          taskRecommendedStart: task.recommendedStart,
+          courseColor,
+          courseName,
+          isCompleted: block.isCompleted,
+        });
+      }
     }
   }
 
@@ -215,6 +263,7 @@ export const getFutureStudyBlocksForExport = internalQuery({
         .collect();
 
       for (const block of blocks) {
+        if (!block.isCompleted) continue;
         if (!block.startTime) continue;
         if (new Date(block.startTime).getTime() <= now) continue;
         result.push({

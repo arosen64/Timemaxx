@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '../../../../backend/convex/_generated/api'
-import { PencilIcon, TrashIcon, SpinnerIcon, SparklesIcon, ChevronDownIcon } from '../icons'
+import { PencilIcon, TrashIcon, SpinnerIcon, SparklesIcon, ChevronDownIcon, ListTreeIcon } from '../icons'
 import { type TaskType, type SubtaskType, type TaskStatus, formatDueDateTimeDisplay, displayTitle, formatMinutes } from './types'
 import { type Id } from '../../../../backend/convex/_generated/dataModel'
 import { formatClassTagForDisplay } from '../../utils/classTagUtils'
@@ -29,6 +29,8 @@ type TaskCardProps = {
   onEditSubtask?: (subtask: SubtaskType) => void
   onDeleteSubtask?: (id: Id<'subtasks'>) => void
   onEstimateSubtask?: (id: Id<'subtasks'>) => void
+  isGeneratingSubtasks?: boolean
+  onGenerateSubtasks?: () => void
   onSubtaskStatusChange?: (id: Id<'subtasks'>, status: TaskStatus) => void
 }
 
@@ -48,6 +50,8 @@ export default function TaskCard({
   onEditSubtask,
   onDeleteSubtask,
   onEstimateSubtask,
+  isGeneratingSubtasks = false,
+  onGenerateSubtasks,
   onSubtaskStatusChange,
 }: TaskCardProps) {
   const [isExpanded, setIsExpanded] = useState(false)
@@ -56,6 +60,11 @@ export default function TaskCard({
   const [showReasoning, setShowReasoning] = useState(false)
 
   const deleteStudyBlocksForTask = useMutation(api.mutations.studyBlocks.deleteStudyBlocksForTask)
+  const toggleStudyBlockComplete = useMutation(api.mutations.studyBlocks.toggleStudyBlockComplete)
+
+  function handleToggleBlock(studyBlockId: string) {
+    toggleStudyBlockComplete({ studyBlockId: studyBlockId as Id<'studyBlocks'> })
+  }
 
   async function handleCancelBlocks(e: React.MouseEvent) {
     e.stopPropagation()
@@ -72,6 +81,11 @@ export default function TaskCard({
     isExpanded ? { taskId: task._id } : 'skip',
   )
 
+  const subtaskBlocksRaw = useQuery(
+    api.queries.studyBlocks.getStudyBlocksForTaskSubtasks,
+    isExpanded && subtasks.length > 0 ? { taskId: task._id } : 'skip',
+  )
+
   const iconBtnCls =
     'flex items-center justify-center w-8 h-8 transition rounded-lg text-slate-blue hover:bg-bg-gray hover:text-navy'
 
@@ -83,9 +97,14 @@ export default function TaskCard({
   const hiddenCount = studyBlocks ? Math.max(0, studyBlocks.length - BLOCK_DISPLAY_LIMIT) : 0
 
   const hasSubtasks = subtasks.length > 0
-  const anySubtaskPending = hasSubtasks && subtasks.some(
-    (s) => s.timeEstimate === undefined && (estimatingSubtasks?.has(s._id) ?? false)
-  )
+  const subtaskBlocksMap = useMemo(() => new Map(
+    subtasks.map((s) => [
+      s._id,
+      (subtaskBlocksRaw ?? []).filter((b) => b.subtaskId === s._id),
+    ])
+  ), [subtasks, subtaskBlocksRaw])
+
+  const anySubtaskPending = hasSubtasks && subtasks.some((s) => s.timeEstimate === undefined)
   const subtaskTotal = hasSubtasks
     ? subtasks.reduce((sum, s) => sum + (s.timeEstimate ?? 0), 0)
     : undefined
@@ -174,7 +193,11 @@ export default function TaskCard({
                     }}
                     size="md"
                   />
-                  {!hasSubtasks && displayedEstimate === undefined && (
+                  {anySubtaskPending ? (
+                    <div className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-blue">
+                      <SpinnerIcon color="currentColor" size={16} />
+                    </div>
+                  ) : !hasSubtasks && displayedEstimate === undefined && (
                     showEstimateSpinner ? (
                       <div className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-blue">
                         <SpinnerIcon color="currentColor" size={16} />
@@ -215,6 +238,26 @@ export default function TaskCard({
                   >
                     <TrashIcon />
                   </button>
+                  {!hasSubtasks && (
+                    isGeneratingSubtasks ? (
+                      <div className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-blue">
+                        <SpinnerIcon color="currentColor" size={16} />
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onGenerateSubtasks?.()
+                        }}
+                        className={iconBtnCls}
+                        aria-label="Generate subtasks"
+                        title="Generate subtasks"
+                      >
+                        <ListTreeIcon color="currentColor" size={16} />
+                      </button>
+                    )
+                  )}
                 </>
               )}
               <div
@@ -224,7 +267,7 @@ export default function TaskCard({
               </div>
             </div>
 
-            {!isReadOnly && task.timeEstimate !== undefined &&
+            {isReadOnly && task.timeEstimate !== undefined &&
               !task.isManualEstimate &&
               (!hasSubtasks || !anySubtaskPending) && (
                 <TaskFeedbackForm task={task} {...feedback} />
@@ -281,7 +324,7 @@ export default function TaskCard({
             ) : (
               <>
                 {visibleBlocks.map((block) => (
-                  <StudyBlockRow key={block._id} block={block} />
+                  <StudyBlockRow key={block._id} block={block} onToggle={handleToggleBlock} />
                 ))}
                 {hiddenCount > 0 && !showAll && (
                   <button
@@ -333,11 +376,13 @@ export default function TaskCard({
                   <SubtaskCard
                     key={subtask._id}
                     subtask={subtask}
+                    blocks={subtaskBlocksMap.get(subtask._id) ?? []}
                     isEstimating={estimatingSubtasks?.has(subtask._id) ?? false}
                     onEstimate={onEstimateSubtask ?? (() => {})}
                     onEdit={onEditSubtask ?? (() => {})}
                     onDelete={onDeleteSubtask ?? (() => {})}
                     onStatusChange={onSubtaskStatusChange ?? (() => {})}
+                    onToggleBlock={handleToggleBlock}
                     isReadOnly={isReadOnly}
                   />
                 ))}

@@ -1,6 +1,7 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { internalQuery, query } from "../_generated/server";
 import { v } from "convex/values";
+import { activeAgentValidator } from "../lib/chatValidators";
 
 export const getChatSessionInternal = internalQuery({
   args: {
@@ -20,8 +21,13 @@ export const getChatSessionInternal = internalQuery({
       clarificationExhausted: v.optional(v.boolean()),
       awaitingEntityResolution: v.optional(v.boolean()),
       chatInputLocked: v.optional(v.boolean()),
-      activeAgent: v.optional(v.union(v.literal("task"), v.literal("feedback"), v.literal("preferences"))),
+      activeAgent: v.optional(activeAgentValidator),
       taskAgentIntent: v.optional(v.union(v.literal("create"), v.literal("rud"))),
+      courseAgentIntent: v.optional(
+        v.union(v.literal("add"), v.literal("drop"), v.literal("view"), v.literal("update")),
+      ),
+      activeTaskId: v.optional(v.id("tasks")),
+      activeCourseId: v.optional(v.id("userCourses")),
     }),
   ),
   handler: async (ctx, args) => {
@@ -43,6 +49,9 @@ export const getChatSessionInternal = internalQuery({
       chatInputLocked: row.chatInputLocked,
       activeAgent: row.activeAgent,
       taskAgentIntent: row.taskAgentIntent,
+      courseAgentIntent: row.courseAgentIntent,
+      activeTaskId: row.activeTaskId,
+      activeCourseId: row.activeCourseId,
     };
   },
 });
@@ -85,7 +94,7 @@ export const getResolvedEntityLabelsInternal = internalQuery({
   },
 });
 
-/** Tags for the chat widget header — derived from recent message taskId/courseId fields. */
+/** Tags for the chat widget header — derived from chatSessions active scope. */
 export const getChatSessionEntityScope = query({
   args: { sessionId: v.string() },
   returns: v.union(
@@ -95,6 +104,7 @@ export const getChatSessionEntityScope = query({
         v.union(v.literal("task_id_set"), v.literal("class_id_set")),
       ),
       chatInputLocked: v.boolean(),
+      activeAgent: v.union(activeAgentValidator, v.null()),
     }),
   ),
   handler: async (ctx, args) => {
@@ -109,26 +119,14 @@ export const getChatSessionEntityScope = query({
       .unique();
     if (!row) return null;
 
-    const msgs = await ctx.db
-      .query("chatMessages")
-      .withIndex("by_session", (q) => q.eq("sessionId", args.sessionId))
-      .order("desc")
-      .take(40);
-
     const entityScopeTags: Array<"task_id_set" | "class_id_set"> = [];
-    let hasTask = false;
-    let hasClass = false;
-    for (const m of msgs) {
-      if (m.userId !== userId) continue;
-      if (m.taskId) hasTask = true;
-      if (m.courseId) hasClass = true;
-    }
-    if (hasTask) entityScopeTags.push("task_id_set");
-    if (hasClass) entityScopeTags.push("class_id_set");
+    if (row.activeTaskId) entityScopeTags.push("task_id_set");
+    if (row.activeCourseId) entityScopeTags.push("class_id_set");
 
     return {
       entityScopeTags,
       chatInputLocked: row.chatInputLocked === true,
+      activeAgent: row.activeAgent ?? null,
     };
   },
 });

@@ -4,7 +4,7 @@ import { api } from '../../../../backend/convex/_generated/api'
 import { Modal, FileUpload, Toggle } from '../ui'
 import { SpinnerIcon } from '../icons'
 import { Course, UploadSyllabusResult } from '../../types'
-import { extractPdfText } from '../../utils/pdf'
+import { fileToBase64 } from '../../utils/fileToBase64'
 
 type Mode = 'upload' | 'text'
 
@@ -47,9 +47,10 @@ export default function SyllabusUploadModal({
     onClose()
   }
 
-  async function submitToBackend(fileContents: string) {
+  async function submitToBackend(fileContents: string, mimeType?: string) {
     const result = await uploadSyllabus({
       fileContents,
+      mimeType,
       courseId: course.userCourseId as Parameters<typeof uploadSyllabus>[0]['courseId'],
     })
     onSuccess?.(result)
@@ -64,16 +65,17 @@ export default function SyllabusUploadModal({
           setError('Please select a file to upload.')
           return
         }
-        const fileContents = file.type === 'application/pdf'
-          ? await extractPdfText(file)
-          : await file.text()
-        await submitToBackend(fileContents)
+        if (file.type === 'application/pdf') {
+          await submitToBackend(await fileToBase64(file), 'application/pdf')
+        } else {
+          await submitToBackend(await file.text(), 'text/plain')
+        }
       } else {
         if (!text.trim()) {
           setError('Please enter some syllabus text.')
           return
         }
-        await submitToBackend(text)
+        await submitToBackend(text, 'text/plain')
       }
       handleClose()
     } catch {
@@ -84,8 +86,8 @@ export default function SyllabusUploadModal({
   }
 
   const subtitle = course.title
-    ? `Upload the syllabus for ${course.title}. Accepted formats: PDF, plain text (max 10 MB).`
-    : 'Upload a syllabus. Accepted formats: PDF, plain text (max 10 MB).'
+    ? `Upload the syllabus for ${course.title}. Accepted formats: PDF, plain text (max 1 MB).`
+    : 'Upload a syllabus. Accepted formats: PDF, plain text (max 1 MB).'
 
   return (
     <Modal
@@ -112,8 +114,8 @@ export default function SyllabusUploadModal({
         <FileUpload
           accept=".pdf,.txt"
           acceptedMimeTypes={['application/pdf', 'text/plain']}
-          maxBytes={10 * 1024 * 1024}
-          hint="PDF or .txt · max 10 MB"
+          maxBytes={1 * 1024 * 1024}
+          hint="PDF or .txt · max 1 MB"
           file={file}
           onFile={(f) => { setError(null); setFile(f) }}
           onError={(msg) => { setError(msg); setFile(null) }}

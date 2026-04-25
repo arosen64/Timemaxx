@@ -263,6 +263,18 @@ export function MessageSquareIcon({ color = 'currentColor', size = 22 }: { color
   )
 }
 
+export function ListTreeIcon({ color = 'currentColor', size = 16 }: { color?: string; size?: number }) {
+  return (
+    <IconBase color={color} size={size}>
+      <path d="M21 12h-8" />
+      <path d="M21 6H8" />
+      <path d="M21 18h-8" />
+      <path d="M3 6v4c0 1.1.9 2 2 2h3" />
+      <path d="M3 10v6c0 1.1.9 2 2 2h3" />
+    </IconBase>
+  )
+}
+
 export function ClockIcon({ color = 'currentColor', size = 16 }: { color?: string; size?: number }) {
   return (
     <IconBase color={color} size={size}>
@@ -286,6 +298,17 @@ export function MenuIcon({ color = 'currentColor', size = 20 }: { color?: string
       <line x1="4" y1="6" x2="20" y2="6" />
       <line x1="4" y1="12" x2="20" y2="12" />
       <line x1="4" y1="18" x2="20" y2="18" />
+    </IconBase>
+  )
+}
+
+export function SplitIcon({ color = 'currentColor', size = 16 }: { color?: string; size?: number }) {
+  return (
+    <IconBase color={color} size={size}>
+      <path d="M16 3h5v5" />
+      <path d="M8 3H3v5" />
+      <path d="M12 22v-8.3a4 4 0 0 0-1.172-2.872L3 3" />
+      <path d="m15 9 6-6" />
     </IconBase>
   )
 }

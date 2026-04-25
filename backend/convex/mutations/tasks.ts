@@ -5,6 +5,7 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { taskTypeValidator } from "../lib/taskValidators";
 import { Id } from "../_generated/dataModel";
 import { rebuildStudyBlocks } from "./timeEstimate";
+import { TWO_WEEKS_MS } from "../lib/scheduleSlots";
 
 export async function cascadeDeleteTask(ctx: MutationCtx, taskId: Id<"tasks">) {
   const subtasks = await ctx.db
@@ -50,6 +51,7 @@ export const createTask = mutation({
     courseId: v.optional(v.id("userCourses")),
     classTag: v.optional(v.string()),
     timeEstimate: v.optional(v.number()),
+    assignmentWeight: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -68,6 +70,9 @@ export const createTask = mutation({
     if (args.dueDate <= now) {
       throw new Error("That due date and time are in the past. Choose a later deadline.");
     }
+    if (args.assignmentWeight !== undefined && (args.assignmentWeight < 0 || args.assignmentWeight > 100)) {
+      throw new Error("Assignment weight must be between 0 and 100");
+    }
 
     const isManualEstimate = args.timeEstimate !== undefined;
 
@@ -81,6 +86,8 @@ export const createTask = mutation({
       classTag: normalizeClassTag(args.classTag),
       timeEstimate: args.timeEstimate,
       isManualEstimate,
+      assignmentWeight: args.assignmentWeight,
+      recommendedStart: args.dueDate - TWO_WEEKS_MS,
       createdAt: Date.now(),
     });
 
@@ -110,6 +117,7 @@ export const updateTask = mutation({
     dueDate: v.number(),
     courseId: v.optional(v.id("userCourses")),
     classTag: v.optional(v.string()),
+    assignmentWeight: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -117,6 +125,10 @@ export const updateTask = mutation({
 
     const task = await ctx.db.get(args.taskId);
     if (!task || task.userId !== userId) throw new Error("Task not found");
+
+    if (args.assignmentWeight !== undefined && (args.assignmentWeight < 0 || args.assignmentWeight > 100)) {
+      throw new Error("Assignment weight must be between 0 and 100");
+    }
 
     await ctx.db.patch(args.taskId, {
       title: args.title,
@@ -127,6 +139,8 @@ export const updateTask = mutation({
       ...(args.classTag !== undefined
         ? { classTag: normalizeClassTag(args.classTag) }
         : {}),
+      assignmentWeight: args.assignmentWeight,
+      recommendedStart: args.dueDate - TWO_WEEKS_MS,
     });
 
     // Cascade dueDate change to child subtasks
@@ -176,6 +190,7 @@ export const createTaskInternal = internalMutation({
       dueDate: args.dueDate,
       courseId: args.courseId,
       classTag,
+      recommendedStart: args.dueDate - TWO_WEEKS_MS,
       createdAt: Date.now(),
       isManualEstimate: false,
     });
@@ -210,7 +225,10 @@ export const patchTaskFieldsInternal = internalMutation({
     if (args.title !== undefined) patch.title = args.title;
     if (args.description !== undefined) patch.description = args.description;
     if (args.taskType !== undefined) patch.taskType = args.taskType;
-    if (args.dueDate !== undefined) patch.dueDate = args.dueDate;
+    if (args.dueDate !== undefined) {
+      patch.dueDate = args.dueDate;
+      patch.recommendedStart = args.dueDate - TWO_WEEKS_MS;
+    }
     if (args.courseId !== undefined) {
       patch.courseId = args.courseId;
       const course = await ctx.db.get(args.courseId);
@@ -295,7 +313,16 @@ export const updateTaskStatus = mutation({
     const task = await ctx.db.get(args.taskId);
     if (!task || task.userId !== userId) throw new Error("Task not found");
 
-    await ctx.db.patch(args.taskId, { status: args.status });
+    // Clear feedback when reopening a task
+    if (args.status === "not_started" || args.status === "in_progress") {
+      await ctx.db.patch(args.taskId, {
+        status: args.status,
+        estimateFeedbackRating: undefined,
+        correctedEstimateMinutes: undefined,
+      });
+    } else {
+      await ctx.db.patch(args.taskId, { status: args.status });
+    }
 
     const subtasks = await ctx.db
       .query("subtasks")
@@ -317,14 +344,17 @@ export const updateTaskStatus = mutation({
         await unscheduleBlock(ctx, block._id);
       }
 
-      // Unschedule subtask-level study blocks
-      for (const subtask of subtasks) {
-        const subtaskBlocks = await ctx.db
+      // Unschedule subtask-level study blocks — single query filtered in memory
+      if (subtasks.length > 0) {
+        const subtaskIdSet = new Set<string>(subtasks.map((s) => s._id as string));
+        const allUserBlocks = await ctx.db
           .query("studyBlocks")
-          .withIndex("by_subtaskId", (q) => q.eq("subtaskId", subtask._id))
+          .withIndex("by_userId", (q) => q.eq("userId", userId))
           .collect();
-        for (const block of subtaskBlocks) {
-          await unscheduleBlock(ctx, block._id);
+        for (const block of allUserBlocks) {
+          if (block.subtaskId !== undefined && subtaskIdSet.has(block.subtaskId as string)) {
+            await unscheduleBlock(ctx, block._id);
+          }
         }
       }
     } else {

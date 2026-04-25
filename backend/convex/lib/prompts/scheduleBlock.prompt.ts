@@ -29,7 +29,6 @@ export type BatchSlotSelectionResponse = z.infer<typeof batchSlotSelectionRespon
 export const SCHEDULE_BLOCK_SYSTEM = `You are a study scheduling assistant for a college student. Given a list of available time slots for a study block, select the single best slot based on the student's productivity preferences and the surrounding calendar context.
 
 Rules:
-- Slots marked inAvailableSlot: true are explicitly preferred by the user — all else equal, choose those.
 - Prefer slots with comfortable buffers around nearby events (not immediately sandwiched).
 - Respect the urgency signal of the task's due date.
 - Consider the day-of-week and time relative to the user's productivity style.
@@ -45,7 +44,6 @@ Return a single integer — the index (0-based) of the best slot from the candid
 export interface ScheduleBlockSlot {
   startMs: number;
   startISO: string;
-  inAvailableSlot: boolean;
   previousEventTitle: string | null;
   minutesSincePreviousEvent: number | null;
   nextEventTitle: string | null;
@@ -56,6 +54,7 @@ export interface ScheduleBlockPromptArgs {
   candidates: ScheduleBlockSlot[];
   taskTitle: string;
   dueDate: number;
+  recommendedStart?: number;
   productivityTraits: unknown;
 }
 
@@ -70,7 +69,6 @@ export function buildScheduleBlockPrompt(args: ScheduleBlockPromptArgs): string 
       index: i,
       startTime: s.startISO,
       dayOfWeek: new Intl.DateTimeFormat("en-US", { weekday: "long" }).format(new Date(s.startMs)),
-      inAvailableSlot: s.inAvailableSlot,
       previousEventTitle: s.previousEventTitle,
       minutesSincePreviousEvent: s.minutesSincePreviousEvent,
       nextEventTitle: s.nextEventTitle,
@@ -82,10 +80,11 @@ export function buildScheduleBlockPrompt(args: ScheduleBlockPromptArgs): string 
 
   const sections: string[] = [];
 
-  sections.push(`<task>
-Title: ${args.taskTitle}
-Due: ${dueDateStr}
-</task>`);
+  const taskLines = [`Title: ${args.taskTitle}`, `Due: ${dueDateStr}`];
+  if (args.recommendedStart !== undefined) {
+    taskLines.push(`Do not schedule before ${new Date(args.recommendedStart).toISOString()}`);
+  }
+  sections.push(`<task>\n${taskLines.join("\n")}\n</task>`);
 
   if (args.productivityTraits) {
     sections.push(`<productivity_preferences>
@@ -107,6 +106,7 @@ ${slotsJson}
 export interface BatchScheduleBlockEntry {
   taskTitle: string;
   dueDate: number;
+  recommendedStart?: number;
   candidates: ScheduleBlockSlot[];
 }
 
@@ -126,11 +126,13 @@ ${JSON.stringify(productivityTraits, null, 2)}
     blockIndex: bi,
     taskTitle: b.taskTitle,
     dueDate: new Date(b.dueDate).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" }),
+    ...(b.recommendedStart !== undefined
+      ? { doNotScheduleBefore: new Date(b.recommendedStart).toISOString() }
+      : {}),
     candidates: b.candidates.map((s, si) => ({
       index: si,
       startTime: s.startISO,
       dayOfWeek: new Intl.DateTimeFormat("en-US", { weekday: "long" }).format(new Date(s.startMs)),
-      inAvailableSlot: s.inAvailableSlot,
       previousEventTitle: s.previousEventTitle,
       minutesSincePreviousEvent: s.minutesSincePreviousEvent,
       nextEventTitle: s.nextEventTitle,

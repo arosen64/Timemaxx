@@ -129,7 +129,7 @@ describe('TaskCard', () => {
   })
 
   it('renders TaskFeedbackForm (thumbs-up button) when timeEstimate is defined', () => {
-    setup()
+    setup({ isReadOnly: true })
     expect(screen.getByRole('button', { name: 'Rate estimate thumbs up' })).toBeInTheDocument()
   })
 
@@ -140,6 +140,7 @@ describe('TaskCard', () => {
 
   it('renders TaskFeedbackForm when task has subtasks and rollup estimate is ready', () => {
     setup({
+      isReadOnly: true,
       task: { ...MOCK_TASK, timeEstimate: 90 },
       subtasks: [
         {
@@ -341,8 +342,8 @@ describe('TaskCard', () => {
     mockUseQuery.mockReturnValue([activeBlock] as never)
     setup()
     await user.click(screen.getByText('Calculus Problem Set'))
-    const blockEl = screen.getByText('Study Block active').closest('div')!
-    expect(blockEl).toHaveClass('bg-navy')
+    const blockEl = screen.getByText('Study Block active').closest('[class*="bg-navy"]')!
+    expect(blockEl).toBeInTheDocument()
   })
 
   it('renders default block without navy background when not active', async () => {

@@ -1,5 +1,6 @@
 import { internalMutation } from "../_generated/server";
 import { v } from "convex/values";
+import { activeAgentValidator } from "../lib/chatValidators";
 
 export const getOrCreateChatSessionInternal = internalMutation({
   args: {
@@ -178,8 +179,11 @@ export const setTaskAgentStateInternal = internalMutation({
   args: {
     userId: v.id("users"),
     sessionId: v.string(),
-    activeAgent: v.optional(v.union(v.literal("task"), v.literal("feedback"), v.literal("preferences"))),
+    activeAgent: v.optional(activeAgentValidator),
     taskAgentIntent: v.optional(v.union(v.literal("create"), v.literal("rud"))),
+    courseAgentIntent: v.optional(
+      v.union(v.literal("add"), v.literal("drop"), v.literal("view"), v.literal("update")),
+    ),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -193,12 +197,13 @@ export const setTaskAgentStateInternal = internalMutation({
     await ctx.db.patch(row._id, {
       ...(args.activeAgent !== undefined ? { activeAgent: args.activeAgent } : {}),
       ...(args.taskAgentIntent !== undefined ? { taskAgentIntent: args.taskAgentIntent } : {}),
+      ...(args.courseAgentIntent !== undefined ? { courseAgentIntent: args.courseAgentIntent } : {}),
     });
     return null;
   },
 });
 
-export const clearTaskAgentStateInternal = internalMutation({
+export const clearAgentStateInternal = internalMutation({
   args: {
     userId: v.id("users"),
     sessionId: v.string(),
@@ -216,11 +221,53 @@ export const clearTaskAgentStateInternal = internalMutation({
     await ctx.db.patch(row._id, {
       activeAgent: undefined,
       taskAgentIntent: undefined,
+      courseAgentIntent: undefined,
       awaitingEntityResolution: false,
       activeEntityStep: undefined,
+      lastEntityQueryText: undefined,
+      entityClarifyTriggerUserMessageId: undefined,
       needsClassAfterTask: false,
       clarificationAttemptCount: 0,
       clarificationExhausted: false,
+      activeTaskId: undefined,
+      activeCourseId: undefined,
+    });
+    return null;
+  },
+});
+
+// Backwards-compatible alias for generated API/type references until next codegen.
+export const clearTaskAgentStateInternal = clearAgentStateInternal;
+
+export const setMessageScopeInternal = internalMutation({
+  args: {
+    userId: v.id("users"),
+    sessionId: v.string(),
+    taskId: v.optional(v.id("tasks")),
+    courseId: v.optional(v.id("userCourses")),
+    clear: v.boolean(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const row = await ctx.db
+      .query("chatSessions")
+      .withIndex("by_userId_sessionId", (q) =>
+        q.eq("userId", args.userId).eq("sessionId", args.sessionId),
+      )
+      .unique();
+    if (!row) return null;
+
+    if (args.clear) {
+      await ctx.db.patch(row._id, {
+        activeTaskId: undefined,
+        activeCourseId: undefined,
+      });
+      return null;
+    }
+
+    await ctx.db.patch(row._id, {
+      ...(args.taskId !== undefined ? { activeTaskId: args.taskId } : {}),
+      ...(args.courseId !== undefined ? { activeCourseId: args.courseId } : {}),
     });
     return null;
   },

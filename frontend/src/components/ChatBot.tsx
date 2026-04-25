@@ -18,6 +18,14 @@ const MAIN_MENU = [
   { label: 'Change preferences', route: 'preferences' },
 ] as const
 
+const ACTIVE_AGENT_LABELS: Record<'task' | 'feedback' | 'preferences' | 'classes' | 'schedule', string> = {
+  task: 'Task agent',
+  feedback: 'Feedback agent',
+  preferences: 'Preferences agent',
+  classes: 'Classes agent',
+  schedule: 'Schedule agent',
+}
+
 type EntityCandidate = { id: string; label: string; subtitle: string }
 
 type ChatApiResponse = {
@@ -292,7 +300,7 @@ export default function ChatBot() {
                 <span className="w-2 h-2 rounded-full shrink-0 bg-teal" />
                 <span className="font-heading text-[15px] font-semibold text-white">Maxx ✦</span>
               </div>
-              {entityScope && entityScope.entityScopeTags.length > 0 && (
+              {entityScope && (entityScope.entityScopeTags.length > 0 || entityScope.activeAgent !== null) && (
                 <div className="flex flex-wrap gap-1 pl-4">
                   {entityScope.entityScopeTags.map((tag) => (
                     <span
@@ -302,6 +310,11 @@ export default function ChatBot() {
                       {tag === 'task_id_set' ? 'Task ID set' : 'Class ID set'}
                     </span>
                   ))}
+                  {entityScope.activeAgent !== null && (
+                    <span className="rounded bg-white/15 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide text-white/90">
+                      {ACTIVE_AGENT_LABELS[entityScope.activeAgent]}
+                    </span>
+                  )}
                 </div>
               )}
             </div>

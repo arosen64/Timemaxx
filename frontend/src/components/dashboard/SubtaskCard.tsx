@@ -3,24 +3,29 @@ import { SpinnerIcon, SparklesIcon, PencilIcon, TrashIcon } from '../icons'
 import { type SubtaskType, type TaskStatus, formatMinutes } from './types'
 import { type Id } from '../../../../backend/convex/_generated/dataModel'
 import StatusDropdown from './StatusDropdown'
+import StudyBlockRow, { type StudyBlockLike } from './StudyBlockRow'
 
 type SubtaskCardProps = {
   subtask: SubtaskType
+  blocks?: StudyBlockLike[]
   isEstimating: boolean
   onEstimate: (id: Id<'subtasks'>) => void
   onEdit: (subtask: SubtaskType) => void
   onDelete: (id: Id<'subtasks'>) => void
   onStatusChange: (id: Id<'subtasks'>, status: TaskStatus) => void
+  onToggleBlock?: (id: string) => void
   isReadOnly?: boolean
 }
 
 export default function SubtaskCard({
   subtask,
+  blocks = [],
   isEstimating,
   onEstimate,
   onEdit,
   onDelete,
   onStatusChange,
+  onToggleBlock,
   isReadOnly = false,
 }: SubtaskCardProps) {
   const [showReasoning, setShowReasoning] = useState(false)
@@ -117,6 +122,14 @@ export default function SubtaskCard({
           )}
         </div>
       </div>
+
+      {blocks.length > 0 && (
+        <div className="flex flex-col gap-2 border-t border-border bg-bg-gray px-[18px] py-3 pl-[52px]">
+          {blocks.map((block) => (
+            <StudyBlockRow key={block._id} block={block} onToggle={onToggleBlock} />
+          ))}
+        </div>
+      )}
 
       <div
         className={`grid transition-[grid-template-rows] duration-200 ${

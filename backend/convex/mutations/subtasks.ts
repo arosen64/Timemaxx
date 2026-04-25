@@ -4,12 +4,75 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { taskTypeValidator } from "../lib/taskValidators";
 import { internal } from "../_generated/api";
 import { rebuildStudyBlocksForSubtask } from "./timeEstimate";
+import { Id } from "../_generated/dataModel";
 
 const reasoningTraceArgs = v.object({
   classes: v.string(),
   tasks: v.string(),
   chats: v.string(),
   profile: v.string(),
+});
+
+// Batch variant: validates all subtasks before any inserts to avoid partial writes on failure.
+export const createSubtasksBatch = mutation({
+  args: {
+    parentTaskId: v.id("tasks"),
+    subtasks: v.array(
+      v.object({
+        title: v.string(),
+        description: v.string(),
+        taskType: taskTypeValidator,
+        color: v.string(),
+        order: v.number(),
+        suggestedCompletionAt: v.optional(v.number()),
+      })
+    ),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Unauthenticated");
+
+    const parent = await ctx.db.get(args.parentTaskId);
+    if (!parent || parent.userId !== userId) {
+      throw new Error("Parent task not found");
+    }
+
+    for (const s of args.subtasks) {
+      if (s.title.trim().length === 0) throw new Error("Title cannot be empty");
+      if (s.description.trim().length === 0) throw new Error("Description cannot be empty");
+    }
+
+    const now = Date.now();
+    const subtaskIds: Id<"subtasks">[] = [];
+
+    for (const s of args.subtasks) {
+      const subtaskId = await ctx.db.insert("subtasks", {
+        parentTaskId: args.parentTaskId,
+        userId,
+        title: s.title,
+        description: s.description,
+        taskType: s.taskType,
+        color: s.color,
+        order: s.order,
+        suggestedCompletionAt: s.suggestedCompletionAt,
+        courseId: parent.courseId,
+        classTag: parent.classTag,
+        dueDate: parent.dueDate,
+        createdAt: now,
+      });
+      subtaskIds.push(subtaskId);
+    }
+
+    await ctx.db.patch(args.parentTaskId, { reasoning: undefined });
+
+    if (process.env.ANTHROPIC_API_KEY) {
+      await ctx.scheduler.runAfter(0, internal.ai.estimateSubtasksBatch.estimateSubtasksBatch, {
+        subtaskIds,
+      });
+    }
+
+    return subtaskIds;
+  },
 });
 
 /**
@@ -174,9 +237,6 @@ export const patchSubtaskEmbedding = internalMutation({
   },
 });
 
-/**
- * Updates the status of a subtask. No propagation to parent task.
- */
 export const updateSubtaskStatus = mutation({
   args: {
     subtaskId: v.id("subtasks"),
@@ -190,6 +250,46 @@ export const updateSubtaskStatus = mutation({
     if (!subtask || subtask.userId !== userId) throw new Error("Subtask not found");
 
     await ctx.db.patch(args.subtaskId, { status: args.status });
+
+    // Sync study block completion when status is set to completed or not_started
+    if (args.status === "completed" || args.status === "not_started") {
+      const blocks = await ctx.db
+        .query("studyBlocks")
+        .withIndex("by_subtaskId", (q) => q.eq("subtaskId", args.subtaskId))
+        .collect();
+      const isCompleted = args.status === "completed";
+      for (const block of blocks) {
+        if (block.isCompleted !== isCompleted) {
+          await ctx.db.patch(block._id, { isCompleted });
+        }
+      }
+    }
+
+    // Bubble up: derive parent status from all sibling statuses after this update
+    const siblings = await ctx.db
+      .query("subtasks")
+      .withIndex("by_parentTaskId", (q) => q.eq("parentTaskId", subtask.parentTaskId))
+      .collect();
+
+    const allDone = siblings.every((s) =>
+      s._id === args.subtaskId ? args.status === "completed" : s.status === "completed"
+    );
+    const anyActive = siblings.some((s) =>
+      s._id === args.subtaskId
+        ? args.status === "in_progress" || args.status === "completed"
+        : s.status === "in_progress" || s.status === "completed"
+    );
+
+    const newParentStatus = allDone
+      ? "completed"
+      : anyActive
+        ? "in_progress"
+        : "not_started";
+
+    const parent = await ctx.db.get(subtask.parentTaskId);
+    if (parent && parent.status !== newParentStatus) {
+      await ctx.db.patch(subtask.parentTaskId, { status: newParentStatus });
+    }
   },
 });
 

@@ -30,8 +30,8 @@ describe('PreferencesForm', () => {
     expect(screen.getByText(/day of week/i)).toBeInTheDocument()
     expect(screen.getByText(/work session style/i)).toBeInTheDocument()
     expect(screen.getByText(/deadline behavior/i)).toBeInTheDocument()
-    expect(screen.getByText(/break preferences/i)).toBeInTheDocument()
-    expect(screen.getByText(/subject\/task switching/i)).toBeInTheDocument()
+    expect(screen.queryByText(/break preferences/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/subject\/task switching/i)).not.toBeInTheDocument()
   })
 
   describe('edit mode (default)', () => {

@@ -14,12 +14,11 @@ import {
 // ---------------------------------------------------------------------------
 
 export type OccupiedInterval = { startMs: number; endMs: number; title: string };
-export type WorkHoursRow = { day: string; available: number[]; blocked: number[] };
+export type WorkHoursRow = { day: string; blocked: number[] };
 
 export type CandidateSlot = ScheduleBlockSlot;
 
-/** A lightweight pool entry — just the start time and available-slot tag. */
-export type PoolSlot = { startMs: number; inAvailableSlot: boolean };
+export type PoolSlot = { startMs: number };
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -29,6 +28,7 @@ export const SCHEDULE_HORIZON_MS = 21 * 24 * 60 * 60 * 1000; // 21 days
 const MAX_CANDIDATES = 20;
 export const FIFTEEN_MIN_MS = 15 * 60 * 1000;
 export const DEFAULT_DUE_FALLBACK_MS = 7 * 24 * 60 * 60 * 1000;
+export const TWO_WEEKS_MS = 14 * 24 * 60 * 60 * 1000;
 
 // ---------------------------------------------------------------------------
 // Shared date utilities
@@ -37,6 +37,94 @@ export const DEFAULT_DUE_FALLBACK_MS = 7 * 24 * 60 * 60 * 1000;
 /** Formats a Date as a local YYYY-MM-DD string in the given timezone. */
 export function toDateStr(d: Date, timezone: string): string {
   return Intl.DateTimeFormat("en-CA", { timeZone: timezone }).format(d);
+}
+
+/** Returns the local day-of-week name (e.g. "Monday") for a UTC timestamp. */
+function toDayName(ms: number, timezone: string): string {
+  return new Intl.DateTimeFormat("en-US", { timeZone: timezone, weekday: "long" }).format(
+    new Date(ms),
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Daily load cap
+// ---------------------------------------------------------------------------
+
+/**
+ * Counts how many study-block-equivalent units each calendar day is already
+ * carrying, based on all occupied intervals (placed study blocks + GCal events).
+ *
+ * Each interval contributes ⌈durationMinutes / focusBlockLengthMinutes⌉ units.
+ * A placed study block of exactly focusBlockLength contributes exactly 1.
+ * A 3-hour lecture with a 60-min focus block contributes 3.
+ */
+export function buildDailyLoadMap(
+  occupiedIntervals: OccupiedInterval[],
+  timezone: string,
+  focusBlockLengthMinutes: number,
+): Map<string, number> {
+  const map = new Map<string, number>();
+  for (const iv of occupiedIntervals) {
+    const durationMinutes = (iv.endMs - iv.startMs) / 60000;
+    const units = Math.ceil(durationMinutes / focusBlockLengthMinutes);
+    const dateStr = toDateStr(new Date(iv.startMs), timezone);
+    map.set(dateStr, (map.get(dateStr) ?? 0) + units);
+  }
+  return map;
+}
+
+/**
+ * Derives the maximum number of study blocks allowed on each day of the week.
+ *
+ * Base cap = Math.min(4, Math.floor(availableSlots * 30 / focusBlockLengthMinutes))
+ * where availableSlots = 48 − blocked.length for that day in workHoursGrid.
+ *
+ * Days listed in preferredDays (from productivityTraits.dayOfWeek) keep the
+ * base cap. Non-preferred days get base − 1, minimum 1.
+ *
+ * Fallback when a day is absent from workHoursGrid:
+ *   preferred → 3, non-preferred → 2.
+ */
+export function computeMaxBlocksPerDay(
+  workHoursGrid: WorkHoursRow[],
+  focusBlockLengthMinutes: number,
+  preferredDays: string[] = [],
+): Map<string, number> {
+  const ALL_DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+  const preferred = new Set(preferredDays);
+  const map = new Map<string, number>();
+
+  for (const day of ALL_DAYS) {
+    const row = workHoursGrid.find((r) => r.day === day);
+    let base: number;
+    if (row) {
+      const availableSlots = 48 - row.blocked.length;
+      base = Math.min(4, Math.floor((availableSlots * 30) / focusBlockLengthMinutes));
+    } else {
+      base = 3; // preferred-day fallback; non-preferred gets base − 1 below
+    }
+    const cap = preferred.has(day) ? base : Math.max(1, base - 1);
+    map.set(day, cap);
+  }
+
+  return map;
+}
+
+/**
+ * Returns true if the calendar day containing startMs has already reached its
+ * study-block cap and should not receive any more blocks.
+ */
+export function isDailyCapReached(
+  startMs: number,
+  timezone: string,
+  dailyLoadMap: Map<string, number>,
+  maxBlocksPerDayMap: Map<string, number>,
+): boolean {
+  const dateStr = toDateStr(new Date(startMs), timezone);
+  const dayName = toDayName(startMs, timezone);
+  const current = dailyLoadMap.get(dateStr) ?? 0;
+  const max = maxBlocksPerDayMap.get(dayName) ?? 2;
+  return current >= max;
 }
 
 // ---------------------------------------------------------------------------
@@ -112,23 +200,6 @@ export function isSlotValid(
 }
 
 /**
- * Returns true if all 30-min slots spanned by the block are in the `available`
- * array for that day (i.e. the slot is explicitly preferred by the user).
- */
-export function isInAvailableSlot(
-  startMs: number,
-  durationMs: number,
-  workHoursGrid: WorkHoursRow[],
-  timezone: string,
-): boolean {
-  const { dayName, minutesFromMidnight } = getLocalTimeInfo(startMs, timezone);
-  const row = workHoursGrid.find((r) => r.day === dayName);
-  if (!row || row.available.length === 0) return false;
-  const spanned = getSpannedSlots(minutesFromMidnight, durationMs / 60000);
-  return spanned.every((s) => row.available.includes(s));
-}
-
-/**
  * Builds the surrounding-event context for a candidate slot.
  * Looks within a 12-hour window on each side.
  */
@@ -178,9 +249,6 @@ export function buildSlotContext(
  *  - Overlap any occupied interval (placed blocks + calendar events)
  *  - Start at or after the task's dueDate
  *  - Fall beyond 21 days from now
- *
- * Each passing slot is tagged `inAvailableSlot: true` if all its 30-min slots
- * are in the user's `available` array.
  */
 export function enumerateSlots(opts: {
   fromMs: number;
@@ -189,24 +257,38 @@ export function enumerateSlots(opts: {
   workHoursGrid: WorkHoursRow[];
   occupiedIntervals: OccupiedInterval[];
   timezone: string;
+  dailyLoadMap?: Map<string, number>;
+  maxBlocksPerDayMap?: Map<string, number>;
+  recommendedStartMs?: number;
 }): CandidateSlot[] {
-  const { fromMs, dueDateMs, durationMinutes, workHoursGrid, occupiedIntervals, timezone } = opts;
+  const { fromMs, dueDateMs, durationMinutes, workHoursGrid, occupiedIntervals, timezone,
+    dailyLoadMap, maxBlocksPerDayMap } = opts;
   const durationMs = durationMinutes * 60000;
   const horizonMs = Date.now() + SCHEDULE_HORIZON_MS;
   const limitMs = Math.min(dueDateMs, horizonMs);
 
   const candidates: CandidateSlot[] = [];
-  let cursor = roundUpTo15Min(fromMs);
+  const effectiveFromMs = opts.recommendedStartMs !== undefined
+    ? Math.max(fromMs, opts.recommendedStartMs)
+    : fromMs;
+  let cursor = roundUpTo15Min(effectiveFromMs);
 
   while (cursor < limitMs && candidates.length < MAX_CANDIDATES) {
     const endMs = cursor + durationMs;
     if (endMs > limitMs) break;
 
+    if (
+      dailyLoadMap && maxBlocksPerDayMap &&
+      isDailyCapReached(cursor, timezone, dailyLoadMap, maxBlocksPerDayMap)
+    ) {
+      cursor += FIFTEEN_MIN_MS;
+      continue;
+    }
+
     if (isSlotValid(cursor, durationMs, workHoursGrid, occupiedIntervals, timezone)) {
       candidates.push({
         startMs: cursor,
         startISO: new Date(cursor).toISOString(),
-        inAvailableSlot: isInAvailableSlot(cursor, durationMs, workHoursGrid, timezone),
         ...buildSlotContext(cursor, endMs, occupiedIntervals),
       });
     }
@@ -227,9 +309,6 @@ export function enumerateSlots(opts: {
  * filtering — that happens at use time.
  *
  * Returns the new scan cursor position.
- *
- * Note: `inAvailableSlot` is computed at extension time with `focusBlockLength`.
- * When filtering for a block with a different duration, re-check validity.
  */
 export function extendSlotPool(opts: {
   pool: PoolSlot[];
@@ -239,20 +318,22 @@ export function extendSlotPool(opts: {
   workHoursGrid: WorkHoursRow[];
   occupiedIntervals: OccupiedInterval[];
   timezone: string;
+  recommendedStartMs?: number;
 }): number {
   const { pool, scanCursor, targetMs, focusBlockLengthMinutes, workHoursGrid, occupiedIntervals, timezone } = opts;
   const blockMs = focusBlockLengthMinutes * 60000;
-  let cursor = scanCursor;
+  const effectiveStart =
+    opts.recommendedStartMs !== undefined
+      ? Math.max(scanCursor, roundUpTo15Min(opts.recommendedStartMs))
+      : scanCursor;
+  let cursor = effectiveStart;
 
   while (cursor < targetMs) {
     const endMs = cursor + blockMs;
     if (endMs > targetMs) break;
 
     if (isSlotValid(cursor, blockMs, workHoursGrid, occupiedIntervals, timezone)) {
-      pool.push({
-        startMs: cursor,
-        inAvailableSlot: isInAvailableSlot(cursor, blockMs, workHoursGrid, timezone),
-      });
+      pool.push({ startMs: cursor });
     }
 
     cursor += FIFTEEN_MIN_MS;
@@ -272,22 +353,32 @@ export function filterPoolForBlock(opts: {
   workHoursGrid: WorkHoursRow[];
   occupiedIntervals: OccupiedInterval[];
   timezone: string;
+  dailyLoadMap?: Map<string, number>;
+  maxBlocksPerDayMap?: Map<string, number>;
+  recommendedStartMs?: number;
+  reverseOrder?: boolean;
 }): CandidateSlot[] {
-  const { pool, dueDateMs, durationMinutes, workHoursGrid, occupiedIntervals, timezone } = opts;
+  const { pool, dueDateMs, durationMinutes, workHoursGrid, occupiedIntervals, timezone,
+    dailyLoadMap, maxBlocksPerDayMap } = opts;
   const durationMs = durationMinutes * 60000;
   const candidates: CandidateSlot[] = [];
+  const orderedPool = opts.reverseOrder ? [...pool].reverse() : pool;
 
-  for (const slot of pool) {
+  for (const slot of orderedPool) {
+    if (opts.recommendedStartMs !== undefined && slot.startMs < opts.recommendedStartMs) continue;
     if (slot.startMs >= dueDateMs) continue;
     const endMs = slot.startMs + durationMs;
     if (endMs > dueDateMs) continue;
+    if (
+      dailyLoadMap && maxBlocksPerDayMap &&
+      isDailyCapReached(slot.startMs, timezone, dailyLoadMap, maxBlocksPerDayMap)
+    ) continue;
     if (!isSlotValid(slot.startMs, durationMs, workHoursGrid, occupiedIntervals, timezone)) continue;
     if (candidates.length >= MAX_CANDIDATES) break;
 
     candidates.push({
       startMs: slot.startMs,
       startISO: new Date(slot.startMs).toISOString(),
-      inAvailableSlot: isInAvailableSlot(slot.startMs, durationMs, workHoursGrid, timezone),
       ...buildSlotContext(slot.startMs, endMs, occupiedIntervals),
     });
   }
@@ -346,7 +437,6 @@ export async function selectSlotWithAI(opts: {
 const BATCH_SCHEDULE_SYSTEM = `You are a study scheduling assistant for a college student. You will receive a list of study blocks, each with a set of candidate time slots. For each block, select the best slot index based on the student's productivity preferences and the calendar context.
 
 Rules:
-- Slots marked inAvailableSlot: true are explicitly preferred by the user — all else equal, choose those.
 - Prefer slots with comfortable buffers around nearby events.
 - Respect the urgency of each task's due date.
 - Consider day-of-week and time relative to the user's productivity style.
