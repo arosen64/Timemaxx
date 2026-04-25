@@ -193,6 +193,42 @@ describe("actions/requestGenerateSubtasks", () => {
     }
   });
 
+  test("falls back to nowMs when recommendedStart is in the past", async () => {
+    mockCallGemini.mockResolvedValueOnce(
+      makeGeminiSubtaskResponse(MOCK_SUBTASKS)
+    );
+
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+    const pastRecommendedStart = Date.now() - 86_400_000 * 7; // 7 days ago
+    const nowAtTestStart = Date.now();
+    const taskId = await t.run((ctx) =>
+      ctx.db.insert("tasks", {
+        userId: userId as never,
+        title: "History Essay",
+        description: "Write a 5-page essay analyzing the causes of World War I.",
+        taskType: "Essay",
+        dueDate: FUTURE,
+        recommendedStart: pastRecommendedStart,
+        createdAt: Date.now(),
+        isManualEstimate: false,
+      })
+    );
+
+    const result = await withAuth.action(
+      api.actions.requestGenerateSubtasks.requestGenerateSubtasks,
+      { taskId }
+    );
+
+    expect(result).toHaveProperty("subtasks");
+    if (!("subtasks" in result)) throw new Error("expected subtasks");
+    for (const s of result.subtasks) {
+      const completionMs = new Date(s.suggestedCompletionAt).getTime();
+      expect(completionMs).toBeGreaterThanOrEqual(nowAtTestStart);
+      expect(completionMs).toBeLessThanOrEqual(FUTURE);
+    }
+  });
+
   test("throws when GEMINI_API_KEY is not set and description is present", async () => {
     vi.stubEnv("GEMINI_API_KEY", "");
 

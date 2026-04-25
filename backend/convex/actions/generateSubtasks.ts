@@ -91,7 +91,7 @@ Return 1–6 subtasks ordered by when they should be completed. If the assignmen
 
       const nowMs = Date.now();
       const dueDateMs = task.dueDate;
-      const windowStart = Math.max(nowMs, task.recommendedStart ?? nowMs);
+      const windowStart = Math.min(Math.max(nowMs, task.recommendedStart ?? nowMs), dueDateMs);
       const n = rawSubtasks.length;
 
       const subtasks: GeneratedSubtask[] = rawSubtasks.map((s, i) => ({
