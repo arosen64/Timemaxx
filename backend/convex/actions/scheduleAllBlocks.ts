@@ -52,7 +52,7 @@ export const scheduleAllBlocks = action({
 
     const focusBlockLength: number = user.focusBlockLength ?? 60;
     const workHoursGrid = (user.workHoursGrid ?? []) as WorkHoursRow[];
-    const { dayOfWeek: preferredDays, timeOfDay: timeOfDayPrefs } = getProductivityTraits(user.productivityTraits);
+    const { dayOfWeek: preferredDays, timeOfDay: timeOfDayPrefs, deadlineBehavior } = getProductivityTraits(user.productivityTraits);
     const timeOfDayRanges = parseTimeOfDayRanges(timeOfDayPrefs);
     const dayOfWeekPrefs: string[] = preferredDays;
 
@@ -259,6 +259,9 @@ export const scheduleAllBlocks = action({
           minutesUntilNextEvent: context.minutesUntilNextEvent,
           dailyLoadCount: speculativeDailyLoadMap.get(dateStr) ?? 0,
           difficultyRating: item.difficultyRating,
+          deadlineBehavior,
+          dueDateMs: item.parentDueDate,
+          nowMs,
         });
 
         scoredSlots.push({
