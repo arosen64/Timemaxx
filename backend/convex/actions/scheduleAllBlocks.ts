@@ -214,39 +214,37 @@ export const scheduleAllBlocks = action({
         });
       }
 
-      let candidates = filterPoolForBlock({
+      // Scan backwards from the due date so blocks land close to when they're
+      // needed rather than packing the nearest available day.
+      const allCandidates = filterPoolForBlock({
         pool,
         dueDateMs: item.parentDueDate,
         durationMinutes: item.block.studyBlockLength,
         workHoursGrid,
         occupiedIntervals,
         timezone: args.timezone,
-        dailyLoadMap: speculativeDailyLoadMap,
-        maxBlocksPerDayMap,
         recommendedStartMs: item.recommendedStart,
+        reverseOrder: true,
       });
 
-      // If speculative cap exhausted all days in the window, fall back to
-      // uncapped candidates so the block still enters phase 2/3.
-      // Phase 3 enforces the actual cap via actualDailyLoadMap.
-      if (candidates.length === 0) {
-        candidates = filterPoolForBlock({
-          pool,
-          dueDateMs: item.parentDueDate,
-          durationMinutes: item.block.studyBlockLength,
-          workHoursGrid,
-          occupiedIntervals,
-          timezone: args.timezone,
-          recommendedStartMs: item.recommendedStart,
-        });
+      if (allCandidates.length === 0) continue;
+
+      // Among the visible days, pick the one with the lowest speculative load
+      // so blocks spread across days rather than concentrating on one.
+      const seenDays = new Map<string, number>();
+      for (const c of allCandidates) {
+        const d = toDateStr(new Date(c.startMs), args.timezone);
+        if (!seenDays.has(d)) seenDays.set(d, speculativeDailyLoadMap.get(d) ?? 0);
       }
+      const [targetDate] = [...seenDays.entries()].reduce((a, b) => (a[1] <= b[1] ? a : b));
 
-      if (candidates.length === 0) continue;
+      // Only show Gemini slots from the target day — it picks the best time, not the day.
+      const candidates = allCandidates.filter(
+        (c) => toDateStr(new Date(c.startMs), args.timezone) === targetDate,
+      );
 
-      // Speculatively reserve the first candidate's day so subsequent blocks
-      // in this run see an updated load and spread across days.
-      const reservedDate = toDateStr(new Date(candidates[0].startMs), args.timezone);
-      speculativeDailyLoadMap.set(reservedDate, (speculativeDailyLoadMap.get(reservedDate) ?? 0) + 1);
+      // Reserve this day so the next block looks elsewhere first.
+      speculativeDailyLoadMap.set(targetDate, (speculativeDailyLoadMap.get(targetDate) ?? 0) + 1);
 
       entries.push({
         block: item.block,
@@ -284,14 +282,27 @@ export const scheduleAllBlocks = action({
       const withinCap = (c: { startMs: number }) =>
         isSlotValid(c.startMs, durationMs, workHoursGrid, occupiedIntervals, args.timezone) &&
         !isDailyCapReached(c.startMs, args.timezone, actualDailyLoadMap, maxBlocksPerDayMap);
-      const physicallyValid = (c: { startMs: number }) =>
-        isSlotValid(c.startMs, durationMs, workHoursGrid, occupiedIntervals, args.timezone);
       if (!withinCap(chosen)) {
-        // Prefer a cap-respecting slot; if none exists, place anyway to avoid
-        // leaving blocks unscheduled when load exceeds the daily limit.
-        const fallback = candidates.find(withinCap) ?? candidates.find(physicallyValid);
-        if (!fallback) continue;
-        chosen = fallback;
+        const capFallback = candidates.find(withinCap);
+        if (capFallback) {
+          chosen = capFallback;
+        } else {
+          // Cap exceeded on all candidate days: place on the least-loaded day
+          // to maintain spread even when overriding the limit.
+          const physCandidates = candidates.filter((c) =>
+            isSlotValid(c.startMs, durationMs, workHoursGrid, occupiedIntervals, args.timezone),
+          );
+          if (physCandidates.length === 0) continue;
+          const dayLoads = new Map<string, number>();
+          for (const c of physCandidates) {
+            const d = toDateStr(new Date(c.startMs), args.timezone);
+            if (!dayLoads.has(d)) dayLoads.set(d, actualDailyLoadMap.get(d) ?? 0);
+          }
+          const [leastLoadedDate] = [...dayLoads.entries()].reduce((a, b) => (a[1] <= b[1] ? a : b));
+          chosen = physCandidates.find(
+            (c) => toDateStr(new Date(c.startMs), args.timezone) === leastLoadedDate,
+          )!;
+        }
       }
 
       await ctx.runMutation(internal.mutations.studyBlocks.placeStudyBlock, {

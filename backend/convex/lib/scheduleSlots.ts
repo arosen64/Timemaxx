@@ -351,13 +351,15 @@ export function filterPoolForBlock(opts: {
   dailyLoadMap?: Map<string, number>;
   maxBlocksPerDayMap?: Map<string, number>;
   recommendedStartMs?: number;
+  reverseOrder?: boolean;
 }): CandidateSlot[] {
   const { pool, dueDateMs, durationMinutes, workHoursGrid, occupiedIntervals, timezone,
     dailyLoadMap, maxBlocksPerDayMap } = opts;
   const durationMs = durationMinutes * 60000;
   const candidates: CandidateSlot[] = [];
+  const orderedPool = opts.reverseOrder ? [...pool].reverse() : pool;
 
-  for (const slot of pool) {
+  for (const slot of orderedPool) {
     if (opts.recommendedStartMs !== undefined && slot.startMs < opts.recommendedStartMs) continue;
     if (slot.startMs >= dueDateMs) continue;
     const endMs = slot.startMs + durationMs;
