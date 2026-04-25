@@ -290,7 +290,7 @@ describe('ClassPanel – Schedule button (scheduleAllBlocks wiring)', () => {
     setupActions({ scheduleAllResult: { scheduled: 3, skipped: 0, conflicted: 0 } })
     await drillToTaskDetail(user, { ...DEFAULT_PROPS, onScheduleAllMsg: onMsg })
     await user.click(screen.getByRole('button', { name: 'Schedule' }))
-    await waitFor(() => expect(onMsg).toHaveBeenCalledWith('All 3 blocks scheduled.'))
+    await waitFor(() => expect(onMsg).toHaveBeenCalledWith('All 3 blocks scheduled.', false))
   })
 
   it('uses singular "block" when exactly one block is scheduled', async () => {
@@ -300,7 +300,7 @@ describe('ClassPanel – Schedule button (scheduleAllBlocks wiring)', () => {
     setupActions({ scheduleAllResult: { scheduled: 1, skipped: 0, conflicted: 0 } })
     await drillToTaskDetail(user, { ...DEFAULT_PROPS, onScheduleAllMsg: onMsg })
     await user.click(screen.getByRole('button', { name: 'Schedule' }))
-    await waitFor(() => expect(onMsg).toHaveBeenCalledWith('All 1 block scheduled.'))
+    await waitFor(() => expect(onMsg).toHaveBeenCalledWith('All 1 block scheduled.', false))
   })
 
   it('shows partial count message when some blocks are skipped', async () => {
@@ -310,7 +310,7 @@ describe('ClassPanel – Schedule button (scheduleAllBlocks wiring)', () => {
     setupActions({ scheduleAllResult: { scheduled: 2, skipped: 1, conflicted: 0 } })
     await drillToTaskDetail(user, { ...DEFAULT_PROPS, onScheduleAllMsg: onMsg })
     await user.click(screen.getByRole('button', { name: 'Schedule' }))
-    await waitFor(() => expect(onMsg).toHaveBeenCalledWith('2 scheduled, 1 skipped.'))
+    await waitFor(() => expect(onMsg).toHaveBeenCalledWith('2 scheduled, 1 skipped.', true))
   })
 
   it('shows error message when scheduleAllBlocks throws', async () => {
@@ -333,7 +333,7 @@ describe('ClassPanel – Schedule button (scheduleAllBlocks wiring)', () => {
     await drillToTaskDetail(user, { ...DEFAULT_PROPS, onScheduleAllMsg: onMsg })
     await user.click(screen.getByRole('button', { name: 'Schedule' }))
     await waitFor(() =>
-      expect(onMsg).toHaveBeenCalledWith('All 2 blocks scheduled. 1 conflicted block needs auto-reschedule.')
+      expect(onMsg).toHaveBeenCalledWith('All 2 blocks scheduled. 1 conflicted block needs auto-reschedule.', false)
     )
   })
 
