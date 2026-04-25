@@ -18,11 +18,12 @@ const MAIN_MENU = [
   { label: 'Change preferences', route: 'preferences' },
 ] as const
 
-const ACTIVE_AGENT_LABELS: Record<'task' | 'feedback' | 'preferences' | 'classes', string> = {
+const ACTIVE_AGENT_LABELS: Record<'task' | 'feedback' | 'preferences' | 'classes' | 'schedule', string> = {
   task: 'Task agent',
   feedback: 'Feedback agent',
   preferences: 'Preferences agent',
   classes: 'Classes agent',
+  schedule: 'Schedule agent',
 }
 
 type EntityCandidate = { id: string; label: string; subtitle: string }

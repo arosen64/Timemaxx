@@ -367,7 +367,7 @@ export default function ScheduleTab() {
         </div>
       )}
 
-      {pendingExportCount > 0 && (
+{pendingExportCount > 0 && (
         <div className="mb-3 flex items-center gap-2 rounded-lg border border-sky-blue bg-info-bg px-4 py-2 text-sm text-navy">
           <CalendarIcon color="#005A8E" size={14} />
           <span>
