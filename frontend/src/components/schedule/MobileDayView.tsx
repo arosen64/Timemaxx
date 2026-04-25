@@ -1,21 +1,14 @@
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
+import type { RefObject } from 'react'
 import type { AllDayEvent } from '../../../../backend/convex/actions/fetchCalendarEvents'
 import type { LayoutEvent } from './overlapLayout'
 import type { StudyBlockOnGrid } from './TimeGrid'
 import ScheduleBlockConflict from './ScheduleBlockConflict'
 import { ChevronLeftIcon, ChevronRightIcon } from '../icons'
-import { SLOT_HEIGHT, TOTAL_SLOTS, isoDateString, isToday, minutesFromMidnight, slotLabel, DAYS_FULL } from './utils'
+import { SLOT_HEIGHT, TOTAL_SLOTS, isoDateString, isToday, minutesFromMidnight, slotLabel, DAYS_FULL, getTextColorClass } from './utils'
 import type { Id } from '../../../../backend/convex/_generated/dataModel'
 
 type WorkHoursRow = { day: string; available: number[]; blocked: number[] }
-
-function getTextColorClass(hexColor: string): string {
-  const r = parseInt(hexColor.slice(1, 3), 16)
-  const g = parseInt(hexColor.slice(3, 5), 16)
-  const b = parseInt(hexColor.slice(5, 7), 16)
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
-  return luminance > 0.5 ? 'text-navy' : 'text-white'
-}
 
 interface MobileDayViewProps {
   days: Date[]
@@ -23,15 +16,12 @@ interface MobileDayViewProps {
   studyBlocksByDay: Record<string, StudyBlockOnGrid[]>
   allDayEventsByDay: Record<string, AllDayEvent[]>
   layoutByDay: Record<string, LayoutEvent[]>
-  highlightedSlots: Set<string>
-  isAssignMode: boolean
   calendarConnected: boolean
   onPrevWeek: () => void
   onNextWeek: () => void
-  onSlotClick: (dateStr: string, slot: number) => void
   onMoveBlock: (studyBlockId: Id<'studyBlocks'>) => void
   onAutoReschedule: () => void
-  gridRef: React.RefObject<HTMLDivElement>
+  gridRef: RefObject<HTMLDivElement>
 }
 
 export default function MobileDayView({
@@ -40,12 +30,9 @@ export default function MobileDayView({
   studyBlocksByDay,
   allDayEventsByDay,
   layoutByDay,
-  highlightedSlots,
-  isAssignMode,
   calendarConnected,
   onPrevWeek,
   onNextWeek,
-  onSlotClick,
   onMoveBlock,
   onAutoReschedule,
   gridRef,
@@ -130,28 +117,24 @@ export default function MobileDayView({
       <div ref={gridRef} className="flex-1 overflow-y-auto">
         <div className="relative" style={{ display: 'grid', gridTemplateColumns: '3rem 1fr' }}>
           {Array.from({ length: TOTAL_SLOTS }, (_, slot) => {
-            const slotKey = `${dateStr}:${slot}`
-            const isHighlighted = highlightedSlots.has(slotKey)
             let bgClass = today ? 'bg-today-col' : 'bg-white'
-            if (isHighlighted) bgClass = 'bg-teal/60 cursor-pointer hover:bg-teal/80'
-            else if (row?.blocked.includes(slot)) bgClass = 'bg-slate-blue'
-            else if (row?.available.includes(slot)) bgClass = isAssignMode ? 'bg-teal/20' : 'bg-teal/40'
+            if (row?.blocked.includes(slot)) bgClass = 'bg-slate-blue'
+            else if (row?.available.includes(slot)) bgClass = 'bg-teal/40'
 
-            return [
-              <div
-                key={`label-${slot}`}
-                className="flex items-start justify-end border-b border-border/50 bg-white pr-1.5 pt-px font-body text-[10px] leading-none text-light-blue"
-                style={{ height: SLOT_HEIGHT }}
-              >
-                {slotLabel(slot)}
-              </div>,
-              <div
-                key={`slot-${slot}`}
-                className={`border-b border-l border-border/50 ${bgClass}`}
-                style={{ height: SLOT_HEIGHT }}
-                onClick={() => { if (isHighlighted) onSlotClick(dateStr, slot) }}
-              />,
-            ]
+            return (
+              <Fragment key={slot}>
+                <div
+                  className="flex items-start justify-end border-b border-border/50 bg-white pr-1.5 pt-px font-body text-[10px] leading-none text-light-blue"
+                  style={{ height: SLOT_HEIGHT }}
+                >
+                  {slotLabel(slot)}
+                </div>
+                <div
+                  className={`border-b border-l border-border/50 ${bgClass}`}
+                  style={{ height: SLOT_HEIGHT }}
+                />
+              </Fragment>
+            )
           })}
 
           {/* Calendar event overlays */}
