@@ -190,13 +190,13 @@ export const setSubtaskTimeEstimate = internalMutation({
     reasoning: reasoningTraceArgs,
   },
   handler: async (ctx, args) => {
+    const subtask = await ctx.db.get(args.subtaskId);
+    if (!subtask) return;
+
     await ctx.db.patch(args.subtaskId, {
       timeEstimate: args.timeEstimate,
       reasoning: args.reasoning,
     });
-
-    const subtask = await ctx.db.get(args.subtaskId);
-    if (!subtask) return;
 
     const siblings = await ctx.db
       .query("subtasks")

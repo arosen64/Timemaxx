@@ -467,6 +467,11 @@ export default function TaskModal({
               </Button>
             )}
           </div>
+          {!useAiEstimate && existingSubtaskCount !== undefined && existingSubtaskCount > 0 && (
+            <p className="font-body text-xs text-burnt-orange">
+              Saving will delete your {existingSubtaskCount} existing subtask{existingSubtaskCount !== 1 ? 's' : ''} and their scheduled blocks.
+            </p>
+          )}
           {useAiEstimate ? (
             <div className="rounded-lg border border-border bg-bg-gray px-3.5 py-3 font-body text-sm text-light-blue">
               AI will estimate after saving
