@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react'
-import { useQuery, useAction } from 'convex/react'
+import { useQuery, useAction, useMutation } from 'convex/react'
 import { api } from '../../../../backend/convex/_generated/api'
 import type { Id } from '../../../../backend/convex/_generated/dataModel'
-import { ChevronLeftIcon, ChevronRightIcon, SpinnerIcon, CalendarIcon } from '../icons'
+import { ChevronLeftIcon, ChevronRightIcon, SpinnerIcon, CalendarIcon, SplitIcon } from '../icons'
 import { isCurrentTerm } from '../../utils/termUtils'
 
 const OTHER_COURSE_KEY = '__none__'
@@ -34,52 +34,79 @@ function BlockRow({
   block,
   isAssigning,
   isScheduling,
+  isSplitting,
+  splitError,
   onToggleAssign,
   onSchedule,
+  onSplit,
 }: {
   block: StudyBlockInPanel
   isAssigning: boolean
   isScheduling: boolean
+  isSplitting: boolean
+  splitError: string | null
   onToggleAssign: (id: Id<'studyBlocks'>) => void
   onSchedule: (id: Id<'studyBlocks'>) => void
+  onSplit: (id: Id<'studyBlocks'>) => void
 }) {
+  const canSplit = block.studyBlockLength >= 30
   return (
-    // outer div handles the assign-mode toggle; inner button is a separate action
-    // div[role=button] + <button> is valid — avoids nested <button> elements
-    <div
-      role="button"
-      tabIndex={0}
-      onClick={() => onToggleAssign(block._id)}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault()
-          onToggleAssign(block._id)
-        }
-      }}
-      className={`group flex items-center gap-2 rounded-lg border px-2.5 py-2 cursor-pointer transition-colors ${
-        isAssigning
-          ? 'border-teal bg-teal/10'
-          : 'border-border bg-bg-gray hover:border-teal/50 hover:bg-teal/5'
-      }`}
-    >
-      <span className="h-1 w-4 rounded-full bg-sky-blue shrink-0" />
-      <span className="flex-1 min-w-0 truncate text-[11px] font-medium text-navy">{block.title}</span>
-      <span className="text-[10px] text-light-blue shrink-0">{block.studyBlockLength} min</span>
-      <button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation()
-          onSchedule(block._id)
+    <div className="flex flex-col gap-0.5">
+      {/* outer div handles the assign-mode toggle; inner buttons are separate actions */}
+      {/* div[role=button] + <button> is valid — avoids nested <button> elements */}
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={() => onToggleAssign(block._id)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            onToggleAssign(block._id)
+          }
         }}
-        disabled={isScheduling}
-        className="flex h-5 w-5 shrink-0 items-center justify-center rounded text-light-blue opacity-0 transition hover:bg-navy/10 hover:text-navy group-hover:opacity-100 disabled:cursor-not-allowed disabled:opacity-50"
-        aria-label="Auto-schedule this block"
+        className={`flex items-center gap-2 rounded-lg border px-2.5 py-2 cursor-pointer transition-colors ${
+          isAssigning
+            ? 'border-teal bg-teal/10'
+            : 'border-border bg-bg-gray hover:border-teal/50 hover:bg-teal/5'
+        }`}
       >
-        {isScheduling
-          ? <SpinnerIcon color="currentColor" size={10} />
-          : <CalendarIcon color="currentColor" size={10} />
-        }
-      </button>
+        <span className="h-1 w-4 rounded-full bg-sky-blue shrink-0" />
+        <span className="flex-1 min-w-0 truncate text-[11px] font-medium text-navy">{block.title}</span>
+        <span className="text-[10px] text-light-blue shrink-0">{block.studyBlockLength} min</span>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation()
+            onSplit(block._id)
+          }}
+          disabled={!canSplit || isSplitting}
+          className="flex h-5 w-5 shrink-0 items-center justify-center rounded text-light-blue transition hover:bg-navy/10 hover:text-navy disabled:cursor-not-allowed disabled:opacity-30"
+          aria-label="Split this block in two"
+        >
+          {isSplitting
+            ? <SpinnerIcon color="currentColor" size={10} />
+            : <SplitIcon color="currentColor" size={10} />
+          }
+        </button>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation()
+            onSchedule(block._id)
+          }}
+          disabled={isScheduling}
+          className="flex h-5 w-5 shrink-0 items-center justify-center rounded text-light-blue transition hover:bg-navy/10 hover:text-navy disabled:cursor-not-allowed disabled:opacity-30"
+          aria-label="Auto-schedule this block"
+        >
+          {isScheduling
+            ? <SpinnerIcon color="currentColor" size={10} />
+            : <CalendarIcon color="currentColor" size={10} />
+          }
+        </button>
+      </div>
+      {splitError && (
+        <p className="px-2.5 text-[10px] text-urgent-red">{splitError}</p>
+      )}
     </div>
   )
 }
@@ -98,6 +125,10 @@ export default function ClassPanel({
   const [selectedTaskId, setSelectedTaskId] = useState<Id<'tasks'> | null>(null)
   const [schedulingBlockIds, setSchedulingBlockIds] = useState<Set<Id<'studyBlocks'>>>(new Set())
   const [isSchedulingAll, setIsSchedulingAll] = useState(false)
+  const [splittingBlockIds, setSplittingBlockIds] = useState<Set<Id<'studyBlocks'>>>(new Set())
+  const [splitErrors, setSplitErrors] = useState<Map<Id<'studyBlocks'>, string>>(new Map())
+
+  const splitStudyBlockMutation = useMutation(api.mutations.studyBlocks.splitStudyBlock)
 
   const courses = useQuery(api.queries.userCourses.getUserCourses)
   // getTasksByCourseId drives the task-list drill-down; skipped until a course is selected.
@@ -177,6 +208,26 @@ export default function ClassPanel({
     }
   }
 
+  async function handleSplitBlock(blockId: Id<'studyBlocks'>) {
+    const block = unscheduledBlocks.find((b) => b._id === blockId)
+    if (!block) return
+    const splitAt = Math.floor(block.studyBlockLength / 2)
+    const remaining = block.studyBlockLength - splitAt
+    if (splitAt < 15 || remaining < 15) {
+      setSplitErrors((prev) => new Map(prev).set(blockId, 'Unable to split: each part must be at least 15 minutes.'))
+      return
+    }
+    setSplitErrors((prev) => { const next = new Map(prev); next.delete(blockId); return next })
+    setSplittingBlockIds((prev) => new Set(prev).add(blockId))
+    try {
+      await splitStudyBlockMutation({ studyBlockId: blockId, splitAtMinutes: splitAt })
+    } catch (err) {
+      setSplitErrors((prev) => new Map(prev).set(blockId, err instanceof Error ? err.message : 'Unable to split.'))
+    } finally {
+      setSplittingBlockIds((prev) => { const next = new Set(prev); next.delete(blockId); return next })
+    }
+  }
+
   async function handleScheduleSelected() {
     if (!selectedTaskId) return
     setIsSchedulingAll(true)
@@ -223,8 +274,6 @@ export default function ClassPanel({
             <div className="flex items-center justify-center py-8">
               <SpinnerIcon color="#4E6A8C" size={14} />
             </div>
-          ) : currentCourses.length === 0 ? (
-            <p className="px-4 py-4 text-xs text-light-blue">No current classes.</p>
           ) : (
             <>
               {currentCourses.map((course) => (
@@ -331,8 +380,11 @@ export default function ClassPanel({
                           block={block}
                           isAssigning={assigningBlockId === block._id}
                           isScheduling={schedulingBlockIds.has(block._id)}
+                          isSplitting={splittingBlockIds.has(block._id)}
+                          splitError={splitErrors.get(block._id) ?? null}
                           onToggleAssign={onToggleAssign}
                           onSchedule={handleScheduleBlock}
+                          onSplit={handleSplitBlock}
                         />
                       ))
                     )}
@@ -354,8 +406,11 @@ export default function ClassPanel({
                       block={block}
                       isAssigning={assigningBlockId === block._id}
                       isScheduling={schedulingBlockIds.has(block._id)}
+                      isSplitting={splittingBlockIds.has(block._id)}
+                      splitError={splitErrors.get(block._id) ?? null}
                       onToggleAssign={onToggleAssign}
                       onSchedule={handleScheduleBlock}
+                      onSplit={handleSplitBlock}
                     />
                   ))}
                 </div>
