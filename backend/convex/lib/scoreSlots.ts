@@ -107,7 +107,7 @@ export function scoreCandidate(opts: {
       ? 1
       : 0;
 
-  const dailyLoadPenalty = Math.max(-3, -opts.dailyLoadCount);
+  const dailyLoadPenalty = opts.dailyLoadCount <= 0 ? 0 : Math.max(-3, -opts.dailyLoadCount);
 
   const difficultyBonus =
     opts.difficultyRating !== undefined && opts.difficultyRating >= 4 && timeOfDayMatch > 0 ? 1 : 0;

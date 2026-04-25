@@ -52,6 +52,7 @@ export const scheduleBlock = action({
     let dueDate: number;
     let creationTime: number;
     let recommendedStart: number | undefined;
+    let courseId: string | undefined;
 
     if (block.subtaskId) {
       const subtask = await ctx.runQuery(internal.queries.subtasks.getSubtaskInternal, {
@@ -65,6 +66,7 @@ export const scheduleBlock = action({
         taskId: subtask.parentTaskId,
       });
       recommendedStart = parentTask?.recommendedStart;
+      courseId = parentTask?.courseId as string | undefined;
     } else {
       // block.taskId is non-null here: the guard above ensures at least one of taskId/subtaskId is set
       const task = await ctx.runQuery(internal.queries.tasks.getTaskInternal, {
@@ -75,13 +77,15 @@ export const scheduleBlock = action({
       dueDate = task.dueDate;
       creationTime = task._creationTime;
       recommendedStart = task.recommendedStart;
+      courseId = task.courseId as string | undefined;
     }
 
-    // Fetch user preferences and calendar events in parallel
-    const [user, timedEvents, allUserBlocks] = await Promise.all([
+    // Fetch user preferences, calendar events, and courses in parallel
+    const [user, timedEvents, allUserBlocks, userCourses] = await Promise.all([
       ctx.runQuery(internal.queries.users.getUserInternal, { userId }),
       fetch21DayCalendarEvents(ctx, args.timezone),
       ctx.runQuery(internal.queries.studyBlocks.getAllStudyBlocksByUserInternal, { userId }),
+      ctx.runQuery(internal.queries.userCourses.getUserCoursesInternal, { userId }) as Promise<Array<{ _id: string; difficultyRating?: number }>>,
     ]);
     if (!user) throw new Error("User not found");
 
@@ -89,6 +93,13 @@ export const scheduleBlock = action({
     const workHoursGrid = (user.workHoursGrid ?? []) as WorkHoursRow[];
     const productivityTraits: unknown = user.productivityTraits;
     const preferredDays: string[] = (productivityTraits as any)?.dayOfWeek ?? [];
+    const timeOfDayRanges = parseTimeOfDayRanges(
+      Array.isArray((productivityTraits as any)?.timeOfDay) ? (productivityTraits as any).timeOfDay : [],
+    );
+    const dayOfWeekPrefs: string[] = preferredDays;
+    const difficultyRating = courseId
+      ? userCourses.find((c) => c._id === courseId)?.difficultyRating
+      : undefined;
 
     const occupiedIntervals: OccupiedInterval[] = [
       ...timedEvents.map((e) => ({
@@ -125,12 +136,28 @@ export const scheduleBlock = action({
 
     if (candidates.length === 0) return { error: "no_slot_found" };
 
+    const scoredCandidates = candidates.map((c) => {
+      const dateStr = toDateStr(new Date(c.startMs), args.timezone);
+      const { score, scoreBreakdown } = scoreCandidate({
+        startMs: c.startMs,
+        timezone: args.timezone,
+        timeOfDayRanges,
+        dayOfWeekPrefs,
+        minutesSincePreviousEvent: c.minutesSincePreviousEvent,
+        minutesUntilNextEvent: c.minutesUntilNextEvent,
+        dailyLoadCount: dailyLoadMap.get(dateStr) ?? 0,
+        difficultyRating,
+      });
+      return { ...c, score, scoreBreakdown };
+    });
+    scoredCandidates.sort((a, b) => b.score - a.score);
+
     const [chosenIndex] = await selectAllSlotsWithAI(
-      [{ taskTitle, dueDate, recommendedStart, candidates }],
+      [{ taskTitle, dueDate, recommendedStart, candidates: scoredCandidates }],
       productivityTraits,
     );
 
-    const chosen = candidates[chosenIndex ?? 0];
+    const chosen = scoredCandidates[chosenIndex ?? 0];
 
     await ctx.runMutation(internal.mutations.studyBlocks.placeStudyBlock, {
       studyBlockId: args.studyBlockId,

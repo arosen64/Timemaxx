@@ -13,6 +13,7 @@ import {
   type OccupiedInterval,
   type WorkHoursRow,
 } from "../lib/scheduleSlots";
+import { parseTimeOfDayRanges, scoreCandidate } from "../lib/scoreSlots";
 import { fetch21DayCalendarEvents } from "../lib/calendarFetch";
 
 /**
@@ -42,16 +43,23 @@ export const scheduleTask = action({
     });
     if (!task || task.userId !== userId) throw new Error("Task not found");
 
-    // Fetch user preferences
-    const user = await ctx.runQuery(internal.queries.users.getUserInternal, {
-      userId,
-    });
+    // Fetch user preferences and courses in parallel
+    const [user, userCourses] = await Promise.all([
+      ctx.runQuery(internal.queries.users.getUserInternal, { userId }),
+      ctx.runQuery(internal.queries.userCourses.getUserCoursesInternal, { userId }) as Promise<Array<{ _id: string; difficultyRating?: number }>>,
+    ]);
     if (!user) throw new Error("User not found");
 
     const focusBlockLength: number = user.focusBlockLength ?? 60;
     const workHoursGrid = (user.workHoursGrid ?? []) as WorkHoursRow[];
     const productivityTraits: unknown = user.productivityTraits;
     const preferredDays: string[] = (productivityTraits as any)?.dayOfWeek ?? [];
+    const timeOfDayRanges = parseTimeOfDayRanges(
+      Array.isArray((productivityTraits as any)?.timeOfDay) ? (productivityTraits as any).timeOfDay : [],
+    );
+    const dayOfWeekPrefs: string[] = preferredDays;
+    const courseId = task.courseId as string | undefined;
+    const difficultyRating = courseId ? userCourses.find((c) => c._id === courseId)?.difficultyRating : undefined;
 
     // Fetch unscheduled blocks for this task
     const studyBlocks = await ctx.runQuery(
@@ -110,13 +118,33 @@ export const scheduleTask = action({
       return { error: "no_slot_found" };
     }
 
+    // Score and sort each block's candidates by fit before the AI call (#507)
+    const scoredBlockCandidates = blockCandidates.map((candidates) =>
+      candidates
+        .map((c) => {
+          const dateStr = toDateStr(new Date(c.startMs), args.timezone);
+          const { score, scoreBreakdown } = scoreCandidate({
+            startMs: c.startMs,
+            timezone: args.timezone,
+            timeOfDayRanges,
+            dayOfWeekPrefs,
+            minutesSincePreviousEvent: c.minutesSincePreviousEvent,
+            minutesUntilNextEvent: c.minutesUntilNextEvent,
+            dailyLoadCount: dailyLoadMap.get(dateStr) ?? 0,
+            difficultyRating,
+          });
+          return { ...c, score, scoreBreakdown };
+        })
+        .sort((a, b) => b.score - a.score),
+    );
+
     // One Gemini call for all blocks
     const chosenIndices = await selectAllSlotsWithAI(
       unscheduled.map((_block, i) => ({
         taskTitle: task.title,
         dueDate: task.dueDate,
         recommendedStart: task.recommendedStart,
-        candidates: blockCandidates[i],
+        candidates: scoredBlockCandidates[i],
       })),
       productivityTraits,
     );
@@ -125,7 +153,7 @@ export const scheduleTask = action({
 
     for (let i = 0; i < unscheduled.length; i++) {
       const block = unscheduled[i];
-      const candidates = blockCandidates[i];
+      const candidates = scoredBlockCandidates[i];
       const durationMs = block.studyBlockLength * 60000;
 
       // Use AI-chosen index; fall back to first still-valid candidate if it conflicts
