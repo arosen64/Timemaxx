@@ -87,7 +87,6 @@ export const confirmSyllabusTasks = mutation({
         description: v.string(),
         dueDate: v.number(),
         taskType: taskTypeValidator,
-        assignmentWeight: v.optional(v.number()),
       })
     ),
   },
@@ -120,7 +119,6 @@ export const confirmSyllabusTasks = mutation({
           taskType: task.taskType,
           courseId: syllabus.courseId,
           ...(classTag !== undefined ? { classTag } : {}),
-          ...(task.assignmentWeight !== undefined ? { assignmentWeight: task.assignmentWeight } : {}),
           createdAt: now,
           isManualEstimate: false,
         })

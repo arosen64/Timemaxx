@@ -54,7 +54,6 @@ export default function SyllabusReviewPage() {
       taskType: t.taskType,
       dueDate: msToFormDate(t.dueDate),
       dueTime: msToTimeInputValue(t.dueDate),
-      ...(t.assignmentWeight !== undefined ? { assignmentWeight: t.assignmentWeight } : {}),
     }))
   })
   const [isConfirming, setIsConfirming] = useState(false)
@@ -81,7 +80,7 @@ export default function SyllabusReviewPage() {
   async function handleConfirm() {
     setError(null)
 
-    const toSave: Array<{ title: string; description: string; taskType: (typeof TASK_TYPE_OPTIONS)[number]; dueDate: number; assignmentWeight?: number }> = []
+    const toSave: Array<{ title: string; description: string; taskType: (typeof TASK_TYPE_OPTIONS)[number]; dueDate: number }> = []
     for (const t of tasks) {
       if (!t.title.trim()) {
         setError('One or more tasks is missing a title.')
@@ -94,7 +93,7 @@ export default function SyllabusReviewPage() {
       }
       const dateMs = formDateToMs(t.dueDate)!
       const ms = combineDateMsWithTime(dateMs, t.dueTime)!
-      toSave.push({ title: t.title.trim(), description: t.description, taskType: t.taskType, dueDate: ms, ...(t.assignmentWeight !== undefined ? { assignmentWeight: t.assignmentWeight } : {}) })
+      toSave.push({ title: t.title.trim(), description: t.description, taskType: t.taskType, dueDate: ms })
     }
 
     setIsConfirming(true)
