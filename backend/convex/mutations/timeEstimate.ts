@@ -1,6 +1,7 @@
 import { internalMutation, mutation } from "../_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { internal } from "../_generated/api";
 import type { MutationCtx } from "../_generated/server";
 import type { Id } from "../_generated/dataModel";
 
@@ -113,20 +114,23 @@ async function forceRebuildStudyBlocksForSubtask(
   }
 }
 
-/** Scales each subtask estimate proportionally so they sum to manualTotal, rounded to the nearest 5 min (min 5 min per subtask), then rebuilds their study blocks. */
+/** Scales each subtask estimate proportionally so they sum to manualTotal, rounded to the nearest 5 min (min 5 min per subtask), then rebuilds their study blocks. Returns the actual post-rounding sum. */
 export async function normalizeSubtaskEstimates(
   ctx: MutationCtx,
   manualTotal: number,
   subtasks: Array<{ _id: Id<"subtasks">; timeEstimate?: number }>
-) {
+): Promise<number> {
   const sum = subtasks.reduce((s, st) => s + (st.timeEstimate ?? 0), 0);
-  if (sum === 0) return;
+  if (sum === 0) return 0;
+  let actualSum = 0;
   for (const subtask of subtasks) {
     const raw = ((subtask.timeEstimate ?? 0) / sum) * manualTotal;
     const rounded = Math.max(5, Math.round(raw / 5) * 5);
     await ctx.db.patch(subtask._id, { timeEstimate: rounded });
     await forceRebuildStudyBlocksForSubtask(ctx, subtask._id, rounded);
+    actualSum += rounded;
   }
+  return actualSum;
 }
 
 export const setTimeEstimate = internalMutation({
@@ -197,7 +201,15 @@ export const setManualTimeEstimate = mutation({
     } else {
       const allEstimated = subtasks.every((s) => s.timeEstimate !== undefined);
       if (allEstimated) {
-        await normalizeSubtaskEstimates(ctx, args.timeEstimate, subtasks);
+        const actualSum = await normalizeSubtaskEstimates(ctx, args.timeEstimate, subtasks);
+        // If rounding caused the total to exceed the target by more than 10%, let the
+        // agent prune the least-important subtasks to bring it back within range.
+        if (actualSum > args.timeEstimate * 1.1) {
+          await ctx.scheduler.runAfter(0, internal.actions.pruneSubtasksToThreshold.pruneSubtasksToThreshold, {
+            taskId: args.taskId,
+            targetMinutes: args.timeEstimate,
+          });
+        }
       }
       // If not all estimated yet, normalization runs when the last estimate arrives.
     }
@@ -240,6 +252,35 @@ export const clearManualEstimate = mutation({
         .collect();
       for (const block of existingBlocks) await ctx.db.delete(block._id);
     }
+  },
+});
+
+export const applySubtaskPruning = internalMutation({
+  args: {
+    taskId: v.id("tasks"),
+    subtaskIdsToRemove: v.array(v.id("subtasks")),
+    targetMinutes: v.number(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    for (const subtaskId of args.subtaskIdsToRemove) {
+      const blocks = await ctx.db
+        .query("studyBlocks")
+        .withIndex("by_subtaskId", (q) => q.eq("subtaskId", subtaskId))
+        .collect();
+      for (const block of blocks) await ctx.db.delete(block._id);
+      await ctx.db.delete(subtaskId);
+    }
+
+    const remaining = await ctx.db
+      .query("subtasks")
+      .withIndex("by_parentTaskId", (q) => q.eq("parentTaskId", args.taskId))
+      .collect();
+
+    if (remaining.length > 0 && remaining.every((s) => s.timeEstimate !== undefined)) {
+      await normalizeSubtaskEstimates(ctx, args.targetMinutes, remaining);
+    }
+    return null;
   },
 });
 
