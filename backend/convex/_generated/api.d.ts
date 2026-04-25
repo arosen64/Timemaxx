@@ -21,7 +21,6 @@ import type * as actions_requestGenerateSubtasks from "../actions/requestGenerat
 import type * as actions_scheduleAllBlocks from "../actions/scheduleAllBlocks.js";
 import type * as actions_scheduleBlock from "../actions/scheduleBlock.js";
 import type * as actions_scheduleSubtask from "../actions/scheduleSubtask.js";
-import type * as actions_scheduleTask from "../actions/scheduleTask.js";
 import type * as ai_embeddings from "../ai/embeddings.js";
 import type * as ai_estimateSubtasksBatch from "../ai/estimateSubtasksBatch.js";
 import type * as ai_estimateTaskTime from "../ai/estimateTaskTime.js";
@@ -55,6 +54,7 @@ import type * as lib_messageTaggedScope from "../lib/messageTaggedScope.js";
 import type * as lib_retrieval from "../lib/retrieval.js";
 import type * as lib_sanitize from "../lib/sanitize.js";
 import type * as lib_scheduleSlots from "../lib/scheduleSlots.js";
+import type * as lib_scoreSlots from "../lib/scoreSlots.js";
 import type * as lib_sisEntityTokens from "../lib/sisEntityTokens.js";
 import type * as lib_syllabusTypes from "../lib/syllabusTypes.js";
 import type * as lib_taskTypes from "../lib/taskTypes.js";
@@ -103,7 +103,6 @@ declare const fullApi: ApiFromModules<{
   "actions/scheduleAllBlocks": typeof actions_scheduleAllBlocks;
   "actions/scheduleBlock": typeof actions_scheduleBlock;
   "actions/scheduleSubtask": typeof actions_scheduleSubtask;
-  "actions/scheduleTask": typeof actions_scheduleTask;
   "ai/embeddings": typeof ai_embeddings;
   "ai/estimateSubtasksBatch": typeof ai_estimateSubtasksBatch;
   "ai/estimateTaskTime": typeof ai_estimateTaskTime;
@@ -137,6 +136,7 @@ declare const fullApi: ApiFromModules<{
   "lib/retrieval": typeof lib_retrieval;
   "lib/sanitize": typeof lib_sanitize;
   "lib/scheduleSlots": typeof lib_scheduleSlots;
+  "lib/scoreSlots": typeof lib_scoreSlots;
   "lib/sisEntityTokens": typeof lib_sisEntityTokens;
   "lib/syllabusTypes": typeof lib_syllabusTypes;
   "lib/taskTypes": typeof lib_taskTypes;
