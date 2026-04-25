@@ -1,4 +1,4 @@
-import { internalMutation, mutation } from "../_generated/server";
+import { internalMutation, mutation, MutationCtx } from "../_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { internal } from "../_generated/api";
@@ -462,6 +462,22 @@ export const splitStudyBlock = mutation({
   },
 });
 
+async function recomputeParentTaskStatus(
+  ctx: MutationCtx,
+  parentTaskId: Id<"tasks">
+): Promise<"not_started" | "in_progress" | "completed"> {
+  const siblings = await ctx.db
+    .query("subtasks")
+    .withIndex("by_parentTaskId", (q) => q.eq("parentTaskId", parentTaskId))
+    .collect();
+
+  const allDone = siblings.every((s) => s.status === "completed");
+  const anyActive = siblings.some(
+    (s) => s.status === "in_progress" || s.status === "completed"
+  );
+  return allDone ? "completed" : anyActive ? "in_progress" : "not_started";
+}
+
 export const toggleStudyBlockComplete = mutation({
   args: { studyBlockId: v.id("studyBlocks") },
   handler: async (ctx, args) => {
@@ -495,26 +511,13 @@ export const toggleStudyBlockComplete = mutation({
         } else {
           newStatus = "not_started";
         }
-        await ctx.db.patch(block.subtaskId, { status: newStatus });
+        if (subtask.status !== newStatus) {
+          await ctx.db.patch(block.subtaskId, { status: newStatus });
+        }
 
-        // Bubble up: derive parent task status from all sibling subtask statuses
-        const siblings = await ctx.db
-          .query("subtasks")
-          .withIndex("by_parentTaskId", (q) =>
-            q.eq("parentTaskId", subtask.parentTaskId)
-          )
-          .collect();
-
-        const allDone = siblings.every((s) =>
-          s._id === block.subtaskId ? newStatus === "completed" : s.status === "completed"
-        );
-        const anyActive = siblings.some((s) =>
-          s._id === block.subtaskId
-            ? newStatus === "in_progress" || newStatus === "completed"
-            : s.status === "in_progress" || s.status === "completed"
-        );
-
-        const newParentStatus = allDone ? "completed" : anyActive ? "in_progress" : "not_started";
+        // Bubble up: derive parent task status from all sibling subtask statuses.
+        // Since the subtask patch is already committed, siblings reflects newStatus.
+        const newParentStatus = await recomputeParentTaskStatus(ctx, subtask.parentTaskId);
         const parent = await ctx.db.get(subtask.parentTaskId);
         if (parent && parent.status !== newParentStatus) {
           await ctx.db.patch(subtask.parentTaskId, { status: newParentStatus });
@@ -530,17 +533,35 @@ export const toggleStudyBlockComplete = mutation({
         b._id === args.studyBlockId ? nowCompleted : b.isCompleted
       ).length;
 
+      // Also factor in subtask state for mixed-mode tasks (task has both
+      // task-level blocks and subtasks).
+      const subtasks = await ctx.db
+        .query("subtasks")
+        .withIndex("by_parentTaskId", (q) => q.eq("parentTaskId", block.taskId!))
+        .collect();
+
       const task = await ctx.db.get(block.taskId);
       if (task && task.userId === userId) {
+        const allBlocksDone = completedCount === allTaskBlocks.length;
+        const anyBlockActive = completedCount > 0;
+        const hasSubtasks = subtasks.length > 0;
+        const allSubtasksDone = subtasks.every((s) => s.status === "completed");
+        const anySubtaskActive = subtasks.some(
+          (s) => s.status === "in_progress" || s.status === "completed"
+        );
+
         let newStatus: "not_started" | "in_progress" | "completed";
-        if (completedCount === allTaskBlocks.length) {
+        if (allBlocksDone && (!hasSubtasks || allSubtasksDone)) {
           newStatus = "completed";
-        } else if (completedCount > 0) {
+        } else if (anyBlockActive || (hasSubtasks && anySubtaskActive)) {
           newStatus = "in_progress";
         } else {
           newStatus = "not_started";
         }
-        await ctx.db.patch(block.taskId, { status: newStatus });
+
+        if (task.status !== newStatus) {
+          await ctx.db.patch(block.taskId, { status: newStatus });
+        }
       }
     }
   },

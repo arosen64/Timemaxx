@@ -960,6 +960,55 @@ describe("mutations/studyBlocks – toggleStudyBlockComplete supertask propagati
     expect(task!.status).toBe("not_started");
   });
 
+  test("completing all task-level blocks does not complete task when a subtask is not_started", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+
+    const parentTaskId = await t.run((ctx) =>
+      ctx.db.insert("tasks", {
+        userId: userId as any,
+        title: "Mixed task",
+        description: "",
+        taskType: "Essay",
+        dueDate: Date.now() + 86_400_000,
+        createdAt: Date.now(),
+        isManualEstimate: false,
+      })
+    );
+
+    // Task-level block
+    const taskBlockId = await t.run((ctx) =>
+      ctx.db.insert("studyBlocks", {
+        taskId: parentTaskId as any,
+        userId: userId as any,
+        title: "Task block",
+        studyBlockLength: 60,
+        isCompleted: false,
+      })
+    );
+
+    // Subtask still not_started (no study blocks)
+    await t.run((ctx) =>
+      ctx.db.insert("subtasks", {
+        parentTaskId: parentTaskId as any,
+        userId: userId as any,
+        title: "Subtask",
+        description: "",
+        taskType: "Essay",
+        color: "#000000",
+        order: 0,
+        createdAt: Date.now(),
+      })
+    );
+
+    await withAuth.mutation(api.mutations.studyBlocks.toggleStudyBlockComplete, {
+      studyBlockId: taskBlockId,
+    });
+
+    const task = await t.run((ctx) => ctx.db.get(parentTaskId));
+    expect(task!.status).toBe("in_progress");
+  });
+
   test("only one subtask fully done does not complete supertask when sibling subtask is not_started", async () => {
     const t = makeTestCtx();
     const { userId, withAuth } = await createTestUser(t);

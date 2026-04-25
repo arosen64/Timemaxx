@@ -22,7 +22,7 @@ async function seedTask(
 async function seedStudyBlock(
   t: ReturnType<typeof makeTestCtx>,
   taskId: string,
-  opts: { googleEventId?: string } = {},
+  opts: { googleEventId?: string; userId?: string } = {},
 ) {
   return t.run((ctx) =>
     ctx.db.insert("studyBlocks", {
@@ -30,6 +30,7 @@ async function seedStudyBlock(
       title: "Block",
       studyBlockLength: 60,
       isCompleted: false,
+      ...(opts.userId ? { userId: opts.userId as any } : {}),
       ...(opts.googleEventId ? { googleEventId: opts.googleEventId } : {}),
     })
   );
@@ -252,5 +253,26 @@ describe("mutations/tasks – updateTaskStatus study block sync", () => {
       ctx.db.query("studyBlocks").collect()
     );
     expect(blocks.every((b) => b.isCompleted)).toBe(true);
+  });
+
+  test("toggling the only block after completed→in_progress reopen sets task to not_started", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+    const taskId = await seedTask(t, userId);
+    const blockId = await seedStudyBlock(t, taskId, { userId });
+
+    // Complete the task (marks block isCompleted: true)
+    await withAuth.mutation(api.mutations.tasks.updateTaskStatus, { taskId, status: "completed" });
+    // Reopen to in_progress (block stays isCompleted: true)
+    await withAuth.mutation(api.mutations.tasks.updateTaskStatus, { taskId, status: "in_progress" });
+    // Toggle the block to uncomplete it
+    await withAuth.mutation(api.mutations.studyBlocks.toggleStudyBlockComplete, {
+      studyBlockId: blockId,
+    });
+
+    const task = await t.run((ctx) => ctx.db.get(taskId));
+    const block = await t.run((ctx) => ctx.db.get(blockId));
+    expect(block!.isCompleted).toBe(false);
+    expect(task!.status).toBe("not_started");
   });
 });

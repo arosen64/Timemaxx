@@ -282,12 +282,17 @@ const taskStatusValidator = v.union(
 );
 
 /** Unsets all calendar-scheduling fields on a study block, leaving the block itself intact. */
-async function unscheduleBlock(ctx: MutationCtx, blockId: Id<"studyBlocks">) {
+async function unscheduleBlock(
+  ctx: MutationCtx,
+  blockId: Id<"studyBlocks">,
+  markComplete = false
+) {
   await ctx.db.patch(blockId, {
     startTime: undefined,
     googleEventId: undefined,
     isConflicted: undefined,
     needsExport: undefined,
+    ...(markComplete ? { isCompleted: true } : {}),
   });
 }
 
@@ -341,8 +346,7 @@ export const updateTaskStatus = mutation({
         .withIndex("by_taskId", (q) => q.eq("taskId", args.taskId))
         .collect();
       for (const block of taskBlocks) {
-        await unscheduleBlock(ctx, block._id);
-        await ctx.db.patch(block._id, { isCompleted: true });
+        await unscheduleBlock(ctx, block._id, true);
       }
 
       // Unschedule and mark subtask-level study blocks complete — single query filtered in memory
@@ -354,8 +358,7 @@ export const updateTaskStatus = mutation({
           .collect();
         for (const block of allUserBlocks) {
           if (block.subtaskId !== undefined && subtaskIdSet.has(block.subtaskId as string)) {
-            await unscheduleBlock(ctx, block._id);
-            await ctx.db.patch(block._id, { isCompleted: true });
+            await unscheduleBlock(ctx, block._id, true);
           }
         }
       }
