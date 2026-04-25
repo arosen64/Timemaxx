@@ -116,7 +116,7 @@ function setupActions({
     return scheduleBlockMock as never
   })
 
-  mockUseMutation.mockReturnValue(makeMutationFn() as never)
+  mockUseMutation.mockReturnValue(vi.fn().mockResolvedValue(undefined) as never)
 
   return { scheduleAllMock, scheduleBlockMock }
 }
