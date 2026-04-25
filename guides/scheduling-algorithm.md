@@ -28,7 +28,7 @@ All three share the same slot pool and validation primitives from `lib/scheduleS
 
 ### Pool building
 
-`extendSlotPool()` scans forward from `now` to `min(dueDate, now + 21 days)` in **15-minute increments**, adding each slot that passes `isSlotValid()` to a shared array. Slots that overlap `occupiedIntervals` (calendar events + already-placed blocks) or fall in blocked hours (`workHoursGrid[].blocked`) are excluded.
+`extendSlotPool()` scans forward from `max(now, recommendedStart)` to `min(dueDate, now + 21 days)` in **15-minute increments**, adding each slot that passes `isSlotValid()` to a shared array. Slots that overlap `occupiedIntervals` (calendar events + already-placed blocks) or fall in blocked hours (`workHoursGrid[].blocked`) are excluded.
 
 ### Day discovery
 
