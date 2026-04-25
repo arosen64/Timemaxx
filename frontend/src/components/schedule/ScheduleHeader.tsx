@@ -33,7 +33,7 @@ export default function ScheduleHeader({
     <div className="flex items-center justify-between mb-4 rounded-xl bg-white border border-border px-4 py-3 lg:px-6 lg:py-4">
       <h1 className="font-heading text-lg font-bold text-navy lg:text-xl">Schedule</h1>
 
-      <div className="hidden md:flex items-center gap-1.5 lg:gap-2">
+      <div className="flex items-center gap-1.5 lg:gap-2">
         <button
           type="button"
           onClick={onPrevWeek}
@@ -77,9 +77,8 @@ export default function ScheduleHeader({
             disabled={isExporting}
             icon={isExporting ? <SpinnerIcon color="#4E6A8C" size={14} /> : <CalendarIcon color="#4E6A8C" size={14} />}
             className="h-9 px-3 text-xs lg:px-4 lg:text-sm"
-            aria-label="Export to Google Calendar"
           >
-            <span className="hidden sm:inline">{isExporting ? 'Exporting…' : 'Export to GCal'}</span>
+            {isExporting ? 'Exporting…' : 'Export to GCal'}
           </Button>
         )}
         {calendarConnected && (
@@ -90,7 +89,7 @@ export default function ScheduleHeader({
             aria-label="Select calendars"
           >
             <CalendarIcon color="#86C8BC" size={14} />
-            <span className="hidden sm:inline">Calendars</span>
+            Calendars
             {hasCalendarIndicator && (
               <span className="flex h-2 w-2 rounded-full bg-sky-blue" aria-hidden="true" />
             )}

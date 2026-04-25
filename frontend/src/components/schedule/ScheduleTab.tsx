@@ -1,12 +1,10 @@
 import { useRef, useEffect, useState, useMemo, useCallback } from 'react'
 import { useQuery, useAction, useMutation } from 'convex/react'
-import { useIsMobile } from '../../hooks/useIsMobile'
 import { api } from '../../../../backend/convex/_generated/api'
 import type { Id } from '../../../../backend/convex/_generated/dataModel'
 import type { CalendarEntry, TimedEvent, AllDayEvent } from '../../../../backend/convex/actions/fetchCalendarEvents'
 import { CalendarIcon, SpinnerIcon, WarningIcon } from '../icons'
 import TimeGrid, { type StudyBlockOnGrid } from './TimeGrid'
-import MobileDayView from './MobileDayView'
 import CalendarSelectorPopup from './CalendarSelectorPopup'
 import ScheduleHeader from './ScheduleHeader'
 import ClassPanel from './ClassPanel'
@@ -48,7 +46,6 @@ export default function ScheduleTab() {
   const fetchCalendarEventsAction = useAction(api.actions.fetchCalendarEvents.fetchCalendarEvents)
   const exportStudyBlocksAction = useAction(api.actions.exportStudyBlocksToCalendar.exportStudyBlocksToCalendar)
 
-  const isMobile = useIsMobile()
   const [weekOffset, setWeekOffset] = useState(0)
   const [calendarData, setCalendarData] = useState<CalendarData | null>(null)
   const [isFetchingEvents, setIsFetchingEvents] = useState(false)
@@ -396,46 +393,30 @@ export default function ScheduleTab() {
 
       <div className="flex flex-1 gap-4 min-h-0">
         <div className="flex flex-1 flex-col min-h-0 min-w-0" data-grid>
-          {isMobile ? (
-            <MobileDayView
-              days={days}
-              workHoursGrid={workHoursGrid}
-              studyBlocksByDay={studyBlocksByDay}
-              allDayEventsByDay={allDayEventsByDay}
-              layoutByDay={layoutByDay}
-              calendarConnected={calendarConnected}
-              onPrevWeek={() => setWeekOffset((o) => o - 7)}
-              onNextWeek={() => setWeekOffset((o) => o + 7)}
-              onMoveBlock={handleMoveBlock}
-              onAutoReschedule={handleAutoReschedule}
-              gridRef={gridRef}
-            />
-          ) : (
-            <TimeGrid
-              days={days}
-              workHoursGrid={workHoursGrid}
-              layoutByDay={layoutByDay}
-              allDayEventsByDay={allDayEventsByDay}
-              calendarConnected={calendarConnected}
-              gridRef={gridRef}
-              studyBlocksByDay={studyBlocksByDay}
-              highlightedSlots={highlightedSlots}
-              isAssignMode={assigningBlockId !== null || draggingBlockId !== null}
-              onSlotClick={handleSlotClick}
-              onMoveBlock={handleMoveBlock}
-              onAutoReschedule={handleAutoReschedule}
-              draggingBlockId={draggingBlockId}
-              onDragStart={(id) => {
-                const block = allStudyBlocks?.find((b) => b._id === id)
-                if (block?.isConflicted) {
-                  setDraggingBlockId(id)
-                } else {
-                  setAssigningBlockId(id)
-                }
-              }}
-              onDrop={handleDrop}
-            />
-          )}
+          <TimeGrid
+            days={days}
+            workHoursGrid={workHoursGrid}
+            layoutByDay={layoutByDay}
+            allDayEventsByDay={allDayEventsByDay}
+            calendarConnected={calendarConnected}
+            gridRef={gridRef}
+            studyBlocksByDay={studyBlocksByDay}
+            highlightedSlots={highlightedSlots}
+            isAssignMode={assigningBlockId !== null || draggingBlockId !== null}
+            onSlotClick={handleSlotClick}
+            onMoveBlock={handleMoveBlock}
+            onAutoReschedule={handleAutoReschedule}
+            draggingBlockId={draggingBlockId}
+            onDragStart={(id) => {
+              const block = allStudyBlocks?.find((b) => b._id === id)
+              if (block?.isConflicted) {
+                setDraggingBlockId(id)
+              } else {
+                setAssigningBlockId(id)
+              }
+            }}
+            onDrop={handleDrop}
+          />
         </div>
 
         {isRescheduling && (
