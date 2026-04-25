@@ -281,11 +281,15 @@ export const scheduleAllBlocks = action({
       const durationMs = block.studyBlockLength * 60000;
 
       let chosen = candidates[chosenIndices[i] ?? 0];
-      const isChosenValid = (c: { startMs: number }) =>
+      const withinCap = (c: { startMs: number }) =>
         isSlotValid(c.startMs, durationMs, workHoursGrid, occupiedIntervals, args.timezone) &&
         !isDailyCapReached(c.startMs, args.timezone, actualDailyLoadMap, maxBlocksPerDayMap);
-      if (!isChosenValid(chosen)) {
-        const fallback = candidates.find(isChosenValid);
+      const physicallyValid = (c: { startMs: number }) =>
+        isSlotValid(c.startMs, durationMs, workHoursGrid, occupiedIntervals, args.timezone);
+      if (!withinCap(chosen)) {
+        // Prefer a cap-respecting slot; if none exists, place anyway to avoid
+        // leaving blocks unscheduled when load exceeds the daily limit.
+        const fallback = candidates.find(withinCap) ?? candidates.find(physicallyValid);
         if (!fallback) continue;
         chosen = fallback;
       }
