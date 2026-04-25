@@ -281,6 +281,7 @@ describe("mutations/timeEstimate – setManualTimeEstimate", () => {
         userId: userId as any,
         title: "Subtask 1",
         studyBlockLength: 60,
+        isCompleted: false,
       })
     );
 
