@@ -20,7 +20,7 @@ import {
 } from "../lib/scheduleSlots";
 import { fetch21DayCalendarEvents } from "../lib/calendarFetch";
 
-const MAX_BLOCKS = 20;
+const MAX_BLOCKS = 10;
 
 /**
  * AI-driven bulk scheduling for all unscheduled blocks belonging to a task
@@ -214,7 +214,7 @@ export const scheduleAllBlocks = action({
         });
       }
 
-      const candidates = filterPoolForBlock({
+      let candidates = filterPoolForBlock({
         pool,
         dueDateMs: item.parentDueDate,
         durationMinutes: item.block.studyBlockLength,
@@ -225,6 +225,21 @@ export const scheduleAllBlocks = action({
         maxBlocksPerDayMap,
         recommendedStartMs: item.recommendedStart,
       });
+
+      // If speculative cap exhausted all days in the window, fall back to
+      // uncapped candidates so the block still enters phase 2/3.
+      // Phase 3 enforces the actual cap via actualDailyLoadMap.
+      if (candidates.length === 0) {
+        candidates = filterPoolForBlock({
+          pool,
+          dueDateMs: item.parentDueDate,
+          durationMinutes: item.block.studyBlockLength,
+          workHoursGrid,
+          occupiedIntervals,
+          timezone: args.timezone,
+          recommendedStartMs: item.recommendedStart,
+        });
+      }
 
       if (candidates.length === 0) continue;
 
