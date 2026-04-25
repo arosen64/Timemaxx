@@ -124,6 +124,7 @@ export default defineSchema({
     reasoning: v.optional(reasoningTraceValidator),
     status: v.optional(v.union(v.literal("not_started"), v.literal("in_progress"), v.literal("completed"))),
     assignmentWeight: v.optional(v.number()),
+    recommendedStart: v.optional(v.number()),
   })
     .index("by_userId", ["userId"])
     .index("by_userId_createdAt", ["userId", "createdAt"])
