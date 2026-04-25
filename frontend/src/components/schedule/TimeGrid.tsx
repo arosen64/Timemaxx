@@ -1,6 +1,5 @@
 import { Fragment, useState, useEffect } from 'react'
 import type { RefObject } from 'react'
-
 import type { AllDayEvent } from '../../../../backend/convex/actions/fetchCalendarEvents'
 import type { LayoutEvent } from './overlapLayout'
 import { TOTAL_SLOTS, SLOT_HEIGHT, DAYS_FULL, slotLabel, isoDateString, isToday, minutesFromMidnight, getTextColorClass } from './utils'
