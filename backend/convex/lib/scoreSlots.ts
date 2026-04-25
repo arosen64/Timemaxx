@@ -17,6 +17,9 @@ const DEADLINE_BUCKET_WEIGHTS: Record<string, number[]> = {
   "Well in advance": [3, 3, 2, 1, 0],
   "Near deadline":   [1, 1, 2, 3, 3],
 };
+const DEADLINE_BUCKET_MAX_WEIGHTS: Record<string, number> = Object.fromEntries(
+  Object.entries(DEADLINE_BUCKET_WEIGHTS).map(([k, v]) => [k, Math.max(...v)])
+);
 
 // Label strings from PreferencesForm.tsx → [startMinFromMidnight, endMinFromMidnight)
 const TIME_OF_DAY_RANGES: Record<string, [number, number]> = {
@@ -124,7 +127,7 @@ export function scoreCandidate(opts: {
   if (weights && opts.dueDateMs !== undefined && opts.nowMs !== undefined && opts.dueDateMs > opts.nowMs) {
     const bucketWidth = (opts.dueDateMs - opts.nowMs) / 5;
     const bucketIndex = Math.min(4, Math.floor((opts.startMs - opts.nowMs) / bucketWidth));
-    const maxWeight = Math.max(...weights);
+    const maxWeight = DEADLINE_BUCKET_MAX_WEIGHTS[opts.deadlineBehavior!];
     deadlineBucketScore = Math.round((weights[Math.max(0, bucketIndex)] / maxWeight) * 2);
   }
 
