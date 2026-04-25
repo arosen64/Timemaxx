@@ -11,6 +11,9 @@ vi.mock('../../backend/convex/_generated/api', () => ({
       tasks: { getTasksByCourseId: 'getTasksByCourseId' },
       subtasks: { getSubtasksForTask: 'getSubtasksForTask' },
     },
+    mutations: {
+      studyBlocks: { splitStudyBlock: 'splitStudyBlock' },
+    },
     actions: {
       scheduleBlock: { scheduleBlock: 'scheduleBlock' },
       scheduleAllBlocks: { scheduleAllBlocks: 'scheduleAllBlocks' },
@@ -21,12 +24,14 @@ vi.mock('../../backend/convex/_generated/api', () => ({
 vi.mock('convex/react', () => ({
   useQuery: vi.fn(),
   useAction: vi.fn(),
+  useMutation: vi.fn(),
 }))
 
-import { useQuery, useAction } from 'convex/react'
+import { useQuery, useAction, useMutation } from 'convex/react'
 
 const mockUseQuery = vi.mocked(useQuery)
 const mockUseAction = vi.mocked(useAction)
+const mockUseMutation = vi.mocked(useMutation)
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
@@ -110,6 +115,8 @@ function setupActions({
     if (ref === 'scheduleAllBlocks') return scheduleAllMock as never
     return scheduleBlockMock as never
   })
+
+  mockUseMutation.mockReturnValue(makeMutationFn() as never)
 
   return { scheduleAllMock, scheduleBlockMock }
 }
