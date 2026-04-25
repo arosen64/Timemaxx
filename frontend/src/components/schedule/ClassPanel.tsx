@@ -264,7 +264,7 @@ export default function ClassPanel({
   // Level 0 — class list
   if (!selectedCourseId) {
     return (
-      <aside className="flex w-[240px] lg:w-[280px] shrink-0 flex-col border-l border-border bg-white overflow-hidden" data-tray>
+      <aside className="flex w-full sm:w-[240px] lg:w-[280px] shrink-0 flex-col border-t sm:border-t-0 sm:border-l border-border bg-white overflow-hidden max-h-[40vh] sm:max-h-none" data-tray>
         <div className="flex-1 overflow-y-auto">
           <div className="px-4 py-2.5 border-b border-border">
             <span className="text-[10px] font-semibold text-light-blue tracking-wider">CLASSES</span>
@@ -317,7 +317,7 @@ export default function ClassPanel({
   if (!selectedTask) {
     const panelTitle = selectedCourseId === OTHER_COURSE_KEY ? 'Other tasks' : selectedCourse?.title ?? ''
     return (
-      <aside className="flex w-[240px] lg:w-[280px] shrink-0 flex-col border-l border-border bg-white overflow-hidden" data-tray>
+      <aside className="flex w-full sm:w-[240px] lg:w-[280px] shrink-0 flex-col border-t sm:border-t-0 sm:border-l border-border bg-white overflow-hidden max-h-[40vh] sm:max-h-none" data-tray>
         <PanelHeader label="TASKS" title={panelTitle} onBack={goBack} />
         <div className="flex-1 overflow-y-auto">
           {tasksForSelectedCourse.length === 0 ? (
@@ -347,7 +347,7 @@ export default function ClassPanel({
   // Level 2 — task detail with subtasks + study blocks
   const subtasksList = subtasks ?? []
   return (
-    <aside className="flex w-[240px] lg:w-[280px] shrink-0 flex-col border-l border-border bg-white overflow-hidden" data-tray>
+    <aside className="flex w-full sm:w-[240px] lg:w-[280px] shrink-0 flex-col border-t sm:border-t-0 sm:border-l border-border bg-white overflow-hidden max-h-[40vh] sm:max-h-none" data-tray>
       <PanelHeader label="TASK" title={selectedTask.title} onBack={goBack} />
 
       <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3">

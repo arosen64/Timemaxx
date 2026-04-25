@@ -208,7 +208,6 @@ export default function ScheduleTab() {
 
         const slotStartMs = new Date(`${dateStr}T00:00:00`).getTime() + slot * 30 * 60 * 1000
         if (slotStartMs < Date.now()) continue
-        if (slotStartMs >= block.taskDueDate) continue
 
         slots.add(`${dateStr}:${slot}`)
       }
@@ -394,7 +393,7 @@ export default function ScheduleTab() {
         </div>
       )}
 
-      <div className="flex flex-1 gap-4 min-h-0">
+      <div className="flex flex-1 gap-4 min-h-0 flex-col sm:flex-row">
         <div className="flex flex-1 flex-col min-h-0 min-w-0" data-grid>
           {isMobile ? (
             <MobileDayView

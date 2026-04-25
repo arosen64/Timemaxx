@@ -64,6 +64,16 @@ export default function MobileDayView({
   const allDayEvents = allDayEventsByDay[dateStr] ?? []
   const today = isToday(day)
 
+  let hasHighlightedSlotsToday = false
+  if (isAssignMode) {
+    for (let s = 0; s < TOTAL_SLOTS; s++) {
+      if (highlightedSlots.has(`${dateStr}:${s}`)) {
+        hasHighlightedSlotsToday = true
+        break
+      }
+    }
+  }
+
   function handlePrev() {
     if (dayIdx === 0) {
       onPrevBoundary()
@@ -111,6 +121,15 @@ export default function MobileDayView({
           <ChevronRightIcon size={14} />
         </button>
       </div>
+
+      {/* No-slots nudge — shown when assign mode is active but this day has nothing available */}
+      {isAssignMode && !hasHighlightedSlotsToday && (
+        <div className="flex items-center gap-2 border-b border-teal/30 bg-teal/10 px-3 py-2 font-body text-[11px] text-navy">
+          <span>No available slots today — use</span>
+          <span className="font-semibold">← →</span>
+          <span>to find an open time.</span>
+        </div>
+      )}
 
       {/* All-day events */}
       {calendarConnected && allDayEvents.length > 0 && (
