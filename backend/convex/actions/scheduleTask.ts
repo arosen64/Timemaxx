@@ -7,6 +7,9 @@ import {
   enumerateSlots,
   selectAllSlotsWithAI,
   isSlotValid,
+  buildDailyLoadMap,
+  computeMaxBlocksPerDay,
+  toDateStr,
   type OccupiedInterval,
   type WorkHoursRow,
 } from "../lib/scheduleSlots";
@@ -45,8 +48,10 @@ export const scheduleTask = action({
     });
     if (!user) throw new Error("User not found");
 
+    const focusBlockLength: number = user.focusBlockLength ?? 60;
     const workHoursGrid = (user.workHoursGrid ?? []) as WorkHoursRow[];
     const productivityTraits: unknown = user.productivityTraits;
+    const preferredDays: string[] = (productivityTraits as any)?.dayOfWeek ?? [];
 
     // Fetch unscheduled blocks for this task
     const studyBlocks = await ctx.runQuery(
@@ -80,6 +85,9 @@ export const scheduleTask = action({
         })),
     ];
 
+    const maxBlocksPerDayMap = computeMaxBlocksPerDay(workHoursGrid, focusBlockLength, preferredDays);
+    const dailyLoadMap = buildDailyLoadMap(occupiedIntervals, args.timezone, focusBlockLength);
+
     const nowMs = Date.now();
     const fromMs = Math.max(nowMs, task._creationTime);
 
@@ -92,6 +100,8 @@ export const scheduleTask = action({
         workHoursGrid,
         occupiedIntervals,
         timezone: args.timezone,
+        dailyLoadMap,
+        maxBlocksPerDayMap,
         recommendedStartMs: task.recommendedStart,
       })
     );
@@ -138,6 +148,9 @@ export const scheduleTask = action({
         endMs: chosen.startMs + durationMs,
         title: block.title,
       });
+
+      const placedDateStr = toDateStr(new Date(chosen.startMs), args.timezone);
+      dailyLoadMap.set(placedDateStr, (dailyLoadMap.get(placedDateStr) ?? 0) + 1);
 
       scheduled++;
     }

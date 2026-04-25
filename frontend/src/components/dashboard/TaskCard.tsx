@@ -7,6 +7,7 @@ import { type Id } from '../../../../backend/convex/_generated/dataModel'
 import { formatClassTagForDisplay } from '../../utils/classTagUtils'
 import TaskFeedbackForm, { type TaskFeedbackFormProps } from './TaskFeedbackForm'
 import EstimateBadge from './EstimateBadge'
+import WeightBadge from './WeightBadge'
 import SubtaskCard from './SubtaskCard'
 import StudyBlockRow from './StudyBlockRow'
 import StatusDropdown from './StatusDropdown'
@@ -126,33 +127,33 @@ export default function TaskCard({
       <div className="flex gap-3 px-[18px] py-4">
         <div className="mt-0.5 h-10 w-1 shrink-0 rounded" style={{ backgroundColor: barColor }} />
 
-        <div className="flex justify-between flex-1 min-w-0 gap-4">
+        <div className="flex flex-col gap-2 flex-1 min-w-0 md:flex-row md:justify-between md:gap-4">
           <div className="flex flex-col flex-1 min-w-0 gap-1">
             <div className="text-sm font-semibold truncate font-heading text-navy">
               {displayTitle(task)}
             </div>
             <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-blue">
-              <span>Due {formatDueDateTimeDisplay(task.dueDate)}</span>
-              {task.classTag ? <span>· {formatClassTagForDisplay(task.classTag)}</span> : null}
-              <span>· {task.taskType}</span>
+              <span className="whitespace-nowrap">Due {formatDueDateTimeDisplay(task.dueDate)}</span>
+              {task.classTag ? <span className="whitespace-nowrap">· {formatClassTagForDisplay(task.classTag)}</span> : null}
+              <span className="whitespace-nowrap">· {task.taskType}</span>
               {hasSubtasks ? (
                 <>
                   {anySubtaskPending && !task.isManualEstimate ? (
-                    <span className="flex items-center gap-1">
+                    <span className="flex items-center gap-1 whitespace-nowrap">
                       · <SpinnerIcon color="currentColor" size={11} /> Estimating subtasks…
                     </span>
                   ) : displayedEstimate !== undefined && displayedEstimate > 0 ? (
                     <>
-                      <span>· {formatMinutes(displayedEstimate)} total</span>
-                      <EstimateBadge isManual={task.isManualEstimate ?? false} />
-                      <span>· {subtasks.length} subtask{subtasks.length !== 1 ? 's' : ''}</span>
+                      <span className="whitespace-nowrap">· {formatMinutes(displayedEstimate)} total</span>
+                      <EstimateBadge isManual={task.isManualEstimate} />
+                      <span className="whitespace-nowrap">· {subtasks.length} subtask{subtasks.length !== 1 ? 's' : ''}</span>
                     </>
                   ) : null}
                 </>
               ) : task.timeEstimate !== undefined ? (
                 <>
-                  <span>· {formatMinutes(task.timeEstimate)}</span>
-                  <EstimateBadge isManual={task.isManualEstimate ?? false} />
+                  <span className="whitespace-nowrap">· {formatMinutes(task.timeEstimate)}</span>
+                  <EstimateBadge isManual={task.isManualEstimate} />
                   {!task.isManualEstimate && task.reasoning && !isEstimating && (
                     <button
                       type="button"
@@ -169,6 +170,7 @@ export default function TaskCard({
                   )}
                 </>
               ) : null}
+              <WeightBadge weight={task.assignmentWeight} />
             </div>
             {task.description.trim().length > 0 && (
               <div className="text-xs break-words text-light-blue line-clamp-4">
@@ -177,7 +179,7 @@ export default function TaskCard({
             )}
           </div>
 
-          <div className="flex w-[260px] shrink-0 flex-col items-end gap-2">
+          <div className="flex shrink-0 flex-col items-start gap-2 md:items-end md:w-[260px]">
             <div className="flex items-center gap-2">
               {isReadOnly ? (
                 <button
@@ -273,7 +275,7 @@ export default function TaskCard({
               </div>
             </div>
 
-            {isReadOnly && task.timeEstimate !== undefined &&
+            {task.timeEstimate !== undefined &&
               !task.isManualEstimate &&
               (!hasSubtasks || !anySubtaskPending) && (
                 <TaskFeedbackForm task={task} {...feedback} />

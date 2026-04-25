@@ -5165,14 +5165,31 @@
               "fontWeight": "600"
             },
             {
-              "type": "text",
-              "id": "ks9wy",
-              "name": "meta",
-              "fill": "$--muted-foreground",
-              "content": "Due tomorrow · ~2.5 hrs estimated",
-              "fontFamily": "Inter",
-              "fontSize": 12,
-              "fontWeight": "normal"
+              "type": "frame",
+              "id": "TCmr1",
+              "name": "metaRow",
+              "gap": 6,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "ks9wy",
+                  "name": "meta",
+                  "fill": "$--muted-foreground",
+                  "content": "Due tomorrow · ~2.5 hrs estimated",
+                  "fontFamily": "Inter",
+                  "fontSize": 12,
+                  "fontWeight": "normal"
+                },
+                {
+                  "id": "TCmr2",
+                  "type": "ref",
+                  "ref": "BWt01",
+                  "name": "weightBadge",
+                  "width": "fit_content",
+                  "height": "fit_content"
+                }
+              ]
             }
           ]
         },
@@ -20130,6 +20147,32 @@
           "name": "label",
           "fill": "$--success",
           "content": "AI",
+          "fontFamily": "Space Grotesk",
+          "fontSize": 11,
+          "fontWeight": "600"
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "BWt01",
+      "x": 7700,
+      "y": 300,
+      "name": "Badge/Weight",
+      "reusable": true,
+      "fill": "$--info-bg",
+      "cornerRadius": 4,
+      "padding": [
+        4,
+        10
+      ],
+      "children": [
+        {
+          "type": "text",
+          "id": "BWt02",
+          "name": "label",
+          "fill": "$--info-emphasis",
+          "content": "25%",
           "fontFamily": "Space Grotesk",
           "fontSize": 11,
           "fontWeight": "600"
