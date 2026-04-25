@@ -1,6 +1,6 @@
 # Scheduling Algorithm — Source of Truth
 
-Last updated: issue #507 (score-driven candidate selection)
+Last updated: issue #506 (deadline-window bucket scoring)
 
 ---
 
@@ -67,6 +67,19 @@ Implemented in `lib/scoreSlots.ts` (pure — no Convex deps). Called for every s
 | Buffer comfort | Both surrounding gaps > 15 min (or no surrounding event) | +1 |
 | Daily load penalty | Existing occupied intervals on the same calendar date (`speculativeDailyLoadMap`) | −1 each, max −3 |
 | Difficulty bonus | Task's `difficultyRating ≥ 4` AND time-of-day match | +1 |
+| Deadline bucket | Slot's position within 5 equal-width buckets across `[now, dueDate]`, weighted by `productivityTraits.deadlineBehavior` | 0 to +2 |
+
+### Deadline bucket scoring
+
+The `[now, dueDate]` window is divided into 5 equal buckets (0 = earliest, 4 = closest to due date). The raw bucket weight is normalised to 0–2 via `round((weight / maxWeight) * 2)`.
+
+| Setting | Bucket weights (0 → 4) | Effect |
+|---|---|---|
+| `"Well in advance"` | `[3, 3, 2, 1, 0]` | Gradual bias toward earlier slots |
+| `"Evenly spread"` (default) | — | No signal (0 for all slots) |
+| `"Near deadline"` | `[1, 1, 2, 3, 3]` | Gradual bias toward later slots |
+
+When `deadlineBehavior` is not set, the component defaults to 0. Both scheduling entry points (`scheduleAllBlocks`, `scheduleBlock`) pass `dueDateMs` and `nowMs` per block so the bucket is computed relative to each task's window.
 
 ### Time-of-day label → minute range mapping
 
@@ -145,6 +158,7 @@ isPhysValid(c) = isSlotValid(c.startMs, durationMs, workHoursGrid, occupiedInter
 | `dueDate` | `task.dueDate` or `subtask.suggestedCompletionAt` |
 | `studyBlockLength` | `block.studyBlockLength` (set at block creation from `focusBlockLength`) |
 | `difficultyRating` | `userCourses[task.courseId].difficultyRating` (used in scoring bonus) |
+| `deadlineBehavior` | `user.productivityTraits.deadlineBehavior` (used in deadline bucket scoring) |
 
 ---
 
