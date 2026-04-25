@@ -45,6 +45,7 @@ export type TaskType = {
   courseId?: Id<'userCourses'>
   reasoning?: ReasoningTrace
   status?: TaskStatus
+  assignmentWeight?: number
 }
 
 export const BUILT_IN_TASK_TYPES = [
@@ -82,6 +83,8 @@ export type EditForm = {
   timeEstimate?: number
   /** True when user explicitly chose to reset to AI estimation */
   useAiEstimate?: boolean
+  /** Grade weight as a percentage 0–100 */
+  assignmentWeight?: number
 }
 
 export const TASK_TYPE_OPTIONS: BuiltInTaskType[] = [...BUILT_IN_TASK_TYPES]

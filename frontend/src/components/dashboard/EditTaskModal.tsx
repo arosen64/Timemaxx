@@ -60,6 +60,7 @@ export default function EditModal({
         timeEstimate: task?.isManualEstimate && task?.timeEstimate !== undefined
           ? String(task.timeEstimate)
           : '',
+        assignmentWeight: task?.assignmentWeight,
       }}
       showAiEstimateReset={task?.isManualEstimate === true}
       classTagCourses={classTagCourses}
