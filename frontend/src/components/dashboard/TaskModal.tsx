@@ -52,8 +52,6 @@ interface TaskModalProps {
   }
   /** Current-term classes; class tag may only be empty or one of these (optional field) */
   classTagCourses?: ClassTagCourseOption[]
-  /** When true, show a "Use AI Estimate" reset button in the time estimate section */
-  showAiEstimateReset?: boolean
   /** When true, hides the entire subtask generation section (e.g. when editing a subtask) */
   hideSubtaskGeneration?: boolean
   /** When > 0, show Delete/Regenerate subtask buttons instead of the generate checkbox */
@@ -77,7 +75,6 @@ export default function TaskModal({
   primaryLoadingLabel,
   initialValues,
   classTagCourses,
-  showAiEstimateReset = false,
   hideSubtaskGeneration = false,
   existingSubtaskCount,
   existingTaskId,
@@ -107,7 +104,8 @@ export default function TaskModal({
     const mins = parseInt(initialValues.timeEstimate, 10)
     return isNaN(mins) ? '' : String(mins % 60)
   })
-  const [useAiEstimate, setUseAiEstimate] = useState(false)
+  // Default to AI mode when there is no pre-existing manual estimate to show.
+  const [useAiEstimate, setUseAiEstimate] = useState(() => isNaN(parseInt(initialValues.timeEstimate, 10)))
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [generateSubtasks, setGenerateSubtasks] = useState(false)
@@ -117,6 +115,9 @@ export default function TaskModal({
   const [pendingTaskId, setPendingTaskId] = useState<Id<'tasks'> | null>(null)
   const [pendingCourseId, setPendingCourseId] = useState<Id<'userCourses'> | undefined>(undefined)
   const requestGenerateSubtasks = useAction(api.actions.requestGenerateSubtasks.requestGenerateSubtasks)
+
+  // useAiEstimate is the single source of truth for AI vs manual mode.
+  const isInManualMode = !useAiEstimate
 
   const classTagSelectOptions = useMemo(
     () =>
@@ -139,7 +140,7 @@ export default function TaskModal({
     const mins = parseInt(initialValues.timeEstimate, 10)
     setEstimateHours(isNaN(mins) ? '' : String(Math.floor(mins / 60)))
     setEstimateMinutes(isNaN(mins) ? '' : String(mins % 60))
-    setUseAiEstimate(false)
+    setUseAiEstimate(isNaN(mins))
     setError(null)
     setSubmitting(false)
     setGenerateSubtasks(false)
@@ -215,6 +216,11 @@ export default function TaskModal({
           ? (isNaN(hrs) ? 0 : hrs) * 60 + (isNaN(mins) ? 0 : mins)
           : NaN
       const parsedEstimate = !useAiEstimate && !isNaN(totalMinutes) && totalMinutes > 0 ? totalMinutes : undefined
+      if (parsedEstimate !== undefined && parsedEstimate < 15) {
+        setError('Time estimate must be at least 15 minutes.')
+        setSubmitting(false)
+        return
+      }
       const form: EditForm = {
         title: taskName,
         description,
@@ -378,6 +384,13 @@ export default function TaskModal({
                 </button>
               </div>
             </div>
+          ) : isInManualMode ? (
+            <div className="flex flex-col gap-1">
+              <label className="font-heading text-[13px] font-semibold text-navy">Subtasks</label>
+              <p className="font-body text-xs text-light-blue">
+                AI subtask generation is unavailable with a manual time estimate. Switch to AI estimate to enable it.
+              </p>
+            </div>
           ) : (
             <div className="flex flex-col gap-1">
               <label className="flex cursor-pointer items-center gap-2.5">
@@ -427,11 +440,8 @@ export default function TaskModal({
               <label className="font-heading text-[13px] font-semibold text-navy">
                 Time estimate <span className="font-normal text-light-blue">(optional)</span>
               </label>
-              {!useAiEstimate && estimateHours.trim() === '' && estimateMinutes.trim() === '' && (
-                <p className="mt-0.5 font-body text-xs text-light-blue">Leave blank to let AI estimate</p>
-              )}
             </div>
-            {showAiEstimateReset && !useAiEstimate && (
+            {!useAiEstimate && (
               <Button
                 variant="outline"
                 className="h-7 px-3 text-xs font-body font-medium"
@@ -448,12 +458,20 @@ export default function TaskModal({
               <Button
                 variant="outline"
                 className="h-7 px-3 text-xs font-body font-medium text-slate-blue"
-                onClick={() => setUseAiEstimate(false)}
+                onClick={() => {
+                  setUseAiEstimate(false)
+                  setGenerateSubtasks(false)
+                }}
               >
                 Set manually
               </Button>
             )}
           </div>
+          {!useAiEstimate && existingSubtaskCount !== undefined && existingSubtaskCount > 0 && (
+            <p className="font-body text-xs text-burnt-orange">
+              Saving will delete your {existingSubtaskCount} existing subtask{existingSubtaskCount !== 1 ? 's' : ''} and their scheduled blocks.
+            </p>
+          )}
           {useAiEstimate ? (
             <div className="rounded-lg border border-border bg-bg-gray px-3.5 py-3 font-body text-sm text-light-blue">
               AI will estimate after saving
