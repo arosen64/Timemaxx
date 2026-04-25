@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import type { Id } from "../_generated/dataModel";
 
+
 export const getStudyBlocksByTask = query({
   args: {
     taskId: v.id("tasks"),
@@ -279,5 +280,59 @@ export const getFutureStudyBlocksForExport = internalQuery({
     }
 
     return result;
+  },
+});
+
+/**
+ * "At Risk" check: fires when the total duration of uncompleted study blocks for
+ * this task (including subtask blocks) exceeds the raw clock time remaining until
+ * the due date.
+ *
+ * NOTE: We intentionally ignore work-hours grid availability here (i.e. we do not
+ * filter to only count slots the user has marked as available). Factoring in the
+ * grid would require per-slot iteration and timezone handling; the simpler wall-clock
+ * comparison is a good-enough signal for an at-risk warning.
+ */
+export const getTaskAtRiskStatus = query({
+  args: { taskId: v.id("tasks") },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+
+    const task = await ctx.db.get(args.taskId);
+    if (!task || task.userId !== userId) return null;
+
+    const nowMs = Date.now();
+    const minutesUntilDue = (task.dueDate - nowMs) / (60 * 1000);
+
+    // Sum uncompleted blocks on the task itself
+    const taskBlocks = await ctx.db
+      .query("studyBlocks")
+      .withIndex("by_taskId", (q) => q.eq("taskId", args.taskId))
+      .collect();
+
+    let uncompletedMinutes = taskBlocks
+      .filter((b) => !b.isCompleted)
+      .reduce((sum, b) => sum + b.studyBlockLength, 0);
+
+    // Also include uncompleted blocks belonging to subtasks of this task
+    const subtasks = await ctx.db
+      .query("subtasks")
+      .withIndex("by_parentTaskId", (q) => q.eq("parentTaskId", args.taskId))
+      .collect();
+
+    for (const subtask of subtasks) {
+      const subtaskBlocks = await ctx.db
+        .query("studyBlocks")
+        .withIndex("by_subtaskId", (q) => q.eq("subtaskId", subtask._id))
+        .collect();
+      uncompletedMinutes += subtaskBlocks
+        .filter((b) => !b.isCompleted)
+        .reduce((sum, b) => sum + b.studyBlockLength, 0);
+    }
+
+    return {
+      isWarning: uncompletedMinutes > minutesUntilDue,
+    };
   },
 });

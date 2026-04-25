@@ -5165,31 +5165,14 @@
               "fontWeight": "600"
             },
             {
-              "type": "frame",
-              "id": "TCmr1",
-              "name": "metaRow",
-              "gap": 6,
-              "alignItems": "center",
-              "children": [
-                {
-                  "type": "text",
-                  "id": "ks9wy",
-                  "name": "meta",
-                  "fill": "$--muted-foreground",
-                  "content": "Due tomorrow · ~2.5 hrs estimated",
-                  "fontFamily": "Inter",
-                  "fontSize": 12,
-                  "fontWeight": "normal"
-                },
-                {
-                  "id": "TCmr2",
-                  "type": "ref",
-                  "ref": "BWt01",
-                  "name": "weightBadge",
-                  "width": "fit_content",
-                  "height": "fit_content"
-                }
-              ]
+              "type": "text",
+              "id": "ks9wy",
+              "name": "meta",
+              "fill": "$--muted-foreground",
+              "content": "Due tomorrow · ~2.5 hrs estimated",
+              "fontFamily": "Inter",
+              "fontSize": 12,
+              "fontWeight": "normal"
             }
           ]
         },
@@ -20155,32 +20138,6 @@
     },
     {
       "type": "frame",
-      "id": "BWt01",
-      "x": 7700,
-      "y": 300,
-      "name": "Badge/Weight",
-      "reusable": true,
-      "fill": "$--info-bg",
-      "cornerRadius": 4,
-      "padding": [
-        4,
-        10
-      ],
-      "children": [
-        {
-          "type": "text",
-          "id": "BWt02",
-          "name": "label",
-          "fill": "$--info-emphasis",
-          "content": "25%",
-          "fontFamily": "Space Grotesk",
-          "fontSize": 11,
-          "fontWeight": "600"
-        }
-      ]
-    },
-    {
-      "type": "frame",
       "id": "3Vv36",
       "x": 13200,
       "y": 0,
@@ -22907,7 +22864,8 @@
           "fill": "$--muted-foreground",
           "content": "Apr 25",
           "fontFamily": "Inter",
-          "fontSize": 10
+          "fontSize": 10,
+          "fontWeight": "normal"
         }
       ]
     },
@@ -22978,7 +22936,8 @@
               "fill": "$--accent",
               "content": "Apr 25",
               "fontFamily": "Inter",
-              "fontSize": 10
+              "fontSize": 10,
+              "fontWeight": "normal"
             }
           ]
         }
@@ -23023,7 +22982,8 @@
           "fill": "$--muted-foreground",
           "content": "Select a task to schedule",
           "fontFamily": "Inter",
-          "fontSize": 12
+          "fontSize": 12,
+          "fontWeight": "normal"
         },
         {
           "type": "frame",
@@ -23179,7 +23139,8 @@
                   "fill": "$--primary",
                   "content": "Outline methodology",
                   "fontFamily": "Inter",
-                  "fontSize": 12
+                  "fontSize": 12,
+                  "fontWeight": "normal"
                 },
                 {
                   "type": "text",
@@ -23224,7 +23185,8 @@
                   "fill": "$--primary",
                   "content": "Write results section",
                   "fontFamily": "Inter",
-                  "fontSize": 12
+                  "fontSize": 12,
+                  "fontWeight": "normal"
                 },
                 {
                   "type": "text",
@@ -23330,7 +23292,8 @@
                       "fill": "$--muted-foreground",
                       "content": "60 min",
                       "fontFamily": "Inter",
-                      "fontSize": 10
+                      "fontSize": 10,
+                      "fontWeight": "normal"
                     }
                   ]
                 }
@@ -23768,7 +23731,8 @@
                           "fill": "$--muted-foreground",
                           "content": "Select a task to schedule",
                           "fontFamily": "Inter",
-                          "fontSize": 11
+                          "fontSize": 11,
+                          "fontWeight": "normal"
                         },
                         {
                           "type": "frame",
@@ -23816,6 +23780,44 @@
               ]
             }
           ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "DJ8xu",
+      "x": 7700,
+      "y": 300,
+      "name": "Badge/DueDateWarning",
+      "reusable": true,
+      "fill": "$--urgent-bg",
+      "cornerRadius": 4,
+      "gap": 4,
+      "padding": [
+        4,
+        10
+      ],
+      "alignItems": "center",
+      "children": [
+        {
+          "type": "icon_font",
+          "id": "ewD8v",
+          "name": "icon",
+          "width": 11,
+          "height": 11,
+          "iconFontName": "triangle-alert",
+          "iconFontFamily": "lucide",
+          "fill": "$--destructive"
+        },
+        {
+          "type": "text",
+          "id": "kM0gC",
+          "name": "label",
+          "fill": "$--destructive",
+          "content": "At Risk",
+          "fontFamily": "Space Grotesk",
+          "fontSize": 11,
+          "fontWeight": "600"
         }
       ]
     }
