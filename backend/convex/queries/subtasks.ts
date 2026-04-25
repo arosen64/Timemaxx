@@ -40,17 +40,14 @@ export const getAllSubtasksForUser = query({
   },
 });
 
-// Internal version for use in actions (no auth check)
-export const getSubtasksForTaskInternal = internalQuery({
-  args: { parentTaskId: v.id("tasks") },
+// Internal query for fetching all subtasks for a user (used by bulk scheduling actions)
+export const getAllSubtasksInternal = internalQuery({
+  args: { userId: v.id("users") },
   handler: async (ctx, args) => {
-    const subtasks = await ctx.db
+    return await ctx.db
       .query("subtasks")
-      .withIndex("by_parentTaskId", (q) =>
-        q.eq("parentTaskId", args.parentTaskId)
-      )
+      .withIndex("by_userId", (q) => q.eq("userId", args.userId))
       .collect();
-    return subtasks.sort((a, b) => a.order - b.order);
   },
 });
 
