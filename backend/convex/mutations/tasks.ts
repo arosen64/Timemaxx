@@ -335,16 +335,17 @@ export const updateTaskStatus = mutation({
         await ctx.db.patch(subtask._id, { status: "completed" });
       }
 
-      // Unschedule task-level study blocks
+      // Unschedule and mark task-level study blocks complete
       const taskBlocks = await ctx.db
         .query("studyBlocks")
         .withIndex("by_taskId", (q) => q.eq("taskId", args.taskId))
         .collect();
       for (const block of taskBlocks) {
         await unscheduleBlock(ctx, block._id);
+        await ctx.db.patch(block._id, { isCompleted: true });
       }
 
-      // Unschedule subtask-level study blocks — single query filtered in memory
+      // Unschedule and mark subtask-level study blocks complete — single query filtered in memory
       if (subtasks.length > 0) {
         const subtaskIdSet = new Set<string>(subtasks.map((s) => s._id as string));
         const allUserBlocks = await ctx.db
@@ -354,6 +355,7 @@ export const updateTaskStatus = mutation({
         for (const block of allUserBlocks) {
           if (block.subtaskId !== undefined && subtaskIdSet.has(block.subtaskId as string)) {
             await unscheduleBlock(ctx, block._id);
+            await ctx.db.patch(block._id, { isCompleted: true });
           }
         }
       }
@@ -362,6 +364,30 @@ export const updateTaskStatus = mutation({
       for (const subtask of subtasks) {
         if (subtask.status === "completed") {
           await ctx.db.patch(subtask._id, { status: "not_started" });
+        }
+      }
+
+      // When fully reopening, unmark all study blocks as completed
+      if (args.status === "not_started") {
+        const taskBlocks = await ctx.db
+          .query("studyBlocks")
+          .withIndex("by_taskId", (q) => q.eq("taskId", args.taskId))
+          .collect();
+        for (const block of taskBlocks) {
+          await ctx.db.patch(block._id, { isCompleted: false });
+        }
+
+        if (subtasks.length > 0) {
+          const subtaskIdSet = new Set<string>(subtasks.map((s) => s._id as string));
+          const allUserBlocks = await ctx.db
+            .query("studyBlocks")
+            .withIndex("by_userId", (q) => q.eq("userId", userId))
+            .collect();
+          for (const block of allUserBlocks) {
+            if (block.subtaskId !== undefined && subtaskIdSet.has(block.subtaskId as string)) {
+              await ctx.db.patch(block._id, { isCompleted: false });
+            }
+          }
         }
       }
     }
