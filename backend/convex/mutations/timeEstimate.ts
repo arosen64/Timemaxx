@@ -133,12 +133,32 @@ export const setManualTimeEstimate = mutation({
     const task = await ctx.db.get(args.taskId);
     if (!task || task.userId !== userId) throw new Error("Task not found");
 
+    if (args.timeEstimate < 15) {
+      throw new Error("Time estimate must be at least 15 minutes.");
+    }
+
+    // Delete all existing subtasks and their study blocks
+    const subtasks = await ctx.db
+      .query("subtasks")
+      .withIndex("by_parentTaskId", (q) => q.eq("parentTaskId", args.taskId))
+      .collect();
+    for (const subtask of subtasks) {
+      const subtaskBlocks = await ctx.db
+        .query("studyBlocks")
+        .withIndex("by_subtaskId", (q) => q.eq("subtaskId", subtask._id))
+        .collect();
+      for (const block of subtaskBlocks) await ctx.db.delete(block._id);
+      await ctx.db.delete(subtask._id);
+    }
+
     await ctx.db.patch(args.taskId, {
       timeEstimate: args.timeEstimate,
       isManualEstimate: true,
       recommendedStart: computeRecommendedStart(Date.now(), task.dueDate, args.timeEstimate),
+      reasoning: undefined,
     });
 
+    // Rebuild task-level blocks sized to the manual estimate using user preferences
     await rebuildStudyBlocks(ctx, args.taskId, args.timeEstimate);
   },
 });
@@ -154,20 +174,18 @@ export const clearManualEstimate = mutation({
     const task = await ctx.db.get(args.taskId);
     if (!task || task.userId !== userId) throw new Error("Task not found");
 
+    // Delete task-level blocks so AI can regenerate fresh
+    const existingBlocks = await ctx.db
+      .query("studyBlocks")
+      .withIndex("by_taskId", (q) => q.eq("taskId", args.taskId))
+      .collect();
+    for (const block of existingBlocks) await ctx.db.delete(block._id);
+
     await ctx.db.patch(args.taskId, {
       isManualEstimate: false,
       timeEstimate: undefined,
       recommendedStart: undefined,
     });
-
-    // Delete existing study blocks so AI can regenerate fresh
-    const existingBlocks = await ctx.db
-      .query("studyBlocks")
-      .withIndex("by_taskId", (q) => q.eq("taskId", args.taskId))
-      .collect();
-    for (const block of existingBlocks) {
-      await ctx.db.delete(block._id);
-    }
   },
 });
 

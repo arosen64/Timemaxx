@@ -172,7 +172,7 @@ export default function UpcomingSchedulePanel() {
   }
 
   return (
-    <aside className="flex w-[300px] shrink-0 flex-col gap-4">
+    <aside className="flex w-full lg:w-[300px] lg:shrink-0 flex-col gap-4">
       <h2 className="font-heading text-base font-bold text-navy">Today's Tasks</h2>
 
       {taskSummaries === undefined ? (
