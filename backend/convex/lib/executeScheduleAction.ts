@@ -30,25 +30,25 @@ async function scheduleTaskFromOutput(
     return { aiText: "All blocks for this task are already scheduled!" };
   }
 
-  const result = await ctx.runAction(api.actions.scheduleTask.scheduleTask, {
+  const result = await ctx.runAction(api.actions.scheduleAllBlocks.scheduleAllBlocks, {
     taskId: activeTaskId,
     timezone,
   });
 
-  if ("error" in result) {
-    return { aiText: "I couldn't find a free time slot — try adjusting your work hours or the task's due date." };
-  }
-
-  const scheduled = result.scheduled;
-  const alreadyDone = unscheduledBefore - scheduled;
+  const { scheduled } = result;
+  const remaining = unscheduledBefore - scheduled;
 
   if (scheduled === 0) {
-    return { aiText: "All blocks for this task are already scheduled!" };
+    return { aiText: "I couldn't find free time slots — try adjusting your work hours or the task's due date." };
   }
-  if (alreadyDone > 0) {
-    return { aiText: `Done! Scheduled ${scheduled} block(s) (${alreadyDone} were already placed).` };
+
+  if (remaining === 0) {
+    return { aiText: `Done! I've scheduled all ${scheduled} study block(s) for that task.` };
   }
-  return { aiText: `Done! I've scheduled ${scheduled} study block(s) for that task.` };
+
+  return {
+    aiText: `Done! I've planned the first ${scheduled} block(s) for that task. ${remaining} more are still unscheduled — head to the **Schedule** page to fit in the rest.`,
+  };
 }
 
 async function scheduleBlockFromOutput(
