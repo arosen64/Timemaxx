@@ -239,8 +239,8 @@ export const scheduleAllBlocks = action({
       const underCap = availEntries.filter(
         ([, { repMs }]) => !isDailyCapReached(repMs, args.timezone, speculativeDailyLoadMap, maxBlocksPerDayMap),
       );
-      const pool2 = underCap.length > 0 ? underCap : availEntries;
-      const [targetDate] = pool2.reduce((a, b) => (a[1].load <= b[1].load ? a : b));
+      const candidateDays = underCap.length > 0 ? underCap : availEntries;
+      const [targetDate] = candidateDays.reduce((a, b) => (a[1].load <= b[1].load ? a : b));
 
       // Pull up to MAX_CANDIDATES slots from just the target day, latest-first.
       const targetPool = pool.filter(
