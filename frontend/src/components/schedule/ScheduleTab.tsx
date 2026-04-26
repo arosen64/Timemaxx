@@ -9,6 +9,8 @@ import MobileDayView from './MobileDayView'
 import CalendarSelectorPopup from './CalendarSelectorPopup'
 import ScheduleHeader from './ScheduleHeader'
 import ClassPanel from './ClassPanel'
+import CalendarNudge from './CalendarNudge'
+import NoCalendarNudge from './NoCalendarNudge'
 import { useIsMobile } from '../../hooks/useIsMobile'
 import { computeOverlapLayout } from './overlapLayout'
 import { offsetDate, isoDateString, minutesFromMidnight, SLOT_HEIGHT, MAX_OFFSET_DAYS, DAYS_FULL } from './utils'
@@ -47,6 +49,7 @@ export default function ScheduleTab() {
   const autoRescheduleAction = useAction(api.actions.autoRescheduleConflicts.autoRescheduleConflicts)
   const fetchCalendarEventsAction = useAction(api.actions.fetchCalendarEvents.fetchCalendarEvents)
   const exportStudyBlocksAction = useAction(api.actions.exportStudyBlocksToCalendar.exportStudyBlocksToCalendar)
+  const initiateCalendarOAuth = useAction(api.actions.initiateGoogleCalendarOAuth.initiateGoogleCalendarOAuth)
 
   const isMobile = useIsMobile()
   const [weekOffset, setWeekOffset] = useState(0)
@@ -60,6 +63,11 @@ export default function ScheduleTab() {
   const [isExporting, setIsExporting] = useState(false)
   const [exportMsg, setExportMsg] = useState<string | null>(null)
   const [scheduleAllMsg, setScheduleAllMsg] = useState<string | null>(null)
+  const [showNudge, setShowNudge] = useState(false)
+  const [pendingSchedule, setPendingSchedule] = useState<(() => void) | null>(null)
+  const [isConnecting, setIsConnecting] = useState(false)
+  const [connectError, setConnectError] = useState<string | null>(null)
+  const [noCalendarPending, setNoCalendarPending] = useState<(() => void) | null>(null)
 
   const gridRef = useRef<HTMLDivElement>(null)
 
@@ -294,6 +302,63 @@ export default function ScheduleTab() {
     }
   }, [exportStudyBlocksAction, fetchCalendarEventsAction, startDateStr, timezone])
 
+  // calendarList already excludes the timemaxx export calendar (filtered server-side),
+  // so any selectedCalendarId that appears in calendarList is a real user-visible calendar.
+  const noCalendarCondition =
+    calendarConnected &&
+    calendarData !== null &&
+    (selectedCalendarIds ?? []).filter(
+      (id) => calendarData.calendarList.some((c) => c.id === id)
+    ).length === 0
+
+  function maybeNudge(proceed: () => void) {
+    if (!calendarConnected) {
+      setPendingSchedule(() => proceed)
+      setShowNudge(true)
+    } else if (noCalendarCondition) {
+      setNoCalendarPending(() => proceed)
+    } else {
+      proceed()
+    }
+  }
+
+  function handleNudgeConnect() {
+    setIsConnecting(true)
+    setConnectError(null)
+    initiateCalendarOAuth({})
+      .then((url) => { window.location.href = url })
+      .catch(() => {
+        setIsConnecting(false)
+        setConnectError('Failed to start Google Calendar sign-in. Please try again.')
+      })
+  }
+
+  function handleNudgeScheduleAnyway() {
+    setShowNudge(false)
+    pendingSchedule?.()
+    setPendingSchedule(null)
+  }
+
+  function handleNudgeDismiss() {
+    setShowNudge(false)
+    setPendingSchedule(null)
+  }
+
+  function handleNoCalendarScheduleAnyway() {
+    const fn = noCalendarPending
+    setNoCalendarPending(null)
+    fn?.()
+  }
+
+  function handleNoCalendarSelectCalendars() {
+    setNoCalendarPending(null)
+    setSelectorOpen(true)
+  }
+
+  function handleNoCalendarDismiss() {
+    setNoCalendarPending(null)
+  }
+
   async function handleToggleCalendar(calId: string) {
     const current = selectedCalendarIds ?? []
     const next = current.includes(calId) ? current.filter((id) => id !== calId) : [...current, calId]
@@ -308,6 +373,7 @@ export default function ScheduleTab() {
   }
 
   const hasIndicator = calendarConnected && (!selectedCalendarIds || selectedCalendarIds.length === 0)
+
 
   const pendingExportCount = useMemo(() => {
     if (!calendarConnected) return 0
@@ -373,7 +439,7 @@ export default function ScheduleTab() {
 
 {pendingExportCount > 0 && (
         <div className="mb-3 flex items-center gap-2 rounded-lg border border-sky-blue bg-info-bg px-4 py-2 text-sm text-navy">
-          <CalendarIcon color="#005A8E" size={14} />
+          <span className="text-info-dark"><CalendarIcon color="currentColor" size={14} /></span>
           <span>
             {pendingExportCount} block{pendingExportCount !== 1 ? 's' : ''} added or moved — export to sync with Google Calendar.
           </span>
@@ -454,6 +520,7 @@ export default function ScheduleTab() {
           onToggleAssign={(id) => setAssigningBlockId((prev) => (prev === id ? null : id))}
           timezone={timezone}
           onScheduleAllMsg={setScheduleAllMsg}
+          onBeforeSchedule={maybeNudge}
         />
       </div>
 
@@ -463,6 +530,24 @@ export default function ScheduleTab() {
           selectedIds={selectedCalendarIds ?? []}
           onToggle={handleToggleCalendar}
           onClose={() => setSelectorOpen(false)}
+        />
+      )}
+
+      {showNudge && (
+        <CalendarNudge
+          onConnect={handleNudgeConnect}
+          onScheduleAnyway={handleNudgeScheduleAnyway}
+          onDismiss={handleNudgeDismiss}
+          isConnecting={isConnecting}
+          connectError={connectError}
+        />
+      )}
+
+      {noCalendarPending !== null && (
+        <NoCalendarNudge
+          onScheduleAnyway={handleNoCalendarScheduleAnyway}
+          onSelectCalendars={handleNoCalendarSelectCalendars}
+          onDismiss={handleNoCalendarDismiss}
         />
       )}
     </div>
