@@ -33,7 +33,7 @@ export default function ScheduleHeader({
     <div className="flex items-center justify-between mb-4 rounded-xl bg-white border border-border px-4 py-3 lg:px-6 lg:py-4">
       <h1 className="font-heading text-lg font-bold text-navy lg:text-xl">Schedule</h1>
 
-      <div className="flex items-center gap-1.5 lg:gap-2">
+      <div className="hidden md:flex items-center gap-1.5 lg:gap-2">
         <button
           type="button"
           onClick={onPrevWeek}
@@ -76,20 +76,21 @@ export default function ScheduleHeader({
             onClick={onExport}
             disabled={isExporting}
             icon={isExporting ? <SpinnerIcon color="#4E6A8C" size={14} /> : <CalendarIcon color="#4E6A8C" size={14} />}
-            className="h-9 px-3 text-xs lg:px-4 lg:text-sm"
+            className="h-11 min-w-[44px] sm:h-9 sm:min-w-0 px-2 sm:px-3 text-xs lg:px-4 lg:text-sm"
+            aria-label="Export to Google Calendar"
           >
-            {isExporting ? 'Exporting…' : 'Export to GCal'}
+            <span className="hidden sm:inline">{isExporting ? 'Exporting…' : 'Export to GCal'}</span>
           </Button>
         )}
         {calendarConnected && (
           <button
             type="button"
             onClick={onOpenSelector}
-            className={`flex items-center gap-2 rounded-lg px-3 h-9 font-heading text-xs font-semibold text-white transition hover:opacity-90 lg:px-4 lg:text-sm ${hasCalendarIndicator ? 'bg-info-bg text-navy' : 'bg-navy'}`}
+            className={`flex items-center gap-2 rounded-lg px-3 h-11 sm:h-9 min-w-[44px] sm:min-w-0 font-heading text-xs font-semibold text-white transition hover:opacity-90 lg:px-4 lg:text-sm ${hasCalendarIndicator ? 'bg-info-bg text-navy' : 'bg-navy'}`}
             aria-label="Select calendars"
           >
             <CalendarIcon color="#86C8BC" size={14} />
-            Calendars
+            <span className="hidden sm:inline">Calendars</span>
             {hasCalendarIndicator && (
               <span className="flex h-2 w-2 rounded-full bg-sky-blue" aria-hidden="true" />
             )}

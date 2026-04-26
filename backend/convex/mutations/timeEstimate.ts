@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import type { MutationCtx } from "../_generated/server";
 import type { Id } from "../_generated/dataModel";
+import { computeRecommendedStart, computeDailyStudyMinutes } from "../lib/scheduleSlots";
 
 export async function rebuildStudyBlocksForSubtask(
   ctx: MutationCtx,
@@ -100,9 +101,14 @@ export const setTimeEstimate = internalMutation({
     // Do not overwrite a manually set estimate
     if (task.isManualEstimate) return;
 
+    const user = await ctx.db.get(task.userId);
     await ctx.db.patch(args.taskId, {
       timeEstimate: args.timeEstimate,
       reasoning: args.reasoning,
+      recommendedStart: computeRecommendedStart(
+        Date.now(), task.dueDate, args.timeEstimate,
+        computeDailyStudyMinutes(user?.workHoursGrid),
+      ),
     });
 
     // When subtasks exist, block rebuilding is owned by the subtask rollup in
@@ -131,11 +137,36 @@ export const setManualTimeEstimate = mutation({
     const task = await ctx.db.get(args.taskId);
     if (!task || task.userId !== userId) throw new Error("Task not found");
 
+    if (args.timeEstimate < 15) {
+      throw new Error("Time estimate must be at least 15 minutes.");
+    }
+
+    // Delete all existing subtasks and their study blocks
+    const subtasks = await ctx.db
+      .query("subtasks")
+      .withIndex("by_parentTaskId", (q) => q.eq("parentTaskId", args.taskId))
+      .collect();
+    for (const subtask of subtasks) {
+      const subtaskBlocks = await ctx.db
+        .query("studyBlocks")
+        .withIndex("by_subtaskId", (q) => q.eq("subtaskId", subtask._id))
+        .collect();
+      for (const block of subtaskBlocks) await ctx.db.delete(block._id);
+      await ctx.db.delete(subtask._id);
+    }
+
+    const user = await ctx.db.get(userId);
     await ctx.db.patch(args.taskId, {
       timeEstimate: args.timeEstimate,
       isManualEstimate: true,
+      recommendedStart: computeRecommendedStart(
+        Date.now(), task.dueDate, args.timeEstimate,
+        computeDailyStudyMinutes(user?.workHoursGrid),
+      ),
+      reasoning: undefined,
     });
 
+    // Rebuild task-level blocks sized to the manual estimate using user preferences
     await rebuildStudyBlocks(ctx, args.taskId, args.timeEstimate);
   },
 });
@@ -151,19 +182,18 @@ export const clearManualEstimate = mutation({
     const task = await ctx.db.get(args.taskId);
     if (!task || task.userId !== userId) throw new Error("Task not found");
 
-    await ctx.db.patch(args.taskId, {
-      isManualEstimate: false,
-      timeEstimate: undefined,
-    });
-
-    // Delete existing study blocks so AI can regenerate fresh
+    // Delete task-level blocks so AI can regenerate fresh
     const existingBlocks = await ctx.db
       .query("studyBlocks")
       .withIndex("by_taskId", (q) => q.eq("taskId", args.taskId))
       .collect();
-    for (const block of existingBlocks) {
-      await ctx.db.delete(block._id);
-    }
+    for (const block of existingBlocks) await ctx.db.delete(block._id);
+
+    await ctx.db.patch(args.taskId, {
+      isManualEstimate: false,
+      timeEstimate: undefined,
+      recommendedStart: undefined,
+    });
   },
 });
 

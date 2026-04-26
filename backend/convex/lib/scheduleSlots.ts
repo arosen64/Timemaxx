@@ -28,7 +28,40 @@ export const SCHEDULE_HORIZON_MS = 21 * 24 * 60 * 60 * 1000; // 21 days
 const MAX_CANDIDATES = 20;
 export const FIFTEEN_MIN_MS = 15 * 60 * 1000;
 export const DEFAULT_DUE_FALLBACK_MS = 7 * 24 * 60 * 60 * 1000;
-export const TWO_WEEKS_MS = 14 * 24 * 60 * 60 * 1000;
+const DAY_MS = 24 * 60 * 60 * 1000;
+const DEFAULT_DAILY_STUDY_MINUTES = 120;
+
+/**
+ * Computes the average available study minutes per day from the user's
+ * workHoursGrid. Each row's available minutes = (48 − blocked.length) × 30.
+ * Falls back to DEFAULT_DAILY_STUDY_MINUTES when the grid is absent or empty.
+ */
+export function computeDailyStudyMinutes(
+  workHoursGrid: WorkHoursRow[] | undefined,
+): number {
+  if (!workHoursGrid || workHoursGrid.length === 0) return DEFAULT_DAILY_STUDY_MINUTES;
+  const total = workHoursGrid.reduce((sum, row) => sum + (48 - row.blocked.length) * 30, 0);
+  return Math.max(DEFAULT_DAILY_STUDY_MINUTES, total / workHoursGrid.length);
+}
+
+/**
+ * Returns the earliest sensible start date for a task, based on how much work
+ * it requires. Returns undefined when no estimate is known — callers should
+ * treat undefined as "no gate; start from now."
+ *
+ * Callers should derive dailyStudyMinutes from the user's workHoursGrid via
+ * computeDailyStudyMinutes; the default of 120 is a safe fallback.
+ */
+export function computeRecommendedStart(
+  now: number,
+  dueDate: number,
+  timeEstimate: number | undefined,
+  dailyStudyMinutes: number = DEFAULT_DAILY_STUDY_MINUTES,
+): number | undefined {
+  if (!timeEstimate) return undefined;
+  const daysNeeded = Math.ceil(timeEstimate / dailyStudyMinutes);
+  return Math.max(now, dueDate - daysNeeded * DAY_MS);
+}
 
 // ---------------------------------------------------------------------------
 // Shared date utilities

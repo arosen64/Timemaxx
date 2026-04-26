@@ -172,7 +172,8 @@ export default defineSchema({
   })
     .index("by_taskId", ["taskId"])
     .index("by_subtaskId", ["subtaskId"])
-    .index("by_userId", ["userId"]),
+    .index("by_userId", ["userId"])
+    .index("by_userId_startTime", ["userId", "startTime"]),
 
   // Chat messages — stores chatbot conversation history per user
   chatMessages: defineTable({
@@ -229,6 +230,9 @@ export default defineSchema({
     /** Current scope for future chat message tagging. */
     activeTaskId: v.optional(v.id("tasks")),
     activeCourseId: v.optional(v.id("userCourses")),
+    /** Block MCQ flow: tracks the schedule sub-intent and chosen block while awaiting a pick. */
+    pendingScheduleAction: v.optional(v.literal("schedule_block")),
+    activeBlockId: v.optional(v.id("studyBlocks")),
   }).index("by_userId_sessionId", ["userId", "sessionId"]),
 
   /**

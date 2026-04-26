@@ -50,6 +50,7 @@ Examples that MUST route to "schedule":
 - "When should I work on my CS homework?" → schedule
 - "Set up a study block for my project" → schedule
 - "Can you schedule that task?" → schedule
+- "Schedule one block for my essay" → schedule
 
 Examples that MUST route to "tasks":
 - "Create a task for my essay" → tasks
