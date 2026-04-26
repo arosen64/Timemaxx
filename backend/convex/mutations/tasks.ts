@@ -5,7 +5,7 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { taskTypeValidator } from "../lib/taskValidators";
 import { Id } from "../_generated/dataModel";
 import { rebuildStudyBlocks } from "./timeEstimate";
-import { computeRecommendedStart, computeDailyStudyMinutes } from "../lib/scheduleSlots";
+import { computeRecommendedStart, computeSubtaskCascade } from "../lib/scheduleSlots";
 
 export async function cascadeDeleteTask(ctx: MutationCtx, taskId: Id<"tasks">) {
   const subtasks = await ctx.db
@@ -79,9 +79,6 @@ export const createTask = mutation({
 
     const isManualEstimate = args.timeEstimate !== undefined;
 
-    const user = await ctx.db.get(userId);
-    const dailyStudyMinutes = computeDailyStudyMinutes(user?.workHoursGrid);
-
     const taskId = await ctx.db.insert("tasks", {
       userId,
       title: args.title,
@@ -93,7 +90,7 @@ export const createTask = mutation({
       timeEstimate: args.timeEstimate,
       isManualEstimate,
       assignmentWeight: args.assignmentWeight,
-      recommendedStart: computeRecommendedStart(now, args.dueDate, args.timeEstimate, dailyStudyMinutes),
+      recommendedStart: computeRecommendedStart(now, args.dueDate),
       createdAt: Date.now(),
     });
 
@@ -136,9 +133,6 @@ export const updateTask = mutation({
       throw new Error("Assignment weight must be between 0 and 100");
     }
 
-    const user = await ctx.db.get(userId);
-    const dailyStudyMinutes = computeDailyStudyMinutes(user?.workHoursGrid);
-
     await ctx.db.patch(args.taskId, {
       title: args.title,
       description: args.description,
@@ -151,17 +145,24 @@ export const updateTask = mutation({
       ...(args.assignmentWeight !== undefined
         ? { assignmentWeight: args.assignmentWeight }
         : {}),
-      recommendedStart: computeRecommendedStart(Date.now(), args.dueDate, task.timeEstimate, dailyStudyMinutes),
+      recommendedStart: computeRecommendedStart(Date.now(), args.dueDate),
     });
 
-    // Cascade dueDate change to child subtasks
+    // Cascade dueDate change to child subtasks and recompute suggestedCompletionAt
     if (args.dueDate !== task.dueDate) {
       const subtasks = await ctx.db
         .query("subtasks")
         .withIndex("by_parentTaskId", (q) => q.eq("parentTaskId", args.taskId))
         .collect();
-      for (const subtask of subtasks) {
-        await ctx.db.patch(subtask._id, { dueDate: args.dueDate });
+      if (subtasks.length > 0) {
+        const now = Date.now();
+        const n = subtasks.length;
+        const dateAt = computeSubtaskCascade(now, args.dueDate, n);
+        const sorted = [...subtasks].sort((a, b) => a.order - b.order);
+        await Promise.all(sorted.map((s, i) => ctx.db.patch(s._id, {
+          dueDate: args.dueDate,
+          suggestedCompletionAt: dateAt(i),
+        })));
       }
     }
 
@@ -205,7 +206,7 @@ export const createTaskInternal = internalMutation({
       ...(args.assignmentWeight !== undefined
         ? { assignmentWeight: args.assignmentWeight }
         : {}),
-      recommendedStart: undefined,
+      recommendedStart: computeRecommendedStart(Date.now(), args.dueDate),
       createdAt: Date.now(),
       isManualEstimate: false,
     });
@@ -242,12 +243,8 @@ export const patchTaskFieldsInternal = internalMutation({
     if (args.description !== undefined) patch.description = args.description;
     if (args.taskType !== undefined) patch.taskType = args.taskType;
     if (args.dueDate !== undefined) {
-      const user = await ctx.db.get(args.userId);
       patch.dueDate = args.dueDate;
-      patch.recommendedStart = computeRecommendedStart(
-        Date.now(), args.dueDate, task.timeEstimate,
-        computeDailyStudyMinutes(user?.workHoursGrid),
-      );
+      patch.recommendedStart = computeRecommendedStart(Date.now(), args.dueDate);
     }
     if (args.courseId !== undefined) {
       patch.courseId = args.courseId;

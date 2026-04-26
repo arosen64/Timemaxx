@@ -8,11 +8,13 @@ import {
   filterPoolForBlock,
   selectSlotWithAI,
   computeRecommendedStart,
-  computeDailyStudyMinutes,
+  computeSubtaskCascade,
   buildDailyLoadMap,
   computeMaxBlocksPerDay,
   isDailyCapReached,
   SCHEDULE_HORIZON_MS,
+  TWO_WEEKS_MS,
+  DAY_MS,
   type OccupiedInterval,
   type WorkHoursRow,
   type PoolSlot,
@@ -410,67 +412,58 @@ describe("selectSlotWithAI", () => {
 // ---------------------------------------------------------------------------
 
 describe("computeRecommendedStart", () => {
-  const DAY_MS = 24 * 60 * 60 * 1000;
   const now = new Date("2026-04-25T12:00:00Z").getTime();
-  const farDue = now + 30 * DAY_MS;
 
-  test("returns undefined when timeEstimate is undefined", () => {
-    expect(computeRecommendedStart(now, farDue, undefined)).toBeUndefined();
+  test("returns dueDate minus two weeks when due date is far out", () => {
+    const farDue = now + 30 * DAY_MS;
+    expect(computeRecommendedStart(now, farDue)).toBe(farDue - TWO_WEEKS_MS);
   });
 
-  test("returns undefined when timeEstimate is 0", () => {
-    expect(computeRecommendedStart(now, farDue, 0)).toBeUndefined();
+  test("clamps to now when due date is within two weeks", () => {
+    const tightDue = now + 7 * DAY_MS;
+    expect(computeRecommendedStart(now, tightDue)).toBe(now);
   });
 
-  test("returns dueDate minus days needed when window is large enough", () => {
-    // 240 min → ceil(240/120) = 2 days needed
-    expect(computeRecommendedStart(now, farDue, 240)).toBe(farDue - 2 * DAY_MS);
-  });
-
-  test("clamps to now when estimate exceeds available window", () => {
-    const tightDue = now + 3 * DAY_MS;
-    // 1200 min → ceil(1200/120) = 10 days needed, but only 3 days available
-    expect(computeRecommendedStart(now, tightDue, 1200)).toBe(now);
-  });
-
-  test("uses custom dailyStudyMinutes when provided", () => {
-    // 240 min → ceil(240/60) = 4 days needed with 60 min/day
-    expect(computeRecommendedStart(now, farDue, 240, 60)).toBe(farDue - 4 * DAY_MS);
+  test("clamps to now when due date is exactly two weeks out", () => {
+    const exactDue = now + TWO_WEEKS_MS;
+    expect(computeRecommendedStart(now, exactDue)).toBe(now);
   });
 });
 
 // ---------------------------------------------------------------------------
-// computeDailyStudyMinutes
+// computeSubtaskCascade
 // ---------------------------------------------------------------------------
 
-describe("computeDailyStudyMinutes", () => {
-  test("returns default 120 when grid is undefined", () => {
-    expect(computeDailyStudyMinutes(undefined)).toBe(120);
+describe("computeSubtaskCascade", () => {
+  const now = new Date("2026-04-25T12:00:00Z").getTime();
+
+  test("spaces subtasks 2 days apart when window is wide", () => {
+    const dueDate = now + 30 * DAY_MS;
+    const dateAt = computeSubtaskCascade(now, dueDate, 3);
+    const windowStart = dueDate - TWO_WEEKS_MS;
+    expect(dateAt(0)).toBe(windowStart + 2 * DAY_MS);
+    expect(dateAt(1)).toBe(windowStart + 4 * DAY_MS);
+    expect(dateAt(2)).toBe(windowStart + 6 * DAY_MS);
   });
 
-  test("returns default 120 when grid is empty", () => {
-    expect(computeDailyStudyMinutes([])).toBe(120);
+  test("compresses to 1-day intervals when window is tight", () => {
+    const dueDate = now + 4 * DAY_MS;
+    const dateAt = computeSubtaskCascade(now, dueDate, 4);
+    expect(dateAt(0)).toBe(now + 1 * DAY_MS);
+    expect(dateAt(1)).toBe(now + 2 * DAY_MS);
+    expect(dateAt(2)).toBe(now + 3 * DAY_MS);
+    expect(dateAt(3)).toBe(now + 4 * DAY_MS);
   });
 
-  test("computes available minutes for a single day", () => {
-    // 8 blocked slots → 40 available → 40 * 30 = 1200 min
-    const grid: WorkHoursRow[] = [{ day: "Monday", blocked: Array.from({ length: 8 }, (_, i) => i) }];
-    expect(computeDailyStudyMinutes(grid)).toBe(1200);
-  });
-
-  test("averages across multiple days", () => {
-    const grid: WorkHoursRow[] = [
-      { day: "Monday", blocked: Array.from({ length: 40 }, (_, i) => i) }, // 8 * 30 = 240 min
-      { day: "Tuesday", blocked: Array.from({ length: 44 }, (_, i) => i) }, // 4 * 30 = 120 min
-    ];
-    // avg = (240 + 120) / 2 = 180
-    expect(computeDailyStudyMinutes(grid)).toBe(180);
-  });
-
-  test("clamps result to minimum of 120 when available time is very low", () => {
-    // 47 blocked → 1 available slot → 30 min, but min is 120
-    const grid: WorkHoursRow[] = [{ day: "Monday", blocked: Array.from({ length: 47 }, (_, i) => i) }];
-    expect(computeDailyStudyMinutes(grid)).toBe(120);
+  test("caps dates at dueDate when more subtasks than available days", () => {
+    // 5 subtasks, 4 days → interval = 1 day, last two both land at dueDate
+    const dueDate = now + 4 * DAY_MS;
+    const dateAt = computeSubtaskCascade(now, dueDate, 5);
+    expect(dateAt(0)).toBe(now + 1 * DAY_MS);
+    expect(dateAt(1)).toBe(now + 2 * DAY_MS);
+    expect(dateAt(2)).toBe(now + 3 * DAY_MS);
+    expect(dateAt(3)).toBe(dueDate);
+    expect(dateAt(4)).toBe(dueDate);
   });
 });
 
