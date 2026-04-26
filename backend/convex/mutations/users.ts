@@ -98,7 +98,11 @@ export const completeOnboarding = mutation({
 });
 
 /**
- * Deletes the authenticated user's account along with all their tasks and syllabi.
+ * Deletes the authenticated user's account along with all their data:
+ * tasks (+ subtasks + study blocks via cascade), syllabi, userCourses,
+ * chatMessages, chatSessions, chatChunks, calendarConnections,
+ * calendarOAuthStates, orphaned studyBlocks, authAccounts, authSessions,
+ * and the user record itself.
  */
 export const deleteAccount = mutation({
   args: {},
@@ -125,6 +129,44 @@ export const deleteAccount = mutation({
       .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
     await Promise.all(userCourses.map((uc) => ctx.db.delete(uc._id)));
+
+    const chatMessages = await ctx.db
+      .query("chatMessages")
+      .withIndex("by_userId_createdAt", (q) => q.eq("userId", userId))
+      .collect();
+    await Promise.all(chatMessages.map((m) => ctx.db.delete(m._id)));
+
+    const chatSessions = await ctx.db
+      .query("chatSessions")
+      .withIndex("by_userId_sessionId", (q) => q.eq("userId", userId))
+      .collect();
+    await Promise.all(chatSessions.map((s) => ctx.db.delete(s._id)));
+
+    const chatChunks = await ctx.db
+      .query("chatChunks")
+      .withIndex("by_userId_sessionId", (q) => q.eq("userId", userId))
+      .collect();
+    await Promise.all(chatChunks.map((c) => ctx.db.delete(c._id)));
+
+    const calendarConnections = await ctx.db
+      .query("calendarConnections")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .collect();
+    await Promise.all(calendarConnections.map((c) => ctx.db.delete(c._id)));
+
+    // calendarOAuthStates has no by_userId index; full scan is safe (small, short-lived table)
+    const oauthStates = await ctx.db
+      .query("calendarOAuthStates")
+      .filter((q) => q.eq(q.field("userId"), userId))
+      .collect();
+    await Promise.all(oauthStates.map((s) => ctx.db.delete(s._id)));
+
+    // Clean up any studyBlocks with userId but no linked task/subtask (missed by task cascade)
+    const orphanedBlocks = await ctx.db
+      .query("studyBlocks")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .collect();
+    await Promise.all(orphanedBlocks.map((b) => ctx.db.delete(b._id)));
 
     const authAccounts = await ctx.db
       .query("authAccounts")
