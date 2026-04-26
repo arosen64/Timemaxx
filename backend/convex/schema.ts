@@ -172,7 +172,8 @@ export default defineSchema({
   })
     .index("by_taskId", ["taskId"])
     .index("by_subtaskId", ["subtaskId"])
-    .index("by_userId", ["userId"]),
+    .index("by_userId", ["userId"])
+    .index("by_userId_startTime", ["userId", "startTime"]),
 
   // Chat messages — stores chatbot conversation history per user
   chatMessages: defineTable({

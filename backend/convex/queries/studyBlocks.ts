@@ -202,6 +202,49 @@ export const getAllStudyBlocksWithTasks = query({
   },
 });
 
+export const getThisWeekStudyBlocks = query({
+  args: { weekStartMs: v.number(), weekEndMs: v.number() },
+  handler: async (ctx, { weekStartMs, weekEndMs }) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return { total: 0, completed: 0 };
+
+    const weekStartIso = new Date(weekStartMs).toISOString();
+    const weekEndIso = new Date(weekEndMs).toISOString();
+
+    const blocks = await ctx.db
+      .query("studyBlocks")
+      .withIndex("by_userId_startTime", (q) =>
+        q.eq("userId", userId).gte("startTime", weekStartIso).lt("startTime", weekEndIso)
+      )
+      .collect();
+
+    return {
+      total: blocks.length,
+      completed: blocks.filter((b) => b.isCompleted).length,
+    };
+  },
+});
+
+export const getTodayStudyBlockMinutes = query({
+  args: { todayStartMs: v.number(), todayEndMs: v.number() },
+  handler: async (ctx, { todayStartMs, todayEndMs }) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return 0;
+
+    const todayStartIso = new Date(todayStartMs).toISOString();
+    const todayEndIso = new Date(todayEndMs).toISOString();
+
+    const blocks = await ctx.db
+      .query("studyBlocks")
+      .withIndex("by_userId_startTime", (q) =>
+        q.eq("userId", userId).gte("startTime", todayStartIso).lt("startTime", todayEndIso)
+      )
+      .collect();
+
+    return blocks.reduce((sum, b) => sum + b.studyBlockLength, 0);
+  },
+});
+
 export const getStudyBlockInternal = internalQuery({
   args: { studyBlockId: v.id("studyBlocks") },
   handler: async (ctx, args) => {
