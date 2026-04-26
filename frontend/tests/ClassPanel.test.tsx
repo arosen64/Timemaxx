@@ -222,7 +222,7 @@ describe('ClassPanel – Level 1 (task list)', () => {
     renderWithProviders(<ClassPanel {...DEFAULT_PROPS} />)
     await user.click(screen.getByText('Algorithms'))
     await user.click(screen.getByText('Homework 1'))
-    expect(screen.getByRole('button', { name: 'Schedule' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Schedule (up to 10 blocks)' })).toBeInTheDocument()
   })
 })
 
@@ -265,7 +265,7 @@ describe('ClassPanel – Level 2 (task detail)', () => {
     setupActions()
     const props = { ...DEFAULT_PROPS, unscheduledBlocks: [] }
     await drillToTaskDetail(user, props)
-    expect(screen.getByRole('button', { name: 'Schedule' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Schedule (up to 10 blocks)' })).toBeDisabled()
   })
 
   it('back button returns to task list', async () => {
@@ -275,7 +275,7 @@ describe('ClassPanel – Level 2 (task detail)', () => {
     await drillToTaskDetail(user)
     await user.click(screen.getByLabelText('Back'))
     expect(screen.getByText('Homework 1')).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Schedule' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Schedule (up to 10 blocks)' })).not.toBeInTheDocument()
   })
 })
 
@@ -289,7 +289,7 @@ describe('ClassPanel – Schedule button (scheduleAllBlocks wiring)', () => {
     setupQueries()
     const { scheduleAllMock } = setupActions({ scheduleAllResult: { scheduled: 1, skipped: 0, conflicted: 0 } })
     await drillToTaskDetail(user)
-    await user.click(screen.getByRole('button', { name: 'Schedule' }))
+    await user.click(screen.getByRole('button', { name: 'Schedule (up to 10 blocks)' }))
     expect(scheduleAllMock).toHaveBeenCalledWith({ taskId: 'task1', timezone: 'UTC' })
   })
 
@@ -299,7 +299,7 @@ describe('ClassPanel – Schedule button (scheduleAllBlocks wiring)', () => {
     const onMsg = vi.fn()
     setupActions({ scheduleAllResult: { scheduled: 3, skipped: 0, conflicted: 0 } })
     await drillToTaskDetail(user, { ...DEFAULT_PROPS, onScheduleAllMsg: onMsg })
-    await user.click(screen.getByRole('button', { name: 'Schedule' }))
+    await user.click(screen.getByRole('button', { name: 'Schedule (up to 10 blocks)' }))
     await waitFor(() => expect(onMsg).toHaveBeenCalledWith('All 3 blocks scheduled.', false))
   })
 
@@ -309,7 +309,7 @@ describe('ClassPanel – Schedule button (scheduleAllBlocks wiring)', () => {
     const onMsg = vi.fn()
     setupActions({ scheduleAllResult: { scheduled: 1, skipped: 0, conflicted: 0 } })
     await drillToTaskDetail(user, { ...DEFAULT_PROPS, onScheduleAllMsg: onMsg })
-    await user.click(screen.getByRole('button', { name: 'Schedule' }))
+    await user.click(screen.getByRole('button', { name: 'Schedule (up to 10 blocks)' }))
     await waitFor(() => expect(onMsg).toHaveBeenCalledWith('All 1 block scheduled.', false))
   })
 
@@ -319,7 +319,7 @@ describe('ClassPanel – Schedule button (scheduleAllBlocks wiring)', () => {
     const onMsg = vi.fn()
     setupActions({ scheduleAllResult: { scheduled: 2, skipped: 1, conflicted: 0 } })
     await drillToTaskDetail(user, { ...DEFAULT_PROPS, onScheduleAllMsg: onMsg })
-    await user.click(screen.getByRole('button', { name: 'Schedule' }))
+    await user.click(screen.getByRole('button', { name: 'Schedule (up to 10 blocks)' }))
     await waitFor(() => expect(onMsg).toHaveBeenCalledWith('2 scheduled, 1 skipped.', true))
   })
 
@@ -329,7 +329,7 @@ describe('ClassPanel – Schedule button (scheduleAllBlocks wiring)', () => {
     const onMsg = vi.fn()
     setupActions({ scheduleAllRejects: true })
     await drillToTaskDetail(user, { ...DEFAULT_PROPS, onScheduleAllMsg: onMsg })
-    await user.click(screen.getByRole('button', { name: 'Schedule' }))
+    await user.click(screen.getByRole('button', { name: 'Schedule (up to 10 blocks)' }))
     await waitFor(() =>
       expect(onMsg).toHaveBeenCalledWith('Scheduling failed: network error')
     )
@@ -341,7 +341,7 @@ describe('ClassPanel – Schedule button (scheduleAllBlocks wiring)', () => {
     const onMsg = vi.fn()
     setupActions({ scheduleAllResult: { scheduled: 2, skipped: 0, conflicted: 1 } })
     await drillToTaskDetail(user, { ...DEFAULT_PROPS, onScheduleAllMsg: onMsg })
-    await user.click(screen.getByRole('button', { name: 'Schedule' }))
+    await user.click(screen.getByRole('button', { name: 'Schedule (up to 10 blocks)' }))
     await waitFor(() =>
       expect(onMsg).toHaveBeenCalledWith('All 2 blocks scheduled. 1 conflicted block needs auto-reschedule.', false)
     )
@@ -352,7 +352,7 @@ describe('ClassPanel – Schedule button (scheduleAllBlocks wiring)', () => {
     const { scheduleAllMock } = setupActions()
     renderWithProviders(<ClassPanel {...DEFAULT_PROPS} />)
     // Still on level 0 — schedule button not present
-    expect(screen.queryByRole('button', { name: 'Schedule' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Schedule (up to 10 blocks)' })).not.toBeInTheDocument()
     expect(scheduleAllMock).not.toHaveBeenCalled()
   })
 })
