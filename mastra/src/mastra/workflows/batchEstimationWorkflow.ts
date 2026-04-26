@@ -33,7 +33,15 @@ const estimateSubtaskStep = createStep({
     if (!response.object) {
       throw new Error(`estimationAgent returned no output for subtask ${inputData.subtaskId}`);
     }
-    return { subtaskId: inputData.subtaskId, ...response.object };
+    const minutes = response.object.estimatedMinutes;
+    if (!Number.isFinite(minutes)) {
+      throw new Error(`estimationAgent returned non-numeric estimatedMinutes for subtask ${inputData.subtaskId}`);
+    }
+    return {
+      subtaskId: inputData.subtaskId,
+      ...response.object,
+      estimatedMinutes: Math.max(1, Math.round(minutes)),
+    };
   },
 });
 

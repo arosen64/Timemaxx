@@ -6,7 +6,8 @@ An AI-powered study scheduler that estimates task time and builds personalized s
 
 The application is deployed via **GitHub Actions** to **GitHub Pages**. On each push to `master`, the CD workflow builds the frontend, deploys the Convex backend, and publishes to GitHub Pages.
 
-**Deployed site:** [https://cs423sp26-homeworks.github.io/team-04/](https://cs423sp26-homeworks.github.io/team-04/)
+**Deployed site (Iteration 1-3):** [https://cs423sp26-homeworks.github.io/team-04/](https://cs423sp26-homeworks.github.io/team-04/)
+**Deployed site (Iteration 4):** [https://timemaxx.netlify.app](https://timemaxx.netlify.app)
 
 If you encounter any issues with the deployed site, please reach out to a team member via Slack or email.
 
