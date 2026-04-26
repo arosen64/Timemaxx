@@ -1,14 +1,26 @@
 // Pure deterministic scoring for candidate study slots — no Convex dependencies.
 
 export interface ScoreBreakdown {
-  timeOfDayMatch: number;    // 0 or +2
-  dayOfWeekMatch: number;    // 0 or +1
-  bufferComfort: number;     // 0 or +1
-  dailyLoadPenalty: number;  // 0 to −3 (one per placed block on the day)
-  difficultyBonus: number;   // 0 or +1 (high-difficulty course + time-of-day match)
+  timeOfDayMatch: number;      // 0 or +2
+  dayOfWeekMatch: number;      // 0 or +1
+  bufferComfort: number;       // 0 or +1
+  dailyLoadPenalty: number;    // 0 to −3 (one per placed block on the day)
+  difficultyBonus: number;     // 0 or +1 (high-difficulty course + time-of-day match)
+  deadlineBucketScore: number; // 0 to +2 (deadline-proximity signal from deadlineBehavior)
 }
 
 const HIGH_DIFFICULTY_THRESHOLD = 4;
+
+// Bucket weights per deadlineBehavior setting (bucket 0 = earliest, 4 = closest to due date).
+// Keys match the option strings in PreferencesForm.tsx. "Somewhere in between" is absent
+// intentionally — missing key → score 0 (no signal).
+const DEADLINE_BUCKET_WEIGHTS: Record<string, number[]> = {
+  "I work best well in advance":      [3, 3, 2, 1, 0],
+  "I need the pressure of a deadline": [1, 1, 2, 3, 3],
+};
+const DEADLINE_BUCKET_MAX_WEIGHTS: Record<string, number> = Object.fromEntries(
+  Object.entries(DEADLINE_BUCKET_WEIGHTS).map(([k, v]) => [k, Math.max(...v)])
+);
 
 // Label strings from PreferencesForm.tsx → [startMinFromMidnight, endMinFromMidnight)
 const TIME_OF_DAY_RANGES: Record<string, [number, number]> = {
@@ -25,11 +37,12 @@ export function parseTimeOfDayRanges(prefs: string[]): Array<[number, number]> {
   return prefs.flatMap((p) => (TIME_OF_DAY_RANGES[p] !== undefined ? [TIME_OF_DAY_RANGES[p]] : []));
 }
 
-export function getProductivityTraits(traits: unknown): { dayOfWeek: string[]; timeOfDay: string[] } {
+export function getProductivityTraits(traits: unknown): { dayOfWeek: string[]; timeOfDay: string[]; deadlineBehavior: string | undefined } {
   const t = traits as Record<string, unknown> | null | undefined;
   return {
     dayOfWeek: Array.isArray(t?.dayOfWeek) ? (t!.dayOfWeek as string[]) : [],
     timeOfDay: Array.isArray(t?.timeOfDay) ? (t!.timeOfDay as string[]) : [],
+    deadlineBehavior: typeof t?.deadlineBehavior === "string" ? t!.deadlineBehavior : undefined,
   };
 }
 
@@ -83,6 +96,9 @@ export function scoreCandidate(opts: {
   minutesUntilNextEvent: number | null;
   dailyLoadCount: number;
   difficultyRating?: number;
+  deadlineBehavior?: string;
+  dueDateMs?: number;
+  nowMs?: number;
 }): { score: number; scoreBreakdown: ScoreBreakdown } {
   const minFromMidnight = opts.precomputed?.minutesFromMidnight ?? getMinutesFromMidnight(opts.startMs, opts.timezone);
   const dayOfWeek = opts.precomputed?.dayOfWeek ?? getDayOfWeek(opts.startMs, opts.timezone);
@@ -107,10 +123,19 @@ export function scoreCandidate(opts: {
   const difficultyBonus =
     opts.difficultyRating !== undefined && opts.difficultyRating >= HIGH_DIFFICULTY_THRESHOLD && timeOfDayMatch > 0 ? 1 : 0;
 
-  const score = timeOfDayMatch + dayOfWeekMatch + bufferComfort + dailyLoadPenalty + difficultyBonus;
+  let deadlineBucketScore = 0;
+  const weights = opts.deadlineBehavior ? DEADLINE_BUCKET_WEIGHTS[opts.deadlineBehavior] : undefined;
+  if (weights && opts.dueDateMs !== undefined && opts.nowMs !== undefined && opts.dueDateMs > opts.nowMs) {
+    const bucketWidth = (opts.dueDateMs - opts.nowMs) / 5;
+    const bucketIndex = Math.min(4, Math.floor((opts.startMs - opts.nowMs) / bucketWidth));
+    const maxWeight = DEADLINE_BUCKET_MAX_WEIGHTS[opts.deadlineBehavior!];
+    deadlineBucketScore = Math.round((weights[Math.max(0, bucketIndex)] / maxWeight) * 2);
+  }
+
+  const score = timeOfDayMatch + dayOfWeekMatch + bufferComfort + dailyLoadPenalty + difficultyBonus + deadlineBucketScore;
 
   return {
     score,
-    scoreBreakdown: { timeOfDayMatch, dayOfWeekMatch, bufferComfort, dailyLoadPenalty, difficultyBonus },
+    scoreBreakdown: { timeOfDayMatch, dayOfWeekMatch, bufferComfort, dailyLoadPenalty, difficultyBonus, deadlineBucketScore },
   };
 }

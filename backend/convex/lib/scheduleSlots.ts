@@ -191,6 +191,22 @@ function getSpannedSlots(minutesFromMidnight: number, durationMinutes: number): 
   return slots;
 }
 
+// Keyed by the workHoursGrid array reference so the index is rebuilt only when
+// the grid itself changes (once per action call in practice).
+const workHoursIndexCache = new WeakMap<WorkHoursRow[], Map<string, Set<number>>>();
+
+function getWorkHoursIndex(grid: WorkHoursRow[]): Map<string, Set<number>> {
+  let index = workHoursIndexCache.get(grid);
+  if (!index) {
+    index = new Map();
+    for (const row of grid) {
+      index.set(row.day, new Set(row.blocked));
+    }
+    workHoursIndexCache.set(grid, index);
+  }
+  return index;
+}
+
 /**
  * Returns true if the slot starting at `startMs` with `durationMs` duration:
  *  - Does NOT overlap any occupied interval
@@ -210,13 +226,13 @@ export function isSlotValid(
     if (startMs < iv.endMs && iv.startMs < endMs) return false;
   }
 
-  // Check blocked hours in workHoursGrid
+  // Check blocked hours — O(1) day lookup and O(1) slot membership via pre-built index
   const { dayName, minutesFromMidnight } = getLocalTimeInfo(startMs, timezone);
-  const row = workHoursGrid.find((r) => r.day === dayName);
-  if (row) {
+  const blockedSet = getWorkHoursIndex(workHoursGrid).get(dayName);
+  if (blockedSet) {
     const spanned = getSpannedSlots(minutesFromMidnight, durationMs / 60000);
     for (const slot of spanned) {
-      if (row.blocked.includes(slot)) return false;
+      if (blockedSet.has(slot)) return false;
     }
   }
 
@@ -226,11 +242,17 @@ export function isSlotValid(
 /**
  * Builds the surrounding-event context for a candidate slot.
  * Looks within a 12-hour window on each side.
+ *
+ * When `sortedByStart` is provided (the same intervals pre-sorted ascending by
+ * startMs), next-event lookup is O(log n) via binary search and prev-event is
+ * O(log n + k) where k is typically 0. Falls back to a full linear scan when
+ * `sortedByStart` is omitted, preserving backward compatibility.
  */
 export function buildSlotContext(
   startMs: number,
   endMs: number,
   occupiedIntervals: OccupiedInterval[],
+  sortedByStart?: OccupiedInterval[],
 ): {
   previousEventTitle: string | null;
   minutesSincePreviousEvent: number | null;
@@ -241,12 +263,40 @@ export function buildSlotContext(
   let prevEvent: OccupiedInterval | null = null;
   let nextEvent: OccupiedInterval | null = null;
 
-  for (const iv of occupiedIntervals) {
-    if (iv.endMs <= startMs && startMs - iv.endMs <= WINDOW_MS) {
-      if (!prevEvent || iv.endMs > prevEvent.endMs) prevEvent = iv;
+  if (sortedByStart && sortedByStart.length > 0) {
+    // Binary search: first index where iv.startMs >= endMs
+    let lo = 0;
+    let hi = sortedByStart.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >>> 1;
+      if (sortedByStart[mid].startMs < endMs) lo = mid + 1;
+      else hi = mid;
     }
-    if (iv.startMs >= endMs && iv.startMs - endMs <= WINDOW_MS) {
-      if (!nextEvent || iv.startMs < nextEvent.startMs) nextEvent = iv;
+    // lo is the first candidate for nextEvent
+    if (lo < sortedByStart.length) {
+      const iv = sortedByStart[lo];
+      if (iv.startMs - endMs <= WINDOW_MS) nextEvent = iv;
+    }
+    // Scan backward from lo-1 to find the nearest interval that ends before startMs.
+    // Bounded by WINDOW_MS on startMs: events starting more than 12 h before the
+    // slot are too old to be within the window (assuming event durations < 12 h,
+    // which holds for calendar events and study blocks). Tracking the latest endMs
+    // handles the rare case of overlapping calendar events correctly.
+    for (let i = lo - 1; i >= 0; i--) {
+      const iv = sortedByStart[i];
+      if (startMs - iv.startMs > WINDOW_MS) break;
+      if (iv.endMs <= startMs && startMs - iv.endMs <= WINDOW_MS) {
+        if (!prevEvent || iv.endMs > prevEvent.endMs) prevEvent = iv;
+      }
+    }
+  } else {
+    for (const iv of occupiedIntervals) {
+      if (iv.endMs <= startMs && startMs - iv.endMs <= WINDOW_MS) {
+        if (!prevEvent || iv.endMs > prevEvent.endMs) prevEvent = iv;
+      }
+      if (iv.startMs >= endMs && iv.startMs - endMs <= WINDOW_MS) {
+        if (!nextEvent || iv.startMs < nextEvent.startMs) nextEvent = iv;
+      }
     }
   }
 

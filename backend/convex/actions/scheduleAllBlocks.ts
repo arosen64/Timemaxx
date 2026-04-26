@@ -52,7 +52,7 @@ export const scheduleAllBlocks = action({
 
     const focusBlockLength: number = user.focusBlockLength ?? 60;
     const workHoursGrid = (user.workHoursGrid ?? []) as WorkHoursRow[];
-    const { dayOfWeek: preferredDays, timeOfDay: timeOfDayPrefs } = getProductivityTraits(user.productivityTraits);
+    const { dayOfWeek: preferredDays, timeOfDay: timeOfDayPrefs, deadlineBehavior } = getProductivityTraits(user.productivityTraits);
     const timeOfDayRanges = parseTimeOfDayRanges(timeOfDayPrefs);
     const dayOfWeekPrefs: string[] = preferredDays;
 
@@ -208,10 +208,16 @@ export const scheduleAllBlocks = action({
     const horizonMs = nowMs + SCHEDULE_HORIZON_MS;
     let scanCursor = roundUpTo15Min(nowMs);
 
+    // Pre-sort occupiedIntervals by startMs once so buildSlotContext can use
+    // binary search instead of a full linear scan for every scored slot.
+    // Phase 3 pushes new intervals after Phase 1 completes, so the sorted
+    // snapshot is stable for the entire scoring loop.
+    const sortedOccupied = [...occupiedIntervals].sort((a, b) => a.startMs - b.startMs);
+
     // Phase 1: score all physically valid slots globally; take top MAX_CANDIDATES by score
-    // slotTimeCache amortizes the two Intl.DateTimeFormat calls in scoreCandidate across
+    // slotTimeCache amortizes the Intl.DateTimeFormat calls in scoreCandidate across
     // all blocks scored against the same pool slot.
-    const slotTimeCache = new Map<number, { dayOfWeek: string; minutesFromMidnight: number }>();
+    const slotTimeCache = new Map<number, { dayOfWeek: string; minutesFromMidnight: number; dateStr: string }>();
     const entries: BlockEntry[] = [];
 
     for (const item of sorted) {
@@ -242,23 +248,29 @@ export const scheduleAllBlocks = action({
         if (!isSlotValid(s.startMs, blockDurationMs, workHoursGrid, occupiedIntervals, args.timezone)) continue;
 
         const endMs = s.startMs + blockDurationMs;
-        const context = buildSlotContext(s.startMs, endMs, occupiedIntervals);
-        const dateStr = toDateStr(new Date(s.startMs), args.timezone);
+        const context = buildSlotContext(s.startMs, endMs, occupiedIntervals, sortedOccupied);
 
         if (!slotTimeCache.has(s.startMs)) {
-          slotTimeCache.set(s.startMs, getSlotTimeInfo(s.startMs, args.timezone));
+          slotTimeCache.set(s.startMs, {
+            ...getSlotTimeInfo(s.startMs, args.timezone),
+            dateStr: toDateStr(new Date(s.startMs), args.timezone),
+          });
         }
+        const cached = slotTimeCache.get(s.startMs)!;
 
         const { score, scoreBreakdown } = scoreCandidate({
           startMs: s.startMs,
           timezone: args.timezone,
-          precomputed: slotTimeCache.get(s.startMs),
+          precomputed: cached,
           timeOfDayRanges,
           dayOfWeekPrefs,
           minutesSincePreviousEvent: context.minutesSincePreviousEvent,
           minutesUntilNextEvent: context.minutesUntilNextEvent,
-          dailyLoadCount: speculativeDailyLoadMap.get(dateStr) ?? 0,
+          dailyLoadCount: speculativeDailyLoadMap.get(cached.dateStr) ?? 0,
           difficultyRating: item.difficultyRating,
+          deadlineBehavior,
+          dueDateMs: item.parentDueDate,
+          nowMs,
         });
 
         scoredSlots.push({
@@ -282,7 +294,7 @@ export const scheduleAllBlocks = action({
       // actually-placed day, so at most one day is slightly over-counted per
       // block. The bias is toward spreading further rather than bunching, which
       // is the desired behavior.
-      const topDateStr = toDateStr(new Date(candidates[0].startMs), args.timezone);
+      const topDateStr = slotTimeCache.get(candidates[0].startMs)!.dateStr;
       speculativeDailyLoadMap.set(topDateStr, (speculativeDailyLoadMap.get(topDateStr) ?? 0) + 1);
 
       entries.push({
@@ -331,9 +343,6 @@ export const scheduleAllBlocks = action({
         studyBlockId: block._id as any,
         startTime: chosen.startISO,
       });
-
-      const poolIdx = pool.findIndex((s) => s.startMs === chosen.startMs);
-      if (poolIdx !== -1) pool.splice(poolIdx, 1);
 
       occupiedIntervals.push({
         startMs: chosen.startMs,

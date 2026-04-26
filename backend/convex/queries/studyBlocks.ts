@@ -332,7 +332,7 @@ export const getFutureStudyBlocksForExport = internalQuery({
         .collect();
 
       for (const block of blocks) {
-        if (!block.isCompleted) continue;
+        if (block.isCompleted) continue;
         if (!block.startTime) continue;
         if (new Date(block.startTime).getTime() <= now) continue;
         result.push({

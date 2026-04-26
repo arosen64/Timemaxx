@@ -62,7 +62,7 @@ export default function ScheduleTab() {
   const [isRescheduling, setIsRescheduling] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   const [exportMsg, setExportMsg] = useState<string | null>(null)
-  const [scheduleAllMsg, setScheduleAllMsg] = useState<string | null>(null)
+  const [scheduleAllMsg, setScheduleAllMsg] = useState<{ text: string; warn: boolean } | null>(null)
   const [showNudge, setShowNudge] = useState(false)
   const [pendingSchedule, setPendingSchedule] = useState<(() => void) | null>(null)
   const [isConnecting, setIsConnecting] = useState(false)
@@ -431,9 +431,9 @@ export default function ScheduleTab() {
       )}
 
       {scheduleAllMsg && (
-        <div className="mb-3 flex items-center justify-between gap-2 rounded-lg border border-border bg-bg-gray px-4 py-2 text-sm text-slate-blue">
-          <span>{scheduleAllMsg}</span>
-          <button type="button" onClick={() => setScheduleAllMsg(null)} className="text-light-blue hover:text-slate-blue">✕</button>
+        <div className={`mb-3 flex items-center justify-between gap-2 rounded-lg border px-4 py-2 text-sm ${scheduleAllMsg.warn ? 'border-amber-200 bg-amber-50 text-amber-800' : 'border-border bg-bg-gray text-slate-blue'}`}>
+          <span>{scheduleAllMsg.text}</span>
+          <button type="button" onClick={() => setScheduleAllMsg(null)} className="opacity-60 hover:opacity-100">✕</button>
         </div>
       )}
 
@@ -519,7 +519,7 @@ export default function ScheduleTab() {
           assigningBlockId={assigningBlockId}
           onToggleAssign={(id) => setAssigningBlockId((prev) => (prev === id ? null : id))}
           timezone={timezone}
-          onScheduleAllMsg={setScheduleAllMsg}
+          onScheduleAllMsg={(msg, warn = false) => setScheduleAllMsg({ text: msg, warn })}
           onBeforeSchedule={maybeNudge}
         />
       </div>

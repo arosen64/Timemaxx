@@ -4,24 +4,31 @@ import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { internal } from "../_generated/api";
 import {
-  enumerateSlots,
+  extendSlotPool,
+  isSlotValid,
   selectAllSlotsWithAI,
+  roundUpTo15Min,
   buildDailyLoadMap,
-  computeMaxBlocksPerDay,
+  buildSlotContext,
   toDateStr,
+  SCHEDULE_HORIZON_MS,
   DEFAULT_DUE_FALLBACK_MS,
+  type CandidateSlot,
   type OccupiedInterval,
   type WorkHoursRow,
+  type PoolSlot,
 } from "../lib/scheduleSlots";
-import { parseTimeOfDayRanges, scoreCandidate, getProductivityTraits } from "../lib/scoreSlots";
+import { parseTimeOfDayRanges, scoreCandidate, getProductivityTraits, getSlotTimeInfo, type ScoreBreakdown } from "../lib/scoreSlots";
 import { fetch21DayCalendarEvents } from "../lib/calendarFetch";
 
+const MAX_CANDIDATES = 20;
 
 /**
  * AI-driven scheduling for a single study block.
  *
- * Enumerates valid time slots for the given block, calls Gemini Flash to
- * select the best slot, and places the block.
+ * Mirrors the batch scheduling logic in scheduleAllBlocks for one block:
+ * builds a slot pool, scores all physically valid slots across the full
+ * window, slices the top MAX_CANDIDATES by score, and asks Gemini to pick.
  *
  * Returns { scheduled: 1 } on success, or { error: "no_slot_found" } if
  * no valid slot could be found.
@@ -50,7 +57,6 @@ export const scheduleBlock = action({
 
     let taskTitle: string;
     let dueDate: number;
-    let creationTime: number;
     let recommendedStart: number | undefined;
     let courseId: string | undefined;
 
@@ -60,11 +66,14 @@ export const scheduleBlock = action({
       });
       if (!subtask || subtask.userId !== userId) throw new Error("Unauthorized");
       taskTitle = subtask.title;
-      dueDate = subtask.suggestedCompletionAt ?? subtask.dueDate ?? Date.now() + DEFAULT_DUE_FALLBACK_MS;
-      creationTime = subtask._creationTime;
       const parentTask = await ctx.runQuery(internal.queries.tasks.getTaskInternal, {
         taskId: subtask.parentTaskId,
       });
+      dueDate =
+        subtask.suggestedCompletionAt ??
+        subtask.dueDate ??
+        parentTask?.dueDate ??
+        Date.now() + DEFAULT_DUE_FALLBACK_MS;
       recommendedStart = parentTask?.recommendedStart;
       courseId = parentTask?.courseId as string | undefined;
     } else {
@@ -75,7 +84,6 @@ export const scheduleBlock = action({
       if (!task || task.userId !== userId) throw new Error("Unauthorized");
       taskTitle = task.title;
       dueDate = task.dueDate;
-      creationTime = task._creationTime;
       recommendedStart = task.recommendedStart;
       courseId = task.courseId as string | undefined;
     }
@@ -91,13 +99,15 @@ export const scheduleBlock = action({
 
     const focusBlockLength: number = user.focusBlockLength ?? 60;
     const workHoursGrid = (user.workHoursGrid ?? []) as WorkHoursRow[];
-    const { dayOfWeek: preferredDays, timeOfDay: timeOfDayPrefs } = getProductivityTraits(user.productivityTraits);
+    const { dayOfWeek: preferredDays, timeOfDay: timeOfDayPrefs, deadlineBehavior } = getProductivityTraits(user.productivityTraits);
     const timeOfDayRanges = parseTimeOfDayRanges(timeOfDayPrefs);
     const dayOfWeekPrefs: string[] = preferredDays;
     const difficultyRating = courseId
       ? userCourses.find((c) => c._id === courseId)?.difficultyRating
       : undefined;
 
+    // Build occupied intervals from calendar events + already-scheduled blocks
+    // (excluding the block being scheduled itself, in case it's a conflicted reschedule)
     const occupiedIntervals: OccupiedInterval[] = [
       ...timedEvents.map((e) => ({
         startMs: new Date(e.start).getTime(),
@@ -113,48 +123,99 @@ export const scheduleBlock = action({
         })),
     ];
 
-    const maxBlocksPerDayMap = computeMaxBlocksPerDay(workHoursGrid, focusBlockLength, preferredDays);
+    // dailyLoadMap feeds the dailyLoadPenalty in scoreCandidate (soft signal, no hard cap).
     const dailyLoadMap = buildDailyLoadMap(occupiedIntervals, args.timezone, focusBlockLength);
 
     const nowMs = Date.now();
-    const fromMs = Math.max(nowMs, creationTime);
+    const horizonMs = nowMs + SCHEDULE_HORIZON_MS;
+    const poolTarget = Math.min(dueDate, horizonMs);
 
-    const candidates = enumerateSlots({
-      fromMs,
-      dueDateMs: dueDate,
-      durationMinutes: block.studyBlockLength,
-      workHoursGrid,
-      occupiedIntervals,
-      timezone: args.timezone,
-      dailyLoadMap,
-      maxBlocksPerDayMap,
-      recommendedStartMs: recommendedStart,
-    });
-
-    if (candidates.length === 0) return { error: "no_slot_found" };
-
-    const scoredCandidates = candidates.map((c) => {
-      const dateStr = toDateStr(new Date(c.startMs), args.timezone);
-      const { score, scoreBreakdown } = scoreCandidate({
-        startMs: c.startMs,
+    // Build slot pool up to dueDate (or horizon, whichever is sooner)
+    const pool: PoolSlot[] = [];
+    let scanCursor = roundUpTo15Min(nowMs);
+    if (scanCursor < poolTarget) {
+      scanCursor = extendSlotPool({
+        pool,
+        scanCursor,
+        targetMs: poolTarget,
+        focusBlockLengthMinutes: focusBlockLength,
+        workHoursGrid,
+        occupiedIntervals,
         timezone: args.timezone,
+        recommendedStartMs: recommendedStart,
+      });
+    }
+
+    // Pre-sort occupiedIntervals by startMs once so buildSlotContext can use binary search
+    const sortedOccupied = [...occupiedIntervals].sort((a, b) => a.startMs - b.startMs);
+
+    type ScoredSlot = CandidateSlot & { score: number; scoreBreakdown: ScoreBreakdown };
+    const slotTimeCache = new Map<number, { dayOfWeek: string; minutesFromMidnight: number; dateStr: string }>();
+    const blockDurationMs = block.studyBlockLength * 60000;
+
+    // Score every physically valid slot across the full window.
+    const scoredSlots: ScoredSlot[] = [];
+    for (const s of pool) {
+      if (s.startMs >= dueDate) continue;
+      if (s.startMs + blockDurationMs > dueDate) continue;
+      if (recommendedStart !== undefined && s.startMs < recommendedStart) continue;
+      if (!isSlotValid(s.startMs, blockDurationMs, workHoursGrid, occupiedIntervals, args.timezone)) continue;
+
+      const endMs = s.startMs + blockDurationMs;
+      const context = buildSlotContext(s.startMs, endMs, occupiedIntervals, sortedOccupied);
+
+      if (!slotTimeCache.has(s.startMs)) {
+        slotTimeCache.set(s.startMs, {
+          ...getSlotTimeInfo(s.startMs, args.timezone),
+          dateStr: toDateStr(new Date(s.startMs), args.timezone),
+        });
+      }
+      const cached = slotTimeCache.get(s.startMs)!;
+
+      const { score, scoreBreakdown } = scoreCandidate({
+        startMs: s.startMs,
+        timezone: args.timezone,
+        precomputed: cached,
         timeOfDayRanges,
         dayOfWeekPrefs,
-        minutesSincePreviousEvent: c.minutesSincePreviousEvent,
-        minutesUntilNextEvent: c.minutesUntilNextEvent,
-        dailyLoadCount: dailyLoadMap.get(dateStr) ?? 0,
+        minutesSincePreviousEvent: context.minutesSincePreviousEvent,
+        minutesUntilNextEvent: context.minutesUntilNextEvent,
+        dailyLoadCount: dailyLoadMap.get(cached.dateStr) ?? 0,
         difficultyRating,
+        deadlineBehavior,
+        dueDateMs: dueDate,
+        nowMs,
       });
-      return { ...c, score, scoreBreakdown };
-    });
-    scoredCandidates.sort((a, b) => b.score - a.score);
+
+      scoredSlots.push({
+        startMs: s.startMs,
+        startISO: new Date(s.startMs).toISOString(),
+        ...context,
+        score,
+        scoreBreakdown,
+      });
+    }
+
+    if (scoredSlots.length === 0) return { error: "no_slot_found" };
+
+    scoredSlots.sort((a, b) => b.score - a.score);
+    const candidates = scoredSlots.slice(0, MAX_CANDIDATES);
 
     const [chosenIndex] = await selectAllSlotsWithAI(
-      [{ taskTitle, dueDate, recommendedStart, candidates: scoredCandidates }],
+      [{ taskTitle, dueDate, recommendedStart, candidates }],
       user.productivityTraits,
     );
 
-    const chosen = scoredCandidates[chosenIndex ?? 0];
+    // Physical-validity fallback (mirrors scheduleAllBlocks Phase 3)
+    const isPhysValid = (c: { startMs: number }) =>
+      isSlotValid(c.startMs, blockDurationMs, workHoursGrid, occupiedIntervals, args.timezone);
+
+    let chosen = candidates[chosenIndex ?? 0];
+    if (!isPhysValid(chosen)) {
+      const fallback = candidates.find(isPhysValid);
+      if (!fallback) return { error: "no_slot_found" };
+      chosen = fallback;
+    }
 
     await ctx.runMutation(internal.mutations.studyBlocks.placeStudyBlock, {
       studyBlockId: args.studyBlockId,
