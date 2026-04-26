@@ -5,22 +5,23 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { internal } from "../_generated/api";
 import {
   extendSlotPool,
-  filterPoolForBlock,
   isSlotValid,
-  isDailyCapReached,
   selectAllSlotsWithAI,
   roundUpTo15Min,
   buildDailyLoadMap,
-  computeMaxBlocksPerDay,
+  buildSlotContext,
   toDateStr,
   SCHEDULE_HORIZON_MS,
+  type CandidateSlot,
   type OccupiedInterval,
   type WorkHoursRow,
   type PoolSlot,
 } from "../lib/scheduleSlots";
+import { parseTimeOfDayRanges, scoreCandidate, getProductivityTraits, getSlotTimeInfo, type ScoreBreakdown } from "../lib/scoreSlots";
 import { fetch21DayCalendarEvents } from "../lib/calendarFetch";
 
 const MAX_BLOCKS = 10;
+const MAX_CANDIDATES = 20;
 
 /**
  * AI-driven bulk scheduling for all unscheduled blocks belonging to a task
@@ -30,7 +31,12 @@ const MAX_BLOCKS = 10;
  * ASC → parent assignment weight DESC → block creation time ASC, then
  * scheduled in one shared pool + AI pass.
  *
- * Returns { scheduled, skipped } block counts.
+ * Phase 1 scores every physically valid slot across the full scheduling window
+ * and takes the top MAX_CANDIDATES by score. Day preference, time-of-day
+ * preference, and daily load spread are all handled through scoring rather than
+ * hard gates, so preferred days/times naturally rise to the top.
+ *
+ * Returns { scheduled, skipped, conflicted } block counts.
  */
 export const scheduleAllBlocks = action({
   args: {
@@ -46,8 +52,9 @@ export const scheduleAllBlocks = action({
 
     const focusBlockLength: number = user.focusBlockLength ?? 60;
     const workHoursGrid = (user.workHoursGrid ?? []) as WorkHoursRow[];
-    const productivityTraits: unknown = user.productivityTraits;
-    const preferredDays: string[] = (productivityTraits as any)?.dayOfWeek ?? [];
+    const { dayOfWeek: preferredDays, timeOfDay: timeOfDayPrefs } = getProductivityTraits(user.productivityTraits);
+    const timeOfDayRanges = parseTimeOfDayRanges(timeOfDayPrefs);
+    const dayOfWeekPrefs: string[] = preferredDays;
 
     // Fetch raw blocks, tasks, and subtasks
     const allBlocks = await ctx.runQuery(
@@ -64,31 +71,32 @@ export const scheduleAllBlocks = action({
       _creationTime: number;
     }>;
 
-    const allTasks = await ctx.runQuery(
-      internal.queries.tasks.getAllTasksInternal,
-      { userId },
-    ) as Array<{
-      _id: string;
-      title: string;
-      dueDate: number;
-      assignmentWeight?: number;
-      recommendedStart?: number;
-      _creationTime: number;
-    }>;
-
-    const allSubtasks = await ctx.runQuery(
-      internal.queries.subtasks.getAllSubtasksInternal,
-      { userId },
-    ) as Array<{
-      _id: string;
-      parentTaskId: string;
-      title: string;
-      dueDate?: number;
-      suggestedCompletionAt?: number;
-      _creationTime: number;
-    }>;
+    const [allTasks, allSubtasks, userCourses] = await Promise.all([
+      ctx.runQuery(internal.queries.tasks.getAllTasksInternal, { userId }) as Promise<Array<{
+        _id: string;
+        title: string;
+        dueDate: number;
+        courseId?: string;
+        assignmentWeight?: number;
+        recommendedStart?: number;
+        _creationTime: number;
+      }>>,
+      ctx.runQuery(internal.queries.subtasks.getAllSubtasksInternal, { userId }) as Promise<Array<{
+        _id: string;
+        parentTaskId: string;
+        title: string;
+        dueDate?: number;
+        suggestedCompletionAt?: number;
+        _creationTime: number;
+      }>>,
+      ctx.runQuery(internal.queries.userCourses.getUserCoursesInternal, { userId }) as Promise<Array<{
+        _id: string;
+        difficultyRating?: number;
+      }>>,
+    ]);
 
     const taskMap = new Map(allTasks.map((t) => [t._id, t]));
+    const difficultyMap = new Map(userCourses.map((c) => [c._id, c.difficultyRating]));
     // Only subtasks that belong to the target task
     const subtaskMap = new Map(
       allSubtasks
@@ -97,14 +105,14 @@ export const scheduleAllBlocks = action({
     );
     const subtaskIds = new Set(subtaskMap.keys());
 
-    // Resolve parent context for each unscheduled block and build sortable entries
+    type ScoredSlot = CandidateSlot & { score: number; scoreBreakdown: ScoreBreakdown };
     type BlockEntry = {
       block: (typeof allBlocks)[0];
       parentTitle: string;
       parentDueDate: number;
       parentWeight: number;
       recommendedStart: number | undefined;
-      candidates: ReturnType<typeof filterPoolForBlock>;
+      candidates: ScoredSlot[];
     };
 
     const isTaskBlock = (b: { taskId?: string; subtaskId?: string }) =>
@@ -112,7 +120,7 @@ export const scheduleAllBlocks = action({
 
     // Only unscheduled blocks belonging to this task or one of its subtasks
     const unscheduled = allBlocks.filter((b) => !b.startTime && isTaskBlock(b));
-    // Conflicted blocks exist for this task but are handled by auto-reschedule, not this action
+    // Conflicted blocks are handled by auto-reschedule, not this action
     const conflictedCount = allBlocks.filter((b) => b.startTime && b.isConflicted && isTaskBlock(b)).length;
 
     type ResolvedBlock = {
@@ -121,6 +129,7 @@ export const scheduleAllBlocks = action({
       parentDueDate: number;
       parentWeight: number;
       recommendedStart: number | undefined;
+      difficultyRating: number | undefined;
     };
 
     const resolved: ResolvedBlock[] = [];
@@ -135,6 +144,7 @@ export const scheduleAllBlocks = action({
           parentDueDate: task.dueDate,
           parentWeight: task.assignmentWeight ?? 0,
           recommendedStart: task.recommendedStart,
+          difficultyRating: task.courseId ? difficultyMap.get(task.courseId) : undefined,
         });
       } else if (block.subtaskId) {
         const subtask = subtaskMap.get(block.subtaskId);
@@ -151,6 +161,7 @@ export const scheduleAllBlocks = action({
           parentDueDate,
           parentWeight: parentTask?.assignmentWeight ?? 0,
           recommendedStart: parentTask?.recommendedStart,
+          difficultyRating: parentTask?.courseId ? difficultyMap.get(parentTask.courseId) : undefined,
         });
       }
     }
@@ -185,11 +196,11 @@ export const scheduleAllBlocks = action({
         })),
     ];
 
-    const maxBlocksPerDayMap = computeMaxBlocksPerDay(workHoursGrid, focusBlockLength, preferredDays);
-    // speculativeDailyLoadMap is mutated during phase 1 to spread blocks across days.
-    // actualDailyLoadMap tracks only real placements and is used for cap enforcement in phase 3.
+    // speculativeDailyLoadMap feeds the dailyLoadPenalty in scoreCandidate.
+    // It starts from existing intervals and is incremented after each block is
+    // assigned, so successive blocks score already-chosen days lower and spread
+    // naturally without a hard cap.
     const speculativeDailyLoadMap = buildDailyLoadMap(occupiedIntervals, args.timezone, focusBlockLength);
-    const actualDailyLoadMap = buildDailyLoadMap(occupiedIntervals, args.timezone, focusBlockLength);
 
     // Shared slot pool extended incrementally per block
     const pool: PoolSlot[] = [];
@@ -197,7 +208,10 @@ export const scheduleAllBlocks = action({
     const horizonMs = nowMs + SCHEDULE_HORIZON_MS;
     let scanCursor = roundUpTo15Min(nowMs);
 
-    // Phase 1: collect (block, candidates) pairs
+    // Phase 1: score all physically valid slots globally; take top MAX_CANDIDATES by score
+    // slotTimeCache amortizes the two Intl.DateTimeFormat calls in scoreCandidate across
+    // all blocks scored against the same pool slot.
+    const slotTimeCache = new Map<number, { dayOfWeek: string; minutesFromMidnight: number }>();
     const entries: BlockEntry[] = [];
 
     for (const item of sorted) {
@@ -217,51 +231,59 @@ export const scheduleAllBlocks = action({
 
       const blockDurationMs = item.block.studyBlockLength * 60000;
 
-      // Scan the full pool in reverse (latest slot first) to discover which days
-      // have at least one physically valid slot — not limited by MAX_CANDIDATES.
-      const dayAvailability = new Map<string, { load: number; repMs: number }>();
-      for (let pi = pool.length - 1; pi >= 0; pi--) {
-        const s = pool[pi];
+      // Score every physically valid slot across the full window.
+      // Scoring naturally handles: day preference (+1), time-of-day preference (+2),
+      // daily load spread (−1 per existing block, max −3).
+      const scoredSlots: ScoredSlot[] = [];
+      for (const s of pool) {
         if (s.startMs >= item.parentDueDate) continue;
         if (s.startMs + blockDurationMs > item.parentDueDate) continue;
         if (item.recommendedStart !== undefined && s.startMs < item.recommendedStart) continue;
-        const d = toDateStr(new Date(s.startMs), args.timezone);
-        if (dayAvailability.has(d)) continue;
-        if (isSlotValid(s.startMs, blockDurationMs, workHoursGrid, occupiedIntervals, args.timezone)) {
-          dayAvailability.set(d, { load: speculativeDailyLoadMap.get(d) ?? 0, repMs: s.startMs });
+        if (!isSlotValid(s.startMs, blockDurationMs, workHoursGrid, occupiedIntervals, args.timezone)) continue;
+
+        const endMs = s.startMs + blockDurationMs;
+        const context = buildSlotContext(s.startMs, endMs, occupiedIntervals);
+        const dateStr = toDateStr(new Date(s.startMs), args.timezone);
+
+        if (!slotTimeCache.has(s.startMs)) {
+          slotTimeCache.set(s.startMs, getSlotTimeInfo(s.startMs, args.timezone));
         }
+
+        const { score, scoreBreakdown } = scoreCandidate({
+          startMs: s.startMs,
+          timezone: args.timezone,
+          precomputed: slotTimeCache.get(s.startMs),
+          timeOfDayRanges,
+          dayOfWeekPrefs,
+          minutesSincePreviousEvent: context.minutesSincePreviousEvent,
+          minutesUntilNextEvent: context.minutesUntilNextEvent,
+          dailyLoadCount: speculativeDailyLoadMap.get(dateStr) ?? 0,
+          difficultyRating: item.difficultyRating,
+        });
+
+        scoredSlots.push({
+          startMs: s.startMs,
+          startISO: new Date(s.startMs).toISOString(),
+          ...context,
+          score,
+          scoreBreakdown,
+        });
       }
 
-      if (dayAvailability.size === 0) continue;
+      if (scoredSlots.length === 0) continue;
 
-      // Prefer days still within the cap; only use over-cap days when every
-      // available day is already at the limit.
-      const availEntries = [...dayAvailability.entries()];
-      const underCap = availEntries.filter(
-        ([, { repMs }]) => !isDailyCapReached(repMs, args.timezone, speculativeDailyLoadMap, maxBlocksPerDayMap),
-      );
-      const candidateDays = underCap.length > 0 ? underCap : availEntries;
-      const [targetDate] = candidateDays.reduce((a, b) => (a[1].load <= b[1].load ? a : b));
+      scoredSlots.sort((a, b) => b.score - a.score);
+      const candidates = scoredSlots.slice(0, MAX_CANDIDATES);
 
-      // Pull up to MAX_CANDIDATES slots from just the target day, latest-first.
-      const targetPool = pool.filter(
-        (s) => toDateStr(new Date(s.startMs), args.timezone) === targetDate,
-      );
-      const candidates = filterPoolForBlock({
-        pool: targetPool,
-        dueDateMs: item.parentDueDate,
-        durationMinutes: item.block.studyBlockLength,
-        workHoursGrid,
-        occupiedIntervals,
-        timezone: args.timezone,
-        recommendedStartMs: item.recommendedStart,
-        reverseOrder: true,
-      });
-
-      if (candidates.length === 0) continue;
-
-      // Reserve this day so the next block looks elsewhere first.
-      speculativeDailyLoadMap.set(targetDate, (speculativeDailyLoadMap.get(targetDate) ?? 0) + 1);
+      // Increment speculative load for the top candidate's day so the next block
+      // scores that day lower, spreading blocks across days.
+      // Slack: if Gemini picks a lower-scored candidate on a different day,
+      // this day gets one phantom load unit. Phase 3 will also increment the
+      // actually-placed day, so at most one day is slightly over-counted per
+      // block. The bias is toward spreading further rather than bunching, which
+      // is the desired behavior.
+      const topDateStr = toDateStr(new Date(candidates[0].startMs), args.timezone);
+      speculativeDailyLoadMap.set(topDateStr, (speculativeDailyLoadMap.get(topDateStr) ?? 0) + 1);
 
       entries.push({
         block: item.block,
@@ -283,11 +305,11 @@ export const scheduleAllBlocks = action({
               recommendedStart: e.recommendedStart,
               candidates: e.candidates,
             })),
-            productivityTraits,
+            user.productivityTraits,
           )
         : [];
 
-    // Phase 3: place blocks using AI-chosen slots, with conflict fallback
+    // Phase 3: place blocks using AI-chosen slots, with physical-validity fallback
     let scheduled = 0;
     const skipped = sorted.length - entries.length;
 
@@ -295,31 +317,14 @@ export const scheduleAllBlocks = action({
       const { block, candidates } = entries[i];
       const durationMs = block.studyBlockLength * 60000;
 
+      const isPhysValid = (c: { startMs: number }) =>
+        isSlotValid(c.startMs, durationMs, workHoursGrid, occupiedIntervals, args.timezone);
+
       let chosen = candidates[chosenIndices[i] ?? 0];
-      const withinCap = (c: { startMs: number }) =>
-        isSlotValid(c.startMs, durationMs, workHoursGrid, occupiedIntervals, args.timezone) &&
-        !isDailyCapReached(c.startMs, args.timezone, actualDailyLoadMap, maxBlocksPerDayMap);
-      if (!withinCap(chosen)) {
-        const capFallback = candidates.find(withinCap);
-        if (capFallback) {
-          chosen = capFallback;
-        } else {
-          // Cap exceeded on all candidate days: place on the least-loaded day
-          // to maintain spread even when overriding the limit.
-          const physCandidates = candidates.filter((c) =>
-            isSlotValid(c.startMs, durationMs, workHoursGrid, occupiedIntervals, args.timezone),
-          );
-          if (physCandidates.length === 0) continue;
-          const dayLoads = new Map<string, number>();
-          for (const c of physCandidates) {
-            const d = toDateStr(new Date(c.startMs), args.timezone);
-            if (!dayLoads.has(d)) dayLoads.set(d, actualDailyLoadMap.get(d) ?? 0);
-          }
-          const [leastLoadedDate] = [...dayLoads.entries()].reduce((a, b) => (a[1] <= b[1] ? a : b));
-          chosen = physCandidates.find(
-            (c) => toDateStr(new Date(c.startMs), args.timezone) === leastLoadedDate,
-          )!;
-        }
+      if (!isPhysValid(chosen)) {
+        const fallback = candidates.find(isPhysValid);
+        if (!fallback) continue;
+        chosen = fallback;
       }
 
       await ctx.runMutation(internal.mutations.studyBlocks.placeStudyBlock, {
@@ -337,7 +342,7 @@ export const scheduleAllBlocks = action({
       });
 
       const placedDateStr = toDateStr(new Date(chosen.startMs), args.timezone);
-      actualDailyLoadMap.set(placedDateStr, (actualDailyLoadMap.get(placedDateStr) ?? 0) + 1);
+      speculativeDailyLoadMap.set(placedDateStr, (speculativeDailyLoadMap.get(placedDateStr) ?? 0) + 1);
 
       scheduled++;
     }
