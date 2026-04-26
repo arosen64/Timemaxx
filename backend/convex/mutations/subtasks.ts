@@ -25,7 +25,6 @@ export const createSubtasksBatch = mutation({
         taskType: taskTypeValidator,
         color: v.string(),
         order: v.number(),
-        suggestedCompletionAt: v.optional(v.number()),
       })
     ),
   },

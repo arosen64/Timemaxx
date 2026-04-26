@@ -484,7 +484,7 @@ describe("mutations/subtasks – createSubtasksBatch suggestedCompletionAt casca
     expect(sorted[3].suggestedCompletionAt).toBe(now + 4 * DAY_MS);
   });
 
-  test("ignores frontend-supplied suggestedCompletionAt and uses server-computed values", async () => {
+  test("server computes suggestedCompletionAt regardless of any client-side date", async () => {
     vi.setSystemTime(new Date("2026-04-26T12:00:00Z"));
     const t = makeTestCtx();
     const { userId, withAuth } = await createTestUser(t);
@@ -502,11 +502,10 @@ describe("mutations/subtasks – createSubtasksBatch suggestedCompletionAt casca
       })
     );
 
-    const bogusDate = now + 999 * DAY_MS;
     await withAuth.mutation(api.mutations.subtasks.createSubtasksBatch, {
       parentTaskId,
       subtasks: [
-        { title: "Only", description: "d", taskType: "Essay", color: "#000", order: 0, suggestedCompletionAt: bogusDate },
+        { title: "Only", description: "d", taskType: "Essay", color: "#000", order: 0 },
       ],
     });
 
@@ -514,8 +513,6 @@ describe("mutations/subtasks – createSubtasksBatch suggestedCompletionAt casca
       ctx.db.query("subtasks").withIndex("by_parentTaskId", (q) => q.eq("parentTaskId", parentTaskId as never)).collect()
     );
     const windowStart = Math.max(now, dueDate - TWO_WEEKS_MS);
-    // Server should use windowStart + 1 * interval, not bogusDate
-    expect(saved[0].suggestedCompletionAt).not.toBe(bogusDate);
     expect(saved[0].suggestedCompletionAt).toBe(windowStart + 2 * DAY_MS);
   });
 

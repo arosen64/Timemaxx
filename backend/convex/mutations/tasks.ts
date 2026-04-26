@@ -159,12 +159,10 @@ export const updateTask = mutation({
         const n = subtasks.length;
         const dateAt = computeSubtaskCascade(now, args.dueDate, n);
         const sorted = [...subtasks].sort((a, b) => a.order - b.order);
-        for (let i = 0; i < n; i++) {
-          await ctx.db.patch(sorted[i]._id, {
-            dueDate: args.dueDate,
-            suggestedCompletionAt: dateAt(i),
-          });
-        }
+        await Promise.all(sorted.map((s, i) => ctx.db.patch(s._id, {
+          dueDate: args.dueDate,
+          suggestedCompletionAt: dateAt(i),
+        })));
       }
     }
 

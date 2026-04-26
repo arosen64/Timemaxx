@@ -412,7 +412,6 @@ describe("selectSlotWithAI", () => {
 // ---------------------------------------------------------------------------
 
 describe("computeRecommendedStart", () => {
-  const DAY_MS = 24 * 60 * 60 * 1000;
   const now = new Date("2026-04-25T12:00:00Z").getTime();
 
   test("returns dueDate minus two weeks when due date is far out", () => {
