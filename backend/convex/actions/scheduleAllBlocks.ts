@@ -208,8 +208,14 @@ export const scheduleAllBlocks = action({
     const horizonMs = nowMs + SCHEDULE_HORIZON_MS;
     let scanCursor = roundUpTo15Min(nowMs);
 
+    // Pre-sort occupiedIntervals by startMs once so buildSlotContext can use
+    // binary search instead of a full linear scan for every scored slot.
+    // Phase 3 pushes new intervals after Phase 1 completes, so the sorted
+    // snapshot is stable for the entire scoring loop.
+    const sortedOccupied = [...occupiedIntervals].sort((a, b) => a.startMs - b.startMs);
+
     // Phase 1: score all physically valid slots globally; take top MAX_CANDIDATES by score
-    // slotTimeCache amortizes the two Intl.DateTimeFormat calls in scoreCandidate across
+    // slotTimeCache amortizes the Intl.DateTimeFormat calls in scoreCandidate across
     // all blocks scored against the same pool slot.
     const slotTimeCache = new Map<number, { dayOfWeek: string; minutesFromMidnight: number; dateStr: string }>();
     const entries: BlockEntry[] = [];
@@ -242,7 +248,7 @@ export const scheduleAllBlocks = action({
         if (!isSlotValid(s.startMs, blockDurationMs, workHoursGrid, occupiedIntervals, args.timezone)) continue;
 
         const endMs = s.startMs + blockDurationMs;
-        const context = buildSlotContext(s.startMs, endMs, occupiedIntervals);
+        const context = buildSlotContext(s.startMs, endMs, occupiedIntervals, sortedOccupied);
 
         if (!slotTimeCache.has(s.startMs)) {
           slotTimeCache.set(s.startMs, {

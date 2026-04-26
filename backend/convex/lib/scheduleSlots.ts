@@ -218,11 +218,17 @@ export function isSlotValid(
 /**
  * Builds the surrounding-event context for a candidate slot.
  * Looks within a 12-hour window on each side.
+ *
+ * When `sortedByStart` is provided (the same intervals pre-sorted ascending by
+ * startMs), next-event lookup is O(log n) via binary search and prev-event is
+ * O(log n + k) where k is typically 0. Falls back to a full linear scan when
+ * `sortedByStart` is omitted, preserving backward compatibility.
  */
 export function buildSlotContext(
   startMs: number,
   endMs: number,
   occupiedIntervals: OccupiedInterval[],
+  sortedByStart?: OccupiedInterval[],
 ): {
   previousEventTitle: string | null;
   minutesSincePreviousEvent: number | null;
@@ -233,12 +239,38 @@ export function buildSlotContext(
   let prevEvent: OccupiedInterval | null = null;
   let nextEvent: OccupiedInterval | null = null;
 
-  for (const iv of occupiedIntervals) {
-    if (iv.endMs <= startMs && startMs - iv.endMs <= WINDOW_MS) {
-      if (!prevEvent || iv.endMs > prevEvent.endMs) prevEvent = iv;
+  if (sortedByStart && sortedByStart.length > 0) {
+    // Binary search: first index where iv.startMs >= endMs
+    let lo = 0;
+    let hi = sortedByStart.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >>> 1;
+      if (sortedByStart[mid].startMs < endMs) lo = mid + 1;
+      else hi = mid;
     }
-    if (iv.startMs >= endMs && iv.startMs - endMs <= WINDOW_MS) {
-      if (!nextEvent || iv.startMs < nextEvent.startMs) nextEvent = iv;
+    // lo is the first candidate for nextEvent
+    if (lo < sortedByStart.length) {
+      const iv = sortedByStart[lo];
+      if (iv.startMs - endMs <= WINDOW_MS) nextEvent = iv;
+    }
+    // Scan backward from lo-1 to find the nearest interval that ends before startMs.
+    // In the non-overlapping case this is just the element at lo-1; the loop handles
+    // overlapping calendar events (e.g. two meetings at the same time) gracefully.
+    for (let i = lo - 1; i >= 0; i--) {
+      const iv = sortedByStart[i];
+      if (iv.endMs <= startMs) {
+        if (startMs - iv.endMs <= WINDOW_MS) prevEvent = iv;
+        break; // sorted by startMs so no earlier interval can have a later endMs
+      }
+    }
+  } else {
+    for (const iv of occupiedIntervals) {
+      if (iv.endMs <= startMs && startMs - iv.endMs <= WINDOW_MS) {
+        if (!prevEvent || iv.endMs > prevEvent.endMs) prevEvent = iv;
+      }
+      if (iv.startMs >= endMs && iv.startMs - endMs <= WINDOW_MS) {
+        if (!nextEvent || iv.startMs < nextEvent.startMs) nextEvent = iv;
+      }
     }
   }
 
