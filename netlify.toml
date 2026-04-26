@@ -1,0 +1,13 @@
+[build]
+  command = "npm run build"
+  publish = "frontend/dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+  VITE_CONVEX_URL = "https://dutiful-dinosaur-826.convex.cloud"
+  VITE_CONVEX_SITE_URL = "https://dutiful-dinosaur-826.convex.site"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

@@ -44,3 +44,6 @@ opsx*
 .mastra/
 # Mastra
 mastra/.mastra
+
+# Local Netlify folder
+.netlify
