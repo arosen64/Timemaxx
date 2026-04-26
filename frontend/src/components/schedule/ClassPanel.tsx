@@ -469,7 +469,7 @@ export default function ClassPanel({
         >
           {isSchedulingAll && <SpinnerIcon color="currentColor" size={12} />}
           <CalendarIcon color="currentColor" size={13} />
-          Schedule
+          Schedule (up to 10 blocks)
         </button>
         {selectedTaskBlocks.length === 0 && !isSchedulingAll && (
           <p className="mt-1.5 text-center text-[10px] text-light-blue">All blocks scheduled</p>
