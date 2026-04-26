@@ -578,9 +578,26 @@ chatApp.post("/api/chat", async (c) => {
       internal.queries.chatSessions.getChatSessionInternal,
       { userId, sessionId },
     );
-    // The empty `message` here is safe only because `activeAgent === "schedule"` is still set,
-    // which routes this turn directly to the schedule agent and bypasses the supervisor (which
-    // would otherwise crash on `messages: at least one message is required`).
+    // The empty `message` below relies on `activeAgent === "schedule"` to route this turn
+    // directly to the schedule agent and bypass the supervisor (which would otherwise crash
+    // on `messages: at least one message is required`). If the schedule agent state was
+    // cleared between the picker being shown and the user picking, fail loudly with a
+    // recoverable message instead of crashing the workflow.
+    if (sessionAfterBlock?.activeAgent !== "schedule") {
+      const recoverMsg =
+        "I lost track of which task we were scheduling. Please ask me again to schedule a block.";
+      await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
+        userId,
+        sessionId,
+        role: "assistant",
+        content: recoverMsg,
+      });
+      await ctx.runMutation(internal.mutations.chatSessions.clearAgentStateInternal, {
+        userId,
+        sessionId,
+      });
+      return c.json({ text: recoverMsg, status: "routed", route: "schedule", entityKind: "none" });
+    }
     return handleWorkflowTurn(ctx, c, client, {
       userId,
       sessionId,
