@@ -219,21 +219,24 @@ async function handleWorkflowTurn(
     userId: Id<"users">;
     sessionId: string;
     message: string;
+    timezone: string;
     session: {
       activeAgent?: string | null;
       taskAgentIntent?: string | null;
       courseAgentIntent?: string | null;
       activeTaskId?: Id<"tasks">;
       activeCourseId?: Id<"userCourses">;
+      activeBlockId?: Id<"studyBlocks">;
       lastEntityQueryText?: string;
       resolvedSisPick?: SisResolvedPick;
     } | null;
     triggerUserMessageId?: Id<"chatMessages">;
   },
 ): Promise<Response> {
-  const { userId, sessionId, message, session, triggerUserMessageId } = params;
+  const { userId, sessionId, message, timezone, session, triggerUserMessageId } = params;
   const sessionActiveTaskId = session?.activeTaskId;
   const sessionActiveCourseId = session?.activeCourseId;
+  const sessionActiveBlockId = session?.activeBlockId;
 
   const rawHistory = (await ctx.runQuery(internal.queries.chatMessages.getChatHistoryInternal, {
     userId,
@@ -324,14 +327,40 @@ async function handleWorkflowTurn(
   }
 
   if (output.status === "schedule_action") {
-    const aiText = await executeScheduleAction(ctx, {
+    const scheduleResult = await executeScheduleAction(ctx, {
       userId,
       sessionId,
       activeTaskId: sessionActiveTaskId,
+      activeBlockId: sessionActiveBlockId,
+      timezone,
       output,
     });
+    if ("needsBlockMcq" in scheduleResult) {
+      await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
+        userId,
+        sessionId,
+        role: "assistant",
+        content: scheduleResult.aiText,
+      });
+      await ctx.runMutation(internal.mutations.chatSessions.setBlockPromptStateInternal, {
+        userId,
+        sessionId,
+        pendingScheduleAction: "schedule_block",
+      });
+      return c.json({
+        text: scheduleResult.aiText,
+        status: "needs_entity_clarification",
+        phase: "block",
+        entityCandidates: scheduleResult.blockCandidates,
+        entityHasMore: false,
+        route: "schedule",
+        entityKind: "block",
+        messageTag: "none",
+        tagConfidence: 0,
+      });
+    }
     return c.json({
-      text: aiText,
+      text: scheduleResult.aiText,
       status: "routed",
       route: "schedule",
       entityKind: "none",
@@ -506,15 +535,18 @@ chatApp.post("/api/chat", async (c) => {
   const body = await c.req.json<{
     message?: string;
     sessionId?: string;
+    timezone?: string;
     entity?: {
-      action: "pick_task" | "pick_course" | "other_tasks" | "other_courses" | "menu_pick";
+      action: "pick_task" | "pick_course" | "other_tasks" | "other_courses" | "menu_pick" | "pick_block";
       taskId?: string;
       courseId?: string;
+      blockId?: string;
       excludeTaskIds?: string[];
       excludeCourseIds?: string[];
       route?: string;
     };
   }>();
+  const timezone = body.timezone?.trim() || "UTC";
 
   const sessionId = body.sessionId?.trim();
   if (!sessionId) return c.json({ error: "Bad Request" }, 400);
@@ -534,6 +566,46 @@ chatApp.post("/api/chat", async (c) => {
   const client = new MastraClient({ baseUrl: mastraUrl });
 
   // ── Entity UI actions ──────────────────────────────────────────────────────
+
+  if (body.entity?.action === "pick_block" && body.entity.blockId) {
+    const blockId = body.entity.blockId as Id<"studyBlocks">;
+    await ctx.runMutation(internal.mutations.chatSessions.resolvePickedBlockInternal, {
+      userId,
+      sessionId,
+      blockId,
+    });
+    const sessionAfterBlock = await ctx.runQuery(
+      internal.queries.chatSessions.getChatSessionInternal,
+      { userId, sessionId },
+    );
+    // The empty `message` below relies on `activeAgent === "schedule"` to route this turn
+    // directly to the schedule agent and bypass the supervisor (which would otherwise crash
+    // on `messages: at least one message is required`). If the schedule agent state was
+    // cleared between the picker being shown and the user picking, fail loudly with a
+    // recoverable message instead of crashing the workflow.
+    if (sessionAfterBlock?.activeAgent !== "schedule") {
+      const recoverMsg =
+        "I lost track of which task we were scheduling. Please ask me again to schedule a block.";
+      await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
+        userId,
+        sessionId,
+        role: "assistant",
+        content: recoverMsg,
+      });
+      await ctx.runMutation(internal.mutations.chatSessions.clearAgentStateInternal, {
+        userId,
+        sessionId,
+      });
+      return c.json({ text: recoverMsg, status: "routed", route: "schedule", entityKind: "none" });
+    }
+    return handleWorkflowTurn(ctx, c, client, {
+      userId,
+      sessionId,
+      message: "",
+      timezone,
+      session: sessionAfterBlock,
+    });
+  }
 
   if (
     body.entity?.action === "pick_task" ||
@@ -563,6 +635,7 @@ chatApp.post("/api/chat", async (c) => {
         userId,
         sessionId,
         message: synthetic,
+        timezone,
         session: {
           ...sessionAfterSynthetic,
           resolvedSisPick: sis as SisResolvedPick,
@@ -614,7 +687,7 @@ chatApp.post("/api/chat", async (c) => {
     return handleEntityAction(
       ctx, c, client,
       { userId, sessionId, session, entity: body.entity as Parameters<typeof handleEntityAction>[3]["entity"] },
-      handleWorkflowTurn,
+      (ctx2, c2, client2, turnParams) => handleWorkflowTurn(ctx2, c2, client2, { ...turnParams, timezone }),
     );
   }
 
@@ -632,6 +705,7 @@ chatApp.post("/api/chat", async (c) => {
       userId,
       sessionId,
       message: userLabel,
+      timezone,
       session,
       triggerUserMessageId: menuUserMessageId,
     });
@@ -701,6 +775,7 @@ chatApp.post("/api/chat", async (c) => {
     userId,
     sessionId,
     message,
+    timezone,
     session: sessionNow,
     triggerUserMessageId: userMessageId,
   });

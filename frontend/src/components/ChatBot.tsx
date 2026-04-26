@@ -33,7 +33,7 @@ type ChatApiResponse = {
   status?: string
   entityCandidates?: EntityCandidate[]
   entityHasMore?: boolean
-  phase?: 'task' | 'class'
+  phase?: 'task' | 'class' | 'block'
 }
 
 /** Assistant copy that introduces the task/class MCQ (must stay in sync with http_chat strings). */
@@ -85,7 +85,7 @@ export default function ChatBot() {
   const [optimistic, setOptimistic] = useState<{ role: 'user' | 'assistant'; content: string }[]>([])
   const [historyLenAtSend, setHistoryLenAtSend] = useState(0)
   const [entityMcq, setEntityMcq] = useState<{
-    phase: 'task' | 'class'
+    phase: 'task' | 'class' | 'block'
     candidates: EntityCandidate[]
     hasMore: boolean
   } | null>(null)
@@ -151,13 +151,14 @@ export default function ChatBot() {
   }
 
   async function postChat(body: Record<string, unknown>, userEcho: string | null) {
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
     const res = await fetch(`${import.meta.env.VITE_CONVEX_SITE_URL}/api/chat`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify({ ...body, timezone }),
     })
     if (!res.ok) {
       if (res.status === 429) {
@@ -192,12 +193,14 @@ export default function ChatBot() {
     }
   }
 
-  async function handlePickEntity(phase: 'task' | 'class', id: string) {
+  async function handlePickEntity(phase: 'task' | 'class' | 'block', id: string) {
     if (isLoading || chatLocked || !entityMcq) return
     setIsLoading(true)
     try {
       if (phase === 'task') {
         await postChat({ sessionId, entity: { action: 'pick_task', taskId: id } }, null)
+      } else if (phase === 'block') {
+        await postChat({ sessionId, entity: { action: 'pick_block', blockId: id } }, null)
       } else {
         await postChat({ sessionId, entity: { action: 'pick_course', courseId: id } }, null)
       }
@@ -255,7 +258,7 @@ export default function ChatBot() {
     return (
       <div className="p-3 space-y-2 bg-white border rounded-xl border-border">
         <p className="text-[11px] font-heading font-semibold text-navy">
-          {entityMcq.phase === 'task' ? 'Pick a task' : 'Pick a class'}
+          {entityMcq.phase === 'task' ? 'Pick a task' : entityMcq.phase === 'block' ? 'Pick a block' : 'Pick a class'}
         </p>
         <div className="flex flex-col gap-1.5 max-h-40 overflow-y-auto">
           {entityMcq.candidates.map((c) => (
