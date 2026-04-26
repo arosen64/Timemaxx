@@ -8,6 +8,7 @@ import {
   filterPoolForBlock,
   selectSlotWithAI,
   computeRecommendedStart,
+  computeDailyStudyMinutes,
   buildDailyLoadMap,
   computeMaxBlocksPerDay,
   isDailyCapReached,
@@ -430,6 +431,46 @@ describe("computeRecommendedStart", () => {
     const tightDue = now + 3 * DAY_MS;
     // 1200 min → ceil(1200/120) = 10 days needed, but only 3 days available
     expect(computeRecommendedStart(now, tightDue, 1200)).toBe(now);
+  });
+
+  test("uses custom dailyStudyMinutes when provided", () => {
+    // 240 min → ceil(240/60) = 4 days needed with 60 min/day
+    expect(computeRecommendedStart(now, farDue, 240, 60)).toBe(farDue - 4 * DAY_MS);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// computeDailyStudyMinutes
+// ---------------------------------------------------------------------------
+
+describe("computeDailyStudyMinutes", () => {
+  test("returns default 120 when grid is undefined", () => {
+    expect(computeDailyStudyMinutes(undefined)).toBe(120);
+  });
+
+  test("returns default 120 when grid is empty", () => {
+    expect(computeDailyStudyMinutes([])).toBe(120);
+  });
+
+  test("computes available minutes for a single day", () => {
+    // 8 blocked slots → 40 available → 40 * 30 = 1200 min
+    const grid: WorkHoursRow[] = [{ day: "Monday", blocked: Array.from({ length: 8 }, (_, i) => i) }];
+    expect(computeDailyStudyMinutes(grid)).toBe(1200);
+  });
+
+  test("averages across multiple days", () => {
+    const grid: WorkHoursRow[] = [
+      { day: "Monday", blocked: Array.from({ length: 40 }, (_, i) => i) }, // 8 * 30 = 240 min
+      { day: "Tuesday", blocked: Array.from({ length: 44 }, (_, i) => i) }, // 4 * 30 = 120 min
+    ];
+    // avg = (240 + 120) / 2 = 180
+    expect(computeDailyStudyMinutes(grid)).toBe(180);
+  });
+
+  test("clamps result to minimum of 120 when available time is very low", () => {
+    // 47 blocked → 1 available slot → 30 min, but min is 120
+    const grid: WorkHoursRow[] = [{ day: "Monday", blocked: Array.from({ length: 47 }, (_, i) => i) }];
+    expect(computeDailyStudyMinutes(grid)).toBe(120);
   });
 });
 

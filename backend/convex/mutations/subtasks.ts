@@ -4,7 +4,7 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { taskTypeValidator } from "../lib/taskValidators";
 import { internal } from "../_generated/api";
 import { rebuildStudyBlocksForSubtask } from "./timeEstimate";
-import { computeRecommendedStart } from "../lib/scheduleSlots";
+import { computeRecommendedStart, computeDailyStudyMinutes } from "../lib/scheduleSlots";
 import { Id } from "../_generated/dataModel";
 
 const reasoningTraceArgs = v.object({
@@ -208,9 +208,13 @@ export const setSubtaskTimeEstimate = internalMutation({
     const total = siblings.reduce((sum, s) => sum + (s.timeEstimate ?? 0), 0);
     const parent = await ctx.db.get(subtask.parentTaskId);
     if (!parent) return;
+    const user = await ctx.db.get(parent.userId);
     await ctx.db.patch(subtask.parentTaskId, {
       timeEstimate: total,
-      recommendedStart: computeRecommendedStart(Date.now(), parent.dueDate, total),
+      recommendedStart: computeRecommendedStart(
+        Date.now(), parent.dueDate, total,
+        computeDailyStudyMinutes(user?.workHoursGrid),
+      ),
     });
 
     // Delete any stale task-level blocks so they don't co-exist with subtask-owned blocks

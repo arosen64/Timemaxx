@@ -214,22 +214,26 @@ describe("mutations/tasks – createTask", () => {
     const t = makeTestCtx();
     const { withAuth } = await createTestUser(t);
     vi.setSystemTime(new Date("2026-04-25T12:00:00Z"));
-    const now = Date.now();
-    // Due in 3 days, but 1200 min estimate = ceil(1200/120)=10 days needed → clamp to now
-    const dueDate = now + 3 * 86_400_000;
-    const timeEstimate = 1200;
+    try {
+      const now = Date.now();
+      // Due in 3 days, but 1200 min estimate = ceil(1200/120)=10 days needed → clamp to now
+      const dueDate = now + 3 * 86_400_000;
+      const timeEstimate = 1200;
 
-    const taskId = await withAuth.mutation(api.mutations.tasks.createTask, {
-      title: "Big task tight deadline",
-      description: "desc",
-      taskType: "Problem Set",
-      dueDate,
-      timeEstimate,
-    });
+      const taskId = await withAuth.mutation(api.mutations.tasks.createTask, {
+        title: "Big task tight deadline",
+        description: "desc",
+        taskType: "Problem Set",
+        dueDate,
+        timeEstimate,
+      });
 
-    await t.finishAllScheduledFunctions(vi.runAllTimers);
-    const task = await t.run((ctx) => ctx.db.get(taskId));
-    expect(task!.recommendedStart).toBe(now);
+      await t.finishAllScheduledFunctions(vi.runAllTimers);
+      const task = await t.run((ctx) => ctx.db.get(taskId));
+      expect(task!.recommendedStart).toBe(now);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   test("recomputes recommendedStart using existing estimate when dueDate is updated", async () => {

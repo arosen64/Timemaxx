@@ -269,6 +269,8 @@ describe("mutations/subtasks – setSubtaskTimeEstimate", () => {
     });
 
     const parent = await t.run((ctx) => ctx.db.get(parentTaskId));
+    // User has no workHoursGrid → computeDailyStudyMinutes falls back to 120 min/day
+    // 240 min → ceil(240/120) = 2 days needed
     expect(parent!.recommendedStart).toBe(dueDate - 2 * DAY_MS);
   });
 });

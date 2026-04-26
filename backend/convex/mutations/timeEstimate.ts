@@ -3,7 +3,7 @@ import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import type { MutationCtx } from "../_generated/server";
 import type { Id } from "../_generated/dataModel";
-import { computeRecommendedStart } from "../lib/scheduleSlots";
+import { computeRecommendedStart, computeDailyStudyMinutes } from "../lib/scheduleSlots";
 
 export async function rebuildStudyBlocksForSubtask(
   ctx: MutationCtx,
@@ -101,10 +101,14 @@ export const setTimeEstimate = internalMutation({
     // Do not overwrite a manually set estimate
     if (task.isManualEstimate) return;
 
+    const user = await ctx.db.get(task.userId);
     await ctx.db.patch(args.taskId, {
       timeEstimate: args.timeEstimate,
       reasoning: args.reasoning,
-      recommendedStart: computeRecommendedStart(Date.now(), task.dueDate, args.timeEstimate),
+      recommendedStart: computeRecommendedStart(
+        Date.now(), task.dueDate, args.timeEstimate,
+        computeDailyStudyMinutes(user?.workHoursGrid),
+      ),
     });
 
     // When subtasks exist, block rebuilding is owned by the subtask rollup in
@@ -151,10 +155,14 @@ export const setManualTimeEstimate = mutation({
       await ctx.db.delete(subtask._id);
     }
 
+    const user = await ctx.db.get(userId);
     await ctx.db.patch(args.taskId, {
       timeEstimate: args.timeEstimate,
       isManualEstimate: true,
-      recommendedStart: computeRecommendedStart(Date.now(), task.dueDate, args.timeEstimate),
+      recommendedStart: computeRecommendedStart(
+        Date.now(), task.dueDate, args.timeEstimate,
+        computeDailyStudyMinutes(user?.workHoursGrid),
+      ),
       reasoning: undefined,
     });
 
