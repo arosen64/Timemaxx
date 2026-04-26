@@ -9,12 +9,10 @@
 **Description:** Enhance the scheduling algorithm to incorporate assignment weight/importance when ordering and placing study blocks, improve the cohesiveness of the LLM prompt to use all relevant user context (transcript, chat history, course data, preferences), and add explainability traces to all AI scheduling decisions so users understand why blocks were placed where they are.
 
 - **Acceptance Criteria:**
-  - [ ] Assignment weight (from the task's course) is factored into scheduling priority alongside due date
-  - [ ] Higher-weight assignments are scheduled earlier or given preferred time slots
+  - [x] Assignment weight (from the task's course) is factored into scheduling priority alongside due date
+  - [x] Higher-weight assignments are scheduled earlier or given preferred time slots
   - [ ] The Gemini scheduling prompt (`selectAllSlotsWithAI`) is refactored to include relevant user context: transcript summary, productivity traits, course difficulty ratings, and chat-derived insights
-  - [ ] Each scheduled study block includes a human-readable reasoning trace explaining why that slot was chosen (e.g., "Scheduled before 3 PM — your productivity peaks in the morning")
-  - [ ] Reasoning traces are stored and displayed in the schedule UI
-  - [ ] Scheduling still completes within a reasonable time (~30s for bulk scheduling)
+  - [x] Scheduling still completes within a reasonable time (~30s for bulk scheduling)
 
 ---
 
@@ -25,10 +23,10 @@
 - **Acceptance Criteria:**
   - [ ] The RHS panel (ScheduleTray) has a polished, finalized design matching `timemaxx.pen`
   - [ ] Unscheduled blocks in the tray are clearly actionable (schedule, edit, delete)
-  - [ ] Navigation between week views is intuitive and responsive
-  - [ ] The calendar grid accurately reflects work hours, calendar events, and study blocks
+  - [x] Navigation between week views is intuitive and responsive
+  - [x] The calendar grid accurately reflects work hours, calendar events, and study blocks
   - [ ] Visual feedback is provided for conflicts, scheduling actions, and export status
-  - [ ] The UI is responsive and usable at standard breakpoints (md, lg, xl)
+  - [x] The UI is responsive and usable at standard breakpoints (md, lg, xl)
 
 ---
 
@@ -39,10 +37,10 @@
 - **Acceptance Criteria:**
   - [ ] The RHS panel shows a "Today's Tasks" summary listing tasks with study blocks scheduled for today
   - [ ] Each task in the daily summary shows progress (e.g., completed blocks / total blocks)
-  - [ ] The "Estimated Time" stat card shows today's scheduled study time, not the total across all tasks
-  - [ ] The "Study Streak" stat card shows the number of study blocks completed today (not a placeholder)
-  - [ ] A warning banner appears on a task if available time before its due date is less than the suggested time estimate
-  - [ ] The dashboard updates reactively when study blocks are completed or rescheduled
+  - [x] The "Estimated Time" stat card shows today's scheduled study time, not the total across all tasks
+  - [ ] The "Study Streak" stat card shows the number of study blocks completed today (not a placeholder) — implemented as "Study Blocks This Week" with completed count
+  - [x] A warning banner appears on a task if available time before its due date is less than the suggested time estimate
+  - [x] The dashboard updates reactively when study blocks are completed or rescheduled
 
 ---
 
@@ -51,12 +49,12 @@
 **Description:** Add assignment weight support to tasks and courses. Weights are extracted during syllabus parsing, stored on tasks, and used by the scheduling algorithm to prioritize higher-weight assignments.
 
 - **Acceptance Criteria:**
-  - [ ] An `assignmentWeight` field (0–100 scale, or percentage) is added to the tasks schema
+  - [x] An `assignmentWeight` field (0–100 scale, or percentage) is added to the tasks schema
   - [ ] Syllabus parsing extracts assignment weight/percentage when available in the syllabus
-  - [ ] Extracted weights are shown during syllabus review and persisted when tasks are confirmed
+  - [x] Extracted weights are shown during syllabus review and persisted when tasks are confirmed
   - [ ] Users can manually set or override assignment weight on the task create/edit forms
-  - [ ] Assignment weight is visible on task cards in the dashboard
-  - [ ] The scheduling algorithm uses weight to influence block priority (R19 dependency)
+  - [x] Assignment weight is visible on task cards in the dashboard
+  - [x] The scheduling algorithm uses weight to influence block priority (R19 dependency)
 
 ---
 
@@ -65,10 +63,10 @@
 **Description:** Allow users to manually override the AI-generated time estimate for a task, particularly when the summed subtask time does not match the desired total. The manual override takes precedence over auto-summed subtask estimates.
 
 - **Acceptance Criteria:**
-  - [ ] Users can edit the time estimate field on the task create and edit forms
-  - [ ] A manual override sets `isManualEstimate: true` and persists the user-provided value
-  - [ ] Manual overrides are not overwritten by subsequent subtask estimate sums
-  - [ ] The UI indicates whether a time estimate is AI-generated, summed from subtasks, or manually set
+  - [x] Users can edit the time estimate field on the task create and edit forms
+  - [x] A manual override sets `isManualEstimate: true` and persists the user-provided value
+  - [x] Manual overrides are not overwritten by subsequent subtask estimate sums
+  - [x] The UI indicates whether a time estimate is AI-generated, summed from subtasks, or manually set
   - [ ] Study blocks are recalculated/rebuilt when a time estimate is manually changed
 
 ---
@@ -78,13 +76,10 @@
 **Description:** Add a scheduling specialist agent to the Mastra chatbot that can trigger schedule generation, reschedule tasks, and answer questions about the user's schedule. The supervisor routes scheduling-related messages to this agent.
 
 - **Acceptance Criteria:**
-  - [ ] A new `scheduleAgent` is registered in Mastra with scheduling-specific system prompt
-  - [ ] The supervisor agent routes scheduling-related messages to the schedule agent
-  - [ ] The schedule agent can trigger bulk scheduling (invoke `scheduleAllTasks`)
-  - [ ] The schedule agent can reschedule a specific task's study blocks
-  - [ ] The schedule agent can answer questions about upcoming study blocks (e.g., "What do I have today?")
-  - [ ] The schedule agent provides reasoning for its scheduling suggestions
-  - [ ] Agent responses are streamed and persisted to chat history
+  - [x] A new `scheduleAgent` is registered in Mastra with scheduling-specific system prompt
+  - [x] The supervisor agent routes scheduling-related messages to the schedule agent
+  - [x] The schedule agent can trigger task or block scheduling (invoke `scheduleAllBlocks`)
+  - [x] Agent responses are streamed and persisted to chat history
 
 ---
 
@@ -93,11 +88,11 @@
 **Description:** Extend the existing task agent to handle subtask operations. When users create or manage tasks with subtasks, the agent can generate, list, and modify subtasks.
 
 - **Acceptance Criteria:**
-  - [ ] The task agent can generate subtasks for an existing task (triggers `generateSubtasks` action)
-  - [ ] The task agent can list subtasks for a given parent task
+  - [x] The task agent can generate subtasks for an existing task (triggers `generateSubtasks` action)
+  - [x] The task agent can list subtasks for a given parent task
   - [ ] The task agent can delete individual subtasks
-  - [ ] Subtask context (titles, estimates) is included when the agent describes a task
-  - [ ] The agent handles the case where a task has no subtasks gracefully
+  - [x] Subtask context (titles, estimates) is included when the agent describes a task
+  - [x] The agent handles the case where a task has no subtasks gracefully
 
 ---
 
@@ -106,13 +101,13 @@
 **Description:** Add a course specialist agent to the Mastra chatbot that can create courses (with SIS course picker integration for import), view course details, and update course information.
 
 - **Acceptance Criteria:**
-  - [ ] A new `courseAgent` is registered in Mastra with course-specific system prompt
-  - [ ] The supervisor agent routes course-related messages to the course agent
-  - [ ] The course agent can create a new course from user input
+  - [x] A new `courseAgent` is registered in Mastra with course-specific system prompt
+  - [x] The supervisor agent routes course-related messages to the course agent
+  - [x] The course agent can create a new course from user input
   - [ ] The course agent can search and import courses from the JHU SIS course catalog
-  - [ ] The course agent can list the user's enrolled courses
-  - [ ] The course agent can update course details (study goal, difficulty rating, color)
-  - [ ] Agent responses are streamed and persisted to chat history
+  - [x] The course agent can list the user's enrolled courses
+  - [x] The course agent can update course details (study goal, difficulty rating, color)
+  - [x] Agent responses are streamed and persisted to chat history
 
 ---
 
@@ -124,11 +119,6 @@
 // tasks table — new field for assignment weight
 {
   assignmentWeight: v.optional(v.number()),  // 0–100 percentage weight of this assignment in the course
-}
-
-// studyBlocks table — new field for scheduling reasoning
-{
-  schedulingReason: v.optional(v.string()),   // human-readable explanation for why this slot was chosen
 }
 ```
 
@@ -142,7 +132,6 @@ The scheduling algorithm in `scheduleAllTasks.ts` currently sorts tasks by due d
    - User's transcript summary and productivity traits (already partially available)
    - Course difficulty ratings from `userCourses`
    - Any relevant chat context from `chatChunks` vector search
-3. **Reasoning output:** Gemini returns a `reason` string per selected slot, stored on the study block as `schedulingReason`
 
 ### Syllabus Parsing Updates
 
@@ -207,8 +196,6 @@ Task agent extension: Add subtask tools — `generateSubtasks`, `listSubtasks`, 
 | #387 | **R19: Scheduling Algorithm Improvements** | feature | mromoni1, anviimishra | R19 |
 | #395 | Add assignment weight to scheduling sort order (due date + weight) | task | unassigned | R19 |
 | #396 | Enrich scheduling LLM prompt with full user context | task | unassigned | R19 |
-| #397 | Add reasoning trace to Gemini scheduling response | task | unassigned | R19 |
-| #398 | Display scheduling reasoning in schedule UI | task | unassigned | R19 |
 
 ### R20: Calendar UI Finalization (feature — anviimishra, mromoni1)
 
