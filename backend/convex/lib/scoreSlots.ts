@@ -12,10 +12,11 @@ export interface ScoreBreakdown {
 const HIGH_DIFFICULTY_THRESHOLD = 4;
 
 // Bucket weights per deadlineBehavior setting (bucket 0 = earliest, 4 = closest to due date).
-// "Evenly spread" is absent intentionally — missing key → score 0 (no signal).
+// Keys match the option strings in PreferencesForm.tsx. "Somewhere in between" is absent
+// intentionally — missing key → score 0 (no signal).
 const DEADLINE_BUCKET_WEIGHTS: Record<string, number[]> = {
-  "Well in advance": [3, 3, 2, 1, 0],
-  "Near deadline":   [1, 1, 2, 3, 3],
+  "I work best well in advance":      [3, 3, 2, 1, 0],
+  "I need the pressure of a deadline": [1, 1, 2, 3, 3],
 };
 const DEADLINE_BUCKET_MAX_WEIGHTS: Record<string, number> = Object.fromEntries(
   Object.entries(DEADLINE_BUCKET_WEIGHTS).map(([k, v]) => [k, Math.max(...v)])
