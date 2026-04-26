@@ -197,7 +197,7 @@ Without AI, it would be considerably more difficult to block off time work appro
 - Dashboard stat cards updated: "Study Time Today" (today's scheduled minutes) and "Study Blocks This Week" (total and completed)
 - Due-date warning badge on tasks where available time before the deadline is less than the estimated time
 - Manual time estimate override with clear UI indication of estimate source (AI, subtask-summed, or manual)
-- Chatbot scheduling agent (`scheduleAgent`) to trigger bulk scheduling and answer questions about upcoming blocks
+- Chatbot scheduling agent (`scheduleAgent`) to trigger block or task scheduling
 - Chatbot task agent extended with subtask support: generate, list, and update subtask time estimates via chat
 - Chatbot course agent (`courseAgent`) to create, list, and update courses via chat
 - Mobile-responsive calendar (day view) and task card layouts

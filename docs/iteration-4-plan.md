@@ -78,9 +78,7 @@
 - **Acceptance Criteria:**
   - [x] A new `scheduleAgent` is registered in Mastra with scheduling-specific system prompt
   - [x] The supervisor agent routes scheduling-related messages to the schedule agent
-  - [x] The schedule agent can trigger bulk scheduling (invoke `scheduleAllTasks`)
-  - [x] The schedule agent can reschedule a specific task's study blocks
-  - [x] The schedule agent can answer questions about upcoming study blocks (e.g., "What do I have today?")
+  - [x] The schedule agent can trigger task or block scheduling (invoke `scheduleAllBlocks`)
   - [x] Agent responses are streamed and persisted to chat history
 
 ---
