@@ -37,9 +37,24 @@ export async function buildTaggedEntitiesContextBlock(
   for (const tid of taskIds) {
     const task = await ctx.runQuery(internal.queries.tasks.getTaskInternal, { taskId: tid });
     if (task && task.userId === userId) {
+      const subtasks = await ctx.runQuery(internal.queries.subtasks.countSubtasksForTaskInternal, { parentTaskId: tid });
       lines.push(
-        `- Task "${task.title}" (${task.taskType}, due ${new Date(task.dueDate).toISOString().slice(0, 10)}${task.classTag ? `, class: ${task.classTag}` : ""}) → taskId ${String(tid)}`,
+        `- Task "${task.title}" (${task.taskType}, due ${new Date(task.dueDate).toISOString().slice(0, 10)}${task.classTag ? `, class: ${task.classTag}` : ""}, subtasks: ${subtasks}) → taskId ${String(tid)}`,
       );
+      if (subtasks > 0) {
+        const subtaskRows = await ctx.runQuery(internal.queries.subtasks.getSubtasksForTaskInternal, {
+          parentTaskId: tid,
+        });
+        for (const [index, subtask] of subtaskRows.entries()) {
+          const estimate =
+            subtask.timeEstimate !== undefined
+              ? `${Math.floor(subtask.timeEstimate / 60)}h ${subtask.timeEstimate % 60}m`
+              : "estimate pending";
+          lines.push(
+            `  - Subtask ${index + 1}: "${subtask.title}" (status: ${subtask.status ?? "not_started"}, estimate: ${estimate})`,
+          );
+        }
+      }
       if (task.courseId) extraCourseIds.add(String(task.courseId));
     }
   }

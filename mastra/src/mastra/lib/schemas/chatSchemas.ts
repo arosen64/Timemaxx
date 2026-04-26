@@ -53,6 +53,7 @@ export const chatWorkflowOutputSchema = z.object({
   updatedTaskType: z.string().nullable(),
   updatedDueDateIso: z.string().nullable(),
   updatedClassTag: z.string().nullable(),
+  generateSubtasks: z.boolean().nullable(),
   courseName: z.string().nullable(),
   sisQuery: z.string().nullable(),
   term: z.string().nullable(),
