@@ -82,7 +82,8 @@ function BlockRow({
           }}
           disabled={!canSplit || isSplitting}
           className="flex h-5 w-5 shrink-0 items-center justify-center rounded text-light-blue transition hover:bg-navy/10 hover:text-navy disabled:cursor-not-allowed disabled:opacity-30"
-          aria-label="Split this block in two"
+          aria-label={`Split "${block.title}"`}
+          title={`Split "${block.title}"`}
         >
           {isSplitting
             ? <SpinnerIcon color="currentColor" size={10} />
@@ -97,7 +98,8 @@ function BlockRow({
           }}
           disabled={isScheduling}
           className="flex h-5 w-5 shrink-0 items-center justify-center rounded text-light-blue transition hover:bg-navy/10 hover:text-navy disabled:cursor-not-allowed disabled:opacity-30"
-          aria-label="Auto-schedule this block"
+          aria-label={`Auto-schedule "${block.title}"`}
+          title={`Auto-schedule "${block.title}"`}
         >
           {isScheduling
             ? <SpinnerIcon color="currentColor" size={10} />
