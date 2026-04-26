@@ -197,7 +197,12 @@ export default function ClassPanel({
   async function handleScheduleBlock(blockId: Id<'studyBlocks'>) {
     setSchedulingBlockIds((prev) => new Set(prev).add(blockId))
     try {
-      await scheduleBlockAction({ studyBlockId: blockId, timezone })
+      const result = await scheduleBlockAction({ studyBlockId: blockId, timezone })
+      if ('error' in result) {
+        onScheduleAllMsg('No valid slot found before the due date.', true)
+      } else if (result.scheduled === 0) {
+        onScheduleAllMsg('Block is already scheduled.', true)
+      }
     } catch (err) {
       onScheduleAllMsg(`Failed to schedule: ${err instanceof Error ? err.message : 'Unknown error'}`)
     } finally {
