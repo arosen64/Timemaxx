@@ -7,23 +7,15 @@ import {
   enumerateSlots,
   selectAllSlotsWithAI,
   isSlotValid,
+  DEFAULT_DUE_FALLBACK_MS,
   type OccupiedInterval,
   type WorkHoursRow,
 } from "../lib/scheduleSlots";
 import { fetch21DayCalendarEvents } from "../lib/calendarFetch";
 
-/**
- * AI-driven scheduling for a single task.
- *
- * Enumerates valid time slots for each unscheduled study block belonging to
- * the task, calls Gemini Flash to select the best slot, and places the block.
- *
- * Returns { scheduled: number } on success, or { error: "no_slot_found" } if
- * no valid slot could be found for any block.
- */
-export const scheduleTask = action({
+export const scheduleSubtask = action({
   args: {
-    taskId: v.id("tasks"),
+    subtaskId: v.id("subtasks"),
     timezone: v.string(),
   },
   handler: async (
@@ -33,35 +25,29 @@ export const scheduleTask = action({
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Unauthenticated");
 
-    // Fetch task
-    const task = await ctx.runQuery(internal.queries.tasks.getTaskInternal, {
-      taskId: args.taskId,
+    const subtask = await ctx.runQuery(internal.queries.subtasks.getSubtaskInternal, {
+      subtaskId: args.subtaskId,
     });
-    if (!task || task.userId !== userId) throw new Error("Task not found");
+    if (!subtask || subtask.userId !== userId) throw new Error("Subtask not found");
 
-    // Fetch user preferences
-    const user = await ctx.runQuery(internal.queries.users.getUserInternal, {
-      userId,
-    });
+    const user = await ctx.runQuery(internal.queries.users.getUserInternal, { userId });
     if (!user) throw new Error("User not found");
 
     const workHoursGrid = (user.workHoursGrid ?? []) as WorkHoursRow[];
     const productivityTraits: unknown = user.productivityTraits;
 
-    // Fetch unscheduled blocks for this task
     const studyBlocks = await ctx.runQuery(
-      api.queries.studyBlocks.getStudyBlocksByTask,
-      { taskId: args.taskId },
+      api.queries.studyBlocks.getStudyBlocksBySubtask,
+      { subtaskId: args.subtaskId },
     );
     const unscheduled = studyBlocks.filter((b) => !b.startTime);
     if (unscheduled.length === 0) return { scheduled: 0 };
 
-    // Fetch calendar events for the 21-day window (best effort)
     const timedEvents = await fetch21DayCalendarEvents(ctx, args.timezone);
 
-    // Build occupied intervals: calendar events + all already-placed study blocks
-    const allBlocks = await ctx.runQuery(
-      internal.queries.studyBlocks.getAllStudyBlocksWithTasksInternal,
+    // All user blocks by userId index — covers both task-level and subtask-level blocks
+    const allUserBlocks = await ctx.runQuery(
+      internal.queries.studyBlocks.getAllStudyBlocksByUserInternal,
       { userId },
     );
 
@@ -71,8 +57,8 @@ export const scheduleTask = action({
         endMs: new Date(e.end).getTime(),
         title: e.summary,
       })),
-      ...(allBlocks as Array<{ startTime?: string; studyBlockLength: number; title: string; taskId: string }>)
-        .filter((b) => b.startTime && b.taskId !== args.taskId)
+      ...(allUserBlocks as Array<{ _id: string; startTime?: string; studyBlockLength: number; title: string }>)
+        .filter((b) => b.startTime)
         .map((b) => ({
           startMs: new Date(b.startTime!).getTime(),
           endMs: new Date(b.startTime!).getTime() + b.studyBlockLength * 60000,
@@ -81,48 +67,46 @@ export const scheduleTask = action({
     ];
 
     const nowMs = Date.now();
-    const fromMs = Math.max(nowMs, task._creationTime);
+    const fromMs = Math.max(nowMs, subtask._creationTime);
+    const dueDateMs = subtask.suggestedCompletionAt ?? subtask.dueDate ?? nowMs + DEFAULT_DUE_FALLBACK_MS;
 
-    // Enumerate candidates for every unscheduled block upfront
-    const blockCandidates = unscheduled.map((block) =>
-      enumerateSlots({
-        fromMs,
-        dueDateMs: task.dueDate,
-        durationMinutes: block.studyBlockLength,
-        workHoursGrid,
-        occupiedIntervals,
-        timezone: args.timezone,
-      })
-    );
+    const placeable = unscheduled
+      .map((block) => ({
+        block,
+        candidates: enumerateSlots({
+          fromMs,
+          dueDateMs,
+          durationMinutes: block.studyBlockLength,
+          workHoursGrid,
+          occupiedIntervals,
+          timezone: args.timezone,
+        }),
+      }))
+      .filter(({ candidates }) => candidates.length > 0);
 
-    if (blockCandidates.some((c) => c.length === 0)) {
-      return { error: "no_slot_found" };
-    }
+    if (placeable.length === 0) return { error: "no_slot_found" };
 
-    // One Gemini call for all blocks
     const chosenIndices = await selectAllSlotsWithAI(
-      unscheduled.map((_block, i) => ({
-        taskTitle: task.title,
-        dueDate: task.dueDate,
-        candidates: blockCandidates[i],
+      placeable.map(({ candidates }) => ({
+        taskTitle: subtask.title,
+        dueDate: dueDateMs,
+        candidates,
       })),
       productivityTraits,
     );
 
     let scheduled = 0;
 
-    for (let i = 0; i < unscheduled.length; i++) {
-      const block = unscheduled[i];
-      const candidates = blockCandidates[i];
+    for (let i = 0; i < placeable.length; i++) {
+      const { block, candidates } = placeable[i];
       const durationMs = block.studyBlockLength * 60000;
 
-      // Use AI-chosen index; fall back to first still-valid candidate if it conflicts
-      let chosen = candidates[chosenIndices[i]];
+      let chosen = candidates[chosenIndices[i] ?? 0];
       if (!isSlotValid(chosen.startMs, durationMs, workHoursGrid, occupiedIntervals, args.timezone)) {
         const fallback = candidates.find((c) =>
           isSlotValid(c.startMs, durationMs, workHoursGrid, occupiedIntervals, args.timezone)
         );
-        if (!fallback) return { error: "no_slot_found" };
+        if (!fallback) continue;
         chosen = fallback;
       }
 

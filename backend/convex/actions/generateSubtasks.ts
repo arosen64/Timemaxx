@@ -5,6 +5,7 @@ import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { z } from "zod";
 import { callGemini } from "../lib/gemini";
+import { computeSubtaskCascade } from "../lib/scheduleSlots";
 
 export type GeneratedSubtask = {
   title: string;
@@ -92,12 +93,11 @@ Return 1–6 subtasks ordered by when they should be completed. If the assignmen
       const nowMs = Date.now();
       const dueDateMs = task.dueDate;
       const n = rawSubtasks.length;
+      const dateAt = computeSubtaskCascade(nowMs, dueDateMs, n);
 
       const subtasks: GeneratedSubtask[] = rawSubtasks.map((s, i) => ({
         ...s,
-        suggestedCompletionAt: new Date(
-          nowMs + ((i + 1) / n) * (dueDateMs - nowMs)
-        ).toISOString(),
+        suggestedCompletionAt: new Date(dateAt(i)).toISOString(),
       }));
 
       return { subtasks };

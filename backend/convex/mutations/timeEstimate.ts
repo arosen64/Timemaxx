@@ -3,6 +3,48 @@ import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import type { MutationCtx } from "../_generated/server";
 import type { Id } from "../_generated/dataModel";
+import { computeRecommendedStart } from "../lib/scheduleSlots";
+
+export async function rebuildStudyBlocksForSubtask(
+  ctx: MutationCtx,
+  subtaskId: Id<"subtasks">,
+  timeEstimate: number
+) {
+  const existingBlocks = await ctx.db
+    .query("studyBlocks")
+    .withIndex("by_subtaskId", (q) => q.eq("subtaskId", subtaskId))
+    .collect();
+
+  // Preserve blocks already placed on the calendar; only clear unscheduled ones.
+  const scheduledCount = existingBlocks.filter((b) => b.startTime !== undefined).length;
+  for (const block of existingBlocks) {
+    if (block.startTime === undefined) {
+      await ctx.db.delete(block._id);
+    }
+  }
+
+  const subtask = await ctx.db.get(subtaskId);
+  if (!subtask) return;
+
+  const user = await ctx.db.get(subtask.userId);
+  const focusBlockLength = user?.focusBlockLength || 60;
+
+  const totalBlockCount = Math.ceil(timeEstimate / focusBlockLength);
+  const remainder = timeEstimate % focusBlockLength;
+
+  for (let i = scheduledCount; i < totalBlockCount; i++) {
+    const isLastBlock = i === totalBlockCount - 1;
+    const studyBlockLength = isLastBlock && remainder !== 0 ? remainder : focusBlockLength;
+    await ctx.db.insert("studyBlocks", {
+      subtaskId,
+      userId: subtask.userId,
+      title: subtask.title,
+      startTime: undefined,
+      studyBlockLength,
+      isCompleted: false,
+    });
+  }
+}
 
 export async function rebuildStudyBlocks(
   ctx: MutationCtx,
@@ -36,6 +78,7 @@ export async function rebuildStudyBlocks(
       title: task.title,
       startTime: undefined,
       studyBlockLength,
+      isCompleted: false,
     });
   }
 }
@@ -61,6 +104,7 @@ export const setTimeEstimate = internalMutation({
     await ctx.db.patch(args.taskId, {
       timeEstimate: args.timeEstimate,
       reasoning: args.reasoning,
+      recommendedStart: computeRecommendedStart(Date.now(), task.dueDate),
     });
 
     // When subtasks exist, block rebuilding is owned by the subtask rollup in
@@ -89,11 +133,32 @@ export const setManualTimeEstimate = mutation({
     const task = await ctx.db.get(args.taskId);
     if (!task || task.userId !== userId) throw new Error("Task not found");
 
+    if (args.timeEstimate < 15) {
+      throw new Error("Time estimate must be at least 15 minutes.");
+    }
+
+    // Delete all existing subtasks and their study blocks
+    const subtasks = await ctx.db
+      .query("subtasks")
+      .withIndex("by_parentTaskId", (q) => q.eq("parentTaskId", args.taskId))
+      .collect();
+    for (const subtask of subtasks) {
+      const subtaskBlocks = await ctx.db
+        .query("studyBlocks")
+        .withIndex("by_subtaskId", (q) => q.eq("subtaskId", subtask._id))
+        .collect();
+      for (const block of subtaskBlocks) await ctx.db.delete(block._id);
+      await ctx.db.delete(subtask._id);
+    }
+
     await ctx.db.patch(args.taskId, {
       timeEstimate: args.timeEstimate,
       isManualEstimate: true,
+      recommendedStart: computeRecommendedStart(Date.now(), task.dueDate),
+      reasoning: undefined,
     });
 
+    // Rebuild task-level blocks sized to the manual estimate using user preferences
     await rebuildStudyBlocks(ctx, args.taskId, args.timeEstimate);
   },
 });
@@ -109,19 +174,18 @@ export const clearManualEstimate = mutation({
     const task = await ctx.db.get(args.taskId);
     if (!task || task.userId !== userId) throw new Error("Task not found");
 
-    await ctx.db.patch(args.taskId, {
-      isManualEstimate: false,
-      timeEstimate: undefined,
-    });
-
-    // Delete existing study blocks so AI can regenerate fresh
+    // Delete task-level blocks so AI can regenerate fresh
     const existingBlocks = await ctx.db
       .query("studyBlocks")
       .withIndex("by_taskId", (q) => q.eq("taskId", args.taskId))
       .collect();
-    for (const block of existingBlocks) {
-      await ctx.db.delete(block._id);
-    }
+    for (const block of existingBlocks) await ctx.db.delete(block._id);
+
+    await ctx.db.patch(args.taskId, {
+      isManualEstimate: false,
+      timeEstimate: undefined,
+      recommendedStart: computeRecommendedStart(Date.now(), task.dueDate),
+    });
   },
 });
 

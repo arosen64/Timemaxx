@@ -1,14 +1,14 @@
 import BrandLogo from "./BrandLogo";
 
 const FEATURES = [
-  "Gemini-powered time estimation",
+  "AI-powered time estimation",
   "Personalized daily study windows",
   "Smart scheduling around your life",
 ];
 
 export default function LandingHeroPanel() {
   return (
-    <div className="flex w-1/2 flex-col justify-between bg-navy px-16 py-20">
+    <div className="flex w-full md:w-1/2 flex-col justify-between bg-navy px-8 py-10 md:px-16 md:py-20">
       <div className="flex flex-col gap-10">
         <BrandLogo />
         <div className="flex flex-col gap-4">

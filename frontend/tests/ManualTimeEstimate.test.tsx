@@ -31,11 +31,12 @@ describe('AddTaskModal – time estimate input', () => {
     mockUseMutation.mockReturnValue(makeMutationFn('task-id-1'))
   })
 
-  test('renders hours and minutes inputs for time estimate', () => {
+  test('renders hours and minutes inputs for time estimate after switching to manual mode', async () => {
     renderWithProviders(
       <AddTaskModal isOpen onClose={vi.fn()} />
     )
 
+    await userEvent.click(screen.getByRole('button', { name: /set manually/i }))
     expect(screen.getByLabelText(/hours/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/minutes/i)).toBeInTheDocument()
   })
@@ -49,6 +50,7 @@ describe('AddTaskModal – time estimate input', () => {
       <AddTaskModal isOpen onClose={onClose} />
     )
 
+    await userEvent.click(screen.getByRole('button', { name: /set manually/i }))
     await userEvent.type(screen.getByPlaceholderText(/calculus/i), 'Test Task')
     expect(screen.getByLabelText(/hours/i)).toHaveValue(null)
     expect(screen.getByLabelText(/minutes/i)).toHaveValue(null)

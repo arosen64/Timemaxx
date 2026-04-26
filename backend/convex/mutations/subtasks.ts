@@ -3,13 +3,139 @@ import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { taskTypeValidator } from "../lib/taskValidators";
 import { internal } from "../_generated/api";
-import { rebuildStudyBlocks } from "./timeEstimate";
+import { rebuildStudyBlocksForSubtask } from "./timeEstimate";
+import { computeRecommendedStart, computeSubtaskCascade } from "../lib/scheduleSlots";
+import { Id } from "../_generated/dataModel";
 
 const reasoningTraceArgs = v.object({
   classes: v.string(),
   tasks: v.string(),
   chats: v.string(),
   profile: v.string(),
+});
+
+const GENERATED_SUBTASK_COLORS = ["#68ACE5", "#7BB6E8", "#8EC0EB", "#A1CAEE", "#B4D4F1", "#C7DEF4"] as const;
+
+// Batch variant: validates all subtasks before any inserts to avoid partial writes on failure.
+export const createSubtasksBatch = mutation({
+  args: {
+    parentTaskId: v.id("tasks"),
+    subtasks: v.array(
+      v.object({
+        title: v.string(),
+        description: v.string(),
+        taskType: taskTypeValidator,
+        color: v.string(),
+        order: v.number(),
+      })
+    ),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Unauthenticated");
+
+    const parent = await ctx.db.get(args.parentTaskId);
+    if (!parent || parent.userId !== userId) {
+      throw new Error("Parent task not found");
+    }
+
+    for (const s of args.subtasks) {
+      if (s.title.trim().length === 0) throw new Error("Title cannot be empty");
+      if (s.description.trim().length === 0) throw new Error("Description cannot be empty");
+    }
+
+    const now = Date.now();
+    const n = args.subtasks.length;
+    const dateAt = computeSubtaskCascade(now, parent.dueDate, n);
+    const subtaskIds: Id<"subtasks">[] = [];
+
+    for (let i = 0; i < n; i++) {
+      const s = args.subtasks[i];
+      const subtaskId = await ctx.db.insert("subtasks", {
+        parentTaskId: args.parentTaskId,
+        userId,
+        title: s.title,
+        description: s.description,
+        taskType: s.taskType,
+        color: s.color,
+        order: s.order,
+        suggestedCompletionAt: dateAt(i),
+        courseId: parent.courseId,
+        classTag: parent.classTag,
+        dueDate: parent.dueDate,
+        createdAt: now,
+      });
+      subtaskIds.push(subtaskId);
+    }
+
+    await ctx.db.patch(args.parentTaskId, { reasoning: undefined });
+
+    if (process.env.ANTHROPIC_API_KEY) {
+      await ctx.scheduler.runAfter(0, internal.ai.estimateSubtasksBatch.estimateSubtasksBatch, {
+        subtaskIds,
+      });
+    }
+
+    return subtaskIds;
+  },
+});
+
+/** Persists generated subtasks from internal actions (chat automation path). */
+export const createSubtasksFromGeneratedInternal = internalMutation({
+  args: {
+    userId: v.id("users"),
+    parentTaskId: v.id("tasks"),
+    subtasks: v.array(
+      v.object({
+        title: v.string(),
+        description: v.string(),
+        taskType: v.string(),
+        suggestedCompletionAt: v.optional(v.number()),
+      })
+    ),
+  },
+  returns: v.array(v.id("subtasks")),
+  handler: async (ctx, args) => {
+    const parent = await ctx.db.get(args.parentTaskId);
+    if (!parent || parent.userId !== args.userId) {
+      throw new Error("Parent task not found");
+    }
+
+    const now = Date.now();
+    const subtaskIds: Id<"subtasks">[] = [];
+
+    for (let i = 0; i < args.subtasks.length; i += 1) {
+      const s = args.subtasks[i];
+      const title = s.title.trim();
+      const description = s.description.trim() || title;
+      if (title.length === 0 || description.length === 0) continue;
+      const subtaskId = await ctx.db.insert("subtasks", {
+        parentTaskId: args.parentTaskId,
+        userId: args.userId,
+        title,
+        description,
+        taskType: s.taskType,
+        color: GENERATED_SUBTASK_COLORS[i % GENERATED_SUBTASK_COLORS.length],
+        order: i,
+        suggestedCompletionAt: s.suggestedCompletionAt,
+        courseId: parent.courseId,
+        classTag: parent.classTag,
+        dueDate: parent.dueDate,
+        createdAt: now,
+      });
+      subtaskIds.push(subtaskId);
+    }
+
+    await ctx.db.patch(args.parentTaskId, { reasoning: undefined });
+
+    if (subtaskIds.length > 0 && process.env.ANTHROPIC_API_KEY) {
+      await ctx.scheduler.runAfter(0, internal.ai.estimateSubtasksBatch.estimateSubtasksBatch, {
+        subtaskIds,
+      });
+    }
+
+    return subtaskIds;
+  },
 });
 
 /**
@@ -59,19 +185,16 @@ export const createSubtask = mutation({
     // so we never show stale explanations alongside a summed estimate.
     await ctx.db.patch(args.parentTaskId, { reasoning: undefined });
 
-    // Kick off time estimation on the backend immediately after creation.
-    // This runs regardless of frontend lifecycle (no component unmount risk).
-    // In convex-test (Node.js), process.env.VITEST is set; in production Convex
-    // (V8 isolate), `process` is undefined. Skip scheduling in tests to avoid
-    // a convex-test limitation where setTimeout callbacks fire after the test's
-    // global has been replaced, causing "Write outside of transaction" errors.
-    const isTest =
-      typeof process !== "undefined" && process.env.VITEST === "true";
-    if (!isTest) {
+    if (process.env.ANTHROPIC_API_KEY) {
       await ctx.scheduler.runAfter(0, internal.ai.estimateTaskTime.estimateTaskTime, {
         subtaskId,
       });
     }
+    await ctx.scheduler.runAfter(0, internal.ai.embeddings.generateSubtaskEmbedding, {
+      subtaskId,
+      title: args.title,
+      description: args.description,
+    });
 
     return subtaskId;
   },
@@ -107,14 +230,16 @@ export const updateSubtask = mutation({
       reasoning: undefined,
     });
 
-    // Re-schedule estimation since content changed.
-    const isTest =
-      typeof process !== "undefined" && process.env.VITEST === "true";
-    if (!isTest) {
+    if (process.env.ANTHROPIC_API_KEY) {
       await ctx.scheduler.runAfter(0, internal.ai.estimateTaskTime.estimateTaskTime, {
         subtaskId: args.subtaskId,
       });
     }
+    await ctx.scheduler.runAfter(0, internal.ai.embeddings.generateSubtaskEmbedding, {
+      subtaskId: args.subtaskId,
+      title: args.title,
+      description: args.description,
+    });
   },
 });
 
@@ -128,30 +253,108 @@ export const setSubtaskTimeEstimate = internalMutation({
     reasoning: reasoningTraceArgs,
   },
   handler: async (ctx, args) => {
+    const subtask = await ctx.db.get(args.subtaskId);
+    if (!subtask) return;
+
     await ctx.db.patch(args.subtaskId, {
       timeEstimate: args.timeEstimate,
       reasoning: args.reasoning,
     });
-
-    // Roll up: sum all sibling estimates and patch parent task
-    const subtask = await ctx.db.get(args.subtaskId);
-    if (!subtask) return;
 
     const siblings = await ctx.db
       .query("subtasks")
       .withIndex("by_parentTaskId", (q) => q.eq("parentTaskId", subtask.parentTaskId))
       .collect();
 
+    // Roll up: sum all sibling estimates and patch parent task
     const total = siblings.reduce((sum, s) => sum + (s.timeEstimate ?? 0), 0);
-    await ctx.db.patch(subtask.parentTaskId, { timeEstimate: total });
+    const parent = await ctx.db.get(subtask.parentTaskId);
+    if (!parent) return;
+    await ctx.db.patch(subtask.parentTaskId, {
+      timeEstimate: total,
+      recommendedStart: computeRecommendedStart(Date.now(), parent.dueDate),
+    });
 
-    // Only rebuild study blocks once all subtasks have been estimated.
-    // Rebuilding on every partial rollup would create blocks sized to an
-    // incomplete sum; waiting for the final tally ensures block count and
-    // lengths match the true total.
-    const allEstimated = siblings.every((s) => s.timeEstimate !== undefined);
-    if (allEstimated && total > 0) {
-      await rebuildStudyBlocks(ctx, subtask.parentTaskId, total);
+    // Delete any stale task-level blocks so they don't co-exist with subtask-owned blocks
+    const staleTaskBlocks = await ctx.db
+      .query("studyBlocks")
+      .withIndex("by_taskId", (q) => q.eq("taskId", subtask.parentTaskId))
+      .collect();
+    for (const block of staleTaskBlocks) {
+      await ctx.db.delete(block._id);
+    }
+
+    // Build blocks for this subtask immediately — each subtask owns its own blocks
+    if (args.timeEstimate > 0) {
+      await rebuildStudyBlocksForSubtask(ctx, args.subtaskId, args.timeEstimate);
+    }
+  },
+});
+
+export const patchSubtaskEmbedding = internalMutation({
+  args: {
+    subtaskId: v.id("subtasks"),
+    embedding: v.array(v.float64()),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.subtaskId, { embedding: args.embedding });
+    return null;
+  },
+});
+
+export const updateSubtaskStatus = mutation({
+  args: {
+    subtaskId: v.id("subtasks"),
+    status: v.union(v.literal("not_started"), v.literal("in_progress"), v.literal("completed")),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Unauthenticated");
+
+    const subtask = await ctx.db.get(args.subtaskId);
+    if (!subtask || subtask.userId !== userId) throw new Error("Subtask not found");
+
+    await ctx.db.patch(args.subtaskId, { status: args.status });
+
+    // Sync study block completion when status is set to completed or not_started
+    if (args.status === "completed" || args.status === "not_started") {
+      const blocks = await ctx.db
+        .query("studyBlocks")
+        .withIndex("by_subtaskId", (q) => q.eq("subtaskId", args.subtaskId))
+        .collect();
+      const isCompleted = args.status === "completed";
+      for (const block of blocks) {
+        if (block.isCompleted !== isCompleted) {
+          await ctx.db.patch(block._id, { isCompleted });
+        }
+      }
+    }
+
+    // Bubble up: derive parent status from all sibling statuses after this update
+    const siblings = await ctx.db
+      .query("subtasks")
+      .withIndex("by_parentTaskId", (q) => q.eq("parentTaskId", subtask.parentTaskId))
+      .collect();
+
+    const allDone = siblings.every((s) =>
+      s._id === args.subtaskId ? args.status === "completed" : s.status === "completed"
+    );
+    const anyActive = siblings.some((s) =>
+      s._id === args.subtaskId
+        ? args.status === "in_progress" || args.status === "completed"
+        : s.status === "in_progress" || s.status === "completed"
+    );
+
+    const newParentStatus = allDone
+      ? "completed"
+      : anyActive
+        ? "in_progress"
+        : "not_started";
+
+    const parent = await ctx.db.get(subtask.parentTaskId);
+    if (parent && parent.status !== newParentStatus) {
+      await ctx.db.patch(subtask.parentTaskId, { status: newParentStatus });
     }
   },
 });
@@ -179,15 +382,18 @@ export const deleteSubtask = mutation({
 
     await ctx.db.delete(args.subtaskId);
 
-    // Recalculate parent task estimate from remaining siblings.
-    const remaining = await ctx.db
-      .query("subtasks")
-      .withIndex("by_parentTaskId", (q) => q.eq("parentTaskId", subtask.parentTaskId))
-      .collect();
+    // Recalculate parent task estimate from remaining siblings (skip if manual override).
+    const parentTask = await ctx.db.get(subtask.parentTaskId);
+    if (!parentTask?.isManualEstimate) {
+      const remaining = await ctx.db
+        .query("subtasks")
+        .withIndex("by_parentTaskId", (q) => q.eq("parentTaskId", subtask.parentTaskId))
+        .collect();
 
-    const newTotal = remaining.reduce((sum, s) => sum + (s.timeEstimate ?? 0), 0);
-    await ctx.db.patch(subtask.parentTaskId, {
-      timeEstimate: newTotal > 0 ? newTotal : undefined,
-    });
+      const newTotal = remaining.reduce((sum, s) => sum + (s.timeEstimate ?? 0), 0);
+      await ctx.db.patch(subtask.parentTaskId, {
+        timeEstimate: newTotal > 0 ? newTotal : undefined,
+      });
+    }
   },
 });

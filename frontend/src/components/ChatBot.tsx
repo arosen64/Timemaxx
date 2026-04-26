@@ -18,6 +18,14 @@ const MAIN_MENU = [
   { label: 'Change preferences', route: 'preferences' },
 ] as const
 
+const ACTIVE_AGENT_LABELS: Record<'task' | 'feedback' | 'preferences' | 'classes' | 'schedule', string> = {
+  task: 'Task agent',
+  feedback: 'Feedback agent',
+  preferences: 'Preferences agent',
+  classes: 'Classes agent',
+  schedule: 'Schedule agent',
+}
+
 type EntityCandidate = { id: string; label: string; subtitle: string }
 
 type ChatApiResponse = {
@@ -25,9 +33,7 @@ type ChatApiResponse = {
   status?: string
   entityCandidates?: EntityCandidate[]
   entityHasMore?: boolean
-  phase?: 'task' | 'class'
-  scopeConfirmTaskLabel?: string | null
-  scopeConfirmClassLabel?: string | null
+  phase?: 'task' | 'class' | 'block'
 }
 
 /** Assistant copy that introduces the task/class MCQ (must stay in sync with http_chat strings). */
@@ -79,7 +85,7 @@ export default function ChatBot() {
   const [optimistic, setOptimistic] = useState<{ role: 'user' | 'assistant'; content: string }[]>([])
   const [historyLenAtSend, setHistoryLenAtSend] = useState(0)
   const [entityMcq, setEntityMcq] = useState<{
-    phase: 'task' | 'class'
+    phase: 'task' | 'class' | 'block'
     candidates: EntityCandidate[]
     hasMore: boolean
   } | null>(null)
@@ -104,7 +110,6 @@ export default function ChatBot() {
 
   const showSuggestions = messages.length === 0 && !isLoading
   const chatLocked = entityScope?.chatInputLocked === true
-  const scopeConfirmOpen = entityScope?.awaitingScopeConfirm === true
 
   const shouldShowEntityBlock = entityMcq !== null && entityMcq.candidates.length > 0
 
@@ -118,44 +123,8 @@ export default function ChatBot() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shouldShowEntityBlock, entityBlockAfterIndex, history.length, optimistic.length])
 
-  async function handleScopeConfirm(yes: boolean) {
-    if (isLoading || chatLocked) return
-    setIsLoading(true)
-    try {
-      await postChat(
-        {
-          sessionId,
-          entity: { action: yes ? 'scope_confirm_yes' : 'scope_confirm_no' },
-        },
-        null,
-      )
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err)
-      setOptimistic((prev) => [...prev, { role: 'assistant', content: `Error: ${msg}` }])
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
   function applyEntityResponse(data: ChatApiResponse, userEcho: string | null) {
     const aiText = data.text ?? ''
-    if (data.status === 'awaiting_scope_reply') {
-      setEntityMcq(null)
-      setEntityBlockAfterIndex(null)
-      if (userEcho !== null) setInput(userEcho)
-      setOptimistic([{ role: 'assistant', content: aiText }])
-      return
-    }
-    if (data.status === 'needs_scope_confirmation') {
-      setEntityMcq(null)
-      setEntityBlockAfterIndex(null)
-      if (userEcho !== null) {
-        setOptimistic([{ role: 'user', content: userEcho }])
-      } else {
-        setOptimistic([])
-      }
-      return
-    }
     if (data.status === 'entity_scope_locked' || data.status === 'chat_input_locked') {
       setEntityBlockAfterIndex(null)
     }
@@ -182,13 +151,14 @@ export default function ChatBot() {
   }
 
   async function postChat(body: Record<string, unknown>, userEcho: string | null) {
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
     const res = await fetch(`${import.meta.env.VITE_CONVEX_SITE_URL}/api/chat`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify({ ...body, timezone }),
     })
     if (!res.ok) {
       if (res.status === 429) {
@@ -223,12 +193,14 @@ export default function ChatBot() {
     }
   }
 
-  async function handlePickEntity(phase: 'task' | 'class', id: string) {
+  async function handlePickEntity(phase: 'task' | 'class' | 'block', id: string) {
     if (isLoading || chatLocked || !entityMcq) return
     setIsLoading(true)
     try {
       if (phase === 'task') {
         await postChat({ sessionId, entity: { action: 'pick_task', taskId: id } }, null)
+      } else if (phase === 'block') {
+        await postChat({ sessionId, entity: { action: 'pick_block', blockId: id } }, null)
       } else {
         await postChat({ sessionId, entity: { action: 'pick_course', courseId: id } }, null)
       }
@@ -286,7 +258,7 @@ export default function ChatBot() {
     return (
       <div className="p-3 space-y-2 bg-white border rounded-xl border-border">
         <p className="text-[11px] font-heading font-semibold text-navy">
-          {entityMcq.phase === 'task' ? 'Pick a task' : 'Pick a class'}
+          {entityMcq.phase === 'task' ? 'Pick a task' : entityMcq.phase === 'block' ? 'Pick a block' : 'Pick a class'}
         </p>
         <div className="flex flex-col gap-1.5 max-h-40 overflow-y-auto">
           {entityMcq.candidates.map((c) => (
@@ -295,7 +267,7 @@ export default function ChatBot() {
               type="button"
               onClick={() => void handlePickEntity(entityMcq.phase, c.id)}
               disabled={isLoading}
-              className="text-left rounded-lg border border-border px-2.5 py-2 text-[12px] hover:bg-bg-gray transition disabled:opacity-50"
+              className="text-left rounded-lg border border-border px-2.5 py-2.5 sm:py-2 text-[13px] sm:text-[12px] hover:bg-bg-gray active:bg-bg-gray transition disabled:opacity-50"
             >
               <span className="block font-medium text-navy">{c.label}</span>
               <span className="text-light-blue text-[11px]">{c.subtitle}</span>
@@ -323,7 +295,7 @@ export default function ChatBot() {
     <div className="fixed z-50 flex flex-col items-end gap-3 bottom-6 right-6">
       {/* Overlay */}
       {isOpen && (
-        <div className="flex w-[400px] h-[600px] flex-col rounded-2xl border border-border bg-white shadow-xl overflow-hidden">
+        <div className="fixed inset-0 z-40 flex flex-col overflow-hidden bg-white sm:static sm:inset-auto sm:z-auto sm:w-[400px] sm:h-[600px] sm:rounded-2xl sm:border sm:border-border sm:shadow-xl">
           {/* Header */}
           <div className="flex min-h-14 shrink-0 items-start justify-between gap-3 bg-navy px-5 py-2.5">
             <div className="flex min-w-0 flex-1 flex-col gap-1 pt-0.5">
@@ -331,7 +303,7 @@ export default function ChatBot() {
                 <span className="w-2 h-2 rounded-full shrink-0 bg-teal" />
                 <span className="font-heading text-[15px] font-semibold text-white">Maxx ✦</span>
               </div>
-              {entityScope && entityScope.entityScopeTags.length > 0 && (
+              {entityScope && (entityScope.entityScopeTags.length > 0 || entityScope.activeAgent !== null) && (
                 <div className="flex flex-wrap gap-1 pl-4">
                   {entityScope.entityScopeTags.map((tag) => (
                     <span
@@ -341,6 +313,11 @@ export default function ChatBot() {
                       {tag === 'task_id_set' ? 'Task ID set' : 'Class ID set'}
                     </span>
                   ))}
+                  {entityScope.activeAgent !== null && (
+                    <span className="rounded bg-white/15 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide text-white/90">
+                      {ACTIVE_AGENT_LABELS[entityScope.activeAgent]}
+                    </span>
+                  )}
                 </div>
               )}
             </div>
@@ -387,7 +364,7 @@ export default function ChatBot() {
                             <span className="font-heading text-[11px] font-semibold text-teal px-0.5">
                               Maxx
                             </span>
-                            <MessageContent className="bg-white border rounded-tl-sm border-border text-navy rounded-2xl">
+                            <MessageContent className="bg-white border rounded-tl-sm border-border text-navy rounded-2xl whitespace-pre-wrap">
                               {renderInlineBoldMarkdown(m.content)}
                             </MessageContent>
                           </div>
@@ -422,53 +399,11 @@ export default function ChatBot() {
                         type="button"
                         onClick={() => void handleMenuPick(opt.route, opt.label)}
                         disabled={isLoading}
-                        className="text-left rounded-xl border border-border bg-white px-3.5 py-2.5 text-[12px] font-body text-navy hover:border-navy/30 hover:bg-bg-gray transition disabled:opacity-50"
+                        className="text-left rounded-xl border border-border bg-white px-3.5 py-3 sm:py-2.5 text-[13px] sm:text-[12px] font-body text-navy hover:border-navy/30 hover:bg-bg-gray active:bg-bg-gray transition disabled:opacity-50"
                       >
                         {opt.label}
                       </button>
                     ))}
-                  </div>
-                )}
-
-                {scopeConfirmOpen && (
-                  <div className="rounded-xl border border-teal/40 bg-white p-3 space-y-2.5">
-                    <p className="text-[11px] font-heading font-semibold text-navy">
-                      Still the same task and class?
-                    </p>
-                    {(entityScope?.scopeConfirmTaskLabel || entityScope?.scopeConfirmClassLabel) && (
-                      <div className="rounded-lg bg-bg-gray/90 px-2.5 py-2 text-[12px] text-navy space-y-1">
-                        {entityScope?.scopeConfirmTaskLabel ? (
-                          <div>
-                            <span className="font-heading text-[10px] font-semibold text-teal">Task </span>
-                            <span className="font-medium">{entityScope.scopeConfirmTaskLabel}</span>
-                          </div>
-                        ) : null}
-                        {entityScope?.scopeConfirmClassLabel ? (
-                          <div>
-                            <span className="font-heading text-[10px] font-semibold text-teal">Class </span>
-                            <span className="font-medium">{entityScope.scopeConfirmClassLabel}</span>
-                          </div>
-                        ) : null}
-                      </div>
-                    )}
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        disabled={isLoading}
-                        onClick={() => void handleScopeConfirm(true)}
-                        className="flex-1 rounded-lg bg-teal py-2 text-[12px] font-semibold text-white hover:opacity-90 transition disabled:opacity-50"
-                      >
-                        Yes
-                      </button>
-                      <button
-                        type="button"
-                        disabled={isLoading}
-                        onClick={() => void handleScopeConfirm(false)}
-                        className="flex-1 rounded-lg border border-border py-2 text-[12px] font-semibold text-navy hover:bg-bg-gray transition disabled:opacity-50"
-                      >
-                        No
-                      </button>
-                    </div>
                   </div>
                 )}
 
@@ -513,7 +448,7 @@ export default function ChatBot() {
                 </Button>
               </PromptInputActions>
             </PromptInput>
-            <p className="mt-1.5 text-center text-[11px] font-body text-light-blue">
+            <p className="hidden sm:block mt-1.5 text-center text-[11px] font-body text-light-blue">
               {chatLocked
                 ? 'Start a new chat from the widget to continue.'
                 : 'Enter to send · Shift+Enter for new line'}
@@ -538,7 +473,7 @@ export default function ChatBot() {
           }
         }}
         aria-label={isOpen ? 'Close AI chat' : 'Open AI chat'}
-        className="flex items-center justify-center transition rounded-full shadow-lg h-14 w-14 bg-navy hover:opacity-90"
+        className={`items-center justify-center transition rounded-full shadow-lg h-14 w-14 bg-navy hover:opacity-90 active:opacity-80 ${isOpen ? 'hidden sm:flex' : 'flex'}`}
       >
         <MessageSquareIcon color="white" size={22} />
       </button>

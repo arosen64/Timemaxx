@@ -22,7 +22,7 @@ async function seedTask(
 async function seedStudyBlock(
   t: ReturnType<typeof makeTestCtx>,
   taskId: string,
-  overrides: { title?: string; startTime?: string; studyBlockLength?: number } = {}
+  overrides: { title?: string; startTime?: string; studyBlockLength?: number; isCompleted?: boolean } = {}
 ) {
   return t.run((ctx) =>
     ctx.db.insert("studyBlocks", {
@@ -30,6 +30,7 @@ async function seedStudyBlock(
       title: overrides.title ?? "Block 1",
       startTime: overrides.startTime,
       studyBlockLength: overrides.studyBlockLength ?? 60,
+      isCompleted: overrides.isCompleted ?? false,
     })
   );
 }
@@ -145,7 +146,7 @@ describe("queries/studyBlocks – getFutureStudyBlocksForExport", () => {
     const { userId } = await createTestUser(t);
     const taskId = await seedTask(t, userId);
     const futureStart = new Date(Date.now() + 3600_000).toISOString();
-    await seedStudyBlock(t, taskId, { title: "Future block", startTime: futureStart, studyBlockLength: 90 });
+    await seedStudyBlock(t, taskId, { title: "Future block", startTime: futureStart, studyBlockLength: 90, isCompleted: false });
 
     const result = await t.query(internal.queries.studyBlocks.getFutureStudyBlocksForExport, {
       userId: userId as any,
@@ -169,6 +170,7 @@ describe("queries/studyBlocks – getFutureStudyBlocksForExport", () => {
         startTime: futureStart,
         studyBlockLength: 60,
         googleEventId: "existing_gcal_event",
+        isCompleted: false,
       })
     );
 
@@ -186,13 +188,59 @@ describe("queries/studyBlocks – getFutureStudyBlocksForExport", () => {
     const futureStart = new Date(Date.now() + 7200_000).toISOString();
     await seedStudyBlock(t, taskId, { title: "Unscheduled" }); // no startTime
     await seedStudyBlock(t, taskId, { title: "Past", startTime: new Date(Date.now() - 3600_000).toISOString() });
-    await seedStudyBlock(t, taskId, { title: "Future", startTime: futureStart });
+    await seedStudyBlock(t, taskId, { title: "Future", startTime: futureStart, isCompleted: false });
 
     const result = await t.query(internal.queries.studyBlocks.getFutureStudyBlocksForExport, {
       userId: userId as any,
     });
     expect(result).toHaveLength(1);
     expect(result[0].title).toBe("Future");
+  });
+
+  test("includes courseName when the task has an associated course", async () => {
+    const t = makeTestCtx();
+    const { userId } = await createTestUser(t);
+    const courseId = await t.run((ctx) =>
+      ctx.db.insert("userCourses", {
+        userId: userId as any,
+        courseCode: "EN.601.315",
+        title: "Databases",
+        term: "Fall 2025",
+      })
+    );
+    const taskId = await t.run((ctx) =>
+      ctx.db.insert("tasks", {
+        userId: userId as any,
+        title: "HW6",
+        description: "Database homework",
+        taskType: "Essay",
+        dueDate: Date.now() + 86_400_000,
+        createdAt: Date.now(),
+        courseId: courseId as any,
+      })
+    );
+    const futureStart = new Date(Date.now() + 3600_000).toISOString();
+    await seedStudyBlock(t, taskId, { startTime: futureStart, isCompleted: false });
+
+    const result = await t.query(internal.queries.studyBlocks.getFutureStudyBlocksForExport, {
+      userId: userId as any,
+    });
+    expect(result).toHaveLength(1);
+    expect(result[0].courseName).toBe("Databases");
+  });
+
+  test("courseName is undefined when the task has no associated course", async () => {
+    const t = makeTestCtx();
+    const { userId } = await createTestUser(t);
+    const taskId = await seedTask(t, userId);
+    const futureStart = new Date(Date.now() + 3600_000).toISOString();
+    await seedStudyBlock(t, taskId, { startTime: futureStart, isCompleted: false });
+
+    const result = await t.query(internal.queries.studyBlocks.getFutureStudyBlocksForExport, {
+      userId: userId as any,
+    });
+    expect(result).toHaveLength(1);
+    expect(result[0].courseName).toBeUndefined();
   });
 
   test("does not return blocks belonging to another user", async () => {
@@ -207,5 +255,51 @@ describe("queries/studyBlocks – getFutureStudyBlocksForExport", () => {
       userId: bobId as any,
     });
     expect(result).toHaveLength(0);
+  });
+});
+
+// ─── getAllStudyBlocksWithTasksInternal (taskRecommendedStart) ────────────────
+
+describe("queries/studyBlocks – getAllStudyBlocksWithTasksInternal taskRecommendedStart", () => {
+  test("includes taskRecommendedStart when the task has recommendedStart set", async () => {
+    const t = makeTestCtx();
+    const { userId } = await createTestUser(t);
+    const dueDate = Date.now() + 30 * 86_400_000;
+    const recommendedStart = dueDate - 14 * 24 * 60 * 60 * 1000;
+
+    const taskId = await t.run((ctx) =>
+      ctx.db.insert("tasks", {
+        userId: userId as any,
+        title: "Task with recommended start",
+        description: "desc",
+        taskType: "Essay",
+        dueDate,
+        recommendedStart: recommendedStart,
+        createdAt: Date.now(),
+        isManualEstimate: false,
+      })
+    );
+    await seedStudyBlock(t, taskId);
+
+    const result = await t.query(internal.queries.studyBlocks.getAllStudyBlocksWithTasksInternal, {
+      userId: userId as any,
+    });
+
+    expect(result).toHaveLength(1);
+    expect(result[0].taskRecommendedStart).toBe(recommendedStart);
+  });
+
+  test("returns taskRecommendedStart as undefined when task has no recommendedStart", async () => {
+    const t = makeTestCtx();
+    const { userId } = await createTestUser(t);
+    const taskId = await seedTask(t, userId);
+    await seedStudyBlock(t, taskId);
+
+    const result = await t.query(internal.queries.studyBlocks.getAllStudyBlocksWithTasksInternal, {
+      userId: userId as any,
+    });
+
+    expect(result).toHaveLength(1);
+    expect(result[0].taskRecommendedStart).toBeUndefined();
   });
 });

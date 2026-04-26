@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react'
+import { screen, within, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { renderWithProviders, makeMutationFn } from '../utils'
 import DashboardPage from '../../src/pages/DashboardPage'
@@ -9,14 +9,14 @@ vi.mock('../../../backend/convex/_generated/api', () => ({
       users: { getCurrUser: 'getCurrUser' },
       tasks: { getAllTasks: 'getAllTasks' },
       subtasks: { getAllSubtasksForUser: 'getAllSubtasksForUser' },
-      studyBlocks: { getUpcomingStudyBlocks: 'getUpcomingStudyBlocks', getStudyBlocksByTask: 'getStudyBlocksByTask' },
+      studyBlocks: { getUpcomingStudyBlocks: 'getUpcomingStudyBlocks', getStudyBlocksByTask: 'getStudyBlocksByTask', getAllStudyBlocksWithTasks: 'getAllStudyBlocksWithTasks', getTodayStudyBlockMinutes: 'getTodayStudyBlockMinutes', getThisWeekStudyBlocks: 'getThisWeekStudyBlocks' },
       userCourses: { getUserCourses: 'getUserCourses' },
     },
     mutations: {
       tasks: { updateTask: 'updateTask', deleteTask: 'deleteTask' },
       subtasks: { deleteSubtask: 'deleteSubtask', updateSubtask: 'updateSubtask' },
       timeEstimate: { submitEstimateFeedback: 'submitEstimateFeedback' },
-      studyBlocks: { deleteStudyBlocksForTask: 'deleteStudyBlocksForTask' },
+      studyBlocks: { deleteStudyBlocksForTask: 'deleteStudyBlocksForTask', toggleStudyBlockComplete: 'toggleStudyBlockComplete' },
     },
     actions: {
       requestEstimateSubtaskTime: { requestEstimateSubtaskTime: 'requestEstimateSubtaskTime' },
@@ -115,9 +115,13 @@ const MOCK_TASKS = [
   },
 ]
 
+// Completed version of task1 — feedback form only renders on completed (isReadOnly) cards
+const COMPLETED_TASK = { ...MOCK_TASKS[0], status: 'completed' as const }
+
 // task1 with feedback already submitted — used to test the saved-feedback "edit" flow
 const TASK_WITH_FEEDBACK = {
   ...MOCK_TASKS[0],
+  status: 'completed' as const,
   estimateFeedbackRating: 'up' as const,
   correctedEstimateMinutes: 60,
 }
@@ -127,8 +131,11 @@ function setup(tasks = MOCK_TASKS, user = MOCK_USER) {
     if (query === 'getAllTasks') return tasks
     if (query === 'getAllSubtasksForUser') return []
     if (query === 'getUpcomingStudyBlocks') return []
+    if (query === 'getAllStudyBlocksWithTasks') return []
     if (query === 'getUserCourses') return []
     if (query === 'getStudyBlocksByTask') return []
+    if (query === 'getTodayStudyBlockMinutes') return 90
+    if (query === 'getThisWeekStudyBlocks') return { total: 2, completed: 1 }
     return user
   }) as never)
   mockUseMutation.mockReturnValue(makeMutationFn() as never)
@@ -162,8 +169,11 @@ describe('DashboardPage', () => {
     mockUseQuery.mockImplementation(((query: string) => {
       if (query === 'getAllTasks') return undefined
       if (query === 'getUpcomingStudyBlocks') return []
+      if (query === 'getAllStudyBlocksWithTasks') return []
       if (query === 'getAllSubtasksForUser') return []
       if (query === 'getStudyBlocksByTask') return []
+      if (query === 'getTodayStudyBlockMinutes') return 0
+      if (query === 'getThisWeekStudyBlocks') return { total: 0, completed: 0 }
       return MOCK_USER
     }) as never)
     mockUseMutation.mockReturnValue(makeMutationFn() as never)
@@ -202,6 +212,7 @@ describe('DashboardPage', () => {
     mockUseQuery.mockImplementation(((query: string) => {
       if (query === 'getAllTasks') return tasksWithoutEstimate
       if (query === 'getUpcomingStudyBlocks') return []
+      if (query === 'getAllStudyBlocksWithTasks') return []
       if (query === 'getAllSubtasksForUser') return []
       if (query === 'getStudyBlocksByTask') return []
       return MOCK_USER
@@ -230,6 +241,7 @@ describe('DashboardPage', () => {
     mockUseQuery.mockImplementation(((query: string) => {
       if (query === 'getAllTasks') return tasksWithoutEstimate
       if (query === 'getUpcomingStudyBlocks') return []
+      if (query === 'getAllStudyBlocksWithTasks') return []
       if (query === 'getAllSubtasksForUser') return []
       if (query === 'getStudyBlocksByTask') return []
       return MOCK_USER
@@ -243,7 +255,7 @@ describe('DashboardPage', () => {
 
     await waitFor(() => expect(screen.getByText('Estimation Failed')).toBeInTheDocument())
 
-    await user.click(screen.getByRole('button', { name: /dismiss/i }))
+    await user.click(screen.getByRole('button', { name: /cancel/i }))
 
     expect(screen.queryByText('Estimation Failed')).not.toBeInTheDocument()
   })
@@ -256,6 +268,7 @@ describe('DashboardPage', () => {
     mockUseQuery.mockImplementation(((query: string) => {
       if (query === 'getAllTasks') return tasksWithoutEstimate
       if (query === 'getUpcomingStudyBlocks') return []
+      if (query === 'getAllStudyBlocksWithTasks') return []
       if (query === 'getAllSubtasksForUser') return []
       if (query === 'getStudyBlocksByTask') return []
       return MOCK_USER
@@ -291,16 +304,18 @@ describe('DashboardPage', () => {
 
   // ── Stat cards ───────────────────────────────────────────────────────────────
 
-  it('Tasks This Week stat card shows the task count', () => {
+  it('Study Blocks This Week stat card shows the block count and completed count', () => {
     setup()
-    expect(screen.getByText('Tasks This Week')).toBeInTheDocument()
+    expect(screen.getByText('Study Blocks This Week')).toBeInTheDocument()
     expect(screen.getByText('2')).toBeInTheDocument()
+    expect(screen.getByText('1 completed')).toBeInTheDocument()
   })
 
-  it('Estimated Time stat card shows the formatted total of estimated minutes', () => {
+  it('Study Time Today stat card shows the formatted total of scheduled study minutes', () => {
     setup()
-    // task1 has 90 min, task2 has undefined → total 90 min → "1h 30m"
-    expect(screen.getByText('1h 30m')).toBeInTheDocument()
+    // getTodayStudyBlockMinutes mock returns 90 → "1h 30m"
+    const statCard = screen.getByText('Study Time Today').closest('div')!
+    expect(within(statCard).getByText('1h 30m')).toBeInTheDocument()
   })
 
   // ── Edit task flow ───────────────────────────────────────────────────────────
@@ -356,6 +371,7 @@ describe('DashboardPage', () => {
     mockUseQuery.mockImplementation(((query: string) => {
       if (query === 'getAllTasks') return MOCK_TASKS
       if (query === 'getUpcomingStudyBlocks') return []
+      if (query === 'getAllStudyBlocksWithTasks') return []
       if (query === 'getAllSubtasksForUser') return []
       if (query === 'getStudyBlocksByTask') return []
       return MOCK_USER
@@ -379,8 +395,9 @@ describe('DashboardPage', () => {
 
   it('shows time inputs after a thumbs-up rating is selected', async () => {
     const user = userEvent.setup()
-    setup()
+    setup([COMPLETED_TASK, MOCK_TASKS[1]])
 
+    await user.click(screen.getByRole('button', { name: /completed/i }))
     await user.click(screen.getByRole('button', { name: /rate estimate thumbs up/i }))
 
     expect(screen.getByPlaceholderText('hrs')).toBeInTheDocument()
@@ -389,8 +406,9 @@ describe('DashboardPage', () => {
 
   it('shows time inputs after a thumbs-down rating is selected', async () => {
     const user = userEvent.setup()
-    setup()
+    setup([COMPLETED_TASK, MOCK_TASKS[1]])
 
+    await user.click(screen.getByRole('button', { name: /completed/i }))
     await user.click(screen.getByRole('button', { name: /rate estimate thumbs down/i }))
 
     expect(screen.getByPlaceholderText('hrs')).toBeInTheDocument()
@@ -402,8 +420,9 @@ describe('DashboardPage', () => {
     const submitFeedbackMock = vi.fn().mockResolvedValue(undefined)
 
     mockUseQuery.mockImplementation(((query: string) => {
-      if (query === 'getAllTasks') return MOCK_TASKS
+      if (query === 'getAllTasks') return [COMPLETED_TASK, MOCK_TASKS[1]]
       if (query === 'getUpcomingStudyBlocks') return []
+      if (query === 'getAllStudyBlocksWithTasks') return []
       if (query === 'getAllSubtasksForUser') return []
       if (query === 'getStudyBlocksByTask') return []
       return MOCK_USER
@@ -415,6 +434,7 @@ describe('DashboardPage', () => {
     mockUseAction.mockReturnValue(makeMutationFn() as never)
     renderWithProviders(<DashboardPage />)
 
+    await user.click(screen.getByRole('button', { name: /completed/i }))
     await user.click(screen.getByRole('button', { name: /rate estimate thumbs up/i }))
     await user.click(screen.getByRole('button', { name: /^save$/i }))
 
@@ -429,6 +449,8 @@ describe('DashboardPage', () => {
   it('re-enters the rating form when edit is clicked on saved feedback', async () => {
     const user = userEvent.setup()
     setup([TASK_WITH_FEEDBACK, MOCK_TASKS[1]])
+
+    await user.click(screen.getByRole('button', { name: /completed/i }))
 
     // Saved feedback summary is shown
     expect(screen.getByText(/feedback: helpful/i)).toBeInTheDocument()

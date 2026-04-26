@@ -1,6 +1,8 @@
 import { mutation } from "../_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { internal } from "../_generated/api";
+import { cascadeDeleteTask } from "./tasks";
 
 /**
  * Partially updates the authenticated user's settings (work hours, focus block length, study profile).
@@ -9,17 +11,15 @@ export const updateUserSettings = mutation({
   args: {
     major: v.optional(v.string()),
     year: v.optional(v.string()),
-    difficultSubjects: v.optional(v.array(v.string())),
-    enjoyedSubjects: v.optional(v.array(v.string())),
     courses: v.optional(v.array(v.object({ title: v.string(), studyGoal: v.string() }))),
     transcriptSummary: v.optional(v.array(v.object({ label: v.string(), text: v.string() }))),
     workHoursGrid: v.optional(v.array(v.object({
       day: v.string(),
-      available: v.array(v.number()),
       blocked: v.array(v.number()),
     }))),
     productivityTraits: v.optional(v.any()),
     focusBlockLength: v.optional(v.number()),
+    gcalColorMappingEnabled: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -38,7 +38,33 @@ export const updateUserSettings = mutation({
     //   - productivityTraits uses v.any() and has no shape enforcement
     // Track this as a follow-up issue for backend input validation.
 
+    const prevUser = args.gcalColorMappingEnabled !== undefined
+      ? await ctx.db.get(userId)
+      : null;
+
     await ctx.db.patch(userId, args);
+
+    // When gcalColorMappingEnabled is toggled, re-export all previously exported blocks
+    // so their GCal colors reflect the new setting immediately.
+    // Skip if the user has no connected calendar — there is nothing to re-export.
+    if (
+      prevUser !== null &&
+      args.gcalColorMappingEnabled !== undefined &&
+      args.gcalColorMappingEnabled !== prevUser.gcalColorMappingEnabled
+    ) {
+      const connection = await ctx.db
+        .query("calendarConnections")
+        .withIndex("by_userId", (q) => q.eq("userId", userId))
+        .unique();
+
+      if (connection) {
+        await ctx.scheduler.runAfter(
+          0,
+          internal.actions.exportStudyBlocksToCalendar.internalExportStudyBlocksToCalendar,
+          { userId },
+        );
+      }
+    }
   },
 });
 
@@ -49,12 +75,8 @@ export const completeOnboarding = mutation({
   args: {
     major: v.string(),
     year: v.string(),
-    difficultSubjects: v.array(v.string()),
-    enjoyedSubjects: v.array(v.string()),
-
     workHoursGrid: v.array(v.object({
       day: v.string(),
-      available: v.array(v.number()),
       blocked: v.array(v.number()),
     })),
     productivityTraits: v.any(),
@@ -76,7 +98,11 @@ export const completeOnboarding = mutation({
 });
 
 /**
- * Deletes the authenticated user's account along with all their tasks and syllabi.
+ * Deletes the authenticated user's account along with all their data:
+ * tasks (+ subtasks + study blocks via cascade), syllabi, userCourses,
+ * chatMessages, chatSessions, chatChunks, calendarConnections,
+ * calendarOAuthStates, orphaned studyBlocks, authVerificationCodes,
+ * authAccounts, authRefreshTokens, authSessions, and the user record itself.
  */
 export const deleteAccount = mutation({
   args: {},
@@ -88,7 +114,9 @@ export const deleteAccount = mutation({
       .query("tasks")
       .withIndex("by_userId", (q) => q.eq("userId", userId))
       .collect();
-    await Promise.all(tasks.map((task) => ctx.db.delete(task._id)));
+    for (const task of tasks) {
+      await cascadeDeleteTask(ctx, task._id);
+    }
 
     const syllabi = await ctx.db
       .query("syllabi")
@@ -102,16 +130,68 @@ export const deleteAccount = mutation({
       .collect();
     await Promise.all(userCourses.map((uc) => ctx.db.delete(uc._id)));
 
+    const chatMessages = await ctx.db
+      .query("chatMessages")
+      .withIndex("by_userId_createdAt", (q) => q.eq("userId", userId))
+      .collect();
+    await Promise.all(chatMessages.map((m) => ctx.db.delete(m._id)));
+
+    const chatSessions = await ctx.db
+      .query("chatSessions")
+      .withIndex("by_userId_sessionId", (q) => q.eq("userId", userId))
+      .collect();
+    await Promise.all(chatSessions.map((s) => ctx.db.delete(s._id)));
+
+    const chatChunks = await ctx.db
+      .query("chatChunks")
+      .withIndex("by_userId_sessionId", (q) => q.eq("userId", userId))
+      .collect();
+    await Promise.all(chatChunks.map((c) => ctx.db.delete(c._id)));
+
+    const calendarConnections = await ctx.db
+      .query("calendarConnections")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .collect();
+    await Promise.all(calendarConnections.map((c) => ctx.db.delete(c._id)));
+
+    // calendarOAuthStates has no by_userId index; full scan is safe (small, short-lived table)
+    const oauthStates = await ctx.db
+      .query("calendarOAuthStates")
+      .filter((q) => q.eq(q.field("userId"), userId))
+      .collect();
+    await Promise.all(oauthStates.map((s) => ctx.db.delete(s._id)));
+
+    // Clean up any studyBlocks with userId but no linked task/subtask (missed by task cascade)
+    const orphanedBlocks = await ctx.db
+      .query("studyBlocks")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .collect();
+    await Promise.all(orphanedBlocks.map((b) => ctx.db.delete(b._id)));
+
     const authAccounts = await ctx.db
       .query("authAccounts")
       .withIndex("userIdAndProvider", (q) => q.eq("userId", userId))
       .collect();
+    for (const account of authAccounts) {
+      const verificationCodes = await ctx.db
+        .query("authVerificationCodes")
+        .withIndex("accountId", (q) => q.eq("accountId", account._id))
+        .collect();
+      await Promise.all(verificationCodes.map((c) => ctx.db.delete(c._id)));
+    }
     await Promise.all(authAccounts.map((account) => ctx.db.delete(account._id)));
 
     const authSessions = await ctx.db
       .query("authSessions")
       .withIndex("userId", (q) => q.eq("userId", userId))
       .collect();
+    for (const session of authSessions) {
+      const refreshTokens = await ctx.db
+        .query("authRefreshTokens")
+        .withIndex("sessionId", (q) => q.eq("sessionId", session._id))
+        .collect();
+      await Promise.all(refreshTokens.map((t) => ctx.db.delete(t._id)));
+    }
     await Promise.all(authSessions.map((session) => ctx.db.delete(session._id)));
 
     await ctx.db.delete(userId);

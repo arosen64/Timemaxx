@@ -1,24 +1,16 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useAction } from 'convex/react'
 import { api } from '../../../../backend/convex/_generated/api'
 import { type Id } from '../../../../backend/convex/_generated/dataModel'
 import { type GeneratedSubtask } from '../../../../backend/convex/actions/generateSubtasks'
 import { type ClassTagCourseOption, type EditForm, CUSTOM_TASK_TYPE_OPTION, TASK_TYPE_OPTIONS } from './types'
-import DueDateRowWithCalendar from '../DueDateRowWithCalendar'
-import DueTimeField from '../DueTimeField'
 import Modal from '../ui/Modal'
 import Button from '../ui/Button'
 import Selector from '../ui/Selector'
+import DatetimePicker from '../ui/DatetimePicker'
 import SubtaskReviewModal from './SubtaskReviewModal'
 import {
-  msToFormDate,
-  msToDateInputValue,
   parseDueDateInput,
-  parseIsoDatePickerValue,
-  startOfTodayMs,
-  todayDateInputMin,
-  validateDueDate,
-  validateDueDateAndTime,
   combineDateMsWithTime,
 } from '../../validators'
 import { legacyNaiveClassTag } from '../../utils/classTagUtils'
@@ -60,8 +52,6 @@ interface TaskModalProps {
   }
   /** Current-term classes; class tag may only be empty or one of these (optional field) */
   classTagCourses?: ClassTagCourseOption[]
-  /** When true, show a "Use AI Estimate" reset button in the time estimate section */
-  showAiEstimateReset?: boolean
   /** When true, hides the entire subtask generation section (e.g. when editing a subtask) */
   hideSubtaskGeneration?: boolean
   /** When > 0, show Delete/Regenerate subtask buttons instead of the generate checkbox */
@@ -85,7 +75,6 @@ export default function TaskModal({
   primaryLoadingLabel,
   initialValues,
   classTagCourses,
-  showAiEstimateReset = false,
   hideSubtaskGeneration = false,
   existingSubtaskCount,
   existingTaskId,
@@ -99,8 +88,11 @@ export default function TaskModal({
   const [selectedType, setSelectedType] = useState(initialValues.selectedType)
   const [customTaskType, setCustomTaskType] = useState(initialValues.customTaskType)
   const [description, setDescription] = useState(initialValues.description)
-  const [dueDate, setDueDate] = useState(initialValues.dueDate)
-  const [dueTime, setDueTime] = useState(initialValues.dueTime)
+  const [dueDatetime, setDueDatetime] = useState<Date | undefined>(() => {
+    const ms = parseDueDateInput(initialValues.dueDate)
+    if (ms === null) return undefined
+    return new Date(combineDateMsWithTime(ms, initialValues.dueTime) ?? ms)
+  })
   const [classTag, setClassTag] = useState(() =>
     allowedClassTagValue(initialValues.classTag, courses)
   )
@@ -112,7 +104,8 @@ export default function TaskModal({
     const mins = parseInt(initialValues.timeEstimate, 10)
     return isNaN(mins) ? '' : String(mins % 60)
   })
-  const [useAiEstimate, setUseAiEstimate] = useState(false)
+  // Default to AI mode when there is no pre-existing manual estimate to show.
+  const [useAiEstimate, setUseAiEstimate] = useState(() => isNaN(parseInt(initialValues.timeEstimate, 10)))
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [generateSubtasks, setGenerateSubtasks] = useState(false)
@@ -122,19 +115,9 @@ export default function TaskModal({
   const [pendingTaskId, setPendingTaskId] = useState<Id<'tasks'> | null>(null)
   const [pendingCourseId, setPendingCourseId] = useState<Id<'userCourses'> | undefined>(undefined)
   const requestGenerateSubtasks = useAction(api.actions.requestGenerateSubtasks.requestGenerateSubtasks)
-  const datePickerRef = useRef<HTMLInputElement>(null)
 
-  const datePickerValue = useMemo(() => {
-    const ms = parseDueDateInput(dueDate)
-    return ms !== null ? msToDateInputValue(ms) : ''
-  }, [dueDate])
-
-  /** Omit `min` when the shown date is already in the past so the controlled picker stays valid. */
-  const datePickerMin = useMemo(() => {
-    const ms = parseDueDateInput(dueDate)
-    if (ms !== null && ms < startOfTodayMs()) return undefined
-    return todayDateInputMin()
-  }, [dueDate])
+  // useAiEstimate is the single source of truth for AI vs manual mode.
+  const isInManualMode = !useAiEstimate
 
   const classTagSelectOptions = useMemo(
     () =>
@@ -151,13 +134,13 @@ export default function TaskModal({
     setSelectedType(initialValues.selectedType)
     setCustomTaskType(initialValues.customTaskType)
     setDescription(initialValues.description)
-    setDueDate(initialValues.dueDate)
-    setDueTime(initialValues.dueTime)
+    const ms = parseDueDateInput(initialValues.dueDate)
+    setDueDatetime(ms !== null ? new Date(combineDateMsWithTime(ms, initialValues.dueTime) ?? ms) : undefined)
     setClassTag(allowedClassTagValue(initialValues.classTag, courses))
     const mins = parseInt(initialValues.timeEstimate, 10)
     setEstimateHours(isNaN(mins) ? '' : String(Math.floor(mins / 60)))
     setEstimateMinutes(isNaN(mins) ? '' : String(mins % 60))
-    setUseAiEstimate(false)
+    setUseAiEstimate(isNaN(mins))
     setError(null)
     setSubmitting(false)
     setGenerateSubtasks(false)
@@ -178,48 +161,6 @@ export default function TaskModal({
     initialValues.timeEstimate,
     courses,
   ])
-
-  function isValidDueDate(value: string): boolean {
-    const err = validateDueDate(value)
-    if (err) {
-      setError(err)
-      return false
-    }
-    return true
-  }
-
-  function isValidDueDateTime(dateStr: string, timeStr: string): boolean {
-    const err = validateDueDateAndTime(dateStr, timeStr)
-    if (err) {
-      setError(err)
-      return false
-    }
-    return true
-  }
-
-  function handleDueDateBlur() {
-    const t = dueDate.trim()
-    if (!t) return
-    const ms = parseDueDateInput(t)
-    if (ms !== null) {
-      const normalized = msToFormDate(ms)
-      setDueDate(normalized)
-      const err = validateDueDate(normalized)
-      setError(err)
-    } else {
-      isValidDueDate(t)
-    }
-  }
-
-  function handleNativeDateChange(iso: string) {
-    if (!iso) return
-    const ms = parseIsoDatePickerValue(iso)
-    if (ms === null) return
-    const display = msToFormDate(ms)
-    setDueDate(display)
-    const err = validateDueDate(display)
-    setError(err)
-  }
 
   async function handleDeleteSubtasks() {
     if (!onDeleteSubtasks) return
@@ -259,17 +200,15 @@ export default function TaskModal({
     const resolvedTaskType = selectedType === CUSTOM_TASK_TYPE_OPTION ? customTaskType.trim() : selectedType
     if (!resolvedTaskType) { setError('Please enter a task type.'); return }
     if (!description.trim()) { setError('Please enter a description.'); return }
-    const trimmedDueDate = dueDate.trim()
-    if (!trimmedDueDate) { setError('Please enter a due date.'); return }
-    if (!isValidDueDateTime(trimmedDueDate, dueTime)) return
+    if (!dueDatetime) { setError('Please pick a due date and time.'); return }
+    if (dueDatetime.getTime() <= Date.now()) { setError('Due date must be in the future.'); return }
 
     setSubmitting(true)
     setError(null)
     try {
       const resolvedClassTag = allowedClassTagValue(classTag, courses)
       const courseId = courses.find((c) => c.classTag === resolvedClassTag)?.courseId
-      const dateMidnight = parseDueDateInput(trimmedDueDate)!
-      const dueMs = combineDateMsWithTime(dateMidnight, dueTime)!
+      const dueMs = dueDatetime.getTime()
       const hrs = parseInt(estimateHours, 10)
       const mins = parseInt(estimateMinutes, 10)
       const totalMinutes =
@@ -277,6 +216,11 @@ export default function TaskModal({
           ? (isNaN(hrs) ? 0 : hrs) * 60 + (isNaN(mins) ? 0 : mins)
           : NaN
       const parsedEstimate = !useAiEstimate && !isNaN(totalMinutes) && totalMinutes > 0 ? totalMinutes : undefined
+      if (parsedEstimate !== undefined && parsedEstimate < 15) {
+        setError('Time estimate must be at least 15 minutes.')
+        setSubmitting(false)
+        return
+      }
       const form: EditForm = {
         title: taskName,
         description,
@@ -440,6 +384,13 @@ export default function TaskModal({
                 </button>
               </div>
             </div>
+          ) : isInManualMode ? (
+            <div className="flex flex-col gap-1">
+              <label className="font-heading text-[13px] font-semibold text-navy">Subtasks</label>
+              <p className="font-body text-xs text-light-blue">
+                AI subtask generation is unavailable with a manual time estimate. Switch to AI estimate to enable it.
+              </p>
+            </div>
           ) : (
             <div className="flex flex-col gap-1">
               <label className="flex cursor-pointer items-center gap-2.5">
@@ -473,50 +424,24 @@ export default function TaskModal({
 
         {/* Due date & time — default time 11:59 PM for new tasks */}
         <div className="flex w-full flex-col gap-1.5">
-          <div className="font-heading text-[13px] font-semibold text-navy">Due date & time</div>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-            <div className="min-w-0 flex-1">
-              <label className="mb-1 block font-body text-xs font-medium text-slate-blue" htmlFor="task-due-date">
-                Date
-              </label>
-              <DueDateRowWithCalendar
-                variant="modal"
-                calendarPosition="end"
-                datePickerRef={datePickerRef}
-                textInputId="task-due-date"
-                dateTextValue={dueDate}
-                onDateTextChange={setDueDate}
-                onDateTextBlur={handleDueDateBlur}
-                onDateTextFocus={() => setError(null)}
-                placeholder="MM/DD/YYYY"
-                datePickerValue={datePickerValue}
-                {...(datePickerMin !== undefined ? { datePickerMin } : {})}
-                onIsoChange={handleNativeDateChange}
-              />
-            </div>
-            <DueTimeField
-              variant="modal"
-              id="task-due-time"
-              label="Time"
-              value={dueTime}
-              onChange={setDueTime}
-              onValueChange={() => setError(null)}
-            />
-          </div>
+          <label className="font-heading text-[13px] font-semibold text-navy">Due date & time</label>
+          <DatetimePicker
+            value={dueDatetime}
+            onChange={(d) => { setDueDatetime(d); setError(null) }}
+            placeholder="Pick a due date & time"
+            minDate={new Date()}
+          />
         </div>
 
-        {/* Time estimate override */}
-        <div className="flex w-full flex-col gap-1.5">
+        {/* Time estimate override — hidden when AI subtask generation is enabled */}
+        <div className={`flex w-full flex-col gap-1.5 ${generateSubtasks ? 'hidden' : ''}`}>
           <div className="flex items-start justify-between">
             <div>
               <label className="font-heading text-[13px] font-semibold text-navy">
                 Time estimate <span className="font-normal text-light-blue">(optional)</span>
               </label>
-              {!useAiEstimate && estimateHours.trim() === '' && estimateMinutes.trim() === '' && (
-                <p className="mt-0.5 font-body text-xs text-light-blue">Leave blank to let AI estimate</p>
-              )}
             </div>
-            {showAiEstimateReset && !useAiEstimate && (
+            {!useAiEstimate && (
               <Button
                 variant="outline"
                 className="h-7 px-3 text-xs font-body font-medium"
@@ -533,12 +458,20 @@ export default function TaskModal({
               <Button
                 variant="outline"
                 className="h-7 px-3 text-xs font-body font-medium text-slate-blue"
-                onClick={() => setUseAiEstimate(false)}
+                onClick={() => {
+                  setUseAiEstimate(false)
+                  setGenerateSubtasks(false)
+                }}
               >
                 Set manually
               </Button>
             )}
           </div>
+          {!useAiEstimate && existingSubtaskCount !== undefined && existingSubtaskCount > 0 && (
+            <p className="font-body text-xs text-burnt-orange">
+              Saving will delete your {existingSubtaskCount} existing subtask{existingSubtaskCount !== 1 ? 's' : ''} and their scheduled blocks.
+            </p>
+          )}
           {useAiEstimate ? (
             <div className="rounded-lg border border-border bg-bg-gray px-3.5 py-3 font-body text-sm text-light-blue">
               AI will estimate after saving

@@ -1,5 +1,4 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import Sidebar from "../components/Sidebar";
 import { useQuery, useAction } from "convex/react";
 import { api } from "../../../backend/convex/_generated/api";
 import ProfileActions from "../components/profile/ProfileActions";
@@ -29,11 +28,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="flex h-screen font-body bg-bg-gray">
-      <Sidebar />
-
-      {/* Main Content */}
-      <main className="flex flex-1 flex-col overflow-y-auto gap-8 p-10">
+    <main className="flex flex-1 min-w-0 flex-col overflow-y-auto overflow-x-hidden gap-8 p-4 sm:p-6 lg:p-10 font-body bg-bg-gray">
         {/* Page Header */}
         <div className="flex flex-col gap-1">
           <h1 className="font-heading text-3xl font-bold text-navy">Profile</h1>
@@ -53,19 +48,19 @@ export default function ProfilePage() {
           <div className="h-px w-full bg-border" />
 
           {/* Fields Row 1 */}
-          <div className="flex w-full gap-8">
+          <div className="flex flex-col md:flex-row w-full gap-8">
             <ProfileField label="Full Name" value={user?.name} loading={user === undefined} />
             <ProfileField label="Email" value={user?.email} loading={user === undefined} />
           </div>
 
           {/* Fields Row 2 */}
           {user === undefined ? (
-            <div className="flex w-full gap-8">
+            <div className="flex flex-col md:flex-row w-full gap-8">
               <ProfileField label="Major" loading />
               <ProfileField label="Year" loading />
             </div>
           ) : user?.onboardingComplete ? (
-            <div className="flex w-full gap-8">
+            <div className="flex flex-col md:flex-row w-full gap-8">
               <ProfileField label="Major" value={user.major} />
               <ProfileField label="Year" value={user.year} />
             </div>
@@ -125,7 +120,6 @@ export default function ProfilePage() {
           <ProfileActions />
         </div>
       </main>
-    </div>
   );
 }
 

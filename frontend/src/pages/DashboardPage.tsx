@@ -2,7 +2,6 @@ import { useMemo, useState, useEffect } from 'react'
 import { useQuery, useMutation, useAction } from 'convex/react'
 import { api } from '../../../backend/convex/_generated/api'
 import { Id } from '../../../backend/convex/_generated/dataModel'
-import Sidebar from '../components/Sidebar'
 import { formatEstimatedTime } from '../utils/timeUtils'
 import { PlusIcon, SparklesIcon } from '../components/icons'
 import Button from '../components/ui/Button'
@@ -12,26 +11,42 @@ import {
   DeleteModal,
   UpcomingSchedulePanel,
   EstimationErrorModal,
+  SubtaskReviewModal,
   StatCard,
   TaskCard,
   parseEstimationError,
   type ClassTagCourseOption,
   type TaskType,
   type SubtaskType,
+  type TaskStatus,
   type EditForm,
-  BADGE_MAP,
 } from '../components/dashboard'
+import { type GeneratedSubtask } from '../../../backend/convex/actions/generateSubtasks'
 import { FALLBACK_COURSE_COLOR } from '../utils/color'
 import { isCurrentTerm } from '../utils/termUtils'
 import { buildClassTag } from '../utils/classTagUtils'
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 
+function getDateBoundaries() {
+  const d = new Date();
+  const todayStart = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  const weekStart = new Date(d.getFullYear(), d.getMonth(), d.getDate() - d.getDay()).getTime();
+  return {
+    todayStartMs: todayStart,
+    todayEndMs: new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1).getTime(),
+    weekStartMs: weekStart,
+    weekEndMs: new Date(d.getFullYear(), d.getMonth(), d.getDate() - d.getDay() + 7).getTime(),
+  };
+}
+
 export default function DashboardPage() {
   const tasks = useQuery(api.queries.tasks.getAllTasks, {}) as TaskType[] | undefined
   const allSubtasks = useQuery(api.queries.subtasks.getAllSubtasksForUser) as SubtaskType[] | undefined
   const userCourses = useQuery(api.queries.userCourses.getUserCourses)
   const updateTask = useMutation(api.mutations.tasks.updateTask)
+  const updateTaskStatus = useMutation(api.mutations.tasks.updateTaskStatus)
+  const updateSubtaskStatus = useMutation(api.mutations.subtasks.updateSubtaskStatus)
   const setManualTimeEstimate = useMutation(api.mutations.timeEstimate.setManualTimeEstimate)
   const clearManualEstimate = useMutation(api.mutations.timeEstimate.clearManualEstimate)
   const deleteTask = useMutation(api.mutations.tasks.deleteTask)
@@ -40,7 +55,11 @@ export default function DashboardPage() {
   const submitEstimateFeedback = useMutation(api.mutations.timeEstimate.submitEstimateFeedback)
   const requestEstimate = useAction(api.ai.requestEstimateTaskTime.requestEstimateTaskTime)
   const requestEstimateSubtask = useAction(api.actions.requestEstimateSubtaskTime.requestEstimateSubtaskTime)
+  const requestGenerateSubtasks = useAction(api.actions.requestGenerateSubtasks.requestGenerateSubtasks)
   const user = useQuery(api.queries.users.getCurrUser)
+  const [{ todayStartMs, todayEndMs, weekStartMs, weekEndMs }, setDateBoundaries] = useState(getDateBoundaries);
+  const todayStudyMinutes = useQuery(api.queries.studyBlocks.getTodayStudyBlockMinutes, { todayStartMs, todayEndMs }) ?? 0
+  const thisWeekBlocks = useQuery(api.queries.studyBlocks.getThisWeekStudyBlocks, { weekStartMs, weekEndMs }) ?? { total: 0, completed: 0 }
 
   const taskRows = useMemo(() => tasks ?? [], [tasks])
 
@@ -80,9 +99,15 @@ export default function DashboardPage() {
     return rows.sort((a, b) => a.courseCode.localeCompare(b.courseCode))
   }, [userCourses])
 
-  const totalEstimatedMinutes = useMemo(
-    () => taskRows.reduce((sum, t) => sum + (t.timeEstimate ?? 0), 0),
-    [taskRows]
+  const [activeTab, setActiveTab] = useState<'active' | 'completed'>('active')
+
+  const activeTasks = useMemo(
+    () => taskRows.filter((t) => (t.status ?? 'not_started') !== 'completed'),
+    [taskRows],
+  )
+  const completedTasks = useMemo(
+    () => taskRows.filter((t) => t.status === 'completed'),
+    [taskRows],
   )
 
   const [editingTask, setEditingTask] = useState<TaskType | null>(null)
@@ -98,6 +123,17 @@ export default function DashboardPage() {
   >({})
   const [feedbackErrors, setFeedbackErrors] = useState<Record<string, string>>({})
   const [estimationError, setEstimationError] = useState<string | null>(null)
+  const [generatingSubtasksTasks, setGeneratingSubtasksTasks] = useState<Set<Id<'tasks'>>>(new Set())
+  const [pendingSubtasks, setPendingSubtasks] = useState<GeneratedSubtask[] | null>(null)
+  const [pendingSubtasksTaskId, setPendingSubtasksTaskId] = useState<Id<'tasks'> | null>(null)
+  const [pendingSubtasksCourseId, setPendingSubtasksCourseId] = useState<Id<'userCourses'> | undefined>(undefined)
+  const [estimationRetry, setEstimationRetry] = useState<(() => void) | null>(null)
+
+  useEffect(() => {
+    const msUntilMidnight = todayEndMs - Date.now();
+    const timer = setTimeout(() => setDateBoundaries(getDateBoundaries()), msUntilMidnight);
+    return () => clearTimeout(timer);
+  }, [todayEndMs]);
 
   // Clear tasks from estimatingTasks once their timeEstimate is populated by the server
   useEffect(() => {
@@ -151,6 +187,7 @@ export default function DashboardPage() {
       await requestEstimateSubtask({ subtaskId })
     } catch (err) {
       setEstimationError(parseEstimationError(err))
+      setEstimationRetry(() => () => handleEstimateSubtask(subtaskId))
     } finally {
       setEstimatingSubtasks((prev) => {
         const next = new Set(prev)
@@ -166,10 +203,33 @@ export default function DashboardPage() {
       await requestEstimate({ taskId })
     } catch (err) {
       setEstimationError(parseEstimationError(err))
+      setEstimationRetry(() => () => handleEstimateTask(taskId))
     } finally {
       setEstimatingTasks((prev) => {
         const next = new Set(prev)
         next.delete(taskId)
+        return next
+      })
+    }
+  }
+
+  async function handleGenerateSubtasks(task: TaskType) {
+    setGeneratingSubtasksTasks((prev) => new Set(prev).add(task._id))
+    try {
+      const result = await requestGenerateSubtasks({ taskId: task._id })
+      if ('error' in result) {
+        setEstimationError(result.error)
+      } else {
+        setPendingSubtasks(result.subtasks)
+        setPendingSubtasksTaskId(task._id)
+        setPendingSubtasksCourseId(task.courseId)
+      }
+    } catch (err) {
+      setEstimationError(parseEstimationError(err))
+    } finally {
+      setGeneratingSubtasksTasks((prev) => {
+        const next = new Set(prev)
+        next.delete(task._id)
         return next
       })
     }
@@ -291,13 +351,25 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-bg-gray font-body text-slate-blue">
+    <div className="flex flex-1 min-h-0 overflow-hidden font-body text-slate-blue">
 
       {/* Modals */}
+      <SubtaskReviewModal
+        isOpen={pendingSubtasks !== null && pendingSubtasksTaskId !== null}
+        subtasks={pendingSubtasks ?? []}
+        parentTaskId={pendingSubtasksTaskId!}
+        courseId={pendingSubtasksCourseId}
+        onClose={() => {
+          setPendingSubtasks(null)
+          setPendingSubtasksTaskId(null)
+          setPendingSubtasksCourseId(undefined)
+        }}
+      />
       <EstimationErrorModal
         isOpen={estimationError !== null}
         message={estimationError ?? ''}
-        onClose={() => setEstimationError(null)}
+        onClose={() => { setEstimationError(null); setEstimationRetry(null) }}
+        onRetry={estimationRetry ?? undefined}
       />
       <EditModal
         isOpen={editingTask !== null && editingSubtask === null}
@@ -353,10 +425,8 @@ export default function DashboardPage() {
         classTagCourses={classTagCourses}
       />
 
-      <Sidebar />
-
       {/* ── Main ── */}
-      <main className="flex flex-col flex-1 min-h-0 p-10 overflow-y-auto gap-7">
+      <main className="flex flex-col flex-1 min-h-0 p-4 sm:p-6 lg:p-10 overflow-y-auto gap-7">
 
         {/* Page Header */}
         <header className="flex items-center justify-between">
@@ -390,85 +460,151 @@ export default function DashboardPage() {
         </header>
 
         {/* Stats Row */}
-        <div className="flex gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <StatCard
-            label="Tasks This Week"
-            value={taskRows.length}
-            indicator={{ dotClass: 'bg-success', text: '0 completed', textClass: 'text-success' }}
+            label="Study Blocks This Week"
+            value={thisWeekBlocks.total}
+            indicator={{ dotClass: 'bg-success', text: `${thisWeekBlocks.completed} completed`, textClass: 'text-success' }}
           />
           <StatCard
-            label="Estimated Time"
-            value={formatEstimatedTime(totalEstimatedMinutes)}
-            indicator={{ dotClass: 'bg-sky-blue', text: 'AI estimated', textClass: 'text-sky-blue' }}
-          />
-          <StatCard
-            label="Study Streak"
-            value="—"
-            indicator={{ dotClass: 'bg-teal', text: 'days in a row', textClass: 'text-white' }}
-            variant="dark"
+            label="Study Time Today"
+            value={formatEstimatedTime(todayStudyMinutes)}
+            indicator={{ dotClass: 'bg-sky-blue', text: 'scheduled today', textClass: 'text-sky-blue' }}
           />
         </div>
 
         {/* Columns */}
-        <div className="flex flex-1 gap-6">
+        <div className="flex flex-col lg:flex-row flex-1 gap-6">
 
           {/* Task Column */}
           <section className="flex flex-col flex-1 min-w-0 gap-4">
-            <h2 className="text-base font-bold font-heading text-navy">Upcoming Tasks</h2>
+            {/* Tabs */}
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setActiveTab('active')}
+                className={`rounded-lg px-3 py-1.5 text-sm font-semibold font-heading transition
+                  ${activeTab === 'active'
+                    ? 'bg-navy text-white'
+                    : 'text-slate-blue hover:bg-bg-gray'}`}
+              >
+                Active ({activeTasks.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('completed')}
+                className={`rounded-lg px-3 py-1.5 text-sm font-semibold font-heading transition
+                  ${activeTab === 'completed'
+                    ? 'bg-navy text-white'
+                    : 'text-slate-blue hover:bg-bg-gray'}`}
+              >
+                Completed ({completedTasks.length})
+              </button>
+            </div>
 
             {tasks === undefined ? (
               <div className="rounded-[10px] border border-border bg-white p-5 text-sm text-slate-blue">
                 Loading tasks…
               </div>
-            ) : taskRows.length === 0 ? (
-              <div className="rounded-[10px] border border-border bg-white p-6">
-                <div className="flex items-start gap-3">
-                  <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-bg-gray">
-                    <SparklesIcon color="#68ACE5" />
-                  </div>
-                  <div>
-                    <div className="text-sm font-semibold font-heading text-navy">No tasks yet</div>
-                    <div className="mt-1 text-sm text-slate-blue">
-                      Add your first task to get an AI time estimate and a personalized schedule.
+            ) : activeTab === 'active' ? (
+              activeTasks.length === 0 ? (
+                <div className="rounded-[10px] border border-border bg-white p-6">
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-bg-gray">
+                      <SparklesIcon color="#68ACE5" />
+                    </div>
+                    <div>
+                      <div className="text-sm font-semibold font-heading text-navy">No tasks yet</div>
+                      <div className="mt-1 text-sm text-slate-blue">
+                        Add your first task to get an AI time estimate and a personalized schedule.
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  {activeTasks.map((task) => (
+                    <TaskCard
+                      key={task._id}
+                      task={task}
+                      barColor={getTaskBarColor(task)}
+                      isEstimating={estimatingTasks.has(task._id)}
+                      onStatusChange={(status: TaskStatus) => updateTaskStatus({ taskId: task._id, status })}
+                      onEstimate={() => handleEstimateTask(task._id)}
+                      onEdit={() => setEditingTask(task)}
+                      onDelete={() => setDeletingTask(task)}
+                      subtasks={subtasksByTaskId.get(task._id) ?? []}
+                      estimatingSubtasks={estimatingSubtasks}
+                      onEditSubtask={(subtask) => setEditingSubtask(subtask)}
+                      onDeleteSubtask={(subtaskId) => deleteSubtask({ subtaskId })}
+                      onEstimateSubtask={(subtaskId) => handleEstimateSubtask(subtaskId)}
+                      isGeneratingSubtasks={generatingSubtasksTasks.has(task._id)}
+                      onGenerateSubtasks={() => handleGenerateSubtasks(task)}
+                      onSubtaskStatusChange={(subtaskId, status) => updateSubtaskStatus({ subtaskId, status })}
+                      feedback={{
+                        draft: getFeedbackDraft(task._id),
+                        error: feedbackErrors[task._id],
+                        isSubmitting: submittingFeedbackTasks.has(task._id),
+                        isEditing: editingFeedbackTasks.has(task._id),
+                        onToggleRating: (value) => updateFeedbackDraft(task._id, (curr) =>
+                          curr.rating === value
+                            ? { ...curr, rating: undefined, hours: '', minutes: '' }
+                            : { ...curr, rating: value }
+                        ),
+                        onHoursChange: (value) => updateFeedbackDraft(task._id, (curr) => ({ ...curr, hours: value })),
+                        onMinutesChange: (value) => updateFeedbackDraft(task._id, (curr) => ({ ...curr, minutes: value })),
+                        onSubmit: () => handleSubmitFeedback(task._id),
+                        onStartEdit: () => startEditFeedback(task),
+                      }}
+                    />
+                  ))}
+                </div>
+              )
             ) : (
-              <div className="flex flex-col gap-3">
-                {taskRows.map((task) => (
-                  <TaskCard
-                    key={task._id}
-                    task={task}
-                    barColor={getTaskBarColor(task)}
-                    badge={BADGE_MAP[task.taskType?.toLowerCase().replace(/\s+/g, '') ?? ''] ?? BADGE_MAP.default}
-                    isEstimating={estimatingTasks.has(task._id)}
-                    onEstimate={() => handleEstimateTask(task._id)}
-                    onEdit={() => setEditingTask(task)}
-                    onDelete={() => setDeletingTask(task)}
-                    subtasks={subtasksByTaskId.get(task._id) ?? []}
-                    estimatingSubtasks={estimatingSubtasks}
-                    onEditSubtask={(subtask) => setEditingSubtask(subtask)}
-                    onDeleteSubtask={(subtaskId) => deleteSubtask({ subtaskId })}
-                    onEstimateSubtask={(subtaskId) => handleEstimateSubtask(subtaskId)}
-                    feedback={{
-                      draft: getFeedbackDraft(task._id),
-                      error: feedbackErrors[task._id],
-                      isSubmitting: submittingFeedbackTasks.has(task._id),
-                      isEditing: editingFeedbackTasks.has(task._id),
-                      onToggleRating: (value) => updateFeedbackDraft(task._id, (curr) =>
-                        curr.rating === value
-                          ? { ...curr, rating: undefined, hours: '', minutes: '' }
-                          : { ...curr, rating: value }
-                      ),
-                      onHoursChange: (value) => updateFeedbackDraft(task._id, (curr) => ({ ...curr, hours: value })),
-                      onMinutesChange: (value) => updateFeedbackDraft(task._id, (curr) => ({ ...curr, minutes: value })),
-                      onSubmit: () => handleSubmitFeedback(task._id),
-                      onStartEdit: () => startEditFeedback(task),
-                    }}
-                  />
-                ))}
-              </div>
+              completedTasks.length === 0 ? (
+                <div className="rounded-[10px] border border-border bg-white p-6 text-sm text-slate-blue">
+                  No completed tasks yet.
+                </div>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  {completedTasks.map((task) => (
+                    <TaskCard
+                      key={task._id}
+                      task={task}
+                      barColor={getTaskBarColor(task)}
+                      isEstimating={false}
+                      isReadOnly
+                      onStatusChange={() => {}}
+                      onEstimate={() => {}}
+                      onEdit={() => {}}
+                      onDelete={() => {}}
+                      onReopen={() => {
+                        updateTaskStatus({ taskId: task._id, status: 'not_started' })
+                        setFeedbackDrafts((prev) => { const { [task._id]: _omit, ...rest } = prev; return rest })
+                        setFeedbackErrors((prev) => { const { [task._id]: _omit, ...rest } = prev; return rest })
+                        setEditingFeedbackTasks((prev) => { const next = new Set(prev); next.delete(task._id); return next })
+                      }}
+                      subtasks={subtasksByTaskId.get(task._id) ?? []}
+                      onSubtaskStatusChange={(subtaskId, status) => updateSubtaskStatus({ subtaskId, status })}
+                      isGeneratingSubtasks={generatingSubtasksTasks.has(task._id)}
+                      onGenerateSubtasks={() => handleGenerateSubtasks(task)}
+                      feedback={{
+                        draft: getFeedbackDraft(task._id),
+                        error: feedbackErrors[task._id],
+                        isSubmitting: submittingFeedbackTasks.has(task._id),
+                        isEditing: editingFeedbackTasks.has(task._id),
+                        onToggleRating: (value) => updateFeedbackDraft(task._id, (curr) =>
+                          ({ ...curr, rating: curr.rating === value ? undefined : value })
+                        ),
+                        onHoursChange: (value) => updateFeedbackDraft(task._id, (curr) => ({ ...curr, hours: value })),
+                        onMinutesChange: (value) => updateFeedbackDraft(task._id, (curr) => ({ ...curr, minutes: value })),
+                        onSubmit: () => handleSubmitFeedback(task._id),
+                        onStartEdit: () => startEditFeedback(task),
+                      }}
+                    />
+                  ))}
+                </div>
+              )
             )}
           </section>
 

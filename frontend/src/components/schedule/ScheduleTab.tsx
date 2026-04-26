@@ -5,9 +5,13 @@ import type { Id } from '../../../../backend/convex/_generated/dataModel'
 import type { CalendarEntry, TimedEvent, AllDayEvent } from '../../../../backend/convex/actions/fetchCalendarEvents'
 import { CalendarIcon, SpinnerIcon, WarningIcon } from '../icons'
 import TimeGrid, { type StudyBlockOnGrid } from './TimeGrid'
+import MobileDayView from './MobileDayView'
 import CalendarSelectorPopup from './CalendarSelectorPopup'
 import ScheduleHeader from './ScheduleHeader'
-import ScheduleTray from './ScheduleTray'
+import ClassPanel from './ClassPanel'
+import CalendarNudge from './CalendarNudge'
+import NoCalendarNudge from './NoCalendarNudge'
+import { useIsMobile } from '../../hooks/useIsMobile'
 import { computeOverlapLayout } from './overlapLayout'
 import { offsetDate, isoDateString, minutesFromMidnight, SLOT_HEIGHT, MAX_OFFSET_DAYS, DAYS_FULL } from './utils'
 
@@ -23,6 +27,7 @@ type CalendarData = {
 type StudyBlockWithTask = {
   _id: Id<'studyBlocks'>
   taskId: Id<'tasks'>
+  subtaskId?: Id<'subtasks'>
   title: string
   startTime: string | undefined
   studyBlockLength: number
@@ -44,7 +49,9 @@ export default function ScheduleTab() {
   const autoRescheduleAction = useAction(api.actions.autoRescheduleConflicts.autoRescheduleConflicts)
   const fetchCalendarEventsAction = useAction(api.actions.fetchCalendarEvents.fetchCalendarEvents)
   const exportStudyBlocksAction = useAction(api.actions.exportStudyBlocksToCalendar.exportStudyBlocksToCalendar)
+  const initiateCalendarOAuth = useAction(api.actions.initiateGoogleCalendarOAuth.initiateGoogleCalendarOAuth)
 
+  const isMobile = useIsMobile()
   const [weekOffset, setWeekOffset] = useState(0)
   const [calendarData, setCalendarData] = useState<CalendarData | null>(null)
   const [isFetchingEvents, setIsFetchingEvents] = useState(false)
@@ -55,7 +62,12 @@ export default function ScheduleTab() {
   const [isRescheduling, setIsRescheduling] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   const [exportMsg, setExportMsg] = useState<string | null>(null)
-  const [scheduleAllMsg, setScheduleAllMsg] = useState<string | null>(null)
+  const [scheduleAllMsg, setScheduleAllMsg] = useState<{ text: string; warn: boolean } | null>(null)
+  const [showNudge, setShowNudge] = useState(false)
+  const [pendingSchedule, setPendingSchedule] = useState<(() => void) | null>(null)
+  const [isConnecting, setIsConnecting] = useState(false)
+  const [connectError, setConnectError] = useState<string | null>(null)
+  const [noCalendarPending, setNoCalendarPending] = useState<(() => void) | null>(null)
 
   const gridRef = useRef<HTMLDivElement>(null)
 
@@ -290,6 +302,63 @@ export default function ScheduleTab() {
     }
   }, [exportStudyBlocksAction, fetchCalendarEventsAction, startDateStr, timezone])
 
+  // calendarList already excludes the timemaxx export calendar (filtered server-side),
+  // so any selectedCalendarId that appears in calendarList is a real user-visible calendar.
+  const noCalendarCondition =
+    calendarConnected &&
+    calendarData !== null &&
+    (selectedCalendarIds ?? []).filter(
+      (id) => calendarData.calendarList.some((c) => c.id === id)
+    ).length === 0
+
+  function maybeNudge(proceed: () => void) {
+    if (!calendarConnected) {
+      setPendingSchedule(() => proceed)
+      setShowNudge(true)
+    } else if (noCalendarCondition) {
+      setNoCalendarPending(() => proceed)
+    } else {
+      proceed()
+    }
+  }
+
+  function handleNudgeConnect() {
+    setIsConnecting(true)
+    setConnectError(null)
+    initiateCalendarOAuth({})
+      .then((url) => { window.location.href = url })
+      .catch(() => {
+        setIsConnecting(false)
+        setConnectError('Failed to start Google Calendar sign-in. Please try again.')
+      })
+  }
+
+  function handleNudgeScheduleAnyway() {
+    setShowNudge(false)
+    pendingSchedule?.()
+    setPendingSchedule(null)
+  }
+
+  function handleNudgeDismiss() {
+    setShowNudge(false)
+    setPendingSchedule(null)
+  }
+
+  function handleNoCalendarScheduleAnyway() {
+    const fn = noCalendarPending
+    setNoCalendarPending(null)
+    fn?.()
+  }
+
+  function handleNoCalendarSelectCalendars() {
+    setNoCalendarPending(null)
+    setSelectorOpen(true)
+  }
+
+  function handleNoCalendarDismiss() {
+    setNoCalendarPending(null)
+  }
+
   async function handleToggleCalendar(calId: string) {
     const current = selectedCalendarIds ?? []
     const next = current.includes(calId) ? current.filter((id) => id !== calId) : [...current, calId]
@@ -304,6 +373,7 @@ export default function ScheduleTab() {
   }
 
   const hasIndicator = calendarConnected && (!selectedCalendarIds || selectedCalendarIds.length === 0)
+
 
   const pendingExportCount = useMemo(() => {
     if (!calendarConnected) return 0
@@ -334,6 +404,7 @@ export default function ScheduleTab() {
         isExporting={isExporting}
         onPrevWeek={() => setWeekOffset((o) => o - 7)}
         onNextWeek={() => setWeekOffset((o) => o + 7)}
+        onGoToToday={() => setWeekOffset(0)}
         onExport={handleExport}
         onOpenSelector={() => setSelectorOpen((o) => !o)}
       />
@@ -360,15 +431,15 @@ export default function ScheduleTab() {
       )}
 
       {scheduleAllMsg && (
-        <div className="mb-3 flex items-center justify-between gap-2 rounded-lg border border-border bg-bg-gray px-4 py-2 text-sm text-slate-blue">
-          <span>{scheduleAllMsg}</span>
-          <button type="button" onClick={() => setScheduleAllMsg(null)} className="text-light-blue hover:text-slate-blue">✕</button>
+        <div className={`mb-3 flex items-center justify-between gap-2 rounded-lg border px-4 py-2 text-sm ${scheduleAllMsg.warn ? 'border-amber-200 bg-amber-50 text-amber-800' : 'border-border bg-bg-gray text-slate-blue'}`}>
+          <span>{scheduleAllMsg.text}</span>
+          <button type="button" onClick={() => setScheduleAllMsg(null)} className="opacity-60 hover:opacity-100">✕</button>
         </div>
       )}
 
-      {pendingExportCount > 0 && (
+{pendingExportCount > 0 && (
         <div className="mb-3 flex items-center gap-2 rounded-lg border border-sky-blue bg-info-bg px-4 py-2 text-sm text-navy">
-          <CalendarIcon color="#005A8E" size={14} />
+          <span className="text-info-dark"><CalendarIcon color="currentColor" size={14} /></span>
           <span>
             {pendingExportCount} block{pendingExportCount !== 1 ? 's' : ''} added or moved — export to sync with Google Calendar.
           </span>
@@ -389,32 +460,51 @@ export default function ScheduleTab() {
         </div>
       )}
 
-      <div className="flex flex-1 gap-4 min-h-0">
+      <div className="flex flex-1 gap-4 min-h-0 flex-col sm:flex-row">
         <div className="flex flex-1 flex-col min-h-0 min-w-0" data-grid>
-          <TimeGrid
-            days={days}
-            workHoursGrid={workHoursGrid}
-            layoutByDay={layoutByDay}
-            allDayEventsByDay={allDayEventsByDay}
-            calendarConnected={calendarConnected}
-            gridRef={gridRef}
-            studyBlocksByDay={studyBlocksByDay}
-            highlightedSlots={highlightedSlots}
-            isAssignMode={assigningBlockId !== null || draggingBlockId !== null}
-            onSlotClick={handleSlotClick}
-            onMoveBlock={handleMoveBlock}
-            onAutoReschedule={handleAutoReschedule}
-            draggingBlockId={draggingBlockId}
-            onDragStart={(id) => {
-              const block = allStudyBlocks?.find((b) => b._id === id)
-              if (block?.isConflicted) {
-                setDraggingBlockId(id)
-              } else {
-                setAssigningBlockId(id)
-              }
-            }}
-            onDrop={handleDrop}
-          />
+          {isMobile ? (
+            <MobileDayView
+              days={days}
+              workHoursGrid={workHoursGrid}
+              studyBlocksByDay={studyBlocksByDay}
+              allDayEventsByDay={allDayEventsByDay}
+              layoutByDay={layoutByDay}
+              calendarConnected={calendarConnected}
+              highlightedSlots={highlightedSlots}
+              isAssignMode={assigningBlockId !== null || draggingBlockId !== null}
+              onPrevBoundary={() => setWeekOffset((o) => o - 7)}
+              onNextBoundary={() => setWeekOffset((o) => o + 7)}
+              onSlotClick={handleSlotClick}
+              onMoveBlock={handleMoveBlock}
+              onAutoReschedule={handleAutoReschedule}
+              gridRef={gridRef}
+            />
+          ) : (
+            <TimeGrid
+              days={days}
+              workHoursGrid={workHoursGrid}
+              layoutByDay={layoutByDay}
+              allDayEventsByDay={allDayEventsByDay}
+              calendarConnected={calendarConnected}
+              gridRef={gridRef}
+              studyBlocksByDay={studyBlocksByDay}
+              highlightedSlots={highlightedSlots}
+              isAssignMode={assigningBlockId !== null || draggingBlockId !== null}
+              onSlotClick={handleSlotClick}
+              onMoveBlock={handleMoveBlock}
+              onAutoReschedule={handleAutoReschedule}
+              draggingBlockId={draggingBlockId}
+              onDragStart={(id) => {
+                const block = allStudyBlocks?.find((b) => b._id === id)
+                if (block?.isConflicted) {
+                  setDraggingBlockId(id)
+                } else {
+                  setAssigningBlockId(id)
+                }
+              }}
+              onDrop={handleDrop}
+            />
+          )}
         </div>
 
         {isRescheduling && (
@@ -424,12 +514,13 @@ export default function ScheduleTab() {
           </div>
         )}
 
-        <ScheduleTray
-          blocks={unscheduledBlocks}
+        <ClassPanel
+          unscheduledBlocks={unscheduledBlocks}
           assigningBlockId={assigningBlockId}
           onToggleAssign={(id) => setAssigningBlockId((prev) => (prev === id ? null : id))}
           timezone={timezone}
-          onScheduleAllMsg={setScheduleAllMsg}
+          onScheduleAllMsg={(msg, warn = false) => setScheduleAllMsg({ text: msg, warn })}
+          onBeforeSchedule={maybeNudge}
         />
       </div>
 
@@ -439,6 +530,24 @@ export default function ScheduleTab() {
           selectedIds={selectedCalendarIds ?? []}
           onToggle={handleToggleCalendar}
           onClose={() => setSelectorOpen(false)}
+        />
+      )}
+
+      {showNudge && (
+        <CalendarNudge
+          onConnect={handleNudgeConnect}
+          onScheduleAnyway={handleNudgeScheduleAnyway}
+          onDismiss={handleNudgeDismiss}
+          isConnecting={isConnecting}
+          connectError={connectError}
+        />
+      )}
+
+      {noCalendarPending !== null && (
+        <NoCalendarNudge
+          onScheduleAnyway={handleNoCalendarScheduleAnyway}
+          onSelectCalendars={handleNoCalendarSelectCalendars}
+          onDismiss={handleNoCalendarDismiss}
         />
       )}
     </div>
