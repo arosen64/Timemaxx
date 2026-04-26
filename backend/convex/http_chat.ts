@@ -89,11 +89,63 @@ function formatTaskReadSummary(task: {
   return lines.join("\n");
 }
 
-function parseDueDateIso(iso: string): number {
+function getTimeZoneOffsetMs(timeZone: string, atMs: number): number {
+  const dtf = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    hour12: false,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+  const parts = dtf.formatToParts(new Date(atMs));
+  const values: Record<string, string> = {};
+  for (const part of parts) {
+    if (part.type !== "literal") values[part.type] = part.value;
+  }
+  const asUtc = Date.UTC(
+    Number(values.year),
+    Number(values.month) - 1,
+    Number(values.day),
+    Number(values.hour),
+    Number(values.minute),
+    Number(values.second),
+  );
+  return asUtc - atMs;
+}
+
+function parseAsUserLocalDateTimeMs(input: string, timeZone: string): number {
+  const m = input.match(
+    /^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2})(?::(\d{2}))?)?$/,
+  );
+  if (!m) return NaN;
+  const year = Number(m[1]);
+  const month = Number(m[2]);
+  const day = Number(m[3]);
+  const hour = Number(m[4] ?? "0");
+  const minute = Number(m[5] ?? "0");
+  const second = Number(m[6] ?? "0");
+
+  // Iteratively solve "wall clock in timeZone" -> UTC instant, including DST.
+  const targetUtcWall = Date.UTC(year, month - 1, day, hour, minute, second);
+  let guess = targetUtcWall;
+  for (let i = 0; i < 3; i += 1) {
+    const offset = getTimeZoneOffsetMs(timeZone, guess);
+    guess = targetUtcWall - offset;
+  }
+  return guess;
+}
+
+function parseDueDateIso(iso: string, timezone: string): number {
   if (!iso) return Date.now() + 86_400_000;
   const hasTime = iso.includes("T") && iso.length > 10;
   const normalized = hasTime ? iso : `${iso}T23:59:59`;
-  const ms = new Date(normalized).getTime();
+  const hasExplicitTz = /[zZ]|[+-]\d{2}:\d{2}$/.test(normalized);
+  const ms = hasExplicitTz
+    ? new Date(normalized).getTime()
+    : parseAsUserLocalDateTimeMs(normalized, timezone);
   return isNaN(ms) ? Date.now() + 86_400_000 : ms;
 }
 
@@ -139,12 +191,13 @@ async function executeTaskAction(
   params: {
     userId: Id<"users">;
     sessionId: string;
+    timezone: string;
     activeTaskId?: Id<"tasks">;
     activeCourseId?: Id<"userCourses">;
     output: ChatWorkflowOutput;
   },
 ): Promise<string> {
-  const { userId, sessionId, activeTaskId, activeCourseId, output } = params;
+  const { userId, sessionId, timezone, activeTaskId, activeCourseId, output } = params;
   const taggedTaskId = activeTaskId;
   const taggedCourseId = activeCourseId;
   let aiText = output.reply;
@@ -161,7 +214,7 @@ async function executeTaskAction(
         title: output.title,
         description: output.description ?? output.title,
         taskType: output.taskType,
-        dueDate: parseDueDateIso(output.dueDateIso),
+        dueDate: parseDueDateIso(output.dueDateIso, timezone),
         ...(taggedCourseId ? { courseId: taggedCourseId } : {}),
         ...(output.classTag ? { classTag: output.classTag } : {}),
       });
@@ -193,7 +246,7 @@ async function executeTaskAction(
         ...(output.updatedTitle ? { title: output.updatedTitle } : {}),
         ...(output.updatedDescription ? { description: output.updatedDescription } : {}),
         ...(output.updatedTaskType ? { taskType: output.updatedTaskType } : {}),
-        ...(output.updatedDueDateIso ? { dueDate: parseDueDateIso(output.updatedDueDateIso) } : {}),
+        ...(output.updatedDueDateIso ? { dueDate: parseDueDateIso(output.updatedDueDateIso, timezone) } : {}),
         ...(taggedCourseId ? { courseId: taggedCourseId } : {}),
         ...(output.updatedClassTag !== undefined && output.updatedClassTag !== null
           ? { classTag: output.updatedClassTag }
@@ -389,6 +442,7 @@ async function handleWorkflowTurn(
     const aiText = await executeTaskAction(ctx, {
       userId,
       sessionId,
+      timezone,
       activeTaskId: sessionActiveTaskId,
       activeCourseId: sessionActiveCourseId,
       output,
