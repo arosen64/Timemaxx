@@ -8,6 +8,7 @@ import { formatClassTagForDisplay } from '../../utils/classTagUtils'
 import TaskFeedbackForm, { type TaskFeedbackFormProps } from './TaskFeedbackForm'
 import EstimateBadge from './EstimateBadge'
 import WeightBadge from './WeightBadge'
+import DueDateWarningBadge from './DueDateWarningBadge'
 import SubtaskCard from './SubtaskCard'
 import StudyBlockRow from './StudyBlockRow'
 import StatusDropdown from './StatusDropdown'
@@ -76,6 +77,11 @@ export default function TaskCard({
       setIsCancellingBlocks(false)
     }
   }
+
+  const atRiskData = useQuery(
+    api.queries.studyBlocks.getTaskAtRiskStatus,
+    task.status !== 'completed' ? { taskId: task._id } : 'skip',
+  )
 
   const studyBlocks = useQuery(
     api.queries.studyBlocks.getStudyBlocksByTask,
@@ -171,6 +177,7 @@ export default function TaskCard({
                 </>
               ) : null}
               <WeightBadge weight={task.assignmentWeight} />
+              {atRiskData?.isWarning && <DueDateWarningBadge />}
             </div>
             {task.description.trim().length > 0 && (
               <div className="text-xs break-words text-light-blue line-clamp-4">
