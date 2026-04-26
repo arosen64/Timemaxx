@@ -108,13 +108,14 @@ async function executeTaskAction(
   const taggedCourseId = activeCourseId;
   let aiText = output.reply;
   let clearedScopeAfterAction = false;
+  const shouldGenerateSubtasks = output.generateSubtasks === true;
 
   try {
     if (output.actionType === "create_task") {
       if (!output.title || !output.dueDateIso || !output.taskType) {
         throw new Error("Missing required task fields.");
       }
-      await ctx.runMutation(internal.mutations.tasks.createTaskInternal, {
+      const createdTaskId = await ctx.runMutation(internal.mutations.tasks.createTaskInternal, {
         userId,
         title: output.title,
         description: output.description ?? output.title,
@@ -123,6 +124,26 @@ async function executeTaskAction(
         ...(taggedCourseId ? { courseId: taggedCourseId } : {}),
         ...(output.classTag ? { classTag: output.classTag } : {}),
       });
+      if (shouldGenerateSubtasks) {
+        const generated = await ctx.runAction(internal.actions.generateSubtasks.generateSubtasks, {
+          taskId: createdTaskId,
+        });
+        if ("error" in generated) throw new Error(generated.error);
+        await ctx.runMutation(internal.mutations.subtasks.createSubtasksFromGeneratedInternal, {
+          userId,
+          parentTaskId: createdTaskId,
+          subtasks: generated.subtasks.map((s) => ({
+            title: s.title,
+            description: s.description,
+            taskType: s.taskType,
+            suggestedCompletionAt: new Date(s.suggestedCompletionAt).getTime(),
+          })),
+        });
+      } else {
+        await ctx.runAction(internal.ai.estimateTaskTime.estimateTaskTime, {
+          taskId: createdTaskId,
+        });
+      }
     } else if (output.actionType === "update_task") {
       if (taggedTaskId === undefined) throw new Error("No task selected.");
       await ctx.runMutation(internal.mutations.tasks.patchTaskFieldsInternal, {
@@ -137,6 +158,31 @@ async function executeTaskAction(
           ? { classTag: output.updatedClassTag }
           : {}),
       });
+      const subtaskCount = await ctx.runQuery(internal.queries.subtasks.countSubtasksForTaskInternal, {
+        parentTaskId: taggedTaskId,
+      });
+      if (subtaskCount === 0) {
+        if (shouldGenerateSubtasks) {
+          const generated = await ctx.runAction(internal.actions.generateSubtasks.generateSubtasks, {
+            taskId: taggedTaskId,
+          });
+          if ("error" in generated) throw new Error(generated.error);
+          await ctx.runMutation(internal.mutations.subtasks.createSubtasksFromGeneratedInternal, {
+            userId,
+            parentTaskId: taggedTaskId,
+            subtasks: generated.subtasks.map((s) => ({
+              title: s.title,
+              description: s.description,
+              taskType: s.taskType,
+              suggestedCompletionAt: new Date(s.suggestedCompletionAt).getTime(),
+            })),
+          });
+        } else {
+          await ctx.runAction(internal.ai.estimateTaskTime.estimateTaskTime, {
+            taskId: taggedTaskId,
+          });
+        }
+      }
       await ctx.runMutation(internal.mutations.chatSessions.setMessageScopeInternal, {
         userId,
         sessionId,

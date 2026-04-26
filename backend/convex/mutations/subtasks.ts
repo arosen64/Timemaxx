@@ -14,6 +14,8 @@ const reasoningTraceArgs = v.object({
   profile: v.string(),
 });
 
+const GENERATED_SUBTASK_COLORS = ["#68ACE5", "#7BB6E8", "#8EC0EB", "#A1CAEE", "#B4D4F1", "#C7DEF4"] as const;
+
 // Batch variant: validates all subtasks before any inserts to avoid partial writes on failure.
 export const createSubtasksBatch = mutation({
   args: {
@@ -67,6 +69,64 @@ export const createSubtasksBatch = mutation({
     await ctx.db.patch(args.parentTaskId, { reasoning: undefined });
 
     if (process.env.ANTHROPIC_API_KEY) {
+      await ctx.scheduler.runAfter(0, internal.ai.estimateSubtasksBatch.estimateSubtasksBatch, {
+        subtaskIds,
+      });
+    }
+
+    return subtaskIds;
+  },
+});
+
+/** Persists generated subtasks from internal actions (chat automation path). */
+export const createSubtasksFromGeneratedInternal = internalMutation({
+  args: {
+    userId: v.id("users"),
+    parentTaskId: v.id("tasks"),
+    subtasks: v.array(
+      v.object({
+        title: v.string(),
+        description: v.string(),
+        taskType: v.string(),
+        suggestedCompletionAt: v.optional(v.number()),
+      })
+    ),
+  },
+  returns: v.array(v.id("subtasks")),
+  handler: async (ctx, args) => {
+    const parent = await ctx.db.get(args.parentTaskId);
+    if (!parent || parent.userId !== args.userId) {
+      throw new Error("Parent task not found");
+    }
+
+    const now = Date.now();
+    const subtaskIds: Id<"subtasks">[] = [];
+
+    for (let i = 0; i < args.subtasks.length; i += 1) {
+      const s = args.subtasks[i];
+      const title = s.title.trim();
+      const description = s.description.trim() || title;
+      if (title.length === 0 || description.length === 0) continue;
+      const subtaskId = await ctx.db.insert("subtasks", {
+        parentTaskId: args.parentTaskId,
+        userId: args.userId,
+        title,
+        description,
+        taskType: s.taskType,
+        color: GENERATED_SUBTASK_COLORS[i % GENERATED_SUBTASK_COLORS.length],
+        order: i,
+        suggestedCompletionAt: s.suggestedCompletionAt,
+        courseId: parent.courseId,
+        classTag: parent.classTag,
+        dueDate: parent.dueDate,
+        createdAt: now,
+      });
+      subtaskIds.push(subtaskId);
+    }
+
+    await ctx.db.patch(args.parentTaskId, { reasoning: undefined });
+
+    if (subtaskIds.length > 0 && process.env.ANTHROPIC_API_KEY) {
       await ctx.scheduler.runAfter(0, internal.ai.estimateSubtasksBatch.estimateSubtasksBatch, {
         subtaskIds,
       });

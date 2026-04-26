@@ -22,7 +22,7 @@ import {
 const NO_ACTION = {
   actionType: null, title: null, description: null, taskType: null, dueDateIso: null,
   classTag: null, deleteConfirmed: false, updatedTitle: null, updatedDescription: null,
-  updatedTaskType: null, updatedDueDateIso: null, updatedClassTag: null, courseName: null,
+  updatedTaskType: null, updatedDueDateIso: null, updatedClassTag: null, generateSubtasks: null, courseName: null,
   sisQuery: null, term: null, school: null, studyGoal: null, grade: null, difficultyRating: null,
 } as const;
 
@@ -110,6 +110,7 @@ function taskOutput(output: TaskAgentOutput, ctx: {
       updatedTaskType: output.updatedTaskType,
       updatedDueDateIso: output.updatedDueDateIso,
       updatedClassTag: output.updatedClassTag,
+      generateSubtasks: output.generateSubtasks,
       courseName: null,
       sisQuery: null,
       term: null,

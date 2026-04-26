@@ -37,8 +37,9 @@ export async function buildTaggedEntitiesContextBlock(
   for (const tid of taskIds) {
     const task = await ctx.runQuery(internal.queries.tasks.getTaskInternal, { taskId: tid });
     if (task && task.userId === userId) {
+      const subtasks = await ctx.runQuery(internal.queries.subtasks.countSubtasksForTaskInternal, { parentTaskId: tid });
       lines.push(
-        `- Task "${task.title}" (${task.taskType}, due ${new Date(task.dueDate).toISOString().slice(0, 10)}${task.classTag ? `, class: ${task.classTag}` : ""}) → taskId ${String(tid)}`,
+        `- Task "${task.title}" (${task.taskType}, due ${new Date(task.dueDate).toISOString().slice(0, 10)}${task.classTag ? `, class: ${task.classTag}` : ""}, subtasks: ${subtasks}) → taskId ${String(tid)}`,
       );
       if (task.courseId) extraCourseIds.add(String(task.courseId));
     }

@@ -51,6 +51,17 @@ export const getAllSubtasksInternal = internalQuery({
   },
 });
 
+export const countSubtasksForTaskInternal = internalQuery({
+  args: { parentTaskId: v.id("tasks") },
+  handler: async (ctx, args) => {
+    const subtasks = await ctx.db
+      .query("subtasks")
+      .withIndex("by_parentTaskId", (q) => q.eq("parentTaskId", args.parentTaskId))
+      .collect();
+    return subtasks.length;
+  },
+});
+
 // Get all subtasks for a parent task, ordered by `order` ascending
 export const getSubtasksForTask = query({
   args: { parentTaskId: v.id("tasks") },
