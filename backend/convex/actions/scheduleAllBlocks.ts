@@ -338,9 +338,6 @@ export const scheduleAllBlocks = action({
         startTime: chosen.startISO,
       });
 
-      const poolIdx = pool.findIndex((s) => s.startMs === chosen.startMs);
-      if (poolIdx !== -1) pool.splice(poolIdx, 1);
-
       occupiedIntervals.push({
         startMs: chosen.startMs,
         endMs: chosen.startMs + durationMs,
