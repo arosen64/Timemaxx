@@ -167,6 +167,22 @@ function getSpannedSlots(minutesFromMidnight: number, durationMinutes: number): 
   return slots;
 }
 
+// Keyed by the workHoursGrid array reference so the index is rebuilt only when
+// the grid itself changes (once per action call in practice).
+const workHoursIndexCache = new WeakMap<WorkHoursRow[], Map<string, Set<number>>>();
+
+function getWorkHoursIndex(grid: WorkHoursRow[]): Map<string, Set<number>> {
+  let index = workHoursIndexCache.get(grid);
+  if (!index) {
+    index = new Map();
+    for (const row of grid) {
+      index.set(row.day, new Set(row.blocked));
+    }
+    workHoursIndexCache.set(grid, index);
+  }
+  return index;
+}
+
 /**
  * Returns true if the slot starting at `startMs` with `durationMs` duration:
  *  - Does NOT overlap any occupied interval
@@ -186,13 +202,13 @@ export function isSlotValid(
     if (startMs < iv.endMs && iv.startMs < endMs) return false;
   }
 
-  // Check blocked hours in workHoursGrid
+  // Check blocked hours — O(1) day lookup and O(1) slot membership via pre-built index
   const { dayName, minutesFromMidnight } = getLocalTimeInfo(startMs, timezone);
-  const row = workHoursGrid.find((r) => r.day === dayName);
-  if (row) {
+  const blockedSet = getWorkHoursIndex(workHoursGrid).get(dayName);
+  if (blockedSet) {
     const spanned = getSpannedSlots(minutesFromMidnight, durationMs / 60000);
     for (const slot of spanned) {
-      if (row.blocked.includes(slot)) return false;
+      if (blockedSet.has(slot)) return false;
     }
   }
 
