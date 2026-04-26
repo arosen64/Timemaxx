@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import type { Id } from '../../../../backend/convex/_generated/dataModel'
 import type { AllDayEvent } from '../../../../backend/convex/actions/fetchCalendarEvents'
 import type { LayoutEvent } from './overlapLayout'
@@ -106,15 +106,13 @@ export default function MobileDayView({
   const studyBlocks = studyBlocksByDay[dateStr] ?? []
   const layout = layoutByDay[dateStr] ?? []
 
-  let hasHighlightedSlotsToday = false
-  if (isAssignMode) {
+  const hasHighlightedSlotsToday = useMemo(() => {
+    if (!isAssignMode) return false
     for (let s = 0; s < TOTAL_SLOTS; s++) {
-      if (highlightedSlots.has(`${dateStr}:${s}`)) {
-        hasHighlightedSlotsToday = true
-        break
-      }
+      if (highlightedSlots.has(`${dateStr}:${s}`)) return true
     }
-  }
+    return false
+  }, [isAssignMode, dateStr, highlightedSlots])
 
   function handlePrev() {
     if (dayIndex > 0) {
