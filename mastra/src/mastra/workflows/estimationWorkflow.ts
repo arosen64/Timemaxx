@@ -31,7 +31,14 @@ const estimationAgentStep = createStep({
       structuredOutput: { schema: estimationAgentOutputSchema },
     });
     if (!response.object) throw new Error("estimationAgent returned no structured output");
-    return response.object;
+    const minutes = response.object.estimatedMinutes;
+    if (!Number.isFinite(minutes)) {
+      throw new Error("estimationAgent returned a non-numeric estimatedMinutes value");
+    }
+    return {
+      ...response.object,
+      estimatedMinutes: Math.max(1, Math.round(minutes)),
+    };
   },
 });
 

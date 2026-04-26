@@ -5,7 +5,9 @@ import { z } from "zod";
 // ---------------------------------------------------------------------------
 
 export const estimationAgentOutputSchema = z.object({
-  estimatedMinutes: z.number().int().positive(),
+  // Keep provider schema unconstrained for Anthropic structured output
+  // compatibility; enforce integer/positive semantics downstream.
+  estimatedMinutes: z.number(),
   reasoningTrace: z.object({
     classes: z.string().describe("1-2 sentences: how course context influenced the estimate"),
     tasks: z.string().describe("1-2 sentences: how prior task history influenced the estimate"),
