@@ -9,4 +9,5 @@ export type ReviewTask = {
   dueDate: string // MM/DD/YYYY
   /** `HH:mm` for `<input type="time" />`; default 23:59 (11:59 PM) */
   dueTime: string
+  assignmentWeight?: number
 }
