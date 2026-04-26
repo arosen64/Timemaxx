@@ -1,15 +1,8 @@
 import { Fragment, useState, useEffect } from 'react'
-
-function getTextColorClass(hexColor: string): string {
-  const r = parseInt(hexColor.slice(1, 3), 16)
-  const g = parseInt(hexColor.slice(3, 5), 16)
-  const b = parseInt(hexColor.slice(5, 7), 16)
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
-  return luminance > 0.5 ? 'text-navy' : 'text-white'
-}
+import type { RefObject } from 'react'
 import type { AllDayEvent } from '../../../../backend/convex/actions/fetchCalendarEvents'
 import type { LayoutEvent } from './overlapLayout'
-import { TOTAL_SLOTS, SLOT_HEIGHT, DAYS_FULL, slotLabel, isoDateString, isToday, minutesFromMidnight } from './utils'
+import { TOTAL_SLOTS, SLOT_HEIGHT, DAYS_FULL, slotLabel, isoDateString, isToday, minutesFromMidnight, getTextColorClass } from './utils'
 import type { Id } from '../../../../backend/convex/_generated/dataModel'
 import ScheduleBlockConflict from './ScheduleBlockConflict'
 
@@ -52,7 +45,7 @@ interface TimeGridProps {
   layoutByDay: Record<string, LayoutEvent[]>
   allDayEventsByDay: Record<string, AllDayEvent[]>
   calendarConnected: boolean
-  gridRef: React.RefObject<HTMLDivElement>
+  gridRef: RefObject<HTMLDivElement>
   studyBlocksByDay: Record<string, StudyBlockOnGrid[]>
   highlightedSlots: Set<string>
   isAssignMode: boolean

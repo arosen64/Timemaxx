@@ -426,7 +426,7 @@ export default function DashboardPage() {
       />
 
       {/* ── Main ── */}
-      <main className="flex flex-col flex-1 min-h-0 p-10 overflow-y-auto gap-7">
+      <main className="flex flex-col flex-1 min-h-0 p-4 sm:p-6 lg:p-10 overflow-y-auto gap-7">
 
         {/* Page Header */}
         <header className="flex items-center justify-between">
@@ -460,7 +460,7 @@ export default function DashboardPage() {
         </header>
 
         {/* Stats Row */}
-        <div className="flex gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <StatCard
             label="Study Blocks This Week"
             value={thisWeekBlocks.total}
@@ -474,7 +474,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Columns */}
-        <div className="flex flex-1 gap-6">
+        <div className="flex flex-col lg:flex-row flex-1 gap-6">
 
           {/* Task Column */}
           <section className="flex flex-col flex-1 min-w-0 gap-4">

@@ -73,6 +73,9 @@ export const createTask = mutation({
     if (args.assignmentWeight !== undefined && (args.assignmentWeight < 0 || args.assignmentWeight > 100)) {
       throw new Error("Assignment weight must be between 0 and 100");
     }
+    if (args.timeEstimate !== undefined && args.timeEstimate < 15) {
+      throw new Error("Time estimate must be at least 15 minutes.");
+    }
 
     const isManualEstimate = args.timeEstimate !== undefined;
 
@@ -139,7 +142,9 @@ export const updateTask = mutation({
       ...(args.classTag !== undefined
         ? { classTag: normalizeClassTag(args.classTag) }
         : {}),
-      assignmentWeight: args.assignmentWeight,
+      ...(args.assignmentWeight !== undefined
+        ? { assignmentWeight: args.assignmentWeight }
+        : {}),
       recommendedStart: args.dueDate - TWO_WEEKS_MS,
     });
 
@@ -174,6 +179,7 @@ export const createTaskInternal = internalMutation({
     dueDate: v.number(),
     courseId: v.optional(v.id("userCourses")),
     classTag: v.optional(v.string()),
+    assignmentWeight: v.optional(v.number()),
   },
   returns: v.id("tasks"),
   handler: async (ctx, args) => {
@@ -190,6 +196,9 @@ export const createTaskInternal = internalMutation({
       dueDate: args.dueDate,
       courseId: args.courseId,
       classTag,
+      ...(args.assignmentWeight !== undefined
+        ? { assignmentWeight: args.assignmentWeight }
+        : {}),
       recommendedStart: args.dueDate - TWO_WEEKS_MS,
       createdAt: Date.now(),
       isManualEstimate: false,
@@ -216,6 +225,7 @@ export const patchTaskFieldsInternal = internalMutation({
     dueDate: v.optional(v.number()),
     courseId: v.optional(v.id("userCourses")),
     classTag: v.optional(v.string()),
+    assignmentWeight: v.optional(v.number()),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -236,6 +246,7 @@ export const patchTaskFieldsInternal = internalMutation({
     } else if (args.classTag !== undefined) {
       patch.classTag = normalizeClassTag(args.classTag);
     }
+    if (args.assignmentWeight !== undefined) patch.assignmentWeight = args.assignmentWeight;
     await ctx.db.patch(args.taskId, patch);
     if (process.env.GEMINI_API_KEY && (args.title !== undefined || args.description !== undefined)) {
       await ctx.scheduler.runAfter(0, internal.ai.embeddings.generateTaskEmbedding, {
@@ -282,12 +293,17 @@ const taskStatusValidator = v.union(
 );
 
 /** Unsets all calendar-scheduling fields on a study block, leaving the block itself intact. */
-async function unscheduleBlock(ctx: MutationCtx, blockId: Id<"studyBlocks">) {
+async function unscheduleBlock(
+  ctx: MutationCtx,
+  blockId: Id<"studyBlocks">,
+  markComplete = false
+) {
   await ctx.db.patch(blockId, {
     startTime: undefined,
     googleEventId: undefined,
     isConflicted: undefined,
     needsExport: undefined,
+    ...(markComplete ? { isCompleted: true } : {}),
   });
 }
 
@@ -335,16 +351,16 @@ export const updateTaskStatus = mutation({
         await ctx.db.patch(subtask._id, { status: "completed" });
       }
 
-      // Unschedule task-level study blocks
+      // Unschedule and mark task-level study blocks complete
       const taskBlocks = await ctx.db
         .query("studyBlocks")
         .withIndex("by_taskId", (q) => q.eq("taskId", args.taskId))
         .collect();
       for (const block of taskBlocks) {
-        await unscheduleBlock(ctx, block._id);
+        await unscheduleBlock(ctx, block._id, true);
       }
 
-      // Unschedule subtask-level study blocks — single query filtered in memory
+      // Unschedule and mark subtask-level study blocks complete — single query filtered in memory
       if (subtasks.length > 0) {
         const subtaskIdSet = new Set<string>(subtasks.map((s) => s._id as string));
         const allUserBlocks = await ctx.db
@@ -353,7 +369,7 @@ export const updateTaskStatus = mutation({
           .collect();
         for (const block of allUserBlocks) {
           if (block.subtaskId !== undefined && subtaskIdSet.has(block.subtaskId as string)) {
-            await unscheduleBlock(ctx, block._id);
+            await unscheduleBlock(ctx, block._id, true);
           }
         }
       }
@@ -362,6 +378,30 @@ export const updateTaskStatus = mutation({
       for (const subtask of subtasks) {
         if (subtask.status === "completed") {
           await ctx.db.patch(subtask._id, { status: "not_started" });
+        }
+      }
+
+      // When fully reopening, unmark all study blocks as completed
+      if (args.status === "not_started") {
+        const taskBlocks = await ctx.db
+          .query("studyBlocks")
+          .withIndex("by_taskId", (q) => q.eq("taskId", args.taskId))
+          .collect();
+        for (const block of taskBlocks) {
+          await ctx.db.patch(block._id, { isCompleted: false });
+        }
+
+        if (subtasks.length > 0) {
+          const subtaskIdSet = new Set<string>(subtasks.map((s) => s._id as string));
+          const allUserBlocks = await ctx.db
+            .query("studyBlocks")
+            .withIndex("by_userId", (q) => q.eq("userId", userId))
+            .collect();
+          for (const block of allUserBlocks) {
+            if (block.subtaskId !== undefined && subtaskIdSet.has(block.subtaskId as string)) {
+              await ctx.db.patch(block._id, { isCompleted: false });
+            }
+          }
         }
       }
     }
