@@ -254,13 +254,15 @@ export function buildSlotContext(
       if (iv.startMs - endMs <= WINDOW_MS) nextEvent = iv;
     }
     // Scan backward from lo-1 to find the nearest interval that ends before startMs.
-    // In the non-overlapping case this is just the element at lo-1; the loop handles
-    // overlapping calendar events (e.g. two meetings at the same time) gracefully.
+    // Bounded by WINDOW_MS on startMs: events starting more than 12 h before the
+    // slot are too old to be within the window (assuming event durations < 12 h,
+    // which holds for calendar events and study blocks). Tracking the latest endMs
+    // handles the rare case of overlapping calendar events correctly.
     for (let i = lo - 1; i >= 0; i--) {
       const iv = sortedByStart[i];
-      if (iv.endMs <= startMs) {
-        if (startMs - iv.endMs <= WINDOW_MS) prevEvent = iv;
-        break; // sorted by startMs so no earlier interval can have a later endMs
+      if (startMs - iv.startMs > WINDOW_MS) break;
+      if (iv.endMs <= startMs && startMs - iv.endMs <= WINDOW_MS) {
+        if (!prevEvent || iv.endMs > prevEvent.endMs) prevEvent = iv;
       }
     }
   } else {
