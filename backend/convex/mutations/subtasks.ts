@@ -4,7 +4,7 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { taskTypeValidator } from "../lib/taskValidators";
 import { internal } from "../_generated/api";
 import { rebuildStudyBlocksForSubtask } from "./timeEstimate";
-import { computeRecommendedStart, computeDailyStudyMinutes } from "../lib/scheduleSlots";
+import { computeRecommendedStart, TWO_WEEKS_MS, DAY_MS } from "../lib/scheduleSlots";
 import { Id } from "../_generated/dataModel";
 
 const reasoningTraceArgs = v.object({
@@ -44,9 +44,14 @@ export const createSubtasksBatch = mutation({
     }
 
     const now = Date.now();
+    const n = args.subtasks.length;
+    const windowStart = Math.max(now, parent.dueDate - TWO_WEEKS_MS);
+    const windowDuration = Math.max(0, parent.dueDate - windowStart);
+    const interval = Math.min(2 * DAY_MS, Math.max(DAY_MS, windowDuration / n));
     const subtaskIds: Id<"subtasks">[] = [];
 
-    for (const s of args.subtasks) {
+    for (let i = 0; i < n; i++) {
+      const s = args.subtasks[i];
       const subtaskId = await ctx.db.insert("subtasks", {
         parentTaskId: args.parentTaskId,
         userId,
@@ -55,7 +60,7 @@ export const createSubtasksBatch = mutation({
         taskType: s.taskType,
         color: s.color,
         order: s.order,
-        suggestedCompletionAt: s.suggestedCompletionAt,
+        suggestedCompletionAt: windowStart + (i + 1) * interval,
         courseId: parent.courseId,
         classTag: parent.classTag,
         dueDate: parent.dueDate,
@@ -208,13 +213,9 @@ export const setSubtaskTimeEstimate = internalMutation({
     const total = siblings.reduce((sum, s) => sum + (s.timeEstimate ?? 0), 0);
     const parent = await ctx.db.get(subtask.parentTaskId);
     if (!parent) return;
-    const user = await ctx.db.get(parent.userId);
     await ctx.db.patch(subtask.parentTaskId, {
       timeEstimate: total,
-      recommendedStart: computeRecommendedStart(
-        Date.now(), parent.dueDate, total,
-        computeDailyStudyMinutes(user?.workHoursGrid),
-      ),
+      recommendedStart: computeRecommendedStart(Date.now(), parent.dueDate),
     });
 
     // Delete any stale task-level blocks so they don't co-exist with subtask-owned blocks

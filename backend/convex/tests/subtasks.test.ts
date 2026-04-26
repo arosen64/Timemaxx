@@ -1,6 +1,7 @@
 import { describe, expect, test, beforeEach, afterEach, vi } from "vitest";
 import { api, internal } from "../_generated/api";
 import { makeTestCtx, createTestUser } from "../../convex-tests/helpers";
+import { TWO_WEEKS_MS, DAY_MS } from "../lib/scheduleSlots";
 
 const makeReasoning = () => ({
   classes: "Course context.",
@@ -215,11 +216,11 @@ describe("mutations/subtasks – setSubtaskTimeEstimate", () => {
     expect(parent!.timeEstimate).toBe(45);
   });
 
-  test("clears parent recommendedStart when all subtask estimates are zero (no estimate = no gate)", async () => {
+  test("sets parent recommendedStart to max(now, dueDate - TWO_WEEKS) even when total estimate is zero", async () => {
     const t = makeTestCtx();
     const { userId } = await createTestUser(t);
-    const DAY_MS = 24 * 60 * 60 * 1000;
-    const dueDate = Date.now() + 30 * DAY_MS;
+    const now = Date.now();
+    const dueDate = now + 30 * DAY_MS;
     const parentTaskId = await t.run((ctx) =>
       ctx.db.insert("tasks", {
         userId: userId as never,
@@ -241,13 +242,12 @@ describe("mutations/subtasks – setSubtaskTimeEstimate", () => {
     });
 
     const parent = await t.run((ctx) => ctx.db.get(parentTaskId));
-    expect(parent!.recommendedStart).toBeUndefined();
+    expect(parent!.recommendedStart).toBe(Math.max(now, dueDate - TWO_WEEKS_MS));
   });
 
-  test("updates parent recommendedStart during subtask estimate rollup", async () => {
+  test("updates parent recommendedStart to two-week window during subtask estimate rollup", async () => {
     const t = makeTestCtx();
     const { userId } = await createTestUser(t);
-    const DAY_MS = 24 * 60 * 60 * 1000;
     const dueDate = Date.now() + 30 * DAY_MS;
     const parentTaskId = await t.run((ctx) =>
       ctx.db.insert("tasks", {
@@ -269,9 +269,7 @@ describe("mutations/subtasks – setSubtaskTimeEstimate", () => {
     });
 
     const parent = await t.run((ctx) => ctx.db.get(parentTaskId));
-    // User has no workHoursGrid → computeDailyStudyMinutes falls back to 120 min/day
-    // 240 min → ceil(240/120) = 2 days needed
-    expect(parent!.recommendedStart).toBe(dueDate - 2 * DAY_MS);
+    expect(parent!.recommendedStart).toBe(dueDate - TWO_WEEKS_MS);
   });
 });
 
@@ -398,5 +396,126 @@ describe("mutations/userCourses – deleteUserCourse cascade", () => {
     expect(await t.run((ctx) => ctx.db.get(taskId))).toBeNull();
     expect(await t.run((ctx) => ctx.db.get(subtaskId))).toBeNull();
     expect(await t.run((ctx) => ctx.db.get(subtaskBlockId))).toBeNull();
+  });
+});
+
+// ─── createSubtasksBatch cascade ─────────────────────────────────────────────
+
+describe("mutations/subtasks – createSubtasksBatch suggestedCompletionAt cascade", () => {
+  beforeEach(() => { vi.useFakeTimers(); });
+  afterEach(() => { vi.useRealTimers(); });
+
+  test("spaces subtasks 2 days apart from windowStart when window is wide", async () => {
+    vi.setSystemTime(new Date("2026-04-26T12:00:00Z"));
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+    const now = Date.now();
+    // 30 days out — window opens 14 days before dueDate
+    const dueDate = now + 30 * DAY_MS;
+    const parentTaskId = await t.run((ctx) =>
+      ctx.db.insert("tasks", {
+        userId: userId as never,
+        title: "Parent",
+        description: "desc",
+        taskType: "Essay",
+        dueDate,
+        isManualEstimate: false,
+        createdAt: now,
+      })
+    );
+
+    await withAuth.mutation(api.mutations.subtasks.createSubtasksBatch, {
+      parentTaskId,
+      subtasks: [
+        { title: "Step 1", description: "d", taskType: "Essay", color: "#000", order: 0 },
+        { title: "Step 2", description: "d", taskType: "Essay", color: "#000", order: 1 },
+        { title: "Step 3", description: "d", taskType: "Essay", color: "#000", order: 2 },
+      ],
+    });
+
+    const saved = await t.run((ctx) =>
+      ctx.db.query("subtasks").withIndex("by_parentTaskId", (q) => q.eq("parentTaskId", parentTaskId as never)).collect()
+    );
+    const sorted = saved.sort((a, b) => a.order - b.order);
+    const windowStart = Math.max(now, dueDate - TWO_WEEKS_MS);
+    expect(sorted[0].suggestedCompletionAt).toBe(windowStart + 1 * 2 * DAY_MS);
+    expect(sorted[1].suggestedCompletionAt).toBe(windowStart + 2 * 2 * DAY_MS);
+    expect(sorted[2].suggestedCompletionAt).toBe(windowStart + 3 * 2 * DAY_MS);
+  });
+
+  test("compresses interval to at least 1 day when window is tight", async () => {
+    vi.setSystemTime(new Date("2026-04-26T12:00:00Z"));
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+    const now = Date.now();
+    // 4 days out — window is only 4 days, 4 subtasks → 1 day each
+    const dueDate = now + 4 * DAY_MS;
+    const parentTaskId = await t.run((ctx) =>
+      ctx.db.insert("tasks", {
+        userId: userId as never,
+        title: "Parent",
+        description: "desc",
+        taskType: "Essay",
+        dueDate,
+        isManualEstimate: false,
+        createdAt: now,
+      })
+    );
+
+    await withAuth.mutation(api.mutations.subtasks.createSubtasksBatch, {
+      parentTaskId,
+      subtasks: [
+        { title: "A", description: "d", taskType: "Essay", color: "#000", order: 0 },
+        { title: "B", description: "d", taskType: "Essay", color: "#000", order: 1 },
+        { title: "C", description: "d", taskType: "Essay", color: "#000", order: 2 },
+        { title: "D", description: "d", taskType: "Essay", color: "#000", order: 3 },
+      ],
+    });
+
+    const saved = await t.run((ctx) =>
+      ctx.db.query("subtasks").withIndex("by_parentTaskId", (q) => q.eq("parentTaskId", parentTaskId as never)).collect()
+    );
+    const sorted = saved.sort((a, b) => a.order - b.order);
+    // windowStart = now (dueDate within 2 weeks), windowDuration = 4 days
+    // interval = clamp(4/4=1, 1, 2) = 1 day
+    expect(sorted[0].suggestedCompletionAt).toBe(now + 1 * DAY_MS);
+    expect(sorted[1].suggestedCompletionAt).toBe(now + 2 * DAY_MS);
+    expect(sorted[2].suggestedCompletionAt).toBe(now + 3 * DAY_MS);
+    expect(sorted[3].suggestedCompletionAt).toBe(now + 4 * DAY_MS);
+  });
+
+  test("ignores frontend-supplied suggestedCompletionAt and uses server-computed values", async () => {
+    vi.setSystemTime(new Date("2026-04-26T12:00:00Z"));
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+    const now = Date.now();
+    const dueDate = now + 30 * DAY_MS;
+    const parentTaskId = await t.run((ctx) =>
+      ctx.db.insert("tasks", {
+        userId: userId as never,
+        title: "Parent",
+        description: "desc",
+        taskType: "Essay",
+        dueDate,
+        isManualEstimate: false,
+        createdAt: now,
+      })
+    );
+
+    const bogusDate = now + 999 * DAY_MS;
+    await withAuth.mutation(api.mutations.subtasks.createSubtasksBatch, {
+      parentTaskId,
+      subtasks: [
+        { title: "Only", description: "d", taskType: "Essay", color: "#000", order: 0, suggestedCompletionAt: bogusDate },
+      ],
+    });
+
+    const saved = await t.run((ctx) =>
+      ctx.db.query("subtasks").withIndex("by_parentTaskId", (q) => q.eq("parentTaskId", parentTaskId as never)).collect()
+    );
+    const windowStart = Math.max(now, dueDate - TWO_WEEKS_MS);
+    // Server should use windowStart + 1 * interval, not bogusDate
+    expect(saved[0].suggestedCompletionAt).not.toBe(bogusDate);
+    expect(saved[0].suggestedCompletionAt).toBe(windowStart + 2 * DAY_MS);
   });
 });

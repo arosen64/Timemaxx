@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { api } from "../_generated/api";
 import { makeTestCtx, createTestUser } from "../../convex-tests/helpers";
+import { TWO_WEEKS_MS } from "../lib/scheduleSlots";
 
 describe("mutations/tasks – createTask", () => {
   beforeEach(() => { vi.useFakeTimers(); });
@@ -171,7 +172,7 @@ describe("mutations/tasks – createTask", () => {
     expect(task!.assignmentWeight).toBeUndefined();
   });
 
-  test("recommendedStart is undefined when no timeEstimate is provided", async () => {
+  test("recommendedStart is set to two weeks before dueDate when due date is far out", async () => {
     const t = makeTestCtx();
     const { withAuth } = await createTestUser(t);
     const dueDate = Date.now() + 30 * 86_400_000;
@@ -185,47 +186,40 @@ describe("mutations/tasks – createTask", () => {
 
     await t.finishAllScheduledFunctions(vi.runAllTimers);
     const task = await t.run((ctx) => ctx.db.get(taskId));
-    expect(task!.recommendedStart).toBeUndefined();
+    expect(task!.recommendedStart).toBe(dueDate - TWO_WEEKS_MS);
   });
 
-  test("recommendedStart is computed from timeEstimate when provided", async () => {
+  test("recommendedStart is set regardless of whether timeEstimate is provided", async () => {
     const t = makeTestCtx();
     const { withAuth } = await createTestUser(t);
-    const now = Date.now();
-    // 30 days out; 240 min estimate = ceil(240/120)=2 days needed → dueDate - 2 days
-    const dueDate = now + 30 * 86_400_000;
-    const timeEstimate = 240;
+    const dueDate = Date.now() + 30 * 86_400_000;
 
     const taskId = await withAuth.mutation(api.mutations.tasks.createTask, {
       title: "Task with estimate",
       description: "desc",
       taskType: "Essay",
       dueDate,
-      timeEstimate,
+      timeEstimate: 240,
     });
 
     await t.finishAllScheduledFunctions(vi.runAllTimers);
     const task = await t.run((ctx) => ctx.db.get(taskId));
-    const DAY_MS = 24 * 60 * 60 * 1000;
-    expect(task!.recommendedStart).toBe(dueDate - 2 * DAY_MS);
+    expect(task!.recommendedStart).toBe(dueDate - TWO_WEEKS_MS);
   });
 
-  test("recommendedStart is clamped to now when estimate exceeds available window", async () => {
+  test("recommendedStart is clamped to now when due date is within two weeks", async () => {
     const t = makeTestCtx();
     const { withAuth } = await createTestUser(t);
     vi.setSystemTime(new Date("2026-04-25T12:00:00Z"));
     try {
       const now = Date.now();
-      // Due in 3 days, but 1200 min estimate = ceil(1200/120)=10 days needed → clamp to now
       const dueDate = now + 3 * 86_400_000;
-      const timeEstimate = 1200;
 
       const taskId = await withAuth.mutation(api.mutations.tasks.createTask, {
-        title: "Big task tight deadline",
+        title: "Task due soon",
         description: "desc",
         taskType: "Problem Set",
         dueDate,
-        timeEstimate,
       });
 
       await t.finishAllScheduledFunctions(vi.runAllTimers);
@@ -236,7 +230,7 @@ describe("mutations/tasks – createTask", () => {
     }
   });
 
-  test("recomputes recommendedStart using existing estimate when dueDate is updated", async () => {
+  test("recomputes recommendedStart when dueDate is updated", async () => {
     const t = makeTestCtx();
     const { withAuth } = await createTestUser(t);
     const originalDue = Date.now() + 30 * 86_400_000;
@@ -246,7 +240,6 @@ describe("mutations/tasks – createTask", () => {
       description: "desc",
       taskType: "Essay",
       dueDate: originalDue,
-      timeEstimate: 240,
     });
 
     const newDue = Date.now() + 60 * 86_400_000;
@@ -260,9 +253,7 @@ describe("mutations/tasks – createTask", () => {
 
     await t.finishAllScheduledFunctions(vi.runAllTimers);
     const task = await t.run((ctx) => ctx.db.get(taskId));
-    const DAY_MS = 24 * 60 * 60 * 1000;
-    // timeEstimate=240 → daysNeeded=2 → recommendedStart = newDue - 2 days
-    expect(task!.recommendedStart).toBe(newDue - 2 * DAY_MS);
+    expect(task!.recommendedStart).toBe(newDue - TWO_WEEKS_MS);
   });
 
   test("throws when assignmentWeight is out of range", async () => {

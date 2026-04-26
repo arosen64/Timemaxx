@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { api, internal } from "../_generated/api";
 import { makeTestCtx, createTestUser } from "../../convex-tests/helpers";
+import { TWO_WEEKS_MS } from "../lib/scheduleSlots";
 
 const makeReasoning = () => ({
   classes: "No enrolled course context was available.",
@@ -183,7 +184,7 @@ describe("mutations/timeEstimate – setTimeEstimate auto-generates study blocks
     expect(uniqueIds.size).toBe(ids.length);
   });
 
-  test("updates recommendedStart based on the new estimate", async () => {
+  test("updates recommendedStart to two-week window when estimate is set", async () => {
     const t = makeTestCtx();
     const { userId } = await createTestUser(t);
     const DAY_MS = 24 * 60 * 60 * 1000;
@@ -208,7 +209,7 @@ describe("mutations/timeEstimate – setTimeEstimate auto-generates study blocks
     });
 
     const task = await t.run((ctx) => ctx.db.get(taskId));
-    expect(task!.recommendedStart).toBe(dueDate - 2 * DAY_MS);
+    expect(task!.recommendedStart).toBe(dueDate - TWO_WEEKS_MS);
   });
 
   test("persists the reasoning trace on the task", async () => {
@@ -273,7 +274,7 @@ describe("mutations/timeEstimate – setManualTimeEstimate", () => {
     expect(blocks.every((b) => b.studyBlockLength === 60)).toBe(true);
   });
 
-  test("updates recommendedStart based on the new estimate", async () => {
+  test("updates recommendedStart to two-week window when manual estimate is set", async () => {
     const t = makeTestCtx();
     const { userId, withAuth } = await createTestUser(t);
     const DAY_MS = 24 * 60 * 60 * 1000;
@@ -297,7 +298,7 @@ describe("mutations/timeEstimate – setManualTimeEstimate", () => {
     });
 
     const task = await t.run((ctx) => ctx.db.get(taskId));
-    expect(task!.recommendedStart).toBe(dueDate - 2 * DAY_MS);
+    expect(task!.recommendedStart).toBe(dueDate - TWO_WEEKS_MS);
   });
 
   test("throws when user does not own the task", async () => {
