@@ -3,7 +3,6 @@ import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import type { Id } from "../_generated/dataModel";
 
-
 export const getStudyBlocksByTask = query({
   args: {
     taskId: v.id("tasks"),
@@ -330,6 +329,8 @@ export const getTaskAtRiskStatus = query({
         .filter((b) => !b.isCompleted)
         .reduce((sum, b) => sum + b.studyBlockLength, 0);
     }
+
+    if (uncompletedMinutes === 0) return { isWarning: false };
 
     return {
       isWarning: uncompletedMinutes > minutesUntilDue,
