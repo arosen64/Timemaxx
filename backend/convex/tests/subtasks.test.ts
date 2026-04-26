@@ -214,6 +214,65 @@ describe("mutations/subtasks – setSubtaskTimeEstimate", () => {
     const parent = await t.run((ctx) => ctx.db.get(parentTaskId));
     expect(parent!.timeEstimate).toBe(45);
   });
+
+  test("clears parent recommendedStart when all subtask estimates are zero (no estimate = no gate)", async () => {
+    const t = makeTestCtx();
+    const { userId } = await createTestUser(t);
+    const DAY_MS = 24 * 60 * 60 * 1000;
+    const dueDate = Date.now() + 30 * DAY_MS;
+    const parentTaskId = await t.run((ctx) =>
+      ctx.db.insert("tasks", {
+        userId: userId as never,
+        title: "Parent Task",
+        description: "desc",
+        taskType: "Essay",
+        dueDate,
+        recommendedStart: dueDate - 2 * DAY_MS,
+        isManualEstimate: false,
+        createdAt: Date.now(),
+      })
+    );
+    const subtaskId = await seedSubtask(t, userId, parentTaskId);
+
+    await t.mutation(internal.mutations.subtasks.setSubtaskTimeEstimate, {
+      subtaskId,
+      timeEstimate: 0,
+      reasoning: makeReasoning(),
+    });
+
+    const parent = await t.run((ctx) => ctx.db.get(parentTaskId));
+    expect(parent!.recommendedStart).toBeUndefined();
+  });
+
+  test("updates parent recommendedStart during subtask estimate rollup", async () => {
+    const t = makeTestCtx();
+    const { userId } = await createTestUser(t);
+    const DAY_MS = 24 * 60 * 60 * 1000;
+    const dueDate = Date.now() + 30 * DAY_MS;
+    const parentTaskId = await t.run((ctx) =>
+      ctx.db.insert("tasks", {
+        userId: userId as never,
+        title: "Parent Task",
+        description: "desc",
+        taskType: "Essay",
+        dueDate,
+        isManualEstimate: false,
+        createdAt: Date.now(),
+      })
+    );
+    const subtaskId = await seedSubtask(t, userId, parentTaskId);
+
+    await t.mutation(internal.mutations.subtasks.setSubtaskTimeEstimate, {
+      subtaskId,
+      timeEstimate: 240,
+      reasoning: makeReasoning(),
+    });
+
+    const parent = await t.run((ctx) => ctx.db.get(parentTaskId));
+    // User has no workHoursGrid → computeDailyStudyMinutes falls back to 120 min/day
+    // 240 min → ceil(240/120) = 2 days needed
+    expect(parent!.recommendedStart).toBe(dueDate - 2 * DAY_MS);
+  });
 });
 
 // ─── deleteSubtask ────────────────────────────────────────────────────────────

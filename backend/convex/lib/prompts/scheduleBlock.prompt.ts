@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { ScoreBreakdown } from "../scoreSlots";
 
 // ---------------------------------------------------------------------------
 // Response schema
@@ -28,6 +29,8 @@ export type BatchSlotSelectionResponse = z.infer<typeof batchSlotSelectionRespon
 
 export const SCHEDULE_BLOCK_SYSTEM = `You are a study scheduling assistant for a college student. Given a list of available time slots for a study block, select the single best slot based on the student's productivity preferences and the surrounding calendar context.
 
+Candidates are pre-scored and sorted by fit (score descending). Prefer higher-scored slots but you may select a lower-scored one if surrounding calendar context makes it clearly better.
+
 Rules:
 - Prefer slots with comfortable buffers around nearby events (not immediately sandwiched).
 - Respect the urgency signal of the task's due date.
@@ -48,6 +51,8 @@ export interface ScheduleBlockSlot {
   minutesSincePreviousEvent: number | null;
   nextEventTitle: string | null;
   minutesUntilNextEvent: number | null;
+  score?: number;
+  scoreBreakdown?: ScoreBreakdown;
 }
 
 export interface ScheduleBlockPromptArgs {
@@ -69,6 +74,7 @@ export function buildScheduleBlockPrompt(args: ScheduleBlockPromptArgs): string 
       index: i,
       startTime: s.startISO,
       dayOfWeek: new Intl.DateTimeFormat("en-US", { weekday: "long" }).format(new Date(s.startMs)),
+      ...(s.score !== undefined ? { score: s.score, scoreBreakdown: s.scoreBreakdown } : {}),
       previousEventTitle: s.previousEventTitle,
       minutesSincePreviousEvent: s.minutesSincePreviousEvent,
       nextEventTitle: s.nextEventTitle,
@@ -133,6 +139,7 @@ ${JSON.stringify(productivityTraits, null, 2)}
       index: si,
       startTime: s.startISO,
       dayOfWeek: new Intl.DateTimeFormat("en-US", { weekday: "long" }).format(new Date(s.startMs)),
+      ...(s.score !== undefined ? { score: s.score, scoreBreakdown: s.scoreBreakdown } : {}),
       previousEventTitle: s.previousEventTitle,
       minutesSincePreviousEvent: s.minutesSincePreviousEvent,
       nextEventTitle: s.nextEventTitle,

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import { useQuery, useAction, useMutation } from 'convex/react'
 import { api } from '../../../../backend/convex/_generated/api'
 import type { Id } from '../../../../backend/convex/_generated/dataModel'
@@ -123,6 +123,7 @@ export default function ClassPanel({
   onScheduleAllMsg,
   onBeforeSchedule,
 }: Props) {
+  const [isCollapsed, setIsCollapsed] = useState(false)
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null)
   const [selectedTaskId, setSelectedTaskId] = useState<Id<'tasks'> | null>(null)
   const [schedulingBlockIds, setSchedulingBlockIds] = useState<Set<Id<'studyBlocks'>>>(new Set())
@@ -271,15 +272,32 @@ export default function ClassPanel({
   // ---------------------------------------------------------------------------
   // Render
   // ---------------------------------------------------------------------------
+  const asideClass = `flex shrink-0 flex-col border-t sm:border-t-0 sm:border-l border-border bg-white overflow-hidden transition-all duration-200 ${
+    isCollapsed
+      ? 'w-full sm:w-10 max-h-10 sm:max-h-none'
+      : 'w-full sm:w-[240px] lg:w-[280px] max-h-[40vh] sm:max-h-none'
+  }`
+
+  const toggleBtn = (
+    <button
+      type="button"
+      onClick={() => setIsCollapsed((v) => !v)}
+      className={`rounded p-1 text-light-blue hover:bg-bg-gray hover:text-slate-blue shrink-0 ${isCollapsed ? 'mx-auto' : 'ml-auto'}`}
+      aria-label={isCollapsed ? 'Expand classes panel' : 'Collapse classes panel'}
+    >
+      {isCollapsed ? <ChevronLeftIcon size={12} /> : <ChevronRightIcon size={12} />}
+    </button>
+  )
 
   // Level 0 — class list
   if (!selectedCourseId) {
     return (
-      <aside className="flex w-[240px] lg:w-[280px] shrink-0 flex-col border-l border-border bg-white overflow-hidden" data-tray>
-        <div className="flex-1 overflow-y-auto">
-          <div className="px-4 py-2.5 border-b border-border">
-            <span className="text-[10px] font-semibold text-light-blue tracking-wider">CLASSES</span>
-          </div>
+      <aside className={asideClass} data-tray>
+        <div className="flex items-center px-3 py-2.5 border-b border-border shrink-0">
+          {!isCollapsed && <span className="text-[10px] font-semibold text-light-blue tracking-wider flex-1">CLASSES</span>}
+          {toggleBtn}
+        </div>
+        {!isCollapsed && <div className="flex-1 overflow-y-auto">
 
           {courses === undefined ? (
             <div className="flex items-center justify-center py-8">
@@ -319,7 +337,7 @@ export default function ClassPanel({
               </button>
             </>
           )}
-        </div>
+        </div>}
       </aside>
     )
   }
@@ -328,9 +346,9 @@ export default function ClassPanel({
   if (!selectedTask) {
     const panelTitle = selectedCourseId === OTHER_COURSE_KEY ? 'Other tasks' : selectedCourse?.title ?? ''
     return (
-      <aside className="flex w-[240px] lg:w-[280px] shrink-0 flex-col border-l border-border bg-white overflow-hidden" data-tray>
-        <PanelHeader label="TASKS" title={panelTitle} onBack={goBack} />
-        <div className="flex-1 overflow-y-auto">
+      <aside className={asideClass} data-tray>
+        <PanelHeader label="TASKS" title={panelTitle} onBack={goBack} toggleBtn={toggleBtn} isCollapsed={isCollapsed} />
+        {!isCollapsed && <div className="flex-1 overflow-y-auto">
           {tasksForSelectedCourse.length === 0 ? (
             <p className="px-4 py-4 text-xs text-light-blue">No tasks for this class.</p>
           ) : (
@@ -350,7 +368,7 @@ export default function ClassPanel({
               </button>
             ))
           )}
-        </div>
+        </div>}
       </aside>
     )
   }
@@ -358,10 +376,10 @@ export default function ClassPanel({
   // Level 2 — task detail with subtasks + study blocks
   const subtasksList = subtasks ?? []
   return (
-    <aside className="flex w-[240px] lg:w-[280px] shrink-0 flex-col border-l border-border bg-white overflow-hidden" data-tray>
-      <PanelHeader label="TASK" title={selectedTask.title} onBack={goBack} />
+    <aside className={asideClass} data-tray>
+      <PanelHeader label="TASK" title={selectedTask.title} onBack={goBack} toggleBtn={toggleBtn} isCollapsed={isCollapsed} />
 
-      <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3">
+      {!isCollapsed && <><div className="flex-1 overflow-y-auto px-3 py-3 space-y-3">
         {subtasks === undefined ? (
           <div className="flex items-center justify-center py-8">
             <SpinnerIcon color="#4E6A8C" size={14} />
@@ -449,7 +467,7 @@ export default function ClassPanel({
         {selectedTaskBlocks.length === 0 && !isSchedulingAll && (
           <p className="mt-1.5 text-center text-[10px] text-light-blue">All blocks scheduled</p>
         )}
-      </div>
+      </div></>}
     </aside>
   )
 }
@@ -457,21 +475,34 @@ export default function ClassPanel({
 // ---------------------------------------------------------------------------
 // PanelHeader — shared drill-down header with back button
 // ---------------------------------------------------------------------------
-function PanelHeader({ label, title, onBack }: { label: string; title: string; onBack: () => void }) {
+function PanelHeader({
+  label, title, onBack, toggleBtn, isCollapsed,
+}: {
+  label: string
+  title: string
+  onBack: () => void
+  toggleBtn: React.ReactNode
+  isCollapsed: boolean
+}) {
   return (
     <div className="flex items-center gap-2 border-b border-border px-3 py-2.5 shrink-0">
-      <button
-        type="button"
-        onClick={onBack}
-        className="rounded p-1 text-light-blue hover:bg-bg-gray hover:text-slate-blue"
-        aria-label="Back"
-      >
-        <ChevronLeftIcon size={14} />
-      </button>
-      <div className="min-w-0">
-        <p className="text-[10px] font-semibold text-light-blue tracking-wider">{label}</p>
-        <p className="truncate text-[12px] font-semibold text-navy">{title}</p>
-      </div>
+      {!isCollapsed && (
+        <button
+          type="button"
+          onClick={onBack}
+          className="rounded p-1 text-light-blue hover:bg-bg-gray hover:text-slate-blue"
+          aria-label="Back"
+        >
+          <ChevronLeftIcon size={14} />
+        </button>
+      )}
+      {!isCollapsed && (
+        <div className="min-w-0 flex-1">
+          <p className="text-[10px] font-semibold text-light-blue tracking-wider">{label}</p>
+          <p className="truncate text-[12px] font-semibold text-navy">{title}</p>
+        </div>
+      )}
+      {toggleBtn}
     </div>
   )
 }

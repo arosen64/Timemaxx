@@ -202,6 +202,49 @@ export const getAllStudyBlocksWithTasks = query({
   },
 });
 
+export const getThisWeekStudyBlocks = query({
+  args: { weekStartMs: v.number(), weekEndMs: v.number() },
+  handler: async (ctx, { weekStartMs, weekEndMs }) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return { total: 0, completed: 0 };
+
+    const weekStartIso = new Date(weekStartMs).toISOString();
+    const weekEndIso = new Date(weekEndMs).toISOString();
+
+    const blocks = await ctx.db
+      .query("studyBlocks")
+      .withIndex("by_userId_startTime", (q) =>
+        q.eq("userId", userId).gte("startTime", weekStartIso).lt("startTime", weekEndIso)
+      )
+      .collect();
+
+    return {
+      total: blocks.length,
+      completed: blocks.filter((b) => b.isCompleted).length,
+    };
+  },
+});
+
+export const getTodayStudyBlockMinutes = query({
+  args: { todayStartMs: v.number(), todayEndMs: v.number() },
+  handler: async (ctx, { todayStartMs, todayEndMs }) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return 0;
+
+    const todayStartIso = new Date(todayStartMs).toISOString();
+    const todayEndIso = new Date(todayEndMs).toISOString();
+
+    const blocks = await ctx.db
+      .query("studyBlocks")
+      .withIndex("by_userId_startTime", (q) =>
+        q.eq("userId", userId).gte("startTime", todayStartIso).lt("startTime", todayEndIso)
+      )
+      .collect();
+
+    return blocks.reduce((sum, b) => sum + b.studyBlockLength, 0);
+  },
+});
+
 export const getStudyBlockInternal = internalQuery({
   args: { studyBlockId: v.id("studyBlocks") },
   handler: async (ctx, args) => {
@@ -223,6 +266,32 @@ export const getAllStudyBlocksByUserInternal = internalQuery({
       .query("studyBlocks")
       .withIndex("by_userId", (q) => q.eq("userId", args.userId))
       .collect();
+  },
+});
+
+export const getStudyBlocksByTaskInternal = internalQuery({
+  args: { taskId: v.id("tasks") },
+  handler: async (ctx, { taskId }) => {
+    const taskBlocks = await ctx.db
+      .query("studyBlocks")
+      .withIndex("by_taskId", (q) => q.eq("taskId", taskId))
+      .collect();
+
+    const subtasks = await ctx.db
+      .query("subtasks")
+      .withIndex("by_parentTaskId", (q) => q.eq("parentTaskId", taskId))
+      .collect();
+
+    const subtaskBlockArrays = await Promise.all(
+      subtasks.map((s) =>
+        ctx.db
+          .query("studyBlocks")
+          .withIndex("by_subtaskId", (q) => q.eq("subtaskId", s._id))
+          .collect(),
+      ),
+    );
+
+    return [...taskBlocks, ...subtaskBlockArrays.flat()];
   },
 });
 
@@ -279,5 +348,61 @@ export const getFutureStudyBlocksForExport = internalQuery({
     }
 
     return result;
+  },
+});
+
+/**
+ * "At Risk" check: fires when the total duration of uncompleted study blocks for
+ * this task (including subtask blocks) exceeds the raw clock time remaining until
+ * the due date.
+ *
+ * NOTE: We intentionally ignore work-hours grid availability here (i.e. we do not
+ * filter to only count slots the user has marked as available). Factoring in the
+ * grid would require per-slot iteration and timezone handling; the simpler wall-clock
+ * comparison is a good-enough signal for an at-risk warning.
+ */
+export const getTaskAtRiskStatus = query({
+  args: { taskId: v.id("tasks") },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+
+    const task = await ctx.db.get(args.taskId);
+    if (!task || task.userId !== userId) return null;
+
+    const nowMs = Date.now();
+    const minutesUntilDue = (task.dueDate - nowMs) / (60 * 1000);
+
+    // Sum uncompleted blocks on the task itself
+    const taskBlocks = await ctx.db
+      .query("studyBlocks")
+      .withIndex("by_taskId", (q) => q.eq("taskId", args.taskId))
+      .collect();
+
+    let uncompletedMinutes = taskBlocks
+      .filter((b) => !b.isCompleted)
+      .reduce((sum, b) => sum + b.studyBlockLength, 0);
+
+    // Also include uncompleted blocks belonging to subtasks of this task
+    const subtasks = await ctx.db
+      .query("subtasks")
+      .withIndex("by_parentTaskId", (q) => q.eq("parentTaskId", args.taskId))
+      .collect();
+
+    for (const subtask of subtasks) {
+      const subtaskBlocks = await ctx.db
+        .query("studyBlocks")
+        .withIndex("by_subtaskId", (q) => q.eq("subtaskId", subtask._id))
+        .collect();
+      uncompletedMinutes += subtaskBlocks
+        .filter((b) => !b.isCompleted)
+        .reduce((sum, b) => sum + b.studyBlockLength, 0);
+    }
+
+    if (uncompletedMinutes === 0) return { isWarning: false };
+
+    return {
+      isWarning: uncompletedMinutes > minutesUntilDue,
+    };
   },
 });

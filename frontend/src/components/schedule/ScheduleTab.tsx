@@ -5,11 +5,13 @@ import type { Id } from '../../../../backend/convex/_generated/dataModel'
 import type { CalendarEntry, TimedEvent, AllDayEvent } from '../../../../backend/convex/actions/fetchCalendarEvents'
 import { CalendarIcon, SpinnerIcon, WarningIcon } from '../icons'
 import TimeGrid, { type StudyBlockOnGrid } from './TimeGrid'
+import MobileDayView from './MobileDayView'
 import CalendarSelectorPopup from './CalendarSelectorPopup'
 import ScheduleHeader from './ScheduleHeader'
 import ClassPanel from './ClassPanel'
 import CalendarNudge from './CalendarNudge'
 import NoCalendarNudge from './NoCalendarNudge'
+import { useIsMobile } from '../../hooks/useIsMobile'
 import { computeOverlapLayout } from './overlapLayout'
 import { offsetDate, isoDateString, minutesFromMidnight, SLOT_HEIGHT, MAX_OFFSET_DAYS, DAYS_FULL } from './utils'
 
@@ -49,6 +51,7 @@ export default function ScheduleTab() {
   const exportStudyBlocksAction = useAction(api.actions.exportStudyBlocksToCalendar.exportStudyBlocksToCalendar)
   const initiateCalendarOAuth = useAction(api.actions.initiateGoogleCalendarOAuth.initiateGoogleCalendarOAuth)
 
+  const isMobile = useIsMobile()
   const [weekOffset, setWeekOffset] = useState(0)
   const [calendarData, setCalendarData] = useState<CalendarData | null>(null)
   const [isFetchingEvents, setIsFetchingEvents] = useState(false)
@@ -457,32 +460,51 @@ export default function ScheduleTab() {
         </div>
       )}
 
-      <div className="flex flex-1 gap-4 min-h-0">
+      <div className="flex flex-1 gap-4 min-h-0 flex-col sm:flex-row">
         <div className="flex flex-1 flex-col min-h-0 min-w-0" data-grid>
-          <TimeGrid
-            days={days}
-            workHoursGrid={workHoursGrid}
-            layoutByDay={layoutByDay}
-            allDayEventsByDay={allDayEventsByDay}
-            calendarConnected={calendarConnected}
-            gridRef={gridRef}
-            studyBlocksByDay={studyBlocksByDay}
-            highlightedSlots={highlightedSlots}
-            isAssignMode={assigningBlockId !== null || draggingBlockId !== null}
-            onSlotClick={handleSlotClick}
-            onMoveBlock={handleMoveBlock}
-            onAutoReschedule={handleAutoReschedule}
-            draggingBlockId={draggingBlockId}
-            onDragStart={(id) => {
-              const block = allStudyBlocks?.find((b) => b._id === id)
-              if (block?.isConflicted) {
-                setDraggingBlockId(id)
-              } else {
-                setAssigningBlockId(id)
-              }
-            }}
-            onDrop={handleDrop}
-          />
+          {isMobile ? (
+            <MobileDayView
+              days={days}
+              workHoursGrid={workHoursGrid}
+              studyBlocksByDay={studyBlocksByDay}
+              allDayEventsByDay={allDayEventsByDay}
+              layoutByDay={layoutByDay}
+              calendarConnected={calendarConnected}
+              highlightedSlots={highlightedSlots}
+              isAssignMode={assigningBlockId !== null || draggingBlockId !== null}
+              onPrevBoundary={() => setWeekOffset((o) => o - 7)}
+              onNextBoundary={() => setWeekOffset((o) => o + 7)}
+              onSlotClick={handleSlotClick}
+              onMoveBlock={handleMoveBlock}
+              onAutoReschedule={handleAutoReschedule}
+              gridRef={gridRef}
+            />
+          ) : (
+            <TimeGrid
+              days={days}
+              workHoursGrid={workHoursGrid}
+              layoutByDay={layoutByDay}
+              allDayEventsByDay={allDayEventsByDay}
+              calendarConnected={calendarConnected}
+              gridRef={gridRef}
+              studyBlocksByDay={studyBlocksByDay}
+              highlightedSlots={highlightedSlots}
+              isAssignMode={assigningBlockId !== null || draggingBlockId !== null}
+              onSlotClick={handleSlotClick}
+              onMoveBlock={handleMoveBlock}
+              onAutoReschedule={handleAutoReschedule}
+              draggingBlockId={draggingBlockId}
+              onDragStart={(id) => {
+                const block = allStudyBlocks?.find((b) => b._id === id)
+                if (block?.isConflicted) {
+                  setDraggingBlockId(id)
+                } else {
+                  setAssigningBlockId(id)
+                }
+              }}
+              onDrop={handleDrop}
+            />
+          )}
         </div>
 
         {isRescheduling && (

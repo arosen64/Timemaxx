@@ -28,6 +28,18 @@ import { buildClassTag } from '../utils/classTagUtils'
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 
+function getDateBoundaries() {
+  const d = new Date();
+  const todayStart = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  const weekStart = new Date(d.getFullYear(), d.getMonth(), d.getDate() - d.getDay()).getTime();
+  return {
+    todayStartMs: todayStart,
+    todayEndMs: new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1).getTime(),
+    weekStartMs: weekStart,
+    weekEndMs: new Date(d.getFullYear(), d.getMonth(), d.getDate() - d.getDay() + 7).getTime(),
+  };
+}
+
 export default function DashboardPage() {
   const tasks = useQuery(api.queries.tasks.getAllTasks, {}) as TaskType[] | undefined
   const allSubtasks = useQuery(api.queries.subtasks.getAllSubtasksForUser) as SubtaskType[] | undefined
@@ -45,6 +57,9 @@ export default function DashboardPage() {
   const requestEstimateSubtask = useAction(api.actions.requestEstimateSubtaskTime.requestEstimateSubtaskTime)
   const requestGenerateSubtasks = useAction(api.actions.requestGenerateSubtasks.requestGenerateSubtasks)
   const user = useQuery(api.queries.users.getCurrUser)
+  const [{ todayStartMs, todayEndMs, weekStartMs, weekEndMs }, setDateBoundaries] = useState(getDateBoundaries);
+  const todayStudyMinutes = useQuery(api.queries.studyBlocks.getTodayStudyBlockMinutes, { todayStartMs, todayEndMs }) ?? 0
+  const thisWeekBlocks = useQuery(api.queries.studyBlocks.getThisWeekStudyBlocks, { weekStartMs, weekEndMs }) ?? { total: 0, completed: 0 }
 
   const taskRows = useMemo(() => tasks ?? [], [tasks])
 
@@ -84,11 +99,6 @@ export default function DashboardPage() {
     return rows.sort((a, b) => a.courseCode.localeCompare(b.courseCode))
   }, [userCourses])
 
-  const totalEstimatedMinutes = useMemo(
-    () => taskRows.reduce((sum, t) => sum + (t.timeEstimate ?? 0), 0),
-    [taskRows]
-  )
-
   const [activeTab, setActiveTab] = useState<'active' | 'completed'>('active')
 
   const activeTasks = useMemo(
@@ -118,6 +128,12 @@ export default function DashboardPage() {
   const [pendingSubtasksTaskId, setPendingSubtasksTaskId] = useState<Id<'tasks'> | null>(null)
   const [pendingSubtasksCourseId, setPendingSubtasksCourseId] = useState<Id<'userCourses'> | undefined>(undefined)
   const [estimationRetry, setEstimationRetry] = useState<(() => void) | null>(null)
+
+  useEffect(() => {
+    const msUntilMidnight = todayEndMs - Date.now();
+    const timer = setTimeout(() => setDateBoundaries(getDateBoundaries()), msUntilMidnight);
+    return () => clearTimeout(timer);
+  }, [todayEndMs]);
 
   // Clear tasks from estimatingTasks once their timeEstimate is populated by the server
   useEffect(() => {
@@ -410,7 +426,7 @@ export default function DashboardPage() {
       />
 
       {/* ── Main ── */}
-      <main className="flex flex-col flex-1 min-h-0 p-10 overflow-y-auto gap-7">
+      <main className="flex flex-col flex-1 min-h-0 p-4 sm:p-6 lg:p-10 overflow-y-auto gap-7">
 
         {/* Page Header */}
         <header className="flex items-center justify-between">
@@ -444,27 +460,21 @@ export default function DashboardPage() {
         </header>
 
         {/* Stats Row */}
-        <div className="flex gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <StatCard
-            label="Tasks This Week"
-            value={taskRows.length}
-            indicator={{ dotClass: 'bg-success', text: `${completedTasks.length} completed`, textClass: 'text-success' }}
+            label="Study Blocks This Week"
+            value={thisWeekBlocks.total}
+            indicator={{ dotClass: 'bg-success', text: `${thisWeekBlocks.completed} completed`, textClass: 'text-success' }}
           />
           <StatCard
-            label="Estimated Time"
-            value={formatEstimatedTime(totalEstimatedMinutes)}
-            indicator={{ dotClass: 'bg-sky-blue', text: 'AI estimated', textClass: 'text-sky-blue' }}
-          />
-          <StatCard
-            label="Study Streak"
-            value="—"
-            indicator={{ dotClass: 'bg-teal', text: 'days in a row', textClass: 'text-white' }}
-            variant="dark"
+            label="Study Time Today"
+            value={formatEstimatedTime(todayStudyMinutes)}
+            indicator={{ dotClass: 'bg-sky-blue', text: 'scheduled today', textClass: 'text-sky-blue' }}
           />
         </div>
 
         {/* Columns */}
-        <div className="flex flex-1 gap-6">
+        <div className="flex flex-col lg:flex-row flex-1 gap-6">
 
           {/* Task Column */}
           <section className="flex flex-col flex-1 min-w-0 gap-4">

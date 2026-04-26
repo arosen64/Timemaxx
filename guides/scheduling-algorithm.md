@@ -1,6 +1,6 @@
 # Scheduling Algorithm — Source of Truth
 
-Last updated: issue #508 (daily load cap + spread)
+Last updated: issue #507 (score-driven candidate selection)
 
 ---
 
@@ -8,128 +8,117 @@ Last updated: issue #508 (daily load cap + spread)
 
 The scheduler turns unscheduled study blocks into placed calendar events. It runs in three phases:
 
-1. **Phase 1 — Day selection & candidate collection** (deterministic)
+1. **Phase 1 — Global candidate scoring** (deterministic)
 2. **Phase 2 — AI slot selection** (Gemini Flash)
-3. **Phase 3 — Placement & enforcement** (deterministic)
+3. **Phase 3 — Placement & physical-validity fallback** (deterministic)
 
 Entry points:
 
 | Action | Scope |
 |---|---|
 | `actions/scheduleAllBlocks.ts` | Bulk: all unscheduled blocks for a task + its subtasks (max 10 per call) |
-| `actions/scheduleTask.ts` | Single task: all unscheduled blocks for one task |
 | `actions/scheduleBlock.ts` | Single block |
 
-All three share the same slot pool and validation primitives from `lib/scheduleSlots.ts`.
+Both share the same slot pool and validation primitives from `lib/scheduleSlots.ts`.
 
 ---
 
-## Phase 1 — Day selection & candidate collection
+## Phase 1 — Global candidate scoring (`scheduleAllBlocks`)
 
 ### Pool building
 
-`extendSlotPool()` scans forward from `max(now, recommendedStart)` to `min(dueDate, now + 21 days)` in **15-minute increments**, adding each slot that passes `isSlotValid()` to a shared array. Slots that overlap `occupiedIntervals` (calendar events + already-placed blocks) or fall in blocked hours (`workHoursGrid[].blocked`) are excluded.
+`extendSlotPool()` scans forward from `max(now, recommendedStart)` to `min(dueDate, now + 21 days)` in **15-minute increments**, adding each slot that passes `isSlotValid()` to a shared array. Slots that overlap `occupiedIntervals` (calendar events + already-placed blocks) or fall in blocked hours (`workHoursGrid[].blocked`) are excluded. The pool is extended incrementally as blocks are processed in due-date order.
 
-### Day discovery
+### Global scoring
 
-For each unscheduled block, the full pool is scanned **in reverse** (latest slot first) to find the first physically valid slot per unique calendar day. This is unbounded by `MAX_CANDIDATES`, so every day with room in the window is visible regardless of how many slots it has.
+For each unscheduled block, **every slot in the shared pool** is evaluated. Hard constraints filter out invalid slots; the rest are scored:
 
 ```
-blockDurationMs = block.studyBlockLength * 60_000
-for pi in pool reversed:
-  skip if slot ≥ dueDate or slot + blockDurationMs > dueDate
+for each slot in pool:
+  skip if slot ≥ dueDate
+  skip if slot + blockDurationMs > dueDate
   skip if slot < recommendedStart (when set)
-  skip if day already in dayAvailability
-  if isSlotValid(slot):
-    dayAvailability[dateStr] = { load: speculativeLoad, repMs: slot.startMs }
+  skip if not isSlotValid(slot)
+
+  score = scoreCandidate(slot, preferences, speculativeDailyLoadMap)
+  add to scoredSlots
 ```
 
-### Day selection — cap-first, then least-loaded
+Slots are then **sorted descending by score** and the top `MAX_CANDIDATES = 20` become the candidate list for Gemini. Because scoring uses `speculativeDailyLoadMap` (which grows after each block is assigned), preferred times and days naturally float to the top while already-loaded days are penalised.
 
-Days are split into two groups:
+This replaces the previous two-step "pick a day, then pick a time within it" approach. Day preference, time-of-day preference, and daily load spread are all expressed through the scoring rubric rather than hard gates.
 
-- **underCap**: days where `speculativeDailyLoadMap` is below `maxBlocksPerDayMap`
-- **overCap**: all remaining days
+### Spread via speculative load
 
-The algorithm always picks from `underCap` first. Only when every available day is already over the speculative cap does it fall through to the least-loaded over-cap day. Within each group, the day with the **lowest speculative load** wins. Ties favour the latest day (closest to due date) because the pool is scanned latest-first.
+After the top candidate is selected (i.e., after `scoredSlots.sort(...).slice(0, MAX_CANDIDATES)`), `speculativeDailyLoadMap` is incremented for that candidate's day. The next block therefore scores that day lower and is more likely to land elsewhere, producing natural spread across days without hard per-day limits.
 
-### Speculative reservation
+---
 
-After selecting a target day, `speculativeDailyLoadMap` is incremented for that day. Subsequent blocks in the same run see an updated load and are routed to other days first. This is what produces the spread across days within a single scheduling run.
+## Pre-scoring layer
 
-`speculativeDailyLoadMap` is never used for actual placement decisions — that is the job of `actualDailyLoadMap` in phase 3.
+Implemented in `lib/scoreSlots.ts` (pure — no Convex deps). Called for every slot during Phase 1.
 
-### Candidate list
+### Scoring rubric
 
-Once the target day is chosen, `filterPoolForBlock()` is called on a **pool filtered to just that day**, with `reverseOrder: true`. This returns up to `MAX_CANDIDATES = 20` slots from that day, ordered **latest-first** (closest to due date). Gemini receives only these slots and picks the best time within the day.
+| Signal | Source | Points |
+|---|---|---|
+| Time-of-day match | Slot falls within any of the user's preferred time windows (`productivityTraits.timeOfDay`) | +2 |
+| Day-of-week match | Slot falls on a preferred day (`productivityTraits.dayOfWeek`) | +1 |
+| Buffer comfort | Both surrounding gaps > 15 min (or no surrounding event) | +1 |
+| Daily load penalty | Existing occupied intervals on the same calendar date (`speculativeDailyLoadMap`) | −1 each, max −3 |
+| Difficulty bonus | Task's `difficultyRating ≥ 4` AND time-of-day match | +1 |
+
+### Time-of-day label → minute range mapping
+
+| Label | Range (minutes from midnight) |
+|---|---|
+| Early Morning (5–8am) | [300, 480) |
+| Morning (8–11am) | [480, 660) |
+| Midday (11am–2pm) | [660, 840) |
+| Afternoon (2–5pm) | [840, 1020) |
+| Evening (5–8pm) | [1020, 1200) |
+| Night (8–11pm) | [1200, 1380) |
+| Late Night (11pm+) | [1380, 1440) |
+
+### Difficulty rating source
+
+`difficultyRating` comes from `userCourses` via the task's `courseId`. Both scheduling actions fetch user courses once at startup and build a `courseId → difficultyRating` map. For subtask blocks, the parent task's `courseId` is used.
+
+### What Gemini still decides
+
+Candidates are pre-sorted but Gemini is told it may override a lower-scored slot if surrounding calendar context makes it clearly better. The AI handles qualitative judgment (event titles, session flow, subject context) that the scorer can't capture numerically.
 
 ---
 
 ## Phase 2 — AI slot selection
 
-One Gemini Flash call covers all blocks in the run. Each block's candidate list and parent task context (title, due date, recommended start) are sent together. Gemini returns one candidate index per block. Falls back to index 0 if the API call fails or returns an invalid index.
+One Gemini Flash call covers all blocks in the run. Each block's pre-scored, sorted candidate list and parent task context (title, due date, recommended start) are sent together. The prompt includes `score` and `scoreBreakdown` per candidate so Gemini can see why each slot ranked as it did. Gemini returns one candidate index per block. Falls back to index 0 if the API call fails or returns an invalid index.
 
 ---
 
-## Phase 3 — Placement & enforcement
+## Phase 3 — Placement & physical-validity fallback
 
-Blocks are placed in the order they were collected in phase 1. For each block:
+Blocks are placed in the order they were collected in Phase 1. For each block:
 
 ### Slot validation
 
-The AI-chosen candidate is checked against `withinCap`:
+The AI-chosen candidate is checked for **physical validity** only:
 
 ```
-withinCap(c) =
-  isSlotValid(c.startMs, durationMs, workHoursGrid, occupiedIntervals, timezone)
-  AND NOT isDailyCapReached(c.startMs, timezone, actualDailyLoadMap, maxBlocksPerDayMap)
+isPhysValid(c) = isSlotValid(c.startMs, durationMs, workHoursGrid, occupiedIntervals, timezone)
 ```
 
 ### Fallback hierarchy
 
-1. AI-chosen slot passes `withinCap` → place it
-2. AI-chosen slot fails → scan candidates for another that passes `withinCap`
-3. No `withinCap` candidate exists → **cap override**: find all physically valid candidates, group by day, place on the **least-loaded day** (cap exceeded intentionally)
-4. No physically valid candidate exists → skip block
+1. AI-chosen slot is physically valid → place it
+2. AI-chosen slot is no longer valid (race condition with earlier placement) → scan remaining candidates for the first physically valid one
+3. No physically valid candidate exists → skip block
 
 ### After placement
 
 - Slot is removed from the pool
 - Interval is added to `occupiedIntervals` so later blocks in the same run see it as occupied
-- `actualDailyLoadMap[date] += 1`
-
----
-
-## Daily load cap
-
-### `maxBlocksPerDayMap` (per day-of-week name)
-
-Derived by `computeMaxBlocksPerDay(workHoursGrid, focusBlockLength, preferredDays)`:
-
-```
-availableSlots = 48 − row.blocked.length   (48 = all 30-min slots in a day)
-base = min(4, floor(availableSlots × 30 / focusBlockLength))
-cap  = preferredDay ? base : max(1, base − 1)
-```
-
-Fallback when a day has no `workHoursGrid` row:
-- Preferred day → cap 3
-- Non-preferred day → cap 2
-
-### `actualDailyLoadMap` (per calendar date string)
-
-Built from `occupiedIntervals` at the start of a run:
-
-```
-units = ceil(intervalDurationMinutes / focusBlockLength)
-map[dateStr] += units
-```
-
-Updated after each real placement during phase 3. Calendar events count toward the load (a 2-hour lecture counts as 2 units with a 60-min focus block).
-
-### Cap override rule
-
-The cap is **soft**. It is respected whenever possible but overridden when there is no other physically valid slot before the due date. The override always picks the least-loaded available day to preserve spread even when exceeding the limit.
+- `speculativeDailyLoadMap[date] += 1` to keep the map accurate for any subsequent runs
 
 ---
 
@@ -138,7 +127,7 @@ The cap is **soft**. It is respected whenever possible but overridden when there
 | Constant | Value | Location |
 |---|---|---|
 | `MAX_BLOCKS` | 10 | `scheduleAllBlocks.ts` — max blocks scheduled per single call |
-| `MAX_CANDIDATES` | 20 | `scheduleSlots.ts` — max candidate slots offered to Gemini per block |
+| `MAX_CANDIDATES` | 20 | `scheduleAllBlocks.ts` / `scheduleSlots.ts` — candidate slots offered to Gemini per block |
 | `SCHEDULE_HORIZON_MS` | 21 days | `scheduleSlots.ts` — how far ahead the pool extends |
 | `FIFTEEN_MIN_MS` | 15 min | `scheduleSlots.ts` — pool scan granularity |
 
@@ -151,9 +140,11 @@ The cap is **soft**. It is respected whenever possible but overridden when there
 | `focusBlockLength` | `user.focusBlockLength` (default 60 min) |
 | `workHoursGrid` | `user.workHoursGrid` |
 | `preferredDays` | `user.productivityTraits.dayOfWeek` |
+| `timeOfDayPrefs` | `user.productivityTraits.timeOfDay` (array of label strings) |
 | `recommendedStart` | `task.recommendedStart` (hard lower bound on placement) |
 | `dueDate` | `task.dueDate` or `subtask.suggestedCompletionAt` |
 | `studyBlockLength` | `block.studyBlockLength` (set at block creation from `focusBlockLength`) |
+| `difficultyRating` | `userCourses[task.courseId].difficultyRating` (used in scoring bonus) |
 
 ---
 
@@ -165,23 +156,17 @@ The cap is **soft**. It is respected whenever possible but overridden when there
 | Calendar event overlap | `isSlotValid()` checks `occupiedIntervals` |
 | Already-placed blocks | Included in `occupiedIntervals` |
 | Due date | Pool never extends past due date; candidates filtered by `slot + duration ≤ dueDate` |
-| `recommendedStart` | Slots before this timestamp skipped in day discovery and `filterPoolForBlock` |
-| Daily load cap | `isDailyCapReached()` in phase 1 day selection and phase 3 `withinCap` check |
-
----
-
-## Scheduling direction
-
-Blocks are scheduled **backwards from the due date**. The pool is built forward (required for the shared pool architecture), but `filterPoolForBlock` iterates it in reverse (`reverseOrder: true`) so `candidates[0]` is the latest available slot on the target day. This means blocks land close to when they are needed rather than being packed at the earliest opportunity.
+| `recommendedStart` | Slots before this timestamp skipped during pool scoring |
 
 ---
 
 ## Spread mechanism
 
-Spread across days within a single run comes from two independent layers:
+Spread across days within a single run comes from the **speculative load penalty** in scoring:
 
-1. **Phase 1 speculative reservation** — each block increments `speculativeDailyLoadMap` for its target day after being assigned. The next block's day selection sees the updated load and prefers a different day.
+- Each block's top candidate's day is incremented in `speculativeDailyLoadMap` after Phase 1 selection
+- After each real placement in Phase 3, `speculativeDailyLoadMap` is incremented again
+- The `dailyLoadPenalty` in `scoreCandidate` (−1 per unit, max −3) means a day with 3+ blocks scores at least 3 points lower than an empty day on the same rubric
+- Once a preferred day accumulates enough blocks, a non-preferred day at the right time can outscore it
 
-2. **Phase 3 actual enforcement** — `actualDailyLoadMap` grows with each real placement. If an AI-chosen slot is now over the actual cap, the fallback finds a within-cap candidate (or overrides to least-loaded day).
-
-The two maps are intentionally separate: the speculative map drives distribution in phase 1 without contaminating the real enforcement in phase 3.
+There is no hard per-day cap in the bulk scheduler. Soft penalisation handles spread in the common case; edge cases (very constrained windows) naturally stack blocks on fewer days rather than skipping them.
