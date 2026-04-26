@@ -48,6 +48,47 @@ const MENU_USER_LABELS: Record<string, string> = {
   schedule: "Schedule something",
   preferences: "Change my preferences",
 };
+
+function formatTaskReadSummary(task: {
+  title: string;
+  description: string;
+  taskType: string;
+  dueDate: number;
+  classTag?: string;
+  timeEstimate?: number;
+}, subtasks: Array<{ title: string; status?: string; timeEstimate?: number }>): string {
+  const due = new Date(task.dueDate).toLocaleString();
+  const estimate =
+    task.timeEstimate !== undefined
+      ? `${Math.floor(task.timeEstimate / 60)}h ${task.timeEstimate % 60}m`
+      : "AI estimate pending";
+  const lines = [
+    `Here are the details for **${task.title}**:`,
+    `- Type: ${task.taskType}`,
+    `- Due: ${due}`,
+    `- Class: ${task.classTag ?? "Not set"}`,
+    `- Time estimate: ${estimate}`,
+    `- Description: ${task.description}`,
+  ];
+
+  if (subtasks.length > 0) {
+    lines.push(`- Subtasks (${subtasks.length}):`);
+    for (const [index, subtask] of subtasks.entries()) {
+      const subEstimate =
+        subtask.timeEstimate !== undefined
+          ? `${Math.floor(subtask.timeEstimate / 60)}h ${subtask.timeEstimate % 60}m`
+          : "estimate pending";
+      lines.push(
+        `  ${index + 1}. ${subtask.title} (${subtask.status ?? "not_started"}, ${subEstimate})`,
+      );
+    }
+  } else {
+    lines.push("- Subtasks: none");
+  }
+
+  return lines.join("\n");
+}
+
 function parseDueDateIso(iso: string): number {
   if (!iso) return Date.now() + 86_400_000;
   const hasTime = iso.includes("T") && iso.length > 10;
@@ -202,6 +243,14 @@ async function executeTaskAction(
       });
       clearedScopeAfterAction = true;
     } else if (output.actionType === "read_task") {
+      if (taggedTaskId !== undefined) {
+        const task = await ctx.runQuery(internal.queries.tasks.getTaskInternal, { taskId: taggedTaskId });
+        if (!task || task.userId !== userId) throw new Error("Task not found.");
+        const subtasks = await ctx.runQuery(internal.queries.subtasks.getSubtasksForTaskInternal, {
+          parentTaskId: taggedTaskId,
+        });
+        aiText = formatTaskReadSummary(task, subtasks);
+      }
       if (taggedTaskId !== undefined || taggedCourseId !== undefined) {
         await ctx.runMutation(internal.mutations.chatSessions.setMessageScopeInternal, {
           userId,
