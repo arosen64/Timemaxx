@@ -2,6 +2,7 @@ import { mutation } from "../_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { internal } from "../_generated/api";
+import { cascadeDeleteTask } from "./tasks";
 
 /**
  * Partially updates the authenticated user's settings (work hours, focus block length, study profile).
@@ -109,7 +110,9 @@ export const deleteAccount = mutation({
       .query("tasks")
       .withIndex("by_userId", (q) => q.eq("userId", userId))
       .collect();
-    await Promise.all(tasks.map((task) => ctx.db.delete(task._id)));
+    for (const task of tasks) {
+      await cascadeDeleteTask(ctx, task._id);
+    }
 
     const syllabi = await ctx.db
       .query("syllabi")
