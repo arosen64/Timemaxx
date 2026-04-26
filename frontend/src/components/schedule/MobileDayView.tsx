@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import type { Id } from '../../../../backend/convex/_generated/dataModel'
 import type { AllDayEvent } from '../../../../backend/convex/actions/fetchCalendarEvents'
 import type { LayoutEvent } from './overlapLayout'
@@ -12,23 +12,16 @@ import {
   isoDateString,
   isToday,
   minutesFromMidnight,
+  getTextColorClass,
 } from './utils'
 
 type WorkHoursRow = { day: string; available: number[]; blocked: number[] }
 
-function getTextColorClass(hexColor: string): string {
-  const r = parseInt(hexColor.slice(1, 3), 16)
-  const g = parseInt(hexColor.slice(3, 5), 16)
-  const b = parseInt(hexColor.slice(5, 7), 16)
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
-  return luminance > 0.5 ? 'text-navy' : 'text-white'
-}
-
 function getSlotState(grid: WorkHoursRow[] | null, dayName: string, slot: number) {
   const row = grid?.find((r) => r.day === dayName)
   if (!row) return 'none'
-  if (row.available.includes(slot)) return 'preferred'
-  if (row.blocked.includes(slot)) return 'unavailable'
+  if (row.available?.includes(slot)) return 'preferred'
+  if (row.blocked?.includes(slot)) return 'unavailable'
   return 'none'
 }
 
@@ -52,8 +45,10 @@ interface MobileDayViewProps {
   highlightedSlots: Set<string>
   isAssignMode: boolean
   calendarConnected: boolean
-  onPrevWeek: () => void
-  onNextWeek: () => void
+  /** Called when navigating before the first day of the current week window */
+  onPrevBoundary: () => void
+  /** Called when navigating after the last day of the current week window */
+  onNextBoundary: () => void
   onSlotClick: (dateStr: string, slot: number) => void
   onMoveBlock: (studyBlockId: Id<'studyBlocks'>) => void
   onAutoReschedule: () => void
@@ -69,8 +64,8 @@ export default function MobileDayView({
   highlightedSlots,
   isAssignMode,
   calendarConnected,
-  onPrevWeek,
-  onNextWeek,
+  onPrevBoundary,
+  onNextBoundary,
   onSlotClick,
   onMoveBlock,
   onAutoReschedule,
@@ -111,11 +106,19 @@ export default function MobileDayView({
   const studyBlocks = studyBlocksByDay[dateStr] ?? []
   const layout = layoutByDay[dateStr] ?? []
 
+  const hasHighlightedSlotsToday = useMemo(() => {
+    if (!isAssignMode) return false
+    for (let s = 0; s < TOTAL_SLOTS; s++) {
+      if (highlightedSlots.has(`${dateStr}:${s}`)) return true
+    }
+    return false
+  }, [isAssignMode, dateStr, highlightedSlots])
+
   function handlePrev() {
     if (dayIndex > 0) {
       setDayIndex(dayIndex - 1)
     } else {
-      onPrevWeek()
+      onPrevBoundary()
       setDayIndex(6)
     }
   }
@@ -124,7 +127,7 @@ export default function MobileDayView({
     if (dayIndex < days.length - 1) {
       setDayIndex(dayIndex + 1)
     } else {
-      onNextWeek()
+      onNextBoundary()
       setDayIndex(0)
     }
   }
@@ -159,6 +162,15 @@ export default function MobileDayView({
           </svg>
         </button>
       </div>
+
+      {/* No-slots nudge — shown when assign mode is active but this day has nothing available */}
+      {isAssignMode && !hasHighlightedSlotsToday && (
+        <div className="flex items-center gap-2 border-b border-teal/30 bg-teal/10 px-3 py-2 font-body text-[11px] text-navy">
+          <span>No available slots today — use</span>
+          <span className="font-semibold">← →</span>
+          <span>to find an open time.</span>
+        </div>
+      )}
 
       {/* All-day row */}
       {calendarConnected && (
