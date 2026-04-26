@@ -41,6 +41,7 @@ export type ChatWorkflowOutput = {
   updatedTaskType: string | null;
   updatedDueDateIso: string | null;
   updatedClassTag: string | null;
+  generateSubtasks: boolean | null;
   courseName: string | null;
   sisQuery: string | null;
   term: string | null;

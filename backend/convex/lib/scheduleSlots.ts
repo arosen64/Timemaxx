@@ -28,39 +28,30 @@ export const SCHEDULE_HORIZON_MS = 21 * 24 * 60 * 60 * 1000; // 21 days
 const MAX_CANDIDATES = 20;
 export const FIFTEEN_MIN_MS = 15 * 60 * 1000;
 export const DEFAULT_DUE_FALLBACK_MS = 7 * 24 * 60 * 60 * 1000;
-const DAY_MS = 24 * 60 * 60 * 1000;
-const DEFAULT_DAILY_STUDY_MINUTES = 120;
+export const DAY_MS = 24 * 60 * 60 * 1000;
+export const TWO_WEEKS_MS = 14 * DAY_MS;
 
-/**
- * Computes the average available study minutes per day from the user's
- * workHoursGrid. Each row's available minutes = (48 − blocked.length) × 30.
- * Falls back to DEFAULT_DAILY_STUDY_MINUTES when the grid is absent or empty.
- */
-export function computeDailyStudyMinutes(
-  workHoursGrid: WorkHoursRow[] | undefined,
-): number {
-  if (!workHoursGrid || workHoursGrid.length === 0) return DEFAULT_DAILY_STUDY_MINUTES;
-  const total = workHoursGrid.reduce((sum, row) => sum + (48 - row.blocked.length) * 30, 0);
-  return Math.max(DEFAULT_DAILY_STUDY_MINUTES, total / workHoursGrid.length);
+/** Returns the earliest sensible start date for a task: 2 weeks before the due date, clamped to now. */
+export function computeRecommendedStart(now: number, dueDate: number): number {
+  return Math.max(now, dueDate - TWO_WEEKS_MS);
 }
 
 /**
- * Returns the earliest sensible start date for a task, based on how much work
- * it requires. Returns undefined when no estimate is known — callers should
- * treat undefined as "no gate; start from now."
- *
- * Callers should derive dailyStudyMinutes from the user's workHoursGrid via
- * computeDailyStudyMinutes; the default of 120 is a safe fallback.
+ * Returns a function mapping subtask index i (0-based) to its suggestedCompletionAt
+ * timestamp. Dates are spaced 1–2 days apart within the 2-week window before dueDate
+ * and are capped at dueDate so no subtask lands after its parent.
  */
-export function computeRecommendedStart(
+export function computeSubtaskCascade(
   now: number,
   dueDate: number,
-  timeEstimate: number | undefined,
-  dailyStudyMinutes: number = DEFAULT_DAILY_STUDY_MINUTES,
-): number | undefined {
-  if (!timeEstimate) return undefined;
-  const daysNeeded = Math.ceil(timeEstimate / dailyStudyMinutes);
-  return Math.max(now, dueDate - daysNeeded * DAY_MS);
+  n: number,
+): (i: number) => number {
+  const windowStart = Math.max(now, dueDate - TWO_WEEKS_MS);
+  const windowDuration = Math.max(0, dueDate - windowStart);
+  const interval = n > 0
+    ? Math.min(2 * DAY_MS, Math.max(DAY_MS, windowDuration / n))
+    : DAY_MS;
+  return (i) => Math.min(windowStart + (i + 1) * interval, dueDate);
 }
 
 // ---------------------------------------------------------------------------

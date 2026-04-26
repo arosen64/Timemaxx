@@ -83,7 +83,6 @@ export default function SubtaskReviewModal({
           taskType: s.taskType as never,
           color: mixHexWithWhite(parentColor, i / n),
           order: i,
-          suggestedCompletionAt: new Date(s.suggestedCompletionAt).getTime(),
         })),
       })
 
