@@ -211,7 +211,7 @@ export const scheduleAllBlocks = action({
     // Phase 1: score all physically valid slots globally; take top MAX_CANDIDATES by score
     // slotTimeCache amortizes the two Intl.DateTimeFormat calls in scoreCandidate across
     // all blocks scored against the same pool slot.
-    const slotTimeCache = new Map<number, { dayOfWeek: string; minutesFromMidnight: number }>();
+    const slotTimeCache = new Map<number, { dayOfWeek: string; minutesFromMidnight: number; dateStr: string }>();
     const entries: BlockEntry[] = [];
 
     for (const item of sorted) {
@@ -243,21 +243,24 @@ export const scheduleAllBlocks = action({
 
         const endMs = s.startMs + blockDurationMs;
         const context = buildSlotContext(s.startMs, endMs, occupiedIntervals);
-        const dateStr = toDateStr(new Date(s.startMs), args.timezone);
 
         if (!slotTimeCache.has(s.startMs)) {
-          slotTimeCache.set(s.startMs, getSlotTimeInfo(s.startMs, args.timezone));
+          slotTimeCache.set(s.startMs, {
+            ...getSlotTimeInfo(s.startMs, args.timezone),
+            dateStr: toDateStr(new Date(s.startMs), args.timezone),
+          });
         }
+        const cached = slotTimeCache.get(s.startMs)!;
 
         const { score, scoreBreakdown } = scoreCandidate({
           startMs: s.startMs,
           timezone: args.timezone,
-          precomputed: slotTimeCache.get(s.startMs),
+          precomputed: cached,
           timeOfDayRanges,
           dayOfWeekPrefs,
           minutesSincePreviousEvent: context.minutesSincePreviousEvent,
           minutesUntilNextEvent: context.minutesUntilNextEvent,
-          dailyLoadCount: speculativeDailyLoadMap.get(dateStr) ?? 0,
+          dailyLoadCount: speculativeDailyLoadMap.get(cached.dateStr) ?? 0,
           difficultyRating: item.difficultyRating,
           deadlineBehavior,
           dueDateMs: item.parentDueDate,
@@ -285,7 +288,7 @@ export const scheduleAllBlocks = action({
       // actually-placed day, so at most one day is slightly over-counted per
       // block. The bias is toward spreading further rather than bunching, which
       // is the desired behavior.
-      const topDateStr = toDateStr(new Date(candidates[0].startMs), args.timezone);
+      const topDateStr = slotTimeCache.get(candidates[0].startMs)!.dateStr;
       speculativeDailyLoadMap.set(topDateStr, (speculativeDailyLoadMap.get(topDateStr) ?? 0) + 1);
 
       entries.push({
