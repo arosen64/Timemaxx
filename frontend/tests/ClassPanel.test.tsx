@@ -81,6 +81,7 @@ const DEFAULT_PROPS = {
   onToggleAssign: vi.fn(),
   timezone: 'UTC',
   onScheduleAllMsg: vi.fn(),
+  onBeforeSchedule: vi.fn((proceed: () => void) => proceed()),
 }
 
 // ── Mock setup helpers ────────────────────────────────────────────────────────
