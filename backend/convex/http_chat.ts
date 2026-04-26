@@ -64,15 +64,15 @@ function formatTaskReadSummary(task: {
       : "AI estimate pending";
   const lines = [
     `Here are the details for **${task.title}**:`,
-    `- Type: ${task.taskType}`,
-    `- Due: ${due}`,
-    `- Class: ${task.classTag ?? "Not set"}`,
-    `- Time estimate: ${estimate}`,
-    `- Description: ${task.description}`,
+    `- **Type**: ${task.taskType}`,
+    `- **Due**: ${due}`,
+    `- **Class**: ${task.classTag ?? "Not set"}`,
+    `- **Time estimate**: ${estimate}`,
+    `- **Description**: ${task.description}`,
   ];
 
   if (subtasks.length > 0) {
-    lines.push(`- Subtasks (${subtasks.length}):`);
+    lines.push(`- **Subtasks** (${subtasks.length}):`);
     for (const [index, subtask] of subtasks.entries()) {
       const subEstimate =
         subtask.timeEstimate !== undefined
@@ -83,7 +83,7 @@ function formatTaskReadSummary(task: {
       );
     }
   } else {
-    lines.push("- Subtasks: none");
+    lines.push("- **Subtasks**: none");
   }
 
   return lines.join("\n");

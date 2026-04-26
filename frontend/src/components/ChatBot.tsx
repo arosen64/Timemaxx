@@ -364,7 +364,7 @@ export default function ChatBot() {
                             <span className="font-heading text-[11px] font-semibold text-teal px-0.5">
                               Maxx
                             </span>
-                            <MessageContent className="bg-white border rounded-tl-sm border-border text-navy rounded-2xl">
+                            <MessageContent className="bg-white border rounded-tl-sm border-border text-navy rounded-2xl whitespace-pre-wrap">
                               {renderInlineBoldMarkdown(m.content)}
                             </MessageContent>
                           </div>
