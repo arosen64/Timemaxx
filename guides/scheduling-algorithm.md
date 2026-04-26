@@ -25,6 +25,16 @@ Both share the same slot pool and validation primitives from `lib/scheduleSlots.
 
 ## Phase 1 — Global candidate scoring (`scheduleAllBlocks`)
 
+### Block processing order
+
+Before any slot scoring begins, blocks are sorted into the order they will be processed:
+
+```
+parent due date ASC → parent assignment weight DESC → block creation time ASC
+```
+
+This means blocks whose parent task has an earlier due date are scheduled first. Among tasks with the same due date, blocks belonging to higher-weight assignments (e.g., a 40% final exam vs. a 10% homework) are prioritised. `assignmentWeight` is set on the task (0–100 scale) and populated from syllabus parsing or manually by the user. Tasks without a weight use 0 as a fallback, so any explicitly-weighted task floats above unweighted ones at the same deadline.
+
 ### Pool building
 
 `extendSlotPool()` scans forward from `max(now, recommendedStart)` to `min(dueDate, now + 21 days)` in **15-minute increments**, adding each slot that passes `isSlotValid()` to a shared array. Slots that overlap `occupiedIntervals` (calendar events + already-placed blocks) or fall in blocked hours (`workHoursGrid[].blocked`) are excluded. The pool is extended incrementally as blocks are processed in due-date order.
