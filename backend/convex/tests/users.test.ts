@@ -310,6 +310,65 @@ describe("mutations/users – deleteAccount", () => {
     expect(blocks).toHaveLength(0);
   });
 
+  test("deletes authVerificationCodes linked to the user's accounts", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+
+    await t.run(async (ctx) => {
+      const accountId = await ctx.db.insert("authAccounts", {
+        userId,
+        provider: "resend-otp",
+        providerAccountId: "user@example.com",
+      });
+      await ctx.db.insert("authVerificationCodes", {
+        accountId,
+        provider: "resend-otp",
+        code: "123456",
+        expirationTime: Date.now() + 600_000,
+      });
+    });
+
+    await withAuth.mutation(api.mutations.users.deleteAccount, {});
+
+    const accounts = await t.run((ctx) =>
+      ctx.db.query("authAccounts").withIndex("userIdAndProvider", (q) => q.eq("userId", userId)).collect()
+    );
+    expect(accounts).toHaveLength(0);
+
+    const codes = await t.run((ctx) =>
+      ctx.db.query("authVerificationCodes").collect()
+    );
+    expect(codes).toHaveLength(0);
+  });
+
+  test("deletes authRefreshTokens linked to the user's sessions", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+
+    await t.run(async (ctx) => {
+      const sessionId = await ctx.db.insert("authSessions", {
+        userId,
+        expirationTime: Date.now() + 86_400_000,
+      });
+      await ctx.db.insert("authRefreshTokens", {
+        sessionId,
+        expirationTime: Date.now() + 86_400_000,
+      });
+    });
+
+    await withAuth.mutation(api.mutations.users.deleteAccount, {});
+
+    const sessions = await t.run((ctx) =>
+      ctx.db.query("authSessions").withIndex("userId", (q) => q.eq("userId", userId)).collect()
+    );
+    expect(sessions).toHaveLength(0);
+
+    const tokens = await t.run((ctx) =>
+      ctx.db.query("authRefreshTokens").collect()
+    );
+    expect(tokens).toHaveLength(0);
+  });
+
   test("only deletes data belonging to the authenticated user", async () => {
     const t = makeTestCtx();
     const { withAuth } = await createTestUser(t);

@@ -101,8 +101,8 @@ export const completeOnboarding = mutation({
  * Deletes the authenticated user's account along with all their data:
  * tasks (+ subtasks + study blocks via cascade), syllabi, userCourses,
  * chatMessages, chatSessions, chatChunks, calendarConnections,
- * calendarOAuthStates, orphaned studyBlocks, authAccounts, authSessions,
- * and the user record itself.
+ * calendarOAuthStates, orphaned studyBlocks, authVerificationCodes,
+ * authAccounts, authRefreshTokens, authSessions, and the user record itself.
  */
 export const deleteAccount = mutation({
   args: {},
@@ -172,12 +172,26 @@ export const deleteAccount = mutation({
       .query("authAccounts")
       .withIndex("userIdAndProvider", (q) => q.eq("userId", userId))
       .collect();
+    for (const account of authAccounts) {
+      const verificationCodes = await ctx.db
+        .query("authVerificationCodes")
+        .withIndex("accountId", (q) => q.eq("accountId", account._id))
+        .collect();
+      await Promise.all(verificationCodes.map((c) => ctx.db.delete(c._id)));
+    }
     await Promise.all(authAccounts.map((account) => ctx.db.delete(account._id)));
 
     const authSessions = await ctx.db
       .query("authSessions")
       .withIndex("userId", (q) => q.eq("userId", userId))
       .collect();
+    for (const session of authSessions) {
+      const refreshTokens = await ctx.db
+        .query("authRefreshTokens")
+        .withIndex("sessionId", (q) => q.eq("sessionId", session._id))
+        .collect();
+      await Promise.all(refreshTokens.map((t) => ctx.db.delete(t._id)));
+    }
     await Promise.all(authSessions.map((session) => ctx.db.delete(session._id)));
 
     await ctx.db.delete(userId);
