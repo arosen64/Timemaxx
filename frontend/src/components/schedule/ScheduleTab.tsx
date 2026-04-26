@@ -208,6 +208,7 @@ export default function ScheduleTab() {
 
         const slotStartMs = new Date(`${dateStr}T00:00:00`).getTime() + slot * 30 * 60 * 1000
         if (slotStartMs < Date.now()) continue
+        if (slotStartMs >= block.taskDueDate) continue
 
         slots.add(`${dateStr}:${slot}`)
       }
