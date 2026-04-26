@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react'
+import { screen, within, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { renderWithProviders, makeMutationFn } from '../utils'
 import DashboardPage from '../../src/pages/DashboardPage'
@@ -314,8 +314,8 @@ describe('DashboardPage', () => {
   it('Study Time Today stat card shows the formatted total of scheduled study minutes', () => {
     setup()
     // getTodayStudyBlockMinutes mock returns 90 → "1h 30m"
-    expect(screen.getByText('Study Time Today')).toBeInTheDocument()
-    expect(screen.getAllByText('1h 30m').length).toBeGreaterThan(0)
+    const statCard = screen.getByText('Study Time Today').closest('div')!
+    expect(within(statCard).getByText('1h 30m')).toBeInTheDocument()
   })
 
   // ── Edit task flow ───────────────────────────────────────────────────────────
