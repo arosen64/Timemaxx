@@ -116,16 +116,16 @@ Without AI, it would be considerably more difficult to block off time work appro
 
 ### Technology Stack
 
-- **Frontend:** React, TypeScript, TailwindCSS  
-- **Backend:** TypeScript
+- **Frontend:** React, Vite, TypeScript, TailwindCSS
+- **Backend:** TypeScript (Convex serverless functions)
 - **Database:** Convex
-- **Auth:** Google OAuth
-- **AI Services:** Google Gemini
-- **External:** 
-  - Google Calendar API  
-  - Google Tasks API  
-  - Canvas API  
-- **Deployment:** GitHub Actions
+- **Auth:** Google OAuth (via Convex Auth)
+- **AI Services:** Google Gemini, OpenAI (GPT-4o mini), Anthropic Claude (via Mastra)
+- **Agent Framework:** Mastra
+- **External:**
+  - Google Calendar API
+  - JHU SIS API
+- **Deployment:** GitHub Actions (CI/CD), GitHub Pages (frontend)
 - **Testing:** Vitest
 
 ## Product Roadmap
@@ -188,15 +188,20 @@ Without AI, it would be considerably more difficult to block off time work appro
 
 **Dates:** Week 12-13
 
-**Goal:** Centralized Dashboard and Email Scanning
+**Goal:** Scheduling Intelligence, Assignment Weights, and Chatbot Agents
 
 **Must-Have Features:**
 
-- Users can view a daily summary of their to-dos and upcoming deadlines in a centralized dashboard
-- Final bug fixes and performance improvements
-- Users can connect the system to their email so the system can scan academic emails for exams/ meetings/ assignments.
+- Scheduling algorithm enhanced with assignment-weight-based priority and a pre-scoring layer (time-of-day, day-of-week, deadline-bucket bias, difficulty bonus)
+- Assignment weights extracted from syllabi, displayed in syllabus review, shown on task cards, and used by the scheduler
+- Dashboard stat cards updated: "Study Time Today" (today's scheduled minutes) and "Study Blocks This Week" (total and completed)
+- Due-date warning badge on tasks where available time before the deadline is less than the estimated time
+- Manual time estimate override with clear UI indication of estimate source (AI, subtask-summed, or manual)
+- Chatbot scheduling agent (`scheduleAgent`) to trigger bulk scheduling and answer questions about upcoming blocks
+- Chatbot task agent extended with subtask support: generate, list, and update subtask time estimates via chat
+- Chatbot course agent (`courseAgent`) to create, list, and update courses via chat
+- Mobile-responsive calendar (day view) and task card layouts
 
 **Nice-to-Have Features:**
 
-- Users can set priority levels for their tasks
-- The application integrates with email to schedule meetings in Calendar/ offer times to meet.
+- SIS course import via chatbot course agent
