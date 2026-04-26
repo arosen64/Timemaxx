@@ -101,6 +101,10 @@ function setupQueries({
   })
 }
 
+function setupMutations() {
+  mockUseMutation.mockReturnValue(makeMutationFn() as never)
+}
+
 function setupActions({
   scheduleAllResult = { scheduled: 1, skipped: 0, conflicted: 0 } as { scheduled: number; skipped: number; conflicted: number },
   scheduleAllRejects = false,
@@ -133,9 +137,14 @@ async function drillToTaskDetail(
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
+beforeEach(() => {
+  setupMutations()
+})
+
 describe('ClassPanel – Level 0 (class list)', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    setupMutations()
     setupActions()
   })
 

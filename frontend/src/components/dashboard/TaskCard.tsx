@@ -110,7 +110,9 @@ export default function TaskCard({
     ? subtasks.reduce((sum, s) => sum + (s.timeEstimate ?? 0), 0)
     : undefined
 
-  const displayedEstimate = hasSubtasks ? subtaskTotal : task.timeEstimate
+  const displayedEstimate = hasSubtasks
+    ? (task.isManualEstimate ? task.timeEstimate : subtaskTotal)
+    : task.timeEstimate
   const showEstimateSpinner = hasSubtasks ? anySubtaskPending : (task.timeEstimate === undefined && isEstimating)
 
   return (
@@ -136,12 +138,16 @@ export default function TaskCard({
               <span className="whitespace-nowrap">· {task.taskType}</span>
               {hasSubtasks ? (
                 <>
-                  {anySubtaskPending ? (
+                  {anySubtaskPending && !task.isManualEstimate ? (
                     <span className="flex items-center gap-1 whitespace-nowrap">
                       · <SpinnerIcon color="currentColor" size={11} /> Estimating subtasks…
                     </span>
-                  ) : subtaskTotal !== undefined && subtaskTotal > 0 ? (
-                    <span className="whitespace-nowrap">· {formatMinutes(subtaskTotal)} total · {subtasks.length} subtask{subtasks.length !== 1 ? 's' : ''}</span>
+                  ) : displayedEstimate !== undefined && displayedEstimate > 0 ? (
+                    <>
+                      <span className="whitespace-nowrap">· {formatMinutes(displayedEstimate)} total</span>
+                      <EstimateBadge isManual={task.isManualEstimate} />
+                      <span className="whitespace-nowrap">· {subtasks.length} subtask{subtasks.length !== 1 ? 's' : ''}</span>
+                    </>
                   ) : null}
                 </>
               ) : task.timeEstimate !== undefined ? (
@@ -240,7 +246,7 @@ export default function TaskCard({
                   >
                     <TrashIcon />
                   </button>
-                  {!hasSubtasks && (
+                  {!hasSubtasks && !task.isManualEstimate && (
                     isGeneratingSubtasks ? (
                       <div className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-blue">
                         <SpinnerIcon color="currentColor" size={16} />
