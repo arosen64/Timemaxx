@@ -158,7 +158,7 @@ export default function ChatBot() {
         'Content-Type': 'application/json',
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
-      body: JSON.stringify({ timezone, ...body }),
+      body: JSON.stringify({ ...body, timezone }),
     })
     if (!res.ok) {
       if (res.status === 429) {
