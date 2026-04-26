@@ -4,7 +4,7 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { taskTypeValidator } from "../lib/taskValidators";
 import { internal } from "../_generated/api";
 import { rebuildStudyBlocksForSubtask } from "./timeEstimate";
-import { computeRecommendedStart, TWO_WEEKS_MS, DAY_MS } from "../lib/scheduleSlots";
+import { computeRecommendedStart, computeSubtaskCascade } from "../lib/scheduleSlots";
 import { Id } from "../_generated/dataModel";
 
 const reasoningTraceArgs = v.object({
@@ -45,9 +45,7 @@ export const createSubtasksBatch = mutation({
 
     const now = Date.now();
     const n = args.subtasks.length;
-    const windowStart = Math.max(now, parent.dueDate - TWO_WEEKS_MS);
-    const windowDuration = Math.max(0, parent.dueDate - windowStart);
-    const interval = Math.min(2 * DAY_MS, Math.max(DAY_MS, windowDuration / n));
+    const dateAt = computeSubtaskCascade(now, parent.dueDate, n);
     const subtaskIds: Id<"subtasks">[] = [];
 
     for (let i = 0; i < n; i++) {
@@ -60,7 +58,7 @@ export const createSubtasksBatch = mutation({
         taskType: s.taskType,
         color: s.color,
         order: s.order,
-        suggestedCompletionAt: windowStart + (i + 1) * interval,
+        suggestedCompletionAt: dateAt(i),
         courseId: parent.courseId,
         classTag: parent.classTag,
         dueDate: parent.dueDate,

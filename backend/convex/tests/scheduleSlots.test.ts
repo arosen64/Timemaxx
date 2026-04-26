@@ -8,11 +8,13 @@ import {
   filterPoolForBlock,
   selectSlotWithAI,
   computeRecommendedStart,
+  computeSubtaskCascade,
   buildDailyLoadMap,
   computeMaxBlocksPerDay,
   isDailyCapReached,
   SCHEDULE_HORIZON_MS,
   TWO_WEEKS_MS,
+  DAY_MS,
   type OccupiedInterval,
   type WorkHoursRow,
   type PoolSlot,
@@ -426,6 +428,43 @@ describe("computeRecommendedStart", () => {
   test("clamps to now when due date is exactly two weeks out", () => {
     const exactDue = now + TWO_WEEKS_MS;
     expect(computeRecommendedStart(now, exactDue)).toBe(now);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// computeSubtaskCascade
+// ---------------------------------------------------------------------------
+
+describe("computeSubtaskCascade", () => {
+  const now = new Date("2026-04-25T12:00:00Z").getTime();
+
+  test("spaces subtasks 2 days apart when window is wide", () => {
+    const dueDate = now + 30 * DAY_MS;
+    const dateAt = computeSubtaskCascade(now, dueDate, 3);
+    const windowStart = dueDate - TWO_WEEKS_MS;
+    expect(dateAt(0)).toBe(windowStart + 2 * DAY_MS);
+    expect(dateAt(1)).toBe(windowStart + 4 * DAY_MS);
+    expect(dateAt(2)).toBe(windowStart + 6 * DAY_MS);
+  });
+
+  test("compresses to 1-day intervals when window is tight", () => {
+    const dueDate = now + 4 * DAY_MS;
+    const dateAt = computeSubtaskCascade(now, dueDate, 4);
+    expect(dateAt(0)).toBe(now + 1 * DAY_MS);
+    expect(dateAt(1)).toBe(now + 2 * DAY_MS);
+    expect(dateAt(2)).toBe(now + 3 * DAY_MS);
+    expect(dateAt(3)).toBe(now + 4 * DAY_MS);
+  });
+
+  test("caps dates at dueDate when more subtasks than available days", () => {
+    // 5 subtasks, 4 days → interval = 1 day, last two both land at dueDate
+    const dueDate = now + 4 * DAY_MS;
+    const dateAt = computeSubtaskCascade(now, dueDate, 5);
+    expect(dateAt(0)).toBe(now + 1 * DAY_MS);
+    expect(dateAt(1)).toBe(now + 2 * DAY_MS);
+    expect(dateAt(2)).toBe(now + 3 * DAY_MS);
+    expect(dateAt(3)).toBe(dueDate);
+    expect(dateAt(4)).toBe(dueDate);
   });
 });
 

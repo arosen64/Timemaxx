@@ -5,7 +5,7 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { taskTypeValidator } from "../lib/taskValidators";
 import { Id } from "../_generated/dataModel";
 import { rebuildStudyBlocks } from "./timeEstimate";
-import { computeRecommendedStart, TWO_WEEKS_MS, DAY_MS } from "../lib/scheduleSlots";
+import { computeRecommendedStart, computeSubtaskCascade } from "../lib/scheduleSlots";
 
 export async function cascadeDeleteTask(ctx: MutationCtx, taskId: Id<"tasks">) {
   const subtasks = await ctx.db
@@ -156,15 +156,13 @@ export const updateTask = mutation({
         .collect();
       if (subtasks.length > 0) {
         const now = Date.now();
-        const windowStart = Math.max(now, args.dueDate - TWO_WEEKS_MS);
-        const windowDuration = Math.max(0, args.dueDate - windowStart);
         const n = subtasks.length;
-        const interval = Math.min(2 * DAY_MS, Math.max(DAY_MS, windowDuration / n));
+        const dateAt = computeSubtaskCascade(now, args.dueDate, n);
         const sorted = [...subtasks].sort((a, b) => a.order - b.order);
         for (let i = 0; i < n; i++) {
           await ctx.db.patch(sorted[i]._id, {
             dueDate: args.dueDate,
-            suggestedCompletionAt: windowStart + (i + 1) * interval,
+            suggestedCompletionAt: dateAt(i),
           });
         }
       }

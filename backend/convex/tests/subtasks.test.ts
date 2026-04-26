@@ -518,4 +518,45 @@ describe("mutations/subtasks – createSubtasksBatch suggestedCompletionAt casca
     expect(saved[0].suggestedCompletionAt).not.toBe(bogusDate);
     expect(saved[0].suggestedCompletionAt).toBe(windowStart + 2 * DAY_MS);
   });
+
+  test("caps suggestedCompletionAt at dueDate when more subtasks than available days", async () => {
+    vi.setSystemTime(new Date("2026-04-26T12:00:00Z"));
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+    const now = Date.now();
+    // 5 subtasks, 4 days → interval clamped to 1 day, last two land on dueDate
+    const dueDate = now + 4 * DAY_MS;
+    const parentTaskId = await t.run((ctx) =>
+      ctx.db.insert("tasks", {
+        userId: userId as never,
+        title: "Parent",
+        description: "desc",
+        taskType: "Essay",
+        dueDate,
+        isManualEstimate: false,
+        createdAt: now,
+      })
+    );
+
+    await withAuth.mutation(api.mutations.subtasks.createSubtasksBatch, {
+      parentTaskId,
+      subtasks: [
+        { title: "A", description: "d", taskType: "Essay", color: "#000", order: 0 },
+        { title: "B", description: "d", taskType: "Essay", color: "#000", order: 1 },
+        { title: "C", description: "d", taskType: "Essay", color: "#000", order: 2 },
+        { title: "D", description: "d", taskType: "Essay", color: "#000", order: 3 },
+        { title: "E", description: "d", taskType: "Essay", color: "#000", order: 4 },
+      ],
+    });
+
+    const saved = await t.run((ctx) =>
+      ctx.db.query("subtasks").withIndex("by_parentTaskId", (q) => q.eq("parentTaskId", parentTaskId as never)).collect()
+    );
+    const sorted = saved.sort((a, b) => a.order - b.order);
+    expect(sorted[0].suggestedCompletionAt).toBe(now + 1 * DAY_MS);
+    expect(sorted[1].suggestedCompletionAt).toBe(now + 2 * DAY_MS);
+    expect(sorted[2].suggestedCompletionAt).toBe(now + 3 * DAY_MS);
+    expect(sorted[3].suggestedCompletionAt).toBe(dueDate);
+    expect(sorted[4].suggestedCompletionAt).toBe(dueDate);
+  });
 });

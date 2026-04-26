@@ -36,6 +36,24 @@ export function computeRecommendedStart(now: number, dueDate: number): number {
   return Math.max(now, dueDate - TWO_WEEKS_MS);
 }
 
+/**
+ * Returns a function mapping subtask index i (0-based) to its suggestedCompletionAt
+ * timestamp. Dates are spaced 1–2 days apart within the 2-week window before dueDate
+ * and are capped at dueDate so no subtask lands after its parent.
+ */
+export function computeSubtaskCascade(
+  now: number,
+  dueDate: number,
+  n: number,
+): (i: number) => number {
+  const windowStart = Math.max(now, dueDate - TWO_WEEKS_MS);
+  const windowDuration = Math.max(0, dueDate - windowStart);
+  const interval = n > 0
+    ? Math.min(2 * DAY_MS, Math.max(DAY_MS, windowDuration / n))
+    : DAY_MS;
+  return (i) => Math.min(windowStart + (i + 1) * interval, dueDate);
+}
+
 // ---------------------------------------------------------------------------
 // Shared date utilities
 // ---------------------------------------------------------------------------
