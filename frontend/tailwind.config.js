@@ -26,6 +26,7 @@ export default {
         'success-light': '#E6F5F0',
         'info-bg': '#EBF5FF',
         'info-emphasis': '#0077D8',
+        'info-dark': '#005A8E',
         'today-col': '#F0F5FF',
       },
       spacing: {

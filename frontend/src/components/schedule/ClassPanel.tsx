@@ -234,7 +234,7 @@ export default function ClassPanel({
     }
   }
 
-  async function handleScheduleSelected() {
+  function handleScheduleSelected() {
     if (!selectedTaskId) return
     onBeforeSchedule(() => doScheduleAllBlocks())
   }
