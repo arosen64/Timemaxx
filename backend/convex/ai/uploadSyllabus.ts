@@ -52,10 +52,11 @@ export const uploadSyllabus = action({
 
     let syllabusId: Id<"syllabi">;
     try {
-      syllabusId = await ctx.runMutation(
-        internal.mutations.syllabi.createSyllabus,
-        { userId, fileContents: args.fileContents, courseId: args.courseId }
-      );
+      syllabusId = await ctx.runMutation(internal.mutations.syllabi.createSyllabus, {
+        userId,
+        fileContents: args.fileContents,
+        courseId: args.courseId,
+      });
     } catch (err) {
       throw new Error(
         `Reupload aborted: could not create syllabus record. ${err instanceof Error ? err.message : String(err)}`

@@ -27,9 +27,7 @@ export async function callGemini<T>(opts: {
       }),
       system: opts.system,
       prompt: opts.prompt,
-      abortSignal: opts.timeoutMs
-        ? AbortSignal.timeout(opts.timeoutMs)
-        : undefined,
+      abortSignal: opts.timeoutMs ? AbortSignal.timeout(opts.timeoutMs) : undefined,
     });
 
     if (!result.output) {

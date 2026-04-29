@@ -308,7 +308,10 @@ describe("mutations/timeEstimate – setManualTimeEstimate", () => {
     const taskId = await seedTask(t, userId);
 
     await expect(
-      otherAuth.mutation(api.mutations.timeEstimate.setManualTimeEstimate, { taskId, timeEstimate: 60 })
+      otherAuth.mutation(api.mutations.timeEstimate.setManualTimeEstimate, {
+        taskId,
+        timeEstimate: 60,
+      })
     ).rejects.toThrow("Task not found");
   });
 

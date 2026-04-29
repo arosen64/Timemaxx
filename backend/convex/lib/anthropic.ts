@@ -7,9 +7,7 @@ const MODEL = "claude-sonnet-4-20250514";
 function isTimeoutError(err: unknown): boolean {
   return (
     err instanceof Error &&
-    (err.name === "AbortError" ||
-      err.name === "TimeoutError" ||
-      err.name === "ResponseAborted")
+    (err.name === "AbortError" || err.name === "TimeoutError" || err.name === "ResponseAborted")
   );
 }
 
@@ -39,9 +37,7 @@ export async function callAnthropic<T>(opts: {
       }),
       system: opts.system,
       prompt: opts.prompt,
-      abortSignal: opts.timeoutMs
-        ? AbortSignal.timeout(opts.timeoutMs)
-        : undefined,
+      abortSignal: opts.timeoutMs ? AbortSignal.timeout(opts.timeoutMs) : undefined,
     });
 
     if (result.output == null) {

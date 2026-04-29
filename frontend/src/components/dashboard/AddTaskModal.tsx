@@ -1,18 +1,23 @@
-import { useMutation } from 'convex/react'
-import { api } from '../../../../backend/convex/_generated/api'
-import { DEFAULT_DUE_TIME } from '../../validators'
-import { type ClassTagCourseOption, type EditForm } from './types'
-import TaskModal from './TaskModal'
+import { useMutation } from "convex/react";
+import { api } from "../../../../backend/convex/_generated/api";
+import { DEFAULT_DUE_TIME } from "../../validators";
+import { type ClassTagCourseOption, type EditForm } from "./types";
+import TaskModal from "./TaskModal";
 
 interface AddTaskModalProps {
-  isOpen: boolean
-  onClose: () => void
-  onTaskCreated?: (taskId: string) => void
-  classTagCourses?: ClassTagCourseOption[]
+  isOpen: boolean;
+  onClose: () => void;
+  onTaskCreated?: (taskId: string) => void;
+  classTagCourses?: ClassTagCourseOption[];
 }
 
-export default function AddTaskModal({ isOpen, onClose, onTaskCreated, classTagCourses }: AddTaskModalProps) {
-  const createTask = useMutation(api.mutations.tasks.createTask)
+export default function AddTaskModal({
+  isOpen,
+  onClose,
+  onTaskCreated,
+  classTagCourses,
+}: AddTaskModalProps) {
+  const createTask = useMutation(api.mutations.tasks.createTask);
 
   async function handleSubmit(form: EditForm): Promise<string> {
     const taskId = await createTask({
@@ -23,9 +28,9 @@ export default function AddTaskModal({ isOpen, onClose, onTaskCreated, classTagC
       ...(form.courseId !== undefined ? { courseId: form.courseId } : {}),
       classTag: form.classTag,
       ...(form.timeEstimate !== undefined ? { timeEstimate: form.timeEstimate } : {}),
-    })
-    onTaskCreated?.(taskId)
-    return taskId
+    });
+    onTaskCreated?.(taskId);
+    return taskId;
   }
 
   return (
@@ -36,18 +41,18 @@ export default function AddTaskModal({ isOpen, onClose, onTaskCreated, classTagC
       primaryLabel="Add Task"
       primaryLoadingLabel="Adding…"
       initialValues={{
-        taskName: '',
-        selectedType: 'Essay',
-        customTaskType: '',
-        description: '',
-        dueDate: '',
+        taskName: "",
+        selectedType: "Essay",
+        customTaskType: "",
+        description: "",
+        dueDate: "",
         dueTime: DEFAULT_DUE_TIME,
-        classTag: '',
-        timeEstimate: '',
+        classTag: "",
+        timeEstimate: "",
       }}
       classTagCourses={classTagCourses}
       onClose={onClose}
       onSubmit={handleSubmit}
     />
-  )
+  );
 }

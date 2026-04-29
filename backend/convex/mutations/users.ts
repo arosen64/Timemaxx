@@ -13,10 +13,14 @@ export const updateUserSettings = mutation({
     year: v.optional(v.string()),
     courses: v.optional(v.array(v.object({ title: v.string(), studyGoal: v.string() }))),
     transcriptSummary: v.optional(v.array(v.object({ label: v.string(), text: v.string() }))),
-    workHoursGrid: v.optional(v.array(v.object({
-      day: v.string(),
-      blocked: v.array(v.number()),
-    }))),
+    workHoursGrid: v.optional(
+      v.array(
+        v.object({
+          day: v.string(),
+          blocked: v.array(v.number()),
+        })
+      )
+    ),
     productivityTraits: v.optional(v.any()),
     focusBlockLength: v.optional(v.number()),
     gcalColorMappingEnabled: v.optional(v.boolean()),
@@ -38,9 +42,7 @@ export const updateUserSettings = mutation({
     //   - productivityTraits uses v.any() and has no shape enforcement
     // Track this as a follow-up issue for backend input validation.
 
-    const prevUser = args.gcalColorMappingEnabled !== undefined
-      ? await ctx.db.get(userId)
-      : null;
+    const prevUser = args.gcalColorMappingEnabled !== undefined ? await ctx.db.get(userId) : null;
 
     await ctx.db.patch(userId, args);
 
@@ -61,7 +63,7 @@ export const updateUserSettings = mutation({
         await ctx.scheduler.runAfter(
           0,
           internal.actions.exportStudyBlocksToCalendar.internalExportStudyBlocksToCalendar,
-          { userId },
+          { userId }
         );
       }
     }
@@ -75,10 +77,12 @@ export const completeOnboarding = mutation({
   args: {
     major: v.string(),
     year: v.string(),
-    workHoursGrid: v.array(v.object({
-      day: v.string(),
-      blocked: v.array(v.number()),
-    })),
+    workHoursGrid: v.array(
+      v.object({
+        day: v.string(),
+        blocked: v.array(v.number()),
+      })
+    ),
     productivityTraits: v.any(),
     focusBlockLength: v.number(),
   },
@@ -87,8 +91,7 @@ export const completeOnboarding = mutation({
     if (!userId) throw new Error("Not authenticated: must be logged in to complete onboarding");
 
     // Major filled check
-    if (args.major.trim().length === 0)
-      throw new Error("Major cannot be empty");
+    if (args.major.trim().length === 0) throw new Error("Major cannot be empty");
 
     await ctx.db.patch(userId, {
       ...args,

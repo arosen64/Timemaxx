@@ -5,7 +5,7 @@ import { makeTestCtx, createTestUser } from "../../convex-tests/helpers";
 async function seedTask(
   t: ReturnType<typeof makeTestCtx>,
   userId: string,
-  opts: { dueDate?: number; recommendedStart?: number } = {},
+  opts: { dueDate?: number; recommendedStart?: number } = {}
 ) {
   const dueDate = opts.dueDate ?? Date.now() + 30 * 86_400_000;
   return t.run((ctx) =>
@@ -22,11 +22,7 @@ async function seedTask(
   );
 }
 
-async function seedBlock(
-  t: ReturnType<typeof makeTestCtx>,
-  taskId: string,
-  userId: string,
-) {
+async function seedBlock(t: ReturnType<typeof makeTestCtx>, taskId: string, userId: string) {
   return t.run((ctx) =>
     ctx.db.insert("studyBlocks", {
       taskId: taskId as any,
@@ -42,7 +38,7 @@ async function seedSubtask(
   t: ReturnType<typeof makeTestCtx>,
   parentTaskId: string,
   userId: string,
-  opts: { dueDate?: number } = {},
+  opts: { dueDate?: number } = {}
 ) {
   return t.run((ctx) =>
     ctx.db.insert("subtasks", {
@@ -62,7 +58,7 @@ async function seedSubtask(
 async function seedSubtaskBlock(
   t: ReturnType<typeof makeTestCtx>,
   subtaskId: string,
-  userId: string,
+  userId: string
 ) {
   return t.run((ctx) =>
     ctx.db.insert("studyBlocks", {

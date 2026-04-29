@@ -56,11 +56,7 @@ export const deleteSyllabiForCourse = internalMutation({
 export const setSyllabusStatus = internalMutation({
   args: {
     syllabusId: v.id("syllabi"),
-    status: v.union(
-      v.literal("pending"),
-      v.literal("confirmed"),
-      v.literal("failed"),
-    ),
+    status: v.union(v.literal("pending"), v.literal("confirmed"), v.literal("failed")),
   },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.syllabusId, { status: args.status });

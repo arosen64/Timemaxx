@@ -17,9 +17,7 @@ export type GeneratedSubtask = {
   suggestedCompletionAt: string; // ISO 8601
 };
 
-export type GenerateSubtasksResult =
-  | { subtasks: GeneratedSubtask[] }
-  | { error: string };
+export type GenerateSubtasksResult = { subtasks: GeneratedSubtask[] } | { error: string };
 
 export const generateSubtasks = internalAction({
   args: {
@@ -77,7 +75,8 @@ Return 1–6 subtasks ordered by when they should be completed. If the assignmen
 
     try {
       const json = await callGemini({
-        system: "You are an academic study planner that breaks assignments into concrete, actionable subtasks.",
+        system:
+          "You are an academic study planner that breaks assignments into concrete, actionable subtasks.",
         prompt,
         schema: subtaskSchema,
         schemaName: "GeneratedSubtasks",

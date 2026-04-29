@@ -4,10 +4,7 @@ import { Id } from "../_generated/dataModel";
 import { makeTestCtx, createTestUser } from "../../convex-tests/helpers";
 
 // Helper: seed a task directly in the db
-async function seedTask(
-  t: ReturnType<typeof makeTestCtx>,
-  userId: string
-) {
+async function seedTask(t: ReturnType<typeof makeTestCtx>, userId: string) {
   return t.run((ctx) =>
     ctx.db.insert("tasks", {
       userId: userId as any,
@@ -260,9 +257,7 @@ describe("mutations/studyBlocks – createTaskBlocks", () => {
       ],
     });
 
-    const blocks = await t.run((ctx) =>
-      ctx.db.query("studyBlocks").collect()
-    );
+    const blocks = await t.run((ctx) => ctx.db.query("studyBlocks").collect());
     expect(blocks).toHaveLength(2);
     expect(blocks.every((b) => b.startTime === undefined)).toBe(true);
   });
@@ -374,7 +369,9 @@ describe("mutations/studyBlocks – editStudyBlockTime", () => {
     const t = makeTestCtx();
     const { userId, withAuth } = await createTestUser(t);
     const taskId = await seedTask(t, userId);
-    const studyBlockId = await seedStudyBlock(t, taskId, { startTime: new Date(Date.now() + 3600_000).toISOString() });
+    const studyBlockId = await seedStudyBlock(t, taskId, {
+      startTime: new Date(Date.now() + 3600_000).toISOString(),
+    });
 
     await withAuth.mutation(api.mutations.studyBlocks.editStudyBlockTime, {
       studyBlockId,
@@ -764,7 +761,9 @@ describe("mutations/studyBlocks – flagFutureBlocksForReexport", () => {
       })
     );
 
-    await t.mutation(internal.mutations.studyBlocks.flagFutureBlocksForReexport, { userId: user1Id });
+    await t.mutation(internal.mutations.studyBlocks.flagFutureBlocksForReexport, {
+      userId: user1Id,
+    });
 
     const block1 = await t.run((ctx) => ctx.db.get(block1Id));
     const block2 = await t.run((ctx) => ctx.db.get(block2Id));
@@ -868,10 +867,7 @@ describe("mutations/studyBlocks – toggleStudyBlockComplete supertask status", 
 // ─── toggleStudyBlockComplete – supertask propagation via subtask ─────────────
 
 describe("mutations/studyBlocks – toggleStudyBlockComplete supertask propagation via subtask", () => {
-  async function seedSupertaskWithSubtaskBlock(
-    t: ReturnType<typeof makeTestCtx>,
-    userId: string
-  ) {
+  async function seedSupertaskWithSubtaskBlock(t: ReturnType<typeof makeTestCtx>, userId: string) {
     const parentTaskId = await t.run((ctx) =>
       ctx.db.insert("tasks", {
         userId: userId as any,
@@ -1012,8 +1008,7 @@ describe("mutations/studyBlocks – toggleStudyBlockComplete supertask propagati
   test("only one subtask fully done does not complete supertask when sibling subtask is not_started", async () => {
     const t = makeTestCtx();
     const { userId, withAuth } = await createTestUser(t);
-    const { parentTaskId, blockId } =
-      await seedSupertaskWithSubtaskBlock(t, userId);
+    const { parentTaskId, blockId } = await seedSupertaskWithSubtaskBlock(t, userId);
 
     // Second subtask with no blocks — status stays not_started
     await t.run((ctx) =>

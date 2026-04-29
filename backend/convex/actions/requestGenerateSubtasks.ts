@@ -16,9 +16,9 @@ export const requestGenerateSubtasks = action({
     });
     if (!task) throw new Error("Task not found or access denied");
 
-    return await ctx.runAction(
-      internal.actions.generateSubtasks.generateSubtasks,
-      { taskId: args.taskId, fileContent: args.fileContent }
-    );
+    return await ctx.runAction(internal.actions.generateSubtasks.generateSubtasks, {
+      taskId: args.taskId,
+      fileContent: args.fileContent,
+    });
   },
 });

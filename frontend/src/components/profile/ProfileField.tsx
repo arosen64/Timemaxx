@@ -1,7 +1,7 @@
 interface ProfileFieldProps {
-  label: string
-  value?: string
-  loading?: boolean
+  label: string;
+  value?: string;
+  loading?: boolean;
 }
 
 export default function ProfileField({ label, value, loading }: ProfileFieldProps) {
@@ -19,5 +19,5 @@ export default function ProfileField({ label, value, loading }: ProfileFieldProp
         </>
       )}
     </div>
-  )
+  );
 }

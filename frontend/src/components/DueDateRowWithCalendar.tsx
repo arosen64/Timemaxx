@@ -1,26 +1,26 @@
-import type { Ref } from 'react'
-import { CalendarIcon } from './icons'
+import type { Ref } from "react";
+import { CalendarIcon } from "./icons";
 
 function openNativeDatePicker(input: HTMLInputElement | null) {
-  if (!input) return
-  const picker = input as HTMLInputElement & { showPicker?: () => void }
-  picker.showPicker?.() ?? input.click()
+  if (!input) return;
+  const picker = input as HTMLInputElement & { showPicker?: () => void };
+  picker.showPicker?.() ?? input.click();
 }
 
 export interface DueDateRowWithCalendarProps {
-  variant: 'modal' | 'compact'
+  variant: "modal" | "compact";
   /** Icon before (syllabus card) or after (task modal) the text field */
-  calendarPosition: 'start' | 'end'
-  datePickerRef: Ref<HTMLInputElement>
-  textInputId: string
-  dateTextValue: string
-  onDateTextChange: (value: string) => void
-  onDateTextBlur: () => void
-  onDateTextFocus?: () => void
-  placeholder: string
-  datePickerValue: string
-  datePickerMin?: string
-  onIsoChange: (iso: string) => void
+  calendarPosition: "start" | "end";
+  datePickerRef: Ref<HTMLInputElement>;
+  textInputId: string;
+  dateTextValue: string;
+  onDateTextChange: (value: string) => void;
+  onDateTextBlur: () => void;
+  onDateTextFocus?: () => void;
+  placeholder: string;
+  datePickerValue: string;
+  datePickerMin?: string;
+  onIsoChange: (iso: string) => void;
 }
 
 export default function DueDateRowWithCalendar({
@@ -37,24 +37,23 @@ export default function DueDateRowWithCalendar({
   datePickerMin,
   onIsoChange,
 }: DueDateRowWithCalendarProps) {
-  const isModal = variant === 'modal'
+  const isModal = variant === "modal";
 
   const rowClass = isModal
-    ? 'relative flex h-11 min-w-0 items-center justify-between rounded-md border border-border bg-bg-gray px-3.5'
-    : 'flex h-8 min-w-0 items-center rounded-md border border-border bg-bg-gray px-2.5 gap-1.5'
+    ? "relative flex h-11 min-w-0 items-center justify-between rounded-md border border-border bg-bg-gray px-3.5"
+    : "flex h-8 min-w-0 items-center rounded-md border border-border bg-bg-gray px-2.5 gap-1.5";
 
   const textClass = isModal
-    ? 'min-w-0 flex-1 border-none bg-transparent font-body text-sm text-navy outline-none placeholder:text-light-blue'
-    : 'w-28 min-w-0 border-none bg-transparent font-body text-sm text-navy outline-none placeholder:text-light-blue'
+    ? "min-w-0 flex-1 border-none bg-transparent font-body text-sm text-navy outline-none placeholder:text-light-blue"
+    : "w-28 min-w-0 border-none bg-transparent font-body text-sm text-navy outline-none placeholder:text-light-blue";
 
-  const calendarButtonClass =
-    !isModal
-      ? 'relative z-20 flex cursor-pointer items-center justify-center rounded p-0.5 text-light-blue outline-none hover:text-navy focus-visible:ring-2 focus-visible:ring-navy/30'
-      : 'relative z-20 cursor-pointer rounded p-1 text-light-blue outline-none hover:text-navy focus-visible:ring-2 focus-visible:ring-navy/30'
+  const calendarButtonClass = !isModal
+    ? "relative z-20 flex cursor-pointer items-center justify-center rounded p-0.5 text-light-blue outline-none hover:text-navy focus-visible:ring-2 focus-visible:ring-navy/30"
+    : "relative z-20 cursor-pointer rounded p-1 text-light-blue outline-none hover:text-navy focus-visible:ring-2 focus-visible:ring-navy/30";
 
   const anchor = (
     <div
-      className={`relative inline-flex shrink-0 ${calendarPosition === 'end' ? 'ml-2' : ''}`.trim()}
+      className={`relative inline-flex shrink-0 ${calendarPosition === "end" ? "ml-2" : ""}`.trim()}
     >
       <input
         ref={datePickerRef}
@@ -69,8 +68,8 @@ export default function DueDateRowWithCalendar({
       <button
         type="button"
         onClick={() => {
-          if (!datePickerRef || typeof datePickerRef === 'function') return
-          openNativeDatePicker(datePickerRef.current)
+          if (!datePickerRef || typeof datePickerRef === "function") return;
+          openNativeDatePicker(datePickerRef.current);
         }}
         className={calendarButtonClass}
         aria-label="Open calendar"
@@ -78,7 +77,7 @@ export default function DueDateRowWithCalendar({
         {!isModal ? <CalendarIcon size={14} /> : <CalendarIcon />}
       </button>
     </div>
-  )
+  );
 
   const textInput = (
     <input
@@ -92,11 +91,11 @@ export default function DueDateRowWithCalendar({
       autoComplete="off"
       className={textClass}
     />
-  )
+  );
 
   return (
     <div className={rowClass}>
-      {calendarPosition === 'start' ? (
+      {calendarPosition === "start" ? (
         <>
           {anchor}
           {textInput}
@@ -108,5 +107,5 @@ export default function DueDateRowWithCalendar({
         </>
       )}
     </div>
-  )
+  );
 }

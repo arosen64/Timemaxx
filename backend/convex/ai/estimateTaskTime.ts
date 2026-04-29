@@ -30,10 +30,9 @@ export async function buildCourseContext(
 ): Promise<string | null> {
   if (courseIds.length === 0) return null;
 
-  const courses = await ctx.runQuery(
-    internal.queries.userCourses.getUserCoursesByIdsInternal,
-    { courseIds }
-  );
+  const courses = await ctx.runQuery(internal.queries.userCourses.getUserCoursesByIdsInternal, {
+    courseIds,
+  });
   if (courses.length === 0) return null;
 
   const lines = (courses as Doc<"userCourses">[]).map((c) => {
@@ -56,16 +55,10 @@ export async function buildCourseContext(
  * Batch-loads the given task IDs and formats a context block that includes
  * estimate history and feedback.
  */
-export async function buildTaskContext(
-  ctx: Ctx,
-  taskIds: Id<"tasks">[]
-): Promise<string | null> {
+export async function buildTaskContext(ctx: Ctx, taskIds: Id<"tasks">[]): Promise<string | null> {
   if (taskIds.length === 0) return null;
 
-  const tasks = await ctx.runQuery(
-    internal.queries.tasks.getTasksByIdsInternal,
-    { taskIds }
-  );
+  const tasks = await ctx.runQuery(internal.queries.tasks.getTasksByIdsInternal, { taskIds });
   if (tasks.length === 0) return null;
 
   const lines = (tasks as Doc<"tasks">[]).map((t) => {
@@ -99,7 +92,7 @@ export async function buildChatContext(
   ctx: Ctx,
   userId: Id<"users">,
   chunkIds: Id<"chatChunks">[],
-  preloadedChunks?: Doc<"chatChunks">[],
+  preloadedChunks?: Doc<"chatChunks">[]
 ): Promise<string | null> {
   if (chunkIds.length === 0) return null;
 
@@ -217,7 +210,9 @@ export const estimateTaskTime = internalAction({
       ctx.runQuery(internal.queries.userCourses.getUserCoursesInternal, { userId: item.userId }),
     ]);
 
-    const taskCourse = item.courseId ? allCourses.find((c: Doc<"userCourses">) => c._id === item.courseId) : undefined;
+    const taskCourse = item.courseId
+      ? allCourses.find((c: Doc<"userCourses">) => c._id === item.courseId)
+      : undefined;
 
     const [courseContext, taskContext, chatContext] = await Promise.all([
       buildCourseContext(ctx, relevantContext.classIds),
@@ -259,7 +254,11 @@ export const estimateTaskTime = internalAction({
       if (runStatus === "failed") {
         const rawErr = (run as { error?: string | Error }).error;
         const runErrMsg = rawErr instanceof Error ? rawErr.message : String(rawErr ?? "unknown");
-        console.error("Estimation workflow top-level failure:", runErrMsg, JSON.stringify(run.steps));
+        console.error(
+          "Estimation workflow top-level failure:",
+          runErrMsg,
+          JSON.stringify(run.steps)
+        );
         if (
           runErrMsg.includes("quota") ||
           runErrMsg.includes("RESOURCE_EXHAUSTED") ||
@@ -276,7 +275,10 @@ export const estimateTaskTime = internalAction({
           const rawErr = (step as { error?: string | Error }).error;
           const stepStatus = (step as { status?: string }).status ?? "unknown";
           const errMsg = rawErr instanceof Error ? rawErr.message : String(rawErr ?? "");
-          console.error(`Estimation step "${stepId}" has no output (status: ${stepStatus}):`, errMsg);
+          console.error(
+            `Estimation step "${stepId}" has no output (status: ${stepStatus}):`,
+            errMsg
+          );
           if (
             errMsg.includes("quota") ||
             errMsg.includes("RESOURCE_EXHAUSTED") ||
@@ -284,7 +286,9 @@ export const estimateTaskTime = internalAction({
           ) {
             throw new Error("quota_exceeded");
           }
-          throw new Error(`Estimation workflow step "${stepId}" failed (status: ${stepStatus}): ${errMsg}`);
+          throw new Error(
+            `Estimation workflow step "${stepId}" failed (status: ${stepStatus}): ${errMsg}`
+          );
         }
       }
 
@@ -308,4 +312,3 @@ export const estimateTaskTime = internalAction({
     }
   },
 });
-

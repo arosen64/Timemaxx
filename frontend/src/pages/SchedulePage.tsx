@@ -1,9 +1,9 @@
-import ScheduleTab from '../components/schedule/ScheduleTab'
+import ScheduleTab from "../components/schedule/ScheduleTab";
 
 export default function SchedulePage() {
   return (
     <main className="flex flex-col flex-1 min-h-0 p-10 overflow-hidden font-body text-slate-blue">
       <ScheduleTab />
     </main>
-  )
+  );
 }

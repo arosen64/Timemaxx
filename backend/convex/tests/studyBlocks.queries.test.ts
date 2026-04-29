@@ -2,10 +2,7 @@ import { describe, expect, test } from "vitest";
 import { api, internal } from "../_generated/api";
 import { makeTestCtx, createTestUser } from "../../convex-tests/helpers";
 
-async function seedTask(
-  t: ReturnType<typeof makeTestCtx>,
-  userId: string
-) {
+async function seedTask(t: ReturnType<typeof makeTestCtx>, userId: string) {
   return t.run((ctx) =>
     ctx.db.insert("tasks", {
       userId: userId as any,
@@ -22,7 +19,12 @@ async function seedTask(
 async function seedStudyBlock(
   t: ReturnType<typeof makeTestCtx>,
   taskId: string,
-  overrides: { title?: string; startTime?: string; studyBlockLength?: number; isCompleted?: boolean } = {}
+  overrides: {
+    title?: string;
+    startTime?: string;
+    studyBlockLength?: number;
+    isCompleted?: boolean;
+  } = {}
 ) {
   return t.run((ctx) =>
     ctx.db.insert("studyBlocks", {
@@ -146,7 +148,12 @@ describe("queries/studyBlocks – getFutureStudyBlocksForExport", () => {
     const { userId } = await createTestUser(t);
     const taskId = await seedTask(t, userId);
     const futureStart = new Date(Date.now() + 3600_000).toISOString();
-    await seedStudyBlock(t, taskId, { title: "Future block", startTime: futureStart, studyBlockLength: 90, isCompleted: false });
+    await seedStudyBlock(t, taskId, {
+      title: "Future block",
+      startTime: futureStart,
+      studyBlockLength: 90,
+      isCompleted: false,
+    });
 
     const result = await t.query(internal.queries.studyBlocks.getFutureStudyBlocksForExport, {
       userId: userId as any,
@@ -187,8 +194,15 @@ describe("queries/studyBlocks – getFutureStudyBlocksForExport", () => {
     const taskId = await seedTask(t, userId);
     const futureStart = new Date(Date.now() + 7200_000).toISOString();
     await seedStudyBlock(t, taskId, { title: "Unscheduled" }); // no startTime
-    await seedStudyBlock(t, taskId, { title: "Past", startTime: new Date(Date.now() - 3600_000).toISOString() });
-    await seedStudyBlock(t, taskId, { title: "Future", startTime: futureStart, isCompleted: false });
+    await seedStudyBlock(t, taskId, {
+      title: "Past",
+      startTime: new Date(Date.now() - 3600_000).toISOString(),
+    });
+    await seedStudyBlock(t, taskId, {
+      title: "Future",
+      startTime: futureStart,
+      isCompleted: false,
+    });
 
     const result = await t.query(internal.queries.studyBlocks.getFutureStudyBlocksForExport, {
       userId: userId as any,

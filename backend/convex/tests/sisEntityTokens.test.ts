@@ -33,7 +33,11 @@ describe("sisEntityTokens", () => {
   test("decodes legacy tokens for backwards compatibility", () => {
     const legacyCtx = "__sis_ctx__|Fall 2026||Krieger||calc";
     const legacyPick = "__sis_pick__|AS.110.201||Calculus II||Fall 2026||Krieger";
-    expect(decodeSisContext(legacyCtx)).toEqual({ term: "Fall 2026", school: "Krieger", query: "calc" });
+    expect(decodeSisContext(legacyCtx)).toEqual({
+      term: "Fall 2026",
+      school: "Krieger",
+      query: "calc",
+    });
     expect(decodeSisCandidate(legacyPick)).toEqual({
       offeringName: "AS.110.201",
       title: "Calculus II",
