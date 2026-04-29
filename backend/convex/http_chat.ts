@@ -590,8 +590,8 @@ async function handleWorkflowTurn(
         output.school !== null &&
         (output.sisQuery !== null || output.courseName !== null)) ||
         sessionSisContext !== null);
-    let candidates: EntityCandidate[] = [];
-    let hasMore = false;
+    let candidates: EntityCandidate[];
+    let hasMore: boolean;
     if (shouldUseSisMcq) {
       const sisTerm = output.term ?? sessionSisContext?.term ?? null;
       const sisSchool = output.school ?? sessionSisContext?.school ?? null;

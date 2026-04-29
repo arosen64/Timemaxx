@@ -88,6 +88,7 @@ export const inspectRetrievalForTask = internalAction({
   handler: async (ctx, args) => {
     // `as unknown as { internal: any }` breaks TS self-reference: this module is part of `internal`
     // while resolving `import("../_generated/api")`.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { internal } = (await import("../_generated/api")) as unknown as { internal: any };
     const task: Doc<"tasks"> | null = await ctx.runQuery(internal.queries.tasks.getTaskInternal, {
       taskId: args.taskId,
@@ -184,6 +185,7 @@ export const inspectChatRetrievalForTask = internalAction({
     })
   ),
   handler: async (ctx, args) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { internal } = (await import("../_generated/api")) as unknown as { internal: any };
     const task: Doc<"tasks"> | null = await ctx.runQuery(internal.queries.tasks.getTaskInternal, {
       taskId: args.taskId,

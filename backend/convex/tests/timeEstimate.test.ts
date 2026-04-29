@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { api, internal } from "../_generated/api";
 import { makeTestCtx, createTestUser } from "../../convex-tests/helpers";
+import type { Id } from "../_generated/dataModel";
 import { TWO_WEEKS_MS } from "../lib/scheduleSlots";
 
 const makeReasoning = () => ({
@@ -18,13 +19,13 @@ async function seedTask(
   // Optionally set focusBlockLength on the user
   if (overrides.focusBlockLength !== undefined) {
     await t.run((ctx) =>
-      ctx.db.patch(userId as any, { focusBlockLength: overrides.focusBlockLength })
+      ctx.db.patch(userId as Id<"users">, { focusBlockLength: overrides.focusBlockLength })
     );
   }
 
   return t.run((ctx) =>
     ctx.db.insert("tasks", {
-      userId: userId as any,
+      userId: userId as Id<"users">,
       title: "Test task",
       description: "desc",
       taskType: "Essay",
@@ -192,7 +193,7 @@ describe("mutations/timeEstimate – setTimeEstimate auto-generates study blocks
     const dueDate = now + 30 * DAY_MS;
     const taskId = await t.run((ctx) =>
       ctx.db.insert("tasks", {
-        userId: userId as any,
+        userId: userId as Id<"users">,
         title: "Test task",
         description: "desc",
         taskType: "Essay",
@@ -282,7 +283,7 @@ describe("mutations/timeEstimate – setManualTimeEstimate", () => {
     const dueDate = now + 30 * DAY_MS;
     const taskId = await t.run((ctx) =>
       ctx.db.insert("tasks", {
-        userId: userId as any,
+        userId: userId as Id<"users">,
         title: "Test task",
         description: "desc",
         taskType: "Essay",
@@ -324,7 +325,7 @@ describe("mutations/timeEstimate – setManualTimeEstimate", () => {
     const subtaskId = await t.run((ctx) =>
       ctx.db.insert("subtasks", {
         parentTaskId: taskId,
-        userId: userId as any,
+        userId: userId as Id<"users">,
         title: "Subtask 1",
         description: "desc",
         taskType: "Essay",
@@ -337,7 +338,7 @@ describe("mutations/timeEstimate – setManualTimeEstimate", () => {
     await t.run((ctx) =>
       ctx.db.insert("studyBlocks", {
         subtaskId,
-        userId: userId as any,
+        userId: userId as Id<"users">,
         title: "Subtask 1",
         studyBlockLength: 60,
         isCompleted: false,

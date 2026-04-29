@@ -40,7 +40,7 @@ export async function callGemini<T>(opts: {
       err instanceof Error &&
       ["AbortError", "TimeoutError", "ResponseAborted"].includes(err.name)
     ) {
-      throw new Error("AI generation timed out — please try again");
+      throw err;
     }
     throw err;
   }

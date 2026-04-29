@@ -148,9 +148,9 @@ export const scheduleBlock = action({
 
     // Build slot pool up to dueDate (or horizon, whichever is sooner)
     const pool: PoolSlot[] = [];
-    let scanCursor = roundUpTo15Min(nowMs);
+    const scanCursor = roundUpTo15Min(nowMs);
     if (scanCursor < poolTarget) {
-      scanCursor = extendSlotPool({
+      extendSlotPool({
         pool,
         scanCursor,
         targetMs: poolTarget,

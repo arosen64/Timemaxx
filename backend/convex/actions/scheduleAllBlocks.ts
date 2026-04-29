@@ -3,6 +3,7 @@ import { action } from "../_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { internal } from "../_generated/api";
+import type { Id } from "../_generated/dataModel";
 import {
   extendSlotPool,
   isSlotValid,
@@ -74,7 +75,7 @@ export const scheduleAllBlocks = action({
       internal.queries.studyBlocks.getAllStudyBlocksByUserInternal,
       { userId }
     )) as Array<{
-      _id: string;
+      _id: Id<"studyBlocks">;
       taskId?: string;
       subtaskId?: string;
       title: string;
@@ -368,7 +369,7 @@ export const scheduleAllBlocks = action({
       }
 
       await ctx.runMutation(internal.mutations.studyBlocks.placeStudyBlock, {
-        studyBlockId: block._id as any,
+        studyBlockId: block._id,
         startTime: chosen.startISO,
       });
 

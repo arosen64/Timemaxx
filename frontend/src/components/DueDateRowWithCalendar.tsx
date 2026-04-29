@@ -4,7 +4,11 @@ import { CalendarIcon } from "./icons";
 function openNativeDatePicker(input: HTMLInputElement | null) {
   if (!input) return;
   const picker = input as HTMLInputElement & { showPicker?: () => void };
-  picker.showPicker?.() ?? input.click();
+  if (picker.showPicker) {
+    picker.showPicker();
+  } else {
+    input.click();
+  }
 }
 
 export interface DueDateRowWithCalendarProps {

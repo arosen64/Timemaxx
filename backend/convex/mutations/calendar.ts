@@ -1,4 +1,6 @@
 import { internalMutation, mutation } from "../_generated/server";
+import type { MutationCtx } from "../_generated/server";
+import type { Id } from "../_generated/dataModel";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
@@ -38,9 +40,9 @@ export const storeCalendarTokenForUser = internalMutation({
 });
 
 async function upsertCalendarToken(
-  ctx: any,
+  ctx: MutationCtx,
   args: {
-    userId: string;
+    userId: Id<"users">;
     accessToken: string;
     refreshToken: string;
     expiresAt: number;
@@ -50,7 +52,7 @@ async function upsertCalendarToken(
 ) {
   const existing = await ctx.db
     .query("calendarConnections")
-    .withIndex("by_userId", (q: any) => q.eq("userId", args.userId))
+    .withIndex("by_userId", (q) => q.eq("userId", args.userId))
     .unique();
 
   if (existing) {
@@ -93,7 +95,7 @@ export const updateCalendarToken = internalMutation({
   handler: async (ctx, args) => {
     const existing = await ctx.db
       .query("calendarConnections")
-      .withIndex("by_userId", (q: any) => q.eq("userId", args.userId))
+      .withIndex("by_userId", (q) => q.eq("userId", args.userId))
       .unique();
 
     if (existing) {
@@ -119,7 +121,7 @@ export const saveSelectedCalendars = mutation({
 
     const existing = await ctx.db
       .query("calendarConnections")
-      .withIndex("by_userId", (q: any) => q.eq("userId", userId))
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
       .unique();
 
     if (!existing) throw new Error("No calendar connected");
@@ -139,7 +141,7 @@ export const deleteCalendarToken = mutation({
 
     const existing = await ctx.db
       .query("calendarConnections")
-      .withIndex("by_userId", (q: any) => q.eq("userId", userId))
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
       .unique();
 
     if (existing) {
@@ -156,7 +158,7 @@ export const deleteCalendarTokenForUser = internalMutation({
   handler: async (ctx, args) => {
     const existing = await ctx.db
       .query("calendarConnections")
-      .withIndex("by_userId", (q: any) => q.eq("userId", args.userId))
+      .withIndex("by_userId", (q) => q.eq("userId", args.userId))
       .unique();
 
     if (existing) {

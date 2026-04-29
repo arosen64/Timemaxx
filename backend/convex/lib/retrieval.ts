@@ -51,6 +51,7 @@ export async function fetchRelevantClasses(
   userId: Id<"users">
 ): Promise<Id<"userCourses">[]> {
   // Dynamic import avoids a static import cycle (api → … → this file → api).
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { internal } = (await import("../_generated/api")) as unknown as { internal: any };
   const task = await ctx.runQuery(internal.queries.tasks.getTaskInternal, { taskId });
   if (!task || task.userId !== userId) return [];
@@ -111,6 +112,7 @@ export async function fetchRelevantTasks(
   taskId: Id<"tasks">,
   userId: Id<"users">
 ): Promise<Id<"tasks">[]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { internal } = (await import("../_generated/api")) as unknown as { internal: any };
   const task = await ctx.runQuery(internal.queries.tasks.getTaskInternal, { taskId });
   if (!task || task.userId !== userId) return [];
@@ -181,6 +183,7 @@ export async function fetchRelevantChats(
   opts?: { queryEmbedding?: number[] }
 ): Promise<RelevantChats> {
   const empty: RelevantChats = { chunkIds: [], chunks: [] };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { internal } = (await import("../_generated/api")) as unknown as { internal: any };
   const task = await ctx.runQuery(internal.queries.tasks.getTaskInternal, {
     taskId: currentTaskId,

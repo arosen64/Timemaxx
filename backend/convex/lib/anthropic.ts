@@ -46,9 +46,7 @@ export async function callAnthropic<T>(opts: {
 
     return result.output;
   } catch (err) {
-    if (isTimeoutError(err)) {
-      throw new Error("AI generation timed out — please try again");
-    }
+    if (isTimeoutError(err)) throw err;
     throw err;
   }
 }

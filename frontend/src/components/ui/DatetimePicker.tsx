@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { CalendarIcon, ClockIcon, ChevronLeftIcon, ChevronRightIcon } from "../icons";
 
 const DAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
@@ -70,7 +70,7 @@ export default function DatetimePicker({
 
   const containerRef = useRef<HTMLDivElement>(null);
 
-  function resetToValue() {
+  const resetToValue = useCallback(() => {
     const base = value ?? new Date();
     setViewYear(base.getFullYear());
     setViewMonth(base.getMonth());
@@ -83,7 +83,7 @@ export default function DatetimePicker({
     setAmpm(value ? (value.getHours() >= 12 ? "PM" : "AM") : "PM");
     setHourDraft(null);
     setMinuteDraft(null);
-  }
+  }, [value]);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -94,7 +94,7 @@ export default function DatetimePicker({
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [value]);
+  }, [value, resetToValue]);
 
   function prevMonth() {
     if (viewMonth === 0) {

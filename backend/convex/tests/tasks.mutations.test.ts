@@ -1,11 +1,12 @@
 import { describe, expect, test, vi, beforeEach, afterEach } from "vitest";
 import { api } from "../_generated/api";
 import { makeTestCtx, createTestUser } from "../../convex-tests/helpers";
+import type { Id } from "../_generated/dataModel";
 
 async function seedTask(t: ReturnType<typeof makeTestCtx>, userId: string) {
   return t.run((ctx) =>
     ctx.db.insert("tasks", {
-      userId: userId as any,
+      userId: userId as Id<"users">,
       title: "Test task",
       description: "desc",
       taskType: "Essay",
@@ -23,11 +24,11 @@ async function seedStudyBlock(
 ) {
   return t.run((ctx) =>
     ctx.db.insert("studyBlocks", {
-      taskId: taskId as any,
+      taskId: taskId as Id<"tasks">,
       title: "Block",
       studyBlockLength: 60,
       isCompleted: false,
-      ...(opts.userId ? { userId: opts.userId as any } : {}),
+      ...(opts.userId ? { userId: opts.userId as Id<"users"> } : {}),
       ...(opts.googleEventId ? { googleEventId: opts.googleEventId } : {}),
     })
   );
@@ -36,8 +37,8 @@ async function seedStudyBlock(
 async function seedSubtask(t: ReturnType<typeof makeTestCtx>, taskId: string, userId: string) {
   return t.run((ctx) =>
     ctx.db.insert("subtasks", {
-      parentTaskId: taskId as any,
-      userId: userId as any,
+      parentTaskId: taskId as Id<"tasks">,
+      userId: userId as Id<"users">,
       title: "Subtask",
       description: "desc",
       taskType: "Essay",
@@ -55,11 +56,11 @@ async function seedSubtaskStudyBlock(
 ) {
   return t.run((ctx) =>
     ctx.db.insert("studyBlocks", {
-      subtaskId: subtaskId as any,
+      subtaskId: subtaskId as Id<"subtasks">,
       title: "Subtask Block",
       studyBlockLength: 60,
       isCompleted: false,
-      ...(opts.userId ? { userId: opts.userId as any } : {}),
+      ...(opts.userId ? { userId: opts.userId as Id<"users"> } : {}),
       ...(opts.googleEventId ? { googleEventId: opts.googleEventId } : {}),
     })
   );
