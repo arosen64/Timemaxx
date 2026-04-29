@@ -15,7 +15,8 @@ export default tseslint.config(
       prettier,
     },
     rules: {
-      ...reactHooks.configs.recommended.rules,
+      "react-hooks/rules-of-hooks": "error",
+      "react-hooks/exhaustive-deps": "warn",
       "prettier/prettier": "warn",
       "@typescript-eslint/no-unused-vars": [
         "warn",
