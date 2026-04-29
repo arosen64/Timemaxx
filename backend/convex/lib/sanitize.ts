@@ -1,6 +1,6 @@
 /**
  * Input sanitization and validation utilities for LLM-facing text fields.
- * Applied to all user-provided content before it enters a Gemini prompt.
+ * Applied to all user-provided content before it enters an LLM prompt.
  */
 
 /** Phrases commonly used in prompt injection attempts (case-insensitive). */
