@@ -40,7 +40,9 @@ export const SCHEDULING_STEP_ID = "slot-selection";
 const slotSelectionStep = createStep({
   id: SCHEDULING_STEP_ID,
   inputSchema: z.object({
-    prompt: z.string().describe("Fully-assembled batch scheduling prompt from buildBatchScheduleBlockPrompt()"),
+    prompt: z
+      .string()
+      .describe("Fully-assembled batch scheduling prompt from buildBatchScheduleBlockPrompt()"),
   }),
   outputSchema: slotSelectionOutputSchema,
   execute: async ({ inputData }) => {

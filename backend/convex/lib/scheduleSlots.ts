@@ -495,7 +495,7 @@ export function filterPoolForBlock(opts: {
  */
 export async function selectAllSlotsWithAI(
   blocks: BatchScheduleBlockEntry[],
-  productivityTraits: unknown,
+  productivityTraits: unknown
 ): Promise<number[]> {
   if (blocks.length === 0) return [];
 
@@ -508,7 +508,9 @@ export async function selectAllSlotsWithAI(
   try {
     const prompt = buildBatchScheduleBlockPrompt(blocks, productivityTraits);
     const client = new MastraClient({ baseUrl: mastraUrl });
-    const run = await client.getWorkflow("scheduling-workflow").startAsync({ inputData: { prompt } });
+    const run = await client
+      .getWorkflow("scheduling-workflow")
+      .startAsync({ inputData: { prompt } });
 
     const runStatus = (run as { status?: string }).status;
     if (runStatus === "failed") {
@@ -553,7 +555,7 @@ export async function selectSlotWithAI(opts: {
   if (opts.candidates.length === 0) return null;
   const [idx] = await selectAllSlotsWithAI(
     [{ taskTitle: opts.taskTitle, dueDate: opts.dueDate, candidates: opts.candidates }],
-    opts.productivityTraits,
+    opts.productivityTraits
   );
   const chosen = opts.candidates[idx ?? 0];
   return { startISO: chosen.startISO, startMs: chosen.startMs };
