@@ -25,7 +25,7 @@ const subtaskGenerationStep = createStep({
     contextPrompt: z
       .string()
       .describe(
-        "Full context prompt: assignment title, type, due date, description, and optional file content",
+        "Full context prompt: assignment title, type, due date, description, and optional file content"
       ),
   }),
   outputSchema: subtaskAgentOutputSchema,

@@ -11,10 +11,8 @@ export const subtaskAgentOutputSchema = z.object({
       description: z.string().describe("1-2 sentences on what the student should do"),
       taskType: z
         .string()
-        .describe(
-          "One of: Essay, Problem Set, Exam Prep, Coding, Reading, Lab, Presentation",
-        ),
-    }),
+        .describe("One of: Essay, Problem Set, Exam Prep, Coding, Reading, Lab, Presentation"),
+    })
   ),
 });
 
