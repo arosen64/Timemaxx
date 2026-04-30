@@ -98,9 +98,7 @@ describe("actions/requestGenerateSubtasks", () => {
   });
 
   test("returns subtasks array on successful generation with description", async () => {
-    mockCallGemini.mockResolvedValueOnce(
-      makeGeminiSubtaskResponse(MOCK_SUBTASKS)
-    );
+    mockCallGemini.mockResolvedValueOnce(makeGeminiSubtaskResponse(MOCK_SUBTASKS));
 
     const t = makeTestCtx();
     const { userId, withAuth } = await createTestUser(t);
@@ -122,9 +120,7 @@ describe("actions/requestGenerateSubtasks", () => {
   });
 
   test("calls Gemini and returns subtasks when only fileContent is provided", async () => {
-    mockCallGemini.mockResolvedValueOnce(
-      makeGeminiSubtaskResponse(MOCK_SUBTASKS)
-    );
+    mockCallGemini.mockResolvedValueOnce(makeGeminiSubtaskResponse(MOCK_SUBTASKS));
 
     const t = makeTestCtx();
     const { userId, withAuth } = await createTestUser(t);
@@ -150,10 +146,7 @@ describe("actions/requestGenerateSubtasks", () => {
     const taskId = await seedTask(t, ownerUserId);
 
     await expect(
-      attackerAuth.action(
-        api.actions.requestGenerateSubtasks.requestGenerateSubtasks,
-        { taskId }
-      )
+      attackerAuth.action(api.actions.requestGenerateSubtasks.requestGenerateSubtasks, { taskId })
     ).rejects.toThrow("Task not found or access denied");
     expect(mockCallGemini).not.toHaveBeenCalled();
   });

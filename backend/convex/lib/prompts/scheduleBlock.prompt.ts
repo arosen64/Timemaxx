@@ -81,7 +81,7 @@ export function buildScheduleBlockPrompt(args: ScheduleBlockPromptArgs): string 
       minutesUntilNextEvent: s.minutesUntilNextEvent,
     })),
     null,
-    2,
+    2
   );
 
   const sections: string[] = [];
@@ -118,7 +118,7 @@ export interface BatchScheduleBlockEntry {
 
 export function buildBatchScheduleBlockPrompt(
   blocks: BatchScheduleBlockEntry[],
-  productivityTraits: unknown,
+  productivityTraits: unknown
 ): string {
   const sections: string[] = [];
 
@@ -131,7 +131,10 @@ ${JSON.stringify(productivityTraits, null, 2)}
   const blocksJson = blocks.map((b, bi) => ({
     blockIndex: bi,
     taskTitle: b.taskTitle,
-    dueDate: new Date(b.dueDate).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" }),
+    dueDate: new Date(b.dueDate).toLocaleString("en-US", {
+      dateStyle: "medium",
+      timeStyle: "short",
+    }),
     ...(b.recommendedStart !== undefined
       ? { doNotScheduleBefore: new Date(b.recommendedStart).toISOString() }
       : {}),

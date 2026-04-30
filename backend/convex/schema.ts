@@ -79,7 +79,6 @@ export default defineSchema({
     ),
 
     gcalColorMappingEnabled: v.optional(v.boolean()),
-
   })
     .index("email", ["email"])
     .index("phone", ["phone"]),
@@ -102,7 +101,11 @@ export default defineSchema({
     .index("by_user", ["userId"])
     .index("by_user_course", ["userId", "courseCode"])
     .index("by_user_term", ["userId", "term"])
-    .vectorIndex("by_embedding", { vectorField: "embedding", dimensions: 3072, filterFields: ["userId"] }),
+    .vectorIndex("by_embedding", {
+      vectorField: "embedding",
+      dimensions: 3072,
+      filterFields: ["userId"],
+    }),
 
   // Tasks table
   tasks: defineTable({
@@ -122,14 +125,20 @@ export default defineSchema({
     classTag: v.optional(v.string()),
     embedding: v.optional(v.array(v.float64())),
     reasoning: v.optional(reasoningTraceValidator),
-    status: v.optional(v.union(v.literal("not_started"), v.literal("in_progress"), v.literal("completed"))),
+    status: v.optional(
+      v.union(v.literal("not_started"), v.literal("in_progress"), v.literal("completed"))
+    ),
     assignmentWeight: v.optional(v.number()),
     recommendedStart: v.optional(v.number()),
   })
     .index("by_userId", ["userId"])
     .index("by_userId_createdAt", ["userId", "createdAt"])
     .index("by_userId_courseId", ["userId", "courseId"])
-    .vectorIndex("by_embedding", { vectorField: "embedding", dimensions: 3072, filterFields: ["userId"] }),
+    .vectorIndex("by_embedding", {
+      vectorField: "embedding",
+      dimensions: 3072,
+      filterFields: ["userId"],
+    }),
 
   // Subtasks table — AI-generated or manually created subtasks linked to a parent task
   subtasks: defineTable({
@@ -151,11 +160,17 @@ export default defineSchema({
     order: v.number(),
     createdAt: v.number(),
     embedding: v.optional(v.array(v.float64())),
-    status: v.optional(v.union(v.literal("not_started"), v.literal("in_progress"), v.literal("completed"))),
+    status: v.optional(
+      v.union(v.literal("not_started"), v.literal("in_progress"), v.literal("completed"))
+    ),
   })
     .index("by_parentTaskId", ["parentTaskId"])
     .index("by_userId", ["userId"])
-    .vectorIndex("by_embedding", { vectorField: "embedding", dimensions: 3072, filterFields: ["userId"] }),
+    .vectorIndex("by_embedding", {
+      vectorField: "embedding",
+      dimensions: 3072,
+      filterFields: ["userId"],
+    }),
 
   // StudyBlocks table — stores scheduled time chunks assigned to tasks or subtasks
   studyBlocks: defineTable({
@@ -183,11 +198,7 @@ export default defineSchema({
     content: v.string(),
     createdAt: v.number(),
     clarificationIntent: v.optional(
-      v.union(
-        v.literal("task_feedback"),
-        v.literal("class_difficulty"),
-        v.literal("none"),
-      ),
+      v.union(v.literal("task_feedback"), v.literal("class_difficulty"), v.literal("none"))
     ),
     /** Copied from chatSessions at insert time when that session has resolved scope */
     taskId: v.optional(v.id("tasks")),
@@ -207,9 +218,7 @@ export default defineSchema({
     /** Last user utterance used for embedding search (MCQ / Other) */
     lastEntityQueryText: v.optional(v.string()),
     /** Which entity we are disambiguating in the active MCQ flow */
-    activeEntityStep: v.optional(
-      v.union(v.literal("task"), v.literal("class")),
-    ),
+    activeEntityStep: v.optional(v.union(v.literal("task"), v.literal("class"))),
     /** Supervisor said "both" — after task, prompt for class */
     needsClassAfterTask: v.optional(v.boolean()),
     clarificationAttemptCount: v.optional(v.number()),
@@ -218,14 +227,12 @@ export default defineSchema({
     /** Set when the thread hits the per-session message cap (no new user messages). */
     chatInputLocked: v.optional(v.boolean()),
     /** Which specialist agent is handling this session */
-    activeAgent: v.optional(
-      activeAgentValidator,
-    ),
+    activeAgent: v.optional(activeAgentValidator),
     /** Intent determined by task agent: "create" skips entity MCQ, "rud" triggers it */
     taskAgentIntent: v.optional(v.union(v.literal("create"), v.literal("rud"))),
     /** Intent determined by course agent for multi-turn class conversations. */
     courseAgentIntent: v.optional(
-      v.union(v.literal("add"), v.literal("drop"), v.literal("view"), v.literal("update")),
+      v.union(v.literal("add"), v.literal("drop"), v.literal("view"), v.literal("update"))
     ),
     /** Current scope for future chat message tagging. */
     activeTaskId: v.optional(v.id("tasks")),
@@ -249,11 +256,7 @@ export default defineSchema({
     linkedTaskIds: v.array(v.id("tasks")),
     linkedCourseIds: v.array(v.id("userCourses")),
     clarificationIntent: v.optional(
-      v.union(
-        v.literal("task_feedback"),
-        v.literal("class_difficulty"),
-        v.literal("none"),
-      ),
+      v.union(v.literal("task_feedback"), v.literal("class_difficulty"), v.literal("none"))
     ),
     embedding: v.optional(v.array(v.float64())),
     createdAt: v.number(),
@@ -271,11 +274,7 @@ export default defineSchema({
     userId: v.id("users"),
     fileContents: v.string(),
     courseId: v.optional(v.id("userCourses")),
-    status: v.union(
-      v.literal("pending"),
-      v.literal("confirmed"),
-      v.literal("failed"),
-    ),
+    status: v.union(v.literal("pending"), v.literal("confirmed"), v.literal("failed")),
     createdAt: v.number(),
   })
     .index("by_userId", ["userId"])

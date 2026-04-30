@@ -17,7 +17,7 @@ export type TimedEvent = {
  */
 export async function fetch21DayCalendarEvents(
   ctx: ActionCtx,
-  timezone: string,
+  timezone: string
 ): Promise<TimedEvent[]> {
   const today = new Date();
   const week2Start = new Date(today);

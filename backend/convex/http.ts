@@ -26,7 +26,7 @@ function makeApiHandler(app: Hono<HonoEnv>, path: string) {
 
     let userId: Id<"users"> | null = null;
     try {
-      userId = await getAuthUserId(ctx) as Id<"users"> | null;
+      userId = (await getAuthUserId(ctx)) as Id<"users"> | null;
     } catch {
       // invalid token — fall through to 401
     }

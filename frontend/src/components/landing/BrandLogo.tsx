@@ -6,9 +6,7 @@ export default function BrandLogo() {
       <div className="flex h-10 w-10 items-center justify-center rounded bg-teal text-navy">
         <BookOpenIcon size={26} />
       </div>
-      <span className="font-heading text-xl font-bold text-white">
-        Timemaxx
-      </span>
+      <span className="font-heading text-xl font-bold text-white">Timemaxx</span>
     </div>
   );
 }

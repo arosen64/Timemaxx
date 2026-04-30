@@ -1,16 +1,17 @@
 import { describe, expect, test } from "vitest";
 import { api } from "../_generated/api";
 import { makeTestCtx, createTestUser } from "../../convex-tests/helpers";
+import type { Id } from "../_generated/dataModel";
 
 async function seedTask(
   t: ReturnType<typeof makeTestCtx>,
   userId: string,
-  opts: { dueDate?: number; recommendedStart?: number } = {},
+  opts: { dueDate?: number; recommendedStart?: number } = {}
 ) {
   const dueDate = opts.dueDate ?? Date.now() + 30 * 86_400_000;
   return t.run((ctx) =>
     ctx.db.insert("tasks", {
-      userId: userId as any,
+      userId: userId as Id<"users">,
       title: "Test task",
       description: "desc",
       taskType: "Essay",
@@ -22,15 +23,11 @@ async function seedTask(
   );
 }
 
-async function seedBlock(
-  t: ReturnType<typeof makeTestCtx>,
-  taskId: string,
-  userId: string,
-) {
+async function seedBlock(t: ReturnType<typeof makeTestCtx>, taskId: string, userId: string) {
   return t.run((ctx) =>
     ctx.db.insert("studyBlocks", {
-      taskId: taskId as any,
-      userId: userId as any,
+      taskId: taskId as Id<"tasks">,
+      userId: userId as Id<"users">,
       title: "Block",
       studyBlockLength: 60,
       isCompleted: false,
@@ -42,12 +39,12 @@ async function seedSubtask(
   t: ReturnType<typeof makeTestCtx>,
   parentTaskId: string,
   userId: string,
-  opts: { dueDate?: number } = {},
+  opts: { dueDate?: number } = {}
 ) {
   return t.run((ctx) =>
     ctx.db.insert("subtasks", {
-      parentTaskId: parentTaskId as any,
-      userId: userId as any,
+      parentTaskId: parentTaskId as Id<"tasks">,
+      userId: userId as Id<"users">,
       title: "Subtask",
       description: "desc",
       taskType: "Essay",
@@ -62,12 +59,12 @@ async function seedSubtask(
 async function seedSubtaskBlock(
   t: ReturnType<typeof makeTestCtx>,
   subtaskId: string,
-  userId: string,
+  userId: string
 ) {
   return t.run((ctx) =>
     ctx.db.insert("studyBlocks", {
-      subtaskId: subtaskId as any,
-      userId: userId as any,
+      subtaskId: subtaskId as Id<"subtasks">,
+      userId: userId as Id<"users">,
       title: "Subtask Block",
       studyBlockLength: 60,
       isCompleted: false,

@@ -18,7 +18,13 @@ import {
   type WorkHoursRow,
   type PoolSlot,
 } from "../lib/scheduleSlots";
-import { parseTimeOfDayRanges, scoreCandidate, getProductivityTraits, getSlotTimeInfo, type ScoreBreakdown } from "../lib/scoreSlots";
+import {
+  parseTimeOfDayRanges,
+  scoreCandidate,
+  getProductivityTraits,
+  getSlotTimeInfo,
+  type ScoreBreakdown,
+} from "../lib/scoreSlots";
 import { fetch21DayCalendarEvents } from "../lib/calendarFetch";
 
 const MAX_CANDIDATES = 20;
@@ -38,20 +44,17 @@ export const scheduleBlock = action({
     studyBlockId: v.id("studyBlocks"),
     timezone: v.string(),
   },
-  handler: async (
-    ctx,
-    args,
-  ): Promise<{ scheduled: number } | { error: string }> => {
+  handler: async (ctx, args): Promise<{ scheduled: number } | { error: string }> => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Unauthenticated");
 
     // Fetch the block and verify ownership
-    const block = await ctx.runQuery(
-      internal.queries.studyBlocks.getStudyBlockInternal,
-      { studyBlockId: args.studyBlockId },
-    );
+    const block = await ctx.runQuery(internal.queries.studyBlocks.getStudyBlockInternal, {
+      studyBlockId: args.studyBlockId,
+    });
     if (!block) throw new Error("Study block not found");
-    if (!block.taskId && !block.subtaskId) throw new Error("Block is not associated with a task or subtask");
+    if (!block.taskId && !block.subtaskId)
+      throw new Error("Block is not associated with a task or subtask");
     // Allow rescheduling conflicted blocks that already have a startTime
     if (block.startTime && !block.isConflicted) return { scheduled: 0 };
 
@@ -93,13 +96,19 @@ export const scheduleBlock = action({
       ctx.runQuery(internal.queries.users.getUserInternal, { userId }),
       fetch21DayCalendarEvents(ctx, args.timezone),
       ctx.runQuery(internal.queries.studyBlocks.getAllStudyBlocksByUserInternal, { userId }),
-      ctx.runQuery(internal.queries.userCourses.getUserCoursesInternal, { userId }) as Promise<Array<{ _id: string; difficultyRating?: number }>>,
+      ctx.runQuery(internal.queries.userCourses.getUserCoursesInternal, { userId }) as Promise<
+        Array<{ _id: string; difficultyRating?: number }>
+      >,
     ]);
     if (!user) throw new Error("User not found");
 
     const focusBlockLength: number = user.focusBlockLength ?? 60;
     const workHoursGrid = (user.workHoursGrid ?? []) as WorkHoursRow[];
-    const { dayOfWeek: preferredDays, timeOfDay: timeOfDayPrefs, deadlineBehavior } = getProductivityTraits(user.productivityTraits);
+    const {
+      dayOfWeek: preferredDays,
+      timeOfDay: timeOfDayPrefs,
+      deadlineBehavior,
+    } = getProductivityTraits(user.productivityTraits);
     const timeOfDayRanges = parseTimeOfDayRanges(timeOfDayPrefs);
     const dayOfWeekPrefs: string[] = preferredDays;
     const difficultyRating = courseId
@@ -114,7 +123,14 @@ export const scheduleBlock = action({
         endMs: new Date(e.end).getTime(),
         title: e.summary,
       })),
-      ...(allUserBlocks as Array<{ _id: string; startTime?: string; studyBlockLength: number; title: string }>)
+      ...(
+        allUserBlocks as Array<{
+          _id: string;
+          startTime?: string;
+          studyBlockLength: number;
+          title: string;
+        }>
+      )
         .filter((b) => b.startTime && b._id !== args.studyBlockId)
         .map((b) => ({
           startMs: new Date(b.startTime!).getTime(),
@@ -132,9 +148,9 @@ export const scheduleBlock = action({
 
     // Build slot pool up to dueDate (or horizon, whichever is sooner)
     const pool: PoolSlot[] = [];
-    let scanCursor = roundUpTo15Min(nowMs);
+    const scanCursor = roundUpTo15Min(nowMs);
     if (scanCursor < poolTarget) {
-      scanCursor = extendSlotPool({
+      extendSlotPool({
         pool,
         scanCursor,
         targetMs: poolTarget,
@@ -150,7 +166,10 @@ export const scheduleBlock = action({
     const sortedOccupied = [...occupiedIntervals].sort((a, b) => a.startMs - b.startMs);
 
     type ScoredSlot = CandidateSlot & { score: number; scoreBreakdown: ScoreBreakdown };
-    const slotTimeCache = new Map<number, { dayOfWeek: string; minutesFromMidnight: number; dateStr: string }>();
+    const slotTimeCache = new Map<
+      number,
+      { dayOfWeek: string; minutesFromMidnight: number; dateStr: string }
+    >();
     const blockDurationMs = block.studyBlockLength * 60000;
 
     // Score every physically valid slot across the full window.
@@ -159,7 +178,8 @@ export const scheduleBlock = action({
       if (s.startMs >= dueDate) continue;
       if (s.startMs + blockDurationMs > dueDate) continue;
       if (recommendedStart !== undefined && s.startMs < recommendedStart) continue;
-      if (!isSlotValid(s.startMs, blockDurationMs, workHoursGrid, occupiedIntervals, args.timezone)) continue;
+      if (!isSlotValid(s.startMs, blockDurationMs, workHoursGrid, occupiedIntervals, args.timezone))
+        continue;
 
       const endMs = s.startMs + blockDurationMs;
       const context = buildSlotContext(s.startMs, endMs, occupiedIntervals, sortedOccupied);
@@ -203,7 +223,7 @@ export const scheduleBlock = action({
 
     const [chosenIndex] = await selectAllSlotsWithAI(
       [{ taskTitle, dueDate, recommendedStart, candidates }],
-      user.productivityTraits,
+      user.productivityTraits
     );
 
     // Physical-validity fallback (mirrors scheduleAllBlocks Phase 3)

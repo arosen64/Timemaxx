@@ -1,4 +1,4 @@
-import { describe, expect, test, vi } from "vitest";
+import { describe, expect, test } from "vitest";
 import {
   roundUpTo15Min,
   isSlotValid,
@@ -319,7 +319,11 @@ describe("filterPoolForBlock", () => {
   test("excludes slots overlapping occupied intervals", () => {
     const pool: PoolSlot[] = [{ startMs: MONDAY_9AM_UTC }];
     const occupied: OccupiedInterval[] = [
-      { startMs: MONDAY_9AM_UTC + 30 * 60 * 1000, endMs: MONDAY_9AM_UTC + 90 * 60 * 1000, title: "Busy" },
+      {
+        startMs: MONDAY_9AM_UTC + 30 * 60 * 1000,
+        endMs: MONDAY_9AM_UTC + 90 * 60 * 1000,
+        title: "Busy",
+      },
     ];
     const candidates = filterPoolForBlock({
       pool,
@@ -624,8 +628,12 @@ describe("enumerateSlots with dailyLoadMap / maxBlocksPerDayMap", () => {
     const loadMap = new Map([["2025-01-06", 1]]);
     const capMap = new Map([
       ["Monday", 1],
-      ["Tuesday", 3], ["Wednesday", 3], ["Thursday", 3], ["Friday", 3],
-      ["Saturday", 3], ["Sunday", 3],
+      ["Tuesday", 3],
+      ["Wednesday", 3],
+      ["Thursday", 3],
+      ["Friday", 3],
+      ["Saturday", 3],
+      ["Sunday", 3],
     ]);
     const candidates = enumerateSlots({
       fromMs: MONDAY_9AM_UTC,
@@ -639,7 +647,9 @@ describe("enumerateSlots with dailyLoadMap / maxBlocksPerDayMap", () => {
     });
     const mondayDate = "2025-01-06";
     const hasMondaySlot = candidates.some(
-      (c) => new Intl.DateTimeFormat("en-CA", { timeZone: TIMEZONE }).format(new Date(c.startMs)) === mondayDate,
+      (c) =>
+        new Intl.DateTimeFormat("en-CA", { timeZone: TIMEZONE }).format(new Date(c.startMs)) ===
+        mondayDate
     );
     expect(hasMondaySlot).toBe(false);
     expect(candidates.length).toBeGreaterThan(0); // other days still have slots
@@ -673,11 +683,14 @@ describe("enumerateSlots with dailyLoadMap / maxBlocksPerDayMap", () => {
 describe("filterPoolForBlock with dailyLoadMap / maxBlocksPerDayMap", () => {
   test("excludes pool slots on days at cap", () => {
     const pool: PoolSlot[] = [
-      { startMs: MONDAY_9AM_UTC },                           // Monday — at cap
-      { startMs: MONDAY_9AM_UTC + 24 * 60 * 60 * 1000 },    // Tuesday — under cap
+      { startMs: MONDAY_9AM_UTC }, // Monday — at cap
+      { startMs: MONDAY_9AM_UTC + 24 * 60 * 60 * 1000 }, // Tuesday — under cap
     ];
     const loadMap = new Map([["2025-01-06", 3]]);
-    const capMap = new Map([["Monday", 3], ["Tuesday", 3]]);
+    const capMap = new Map([
+      ["Monday", 3],
+      ["Tuesday", 3],
+    ]);
     const candidates = filterPoolForBlock({
       pool,
       dueDateMs: MONDAY_9AM_UTC + 5 * 24 * 60 * 60 * 1000,

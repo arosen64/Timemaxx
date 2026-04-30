@@ -85,13 +85,7 @@ export const parseTranscript = action({
     const raw: ParsedCourse[] = parseOutput.courses ?? [];
 
     return raw
-      .filter(
-        (c) =>
-          c.courseCode?.trim() &&
-          c.title?.trim() &&
-          c.term?.trim() &&
-          c.grade?.trim()
-      )
+      .filter((c) => c.courseCode?.trim() && c.title?.trim() && c.term?.trim() && c.grade?.trim())
       .map((c) => ({ ...c }));
   },
 });

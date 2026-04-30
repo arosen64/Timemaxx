@@ -1,60 +1,69 @@
-import { Fragment, useState, useEffect } from 'react'
-import type { RefObject } from 'react'
-import type { AllDayEvent } from '../../../../backend/convex/actions/fetchCalendarEvents'
-import type { LayoutEvent } from './overlapLayout'
-import { TOTAL_SLOTS, SLOT_HEIGHT, DAYS_FULL, slotLabel, isoDateString, isToday, minutesFromMidnight, getTextColorClass } from './utils'
-import type { Id } from '../../../../backend/convex/_generated/dataModel'
-import ScheduleBlockConflict from './ScheduleBlockConflict'
+import { Fragment, useState, useEffect } from "react";
+import type { RefObject } from "react";
+import type { AllDayEvent } from "../../../../backend/convex/actions/fetchCalendarEvents";
+import type { LayoutEvent } from "./overlapLayout";
+import {
+  TOTAL_SLOTS,
+  SLOT_HEIGHT,
+  DAYS_FULL,
+  slotLabel,
+  isoDateString,
+  isToday,
+  minutesFromMidnight,
+  getTextColorClass,
+} from "./utils";
+import type { Id } from "../../../../backend/convex/_generated/dataModel";
+import ScheduleBlockConflict from "./ScheduleBlockConflict";
 
-type WorkHoursRow = { day: string; blocked: number[] }
+type WorkHoursRow = { day: string; blocked: number[] };
 
 export type StudyBlockOnGrid = {
-  _id: Id<'studyBlocks'>
-  taskId: Id<'tasks'>
-  title: string
-  startTime: string
-  studyBlockLength: number
-  isConflicted: boolean | undefined
-  taskTitle: string
-  taskDueDate: number
-  courseColor?: string
-  courseName?: string
-}
+  _id: Id<"studyBlocks">;
+  taskId: Id<"tasks">;
+  title: string;
+  startTime: string;
+  studyBlockLength: number;
+  isConflicted: boolean | undefined;
+  taskTitle: string;
+  taskDueDate: number;
+  courseColor?: string;
+  courseName?: string;
+};
 
 function getSlotState(grid: WorkHoursRow[] | null, dayName: string, slot: number) {
-  const row = grid?.find((r) => r.day === dayName)
-  if (!row) return 'none'
-  if (row.blocked.includes(slot)) return 'unavailable'
-  return 'none'
+  const row = grid?.find((r) => r.day === dayName);
+  if (!row) return "none";
+  if (row.blocked.includes(slot)) return "unavailable";
+  return "none";
 }
 
 function slotBgClass(
-  state: 'unavailable' | 'none',
+  state: "unavailable" | "none",
   isHighlighted: boolean,
   _isAssignMode: boolean,
-  isTodayCol: boolean = false,
+  isTodayCol: boolean = false
 ) {
-  if (isHighlighted) return 'bg-teal/60 cursor-pointer hover:bg-teal/80'
-  if (state === 'unavailable') return 'bg-slate-blue'
-  return isTodayCol ? 'bg-today-col' : 'bg-white'
+  if (isHighlighted) return "bg-teal/60 cursor-pointer hover:bg-teal/80";
+  if (state === "unavailable") return "bg-slate-blue";
+  return isTodayCol ? "bg-today-col" : "bg-white";
 }
 
 interface TimeGridProps {
-  days: Date[]
-  workHoursGrid: WorkHoursRow[] | null
-  layoutByDay: Record<string, LayoutEvent[]>
-  allDayEventsByDay: Record<string, AllDayEvent[]>
-  calendarConnected: boolean
-  gridRef: RefObject<HTMLDivElement>
-  studyBlocksByDay: Record<string, StudyBlockOnGrid[]>
-  highlightedSlots: Set<string>
-  isAssignMode: boolean
-  onSlotClick: (dateStr: string, slot: number) => void
-  onMoveBlock: (studyBlockId: Id<'studyBlocks'>) => void
-  onAutoReschedule: () => void
-  draggingBlockId: Id<'studyBlocks'> | null
-  onDragStart: (studyBlockId: Id<'studyBlocks'>) => void
-  onDrop: (dateStr: string, slot: number) => void
+  days: Date[];
+  workHoursGrid: WorkHoursRow[] | null;
+  layoutByDay: Record<string, LayoutEvent[]>;
+  allDayEventsByDay: Record<string, AllDayEvent[]>;
+  calendarConnected: boolean;
+  gridRef: RefObject<HTMLDivElement>;
+  studyBlocksByDay: Record<string, StudyBlockOnGrid[]>;
+  highlightedSlots: Set<string>;
+  isAssignMode: boolean;
+  onSlotClick: (dateStr: string, slot: number) => void;
+  onMoveBlock: (studyBlockId: Id<"studyBlocks">) => void;
+  onAutoReschedule: () => void;
+  draggingBlockId: Id<"studyBlocks"> | null;
+  onDragStart: (studyBlockId: Id<"studyBlocks">) => void;
+  onDrop: (dateStr: string, slot: number) => void;
 }
 
 export default function TimeGrid({
@@ -74,49 +83,67 @@ export default function TimeGrid({
   onDragStart,
   onDrop,
 }: TimeGridProps) {
-  const COLS = `3rem repeat(7, 1fr)`
-  const [hoveredBlockId, setHoveredBlockId] = useState<Id<'studyBlocks'> | null>(null)
-  const [now, setNow] = useState(() => new Date())
+  const COLS = `3rem repeat(7, 1fr)`;
+  const [hoveredBlockId, setHoveredBlockId] = useState<Id<"studyBlocks"> | null>(null);
+  const [now, setNow] = useState(() => new Date());
 
   useEffect(() => {
-    const id = setInterval(() => setNow(new Date()), 60_000)
-    return () => clearInterval(id)
-  }, [])
+    const id = setInterval(() => setNow(new Date()), 60_000);
+    return () => clearInterval(id);
+  }, []);
 
-  const todayColIdx = days.findIndex((d) => isToday(d))
-  const nowTopPx = todayColIdx >= 0 ? (minutesFromMidnight(now) / 30) * SLOT_HEIGHT : null
+  const todayColIdx = days.findIndex((d) => isToday(d));
+  const nowTopPx = todayColIdx >= 0 ? (minutesFromMidnight(now) / 30) * SLOT_HEIGHT : null;
 
   return (
-    <div ref={gridRef} className="flex-1 overflow-y-auto rounded-xl border border-border bg-white min-h-0">
-
+    <div
+      ref={gridRef}
+      className="flex-1 overflow-y-auto rounded-xl border border-border bg-white min-h-0"
+    >
       {/* Sticky day header */}
-      <div className="sticky top-0 z-10 grid border-b border-border bg-bg-gray" style={{ gridTemplateColumns: COLS }}>
+      <div
+        className="sticky top-0 z-10 grid border-b border-border bg-bg-gray"
+        style={{ gridTemplateColumns: COLS }}
+      >
         <div />
         {days.map((day) => {
-          const today = isToday(day)
+          const today = isToday(day);
           return (
-            <div key={isoDateString(day)} className={`flex flex-col items-center justify-center border-l border-border py-2 ${today ? 'bg-navy' : ''}`}>
-              <div className={`font-body text-xs font-semibold ${today ? 'text-teal' : 'text-slate-blue'}`}>
-                {day.toLocaleDateString('en-US', { weekday: 'short' })}
+            <div
+              key={isoDateString(day)}
+              className={`flex flex-col items-center justify-center border-l border-border py-2 ${today ? "bg-navy" : ""}`}
+            >
+              <div
+                className={`font-body text-xs font-semibold ${today ? "text-teal" : "text-slate-blue"}`}
+              >
+                {day.toLocaleDateString("en-US", { weekday: "short" })}
               </div>
-              <div className={`font-heading text-sm font-bold ${today ? 'text-white' : 'text-slate-blue'}`}>
-                {day.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric' })}
+              <div
+                className={`font-heading text-sm font-bold ${today ? "text-white" : "text-slate-blue"}`}
+              >
+                {day.toLocaleDateString("en-US", { month: "numeric", day: "numeric" })}
               </div>
             </div>
-          )
+          );
         })}
       </div>
 
       {/* All-day chips row (only when calendar is connected) */}
       {calendarConnected && (
-        <div className="grid border-b border-border bg-bg-gray/50" style={{ gridTemplateColumns: COLS }}>
+        <div
+          className="grid border-b border-border bg-bg-gray/50"
+          style={{ gridTemplateColumns: COLS }}
+        >
           <div className="flex items-center justify-end pr-1.5">
             <span className="font-body text-[9px] leading-none text-light-blue">all-day</span>
           </div>
           {days.map((day) => {
-            const key = isoDateString(day)
+            const key = isoDateString(day);
             return (
-              <div key={key} className="flex min-h-[24px] flex-wrap gap-1 border-l border-border px-1 py-1">
+              <div
+                key={key}
+                className="flex min-h-[24px] flex-wrap gap-1 border-l border-border px-1 py-1"
+              >
                 {(allDayEventsByDay[key] ?? []).map((e) => (
                   <span
                     key={e.id}
@@ -127,7 +154,7 @@ export default function TimeGrid({
                   </span>
                 ))}
               </div>
-            )
+            );
           })}
         </div>
       )}
@@ -147,12 +174,12 @@ export default function TimeGrid({
               {slotLabel(slot)}
             </div>
             {days.map((day, colIdx) => {
-              const key = isoDateString(day)
-              const jsDay = day.getDay()
-              const dayName = DAYS_FULL[jsDay === 0 ? 6 : jsDay - 1]
-              const state = getSlotState(workHoursGrid, dayName, slot)
-              const slotKey = `${key}:${slot}`
-              const isHighlighted = highlightedSlots.has(slotKey)
+              const key = isoDateString(day);
+              const jsDay = day.getDay();
+              const dayName = DAYS_FULL[jsDay === 0 ? 6 : jsDay - 1];
+              const state = getSlotState(workHoursGrid, dayName, slot);
+              const slotKey = `${key}:${slot}`;
+              const isHighlighted = highlightedSlots.has(slotKey);
 
               return (
                 <div
@@ -160,30 +187,30 @@ export default function TimeGrid({
                   className={`border-b border-l border-border/50 ${slotBgClass(state, isHighlighted, isAssignMode, colIdx === todayColIdx)}`}
                   style={{ height: SLOT_HEIGHT }}
                   onClick={() => {
-                    if (isHighlighted) onSlotClick(key, slot)
+                    if (isHighlighted) onSlotClick(key, slot);
                   }}
                   onDragOver={(e) => {
-                    if (draggingBlockId && isHighlighted) e.preventDefault()
+                    if (draggingBlockId && isHighlighted) e.preventDefault();
                   }}
                   onDrop={(e) => {
-                    e.preventDefault()
-                    if (draggingBlockId && isHighlighted) onDrop(key, slot)
+                    e.preventDefault();
+                    if (draggingBlockId && isHighlighted) onDrop(key, slot);
                   }}
                 />
-              )
+              );
             })}
           </Fragment>
         ))}
 
         {/* Timed calendar event blocks */}
         {days.map((day, colIdx) => {
-          const key = isoDateString(day)
+          const key = isoDateString(day);
           return (layoutByDay[key] ?? []).map(({ event, left, width }) => {
-            const startDt = new Date(event.start)
-            const endDt = new Date(event.end)
-            const durationMin = Math.max(15, (endDt.getTime() - startDt.getTime()) / 60000)
-            const topPx = (minutesFromMidnight(startDt) / 30) * SLOT_HEIGHT
-            const heightPx = (durationMin / 30) * SLOT_HEIGHT
+            const startDt = new Date(event.start);
+            const endDt = new Date(event.end);
+            const durationMin = Math.max(15, (endDt.getTime() - startDt.getTime()) / 60000);
+            const topPx = (minutesFromMidnight(startDt) / 30) * SLOT_HEIGHT;
+            const heightPx = (durationMin / 30) * SLOT_HEIGHT;
 
             return (
               <div
@@ -201,11 +228,11 @@ export default function TimeGrid({
                   {event.summary}
                 </span>
                 <span className="block font-body text-[9px] text-sky-blue">
-                  {startDt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                  {startDt.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
                 </span>
               </div>
-            )
-          })
+            );
+          });
         })}
 
         {/* Current time indicator */}
@@ -232,14 +259,14 @@ export default function TimeGrid({
 
         {/* Study block overlays */}
         {days.map((day, colIdx) => {
-          const key = isoDateString(day)
+          const key = isoDateString(day);
           return (studyBlocksByDay[key] ?? []).map((block) => {
-            const startDt = new Date(block.startTime)
-            const topPx = (minutesFromMidnight(startDt) / 30) * SLOT_HEIGHT
-            const heightPx = Math.max((block.studyBlockLength / 30) * SLOT_HEIGHT, SLOT_HEIGHT)
-            const isConflicted = block.isConflicted ?? false
+            const startDt = new Date(block.startTime);
+            const topPx = (minutesFromMidnight(startDt) / 30) * SLOT_HEIGHT;
+            const heightPx = Math.max((block.studyBlockLength / 30) * SLOT_HEIGHT, SLOT_HEIGHT);
+            const isConflicted = block.isConflicted ?? false;
             // One calendar row or less: keep title visible (truncate + flex min-size-0 can collapse the title).
-            const compactBlock = heightPx <= SLOT_HEIGHT
+            const compactBlock = heightPx <= SLOT_HEIGHT;
 
             return (
               <div
@@ -274,24 +301,26 @@ export default function TimeGrid({
                 ) : (
                   <div
                     className={`flex h-full min-h-0 flex-col justify-start overflow-hidden rounded px-2 cursor-grab active:cursor-grabbing ${
-                      compactBlock ? 'gap-0 py-0.5' : 'gap-0.5 py-1.5'
-                    } ${block.courseColor ? '' : 'bg-navy'}`}
+                      compactBlock ? "gap-0 py-0.5" : "gap-0.5 py-1.5"
+                    } ${block.courseColor ? "" : "bg-navy"}`}
                     style={block.courseColor ? { backgroundColor: block.courseColor } : undefined}
                   >
-                    <span className={`block min-w-0 shrink-0 truncate font-heading text-[11px] font-semibold leading-tight ${block.courseColor ? getTextColorClass(block.courseColor) : 'text-white'}`}>
+                    <span
+                      className={`block min-w-0 shrink-0 truncate font-heading text-[11px] font-semibold leading-tight ${block.courseColor ? getTextColorClass(block.courseColor) : "text-white"}`}
+                    >
                       {block.title}
                     </span>
                     <span className="block min-w-0 shrink-0 truncate font-body text-[9px] leading-tight text-sky-blue">
-                      {startDt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} ·{' '}
-                      {block.studyBlockLength} min
+                      {startDt.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}{" "}
+                      · {block.studyBlockLength} min
                     </span>
                   </div>
                 )}
               </div>
-            )
-          })
+            );
+          });
         })}
       </div>
     </div>
-  )
+  );
 }

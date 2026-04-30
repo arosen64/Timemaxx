@@ -1,36 +1,44 @@
-import { type ReactNode } from 'react'
+import { type ReactNode } from "react";
 
 interface ButtonProps {
-  variant: 'primary' | 'destructive' | 'secondary' | 'outline' | 'warning'
-  children: ReactNode
-  onClick?: () => void
-  icon?: ReactNode
-  iconPosition?: 'left' | 'right'
-  disabled?: boolean
-  className?: string
+  variant: "primary" | "destructive" | "secondary" | "outline" | "warning";
+  children: ReactNode;
+  onClick?: () => void;
+  icon?: ReactNode;
+  iconPosition?: "left" | "right";
+  disabled?: boolean;
+  className?: string;
 }
 
 const variantStyles = {
-  primary: 'bg-navy text-white',
-  destructive: 'bg-urgent-red text-white',
-  secondary: 'border border-border bg-bg-gray text-slate-blue hover:border-navy/30',
-  warning: 'bg-yellow-600 text-white',
-  outline: 'border border-border bg-white text-navy hover:border-navy/50',
-}
+  primary: "bg-navy text-white",
+  destructive: "bg-urgent-red text-white",
+  secondary: "border border-border bg-bg-gray text-slate-blue hover:border-navy/30",
+  warning: "bg-yellow-600 text-white",
+  outline: "border border-border bg-white text-navy hover:border-navy/50",
+};
 
-export default function Button({ variant, children, onClick, icon, iconPosition = 'left', disabled, className }: ButtonProps) {
-  const variantClass = variantStyles[variant]
+export default function Button({
+  variant,
+  children,
+  onClick,
+  icon,
+  iconPosition = "left",
+  disabled,
+  className,
+}: ButtonProps) {
+  const variantClass = variantStyles[variant];
 
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`flex items-center justify-center gap-2 h-11 font-heading text-sm font-semibold rounded-lg transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 ${variantClass} ${className ?? ''}`}
+      className={`flex items-center justify-center gap-2 h-11 font-heading text-sm font-semibold rounded-lg transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 ${variantClass} ${className ?? ""}`}
     >
-      {icon && iconPosition === 'left' && icon}
+      {icon && iconPosition === "left" && icon}
       {children}
-      {icon && iconPosition === 'right' && icon}
+      {icon && iconPosition === "right" && icon}
     </button>
-  )
+  );
 }

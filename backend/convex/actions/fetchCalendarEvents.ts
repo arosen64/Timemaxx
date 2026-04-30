@@ -35,7 +35,10 @@ export const fetchCalendarEvents = action({
     startDate: v.string(),
     timezone: v.string(),
   },
-  handler: async (ctx, args): Promise<{
+  handler: async (
+    ctx,
+    args
+  ): Promise<{
     calendarList: CalendarEntry[];
     timedEvents: TimedEvent[];
     allDayEvents: AllDayEvent[];
@@ -49,10 +52,9 @@ export const fetchCalendarEvents = action({
     const tokenSecret = process.env.CALENDAR_TOKEN_SECRET;
     if (!tokenSecret) return { ...empty, error: true };
 
-    const connection = await ctx.runQuery(
-      internal.queries.calendar.getCalendarConnectionForUser,
-      { userId },
-    );
+    const connection = await ctx.runQuery(internal.queries.calendar.getCalendarConnectionForUser, {
+      userId,
+    });
     if (!connection) return empty;
 
     let accessToken: string;
@@ -60,7 +62,7 @@ export const fetchCalendarEvents = action({
     try {
       accessToken = await resolveAccessToken(ctx, connection, userId, tokenSecret);
       calendarList = (await fetchCalendarList(accessToken)).filter(
-        (c) => c.id !== connection.timemaxxCalendarId,
+        (c) => c.id !== connection.timemaxxCalendarId
       );
     } catch {
       return { ...empty, error: true };
@@ -93,11 +95,11 @@ export const fetchCalendarEvents = action({
 
       const res = await fetch(
         `${GOOGLE_CALENDAR_API}/calendars/${encodeURIComponent(calendarId)}/events?${params}`,
-        { headers: { Authorization: `Bearer ${accessToken}` } },
+        { headers: { Authorization: `Bearer ${accessToken}` } }
       );
       if (!res.ok) continue;
 
-      const data = await res.json() as {
+      const data = (await res.json()) as {
         items?: Array<{
           id: string;
           summary?: string;
@@ -126,12 +128,11 @@ export const fetchCalendarEvents = action({
   },
 });
 
-
 async function fetchCalendarList(accessToken: string): Promise<CalendarEntry[]> {
   const res = await fetch(`${GOOGLE_CALENDAR_API}/users/me/calendarList`, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
   if (!res.ok) throw new Error(`Calendar list fetch failed: ${res.status}`);
-  const data = await res.json() as { items?: Array<{ id: string; summary?: string }> };
+  const data = (await res.json()) as { items?: Array<{ id: string; summary?: string }> };
   return (data.items ?? []).map((c) => ({ id: c.id, summary: c.summary ?? c.id }));
 }

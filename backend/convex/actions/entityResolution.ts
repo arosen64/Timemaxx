@@ -36,7 +36,7 @@ export const searchTaskCandidates = internalAction({
         id: v.id("tasks"),
         label: v.string(),
         subtitle: v.string(),
-      }),
+      })
     ),
     hasMore: v.boolean(),
   }),
@@ -85,7 +85,7 @@ export const searchCourseCandidates = internalAction({
         id: v.id("userCourses"),
         label: v.string(),
         subtitle: v.string(),
-      }),
+      })
     ),
     hasMore: v.boolean(),
   }),
@@ -107,18 +107,16 @@ export const searchCourseCandidates = internalAction({
     }
     const courses: Doc<"userCourses">[] = await ctx.runQuery(
       internal.queries.userCourses.getUserCoursesByIdsInternal,
-      { courseIds: matching },
+      { courseIds: matching }
     );
     const byId = new Map<string, Doc<"userCourses">>(courses.map((c) => [String(c._id), c]));
-    const rankedIds = matching
-      .slice()
-      .sort((a, b) => {
-        const ac = byId.get(String(a));
-        const bc = byId.get(String(b));
-        const bucketDiff = termBucket(ac?.term) - termBucket(bc?.term);
-        if (bucketDiff !== 0) return bucketDiff;
-        return (rawRank.get(String(a)) ?? 9999) - (rawRank.get(String(b)) ?? 9999);
-      });
+    const rankedIds = matching.slice().sort((a, b) => {
+      const ac = byId.get(String(a));
+      const bc = byId.get(String(b));
+      const bucketDiff = termBucket(ac?.term) - termBucket(bc?.term);
+      if (bucketDiff !== 0) return bucketDiff;
+      return (rawRank.get(String(a)) ?? 9999) - (rawRank.get(String(b)) ?? 9999);
+    });
     const pageIds = rankedIds.slice(0, PAGE);
     const candidates = pageIds.map((id) => {
       const c = byId.get(String(id))!;

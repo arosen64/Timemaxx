@@ -1,14 +1,12 @@
 import { describe, expect, test } from "vitest";
 import { api, internal } from "../_generated/api";
 import { makeTestCtx, createTestUser } from "../../convex-tests/helpers";
+import type { Id } from "../_generated/dataModel";
 
-async function seedTask(
-  t: ReturnType<typeof makeTestCtx>,
-  userId: string
-) {
+async function seedTask(t: ReturnType<typeof makeTestCtx>, userId: string) {
   return t.run((ctx) =>
     ctx.db.insert("tasks", {
-      userId: userId as any,
+      userId: userId as Id<"users">,
       title: "Test task",
       description: "Test description",
       taskType: "Essay",
@@ -22,11 +20,16 @@ async function seedTask(
 async function seedStudyBlock(
   t: ReturnType<typeof makeTestCtx>,
   taskId: string,
-  overrides: { title?: string; startTime?: string; studyBlockLength?: number; isCompleted?: boolean } = {}
+  overrides: {
+    title?: string;
+    startTime?: string;
+    studyBlockLength?: number;
+    isCompleted?: boolean;
+  } = {}
 ) {
   return t.run((ctx) =>
     ctx.db.insert("studyBlocks", {
-      taskId: taskId as any,
+      taskId: taskId as Id<"tasks">,
       title: overrides.title ?? "Block 1",
       startTime: overrides.startTime,
       studyBlockLength: overrides.studyBlockLength ?? 60,
@@ -111,7 +114,7 @@ describe("queries/studyBlocks – getFutureStudyBlocksForExport", () => {
     const { userId } = await createTestUser(t);
 
     const result = await t.query(internal.queries.studyBlocks.getFutureStudyBlocksForExport, {
-      userId: userId as any,
+      userId: userId as Id<"users">,
     });
     expect(result).toEqual([]);
   });
@@ -123,7 +126,7 @@ describe("queries/studyBlocks – getFutureStudyBlocksForExport", () => {
     await seedStudyBlock(t, taskId); // no startTime
 
     const result = await t.query(internal.queries.studyBlocks.getFutureStudyBlocksForExport, {
-      userId: userId as any,
+      userId: userId as Id<"users">,
     });
     expect(result).toHaveLength(0);
   });
@@ -136,7 +139,7 @@ describe("queries/studyBlocks – getFutureStudyBlocksForExport", () => {
     await seedStudyBlock(t, taskId, { startTime: pastStart });
 
     const result = await t.query(internal.queries.studyBlocks.getFutureStudyBlocksForExport, {
-      userId: userId as any,
+      userId: userId as Id<"users">,
     });
     expect(result).toHaveLength(0);
   });
@@ -146,10 +149,15 @@ describe("queries/studyBlocks – getFutureStudyBlocksForExport", () => {
     const { userId } = await createTestUser(t);
     const taskId = await seedTask(t, userId);
     const futureStart = new Date(Date.now() + 3600_000).toISOString();
-    await seedStudyBlock(t, taskId, { title: "Future block", startTime: futureStart, studyBlockLength: 90, isCompleted: false });
+    await seedStudyBlock(t, taskId, {
+      title: "Future block",
+      startTime: futureStart,
+      studyBlockLength: 90,
+      isCompleted: false,
+    });
 
     const result = await t.query(internal.queries.studyBlocks.getFutureStudyBlocksForExport, {
-      userId: userId as any,
+      userId: userId as Id<"users">,
     });
     expect(result).toHaveLength(1);
     expect(result[0].title).toBe("Future block");
@@ -165,7 +173,7 @@ describe("queries/studyBlocks – getFutureStudyBlocksForExport", () => {
     const futureStart = new Date(Date.now() + 3600_000).toISOString();
     await t.run((ctx) =>
       ctx.db.insert("studyBlocks", {
-        taskId: taskId as any,
+        taskId: taskId as Id<"tasks">,
         title: "Exported block",
         startTime: futureStart,
         studyBlockLength: 60,
@@ -175,7 +183,7 @@ describe("queries/studyBlocks – getFutureStudyBlocksForExport", () => {
     );
 
     const result = await t.query(internal.queries.studyBlocks.getFutureStudyBlocksForExport, {
-      userId: userId as any,
+      userId: userId as Id<"users">,
     });
     expect(result).toHaveLength(1);
     expect(result[0].googleEventId).toBe("existing_gcal_event");
@@ -187,11 +195,18 @@ describe("queries/studyBlocks – getFutureStudyBlocksForExport", () => {
     const taskId = await seedTask(t, userId);
     const futureStart = new Date(Date.now() + 7200_000).toISOString();
     await seedStudyBlock(t, taskId, { title: "Unscheduled" }); // no startTime
-    await seedStudyBlock(t, taskId, { title: "Past", startTime: new Date(Date.now() - 3600_000).toISOString() });
-    await seedStudyBlock(t, taskId, { title: "Future", startTime: futureStart, isCompleted: false });
+    await seedStudyBlock(t, taskId, {
+      title: "Past",
+      startTime: new Date(Date.now() - 3600_000).toISOString(),
+    });
+    await seedStudyBlock(t, taskId, {
+      title: "Future",
+      startTime: futureStart,
+      isCompleted: false,
+    });
 
     const result = await t.query(internal.queries.studyBlocks.getFutureStudyBlocksForExport, {
-      userId: userId as any,
+      userId: userId as Id<"users">,
     });
     expect(result).toHaveLength(1);
     expect(result[0].title).toBe("Future");
@@ -202,7 +217,7 @@ describe("queries/studyBlocks – getFutureStudyBlocksForExport", () => {
     const { userId } = await createTestUser(t);
     const courseId = await t.run((ctx) =>
       ctx.db.insert("userCourses", {
-        userId: userId as any,
+        userId: userId as Id<"users">,
         courseCode: "EN.601.315",
         title: "Databases",
         term: "Fall 2025",
@@ -210,20 +225,20 @@ describe("queries/studyBlocks – getFutureStudyBlocksForExport", () => {
     );
     const taskId = await t.run((ctx) =>
       ctx.db.insert("tasks", {
-        userId: userId as any,
+        userId: userId as Id<"users">,
         title: "HW6",
         description: "Database homework",
         taskType: "Essay",
         dueDate: Date.now() + 86_400_000,
         createdAt: Date.now(),
-        courseId: courseId as any,
+        courseId: courseId as Id<"userCourses">,
       })
     );
     const futureStart = new Date(Date.now() + 3600_000).toISOString();
     await seedStudyBlock(t, taskId, { startTime: futureStart, isCompleted: false });
 
     const result = await t.query(internal.queries.studyBlocks.getFutureStudyBlocksForExport, {
-      userId: userId as any,
+      userId: userId as Id<"users">,
     });
     expect(result).toHaveLength(1);
     expect(result[0].courseName).toBe("Databases");
@@ -237,7 +252,7 @@ describe("queries/studyBlocks – getFutureStudyBlocksForExport", () => {
     await seedStudyBlock(t, taskId, { startTime: futureStart, isCompleted: false });
 
     const result = await t.query(internal.queries.studyBlocks.getFutureStudyBlocksForExport, {
-      userId: userId as any,
+      userId: userId as Id<"users">,
     });
     expect(result).toHaveLength(1);
     expect(result[0].courseName).toBeUndefined();
@@ -252,7 +267,7 @@ describe("queries/studyBlocks – getFutureStudyBlocksForExport", () => {
     await seedStudyBlock(t, aliceTaskId, { startTime: futureStart });
 
     const result = await t.query(internal.queries.studyBlocks.getFutureStudyBlocksForExport, {
-      userId: bobId as any,
+      userId: bobId as Id<"users">,
     });
     expect(result).toHaveLength(0);
   });
@@ -269,7 +284,7 @@ describe("queries/studyBlocks – getAllStudyBlocksWithTasksInternal taskRecomme
 
     const taskId = await t.run((ctx) =>
       ctx.db.insert("tasks", {
-        userId: userId as any,
+        userId: userId as Id<"users">,
         title: "Task with recommended start",
         description: "desc",
         taskType: "Essay",
@@ -282,7 +297,7 @@ describe("queries/studyBlocks – getAllStudyBlocksWithTasksInternal taskRecomme
     await seedStudyBlock(t, taskId);
 
     const result = await t.query(internal.queries.studyBlocks.getAllStudyBlocksWithTasksInternal, {
-      userId: userId as any,
+      userId: userId as Id<"users">,
     });
 
     expect(result).toHaveLength(1);
@@ -296,7 +311,7 @@ describe("queries/studyBlocks – getAllStudyBlocksWithTasksInternal taskRecomme
     await seedStudyBlock(t, taskId);
 
     const result = await t.query(internal.queries.studyBlocks.getAllStudyBlocksWithTasksInternal, {
-      userId: userId as any,
+      userId: userId as Id<"users">,
     });
 
     expect(result).toHaveLength(1);

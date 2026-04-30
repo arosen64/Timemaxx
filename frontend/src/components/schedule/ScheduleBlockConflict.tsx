@@ -1,13 +1,13 @@
-import type { Id } from '../../../../backend/convex/_generated/dataModel'
-import { RetryIcon } from '../icons'
+import type { Id } from "../../../../backend/convex/_generated/dataModel";
+import { RetryIcon } from "../icons";
 
 interface ScheduleBlockConflictProps {
-  title: string
-  studyBlockId: Id<'studyBlocks'>
-  startTime: string
-  studyBlockLength: number
-  onMove: (studyBlockId: Id<'studyBlocks'>) => void
-  onAutoReschedule: () => void
+  title: string;
+  studyBlockId: Id<"studyBlocks">;
+  startTime: string;
+  studyBlockLength: number;
+  onMove: (studyBlockId: Id<"studyBlocks">) => void;
+  onAutoReschedule: () => void;
 }
 
 export default function ScheduleBlockConflict({
@@ -18,8 +18,8 @@ export default function ScheduleBlockConflict({
   onMove,
   onAutoReschedule,
 }: ScheduleBlockConflictProps) {
-  const startDt = new Date(startTime)
-  const timeLabel = startDt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+  const startDt = new Date(startTime);
+  const timeLabel = startDt.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
 
   return (
     <div className="relative flex flex-col gap-1 rounded border border-urgent-red-light bg-white px-2 py-1.5 shadow-sm overflow-hidden">
@@ -53,5 +53,5 @@ export default function ScheduleBlockConflict({
         </button>
       </div>
     </div>
-  )
+  );
 }

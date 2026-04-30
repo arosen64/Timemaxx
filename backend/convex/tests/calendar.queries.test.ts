@@ -5,19 +5,16 @@ import { makeTestCtx, createTestUser } from "../../convex-tests/helpers";
 describe("queries/calendar – getCalendarConnectionStatus", () => {
   test("throws when unauthenticated", async () => {
     const t = makeTestCtx();
-    await expect(
-      t.query(api.queries.calendar.getCalendarConnectionStatus, {})
-    ).rejects.toThrow("Not authenticated");
+    await expect(t.query(api.queries.calendar.getCalendarConnectionStatus, {})).rejects.toThrow(
+      "Not authenticated"
+    );
   });
 
   test("returns not connected when no token exists", async () => {
     const t = makeTestCtx();
     const { withAuth } = await createTestUser(t);
 
-    const result = await withAuth.query(
-      api.queries.calendar.getCalendarConnectionStatus,
-      {}
-    );
+    const result = await withAuth.query(api.queries.calendar.getCalendarConnectionStatus, {});
 
     expect(result.connected).toBe(false);
     expect(result.hasEventsScope).toBe(false);
@@ -36,10 +33,7 @@ describe("queries/calendar – getCalendarConnectionStatus", () => {
       })
     );
 
-    const result = await withAuth.query(
-      api.queries.calendar.getCalendarConnectionStatus,
-      {}
-    );
+    const result = await withAuth.query(api.queries.calendar.getCalendarConnectionStatus, {});
 
     expect(result.connected).toBe(true);
     expect(result.hasEventsScope).toBe(false);
@@ -59,10 +53,7 @@ describe("queries/calendar – getCalendarConnectionStatus", () => {
       })
     );
 
-    const result = await withAuth.query(
-      api.queries.calendar.getCalendarConnectionStatus,
-      {}
-    );
+    const result = await withAuth.query(api.queries.calendar.getCalendarConnectionStatus, {});
 
     expect(result.connected).toBe(true);
     expect(result.hasEventsScope).toBe(true);
@@ -78,14 +69,12 @@ describe("queries/calendar – getCalendarConnectionStatus", () => {
         accessToken: "enc-acc",
         refreshToken: "enc-ref",
         expiresAt: Date.now() + 3600_000,
-        scope: "https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/calendar.events",
+        scope:
+          "https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/calendar.events",
       })
     );
 
-    const result = await withAuth.query(
-      api.queries.calendar.getCalendarConnectionStatus,
-      {}
-    );
+    const result = await withAuth.query(api.queries.calendar.getCalendarConnectionStatus, {});
 
     expect(result.connected).toBe(true);
     expect(result.hasEventsScope).toBe(true);
@@ -105,10 +94,7 @@ describe("queries/calendar – getCalendarConnectionStatus", () => {
       })
     );
 
-    const result = await withAuth.query(
-      api.queries.calendar.getCalendarConnectionStatus,
-      {}
-    );
+    const result = await withAuth.query(api.queries.calendar.getCalendarConnectionStatus, {});
 
     expect(result.connected).toBe(true);
     expect(result.hasEventsScope).toBe(true);
@@ -128,10 +114,7 @@ describe("queries/calendar – getCalendarConnectionStatus", () => {
       })
     );
 
-    const result = await withAuth.query(
-      api.queries.calendar.getCalendarConnectionStatus,
-      {}
-    );
+    const result = await withAuth.query(api.queries.calendar.getCalendarConnectionStatus, {});
 
     expect(result.connected).toBe(true);
     expect(result.hasEventsScope).toBe(false);
@@ -151,10 +134,7 @@ describe("queries/calendar – getCalendarConnectionStatus", () => {
       })
     );
 
-    const result = await user2Auth.query(
-      api.queries.calendar.getCalendarConnectionStatus,
-      {}
-    );
+    const result = await user2Auth.query(api.queries.calendar.getCalendarConnectionStatus, {});
 
     expect(result.connected).toBe(false);
   });

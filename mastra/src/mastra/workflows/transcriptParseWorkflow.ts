@@ -17,7 +17,7 @@ const parseStep = createStep({
   execute: async ({ inputData }) => {
     const result = await transcriptAgent.generate(
       buildTranscriptParsePrompt(inputData.sanitizedText),
-      { structuredOutput: { schema: transcriptResponseSchema } },
+      { structuredOutput: { schema: transcriptResponseSchema } }
     );
     return result.object as TranscriptResponse;
   },

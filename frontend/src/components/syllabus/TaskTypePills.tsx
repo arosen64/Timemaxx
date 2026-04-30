@@ -1,9 +1,9 @@
-import { TASK_TYPE_OPTIONS, type SchemaTaskType } from '../dashboard/types'
-import { Button } from '../ui'
+import { TASK_TYPE_OPTIONS, type SchemaTaskType } from "../dashboard/types";
+import { Button } from "../ui";
 
 interface TaskTypePillsProps {
-  value: SchemaTaskType
-  onChange: (type: SchemaTaskType) => void
+  value: SchemaTaskType;
+  onChange: (type: SchemaTaskType) => void;
 }
 
 export default function TaskTypePills({ value, onChange }: TaskTypePillsProps) {
@@ -12,7 +12,7 @@ export default function TaskTypePills({ value, onChange }: TaskTypePillsProps) {
       {TASK_TYPE_OPTIONS.map((type) => (
         <Button
           key={type}
-          variant={value === type ? 'primary' : 'secondary'}
+          variant={value === type ? "primary" : "secondary"}
           onClick={() => onChange(type)}
           className="h-7 px-3 text-xs rounded-md"
         >
@@ -20,5 +20,5 @@ export default function TaskTypePills({ value, onChange }: TaskTypePillsProps) {
         </Button>
       ))}
     </div>
-  )
+  );
 }

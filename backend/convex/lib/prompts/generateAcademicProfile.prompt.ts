@@ -21,9 +21,7 @@ export const academicProfileResponseSchema = z.object({
     .describe("Exactly 5 academic insights in the specified label order"),
 });
 
-export type AcademicProfileResponse = z.infer<
-  typeof academicProfileResponseSchema
->;
+export type AcademicProfileResponse = z.infer<typeof academicProfileResponseSchema>;
 
 // ---------------------------------------------------------------------------
 // System prompt (immutable instructions — never interpolate user content here)

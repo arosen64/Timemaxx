@@ -30,36 +30,36 @@ describe("actions/jhuCourses", () => {
   describe("getAvailableTerms", () => {
     test("throws when unauthenticated", async () => {
       const t = makeTestCtx();
-      await expect(
-        t.action(api.actions.jhuCourses.getAvailableTerms, {})
-      ).rejects.toThrow("Unauthenticated");
+      await expect(t.action(api.actions.jhuCourses.getAvailableTerms, {})).rejects.toThrow(
+        "Unauthenticated"
+      );
     });
 
     test("throws when JHU_SIS_API_KEY is not set", async () => {
       vi.stubEnv("JHU_SIS_API_KEY", "");
       const t = makeTestCtx();
       const { withAuth } = await createTestUser(t);
-      await expect(
-        withAuth.action(api.actions.jhuCourses.getAvailableTerms, {})
-      ).rejects.toThrow("JHU_SIS_API_KEY");
+      await expect(withAuth.action(api.actions.jhuCourses.getAvailableTerms, {})).rejects.toThrow(
+        "JHU_SIS_API_KEY"
+      );
     });
 
     test("throws when SIS API returns a non-ok status", async () => {
       mockFetch.mockResolvedValueOnce(makeErrorResponse(503, "Service Unavailable"));
       const t = makeTestCtx();
       const { withAuth } = await createTestUser(t);
-      await expect(
-        withAuth.action(api.actions.jhuCourses.getAvailableTerms, {})
-      ).rejects.toThrow("503");
+      await expect(withAuth.action(api.actions.jhuCourses.getAvailableTerms, {})).rejects.toThrow(
+        "503"
+      );
     });
 
     test("throws when fetch throws (network error)", async () => {
       mockFetch.mockRejectedValueOnce(new Error("Network error"));
       const t = makeTestCtx();
       const { withAuth } = await createTestUser(t);
-      await expect(
-        withAuth.action(api.actions.jhuCourses.getAvailableTerms, {})
-      ).rejects.toThrow("JHU SIS API request failed for terms");
+      await expect(withAuth.action(api.actions.jhuCourses.getAvailableTerms, {})).rejects.toThrow(
+        "JHU SIS API request failed for terms"
+      );
     });
 
     test("returns terms on success", async () => {
@@ -87,36 +87,36 @@ describe("actions/jhuCourses", () => {
   describe("getAvailableSchools", () => {
     test("throws when unauthenticated", async () => {
       const t = makeTestCtx();
-      await expect(
-        t.action(api.actions.jhuCourses.getAvailableSchools, {})
-      ).rejects.toThrow("Unauthenticated");
+      await expect(t.action(api.actions.jhuCourses.getAvailableSchools, {})).rejects.toThrow(
+        "Unauthenticated"
+      );
     });
 
     test("throws when JHU_SIS_API_KEY is not set", async () => {
       vi.stubEnv("JHU_SIS_API_KEY", "");
       const t = makeTestCtx();
       const { withAuth } = await createTestUser(t);
-      await expect(
-        withAuth.action(api.actions.jhuCourses.getAvailableSchools, {})
-      ).rejects.toThrow("JHU_SIS_API_KEY");
+      await expect(withAuth.action(api.actions.jhuCourses.getAvailableSchools, {})).rejects.toThrow(
+        "JHU_SIS_API_KEY"
+      );
     });
 
     test("throws when SIS API returns a non-ok status", async () => {
       mockFetch.mockResolvedValueOnce(makeErrorResponse(500, "Internal Server Error"));
       const t = makeTestCtx();
       const { withAuth } = await createTestUser(t);
-      await expect(
-        withAuth.action(api.actions.jhuCourses.getAvailableSchools, {})
-      ).rejects.toThrow("500");
+      await expect(withAuth.action(api.actions.jhuCourses.getAvailableSchools, {})).rejects.toThrow(
+        "500"
+      );
     });
 
     test("throws when fetch throws (network error)", async () => {
       mockFetch.mockRejectedValueOnce(new Error("Network error"));
       const t = makeTestCtx();
       const { withAuth } = await createTestUser(t);
-      await expect(
-        withAuth.action(api.actions.jhuCourses.getAvailableSchools, {})
-      ).rejects.toThrow("JHU SIS API request failed for schools");
+      await expect(withAuth.action(api.actions.jhuCourses.getAvailableSchools, {})).rejects.toThrow(
+        "JHU SIS API request failed for schools"
+      );
     });
 
     test("returns schools on success", async () => {

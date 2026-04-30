@@ -8,17 +8,17 @@ export const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
 
 // GCal preset colors with their colorId and approximate RGB values
 const GCAL_COLORS: Array<{ id: string; r: number; g: number; b: number }> = [
-  { id: "1",  r: 121, g: 134, b: 203 }, // Lavender
-  { id: "2",  r:  51, g: 182, b: 121 }, // Sage
-  { id: "3",  r: 142, g:  36, b: 170 }, // Grape
-  { id: "4",  r: 230, g: 124, b: 115 }, // Flamingo
-  { id: "5",  r: 246, g: 191, b:  38 }, // Banana
-  { id: "6",  r: 244, g:  81, b:  30 }, // Tangerine
-  { id: "7",  r:   3, g: 155, b: 229 }, // Peacock
-  { id: "8",  r:  97, g:  97, b:  97 }, // Graphite
-  { id: "9",  r:  63, g:  81, b: 181 }, // Blueberry
-  { id: "10", r:  11, g: 128, b:  67 }, // Basil
-  { id: "11", r: 213, g:   0, b:   0 }, // Tomato
+  { id: "1", r: 121, g: 134, b: 203 }, // Lavender
+  { id: "2", r: 51, g: 182, b: 121 }, // Sage
+  { id: "3", r: 142, g: 36, b: 170 }, // Grape
+  { id: "4", r: 230, g: 124, b: 115 }, // Flamingo
+  { id: "5", r: 246, g: 191, b: 38 }, // Banana
+  { id: "6", r: 244, g: 81, b: 30 }, // Tangerine
+  { id: "7", r: 3, g: 155, b: 229 }, // Peacock
+  { id: "8", r: 97, g: 97, b: 97 }, // Graphite
+  { id: "9", r: 63, g: 81, b: 181 }, // Blueberry
+  { id: "10", r: 11, g: 128, b: 67 }, // Basil
+  { id: "11", r: 213, g: 0, b: 0 }, // Tomato
 ];
 
 export function hexToGcalColorId(hex: string): string | undefined {
@@ -33,7 +33,10 @@ export function hexToGcalColorId(hex: string): string | undefined {
   let bestDist = Infinity;
   for (const c of GCAL_COLORS) {
     const dist = (r - c.r) ** 2 + (g - c.g) ** 2 + (b - c.b) ** 2;
-    if (dist < bestDist) { bestDist = dist; bestId = c.id; }
+    if (dist < bestDist) {
+      bestDist = dist;
+      bestId = c.id;
+    }
   }
   return bestId;
 }
@@ -52,7 +55,7 @@ export async function resolveAccessToken(
     expiresAt: number;
   },
   userId: Id<"users">,
-  tokenSecret: string,
+  tokenSecret: string
 ): Promise<string> {
   // Refresh 60 seconds early to avoid using a token that expires mid-request
   if (Date.now() + 60_000 < connection.expiresAt) {
@@ -76,7 +79,7 @@ export async function resolveAccessToken(
   });
   if (!tokenRes.ok) throw new Error("Token refresh failed");
 
-  const tokenData = await tokenRes.json() as { access_token: string; expires_in: number };
+  const tokenData = (await tokenRes.json()) as { access_token: string; expires_in: number };
   if (!tokenData.access_token) throw new Error("No access_token in refresh response");
 
   const newExpiry = Date.now() + tokenData.expires_in * 1000;

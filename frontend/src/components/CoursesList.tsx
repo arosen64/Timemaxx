@@ -1,60 +1,58 @@
-import { useState } from 'react'
-import { useMutation } from 'convex/react'
-import { api } from '../../../backend/convex/_generated/api'
-import { Id } from '../../../backend/convex/_generated/dataModel'
-import { Course } from '../types'
-import DifficultyRating from './DifficultyRating'
-import Button from './ui/Button'
-import Selector from './ui/Selector'
-import { GRADES, STUDY_GOALS, REMOVE_CLASS_TASKS_WARNING } from '../constants'
+import { useState } from "react";
+import { useMutation } from "convex/react";
+import { api } from "../../../backend/convex/_generated/api";
+import { Id } from "../../../backend/convex/_generated/dataModel";
+import { Course } from "../types";
+import DifficultyRating from "./DifficultyRating";
+import Button from "./ui/Button";
+import Selector from "./ui/Selector";
+import { GRADES, STUDY_GOALS, REMOVE_CLASS_TASKS_WARNING } from "../constants";
 
-const PAGE_SIZE = 4
+const PAGE_SIZE = 4;
 
 interface CoursesListProps {
-  courses: Course[]
-  onCoursesChange: (courses: Course[]) => void
+  courses: Course[];
+  onCoursesChange: (courses: Course[]) => void;
 }
 
 export default function CoursesList({ courses, onCoursesChange }: CoursesListProps) {
-  const deleteUserCourse = useMutation(api.mutations.userCourses.deleteUserCourse)
-  const updateUserCourse = useMutation(api.mutations.userCourses.updateUserCourse)
-  const [search, setSearch] = useState('')
-  const [page, setPage] = useState(0)
+  const deleteUserCourse = useMutation(api.mutations.userCourses.deleteUserCourse);
+  const updateUserCourse = useMutation(api.mutations.userCourses.updateUserCourse);
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(0);
 
   const handleRemove = async (index: number) => {
-    const course = courses[index]
+    const course = courses[index];
     if (course.userCourseId) {
       const ok = window.confirm(
         `${REMOVE_CLASS_TASKS_WARNING}\n\nRemove "${course.title}" from your courses?`
-      )
-      if (!ok) return
-      await deleteUserCourse({ userCourseId: course.userCourseId as Id<'userCourses'> })
+      );
+      if (!ok) return;
+      await deleteUserCourse({ userCourseId: course.userCourseId as Id<"userCourses"> });
     }
-    const next = courses.filter((_, j) => j !== index)
-    onCoursesChange(next)
-    const maxPage = Math.max(0, Math.ceil(next.length / PAGE_SIZE) - 1)
-    setPage((p) => Math.min(p, maxPage))
-  }
+    const next = courses.filter((_, j) => j !== index);
+    onCoursesChange(next);
+    const maxPage = Math.max(0, Math.ceil(next.length / PAGE_SIZE) - 1);
+    setPage((p) => Math.min(p, maxPage));
+  };
 
   const handleUpdate = (index: number, patch: Partial<Course>) => {
-    const updated = courses.map((c, j) => (j === index ? { ...c, ...patch } : c))
-    onCoursesChange(updated)
-    const course = courses[index]
+    const updated = courses.map((c, j) => (j === index ? { ...c, ...patch } : c));
+    onCoursesChange(updated);
+    const course = courses[index];
     if (course.userCourseId) {
       updateUserCourse({
-        userCourseId: course.userCourseId as Id<'userCourses'>,
+        userCourseId: course.userCourseId as Id<"userCourses">,
         grade: patch.grade ?? course.grade,
         studyGoal: patch.studyGoal ?? course.studyGoal,
         difficultyRating: patch.difficultyRating ?? course.difficultyRating,
-      })
+      });
     }
-  }
+  };
 
-  const filtered = courses.filter((c) =>
-    c.title.toLowerCase().includes(search.toLowerCase())
-  )
-  const totalPages = Math.ceil(filtered.length / PAGE_SIZE)
-  const paged = filtered.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE)
+  const filtered = courses.filter((c) => c.title.toLowerCase().includes(search.toLowerCase()));
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const paged = filtered.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
 
   return (
     <div className="flex flex-col gap-3">
@@ -69,15 +67,21 @@ export default function CoursesList({ courses, onCoursesChange }: CoursesListPro
       <input
         type="text"
         value={search}
-        onChange={(e) => { setSearch(e.target.value); setPage(0) }}
+        onChange={(e) => {
+          setSearch(e.target.value);
+          setPage(0);
+        }}
         placeholder="Search added courses..."
         className="rounded-lg border border-border bg-bg-gray px-3 py-2 font-body text-sm text-navy outline-none placeholder:text-light-blue focus:border-sky-blue focus:ring-2 focus:ring-sky-blue/20"
       />
 
       {paged.map((course) => {
-        const realIndex = courses.indexOf(course)
+        const realIndex = courses.indexOf(course);
         return (
-          <div key={realIndex} className="flex flex-col gap-2 rounded-lg border border-border bg-bg-gray p-3">
+          <div
+            key={realIndex}
+            className="flex flex-col gap-2 rounded-lg border border-border bg-bg-gray p-3"
+          >
             <div className="flex items-center justify-between gap-2">
               <div className="flex flex-col gap-0.5">
                 <span className="font-body text-sm font-semibold text-navy">{course.title}</span>
@@ -114,8 +118,8 @@ export default function CoursesList({ courses, onCoursesChange }: CoursesListPro
                     key={goal}
                     className={`flex flex-1 cursor-pointer items-center justify-center rounded-lg border px-2 py-2 font-body text-xs font-medium transition-colors ${
                       course.studyGoal === goal
-                        ? 'border-sky-blue bg-sky-blue/10 text-navy'
-                        : 'border-border text-slate-blue hover:border-sky-blue/50 hover:bg-sky-blue/5'
+                        ? "border-sky-blue bg-sky-blue/10 text-navy"
+                        : "border-border text-slate-blue hover:border-sky-blue/50 hover:bg-sky-blue/5"
                     }`}
                   >
                     <input
@@ -139,7 +143,7 @@ export default function CoursesList({ courses, onCoursesChange }: CoursesListPro
               />
             )}
           </div>
-        )
+        );
       })}
 
       {filtered.length === 0 && search && (
@@ -170,5 +174,5 @@ export default function CoursesList({ courses, onCoursesChange }: CoursesListPro
         </div>
       )}
     </div>
-  )
+  );
 }

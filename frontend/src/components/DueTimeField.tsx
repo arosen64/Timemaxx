@@ -1,14 +1,14 @@
 /** Tint and slightly scale `::-webkit-calendar-picker-indicator` (WebKit/Blink). */
 const TIME_CLOCK_ICON =
-  '[&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:[transform:scale(1.15)] [&::-webkit-calendar-picker-indicator]:origin-right [&::-webkit-calendar-picker-indicator]:[filter:invert(68%)_sepia(18%)_saturate(520%)_hue-rotate(176deg)_brightness(82%)_contrast(92%)]'
+  "[&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:[transform:scale(1.15)] [&::-webkit-calendar-picker-indicator]:origin-right [&::-webkit-calendar-picker-indicator]:[filter:invert(68%)_sepia(18%)_saturate(520%)_hue-rotate(176deg)_brightness(82%)_contrast(92%)]";
 
 export interface DueTimeFieldProps {
-  variant: 'modal' | 'compact'
-  id: string
-  label: string
-  value: string
-  onChange: (value: string) => void
-  onValueChange?: () => void
+  variant: "modal" | "compact";
+  id: string;
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  onValueChange?: () => void;
 }
 
 export default function DueTimeField({
@@ -19,15 +19,15 @@ export default function DueTimeField({
   onChange,
   onValueChange,
 }: DueTimeFieldProps) {
-  const isModal = variant === 'modal'
+  const isModal = variant === "modal";
 
   return (
-    <div className={isModal ? 'shrink-0 sm:w-36' : 'flex min-w-0 flex-col gap-1'}>
+    <div className={isModal ? "shrink-0 sm:w-36" : "flex min-w-0 flex-col gap-1"}>
       <label
         className={
           isModal
-            ? 'mb-1 block font-body text-xs font-medium text-slate-blue'
-            : 'font-body text-xs font-medium text-slate-blue'
+            ? "mb-1 block font-body text-xs font-medium text-slate-blue"
+            : "font-body text-xs font-medium text-slate-blue"
         }
         htmlFor={id}
       >
@@ -38,8 +38,8 @@ export default function DueTimeField({
         type="time"
         value={value}
         onChange={(e) => {
-          onChange(e.target.value)
-          onValueChange?.()
+          onChange(e.target.value);
+          onValueChange?.();
         }}
         className={
           isModal
@@ -48,5 +48,5 @@ export default function DueTimeField({
         }
       />
     </div>
-  )
+  );
 }
