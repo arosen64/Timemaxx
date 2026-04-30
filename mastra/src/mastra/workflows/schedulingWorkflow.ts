@@ -14,7 +14,7 @@
 import { createWorkflow, createStep } from "@mastra/core/workflows";
 import { z } from "zod";
 import { anthropic } from "@ai-sdk/anthropic";
-import { generateText, Output } from "ai";
+import { generateObject } from "ai";
 
 const SLOT_SELECTION_SYSTEM = `You are a study scheduling assistant for a college student. You will receive a list of study blocks, each with a set of candidate time slots. For each block, select the best slot index based on the student's productivity preferences and the calendar context.
 
@@ -44,18 +44,13 @@ const slotSelectionStep = createStep({
   }),
   outputSchema: slotSelectionOutputSchema,
   execute: async ({ inputData }) => {
-    const result = await generateText({
+    const { object } = await generateObject({
       model: anthropic("claude-sonnet-4-6"),
-      output: Output.object({
-        schema: slotSelectionOutputSchema,
-        name: "SlotSelection",
-        description: "Array of chosen slot indices, one per block",
-      }),
+      schema: slotSelectionOutputSchema,
       system: SLOT_SELECTION_SYSTEM,
       prompt: inputData.prompt,
     });
-    if (!result.output) throw new Error("No structured output from slot selection");
-    return result.output;
+    return object;
   },
 });
 
