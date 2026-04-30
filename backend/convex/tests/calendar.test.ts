@@ -68,9 +68,9 @@ describe("mutations/calendar – storeCalendarToken", () => {
 describe("mutations/calendar – deleteCalendarToken", () => {
   test("throws when unauthenticated", async () => {
     const t = makeTestCtx();
-    await expect(
-      t.mutation(api.mutations.calendar.deleteCalendarToken, {})
-    ).rejects.toThrow("Not authenticated");
+    await expect(t.mutation(api.mutations.calendar.deleteCalendarToken, {})).rejects.toThrow(
+      "Not authenticated"
+    );
   });
 
   test("removes the token record for the authenticated user", async () => {

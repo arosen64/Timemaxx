@@ -1,25 +1,25 @@
-import { useCallback, useEffect, useState } from 'react'
-import { useAction, useMutation, useQuery } from 'convex/react'
-import { api } from '../../../backend/convex/_generated/api'
-import { AcademicInsight, AcademicProfileSummaryProps } from '../types'
-import { ACCENTS } from '../constants'
-import Button from './ui/Button'
+import { useCallback, useEffect, useState } from "react";
+import { useAction, useMutation, useQuery } from "convex/react";
+import { api } from "../../../backend/convex/_generated/api";
+import { AcademicInsight, AcademicProfileSummaryProps } from "../types";
+import { ACCENTS } from "../constants";
+import Button from "./ui/Button";
 
 export default function AcademicProfileSummary({ profile, onChange }: AcademicProfileSummaryProps) {
-  const generateProfile = useAction(api.ai.generateAcademicProfile.generateAcademicProfile)
-  const updateSettings = useMutation(api.mutations.users.updateUserSettings)
-  const currUser = useQuery(api.queries.users.getCurrUser)
-  const userCourses = useQuery(api.queries.userCourses.getUserCourses)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const generateProfile = useAction(api.ai.generateAcademicProfile.generateAcademicProfile);
+  const updateSettings = useMutation(api.mutations.users.updateUserSettings);
+  const currUser = useQuery(api.queries.users.getCurrUser);
+  const userCourses = useQuery(api.queries.userCourses.getUserCourses);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const hasCourses = (userCourses?.length ?? 0) > 0
-  const insights: AcademicInsight[] = currUser?.transcriptSummary ?? []
+  const hasCourses = (userCourses?.length ?? 0) > 0;
+  const insights: AcademicInsight[] = currUser?.transcriptSummary ?? [];
 
   const generate = useCallback(async () => {
-    if (!userCourses) return
-    setLoading(true)
-    setError(null)
+    if (!userCourses) return;
+    setLoading(true);
+    setError(null);
     try {
       const result = await generateProfile({
         courses: userCourses.map((c) => ({
@@ -28,22 +28,27 @@ export default function AcademicProfileSummary({ profile, onChange }: AcademicPr
           term: c.term,
           difficultyRating: c.difficultyRating,
         })),
-      })
-      await updateSettings({ transcriptSummary: result as AcademicInsight[] })
-      onChange({ ...profile, transcriptSummary: result as AcademicInsight[] })
+      });
+      await updateSettings({ transcriptSummary: result as AcademicInsight[] });
+      onChange({ ...profile, transcriptSummary: result as AcademicInsight[] });
     } catch {
-      setError('Failed to generate your academic profile. Please try again.')
+      setError("Failed to generate your academic profile. Please try again.");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }, [userCourses, generateProfile, updateSettings, onChange, profile])
+  }, [userCourses, generateProfile, updateSettings, onChange, profile]);
 
   // Auto-generate once courses and user are loaded and no summary is stored in DB yet
   useEffect(() => {
-    if (userCourses && hasCourses && currUser !== undefined && !currUser?.transcriptSummary?.length) {
-      generate()
+    if (
+      userCourses &&
+      hasCourses &&
+      currUser !== undefined &&
+      !currUser?.transcriptSummary?.length
+    ) {
+      generate();
     }
-  }, [userCourses, hasCourses, currUser, generate])
+  }, [userCourses, hasCourses, currUser, generate]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -62,7 +67,9 @@ export default function AcademicProfileSummary({ profile, onChange }: AcademicPr
             <Button variant="primary" onClick={generate} className="px-3 h-8 text-xs">
               Regenerate
             </Button>
-            <p className="font-body text-xs text-light-blue">Added more courses? Regenerate for an updated profile.</p>
+            <p className="font-body text-xs text-light-blue">
+              Added more courses? Regenerate for an updated profile.
+            </p>
           </div>
         )}
       </div>
@@ -70,25 +77,29 @@ export default function AcademicProfileSummary({ profile, onChange }: AcademicPr
       {userCourses && !hasCourses && (
         <div className="rounded-xl border border-border bg-bg-gray p-6 text-center">
           <p className="font-body text-sm text-light-blue">
-            No courses added yet. Go back and add courses from your transcript to generate your academic profile.
+            No courses added yet. Go back and add courses from your transcript to generate your
+            academic profile.
           </p>
         </div>
       )}
 
-      {(loading || userCourses === undefined || currUser === undefined) && insights.length === 0 && (
-        <div className="flex flex-col gap-3">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div
-              key={i}
-              className="h-20 animate-pulse rounded-xl border border-border bg-bg-gray"
-              style={{ animationDelay: `${i * 80}ms` }}
-            />
-          ))}
-          <p className="text-center font-body text-xs text-light-blue">
-            {userCourses === undefined || currUser === undefined ? 'Loading...' : 'Analyzing your transcript...'}
-          </p>
-        </div>
-      )}
+      {(loading || userCourses === undefined || currUser === undefined) &&
+        insights.length === 0 && (
+          <div className="flex flex-col gap-3">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div
+                key={i}
+                className="h-20 animate-pulse rounded-xl border border-border bg-bg-gray"
+                style={{ animationDelay: `${i * 80}ms` }}
+              />
+            ))}
+            <p className="text-center font-body text-xs text-light-blue">
+              {userCourses === undefined || currUser === undefined
+                ? "Loading..."
+                : "Analyzing your transcript..."}
+            </p>
+          </div>
+        )}
 
       {hasCourses && error && (
         <div className="flex flex-col items-center gap-3 rounded-xl border border-urgent-red/20 bg-urgent-red/5 p-6">
@@ -102,7 +113,7 @@ export default function AcademicProfileSummary({ profile, onChange }: AcademicPr
       {hasCourses && !loading && insights.length > 0 && (
         <div className="flex flex-col gap-3">
           {insights.map((insight, i) => {
-            const accent = ACCENTS[i] ?? ACCENTS[0]
+            const accent = ACCENTS[i] ?? ACCENTS[0];
             return (
               <div
                 key={i}
@@ -116,10 +127,10 @@ export default function AcademicProfileSummary({ profile, onChange }: AcademicPr
                   <p className="font-body text-sm text-navy">{insight.text}</p>
                 </div>
               </div>
-            )
+            );
           })}
         </div>
       )}
     </div>
-  )
+  );
 }

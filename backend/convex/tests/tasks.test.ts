@@ -4,8 +4,12 @@ import { makeTestCtx, createTestUser } from "../../convex-tests/helpers";
 import { TWO_WEEKS_MS } from "../lib/scheduleSlots";
 
 describe("mutations/tasks – createTask", () => {
-  beforeEach(() => { vi.useFakeTimers(); });
-  afterEach(() => { vi.useRealTimers(); });
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
 
   test("throws when unauthenticated", async () => {
     const t = makeTestCtx();

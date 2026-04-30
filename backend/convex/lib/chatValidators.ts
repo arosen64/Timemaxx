@@ -6,7 +6,7 @@ export const activeAgentValidator = v.union(
   v.literal("feedback"),
   v.literal("preferences"),
   v.literal("classes"),
-  v.literal("schedule"),
+  v.literal("schedule")
 );
 
 export type ActiveAgent = "task" | "feedback" | "preferences" | "classes" | "schedule";

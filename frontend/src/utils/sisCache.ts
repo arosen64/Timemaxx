@@ -11,60 +11,60 @@
  *   sis:courses:{term}:{school} — course list for a specific term + school
  */
 
-const CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000 // 30 days
+const CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
 interface CacheEntry<T> {
-  data: T
-  cachedAt: number
+  data: T;
+  cachedAt: number;
 }
 
 /** Reads and deserializes a cache entry, returning null if missing or expired. */
 function readEntry<T>(key: string): T | null {
   try {
-    const raw = localStorage.getItem(key)
-    if (!raw) return null
-    const entry: CacheEntry<T> = JSON.parse(raw)
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    const entry: CacheEntry<T> = JSON.parse(raw);
     if (Date.now() - entry.cachedAt > CACHE_TTL_MS) {
-      localStorage.removeItem(key)
-      return null
+      localStorage.removeItem(key);
+      return null;
     }
-    return entry.data
+    return entry.data;
   } catch {
-    return null
+    return null;
   }
 }
 
 /** Serializes and writes a cache entry, stamping the current time as cachedAt. */
 function writeEntry<T>(key: string, data: T): void {
   try {
-    const entry: CacheEntry<T> = { data, cachedAt: Date.now() }
-    localStorage.setItem(key, JSON.stringify(entry))
+    const entry: CacheEntry<T> = { data, cachedAt: Date.now() };
+    localStorage.setItem(key, JSON.stringify(entry));
   } catch {
     // Storage quota exceeded or unavailable — fail silently
   }
 }
 
 export function getCachedTerms<T>(): T | null {
-  return readEntry<T>('sis:terms')
+  return readEntry<T>("sis:terms");
 }
 
 export function setCachedTerms<T>(data: T): void {
-  writeEntry('sis:terms', data)
+  writeEntry("sis:terms", data);
 }
 
 export function getCachedSchools<T>(): T | null {
-  return readEntry<T>('sis:schools')
+  return readEntry<T>("sis:schools");
 }
 
 export function setCachedSchools<T>(data: T): void {
-  writeEntry('sis:schools', data)
+  writeEntry("sis:schools", data);
 }
 
 /** Returns cached courses for a specific term + school, or null if absent/stale. */
 export function getCachedCourses<T>(term: string, school: string): T | null {
-  return readEntry<T>(`sis:courses:${term}:${school}`)
+  return readEntry<T>(`sis:courses:${term}:${school}`);
 }
 
 export function setCachedCourses<T>(term: string, school: string, data: T): void {
-  writeEntry(`sis:courses:${term}:${school}`, data)
+  writeEntry(`sis:courses:${term}:${school}`, data);
 }

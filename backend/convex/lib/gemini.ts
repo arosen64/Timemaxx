@@ -27,9 +27,7 @@ export async function callGemini<T>(opts: {
       }),
       system: opts.system,
       prompt: opts.prompt,
-      abortSignal: opts.timeoutMs
-        ? AbortSignal.timeout(opts.timeoutMs)
-        : undefined,
+      abortSignal: opts.timeoutMs ? AbortSignal.timeout(opts.timeoutMs) : undefined,
     });
 
     if (!result.output) {
@@ -42,7 +40,7 @@ export async function callGemini<T>(opts: {
       err instanceof Error &&
       ["AbortError", "TimeoutError", "ResponseAborted"].includes(err.name)
     ) {
-      throw new Error("AI generation timed out — please try again");
+      throw err;
     }
     throw err;
   }

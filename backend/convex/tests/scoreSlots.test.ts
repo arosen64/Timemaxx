@@ -6,7 +6,9 @@ const TZ = "America/New_York";
 // Helper: build a timestamp for a given weekday + hour in ET (non-DST week: 2026-01-05 Mon)
 function etMs(isoDate: string, hour: number, minute = 0): number {
   // isoDate = "2026-01-05" (Monday)
-  return new Date(`${isoDate}T${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00-05:00`).getTime();
+  return new Date(
+    `${isoDate}T${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00-05:00`
+  ).getTime();
 }
 
 const MON = "2026-01-05"; // Monday
@@ -107,13 +109,25 @@ describe("scoreCandidate", () => {
   });
 
   it("applies daily load penalty of -1 per interval, capped at -3", () => {
-    const { scoreBreakdown: sb1 } = scoreCandidate({ ...baseOpts, startMs: slot9amMon, dailyLoadCount: 1 });
+    const { scoreBreakdown: sb1 } = scoreCandidate({
+      ...baseOpts,
+      startMs: slot9amMon,
+      dailyLoadCount: 1,
+    });
     expect(sb1.dailyLoadPenalty).toBe(-1);
 
-    const { scoreBreakdown: sb3 } = scoreCandidate({ ...baseOpts, startMs: slot9amMon, dailyLoadCount: 3 });
+    const { scoreBreakdown: sb3 } = scoreCandidate({
+      ...baseOpts,
+      startMs: slot9amMon,
+      dailyLoadCount: 3,
+    });
     expect(sb3.dailyLoadPenalty).toBe(-3);
 
-    const { scoreBreakdown: sb5 } = scoreCandidate({ ...baseOpts, startMs: slot9amMon, dailyLoadCount: 5 });
+    const { scoreBreakdown: sb5 } = scoreCandidate({
+      ...baseOpts,
+      startMs: slot9amMon,
+      dailyLoadCount: 5,
+    });
     expect(sb5.dailyLoadPenalty).toBe(-3);
   });
 
@@ -153,7 +167,7 @@ describe("scoreCandidate", () => {
     const { timeOfDayMatch, dayOfWeekMatch, bufferComfort, dailyLoadPenalty, difficultyBonus } =
       result.scoreBreakdown;
     expect(result.score).toBe(
-      timeOfDayMatch + dayOfWeekMatch + bufferComfort + dailyLoadPenalty + difficultyBonus,
+      timeOfDayMatch + dayOfWeekMatch + bufferComfort + dailyLoadPenalty + difficultyBonus
     );
   });
 
@@ -175,7 +189,7 @@ describe("scoreCandidate", () => {
 
   it("handles all seven time-of-day labels correctly", () => {
     const cases: Array<[string, number, number]> = [
-      ["Early Morning (5–8am)", 6, 300],   // 6am = 360 min → in [300, 480)
+      ["Early Morning (5–8am)", 6, 300], // 6am = 360 min → in [300, 480)
       ["Morning (8–11am)", 9, 480],
       ["Midday (11am–2pm)", 12, 660],
       ["Afternoon (2–5pm)", 15, 840],

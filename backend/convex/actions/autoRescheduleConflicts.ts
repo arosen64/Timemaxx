@@ -49,12 +49,12 @@ export const autoRescheduleConflicts = action({
 
     // Get user preferences
     const user = await ctx.runQuery(internal.queries.users.getUserInternal, { userId });
-    const workHoursGrid = ((user?.workHoursGrid ?? []) as WorkHoursRow[]);
+    const workHoursGrid = (user?.workHoursGrid ?? []) as WorkHoursRow[];
     const productivityTraits: unknown = user?.productivityTraits;
 
     // Get all study blocks for the user
     const allBlocks = (await ctx.runQuery(
-      api.queries.studyBlocks.getAllStudyBlocksWithTasks,
+      api.queries.studyBlocks.getAllStudyBlocksWithTasks
     )) as StudyBlockWithTask[];
 
     const conflictedBlocks = allBlocks.filter((b) => b.isConflicted && b.startTime);
@@ -152,10 +152,9 @@ export const autoRescheduleConflicts = action({
  *
  * Exported for unit testing.
  */
-export function filterPastFreeBlocks<T extends { startMs: number; endMs: number; startISO: string }>(
-  blocks: T[],
-  nowMs: number,
-): T[] {
+export function filterPastFreeBlocks<
+  T extends { startMs: number; endMs: number; startISO: string },
+>(blocks: T[], nowMs: number): T[] {
   return blocks
     .filter((b) => b.endMs > nowMs)
     .map((b) => {

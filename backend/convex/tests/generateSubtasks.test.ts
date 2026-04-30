@@ -158,10 +158,7 @@ describe("actions/requestGenerateSubtasks", () => {
     const taskId = await seedTask(t, ownerUserId);
 
     await expect(
-      attackerAuth.action(
-        api.actions.requestGenerateSubtasks.requestGenerateSubtasks,
-        { taskId }
-      )
+      attackerAuth.action(api.actions.requestGenerateSubtasks.requestGenerateSubtasks, { taskId })
     ).rejects.toThrow("Task not found or access denied");
     expect(mockStartAsync).not.toHaveBeenCalled();
   });

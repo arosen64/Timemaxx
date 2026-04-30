@@ -1,264 +1,272 @@
-import { Fragment, useEffect, useState, type ReactNode } from 'react'
-import { useQuery } from 'convex/react'
-import { useAuthToken } from '@convex-dev/auth/react'
-import { api } from '../../../backend/convex/_generated/api'
-import { ChatContainerRoot, ChatContainerContent, ChatContainerScrollAnchor } from './prompt-kit/chat-container'
-import { Message, MessageAvatar, MessageContent } from './prompt-kit/message'
-import { PromptInput, PromptInputTextarea, PromptInputActions } from './prompt-kit/prompt-input'
-import { ScrollButton } from './prompt-kit/scroll-button'
-import { Loader } from './prompt-kit/loader'
-import { MessageSquareIcon, XIcon } from './icons'
-import Button from './ui/Button'
+import { Fragment, useEffect, useState, type ReactNode } from "react";
+import { useQuery } from "convex/react";
+import { useAuthToken } from "@convex-dev/auth/react";
+import { api } from "../../../backend/convex/_generated/api";
+import {
+  ChatContainerRoot,
+  ChatContainerContent,
+  ChatContainerScrollAnchor,
+} from "./prompt-kit/chat-container";
+import { Message, MessageAvatar, MessageContent } from "./prompt-kit/message";
+import { PromptInput, PromptInputTextarea, PromptInputActions } from "./prompt-kit/prompt-input";
+import { ScrollButton } from "./prompt-kit/scroll-button";
+import { Loader } from "./prompt-kit/loader";
+import { MessageSquareIcon, XIcon } from "./icons";
+import Button from "./ui/Button";
 
 const MAIN_MENU = [
-  { label: 'Give feedback on a task', route: 'feedback' },
-  { label: 'Schedule something', route: 'schedule' },
-  { label: 'Task help (create / edit / view)', route: 'tasks' },
-  { label: 'Class questions', route: 'classes' },
-  { label: 'Change preferences', route: 'preferences' },
-] as const
+  { label: "Give feedback on a task", route: "feedback" },
+  { label: "Schedule something", route: "schedule" },
+  { label: "Task help (create / edit / view)", route: "tasks" },
+  { label: "Class questions", route: "classes" },
+  { label: "Change preferences", route: "preferences" },
+] as const;
 
-const ACTIVE_AGENT_LABELS: Record<'task' | 'feedback' | 'preferences' | 'classes' | 'schedule', string> = {
-  task: 'Task agent',
-  feedback: 'Feedback agent',
-  preferences: 'Preferences agent',
-  classes: 'Classes agent',
-  schedule: 'Schedule agent',
-}
+const ACTIVE_AGENT_LABELS: Record<
+  "task" | "feedback" | "preferences" | "classes" | "schedule",
+  string
+> = {
+  task: "Task agent",
+  feedback: "Feedback agent",
+  preferences: "Preferences agent",
+  classes: "Classes agent",
+  schedule: "Schedule agent",
+};
 
-type EntityCandidate = { id: string; label: string; subtitle: string }
+type EntityCandidate = { id: string; label: string; subtitle: string };
 
 type ChatApiResponse = {
-  text?: string
-  status?: string
-  entityCandidates?: EntityCandidate[]
-  entityHasMore?: boolean
-  phase?: 'task' | 'class' | 'block'
-}
+  text?: string;
+  status?: string;
+  entityCandidates?: EntityCandidate[];
+  entityHasMore?: boolean;
+  phase?: "task" | "class" | "block";
+};
 
 /** Assistant copy that introduces the task/class MCQ (must stay in sync with http_chat strings). */
 function isMcqIntroAssistantContent(content: string): boolean {
   return (
-    content.includes('Which task do you mean') ||
-    content.includes('Which class do you mean') ||
-    content.includes('Pick one below') ||
-    content.includes('see more options') ||
-    content.includes('tap one of the tasks') ||
-    content.includes('tap one of the classes') ||
-    content.includes('Pick a task') ||
-    content.includes('Pick a class')
-  )
+    content.includes("Which task do you mean") ||
+    content.includes("Which class do you mean") ||
+    content.includes("Pick one below") ||
+    content.includes("see more options") ||
+    content.includes("tap one of the tasks") ||
+    content.includes("tap one of the classes") ||
+    content.includes("Pick a task") ||
+    content.includes("Pick a class")
+  );
 }
 
 function findLastMcqIntroAssistantIndex(
-  msgs: ReadonlyArray<{ role: string; content: string }>,
+  msgs: ReadonlyArray<{ role: string; content: string }>
 ): number {
   for (let i = msgs.length - 1; i >= 0; i--) {
-    const m = msgs[i]
-    if (m.role === 'assistant' && isMcqIntroAssistantContent(m.content)) {
-      return i
+    const m = msgs[i];
+    if (m.role === "assistant" && isMcqIntroAssistantContent(m.content)) {
+      return i;
     }
   }
-  return -1
+  return -1;
 }
 
 /** Renders `**like this**` as bold (common in assistant copy; plain text otherwise). */
 function renderInlineBoldMarkdown(text: string): ReactNode {
-  const parts = text.split(/(\*\*.+?\*\*)/g)
+  const parts = text.split(/(\*\*.+?\*\*)/g);
   return parts.map((part, i) => {
-    if (part.startsWith('**') && part.endsWith('**') && part.length > 4) {
+    if (part.startsWith("**") && part.endsWith("**") && part.length > 4) {
       return (
         <strong key={i} className="font-semibold">
           {part.slice(2, -2)}
         </strong>
-      )
+      );
     }
-    return part
-  })
+    return part;
+  });
 }
 
 export default function ChatBot() {
-  const [isOpen, setIsOpen] = useState(false)
-  const [sessionId, setSessionId] = useState(() => crypto.randomUUID())
-  const [input, setInput] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const [optimistic, setOptimistic] = useState<{ role: 'user' | 'assistant'; content: string }[]>([])
-  const [historyLenAtSend, setHistoryLenAtSend] = useState(0)
+  const [isOpen, setIsOpen] = useState(false);
+  const [sessionId, setSessionId] = useState(() => crypto.randomUUID());
+  const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [optimistic, setOptimistic] = useState<{ role: "user" | "assistant"; content: string }[]>(
+    []
+  );
+  const [historyLenAtSend, setHistoryLenAtSend] = useState(0);
   const [entityMcq, setEntityMcq] = useState<{
-    phase: 'task' | 'class' | 'block'
-    candidates: EntityCandidate[]
-    hasMore: boolean
-  } | null>(null)
+    phase: "task" | "class" | "block";
+    candidates: EntityCandidate[];
+    hasMore: boolean;
+  } | null>(null);
   /** Insert MCQ right after this message index (the MCQ intro assistant line). */
-  const [entityBlockAfterIndex, setEntityBlockAfterIndex] = useState<number | null>(null)
+  const [entityBlockAfterIndex, setEntityBlockAfterIndex] = useState<number | null>(null);
 
-  const token = useAuthToken()
-  const history = useQuery(api.queries.chatMessages.getChatHistory, { sessionId, limit: 50 }) ?? []
+  const token = useAuthToken();
+  const history = useQuery(api.queries.chatMessages.getChatHistory, { sessionId, limit: 50 }) ?? [];
   const entityScope =
-    useQuery(
-      api.queries.chatSessions.getChatSessionEntityScope,
-      isOpen ? { sessionId } : 'skip',
-    ) ?? null
+    useQuery(api.queries.chatSessions.getChatSessionEntityScope, isOpen ? { sessionId } : "skip") ??
+    null;
 
   // Show optimistic[i] only while history hasn't committed that index yet.
   // Using a cursor (history length at send time) instead of content comparison
   // avoids false deduplication when the user sends identical messages back-to-back.
   const pendingMessages = isLoading
     ? optimistic.slice(Math.max(0, history.length - historyLenAtSend))
-    : []
-  const messages = [...history, ...pendingMessages]
+    : [];
+  const messages = [...history, ...pendingMessages];
 
-  const showSuggestions = messages.length === 0 && !isLoading
-  const chatLocked = entityScope?.chatInputLocked === true
+  const showSuggestions = messages.length === 0 && !isLoading;
+  const chatLocked = entityScope?.chatInputLocked === true;
 
-  const shouldShowEntityBlock = entityMcq !== null && entityMcq.candidates.length > 0
+  const shouldShowEntityBlock = entityMcq !== null && entityMcq.candidates.length > 0;
 
   useEffect(() => {
-    if (!shouldShowEntityBlock || entityBlockAfterIndex !== null) return
-    const idx = findLastMcqIntroAssistantIndex(messages)
+    if (!shouldShowEntityBlock || entityBlockAfterIndex !== null) return;
+    const idx = findLastMcqIntroAssistantIndex(messages);
     if (idx >= 0) {
-      setEntityBlockAfterIndex(idx)
+      setEntityBlockAfterIndex(idx);
     }
     // `messages` is intentionally omitted: deps track when history grows so we re-scan for the MCQ intro line.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [shouldShowEntityBlock, entityBlockAfterIndex, history.length, optimistic.length])
+  }, [shouldShowEntityBlock, entityBlockAfterIndex, history.length, optimistic.length]);
 
   function applyEntityResponse(data: ChatApiResponse, userEcho: string | null) {
-    const aiText = data.text ?? ''
-    if (data.status === 'entity_scope_locked' || data.status === 'chat_input_locked') {
-      setEntityBlockAfterIndex(null)
+    const aiText = data.text ?? "";
+    if (data.status === "entity_scope_locked" || data.status === "chat_input_locked") {
+      setEntityBlockAfterIndex(null);
     }
     if (data.entityCandidates && data.entityCandidates.length > 0 && data.phase) {
-      setEntityBlockAfterIndex(null)
+      setEntityBlockAfterIndex(null);
       setEntityMcq({
         phase: data.phase,
         candidates: data.entityCandidates,
         hasMore: data.entityHasMore ?? false,
-      })
+      });
     } else {
-      setEntityMcq(null)
-      setEntityBlockAfterIndex(null)
+      setEntityMcq(null);
+      setEntityBlockAfterIndex(null);
     }
     if (userEcho !== null) {
       setOptimistic([
-        { role: 'user', content: userEcho },
-        { role: 'assistant', content: aiText },
-      ])
+        { role: "user", content: userEcho },
+        { role: "assistant", content: aiText },
+      ]);
     } else {
       // MCQ actions persist via Convex; avoid double-rendering with optimistic rows
-      setOptimistic([])
+      setOptimistic([]);
     }
   }
 
   async function postChat(body: Record<string, unknown>, userEcho: string | null) {
-    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const res = await fetch(`${import.meta.env.VITE_CONVEX_SITE_URL}/api/chat`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       body: JSON.stringify({ ...body, timezone }),
-    })
+    });
     if (!res.ok) {
       if (res.status === 429) {
-        throw new Error('Maxx has hit the AI rate limit — please wait a moment and try again.')
+        throw new Error("Maxx has hit the AI rate limit — please wait a moment and try again.");
       }
-      const errText = await res.text().catch(() => '(no body)')
-      throw new Error(`Chat request failed: ${res.status} ${errText}`)
+      const errText = await res.text().catch(() => "(no body)");
+      throw new Error(`Chat request failed: ${res.status} ${errText}`);
     }
-    const data = (await res.json()) as ChatApiResponse
-    applyEntityResponse(data, userEcho)
+    const data = (await res.json()) as ChatApiResponse;
+    applyEntityResponse(data, userEcho);
   }
 
   async function handleSend() {
-    const text = input.trim()
-    if (!text || isLoading || chatLocked) return
+    const text = input.trim();
+    if (!text || isLoading || chatLocked) return;
 
-    setInput('')
-    setIsLoading(true)
-    setEntityMcq(null)
-    setEntityBlockAfterIndex(null)
-    setHistoryLenAtSend(history.length)
-    setOptimistic([{ role: 'user', content: text }])
+    setInput("");
+    setIsLoading(true);
+    setEntityMcq(null);
+    setEntityBlockAfterIndex(null);
+    setHistoryLenAtSend(history.length);
+    setOptimistic([{ role: "user", content: text }]);
 
     try {
-      await postChat({ message: text, sessionId }, text)
+      await postChat({ message: text, sessionId }, text);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err)
-      console.error('[ChatBot] error:', msg)
-      setOptimistic((prev) => [...prev, { role: 'assistant', content: `Error: ${msg}` }])
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error("[ChatBot] error:", msg);
+      setOptimistic((prev) => [...prev, { role: "assistant", content: `Error: ${msg}` }]);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
   }
 
-  async function handlePickEntity(phase: 'task' | 'class' | 'block', id: string) {
-    if (isLoading || chatLocked || !entityMcq) return
-    setIsLoading(true)
+  async function handlePickEntity(phase: "task" | "class" | "block", id: string) {
+    if (isLoading || chatLocked || !entityMcq) return;
+    setIsLoading(true);
     try {
-      if (phase === 'task') {
-        await postChat({ sessionId, entity: { action: 'pick_task', taskId: id } }, null)
-      } else if (phase === 'block') {
-        await postChat({ sessionId, entity: { action: 'pick_block', blockId: id } }, null)
+      if (phase === "task") {
+        await postChat({ sessionId, entity: { action: "pick_task", taskId: id } }, null);
+      } else if (phase === "block") {
+        await postChat({ sessionId, entity: { action: "pick_block", blockId: id } }, null);
       } else {
-        await postChat({ sessionId, entity: { action: 'pick_course', courseId: id } }, null)
+        await postChat({ sessionId, entity: { action: "pick_course", courseId: id } }, null);
       }
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err)
-      setOptimistic((prev) => [...prev, { role: 'assistant', content: `Error: ${msg}` }])
+      const msg = err instanceof Error ? err.message : String(err);
+      setOptimistic((prev) => [...prev, { role: "assistant", content: `Error: ${msg}` }]);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
   }
 
   async function handleOtherEntity() {
-    if (!entityMcq || isLoading || chatLocked || !entityMcq.hasMore) return
-    const ids = entityMcq.candidates.map((c) => c.id)
-    setIsLoading(true)
+    if (!entityMcq || isLoading || chatLocked || !entityMcq.hasMore) return;
+    const ids = entityMcq.candidates.map((c) => c.id);
+    setIsLoading(true);
     try {
-      if (entityMcq.phase === 'task') {
-        await postChat(
-          { sessionId, entity: { action: 'other_tasks', excludeTaskIds: ids } },
-          null,
-        )
+      if (entityMcq.phase === "task") {
+        await postChat({ sessionId, entity: { action: "other_tasks", excludeTaskIds: ids } }, null);
       } else {
         await postChat(
-          { sessionId, entity: { action: 'other_courses', excludeCourseIds: ids } },
-          null,
-        )
+          { sessionId, entity: { action: "other_courses", excludeCourseIds: ids } },
+          null
+        );
       }
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err)
-      setOptimistic((prev) => [...prev, { role: 'assistant', content: `Error: ${msg}` }])
+      const msg = err instanceof Error ? err.message : String(err);
+      setOptimistic((prev) => [...prev, { role: "assistant", content: `Error: ${msg}` }]);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
   }
 
   async function handleMenuPick(route: string, label: string) {
-    if (isLoading || chatLocked) return
-    setIsLoading(true)
-    setEntityMcq(null)
-    setEntityBlockAfterIndex(null)
-    setHistoryLenAtSend(history.length)
-    setOptimistic([{ role: 'user', content: label }])
+    if (isLoading || chatLocked) return;
+    setIsLoading(true);
+    setEntityMcq(null);
+    setEntityBlockAfterIndex(null);
+    setHistoryLenAtSend(history.length);
+    setOptimistic([{ role: "user", content: label }]);
     try {
-      await postChat({ sessionId, entity: { action: 'menu_pick', route } }, label)
+      await postChat({ sessionId, entity: { action: "menu_pick", route } }, label);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err)
-      setOptimistic((prev) => [...prev, { role: 'assistant', content: `Error: ${msg}` }])
+      const msg = err instanceof Error ? err.message : String(err);
+      setOptimistic((prev) => [...prev, { role: "assistant", content: `Error: ${msg}` }]);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
   }
 
   function renderEntityMcqBlock() {
-    if (!shouldShowEntityBlock || !entityMcq) return null
+    if (!shouldShowEntityBlock || !entityMcq) return null;
     return (
       <div className="p-3 space-y-2 bg-white border rounded-xl border-border">
         <p className="text-[11px] font-heading font-semibold text-navy">
-          {entityMcq.phase === 'task' ? 'Pick a task' : entityMcq.phase === 'block' ? 'Pick a block' : 'Pick a class'}
+          {entityMcq.phase === "task"
+            ? "Pick a task"
+            : entityMcq.phase === "block"
+              ? "Pick a block"
+              : "Pick a class"}
         </p>
         <div className="flex flex-col gap-1.5 max-h-40 overflow-y-auto">
           {entityMcq.candidates.map((c) => (
@@ -278,17 +286,17 @@ export default function ChatBot() {
           type="button"
           onClick={() => void handleOtherEntity()}
           disabled={isLoading || !entityMcq.hasMore}
-          title={entityMcq.hasMore ? 'Show more options' : 'No more matches for this search'}
+          title={entityMcq.hasMore ? "Show more options" : "No more matches for this search"}
           className={
             entityMcq.hasMore
-              ? 'w-full rounded-lg border border-dashed border-teal/50 py-2 text-[12px] font-medium text-teal hover:bg-teal/5 transition disabled:opacity-50'
-              : 'w-full rounded-lg border border-dashed border-border py-2 text-[12px] font-medium text-light-blue cursor-not-allowed opacity-70'
+              ? "w-full rounded-lg border border-dashed border-teal/50 py-2 text-[12px] font-medium text-teal hover:bg-teal/5 transition disabled:opacity-50"
+              : "w-full rounded-lg border border-dashed border-border py-2 text-[12px] font-medium text-light-blue cursor-not-allowed opacity-70"
           }
         >
           Other…
         </button>
       </div>
-    )
+    );
   }
 
   return (
@@ -303,33 +311,34 @@ export default function ChatBot() {
                 <span className="w-2 h-2 rounded-full shrink-0 bg-teal" />
                 <span className="font-heading text-[15px] font-semibold text-white">Maxx ✦</span>
               </div>
-              {entityScope && (entityScope.entityScopeTags.length > 0 || entityScope.activeAgent !== null) && (
-                <div className="flex flex-wrap gap-1 pl-4">
-                  {entityScope.entityScopeTags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="rounded bg-white/15 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide text-white/90"
-                    >
-                      {tag === 'task_id_set' ? 'Task ID set' : 'Class ID set'}
-                    </span>
-                  ))}
-                  {entityScope.activeAgent !== null && (
-                    <span className="rounded bg-white/15 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide text-white/90">
-                      {ACTIVE_AGENT_LABELS[entityScope.activeAgent]}
-                    </span>
-                  )}
-                </div>
-              )}
+              {entityScope &&
+                (entityScope.entityScopeTags.length > 0 || entityScope.activeAgent !== null) && (
+                  <div className="flex flex-wrap gap-1 pl-4">
+                    {entityScope.entityScopeTags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="rounded bg-white/15 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide text-white/90"
+                      >
+                        {tag === "task_id_set" ? "Task ID set" : "Class ID set"}
+                      </span>
+                    ))}
+                    {entityScope.activeAgent !== null && (
+                      <span className="rounded bg-white/15 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide text-white/90">
+                        {ACTIVE_AGENT_LABELS[entityScope.activeAgent]}
+                      </span>
+                    )}
+                  </div>
+                )}
             </div>
             <button
               type="button"
               onClick={() => {
-                setIsOpen(false)
-                setSessionId(crypto.randomUUID())
-                setOptimistic([])
-                setEntityMcq(null)
-                setEntityBlockAfterIndex(null)
-                setInput('')
+                setIsOpen(false);
+                setSessionId(crypto.randomUUID());
+                setOptimistic([]);
+                setEntityMcq(null);
+                setEntityBlockAfterIndex(null);
+                setInput("");
               }}
               aria-label="Close chat"
               className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-white/10 hover:bg-white/20 transition"
@@ -342,22 +351,27 @@ export default function ChatBot() {
           <div className="relative flex-1 min-h-0">
             <ChatContainerRoot className="h-full bg-bg-gray">
               <ChatContainerContent className="gap-3 px-4 py-4">
-
                 {messages.length === 0 && !isLoading && (
                   <div className="flex flex-col items-center gap-2 pt-8 text-center">
-                    <span className="text-sm font-semibold font-heading text-navy">What can I help you with?</span>
-                    <span className="text-xs font-body text-light-blue">Pick an option below or type your question.</span>
+                    <span className="text-sm font-semibold font-heading text-navy">
+                      What can I help you with?
+                    </span>
+                    <span className="text-xs font-body text-light-blue">
+                      Pick an option below or type your question.
+                    </span>
                   </div>
                 )}
 
                 {messages.map((msg, i) => {
-                  const m = msg as { role: 'user' | 'assistant'; content: string; _id?: string }
-                  const key = typeof m._id === 'string' ? m._id : `m-${i}`
+                  const m = msg as { role: "user" | "assistant"; content: string; _id?: string };
+                  const key = typeof m._id === "string" ? m._id : `m-${i}`;
                   const showEntityAfterThis =
-                    shouldShowEntityBlock && entityBlockAfterIndex !== null && i === entityBlockAfterIndex
+                    shouldShowEntityBlock &&
+                    entityBlockAfterIndex !== null &&
+                    i === entityBlockAfterIndex;
                   return (
                     <Fragment key={key}>
-                      {m.role === 'assistant' ? (
+                      {m.role === "assistant" ? (
                         <Message className="items-start">
                           <MessageAvatar fallback="AI" />
                           <div className="flex flex-col gap-1 max-w-[82%]">
@@ -378,9 +392,11 @@ export default function ChatBot() {
                       )}
                       {showEntityAfterThis ? renderEntityMcqBlock() : null}
                     </Fragment>
-                  )
+                  );
                 })}
-                {shouldShowEntityBlock && entityBlockAfterIndex === null ? renderEntityMcqBlock() : null}
+                {shouldShowEntityBlock && entityBlockAfterIndex === null
+                  ? renderEntityMcqBlock()
+                  : null}
 
                 {isLoading && optimistic.length <= 1 && (
                   <Message className="items-start">
@@ -420,7 +436,8 @@ export default function ChatBot() {
           <div className="px-4 py-3 bg-white border-t shrink-0 border-border">
             {chatLocked && (
               <p className="mb-2 rounded-lg bg-amber-50 border border-amber-200 px-2.5 py-2 text-[11px] font-body text-amber-950">
-                This chat is closed for new messages. Tap × and open Maxx again to start a new session.
+                This chat is closed for new messages. Tap × and open Maxx again to start a new
+                session.
               </p>
             )}
             <PromptInput
@@ -433,8 +450,8 @@ export default function ChatBot() {
               <PromptInputTextarea
                 placeholder={
                   chatLocked
-                    ? 'Chat closed — open a new session…'
-                    : 'Ask me anything… (Enter to send)'
+                    ? "Chat closed — open a new session…"
+                    : "Ask me anything… (Enter to send)"
                 }
               />
               <PromptInputActions>
@@ -450,8 +467,8 @@ export default function ChatBot() {
             </PromptInput>
             <p className="hidden sm:block mt-1.5 text-center text-[11px] font-body text-light-blue">
               {chatLocked
-                ? 'Start a new chat from the widget to continue.'
-                : 'Enter to send · Shift+Enter for new line'}
+                ? "Start a new chat from the widget to continue."
+                : "Enter to send · Shift+Enter for new line"}
             </p>
           </div>
         </div>
@@ -462,21 +479,21 @@ export default function ChatBot() {
         type="button"
         onClick={() => {
           if (isOpen) {
-            setIsOpen(false)
-            setSessionId(crypto.randomUUID())
-            setOptimistic([])
-            setEntityMcq(null)
-            setEntityBlockAfterIndex(null)
-            setInput('')
+            setIsOpen(false);
+            setSessionId(crypto.randomUUID());
+            setOptimistic([]);
+            setEntityMcq(null);
+            setEntityBlockAfterIndex(null);
+            setInput("");
           } else {
-            setIsOpen(true)
+            setIsOpen(true);
           }
         }}
-        aria-label={isOpen ? 'Close AI chat' : 'Open AI chat'}
-        className={`items-center justify-center transition rounded-full shadow-lg h-14 w-14 bg-navy hover:opacity-90 active:opacity-80 ${isOpen ? 'hidden sm:flex' : 'flex'}`}
+        aria-label={isOpen ? "Close AI chat" : "Open AI chat"}
+        className={`items-center justify-center transition rounded-full shadow-lg h-14 w-14 bg-navy hover:opacity-90 active:opacity-80 ${isOpen ? "hidden sm:flex" : "flex"}`}
       >
         <MessageSquareIcon color="white" size={22} />
       </button>
     </div>
-  )
+  );
 }

@@ -69,8 +69,7 @@ export async function rebuildStudyBlocks(
   for (let i = 0; i < blockCount; i++) {
     const isLastBlock = i === blockCount - 1;
     const remainder = timeEstimate % focusBlockLength;
-    const studyBlockLength =
-      isLastBlock && remainder !== 0 ? remainder : focusBlockLength;
+    const studyBlockLength = isLastBlock && remainder !== 0 ? remainder : focusBlockLength;
 
     await ctx.db.insert("studyBlocks", {
       taskId,

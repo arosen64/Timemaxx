@@ -5,12 +5,15 @@ export function termToOrdinal(termName: string): number | null {
   const yearMatch = termName.match(/\d{4}/);
   if (!yearMatch) return null;
   const year = Number.parseInt(yearMatch[0], 10);
-  const season =
-    lower.includes("intersession") ? 0
-    : lower.includes("spring") ? 1
-    : lower.includes("summer") ? 2
-    : lower.includes("fall") ? 3
-    : null;
+  const season = lower.includes("intersession")
+    ? 0
+    : lower.includes("spring")
+      ? 1
+      : lower.includes("summer")
+        ? 2
+        : lower.includes("fall")
+          ? 3
+          : null;
   if (season === null) return null;
   return year * 10 + season;
 }
@@ -20,10 +23,7 @@ export function currentTermOrdinal(date = new Date()): number {
   const day = date.getDate();
   const year = date.getFullYear();
   const season =
-    month === 1 && day < 15 ? 0
-    : month < 6 ? 1
-    : month < 8 || (month === 8 && day < 15) ? 2
-    : 3;
+    month === 1 && day < 15 ? 0 : month < 6 ? 1 : month < 8 || (month === 8 && day < 15) ? 2 : 3;
   return year * 10 + season;
 }
 

@@ -4,26 +4,34 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 
-type WorkHoursRow = { day: string; blocked: number[] }
-type TimedEventArg = { id: string; summary: string; start: string; end: string; calendarId: string }
+type WorkHoursRow = { day: string; blocked: number[] };
+type TimedEventArg = {
+  id: string;
+  summary: string;
+  start: string;
+  end: string;
+  calendarId: string;
+};
 
 const MIN_STUDY_BLOCK_MINUTES = 15;
 const MIN_STUDY_BLOCK_ERROR = `Study block length must be at least ${MIN_STUDY_BLOCK_MINUTES} minutes`;
 
-
-function getLocalTimeInfo(isoString: string, timezone: string): { dayName: string; minutesFromMidnight: number } {
-  const dt = new Date(isoString)
+function getLocalTimeInfo(
+  isoString: string,
+  timezone: string
+): { dayName: string; minutesFromMidnight: number } {
+  const dt = new Date(isoString);
   const parts = new Intl.DateTimeFormat("en-US", {
     timeZone: timezone,
     weekday: "long",
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
-  }).formatToParts(dt)
-  const dayName = parts.find((p) => p.type === "weekday")?.value ?? ""
-  const hour = parseInt(parts.find((p) => p.type === "hour")?.value ?? "0", 10)
-  const minute = parseInt(parts.find((p) => p.type === "minute")?.value ?? "0", 10)
-  return { dayName, minutesFromMidnight: (hour === 24 ? 0 : hour) * 60 + minute }
+  }).formatToParts(dt);
+  const dayName = parts.find((p) => p.type === "weekday")?.value ?? "";
+  const hour = parseInt(parts.find((p) => p.type === "hour")?.value ?? "0", 10);
+  const minute = parseInt(parts.find((p) => p.type === "minute")?.value ?? "0", 10);
+  return { dayName, minutesFromMidnight: (hour === 24 ? 0 : hour) * 60 + minute };
 }
 
 function isBlockConflicted(
@@ -31,36 +39,36 @@ function isBlockConflicted(
   task: { dueDate: number },
   timedEvents: TimedEventArg[],
   workHoursGrid: WorkHoursRow[],
-  timezone: string,
+  timezone: string
 ): boolean {
-  const startMs = new Date(block.startTime).getTime()
-  const endMs = startMs + block.studyBlockLength * 60 * 1000
+  const startMs = new Date(block.startTime).getTime();
+  const endMs = startMs + block.studyBlockLength * 60 * 1000;
 
   // 1. Due date violation — only flag if the task is not already overdue
-  const nowMs = Date.now()
-  if (task.dueDate > nowMs && (startMs >= task.dueDate || endMs > task.dueDate)) return true
+  const nowMs = Date.now();
+  if (task.dueDate > nowMs && (startMs >= task.dueDate || endMs > task.dueDate)) return true;
 
   // 2. Calendar event overlap — skip the block's own exported GCal event
   for (const event of timedEvents) {
-    if (block.googleEventId && event.id === block.googleEventId) continue
-    const eventStart = new Date(event.start).getTime()
-    const eventEnd = new Date(event.end).getTime()
-    if (startMs < eventEnd && eventStart < endMs) return true
+    if (block.googleEventId && event.id === block.googleEventId) continue;
+    const eventStart = new Date(event.start).getTime();
+    const eventEnd = new Date(event.end).getTime();
+    if (startMs < eventEnd && eventStart < endMs) return true;
   }
 
   // 3. Unavailable slot overlap — use Intl to get local day/time since Convex runs in UTC
-  const { dayName, minutesFromMidnight: startMins } = getLocalTimeInfo(block.startTime, timezone)
-  const row = workHoursGrid.find((r) => r.day === dayName)
+  const { dayName, minutesFromMidnight: startMins } = getLocalTimeInfo(block.startTime, timezone);
+  const row = workHoursGrid.find((r) => r.day === dayName);
   if (row) {
-    const endMins = startMins + block.studyBlockLength
+    const endMins = startMins + block.studyBlockLength;
     for (const slotIdx of row.blocked) {
-      const slotStartMins = slotIdx * 30
-      const slotEndMins = slotStartMins + 30
-      if (startMins < slotEndMins && slotStartMins < endMins) return true
+      const slotStartMins = slotIdx * 30;
+      const slotEndMins = slotStartMins + 30;
+      if (startMins < slotEndMins && slotStartMins < endMins) return true;
     }
   }
 
-  return false
+  return false;
 }
 
 const timedEventValidator = v.object({
@@ -69,12 +77,12 @@ const timedEventValidator = v.object({
   start: v.string(),
   end: v.string(),
   calendarId: v.string(),
-})
+});
 
 const workHoursRowValidator = v.object({
   day: v.string(),
   blocked: v.array(v.number()),
-})
+});
 
 const studyBlockArgs = {
   taskId: v.id("tasks"),
@@ -221,7 +229,10 @@ export const setGoogleEventId = internalMutation({
     googleEventId: v.string(),
   },
   handler: async (ctx, args) => {
-    await ctx.db.patch(args.studyBlockId, { googleEventId: args.googleEventId, needsExport: false });
+    await ctx.db.patch(args.studyBlockId, {
+      googleEventId: args.googleEventId,
+      needsExport: false,
+    });
   },
 });
 
@@ -331,11 +342,15 @@ export const detectConflicts = internalMutation({
         }
 
         const conflicted = isBlockConflicted(
-          { startTime: block.startTime, studyBlockLength: block.studyBlockLength, googleEventId: block.googleEventId },
+          {
+            startTime: block.startTime,
+            studyBlockLength: block.studyBlockLength,
+            googleEventId: block.googleEventId,
+          },
           { dueDate: task.dueDate },
           args.timedEvents,
           args.workHoursGrid,
-          args.timezone,
+          args.timezone
         );
 
         if ((block.isConflicted ?? false) !== conflicted) {
@@ -386,11 +401,15 @@ export const detectConflicts = internalMutation({
         }
 
         const conflicted = isBlockConflicted(
-          { startTime: block.startTime, studyBlockLength: block.studyBlockLength, googleEventId: block.googleEventId },
+          {
+            startTime: block.startTime,
+            studyBlockLength: block.studyBlockLength,
+            googleEventId: block.googleEventId,
+          },
           { dueDate },
           args.timedEvents,
           args.workHoursGrid,
-          args.timezone,
+          args.timezone
         );
 
         if ((block.isConflicted ?? false) !== conflicted) {
@@ -473,9 +492,7 @@ async function recomputeParentTaskStatus(
     .collect();
 
   const allDone = siblings.every((s) => s.status === "completed");
-  const anyActive = siblings.some(
-    (s) => s.status === "in_progress" || s.status === "completed"
-  );
+  const anyActive = siblings.some((s) => s.status === "in_progress" || s.status === "completed");
   return allDone ? "completed" : anyActive ? "in_progress" : "not_started";
 }
 

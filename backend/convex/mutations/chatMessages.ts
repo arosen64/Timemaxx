@@ -18,19 +18,17 @@ export const saveMessage = internalMutation({
   handler: async (ctx, args) => {
     let taskId: Id<"tasks"> | undefined = args.taskId;
     let courseId: Id<"userCourses"> | undefined = args.courseId;
-    let sessionRow:
-      | {
-          _id: Id<"chatSessions">;
-          activeTaskId?: Id<"tasks">;
-          activeCourseId?: Id<"userCourses">;
-        }
-      | null = null;
+    let sessionRow: {
+      _id: Id<"chatSessions">;
+      activeTaskId?: Id<"tasks">;
+      activeCourseId?: Id<"userCourses">;
+    } | null = null;
 
     if (args.sessionId) {
       sessionRow = await ctx.db
         .query("chatSessions")
         .withIndex("by_userId_sessionId", (q) =>
-          q.eq("userId", args.userId).eq("sessionId", args.sessionId),
+          q.eq("userId", args.userId).eq("sessionId", args.sessionId)
         )
         .unique();
     }
@@ -63,10 +61,14 @@ export const saveMessage = internalMutation({
       });
     }
 
-    await ctx.scheduler.runAfter(0, internal.mutations.chatChunks.rebuildChatChunksForSessionInternal, {
-      userId: args.userId,
-      sessionId: args.sessionId,
-    });
+    await ctx.scheduler.runAfter(
+      0,
+      internal.mutations.chatChunks.rebuildChatChunksForSessionInternal,
+      {
+        userId: args.userId,
+        sessionId: args.sessionId,
+      }
+    );
 
     return id;
   },
@@ -89,7 +91,7 @@ export const applyResolvedEntityToClarifyTriggerMessageInternal = internalMutati
     const session = await ctx.db
       .query("chatSessions")
       .withIndex("by_userId_sessionId", (q) =>
-        q.eq("userId", args.userId).eq("sessionId", args.sessionId),
+        q.eq("userId", args.userId).eq("sessionId", args.sessionId)
       )
       .unique();
     if (!session) throw new Error("chat session missing");
@@ -122,10 +124,14 @@ export const applyResolvedEntityToClarifyTriggerMessageInternal = internalMutati
       });
     }
 
-    await ctx.scheduler.runAfter(0, internal.mutations.chatChunks.rebuildChatChunksForSessionInternal, {
-      userId: args.userId,
-      sessionId: args.sessionId,
-    });
+    await ctx.scheduler.runAfter(
+      0,
+      internal.mutations.chatChunks.rebuildChatChunksForSessionInternal,
+      {
+        userId: args.userId,
+        sessionId: args.sessionId,
+      }
+    );
 
     return null;
   },
@@ -138,7 +144,7 @@ export const patchUserMessageClarificationIntent = internalMutation({
     clarificationIntent: v.union(
       v.literal("task_feedback"),
       v.literal("class_difficulty"),
-      v.literal("none"),
+      v.literal("none")
     ),
   },
   returns: v.null(),
@@ -152,10 +158,14 @@ export const patchUserMessageClarificationIntent = internalMutation({
     });
 
     if (msg.sessionId) {
-      await ctx.scheduler.runAfter(0, internal.mutations.chatChunks.rebuildChatChunksForSessionInternal, {
-        userId: args.userId,
-        sessionId: msg.sessionId,
-      });
+      await ctx.scheduler.runAfter(
+        0,
+        internal.mutations.chatChunks.rebuildChatChunksForSessionInternal,
+        {
+          userId: args.userId,
+          sessionId: msg.sessionId,
+        }
+      );
     }
 
     return null;
@@ -183,10 +193,14 @@ export const clearTaskTagForSessionInternal = internalMutation({
     }
 
     if (patchedCount > 0) {
-      await ctx.scheduler.runAfter(0, internal.mutations.chatChunks.rebuildChatChunksForSessionInternal, {
-        userId: args.userId,
-        sessionId: args.sessionId,
-      });
+      await ctx.scheduler.runAfter(
+        0,
+        internal.mutations.chatChunks.rebuildChatChunksForSessionInternal,
+        {
+          userId: args.userId,
+          sessionId: args.sessionId,
+        }
+      );
     }
 
     return patchedCount;
@@ -223,10 +237,14 @@ export const clearEntityTagsForSessionInternal = internalMutation({
     }
 
     if (patchedCount > 0) {
-      await ctx.scheduler.runAfter(0, internal.mutations.chatChunks.rebuildChatChunksForSessionInternal, {
-        userId: args.userId,
-        sessionId: args.sessionId,
-      });
+      await ctx.scheduler.runAfter(
+        0,
+        internal.mutations.chatChunks.rebuildChatChunksForSessionInternal,
+        {
+          userId: args.userId,
+          sessionId: args.sessionId,
+        }
+      );
     }
 
     return patchedCount;

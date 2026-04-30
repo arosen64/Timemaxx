@@ -4,13 +4,10 @@ import { Id } from "../_generated/dataModel";
 import { makeTestCtx, createTestUser } from "../../convex-tests/helpers";
 
 // Helper: seed a task directly in the db
-async function seedTask(
-  t: ReturnType<typeof makeTestCtx>,
-  userId: string
-) {
+async function seedTask(t: ReturnType<typeof makeTestCtx>, userId: string) {
   return t.run((ctx) =>
     ctx.db.insert("tasks", {
-      userId: userId as any,
+      userId: userId as Id<"users">,
       title: "Test task",
       description: "Test description",
       taskType: "Essay",
@@ -29,7 +26,7 @@ async function seedStudyBlock(
 ) {
   return t.run((ctx) =>
     ctx.db.insert("studyBlocks", {
-      taskId: taskId as any,
+      taskId: taskId as Id<"tasks">,
       title: overrides.title ?? "Block 1",
       startTime: overrides.startTime,
       studyBlockLength: overrides.studyBlockLength ?? 60,
@@ -46,7 +43,7 @@ async function seedSubtaskBlock(
 ) {
   const parentTaskId = await t.run((ctx) =>
     ctx.db.insert("tasks", {
-      userId: userId as any,
+      userId: userId as Id<"users">,
       title: "Parent task",
       description: "",
       taskType: "Essay",
@@ -57,8 +54,8 @@ async function seedSubtaskBlock(
   );
   const subtaskId = await t.run((ctx) =>
     ctx.db.insert("subtasks", {
-      parentTaskId: parentTaskId as any,
-      userId: userId as any,
+      parentTaskId: parentTaskId as Id<"tasks">,
+      userId: userId as Id<"users">,
       title: "Sub task",
       description: "",
       taskType: "Essay",
@@ -69,8 +66,8 @@ async function seedSubtaskBlock(
   );
   const studyBlockId = await t.run((ctx) =>
     ctx.db.insert("studyBlocks", {
-      subtaskId: subtaskId as any,
-      userId: userId as any,
+      subtaskId: subtaskId as Id<"subtasks">,
+      userId: userId as Id<"users">,
       title: "Subtask block",
       studyBlockLength: overrides.studyBlockLength ?? 90,
       isCompleted: false,
@@ -260,9 +257,7 @@ describe("mutations/studyBlocks – createTaskBlocks", () => {
       ],
     });
 
-    const blocks = await t.run((ctx) =>
-      ctx.db.query("studyBlocks").collect()
-    );
+    const blocks = await t.run((ctx) => ctx.db.query("studyBlocks").collect());
     expect(blocks).toHaveLength(2);
     expect(blocks.every((b) => b.startTime === undefined)).toBe(true);
   });
@@ -374,7 +369,9 @@ describe("mutations/studyBlocks – editStudyBlockTime", () => {
     const t = makeTestCtx();
     const { userId, withAuth } = await createTestUser(t);
     const taskId = await seedTask(t, userId);
-    const studyBlockId = await seedStudyBlock(t, taskId, { startTime: new Date(Date.now() + 3600_000).toISOString() });
+    const studyBlockId = await seedStudyBlock(t, taskId, {
+      startTime: new Date(Date.now() + 3600_000).toISOString(),
+    });
 
     await withAuth.mutation(api.mutations.studyBlocks.editStudyBlockTime, {
       studyBlockId,
@@ -591,7 +588,7 @@ describe("mutations/studyBlocks – setGoogleEventId", () => {
     const taskId = await seedTask(t, userId);
     const studyBlockId = await t.run((ctx) =>
       ctx.db.insert("studyBlocks", {
-        taskId: taskId as any,
+        taskId: taskId as Id<"tasks">,
         title: "Block",
         studyBlockLength: 60,
         googleEventId: "old_event_id",
@@ -643,8 +640,8 @@ describe("mutations/studyBlocks – flagFutureBlocksForReexport", () => {
 
     const blockId = await t.run((ctx) =>
       ctx.db.insert("studyBlocks", {
-        taskId: taskId as any,
-        userId: userId as any,
+        taskId: taskId as Id<"tasks">,
+        userId: userId as Id<"users">,
         title: "Exported block",
         startTime: futureStart,
         studyBlockLength: 60,
@@ -669,7 +666,7 @@ describe("mutations/studyBlocks – flagFutureBlocksForReexport", () => {
 
     const blockId = await t.run((ctx) =>
       ctx.db.insert("studyBlocks", {
-        taskId: taskId as any,
+        taskId: taskId as Id<"tasks">,
         title: "Past block",
         startTime: pastStart,
         studyBlockLength: 60,
@@ -693,7 +690,7 @@ describe("mutations/studyBlocks – flagFutureBlocksForReexport", () => {
 
     const blockId = await t.run((ctx) =>
       ctx.db.insert("studyBlocks", {
-        taskId: taskId as any,
+        taskId: taskId as Id<"tasks">,
         title: "Unscheduled block",
         studyBlockLength: 60,
         googleEventId: "gcal-evt-unscheduled",
@@ -715,7 +712,7 @@ describe("mutations/studyBlocks – flagFutureBlocksForReexport", () => {
 
     const blockId = await t.run((ctx) =>
       ctx.db.insert("studyBlocks", {
-        taskId: taskId as any,
+        taskId: taskId as Id<"tasks">,
         title: "Never exported",
         startTime: futureStart,
         studyBlockLength: 60,
@@ -741,8 +738,8 @@ describe("mutations/studyBlocks – flagFutureBlocksForReexport", () => {
 
     const block1Id = await t.run((ctx) =>
       ctx.db.insert("studyBlocks", {
-        taskId: task1Id as any,
-        userId: user1Id as any,
+        taskId: task1Id as Id<"tasks">,
+        userId: user1Id as Id<"users">,
         title: "User 1 block",
         startTime: futureStart,
         studyBlockLength: 60,
@@ -753,8 +750,8 @@ describe("mutations/studyBlocks – flagFutureBlocksForReexport", () => {
     );
     const block2Id = await t.run((ctx) =>
       ctx.db.insert("studyBlocks", {
-        taskId: task2Id as any,
-        userId: user2Id as any,
+        taskId: task2Id as Id<"tasks">,
+        userId: user2Id as Id<"users">,
         title: "User 2 block",
         startTime: futureStart,
         studyBlockLength: 60,
@@ -764,7 +761,9 @@ describe("mutations/studyBlocks – flagFutureBlocksForReexport", () => {
       })
     );
 
-    await t.mutation(internal.mutations.studyBlocks.flagFutureBlocksForReexport, { userId: user1Id });
+    await t.mutation(internal.mutations.studyBlocks.flagFutureBlocksForReexport, {
+      userId: user1Id,
+    });
 
     const block1 = await t.run((ctx) => ctx.db.get(block1Id));
     const block2 = await t.run((ctx) => ctx.db.get(block2Id));
@@ -789,8 +788,8 @@ describe("mutations/studyBlocks – toggleStudyBlockComplete supertask status", 
     for (let i = 0; i < count; i++) {
       const id = await t.run((ctx) =>
         ctx.db.insert("studyBlocks", {
-          taskId: taskId as any,
-          userId: userId as any,
+          taskId: taskId as Id<"tasks">,
+          userId: userId as Id<"users">,
           title: `Block ${i + 1}`,
           studyBlockLength: 60,
           isCompleted: false,
@@ -868,13 +867,10 @@ describe("mutations/studyBlocks – toggleStudyBlockComplete supertask status", 
 // ─── toggleStudyBlockComplete – supertask propagation via subtask ─────────────
 
 describe("mutations/studyBlocks – toggleStudyBlockComplete supertask propagation via subtask", () => {
-  async function seedSupertaskWithSubtaskBlock(
-    t: ReturnType<typeof makeTestCtx>,
-    userId: string
-  ) {
+  async function seedSupertaskWithSubtaskBlock(t: ReturnType<typeof makeTestCtx>, userId: string) {
     const parentTaskId = await t.run((ctx) =>
       ctx.db.insert("tasks", {
-        userId: userId as any,
+        userId: userId as Id<"users">,
         title: "Parent task",
         description: "",
         taskType: "Essay",
@@ -885,8 +881,8 @@ describe("mutations/studyBlocks – toggleStudyBlockComplete supertask propagati
     );
     const subtaskId = await t.run((ctx) =>
       ctx.db.insert("subtasks", {
-        parentTaskId: parentTaskId as any,
-        userId: userId as any,
+        parentTaskId: parentTaskId as Id<"tasks">,
+        userId: userId as Id<"users">,
         title: "Subtask",
         description: "",
         taskType: "Essay",
@@ -897,8 +893,8 @@ describe("mutations/studyBlocks – toggleStudyBlockComplete supertask propagati
     );
     const blockId = await t.run((ctx) =>
       ctx.db.insert("studyBlocks", {
-        subtaskId: subtaskId as any,
-        userId: userId as any,
+        subtaskId: subtaskId as Id<"subtasks">,
+        userId: userId as Id<"users">,
         title: "Block",
         studyBlockLength: 60,
         isCompleted: false,
@@ -915,8 +911,8 @@ describe("mutations/studyBlocks – toggleStudyBlockComplete supertask propagati
     // Add a second block so the subtask isn't fully complete after one toggle
     await t.run((ctx) =>
       ctx.db.insert("studyBlocks", {
-        subtaskId: subtaskId as any,
-        userId: userId as any,
+        subtaskId: subtaskId as Id<"subtasks">,
+        userId: userId as Id<"users">,
         title: "Block 2",
         studyBlockLength: 60,
         isCompleted: false,
@@ -966,7 +962,7 @@ describe("mutations/studyBlocks – toggleStudyBlockComplete supertask propagati
 
     const parentTaskId = await t.run((ctx) =>
       ctx.db.insert("tasks", {
-        userId: userId as any,
+        userId: userId as Id<"users">,
         title: "Mixed task",
         description: "",
         taskType: "Essay",
@@ -979,8 +975,8 @@ describe("mutations/studyBlocks – toggleStudyBlockComplete supertask propagati
     // Task-level block
     const taskBlockId = await t.run((ctx) =>
       ctx.db.insert("studyBlocks", {
-        taskId: parentTaskId as any,
-        userId: userId as any,
+        taskId: parentTaskId as Id<"tasks">,
+        userId: userId as Id<"users">,
         title: "Task block",
         studyBlockLength: 60,
         isCompleted: false,
@@ -990,8 +986,8 @@ describe("mutations/studyBlocks – toggleStudyBlockComplete supertask propagati
     // Subtask still not_started (no study blocks)
     await t.run((ctx) =>
       ctx.db.insert("subtasks", {
-        parentTaskId: parentTaskId as any,
-        userId: userId as any,
+        parentTaskId: parentTaskId as Id<"tasks">,
+        userId: userId as Id<"users">,
         title: "Subtask",
         description: "",
         taskType: "Essay",
@@ -1012,14 +1008,13 @@ describe("mutations/studyBlocks – toggleStudyBlockComplete supertask propagati
   test("only one subtask fully done does not complete supertask when sibling subtask is not_started", async () => {
     const t = makeTestCtx();
     const { userId, withAuth } = await createTestUser(t);
-    const { parentTaskId, blockId } =
-      await seedSupertaskWithSubtaskBlock(t, userId);
+    const { parentTaskId, blockId } = await seedSupertaskWithSubtaskBlock(t, userId);
 
     // Second subtask with no blocks — status stays not_started
     await t.run((ctx) =>
       ctx.db.insert("subtasks", {
-        parentTaskId: parentTaskId as any,
-        userId: userId as any,
+        parentTaskId: parentTaskId as Id<"tasks">,
+        userId: userId as Id<"users">,
         title: "Subtask 2",
         description: "",
         taskType: "Essay",

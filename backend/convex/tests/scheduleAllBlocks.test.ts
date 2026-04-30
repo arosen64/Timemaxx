@@ -14,7 +14,7 @@ const TIMEZONE = "America/New_York";
 // ET (non-DST) timestamp helper
 function etMs(isoDate: string, hour: number, minute = 0): number {
   return new Date(
-    `${isoDate}T${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00-05:00`,
+    `${isoDate}T${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00-05:00`
   ).getTime();
 }
 
@@ -55,7 +55,8 @@ function scoreAndRankSlots(opts: {
     if (s.startMs >= dueDateMs) continue;
     if (s.startMs + blockDurationMs > dueDateMs) continue;
     if (opts.recommendedStartMs !== undefined && s.startMs < opts.recommendedStartMs) continue;
-    if (!isSlotValid(s.startMs, blockDurationMs, workHoursGrid, occupiedIntervals, timezone)) continue;
+    if (!isSlotValid(s.startMs, blockDurationMs, workHoursGrid, occupiedIntervals, timezone))
+      continue;
 
     const endMs = s.startMs + blockDurationMs;
     const context = buildSlotContext(s.startMs, endMs, occupiedIntervals);
@@ -133,10 +134,7 @@ describe("global scoring: preferred day and time sort to top", () => {
   });
 
   test("when no preferences set all slots score equally (only buffer comfort applies)", () => {
-    const pool: PoolSlot[] = [
-      { startMs: etMs(TUE, 14) },
-      { startMs: etMs(SAT, 23) },
-    ];
+    const pool: PoolSlot[] = [{ startMs: etMs(TUE, 14) }, { startMs: etMs(SAT, 23) }];
 
     const ranked = scoreAndRankSlots({
       pool,
@@ -324,7 +322,7 @@ describe("global scoring: speculative load spreads blocks across days", () => {
 // If the comparator changes, update this too.
 function sortForScheduling(
   a: { parentDueDate: number; parentWeight: number; _creationTime: number },
-  b: { parentDueDate: number; parentWeight: number; _creationTime: number },
+  b: { parentDueDate: number; parentWeight: number; _creationTime: number }
 ) {
   return (
     a.parentDueDate - b.parentDueDate ||
@@ -387,9 +385,14 @@ describe("scheduleAllBlocks sort order", () => {
 // ---------------------------------------------------------------------------
 
 function filterBlocksForTask(
-  blocks: Array<{ taskId?: string; subtaskId?: string; startTime?: string; isConflicted?: boolean }>,
+  blocks: Array<{
+    taskId?: string;
+    subtaskId?: string;
+    startTime?: string;
+    isConflicted?: boolean;
+  }>,
   taskId: string,
-  subtaskIds: Set<string>,
+  subtaskIds: Set<string>
 ) {
   const isTaskBlock = (b: { taskId?: string; subtaskId?: string }) =>
     b.taskId === taskId || (b.subtaskId !== undefined && subtaskIds.has(b.subtaskId));
@@ -426,9 +429,7 @@ describe("scheduleAllBlocks block filtering", () => {
   });
 
   test("excludes scheduled (non-conflicted) blocks", () => {
-    const blocks = [
-      { taskId: TASK_ID, startTime: "2026-04-01T10:00:00Z", isConflicted: false },
-    ];
+    const blocks = [{ taskId: TASK_ID, startTime: "2026-04-01T10:00:00Z", isConflicted: false }];
     const { unscheduled, conflicted } = filterBlocksForTask(blocks, TASK_ID, subtaskIds);
     expect(unscheduled).toHaveLength(0);
     expect(conflicted).toHaveLength(0);

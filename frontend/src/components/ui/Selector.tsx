@@ -1,27 +1,27 @@
-import { useEffect, useRef, useState } from 'react'
-import { ChevronDownIcon } from '../icons'
+import { useEffect, useRef, useState } from "react";
+import { ChevronDownIcon } from "../icons";
 
 interface Option {
-  label: string
-  value: string
+  label: string;
+  value: string;
 }
 
 interface SelectProps {
-  value: string
-  onChange: (value: string) => void
-  options: Option[]
-  placeholder: string
-  disabled?: boolean
-  loading?: boolean
-  loadingText?: string
-  className?: string
+  value: string;
+  onChange: (value: string) => void;
+  options: Option[];
+  placeholder: string;
+  disabled?: boolean;
+  loading?: boolean;
+  loadingText?: string;
+  className?: string;
 }
 
 /** Renders course-style rows when label looks like "CODE: Title" (same pattern as CourseSelector). */
 function splitLabeledRow(label: string): { primary: string; secondary: string } | null {
-  const i = label.indexOf(': ')
-  if (i <= 0) return null
-  return { primary: label.slice(0, i).trim(), secondary: label.slice(i + 2).trim() }
+  const i = label.indexOf(": ");
+  if (i <= 0) return null;
+  return { primary: label.slice(0, i).trim(), secondary: label.slice(i + 2).trim() };
 }
 
 export default function Selector({
@@ -31,40 +31,40 @@ export default function Selector({
   placeholder,
   disabled = false,
   loading = false,
-  loadingText = 'Loading...',
+  loadingText = "Loading...",
   className,
 }: SelectProps) {
-  const [open, setOpen] = useState(false)
-  const containerRef = useRef<HTMLDivElement>(null)
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false)
+        setOpen(false);
       }
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [])
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
   useEffect(() => {
-    if (disabled || loading) setOpen(false)
-  }, [disabled, loading])
+    if (disabled || loading) setOpen(false);
+  }, [disabled, loading]);
 
-  const selectedOption = options.find((o) => o.value === value)
-  const showPlaceholder = !loading && !selectedOption
+  const selectedOption = options.find((o) => o.value === value);
+  const showPlaceholder = !loading && !selectedOption;
 
   return (
-    <div ref={containerRef} className={`relative ${className ?? ''}`}>
+    <div ref={containerRef} className={`relative ${className ?? ""}`}>
       <button
         type="button"
         disabled={disabled || loading}
         onClick={() => {
-          if (disabled || loading) return
-          setOpen((o) => !o)
+          if (disabled || loading) return;
+          setOpen((o) => !o);
         }}
         className={`flex h-11 w-full items-center justify-between gap-2 rounded-md border border-border bg-bg-gray px-3.5 font-body text-sm outline-none focus:border-sky-blue focus:ring-2 focus:ring-sky-blue/20 disabled:opacity-50 ${
-          showPlaceholder ? 'text-light-blue' : 'text-navy'
+          showPlaceholder ? "text-light-blue" : "text-navy"
         }`}
       >
         <span className="min-w-0 flex-1 truncate text-left">
@@ -79,31 +79,31 @@ export default function Selector({
         <ul className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-lg border border-border bg-white shadow-lg">
           <li
             role="option"
-            aria-selected={value === ''}
+            aria-selected={value === ""}
             onMouseDown={(e) => {
-              e.preventDefault()
-              onChange('')
-              setOpen(false)
+              e.preventDefault();
+              onChange("");
+              setOpen(false);
             }}
             className="cursor-pointer px-3 py-2 font-body text-sm text-light-blue hover:bg-sky-blue/10"
           >
             {placeholder}
           </li>
           {options.map((opt) => {
-            const parts = splitLabeledRow(opt.label)
-            const selected = opt.value === value
+            const parts = splitLabeledRow(opt.label);
+            const selected = opt.value === value;
             return (
               <li
                 key={opt.value}
                 role="option"
                 aria-selected={selected}
                 onMouseDown={(e) => {
-                  e.preventDefault()
-                  onChange(opt.value)
-                  setOpen(false)
+                  e.preventDefault();
+                  onChange(opt.value);
+                  setOpen(false);
                 }}
                 className={`cursor-pointer px-3 py-2 font-body text-sm hover:bg-sky-blue/10 ${
-                  selected ? 'bg-sky-blue/10' : ''
+                  selected ? "bg-sky-blue/10" : ""
                 }`}
               >
                 {parts ? (
@@ -115,10 +115,10 @@ export default function Selector({
                   <span className="text-navy">{opt.label}</span>
                 )}
               </li>
-            )
+            );
           })}
         </ul>
       )}
     </div>
-  )
+  );
 }

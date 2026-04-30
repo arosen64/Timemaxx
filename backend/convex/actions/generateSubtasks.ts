@@ -16,9 +16,7 @@ export type GeneratedSubtask = {
   suggestedCompletionAt: string; // ISO 8601
 };
 
-export type GenerateSubtasksResult =
-  | { subtasks: GeneratedSubtask[] }
-  | { error: string };
+export type GenerateSubtasksResult = { subtasks: GeneratedSubtask[] } | { error: string };
 
 const SUBTASK_STEP_ID = "subtask-generation-step";
 
@@ -108,7 +106,10 @@ ${sanitizeUserInput(args.fileContent!, 10_000)}
           const rawErr = (step as { error?: string | Error }).error;
           const stepStatus = (step as { status?: string }).status ?? "unknown";
           const errMsg = rawErr instanceof Error ? rawErr.message : String(rawErr ?? "");
-          console.error(`Subtask generation step "${stepId}" has no output (status: ${stepStatus}):`, errMsg);
+          console.error(
+            `Subtask generation step "${stepId}" has no output (status: ${stepStatus}):`,
+            errMsg
+          );
           return { error: "Failed to generate subtasks. Please try again." };
         }
       }

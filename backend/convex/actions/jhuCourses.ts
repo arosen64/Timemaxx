@@ -93,10 +93,14 @@ export const getCourseDetails = action({
     if (!sections.length) return null;
 
     const first = sections[0];
-    const sectionDetails = (first.SectionDetails as Array<Record<string, unknown>> | undefined)?.[0];
+    const sectionDetails = (
+      first.SectionDetails as Array<Record<string, unknown>> | undefined
+    )?.[0];
 
     // Extract course codes (e.g. "EN.500.112") from each prereq's Expression or Description
-    const prereqsArr = sectionDetails?.Prerequisites as Array<{ Expression?: string; Description?: string }> | undefined;
+    const prereqsArr = sectionDetails?.Prerequisites as
+      | Array<{ Expression?: string; Description?: string }>
+      | undefined;
     const courseCodeRegex = /[A-Z]{2}\.\d{3}\.\d{3}/g;
     const prereqs: string[] = [];
     for (const p of prereqsArr ?? []) {
@@ -110,7 +114,8 @@ export const getCourseDetails = action({
     return {
       offeringName: first.OfferingName as string | undefined,
       title: first.Title as string | undefined,
-      description: typeof sectionDetails?.Description === "string" ? sectionDetails.Description : undefined,
+      description:
+        typeof sectionDetails?.Description === "string" ? sectionDetails.Description : undefined,
       prereqs: prereqs.length > 0 ? prereqs : undefined,
       credits: first.Credits as number | undefined,
       sections,

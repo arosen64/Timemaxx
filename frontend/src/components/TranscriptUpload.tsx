@@ -1,62 +1,65 @@
-import { useState } from 'react'
-import { useAction, useMutation } from 'convex/react'
-import { api } from '../../../backend/convex/_generated/api'
-import { type ParsedCourse } from '../../../backend/convex/ai/parseTranscript'
-import { type Course } from '../types'
-import FileUpload from './ui/FileUpload'
-import Modal from './ui/Modal'
-import Selector from './ui/Selector'
-import { SpinnerIcon } from './icons'
-import { STUDY_GOALS } from '../constants'
-import { fileToBase64 } from '../utils/fileToBase64'
+import { useState } from "react";
+import { useAction, useMutation } from "convex/react";
+import { api } from "../../../backend/convex/_generated/api";
+import { type ParsedCourse } from "../../../backend/convex/ai/parseTranscript";
+import { type Course } from "../types";
+import FileUpload from "./ui/FileUpload";
+import Modal from "./ui/Modal";
+import Selector from "./ui/Selector";
+import { SpinnerIcon } from "./icons";
+import { STUDY_GOALS } from "../constants";
+import { fileToBase64 } from "../utils/fileToBase64";
 
 interface TranscriptUploadProps {
-  onCoursesAdded: (courses: Course[]) => void
+  onCoursesAdded: (courses: Course[]) => void;
 }
 
 export default function TranscriptUpload({ onCoursesAdded }: TranscriptUploadProps) {
-  const parseTranscript = useAction(api.ai.parseTranscript.parseTranscript)
-  const getCourseDetails = useAction(api.actions.jhuCourses.getCourseDetails)
-  const addUserCourse = useMutation(api.mutations.userCourses.addUserCourse)
+  const parseTranscript = useAction(api.ai.parseTranscript.parseTranscript);
+  const getCourseDetails = useAction(api.actions.jhuCourses.getCourseDetails);
+  const addUserCourse = useMutation(api.mutations.userCourses.addUserCourse);
 
-  const [file, setFile] = useState<File | null>(null)
-  const [parsing, setParsing] = useState(false)
-  const [summary, setSummary] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const [file, setFile] = useState<File | null>(null);
+  const [parsing, setParsing] = useState(false);
+  const [summary, setSummary] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   // Modal state for current courses needing a study goal
-  const [pendingCurrentCourses, setPendingCurrentCourses] = useState<ParsedCourse[]>([])
-  const [pendingSavedPast, setPendingSavedPast] = useState<Course[]>([])
-  const [pendingGoals, setPendingGoals] = useState<string[]>([])
-  const [savingGoals, setSavingGoals] = useState(false)
-  const [goalErrors, setGoalErrors] = useState<string[]>([])
+  const [pendingCurrentCourses, setPendingCurrentCourses] = useState<ParsedCourse[]>([]);
+  const [pendingSavedPast, setPendingSavedPast] = useState<Course[]>([]);
+  const [pendingGoals, setPendingGoals] = useState<string[]>([]);
+  const [savingGoals, setSavingGoals] = useState(false);
+  const [goalErrors, setGoalErrors] = useState<string[]>([]);
 
   const handleFile = async (f: File) => {
-    setFile(f)
-    setError(null)
-    setSummary(null)
-    setParsing(true)
+    setFile(f);
+    setError(null);
+    setSummary(null);
+    setParsing(true);
 
     try {
-      const fileContents = await fileToBase64(f)
-      const parsed: ParsedCourse[] = await parseTranscript({ fileContents })
+      const fileContents = await fileToBase64(f);
+      const parsed: ParsedCourse[] = await parseTranscript({ fileContents });
 
-      const pastCourses = parsed.filter((c) => c.grade && c.grade.trim().toUpperCase() !== 'X')
-      const currentCourses = parsed.filter((c) => !c.grade || c.grade.trim().toUpperCase() === 'X')
+      const pastCourses = parsed.filter((c) => c.grade && c.grade.trim().toUpperCase() !== "X");
+      const currentCourses = parsed.filter((c) => !c.grade || c.grade.trim().toUpperCase() === "X");
 
       // Save past courses immediately
-      const savedPast: Course[] = []
+      const savedPast: Course[] = [];
       await Promise.all(
         pastCourses.map(async (c) => {
-          let description: string | undefined
-          let prereqs: string[] | undefined
+          let description: string | undefined;
+          let prereqs: string[] | undefined;
           try {
-            const details = await getCourseDetails({ offeringName: c.courseCode, term: c.term })
+            const details = await getCourseDetails({ offeringName: c.courseCode, term: c.term });
             if (details) {
-              description = typeof details.description === 'string' ? details.description : undefined
-              prereqs = Array.isArray(details.prereqs) ? (details.prereqs as string[]) : undefined
+              description =
+                typeof details.description === "string" ? details.description : undefined;
+              prereqs = Array.isArray(details.prereqs) ? (details.prereqs as string[]) : undefined;
             }
-          } catch { /* best-effort */ }
+          } catch {
+            /* best-effort */
+          }
           try {
             const userCourseId = await addUserCourse({
               courseCode: c.courseCode,
@@ -66,7 +69,7 @@ export default function TranscriptUpload({ onCoursesAdded }: TranscriptUploadPro
               credits: c.credits,
               term: c.term,
               grade: c.grade,
-            })
+            });
             savedPast.push({
               userCourseId,
               courseCode: c.courseCode,
@@ -74,68 +77,76 @@ export default function TranscriptUpload({ onCoursesAdded }: TranscriptUploadPro
               credits: c.credits,
               term: c.term,
               grade: c.grade,
-            })
+            });
           } catch {
             // Already exists — skip quietly
           }
         })
-      )
+      );
 
       if (currentCourses.length === 0) {
-        onCoursesAdded(savedPast)
-        setSummary(`${savedPast.length} course${savedPast.length !== 1 ? 's' : ''} imported from transcript`)
+        onCoursesAdded(savedPast);
+        setSummary(
+          `${savedPast.length} course${savedPast.length !== 1 ? "s" : ""} imported from transcript`
+        );
       } else {
-        setPendingSavedPast(savedPast)
-        setPendingCurrentCourses(currentCourses)
-        setPendingGoals(currentCourses.map(() => ''))
-        setGoalErrors(currentCourses.map(() => ''))
+        setPendingSavedPast(savedPast);
+        setPendingCurrentCourses(currentCourses);
+        setPendingGoals(currentCourses.map(() => ""));
+        setGoalErrors(currentCourses.map(() => ""));
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err)
-      if (message.includes('NOT_JHU_TRANSCRIPT')) {
-        setError("That doesn't look like a JHU transcript. Please upload your official Johns Hopkins transcript.")
-      } else if (message.includes('maximum upload size')) {
-        setError('This PDF is too large to process. Please upload a smaller transcript file.')
+      const message = err instanceof Error ? err.message : String(err);
+      if (message.includes("NOT_JHU_TRANSCRIPT")) {
+        setError(
+          "That doesn't look like a JHU transcript. Please upload your official Johns Hopkins transcript."
+        );
+      } else if (message.includes("maximum upload size")) {
+        setError("This PDF is too large to process. Please upload a smaller transcript file.");
       } else {
-        setError('Failed to parse transcript. Please try again.')
+        setError("Failed to parse transcript. Please try again.");
       }
-      setFile(null)
+      setFile(null);
     } finally {
-      setParsing(false)
+      setParsing(false);
     }
-  }
+  };
 
   const handleGoalDismiss = () => {
-    onCoursesAdded(pendingSavedPast)
+    onCoursesAdded(pendingSavedPast);
     if (pendingSavedPast.length > 0) {
-      setSummary(`${pendingSavedPast.length} course${pendingSavedPast.length !== 1 ? 's' : ''} imported from transcript`)
+      setSummary(
+        `${pendingSavedPast.length} course${pendingSavedPast.length !== 1 ? "s" : ""} imported from transcript`
+      );
     }
-    setPendingCurrentCourses([])
-    setPendingSavedPast([])
-    setPendingGoals([])
-    setGoalErrors([])
-  }
+    setPendingCurrentCourses([]);
+    setPendingSavedPast([]);
+    setPendingGoals([]);
+    setGoalErrors([]);
+  };
 
   const handleGoalConfirm = async () => {
-    const errors = pendingGoals.map((g) => (g.trim() ? '' : 'Please select a study goal.'))
+    const errors = pendingGoals.map((g) => (g.trim() ? "" : "Please select a study goal."));
     if (errors.some(Boolean)) {
-      setGoalErrors(errors)
-      return
+      setGoalErrors(errors);
+      return;
     }
 
-    setSavingGoals(true)
-    const savedCurrent: Course[] = []
+    setSavingGoals(true);
+    const savedCurrent: Course[] = [];
     await Promise.all(
       pendingCurrentCourses.map(async (c, i) => {
-        let description: string | undefined
-        let prereqs: string[] | undefined
+        let description: string | undefined;
+        let prereqs: string[] | undefined;
         try {
-          const details = await getCourseDetails({ offeringName: c.courseCode, term: c.term })
+          const details = await getCourseDetails({ offeringName: c.courseCode, term: c.term });
           if (details) {
-            description = typeof details.description === 'string' ? details.description : undefined
-            prereqs = Array.isArray(details.prereqs) ? (details.prereqs as string[]) : undefined
+            description = typeof details.description === "string" ? details.description : undefined;
+            prereqs = Array.isArray(details.prereqs) ? (details.prereqs as string[]) : undefined;
           }
-        } catch { /* best-effort */ }
+        } catch {
+          /* best-effort */
+        }
         try {
           const userCourseId = await addUserCourse({
             courseCode: c.courseCode,
@@ -145,7 +156,7 @@ export default function TranscriptUpload({ onCoursesAdded }: TranscriptUploadPro
             credits: c.credits,
             term: c.term,
             studyGoal: pendingGoals[i],
-          })
+          });
           savedCurrent.push({
             userCourseId,
             courseCode: c.courseCode,
@@ -153,28 +164,30 @@ export default function TranscriptUpload({ onCoursesAdded }: TranscriptUploadPro
             credits: c.credits,
             term: c.term,
             studyGoal: pendingGoals[i],
-          })
+          });
         } catch {
           // Already exists — skip quietly
         }
       })
-    )
+    );
 
-    const allSaved = [...pendingSavedPast, ...savedCurrent]
-    onCoursesAdded(allSaved)
-    setSummary(`${allSaved.length} course${allSaved.length !== 1 ? 's' : ''} imported from transcript`)
-    setPendingCurrentCourses([])
-    setPendingSavedPast([])
-    setPendingGoals([])
-    setGoalErrors([])
-    setSavingGoals(false)
-  }
+    const allSaved = [...pendingSavedPast, ...savedCurrent];
+    onCoursesAdded(allSaved);
+    setSummary(
+      `${allSaved.length} course${allSaved.length !== 1 ? "s" : ""} imported from transcript`
+    );
+    setPendingCurrentCourses([]);
+    setPendingSavedPast([]);
+    setPendingGoals([]);
+    setGoalErrors([]);
+    setSavingGoals(false);
+  };
 
   const handleRemove = () => {
-    setFile(null)
-    setError(null)
-    setSummary(null)
-  }
+    setFile(null);
+    setError(null);
+    setSummary(null);
+  };
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -187,17 +200,22 @@ export default function TranscriptUpload({ onCoursesAdded }: TranscriptUploadPro
       </p>
       <div className="rounded-lg border border-urgent-red/40 bg-urgent-red/10 px-3 py-2">
         <p className="font-body text-xs text-urgent-red">
-          <span className="font-semibold">Note:</span> AP, IB, and other external/transfer courses are not supported — please add those manually as equivalent JHU courses with an equivalent grade.
+          <span className="font-semibold">Note:</span> AP, IB, and other external/transfer courses
+          are not supported — please add those manually as equivalent JHU courses with an equivalent
+          grade.
         </p>
       </div>
       <FileUpload
         accept=".pdf"
-        acceptedMimeTypes={['application/pdf']}
+        acceptedMimeTypes={["application/pdf"]}
         maxBytes={1 * 1024 * 1024}
         hint="PDF · max 1 MB"
         file={file}
         onFile={handleFile}
-        onError={(msg) => { setError(msg); setFile(null) }}
+        onError={(msg) => {
+          setError(msg);
+          setFile(null);
+        }}
         onRemove={handleRemove}
       />
       {parsing && (
@@ -232,13 +250,13 @@ export default function TranscriptUpload({ onCoursesAdded }: TranscriptUploadPro
               <Selector
                 value={pendingGoals[i]}
                 onChange={(val) => {
-                  const updated = [...pendingGoals]
-                  updated[i] = val
-                  setPendingGoals(updated)
+                  const updated = [...pendingGoals];
+                  updated[i] = val;
+                  setPendingGoals(updated);
                   if (val) {
-                    const updatedErrors = [...goalErrors]
-                    updatedErrors[i] = ''
-                    setGoalErrors(updatedErrors)
+                    const updatedErrors = [...goalErrors];
+                    updatedErrors[i] = "";
+                    setGoalErrors(updatedErrors);
                   }
                 }}
                 placeholder="Select a study goal"
@@ -252,5 +270,5 @@ export default function TranscriptUpload({ onCoursesAdded }: TranscriptUploadPro
         </div>
       </Modal>
     </div>
-  )
+  );
 }

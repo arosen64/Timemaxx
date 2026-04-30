@@ -35,7 +35,9 @@ const estimateSubtaskStep = createStep({
     }
     const minutes = response.object.estimatedMinutes;
     if (!Number.isFinite(minutes)) {
-      throw new Error(`estimationAgent returned non-numeric estimatedMinutes for subtask ${inputData.subtaskId}`);
+      throw new Error(
+        `estimationAgent returned non-numeric estimatedMinutes for subtask ${inputData.subtaskId}`
+      );
     }
     return {
       subtaskId: inputData.subtaskId,

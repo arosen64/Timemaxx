@@ -1,12 +1,12 @@
-import { ReactNode } from 'react'
-import { BookOpenIcon } from '../icons'
+import { ReactNode } from "react";
+import { BookOpenIcon } from "../icons";
 
 interface OnboardingStepShellProps {
-  currentStep: number
-  totalSteps: number
-  wide?: boolean
-  tall?: boolean
-  children: ReactNode
+  currentStep: number;
+  totalSteps: number;
+  wide?: boolean;
+  tall?: boolean;
+  children: ReactNode;
 }
 
 export default function OnboardingStepShell({
@@ -29,17 +29,17 @@ export default function OnboardingStepShell({
 
         <div className="flex items-center gap-2">
           {Array.from({ length: totalSteps }, (_, i) => {
-            const stepNum = i + 1
-            const isActive = currentStep === stepNum
-            const isComplete = currentStep > stepNum
+            const stepNum = i + 1;
+            const isActive = currentStep === stepNum;
+            const isComplete = currentStep > stepNum;
             return (
               <div
                 key={stepNum}
                 className={`h-1.5 w-8 rounded-full ${
-                  isComplete || isActive ? 'bg-teal' : 'bg-sky-blue/40'
+                  isComplete || isActive ? "bg-teal" : "bg-sky-blue/40"
                 }`}
               />
-            )
+            );
           })}
         </div>
 
@@ -48,15 +48,17 @@ export default function OnboardingStepShell({
         </span>
       </header>
 
-      <div className={`flex flex-1 flex-col items-center px-4 py-12 ${tall ? '' : 'justify-center'}`}>
+      <div
+        className={`flex flex-1 flex-col items-center px-4 py-12 ${tall ? "" : "justify-center"}`}
+      >
         <div
           className={`flex w-full flex-col rounded-xl border border-border bg-white p-12 ${
-            wide || tall ? 'max-w-2xl' : 'max-w-xl'
-          } ${tall ? 'flex-1' : ''}`}
+            wide || tall ? "max-w-2xl" : "max-w-xl"
+          } ${tall ? "flex-1" : ""}`}
         >
           {children}
         </div>
       </div>
     </div>
-  )
+  );
 }
