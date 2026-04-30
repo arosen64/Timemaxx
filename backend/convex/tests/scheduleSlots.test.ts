@@ -7,6 +7,7 @@ import {
   extendSlotPool,
   filterPoolForBlock,
   selectSlotWithAI,
+  selectAllSlotsWithAI,
   computeRecommendedStart,
   computeSubtaskCascade,
   buildDailyLoadMap,
@@ -375,7 +376,38 @@ describe("filterPoolForBlock", () => {
 });
 
 // ---------------------------------------------------------------------------
-// selectSlotWithAI (mock Gemini)
+// selectAllSlotsWithAI
+// ---------------------------------------------------------------------------
+
+describe("selectAllSlotsWithAI", () => {
+  test("returns empty array for empty input", async () => {
+    const result = await selectAllSlotsWithAI([], null);
+    expect(result).toEqual([]);
+  });
+
+  test("falls back to all zeros when MASTRA_URL is not set", async () => {
+    const candidates = enumerateSlots({
+      fromMs: MONDAY_9AM_UTC,
+      dueDateMs: MONDAY_9AM_UTC + 5 * 86400000,
+      durationMinutes: 60,
+      workHoursGrid: [],
+      occupiedIntervals: [],
+      timezone: TIMEZONE,
+    });
+    const result = await selectAllSlotsWithAI(
+      [
+        { taskTitle: "Task A", dueDate: MONDAY_9AM_UTC + 5 * 86400000, candidates },
+        { taskTitle: "Task B", dueDate: MONDAY_9AM_UTC + 5 * 86400000, candidates },
+      ],
+      null,
+    );
+    // No MASTRA_URL in test env → falls back to index 0 for each block
+    expect(result).toEqual([0, 0]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// selectSlotWithAI
 // ---------------------------------------------------------------------------
 
 describe("selectSlotWithAI", () => {
@@ -389,8 +421,8 @@ describe("selectSlotWithAI", () => {
     expect(result).toBeNull();
   });
 
-  test("falls back to index 0 when Gemini is unavailable (no API key)", async () => {
-    // No GEMINI_API_KEY in test env → callGemini will throw → fallback to 0
+  test("falls back to index 0 when MASTRA_URL is not set", async () => {
+    // No MASTRA_URL in test env → selectAllSlotsWithAI falls back to index 0
     const candidates = enumerateSlots({
       fromMs: MONDAY_9AM_UTC,
       dueDateMs: MONDAY_9AM_UTC + 5 * 86400000,
