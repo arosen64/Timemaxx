@@ -49,25 +49,26 @@ async function seedSubtask(
 // ─── createSubtask ────────────────────────────────────────────────────────────
 
 describe("mutations/subtasks – createSubtask", () => {
-  beforeEach(() => { vi.useFakeTimers(); });
-  afterEach(() => { vi.useRealTimers(); });
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
 
   test("creates a subtask with valid input and returns its ID", async () => {
     const t = makeTestCtx();
     const { userId, withAuth } = await createTestUser(t);
     const parentTaskId = await seedTask(t, userId);
 
-    const subtaskId = await withAuth.mutation(
-      api.mutations.subtasks.createSubtask,
-      {
-        parentTaskId,
-        title: "Write intro",
-        description: "Draft the introduction section",
-        taskType: "Essay",
-        color: "#2563eb",
-        order: 0,
-      }
-    );
+    const subtaskId = await withAuth.mutation(api.mutations.subtasks.createSubtask, {
+      parentTaskId,
+      title: "Write intro",
+      description: "Draft the introduction section",
+      taskType: "Essay",
+      color: "#2563eb",
+      order: 0,
+    });
 
     const record = await t.run((ctx) => ctx.db.get(subtaskId));
     expect(record).not.toBeNull();
@@ -148,12 +149,8 @@ describe("mutations/subtasks – createSubtask", () => {
       order: 0,
     });
 
-    const scheduled = await t.run((ctx) =>
-      ctx.db.system.query("_scheduled_functions").collect()
-    );
-    const embeddingJob = scheduled.find((f) =>
-      f.name.includes("generateSubtaskEmbedding")
-    );
+    const scheduled = await t.run((ctx) => ctx.db.system.query("_scheduled_functions").collect());
+    const embeddingJob = scheduled.find((f) => f.name.includes("generateSubtaskEmbedding"));
     expect(embeddingJob).toBeDefined();
     const args = (embeddingJob!.args as [{ title: string; description: string }])[0];
     expect(args.title).toBe("Write intro");
@@ -164,8 +161,12 @@ describe("mutations/subtasks – createSubtask", () => {
 // ─── updateSubtask ────────────────────────────────────────────────────────────
 
 describe("mutations/subtasks – updateSubtask", () => {
-  beforeEach(() => { vi.useFakeTimers(); });
-  afterEach(() => { vi.useRealTimers(); });
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
 
   test("schedules generateSubtaskEmbedding after updateSubtask", async () => {
     const t = makeTestCtx();
@@ -180,12 +181,8 @@ describe("mutations/subtasks – updateSubtask", () => {
       taskType: "Essay",
     });
 
-    const scheduled = await t.run((ctx) =>
-      ctx.db.system.query("_scheduled_functions").collect()
-    );
-    const embeddingJob = scheduled.find((f) =>
-      f.name.includes("generateSubtaskEmbedding")
-    );
+    const scheduled = await t.run((ctx) => ctx.db.system.query("_scheduled_functions").collect());
+    const embeddingJob = scheduled.find((f) => f.name.includes("generateSubtaskEmbedding"));
     expect(embeddingJob).toBeDefined();
     const args = (embeddingJob!.args as [{ title: string; description: string }])[0];
     expect(args.title).toBe("Revised intro");
@@ -402,8 +399,12 @@ describe("mutations/userCourses – deleteUserCourse cascade", () => {
 // ─── createSubtasksBatch cascade ─────────────────────────────────────────────
 
 describe("mutations/subtasks – createSubtasksBatch suggestedCompletionAt cascade", () => {
-  beforeEach(() => { vi.useFakeTimers(); });
-  afterEach(() => { vi.useRealTimers(); });
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
 
   test("spaces subtasks 2 days apart from windowStart when window is wide", async () => {
     vi.setSystemTime(new Date("2026-04-26T12:00:00Z"));
@@ -434,7 +435,10 @@ describe("mutations/subtasks – createSubtasksBatch suggestedCompletionAt casca
     });
 
     const saved = await t.run((ctx) =>
-      ctx.db.query("subtasks").withIndex("by_parentTaskId", (q) => q.eq("parentTaskId", parentTaskId as never)).collect()
+      ctx.db
+        .query("subtasks")
+        .withIndex("by_parentTaskId", (q) => q.eq("parentTaskId", parentTaskId as never))
+        .collect()
     );
     const sorted = saved.sort((a, b) => a.order - b.order);
     const windowStart = Math.max(now, dueDate - TWO_WEEKS_MS);
@@ -473,7 +477,10 @@ describe("mutations/subtasks – createSubtasksBatch suggestedCompletionAt casca
     });
 
     const saved = await t.run((ctx) =>
-      ctx.db.query("subtasks").withIndex("by_parentTaskId", (q) => q.eq("parentTaskId", parentTaskId as never)).collect()
+      ctx.db
+        .query("subtasks")
+        .withIndex("by_parentTaskId", (q) => q.eq("parentTaskId", parentTaskId as never))
+        .collect()
     );
     const sorted = saved.sort((a, b) => a.order - b.order);
     // windowStart = now (dueDate within 2 weeks), windowDuration = 4 days
@@ -504,13 +511,14 @@ describe("mutations/subtasks – createSubtasksBatch suggestedCompletionAt casca
 
     await withAuth.mutation(api.mutations.subtasks.createSubtasksBatch, {
       parentTaskId,
-      subtasks: [
-        { title: "Only", description: "d", taskType: "Essay", color: "#000", order: 0 },
-      ],
+      subtasks: [{ title: "Only", description: "d", taskType: "Essay", color: "#000", order: 0 }],
     });
 
     const saved = await t.run((ctx) =>
-      ctx.db.query("subtasks").withIndex("by_parentTaskId", (q) => q.eq("parentTaskId", parentTaskId as never)).collect()
+      ctx.db
+        .query("subtasks")
+        .withIndex("by_parentTaskId", (q) => q.eq("parentTaskId", parentTaskId as never))
+        .collect()
     );
     const windowStart = Math.max(now, dueDate - TWO_WEEKS_MS);
     expect(saved[0].suggestedCompletionAt).toBe(windowStart + 2 * DAY_MS);
@@ -547,7 +555,10 @@ describe("mutations/subtasks – createSubtasksBatch suggestedCompletionAt casca
     });
 
     const saved = await t.run((ctx) =>
-      ctx.db.query("subtasks").withIndex("by_parentTaskId", (q) => q.eq("parentTaskId", parentTaskId as never)).collect()
+      ctx.db
+        .query("subtasks")
+        .withIndex("by_parentTaskId", (q) => q.eq("parentTaskId", parentTaskId as never))
+        .collect()
     );
     const sorted = saved.sort((a, b) => a.order - b.order);
     expect(sorted[0].suggestedCompletionAt).toBe(now + 1 * DAY_MS);

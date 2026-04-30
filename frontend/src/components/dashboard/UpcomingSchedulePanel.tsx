@@ -1,72 +1,71 @@
-import { useQuery, useMutation } from 'convex/react'
-import { api } from '../../../../backend/convex/_generated/api'
-import type { Id } from '../../../../backend/convex/_generated/dataModel'
-import { formatDateMMDDYYYY } from './types'
+import { useQuery, useMutation } from "convex/react";
+import { api } from "../../../../backend/convex/_generated/api";
+import type { Id } from "../../../../backend/convex/_generated/dataModel";
+import { formatDateMMDDYYYY } from "./types";
 
 type BlockInfo = {
-  _id: string
-  title: string
-  startTime: string
-  studyBlockLength: number
-  isCompleted: boolean
-}
+  _id: string;
+  title: string;
+  startTime: string;
+  studyBlockLength: number;
+  isCompleted: boolean;
+};
 
 type TaskSummary = {
-  taskId: string
-  taskTitle: string
-  taskDueDate: number
-  total: number
-  completed: number
-  firstBlockTime: number
-  blocks: BlockInfo[]
-}
+  taskId: string;
+  taskTitle: string;
+  taskDueDate: number;
+  total: number;
+  completed: number;
+  firstBlockTime: number;
+  blocks: BlockInfo[];
+};
 
 function formatTimeRange(startTime: string, lengthMinutes: number): string {
-  const start = new Date(startTime)
-  const end = new Date(start.getTime() + lengthMinutes * 60 * 1000)
-  const fmt = (d: Date) =>
-    d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
-  return `${fmt(start)} – ${fmt(end)}`
+  const start = new Date(startTime);
+  const end = new Date(start.getTime() + lengthMinutes * 60 * 1000);
+  const fmt = (d: Date) => d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  return `${fmt(start)} – ${fmt(end)}`;
 }
 
 function buildTodaysSummary(
   allBlocks: Array<{
-    _id: string
-    title: string
-    taskId: string
-    taskTitle: string
-    taskDueDate: number
-    startTime?: string
-    studyBlockLength: number
-    isCompleted: boolean
-  }>,
+    _id: string;
+    title: string;
+    taskId: string;
+    taskTitle: string;
+    taskDueDate: number;
+    startTime?: string;
+    studyBlockLength: number;
+    isCompleted: boolean;
+  }>
 ): TaskSummary[] {
-  const todayStart = new Date()
-  todayStart.setHours(0, 0, 0, 0)
-  const todayStartMs = todayStart.getTime()
-  const todayEndMs = todayStartMs + 24 * 60 * 60 * 1000
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const todayStartMs = todayStart.getTime();
+  const todayEndMs = todayStartMs + 24 * 60 * 60 * 1000;
 
-  const summaryMap = new Map<string, TaskSummary>()
+  const summaryMap = new Map<string, TaskSummary>();
 
   for (const block of allBlocks) {
-    if (!block.startTime) continue
-    const startMs = new Date(block.startTime).getTime()
-    if (startMs < todayStartMs || startMs >= todayEndMs) continue
+    if (!block.startTime) continue;
+    const startMs = new Date(block.startTime).getTime();
+    if (startMs < todayStartMs || startMs >= todayEndMs) continue;
 
-    const existing = summaryMap.get(block.taskId)
+    const existing = summaryMap.get(block.taskId);
     const blockInfo: BlockInfo = {
       _id: block._id,
       title: block.title,
       startTime: block.startTime,
       studyBlockLength: block.studyBlockLength,
       isCompleted: block.isCompleted,
-    }
+    };
 
     if (existing) {
-      existing.total++
-      if (block.isCompleted) existing.completed++
-      if (startMs < existing.firstBlockTime) existing.firstBlockTime = startMs
-      existing.blocks.push(blockInfo)
+      existing.total++;
+      if (block.isCompleted) existing.completed++;
+      if (startMs < existing.firstBlockTime) existing.firstBlockTime = startMs;
+      existing.blocks.push(blockInfo);
     } else {
       summaryMap.set(block.taskId, {
         taskId: block.taskId,
@@ -76,7 +75,7 @@ function buildTodaysSummary(
         completed: block.isCompleted ? 1 : 0,
         firstBlockTime: startMs,
         blocks: [blockInfo],
-      })
+      });
     }
   }
 
@@ -84,35 +83,35 @@ function buildTodaysSummary(
     .map((s) => ({
       ...s,
       blocks: [...s.blocks].sort(
-        (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime(),
+        (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
       ),
     }))
-    .sort((a, b) => a.firstBlockTime - b.firstBlockTime)
+    .sort((a, b) => a.firstBlockTime - b.firstBlockTime);
 }
 
 function TaskProgressCard({
   summary,
   onToggle,
 }: {
-  summary: TaskSummary
-  onToggle: (id: string) => void
+  summary: TaskSummary;
+  onToggle: (id: string) => void;
 }) {
-  const { taskTitle, taskDueDate, total, completed, blocks } = summary
-  const progress = total > 0 ? (completed / total) * 100 : 0
-  const allDone = completed === total
+  const { taskTitle, taskDueDate, total, completed, blocks } = summary;
+  const progress = total > 0 ? (completed / total) * 100 : 0;
+  const allDone = completed === total;
 
   return (
     <div className="flex flex-col gap-2 rounded-[10px] border border-border bg-white py-4 px-[18px]">
       <span className="font-heading text-[13px] font-semibold text-navy">{taskTitle}</span>
       <div className="flex items-center justify-between">
-        <span className={`text-xs ${allDone ? 'text-success' : 'text-slate-blue'}`}>
+        <span className={`text-xs ${allDone ? "text-success" : "text-slate-blue"}`}>
           {completed} / {total} blocks done
         </span>
         <span className="text-xs text-slate-blue">Due {formatDateMMDDYYYY(taskDueDate)}</span>
       </div>
       <div className="h-1.5 w-full overflow-hidden rounded-full bg-bg-gray">
         <div
-          className={`h-full rounded-full transition-all ${allDone ? 'bg-success' : 'bg-sky-blue'}`}
+          className={`h-full rounded-full transition-all ${allDone ? "bg-success" : "bg-sky-blue"}`}
           style={{ width: `${progress}%` }}
         />
       </div>
@@ -122,7 +121,7 @@ function TaskProgressCard({
           <div key={block._id} className="flex items-center justify-between gap-2">
             <div className="flex min-w-0 flex-col">
               <span
-                className={`truncate text-[11px] font-medium leading-tight ${block.isCompleted ? 'text-success line-through' : 'text-navy'}`}
+                className={`truncate text-[11px] font-medium leading-tight ${block.isCompleted ? "text-success line-through" : "text-navy"}`}
               >
                 {block.title}
               </span>
@@ -132,11 +131,11 @@ function TaskProgressCard({
             </div>
             <button
               onClick={() => onToggle(block._id)}
-              aria-label={block.isCompleted ? 'Mark incomplete' : 'Mark complete'}
+              aria-label={block.isCompleted ? "Mark incomplete" : "Mark complete"}
               className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition-colors ${
                 block.isCompleted
-                  ? 'border-success bg-success text-white'
-                  : 'border-slate-blue bg-white text-transparent hover:border-sky-blue'
+                  ? "border-success bg-success text-white"
+                  : "border-slate-blue bg-white text-transparent hover:border-sky-blue"
               }`}
             >
               <svg
@@ -155,20 +154,20 @@ function TaskProgressCard({
         ))}
       </div>
     </div>
-  )
+  );
 }
 
 export default function UpcomingSchedulePanel() {
-  const allBlocks = useQuery(api.queries.studyBlocks.getAllStudyBlocksWithTasks)
-  const toggleComplete = useMutation(api.mutations.studyBlocks.toggleStudyBlockComplete)
+  const allBlocks = useQuery(api.queries.studyBlocks.getAllStudyBlocksWithTasks);
+  const toggleComplete = useMutation(api.mutations.studyBlocks.toggleStudyBlockComplete);
 
   const taskSummaries: TaskSummary[] | undefined =
     allBlocks === undefined
       ? undefined
-      : buildTodaysSummary(allBlocks as Parameters<typeof buildTodaysSummary>[0])
+      : buildTodaysSummary(allBlocks as Parameters<typeof buildTodaysSummary>[0]);
 
   function handleToggle(studyBlockId: string) {
-    toggleComplete({ studyBlockId: studyBlockId as Id<'studyBlocks'> })
+    toggleComplete({ studyBlockId: studyBlockId as Id<"studyBlocks"> });
   }
 
   return (
@@ -181,8 +180,12 @@ export default function UpcomingSchedulePanel() {
         </div>
       ) : taskSummaries.length === 0 ? (
         <div className="flex flex-col gap-1.5 rounded-[10px] border border-border bg-white p-[18px]">
-          <span className="font-heading text-[13px] font-semibold text-navy">No study blocks today</span>
-          <span className="text-xs text-slate-blue">Head to the Schedule tab to assign study blocks.</span>
+          <span className="font-heading text-[13px] font-semibold text-navy">
+            No study blocks today
+          </span>
+          <span className="text-xs text-slate-blue">
+            Head to the Schedule tab to assign study blocks.
+          </span>
         </div>
       ) : (
         taskSummaries.map((summary) => (
@@ -190,5 +193,5 @@ export default function UpcomingSchedulePanel() {
         ))
       )}
     </aside>
-  )
+  );
 }

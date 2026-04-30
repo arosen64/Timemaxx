@@ -1,4 +1,4 @@
-import { WarningIcon } from '../icons'
+import { WarningIcon } from "../icons";
 
 export default function DueDateWarningBadge() {
   return (
@@ -10,5 +10,5 @@ export default function DueDateWarningBadge() {
       <WarningIcon color="currentColor" size={11} />
       At Risk
     </span>
-  )
+  );
 }

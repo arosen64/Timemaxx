@@ -1,23 +1,15 @@
 import { z } from "zod";
 
 export const transcriptResponseSchema = z.object({
-  isJhuTranscript: z
-    .boolean()
-    .describe("Whether the document is a JHU transcript"),
+  isJhuTranscript: z.boolean().describe("Whether the document is a JHU transcript"),
   courses: z
     .array(
       z.object({
-        courseCode: z
-          .string()
-          .describe("JHU course code, e.g. 'EN.601.226'"),
+        courseCode: z.string().describe("JHU course code, e.g. 'EN.601.226'"),
         title: z.string().describe("Full course title as it appears"),
         credits: z.number().describe("Numeric credit value, e.g. 3.0"),
-        term: z
-          .string()
-          .describe("Semester and year as 'Season YYYY', e.g. 'Fall 2022'"),
-        grade: z
-          .string()
-          .describe("Letter grade as shown, e.g. 'A', 'A-', 'B+'"),
+        term: z.string().describe("Semester and year as 'Season YYYY', e.g. 'Fall 2022'"),
+        grade: z.string().describe("Letter grade as shown, e.g. 'A', 'A-', 'B+'"),
       })
     )
     .describe("Array of extracted course records"),

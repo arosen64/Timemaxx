@@ -1,10 +1,10 @@
 interface OnboardingNavProps {
-  onBack: () => void
-  onContinue: () => void
-  isFirstStep: boolean
-  isLastStep: boolean
-  continueLabel?: string
-  disabled?: boolean
+  onBack: () => void;
+  onContinue: () => void;
+  isFirstStep: boolean;
+  isLastStep: boolean;
+  continueLabel?: string;
+  disabled?: boolean;
 }
 
 export default function OnboardingNav({
@@ -15,10 +15,10 @@ export default function OnboardingNav({
   continueLabel,
   disabled = false,
 }: OnboardingNavProps) {
-  const label = continueLabel ?? (isLastStep ? 'Finish' : 'Continue →')
+  const label = continueLabel ?? (isLastStep ? "Finish" : "Continue →");
 
   return (
-    <div className={`mt-8 flex ${isFirstStep ? 'justify-end' : 'justify-between'}`}>
+    <div className={`mt-8 flex ${isFirstStep ? "justify-end" : "justify-between"}`}>
       {!isFirstStep && (
         <button
           type="button"
@@ -38,5 +38,5 @@ export default function OnboardingNav({
         {label}
       </button>
     </div>
-  )
+  );
 }

@@ -10,12 +10,7 @@ export const MAX_TRANSCRIPT_CHARS = 100_000;
 
 export type ChatMessageForChunking = Pick<
   Doc<"chatMessages">,
-  | "role"
-  | "content"
-  | "createdAt"
-  | "taskId"
-  | "courseId"
-  | "clarificationIntent"
+  "role" | "content" | "createdAt" | "taskId" | "courseId" | "clarificationIntent"
 >;
 
 export interface ChatChunkSpec {
@@ -44,14 +39,11 @@ function estimateTranscriptLength(messages: ChatMessageForChunking[]): number {
  * Keep the most recent tail of the thread, capped by message count and total size.
  */
 export function selectMessagesForChunking(
-  messages: ChatMessageForChunking[],
+  messages: ChatMessageForChunking[]
 ): ChatMessageForChunking[] {
   const sorted = [...messages].sort((a, b) => a.createdAt - b.createdAt);
   let slice = sorted.slice(-MAX_MESSAGES_PER_REBUILD);
-  while (
-    slice.length > 1 &&
-    estimateTranscriptLength(slice) > MAX_TRANSCRIPT_CHARS
-  ) {
+  while (slice.length > 1 && estimateTranscriptLength(slice) > MAX_TRANSCRIPT_CHARS) {
     slice = slice.slice(1);
   }
   return slice;
@@ -77,19 +69,11 @@ function buildTranscript(messages: ChatMessageForChunking[]): {
   return { transcript, spans };
 }
 
-function spansOverlappingRange(
-  spans: Span[],
-  rangeStart: number,
-  rangeEnd: number,
-): Span[] {
-  return spans.filter(
-    (s) => rangeStart < s.end && rangeEnd > s.start,
-  );
+function spansOverlappingRange(spans: Span[], rangeStart: number, rangeEnd: number): Span[] {
+  return spans.filter((s) => rangeStart < s.end && rangeEnd > s.start);
 }
 
-function mergeIntent(
-  messages: ChatMessageForChunking[],
-): ChatChunkSpec["clarificationIntent"] {
+function mergeIntent(messages: ChatMessageForChunking[]): ChatChunkSpec["clarificationIntent"] {
   let sawNone = false;
   for (const m of messages) {
     const t = m.clarificationIntent;
@@ -122,7 +106,7 @@ function linkedCourseIdsFrom(messages: ChatMessageForChunking[]): Id<"userCourse
  * update the active context; messages without tags inherit the previous active values.
  */
 function effectiveTaskCoursePerMessage(
-  messages: ChatMessageForChunking[],
+  messages: ChatMessageForChunking[]
 ): Array<{ taskId?: Id<"tasks">; courseId?: Id<"userCourses"> }> {
   let activeTask: Id<"tasks"> | undefined;
   let activeCourse: Id<"userCourses"> | undefined;
@@ -138,7 +122,7 @@ function effectiveTaskCoursePerMessage(
 }
 
 function segmentIndicesByEffectivePair(
-  effective: Array<{ taskId?: Id<"tasks">; courseId?: Id<"userCourses"> }>,
+  effective: Array<{ taskId?: Id<"tasks">; courseId?: Id<"userCourses"> }>
 ): number[][] {
   const segments: number[][] = [];
   if (effective.length === 0) return segments;
@@ -162,7 +146,7 @@ function segmentIndicesByEffectivePair(
 function messagesWithEffectiveTags(
   messages: ChatMessageForChunking[],
   indices: number[],
-  effective: Array<{ taskId?: Id<"tasks">; courseId?: Id<"userCourses"> }>,
+  effective: Array<{ taskId?: Id<"tasks">; courseId?: Id<"userCourses"> }>
 ): ChatMessageForChunking[] {
   return indices.map((i) => {
     const m = messages[i]!;
@@ -183,13 +167,9 @@ const END_SNAP_LOOKBACK = 140;
 /**
  * Move `end` backward so we do not end mid-word (prefer breaks after `\n\n`, `\n`, or spaces).
  */
-function snapEndBackward(
-  transcript: string,
-  start: number,
-  desiredEnd: number,
-): number {
+function snapEndBackward(transcript: string, start: number, desiredEnd: number): number {
   const len = transcript.length;
-  let end = Math.min(desiredEnd, len);
+  const end = Math.min(desiredEnd, len);
   const minEnd = start + MIN_CHUNK_CHARS;
   if (end >= len) {
     return len;
@@ -256,9 +236,7 @@ function snapStartForward(transcript: string, rawStart: number): number {
  * contiguous runs where the inherited (taskId, courseId) pair is constant so
  * a chunk never mixes two different contexts.
  */
-export function buildChatChunkSpecs(
-  messages: ChatMessageForChunking[],
-): ChatChunkSpec[] {
+export function buildChatChunkSpecs(messages: ChatMessageForChunking[]): ChatChunkSpec[] {
   const selected = selectMessagesForChunking(messages);
   if (selected.length === 0) return [];
 
@@ -284,7 +262,7 @@ export function buildChatChunkSpecs(
  */
 function buildChunkSpecsForMessages(
   messages: ChatMessageForChunking[],
-  startChunkIndex: number,
+  startChunkIndex: number
 ): ChatChunkSpec[] {
   const { transcript, spans } = buildTranscript(messages);
   if (transcript.trim().length === 0) return [];

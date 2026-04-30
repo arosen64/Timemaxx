@@ -43,13 +43,11 @@ export function computeRecommendedStart(now: number, dueDate: number): number {
 export function computeSubtaskCascade(
   now: number,
   dueDate: number,
-  n: number,
+  n: number
 ): (i: number) => number {
   const windowStart = Math.max(now, dueDate - TWO_WEEKS_MS);
   const windowDuration = Math.max(0, dueDate - windowStart);
-  const interval = n > 0
-    ? Math.min(2 * DAY_MS, Math.max(DAY_MS, windowDuration / n))
-    : DAY_MS;
+  const interval = n > 0 ? Math.min(2 * DAY_MS, Math.max(DAY_MS, windowDuration / n)) : DAY_MS;
   return (i) => Math.min(windowStart + (i + 1) * interval, dueDate);
 }
 
@@ -65,7 +63,7 @@ export function toDateStr(d: Date, timezone: string): string {
 /** Returns the local day-of-week name (e.g. "Monday") for a UTC timestamp. */
 function toDayName(ms: number, timezone: string): string {
   return new Intl.DateTimeFormat("en-US", { timeZone: timezone, weekday: "long" }).format(
-    new Date(ms),
+    new Date(ms)
   );
 }
 
@@ -84,7 +82,7 @@ function toDayName(ms: number, timezone: string): string {
 export function buildDailyLoadMap(
   occupiedIntervals: OccupiedInterval[],
   timezone: string,
-  focusBlockLengthMinutes: number,
+  focusBlockLengthMinutes: number
 ): Map<string, number> {
   const map = new Map<string, number>();
   for (const iv of occupiedIntervals) {
@@ -111,7 +109,7 @@ export function buildDailyLoadMap(
 export function computeMaxBlocksPerDay(
   workHoursGrid: WorkHoursRow[],
   focusBlockLengthMinutes: number,
-  preferredDays: string[] = [],
+  preferredDays: string[] = []
 ): Map<string, number> {
   const ALL_DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
   const preferred = new Set(preferredDays);
@@ -141,7 +139,7 @@ export function isDailyCapReached(
   startMs: number,
   timezone: string,
   dailyLoadMap: Map<string, number>,
-  maxBlocksPerDayMap: Map<string, number>,
+  maxBlocksPerDayMap: Map<string, number>
 ): boolean {
   const dateStr = toDateStr(new Date(startMs), timezone);
   const dayName = toDayName(startMs, timezone);
@@ -162,7 +160,7 @@ export function roundUpTo15Min(ms: number): number {
 /** Get local day-of-week name and minutes-from-midnight for a UTC timestamp. */
 function getLocalTimeInfo(
   ms: number,
-  timezone: string,
+  timezone: string
 ): { dayName: string; minutesFromMidnight: number } {
   const dt = new Date(ms);
   const parts = new Intl.DateTimeFormat("en-US", {
@@ -216,7 +214,7 @@ export function isSlotValid(
   durationMs: number,
   workHoursGrid: WorkHoursRow[],
   occupiedIntervals: OccupiedInterval[],
-  timezone: string,
+  timezone: string
 ): boolean {
   const endMs = startMs + durationMs;
 
@@ -251,7 +249,7 @@ export function buildSlotContext(
   startMs: number,
   endMs: number,
   occupiedIntervals: OccupiedInterval[],
-  sortedByStart?: OccupiedInterval[],
+  sortedByStart?: OccupiedInterval[]
 ): {
   previousEventTitle: string | null;
   minutesSincePreviousEvent: number | null;
@@ -334,16 +332,23 @@ export function enumerateSlots(opts: {
   maxBlocksPerDayMap?: Map<string, number>;
   recommendedStartMs?: number;
 }): CandidateSlot[] {
-  const { fromMs, dueDateMs, durationMinutes, workHoursGrid, occupiedIntervals, timezone,
-    dailyLoadMap, maxBlocksPerDayMap } = opts;
+  const {
+    fromMs,
+    dueDateMs,
+    durationMinutes,
+    workHoursGrid,
+    occupiedIntervals,
+    timezone,
+    dailyLoadMap,
+    maxBlocksPerDayMap,
+  } = opts;
   const durationMs = durationMinutes * 60000;
   const horizonMs = Date.now() + SCHEDULE_HORIZON_MS;
   const limitMs = Math.min(dueDateMs, horizonMs);
 
   const candidates: CandidateSlot[] = [];
-  const effectiveFromMs = opts.recommendedStartMs !== undefined
-    ? Math.max(fromMs, opts.recommendedStartMs)
-    : fromMs;
+  const effectiveFromMs =
+    opts.recommendedStartMs !== undefined ? Math.max(fromMs, opts.recommendedStartMs) : fromMs;
   let cursor = roundUpTo15Min(effectiveFromMs);
 
   while (cursor < limitMs && candidates.length < MAX_CANDIDATES) {
@@ -351,7 +356,8 @@ export function enumerateSlots(opts: {
     if (endMs > limitMs) break;
 
     if (
-      dailyLoadMap && maxBlocksPerDayMap &&
+      dailyLoadMap &&
+      maxBlocksPerDayMap &&
       isDailyCapReached(cursor, timezone, dailyLoadMap, maxBlocksPerDayMap)
     ) {
       cursor += FIFTEEN_MIN_MS;
@@ -393,7 +399,15 @@ export function extendSlotPool(opts: {
   timezone: string;
   recommendedStartMs?: number;
 }): number {
-  const { pool, scanCursor, targetMs, focusBlockLengthMinutes, workHoursGrid, occupiedIntervals, timezone } = opts;
+  const {
+    pool,
+    scanCursor,
+    targetMs,
+    focusBlockLengthMinutes,
+    workHoursGrid,
+    occupiedIntervals,
+    timezone,
+  } = opts;
   const blockMs = focusBlockLengthMinutes * 60000;
   const effectiveStart =
     opts.recommendedStartMs !== undefined
@@ -431,8 +445,16 @@ export function filterPoolForBlock(opts: {
   recommendedStartMs?: number;
   reverseOrder?: boolean;
 }): CandidateSlot[] {
-  const { pool, dueDateMs, durationMinutes, workHoursGrid, occupiedIntervals, timezone,
-    dailyLoadMap, maxBlocksPerDayMap } = opts;
+  const {
+    pool,
+    dueDateMs,
+    durationMinutes,
+    workHoursGrid,
+    occupiedIntervals,
+    timezone,
+    dailyLoadMap,
+    maxBlocksPerDayMap,
+  } = opts;
   const durationMs = durationMinutes * 60000;
   const candidates: CandidateSlot[] = [];
   const orderedPool = opts.reverseOrder ? [...pool].reverse() : pool;
@@ -443,10 +465,13 @@ export function filterPoolForBlock(opts: {
     const endMs = slot.startMs + durationMs;
     if (endMs > dueDateMs) continue;
     if (
-      dailyLoadMap && maxBlocksPerDayMap &&
+      dailyLoadMap &&
+      maxBlocksPerDayMap &&
       isDailyCapReached(slot.startMs, timezone, dailyLoadMap, maxBlocksPerDayMap)
-    ) continue;
-    if (!isSlotValid(slot.startMs, durationMs, workHoursGrid, occupiedIntervals, timezone)) continue;
+    )
+      continue;
+    if (!isSlotValid(slot.startMs, durationMs, workHoursGrid, occupiedIntervals, timezone))
+      continue;
     if (candidates.length >= MAX_CANDIDATES) break;
 
     candidates.push({

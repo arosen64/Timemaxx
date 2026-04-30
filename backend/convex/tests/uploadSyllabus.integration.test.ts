@@ -17,9 +17,7 @@ const FIXTURE_PATH = resolve(import.meta.dirname, "__fixtures__/syllabus.txt");
 
 describe("actions/uploadSyllabus - integration (real Gemini API)", () => {
   test("extracts tasks from fixture syllabus and prints results", async () => {
-    const fixtureText = existsSync(FIXTURE_PATH)
-      ? readFileSync(FIXTURE_PATH, "utf8")
-      : "";
+    const fixtureText = existsSync(FIXTURE_PATH) ? readFileSync(FIXTURE_PATH, "utf8") : "";
     const isPlaceholder = fixtureText.startsWith("Paste or type");
     const apiKey = process.env.GEMINI_API_KEY;
 
@@ -39,10 +37,9 @@ describe("actions/uploadSyllabus - integration (real Gemini API)", () => {
     const t = makeTestCtx();
     const { withAuth } = await createTestUser(t);
 
-    const result = await withAuth.action(
-      api.ai.uploadSyllabus.uploadSyllabus,
-      { fileContents: fixtureText }
-    );
+    const result = await withAuth.action(api.ai.uploadSyllabus.uploadSyllabus, {
+      fileContents: fixtureText,
+    });
 
     console.log("\n=== Gemini extraction result ===");
     console.log("syllabusId:", result.syllabusId);

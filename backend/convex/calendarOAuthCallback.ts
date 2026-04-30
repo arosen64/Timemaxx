@@ -27,10 +27,9 @@ export const calendarOAuthCallback = httpAction(async (ctx, request) => {
 
   // Validate state and identify the user — state was stored at initiation time
   // linked to the userId (see initiateGoogleCalendarOAuth.ts)
-  const stateRecord = await ctx.runQuery(
-    internal.queries.calendar.getCalendarOAuthState,
-    { state },
-  );
+  const stateRecord = await ctx.runQuery(internal.queries.calendar.getCalendarOAuthState, {
+    state,
+  });
 
   if (!stateRecord || stateRecord.expiresAt < Date.now()) {
     return new Response(null, { status: 302, headers: { Location: profileRedirect } });
@@ -62,7 +61,7 @@ export const calendarOAuthCallback = httpAction(async (ctx, request) => {
     return new Response(null, { status: 302, headers: { Location: profileRedirect } });
   }
 
-  const data = await tokenResponse.json() as {
+  const data = (await tokenResponse.json()) as {
     access_token: string;
     refresh_token: string;
     expires_in: number;
@@ -98,9 +97,7 @@ export const calendarOAuthCallback = httpAction(async (ctx, request) => {
 
   // If the Timemaxx calendar couldn't be created, tell the frontend so it can
   // prompt the user to reconnect via the "Update Calendar Permissions" button.
-  const redirectTarget = timemaxxCalendarId
-    ? "/profile"
-    : "/profile?calendarSetupFailed=1";
+  const redirectTarget = timemaxxCalendarId ? "/profile" : "/profile?calendarSetupFailed=1";
   const finalRedirect = `${siteUrl}/?oauth=calendar&returnTo=${encodeURIComponent(redirectTarget)}`;
 
   return new Response(null, { status: 302, headers: { Location: finalRedirect } });
@@ -122,13 +119,11 @@ async function findOrCreateTimemaxxCalendar(accessToken: string): Promise<string
     const url = `${GCAL_API}/users/me/calendarList${pageToken ? `?pageToken=${pageToken}` : ""}`;
     const listRes = await fetch(url, { headers });
     if (!listRes.ok) break;
-    const listData = await listRes.json() as {
+    const listData = (await listRes.json()) as {
       items?: Array<{ id: string; summary: string }>;
       nextPageToken?: string;
     };
-    const existing = listData.items?.find(
-      (c) => c.summary === TIMEMAXX_CALENDAR_NAME,
-    );
+    const existing = listData.items?.find((c) => c.summary === TIMEMAXX_CALENDAR_NAME);
     if (existing) return existing.id;
     pageToken = listData.nextPageToken;
   } while (pageToken);
@@ -141,6 +136,6 @@ async function findOrCreateTimemaxxCalendar(accessToken: string): Promise<string
   });
   if (!createRes.ok) return null;
 
-  const created = await createRes.json() as { id?: string };
+  const created = (await createRes.json()) as { id?: string };
   return created.id ?? null;
 }

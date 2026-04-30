@@ -11,7 +11,7 @@ import {
 export async function threadHasTaggedCourse(
   ctx: ActionCtx,
   userId: Id<"users">,
-  historyAsc: readonly TaggedMessageView[],
+  historyAsc: readonly TaggedMessageView[]
 ): Promise<boolean> {
   if (walkLatestTaggedCourseId(historyAsc) !== undefined) return true;
   const tid = walkLatestTaggedTaskId(historyAsc);
@@ -23,7 +23,7 @@ export async function threadHasTaggedCourse(
 export async function buildTaggedEntitiesContextBlock(
   ctx: ActionCtx,
   userId: Id<"users">,
-  historyAsc: readonly TaggedMessageView[],
+  historyAsc: readonly TaggedMessageView[]
 ): Promise<string> {
   const { taskIds, courseIds } = collectUniqueTaggedIds(historyAsc);
   const extraCourseIds = new Set<string>();
@@ -37,21 +37,26 @@ export async function buildTaggedEntitiesContextBlock(
   for (const tid of taskIds) {
     const task = await ctx.runQuery(internal.queries.tasks.getTaskInternal, { taskId: tid });
     if (task && task.userId === userId) {
-      const subtasks = await ctx.runQuery(internal.queries.subtasks.countSubtasksForTaskInternal, { parentTaskId: tid });
+      const subtasks = await ctx.runQuery(internal.queries.subtasks.countSubtasksForTaskInternal, {
+        parentTaskId: tid,
+      });
       lines.push(
-        `- Task "${task.title}" (${task.taskType}, due ${new Date(task.dueDate).toISOString().slice(0, 10)}${task.classTag ? `, class: ${task.classTag}` : ""}, subtasks: ${subtasks}) → taskId ${String(tid)}`,
+        `- Task "${task.title}" (${task.taskType}, due ${new Date(task.dueDate).toISOString().slice(0, 10)}${task.classTag ? `, class: ${task.classTag}` : ""}, subtasks: ${subtasks}) → taskId ${String(tid)}`
       );
       if (subtasks > 0) {
-        const subtaskRows = await ctx.runQuery(internal.queries.subtasks.getSubtasksForTaskInternal, {
-          parentTaskId: tid,
-        });
+        const subtaskRows = await ctx.runQuery(
+          internal.queries.subtasks.getSubtasksForTaskInternal,
+          {
+            parentTaskId: tid,
+          }
+        );
         for (const [index, subtask] of subtaskRows.entries()) {
           const estimate =
             subtask.timeEstimate !== undefined
               ? `${Math.floor(subtask.timeEstimate / 60)}h ${subtask.timeEstimate % 60}m`
               : "estimate pending";
           lines.push(
-            `  - Subtask ${index + 1}: "${subtask.title}" (status: ${subtask.status ?? "not_started"}, estimate: ${estimate})`,
+            `  - Subtask ${index + 1}: "${subtask.title}" (status: ${subtask.status ?? "not_started"}, estimate: ${estimate})`
           );
         }
       }
@@ -61,10 +66,9 @@ export async function buildTaggedEntitiesContextBlock(
 
   const mergedCourse = new Set([...courseIds.map(String), ...extraCourseIds]);
   for (const cid of mergedCourse) {
-    const courses = await ctx.runQuery(
-      internal.queries.userCourses.getUserCoursesByIdsInternal,
-      { courseIds: [cid as Id<"userCourses">] },
-    );
+    const courses = await ctx.runQuery(internal.queries.userCourses.getUserCoursesByIdsInternal, {
+      courseIds: [cid as Id<"userCourses">],
+    });
     const c2 = courses[0];
     if (c2 && c2.userId === userId) {
       lines.push(`- Course "${c2.title}" (${c2.courseCode}) → courseId ${String(cid)}`);
@@ -74,10 +78,10 @@ export async function buildTaggedEntitiesContextBlock(
   const primaryTask = walkLatestTaggedTaskId(historyAsc);
   const primaryCourse = walkLatestTaggedCourseId(historyAsc);
   lines.push(
-    `Most recent tag (newest first): ${primaryTask ? `taskId=${String(primaryTask)}` : "no task tag"}, ${primaryCourse ? `courseId=${String(primaryCourse)}` : "no course tag"}.`,
+    `Most recent tag (newest first): ${primaryTask ? `taskId=${String(primaryTask)}` : "no task tag"}, ${primaryCourse ? `courseId=${String(primaryCourse)}` : "no course tag"}.`
   );
   lines.push(
-    "Use these IDs for update/delete/read and for class on create when they match the user's latest request.",
+    "Use these IDs for update/delete/read and for class on create when they match the user's latest request."
   );
   return lines.join("\n");
 }

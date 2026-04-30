@@ -1,11 +1,11 @@
-import type { CalendarEntry } from '../../../../backend/convex/actions/fetchCalendarEvents'
-import { XIcon } from '../icons'
+import type { CalendarEntry } from "../../../../backend/convex/actions/fetchCalendarEvents";
+import { XIcon } from "../icons";
 
 interface CalendarSelectorPopupProps {
-  calendars: CalendarEntry[]
-  selectedIds: string[]
-  onToggle: (id: string) => void
-  onClose: () => void
+  calendars: CalendarEntry[];
+  selectedIds: string[];
+  onToggle: (id: string) => void;
+  onClose: () => void;
 }
 
 export default function CalendarSelectorPopup({
@@ -55,5 +55,5 @@ export default function CalendarSelectorPopup({
         </div>
       </div>
     </div>
-  )
+  );
 }

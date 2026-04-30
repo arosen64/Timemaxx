@@ -3,6 +3,7 @@ import { action } from "../_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { internal } from "../_generated/api";
+import type { Id } from "../_generated/dataModel";
 import {
   extendSlotPool,
   isSlotValid,
@@ -17,7 +18,13 @@ import {
   type WorkHoursRow,
   type PoolSlot,
 } from "../lib/scheduleSlots";
-import { parseTimeOfDayRanges, scoreCandidate, getProductivityTraits, getSlotTimeInfo, type ScoreBreakdown } from "../lib/scoreSlots";
+import {
+  parseTimeOfDayRanges,
+  scoreCandidate,
+  getProductivityTraits,
+  getSlotTimeInfo,
+  type ScoreBreakdown,
+} from "../lib/scoreSlots";
 import { fetch21DayCalendarEvents } from "../lib/calendarFetch";
 
 const MAX_BLOCKS = 10;
@@ -43,7 +50,10 @@ export const scheduleAllBlocks = action({
     taskId: v.id("tasks"),
     timezone: v.string(),
   },
-  handler: async (ctx, args): Promise<{ scheduled: number; skipped: number; conflicted: number }> => {
+  handler: async (
+    ctx,
+    args
+  ): Promise<{ scheduled: number; skipped: number; conflicted: number }> => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Unauthenticated");
 
@@ -52,16 +62,20 @@ export const scheduleAllBlocks = action({
 
     const focusBlockLength: number = user.focusBlockLength ?? 60;
     const workHoursGrid = (user.workHoursGrid ?? []) as WorkHoursRow[];
-    const { dayOfWeek: preferredDays, timeOfDay: timeOfDayPrefs, deadlineBehavior } = getProductivityTraits(user.productivityTraits);
+    const {
+      dayOfWeek: preferredDays,
+      timeOfDay: timeOfDayPrefs,
+      deadlineBehavior,
+    } = getProductivityTraits(user.productivityTraits);
     const timeOfDayRanges = parseTimeOfDayRanges(timeOfDayPrefs);
     const dayOfWeekPrefs: string[] = preferredDays;
 
     // Fetch raw blocks, tasks, and subtasks
-    const allBlocks = await ctx.runQuery(
+    const allBlocks = (await ctx.runQuery(
       internal.queries.studyBlocks.getAllStudyBlocksByUserInternal,
-      { userId },
-    ) as Array<{
-      _id: string;
+      { userId }
+    )) as Array<{
+      _id: Id<"studyBlocks">;
       taskId?: string;
       subtaskId?: string;
       title: string;
@@ -72,36 +86,40 @@ export const scheduleAllBlocks = action({
     }>;
 
     const [allTasks, allSubtasks, userCourses] = await Promise.all([
-      ctx.runQuery(internal.queries.tasks.getAllTasksInternal, { userId }) as Promise<Array<{
-        _id: string;
-        title: string;
-        dueDate: number;
-        courseId?: string;
-        assignmentWeight?: number;
-        recommendedStart?: number;
-        _creationTime: number;
-      }>>,
-      ctx.runQuery(internal.queries.subtasks.getAllSubtasksInternal, { userId }) as Promise<Array<{
-        _id: string;
-        parentTaskId: string;
-        title: string;
-        dueDate?: number;
-        suggestedCompletionAt?: number;
-        _creationTime: number;
-      }>>,
-      ctx.runQuery(internal.queries.userCourses.getUserCoursesInternal, { userId }) as Promise<Array<{
-        _id: string;
-        difficultyRating?: number;
-      }>>,
+      ctx.runQuery(internal.queries.tasks.getAllTasksInternal, { userId }) as Promise<
+        Array<{
+          _id: string;
+          title: string;
+          dueDate: number;
+          courseId?: string;
+          assignmentWeight?: number;
+          recommendedStart?: number;
+          _creationTime: number;
+        }>
+      >,
+      ctx.runQuery(internal.queries.subtasks.getAllSubtasksInternal, { userId }) as Promise<
+        Array<{
+          _id: string;
+          parentTaskId: string;
+          title: string;
+          dueDate?: number;
+          suggestedCompletionAt?: number;
+          _creationTime: number;
+        }>
+      >,
+      ctx.runQuery(internal.queries.userCourses.getUserCoursesInternal, { userId }) as Promise<
+        Array<{
+          _id: string;
+          difficultyRating?: number;
+        }>
+      >,
     ]);
 
     const taskMap = new Map(allTasks.map((t) => [t._id, t]));
     const difficultyMap = new Map(userCourses.map((c) => [c._id, c.difficultyRating]));
     // Only subtasks that belong to the target task
     const subtaskMap = new Map(
-      allSubtasks
-        .filter((s) => s.parentTaskId === args.taskId)
-        .map((s) => [s._id, s]),
+      allSubtasks.filter((s) => s.parentTaskId === args.taskId).map((s) => [s._id, s])
     );
     const subtaskIds = new Set(subtaskMap.keys());
 
@@ -121,7 +139,9 @@ export const scheduleAllBlocks = action({
     // Only unscheduled blocks belonging to this task or one of its subtasks
     const unscheduled = allBlocks.filter((b) => !b.startTime && isTaskBlock(b));
     // Conflicted blocks are handled by auto-reschedule, not this action
-    const conflictedCount = allBlocks.filter((b) => b.startTime && b.isConflicted && isTaskBlock(b)).length;
+    const conflictedCount = allBlocks.filter(
+      (b) => b.startTime && b.isConflicted && isTaskBlock(b)
+    ).length;
 
     type ResolvedBlock = {
       block: (typeof allBlocks)[0];
@@ -151,17 +171,16 @@ export const scheduleAllBlocks = action({
         if (!subtask) continue;
         const parentTask = taskMap.get(subtask.parentTaskId);
         const parentDueDate =
-          subtask.suggestedCompletionAt ??
-          subtask.dueDate ??
-          parentTask?.dueDate ??
-          Date.now();
+          subtask.suggestedCompletionAt ?? subtask.dueDate ?? parentTask?.dueDate ?? Date.now();
         resolved.push({
           block,
           parentTitle: subtask.title,
           parentDueDate,
           parentWeight: parentTask?.assignmentWeight ?? 0,
           recommendedStart: parentTask?.recommendedStart,
-          difficultyRating: parentTask?.courseId ? difficultyMap.get(parentTask.courseId) : undefined,
+          difficultyRating: parentTask?.courseId
+            ? difficultyMap.get(parentTask.courseId)
+            : undefined,
         });
       }
     }
@@ -171,7 +190,7 @@ export const scheduleAllBlocks = action({
         (a, b) =>
           a.parentDueDate - b.parentDueDate ||
           b.parentWeight - a.parentWeight ||
-          a.block._creationTime - b.block._creationTime,
+          a.block._creationTime - b.block._creationTime
       )
       .slice(0, MAX_BLOCKS);
 
@@ -200,7 +219,11 @@ export const scheduleAllBlocks = action({
     // It starts from existing intervals and is incremented after each block is
     // assigned, so successive blocks score already-chosen days lower and spread
     // naturally without a hard cap.
-    const speculativeDailyLoadMap = buildDailyLoadMap(occupiedIntervals, args.timezone, focusBlockLength);
+    const speculativeDailyLoadMap = buildDailyLoadMap(
+      occupiedIntervals,
+      args.timezone,
+      focusBlockLength
+    );
 
     // Shared slot pool extended incrementally per block
     const pool: PoolSlot[] = [];
@@ -217,7 +240,10 @@ export const scheduleAllBlocks = action({
     // Phase 1: score all physically valid slots globally; take top MAX_CANDIDATES by score
     // slotTimeCache amortizes the Intl.DateTimeFormat calls in scoreCandidate across
     // all blocks scored against the same pool slot.
-    const slotTimeCache = new Map<number, { dayOfWeek: string; minutesFromMidnight: number; dateStr: string }>();
+    const slotTimeCache = new Map<
+      number,
+      { dayOfWeek: string; minutesFromMidnight: number; dateStr: string }
+    >();
     const entries: BlockEntry[] = [];
 
     for (const item of sorted) {
@@ -245,7 +271,10 @@ export const scheduleAllBlocks = action({
         if (s.startMs >= item.parentDueDate) continue;
         if (s.startMs + blockDurationMs > item.parentDueDate) continue;
         if (item.recommendedStart !== undefined && s.startMs < item.recommendedStart) continue;
-        if (!isSlotValid(s.startMs, blockDurationMs, workHoursGrid, occupiedIntervals, args.timezone)) continue;
+        if (
+          !isSlotValid(s.startMs, blockDurationMs, workHoursGrid, occupiedIntervals, args.timezone)
+        )
+          continue;
 
         const endMs = s.startMs + blockDurationMs;
         const context = buildSlotContext(s.startMs, endMs, occupiedIntervals, sortedOccupied);
@@ -317,7 +346,7 @@ export const scheduleAllBlocks = action({
               recommendedStart: e.recommendedStart,
               candidates: e.candidates,
             })),
-            user.productivityTraits,
+            user.productivityTraits
           )
         : [];
 
@@ -340,7 +369,7 @@ export const scheduleAllBlocks = action({
       }
 
       await ctx.runMutation(internal.mutations.studyBlocks.placeStudyBlock, {
-        studyBlockId: block._id as any,
+        studyBlockId: block._id,
         startTime: chosen.startISO,
       });
 
@@ -351,11 +380,18 @@ export const scheduleAllBlocks = action({
       });
 
       const placedDateStr = toDateStr(new Date(chosen.startMs), args.timezone);
-      speculativeDailyLoadMap.set(placedDateStr, (speculativeDailyLoadMap.get(placedDateStr) ?? 0) + 1);
+      speculativeDailyLoadMap.set(
+        placedDateStr,
+        (speculativeDailyLoadMap.get(placedDateStr) ?? 0) + 1
+      );
 
       scheduled++;
     }
 
-    return { scheduled, skipped: skipped + (entries.length - scheduled), conflicted: conflictedCount };
+    return {
+      scheduled,
+      skipped: skipped + (entries.length - scheduled),
+      conflicted: conflictedCount,
+    };
   },
 });

@@ -18,6 +18,24 @@ import { transcriptOcrWorkflow } from "./workflows/transcriptOcrWorkflow";
 import { transcriptParseWorkflow } from "./workflows/transcriptParseWorkflow";
 
 export const mastra = new Mastra({
-  agents: { supervisorAgent, taskAgent, feedbackAgent, scheduleAgent, courseAgent, estimationAgent, syllabusAgent, transcriptAgent },
-  workflows: { chatWorkflow, estimationWorkflow, batchEstimationWorkflow, schedulingWorkflow, syllabusOcrWorkflow, syllabusParseWorkflow, transcriptOcrWorkflow, transcriptParseWorkflow },
+  agents: {
+    supervisorAgent,
+    taskAgent,
+    feedbackAgent,
+    scheduleAgent,
+    courseAgent,
+    estimationAgent,
+    syllabusAgent,
+    transcriptAgent,
+  },
+  workflows: {
+    chatWorkflow,
+    estimationWorkflow,
+    batchEstimationWorkflow,
+    schedulingWorkflow,
+    syllabusOcrWorkflow,
+    syllabusParseWorkflow,
+    transcriptOcrWorkflow,
+    transcriptParseWorkflow,
+  },
 });
