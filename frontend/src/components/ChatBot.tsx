@@ -309,7 +309,7 @@ export default function ChatBot() {
       {isOpen && (
         <div
           ref={containerRef}
-          className={`fixed inset-0 z-40 flex flex-col overflow-hidden bg-white sm:static sm:inset-auto sm:z-auto sm:rounded-2xl sm:border sm:border-border sm:shadow-xl sm:relative sm:min-w-64 sm:min-h-64${chatSize ? "" : " sm:w-[400px] sm:h-[600px]"}`}
+          className={`fixed inset-0 z-40 flex flex-col overflow-hidden bg-white sm:relative sm:inset-auto sm:z-auto sm:rounded-2xl sm:border sm:border-border sm:shadow-xl sm:min-w-64 sm:min-h-64${chatSize ? "" : " sm:w-[400px] sm:h-[600px]"}`}
           style={
             chatSize && !isMobile ? { width: chatSize.width, height: chatSize.height } : undefined
           }

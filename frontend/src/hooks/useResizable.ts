@@ -1,10 +1,19 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type ResizeDirection = "nw" | "n" | "ne" | "w" | "sw";
 
 export function useResizable() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState<{ width: number; height: number } | null>(null);
+  const moveHandlerRef = useRef<((ev: MouseEvent) => void) | null>(null);
+  const upHandlerRef = useRef<(() => void) | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (moveHandlerRef.current) document.removeEventListener("mousemove", moveHandlerRef.current);
+      if (upHandlerRef.current) document.removeEventListener("mouseup", upHandlerRef.current);
+    };
+  }, []);
 
   function reset() {
     setSize(null);
@@ -36,8 +45,12 @@ export function useResizable() {
     function onMouseUp() {
       document.removeEventListener("mousemove", onMouseMove);
       document.removeEventListener("mouseup", onMouseUp);
+      moveHandlerRef.current = null;
+      upHandlerRef.current = null;
     }
 
+    moveHandlerRef.current = onMouseMove;
+    upHandlerRef.current = onMouseUp;
     document.addEventListener("mousemove", onMouseMove);
     document.addEventListener("mouseup", onMouseUp);
   }
