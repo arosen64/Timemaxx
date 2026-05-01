@@ -120,8 +120,16 @@ export default function WorkHoursSelector({
         )}
       </div>
 
+      {/* Mobile hint */}
+      {!readOnly && (
+        <p className="font-body text-xs text-light-blue sm:hidden">
+          Best used on a larger screen — scroll horizontally to see all days.
+        </p>
+      )}
+
       {/* Grid */}
-      <div className="select-none overflow-hidden rounded-xl border border-border">
+      <div className="overflow-x-auto rounded-xl border border-border">
+      <div className="min-w-[480px] select-none overflow-hidden">
         {/* Sticky day header */}
         <div
           className="grid border-b border-border bg-bg-gray"
@@ -169,6 +177,7 @@ export default function WorkHoursSelector({
             ))}
           </div>
         </div>
+      </div>
       </div>
     </div>
   );
