@@ -5,7 +5,7 @@ const PHRASES = [
   "Meticulously scrutinizing your document…",
   "Hermeneutically decoding your submission…",
   "Taxonomizing your academic obligations…",
-  "Epistemologically interrogating your syllabus…",
+  "Epistemologically interrogating your pdfs…",
   "Philologically dissecting your documents…",
   "Comprehensively perusing your pedagogical imperatives…",
   "Assiduously extrapolating your chronological deliverables…",
