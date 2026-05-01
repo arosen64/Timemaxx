@@ -111,6 +111,7 @@ export const createStudyBlock = mutation({
       startTime: args.startTime,
       studyBlockLength: args.studyBlockLength,
       isCompleted: false,
+      isConflicted: false,
     });
   },
 });
@@ -150,6 +151,7 @@ export const createTaskBlocks = mutation({
         startTime: undefined,
         studyBlockLength: block.studyBlockLength,
         isCompleted: false,
+        isConflicted: false,
       });
     }
   },
@@ -353,7 +355,7 @@ export const detectConflicts = internalMutation({
           args.timezone
         );
 
-        if ((block.isConflicted ?? false) !== conflicted) {
+        if (block.isConflicted !== conflicted) {
           await ctx.db.patch(block._id, { isConflicted: conflicted });
         }
       }
@@ -412,7 +414,7 @@ export const detectConflicts = internalMutation({
           args.timezone
         );
 
-        if ((block.isConflicted ?? false) !== conflicted) {
+        if (block.isConflicted !== conflicted) {
           await ctx.db.patch(block._id, { isConflicted: conflicted });
         }
       }
@@ -465,6 +467,7 @@ export const splitStudyBlock = mutation({
       studyBlockLength: splitAt,
       needsExport,
       isCompleted: false,
+      isConflicted: false,
     });
 
     const blockBId = await ctx.db.insert("studyBlocks", {
@@ -476,6 +479,7 @@ export const splitStudyBlock = mutation({
       studyBlockLength: remaining,
       needsExport,
       isCompleted: false,
+      isConflicted: false,
     });
 
     return { blockAId, blockBId };
