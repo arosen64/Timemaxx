@@ -60,6 +60,7 @@ import type * as lib_syllabusTypes from "../lib/syllabusTypes.js";
 import type * as lib_taskTypes from "../lib/taskTypes.js";
 import type * as lib_taskValidators from "../lib/taskValidators.js";
 import type * as lib_terms from "../lib/terms.js";
+import type * as lib_userValidators from "../lib/userValidators.js";
 import type * as lib_withTimeout from "../lib/withTimeout.js";
 import type * as mutations_calendar from "../mutations/calendar.js";
 import type * as mutations_chatChunkEmbeddings from "../mutations/chatChunkEmbeddings.js";
@@ -138,6 +139,7 @@ declare const fullApi: ApiFromModules<{
   "lib/taskTypes": typeof lib_taskTypes;
   "lib/taskValidators": typeof lib_taskValidators;
   "lib/terms": typeof lib_terms;
+  "lib/userValidators": typeof lib_userValidators;
   "lib/withTimeout": typeof lib_withTimeout;
   "mutations/calendar": typeof mutations_calendar;
   "mutations/chatChunkEmbeddings": typeof mutations_chatChunkEmbeddings;

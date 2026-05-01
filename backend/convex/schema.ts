@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import { authTables } from "@convex-dev/auth/server";
 import { taskTypeValidator } from "./lib/taskValidators";
 import { activeAgentValidator } from "./lib/chatValidators";
+import { productivityTraitsValidator, workHoursRowValidator } from "./lib/userValidators";
 
 /** Per-category AI explanation for time estimates (tasks and subtasks). */
 const reasoningTraceValidator = v.object({
@@ -49,25 +50,10 @@ export default defineSchema({
     focusBlockLength: v.optional(v.number()),
     major: v.optional(v.string()),
     year: v.optional(v.string()),
-    courses: v.optional(
-      v.array(
-        v.object({
-          title: v.string(),
-          studyGoal: v.string(),
-        })
-      )
-    ),
 
-    workHoursGrid: v.optional(
-      v.array(
-        v.object({
-          day: v.string(),
-          blocked: v.array(v.number()),
-        })
-      )
-    ),
+    workHoursGrid: v.optional(v.array(workHoursRowValidator)),
 
-    productivityTraits: v.optional(v.any()),
+    productivityTraits: v.optional(productivityTraitsValidator),
 
     transcriptSummary: v.optional(
       v.array(

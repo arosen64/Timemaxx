@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { internal } from "../_generated/api";
 import { cascadeDeleteTask } from "./tasks";
+import { productivityTraitsValidator, workHoursRowValidator } from "../lib/userValidators";
 
 /**
  * Partially updates the authenticated user's settings (work hours, focus block length, study profile).
@@ -13,15 +14,8 @@ export const updateUserSettings = mutation({
     year: v.optional(v.string()),
     courses: v.optional(v.array(v.object({ title: v.string(), studyGoal: v.string() }))),
     transcriptSummary: v.optional(v.array(v.object({ label: v.string(), text: v.string() }))),
-    workHoursGrid: v.optional(
-      v.array(
-        v.object({
-          day: v.string(),
-          blocked: v.array(v.number()),
-        })
-      )
-    ),
-    productivityTraits: v.optional(v.any()),
+    workHoursGrid: v.optional(v.array(workHoursRowValidator)),
+    productivityTraits: v.optional(productivityTraitsValidator),
     focusBlockLength: v.optional(v.number()),
     gcalColorMappingEnabled: v.optional(v.boolean()),
   },
@@ -77,13 +71,8 @@ export const completeOnboarding = mutation({
   args: {
     major: v.string(),
     year: v.string(),
-    workHoursGrid: v.array(
-      v.object({
-        day: v.string(),
-        blocked: v.array(v.number()),
-      })
-    ),
-    productivityTraits: v.any(),
+    workHoursGrid: v.array(workHoursRowValidator),
+    productivityTraits: productivityTraitsValidator,
     focusBlockLength: v.number(),
   },
   handler: async (ctx, args) => {
