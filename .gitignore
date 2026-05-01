@@ -40,6 +40,9 @@ opsx
 openspec*
 opsx*
 
+# Convex auto-generated files
+backend/convex/_generated/
+
 # Mastra generated files
 .mastra/
 # Mastra
