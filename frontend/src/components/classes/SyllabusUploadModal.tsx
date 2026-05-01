@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useAction } from "convex/react";
 import { api } from "../../../../backend/convex/_generated/api";
 import { Modal, FileUpload, Toggle } from "../ui";
-import { SpinnerIcon } from "../icons";
+import ParsingAnimation from "../ParsingAnimation";
 import { Course, UploadSyllabusResult } from "../../types";
 import { fileToBase64 } from "../../utils/fileToBase64";
 
@@ -140,12 +140,7 @@ export default function SyllabusUploadModal({
         />
       )}
 
-      {isSubmitting && (
-        <div className="flex items-center gap-2 text-sm font-body text-slate-blue">
-          <SpinnerIcon size={14} />
-          <span>Uploading your syllabus…</span>
-        </div>
-      )}
+      {isSubmitting && <ParsingAnimation size={14} />}
     </Modal>
   );
 }
