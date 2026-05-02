@@ -148,6 +148,15 @@ export const updateTask = mutation({
       recommendedStart: computeRecommendedStart(Date.now(), args.dueDate),
     });
 
+    // Cascade title change to all study blocks for this task
+    if (args.title !== task.title) {
+      const blocks = await ctx.db
+        .query("studyBlocks")
+        .withIndex("by_taskId", (q) => q.eq("taskId", args.taskId))
+        .collect();
+      await Promise.all(blocks.map((b) => ctx.db.patch(b._id, { title: args.title })));
+    }
+
     // Cascade dueDate change to child subtasks and recompute suggestedCompletionAt
     if (args.dueDate !== task.dueDate) {
       const subtasks = await ctx.db
@@ -255,6 +264,15 @@ export const patchTaskFieldsInternal = internalMutation({
     }
     if (args.assignmentWeight !== undefined) patch.assignmentWeight = args.assignmentWeight;
     await ctx.db.patch(args.taskId, patch);
+
+    if (args.title !== undefined && args.title !== task.title) {
+      const blocks = await ctx.db
+        .query("studyBlocks")
+        .withIndex("by_taskId", (q) => q.eq("taskId", args.taskId))
+        .collect();
+      await Promise.all(blocks.map((b) => ctx.db.patch(b._id, { title: args.title! })));
+    }
+
     if (process.env.GEMINI_API_KEY && (args.title !== undefined || args.description !== undefined)) {
       await ctx.scheduler.runAfter(0, internal.ai.embeddings.generateTaskEmbedding, {
         taskId: args.taskId,
