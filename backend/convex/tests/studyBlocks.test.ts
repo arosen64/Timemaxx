@@ -494,7 +494,10 @@ describe("mutations/studyBlocks – splitStudyBlock", () => {
     const { userId, withAuth } = await createTestUser(t);
     const taskId = await seedTask(t, userId);
     const startTime = new Date(Date.now() + 3600_000).toISOString();
-    const studyBlockId = await seedStudyBlock(t, userId, taskId, { studyBlockLength: 90, startTime });
+    const studyBlockId = await seedStudyBlock(t, userId, taskId, {
+      studyBlockLength: 90,
+      startTime,
+    });
 
     const { blockAId, blockBId } = await withAuth.mutation(
       api.mutations.studyBlocks.splitStudyBlock,
