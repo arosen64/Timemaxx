@@ -746,7 +746,10 @@ chatApp.post("/api/chat", async (c) => {
   });
 
   const mastraUrl = process.env.MASTRA_URL;
-  if (!mastraUrl) return c.json({ error: "MASTRA_URL not configured" }, 503);
+  if (!mastraUrl) {
+    console.error("MASTRA_URL not configured");
+    return c.json({ error: "Service unavailable" }, 503);
+  }
   const client = new MastraClient({ baseUrl: mastraUrl });
 
   // ── Entity UI actions ──────────────────────────────────────────────────────

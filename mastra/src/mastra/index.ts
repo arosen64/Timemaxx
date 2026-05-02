@@ -11,6 +11,7 @@ import { transcriptAgent } from "./agents/transcriptAgent";
 import { chatWorkflow } from "./workflows/chatWorkflow";
 import { estimationWorkflow } from "./workflows/estimationWorkflow";
 import { batchEstimationWorkflow } from "./workflows/batchEstimationWorkflow";
+import { schedulingWorkflow } from "./workflows/schedulingWorkflow";
 import { syllabusOcrWorkflow } from "./workflows/syllabusOcrWorkflow";
 import { syllabusParseWorkflow } from "./workflows/syllabusParseWorkflow";
 import { transcriptOcrWorkflow } from "./workflows/transcriptOcrWorkflow";
@@ -31,6 +32,7 @@ export const mastra = new Mastra({
     chatWorkflow,
     estimationWorkflow,
     batchEstimationWorkflow,
+    schedulingWorkflow,
     syllabusOcrWorkflow,
     syllabusParseWorkflow,
     transcriptOcrWorkflow,
