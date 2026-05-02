@@ -4,6 +4,7 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { MastraClient } from "@mastra/client-js";
 import { sanitizeUserInput } from "../lib/sanitize";
 import { withTimeout } from "../lib/withTimeout";
+import { withAiObservability } from "../lib/aiObservability";
 
 export interface ParsedCourse {
   courseCode: string; // e.g. "EN.601.226"
@@ -41,9 +42,25 @@ export const parseTranscript = action({
 
     // OCR: extract text from the base64-encoded PDF
     const ocrWf = client.getWorkflow("transcript-ocr-workflow");
-    const ocrRun = await withTimeout(
-      ocrWf.startAsync({ inputData: { fileContents: args.fileContents } }),
-      "Transcript OCR"
+    const ocrRun = await withAiObservability(
+      ctx,
+      {
+        callSite: "parseTranscript.ocr",
+        provider: "mastra",
+        model: "transcript-ocr-workflow",
+        userId,
+        promptPreview: `[base64 PDF, ${args.fileContents.length} chars]`,
+        metadata: { workflowId: "transcript-ocr-workflow" },
+      },
+      () =>
+        withTimeout(
+          ocrWf.startAsync({ inputData: { fileContents: args.fileContents } }),
+          "Transcript OCR"
+        ),
+      (r) => ({
+        responsePreview: (r.steps?.["ocr"] as { output?: { extractedText?: string } } | undefined)
+          ?.output?.extractedText,
+      }),
     );
     const ocrStep = ocrRun.steps?.["ocr"] as
       | { status: string; output?: { extractedText?: string }; error?: string | Error }
@@ -63,9 +80,28 @@ export const parseTranscript = action({
     // Parse — Claude agent extracts structured course data
     // Workflow expects already-sanitized input; do not call without sanitizing first.
     const parseWf = client.getWorkflow("transcript-parse-workflow");
-    const parseRun = await withTimeout(
-      parseWf.startAsync({ inputData: { sanitizedText } }),
-      "Transcript parse"
+    const parseRun = await withAiObservability(
+      ctx,
+      {
+        callSite: "parseTranscript.parse",
+        provider: "mastra",
+        model: "transcript-parse-workflow",
+        userId,
+        promptPreview: sanitizedText,
+        metadata: { workflowId: "transcript-parse-workflow" },
+      },
+      () =>
+        withTimeout(
+          parseWf.startAsync({ inputData: { sanitizedText } }),
+          "Transcript parse"
+        ),
+      (r) => {
+        const step = r.steps?.["parse"];
+        return {
+          responsePreview:
+            step && "output" in step ? JSON.stringify(step.output) : undefined,
+        };
+      },
     );
 
     const parseStep = parseRun.steps?.["parse"];

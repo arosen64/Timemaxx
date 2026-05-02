@@ -12,6 +12,7 @@ import {
 } from "../lib/prompts/estimateTaskTime.prompt";
 import { taskToTaskLike, subtaskToTaskLike, TaskLike } from "../lib/taskTypes";
 import { fetchRelevantContext } from "../lib/retrieval";
+import { withAiObservability } from "../lib/aiObservability";
 
 const ESTIMATION_STEP_ID = "estimation-agent";
 
@@ -250,7 +251,29 @@ export const estimateTaskTime = internalAction({
 
       const client = new MastraClient({ baseUrl: mastraUrl });
       const wf = client.getWorkflow("estimation-workflow");
-      const run = await wf.startAsync({ inputData: { contextPrompt } });
+      const run = await withAiObservability(
+        ctx,
+        {
+          callSite: "estimateTaskTime",
+          provider: "mastra",
+          model: "estimation-workflow",
+          userId: item.userId,
+          promptPreview: contextPrompt,
+          metadata: {
+            taskId: args.taskId,
+            subtaskId: args.subtaskId,
+            workflowId: "estimation-workflow",
+          },
+        },
+        () => wf.startAsync({ inputData: { contextPrompt } }),
+        (r) => {
+          const out = r.steps?.[ESTIMATION_STEP_ID];
+          return {
+            responsePreview:
+              out && "output" in out ? JSON.stringify(out.output) : undefined,
+          };
+        },
+      );
 
       // If the workflow itself reports a top-level failure, surface it before
       // inspecting steps (steps may still be in running/pending state with no

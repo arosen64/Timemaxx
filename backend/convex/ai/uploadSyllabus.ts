@@ -8,6 +8,7 @@ import { sanitizeUserInput, validateLength } from "../lib/sanitize";
 import { TaskType, TASK_TYPES } from "../lib/taskValidators";
 import { UploadSyllabusResult } from "../lib/syllabusTypes";
 import { withTimeout } from "../lib/withTimeout";
+import { withAiObservability } from "../lib/aiObservability";
 
 /**
  * Parses a syllabus using Mastra:
@@ -72,9 +73,25 @@ export const uploadSyllabus = action({
       if (args.mimeType === "application/pdf") {
         // PDF path: run Mistral OCR on the base64-encoded file bytes first
         const ocrWf = client.getWorkflow("syllabus-ocr-workflow");
-        const ocrRun = await withTimeout(
-          ocrWf.startAsync({ inputData: { fileContents: args.fileContents } }),
-          "Syllabus OCR"
+        const ocrRun = await withAiObservability(
+          ctx,
+          {
+            callSite: "uploadSyllabus.ocr",
+            provider: "mastra",
+            model: "syllabus-ocr-workflow",
+            userId,
+            promptPreview: `[base64 PDF, ${args.fileContents.length} chars]`,
+            metadata: { syllabusId, courseId: args.courseId },
+          },
+          () =>
+            withTimeout(
+              ocrWf.startAsync({ inputData: { fileContents: args.fileContents } }),
+              "Syllabus OCR"
+            ),
+          (r) => ({
+            responsePreview: (r.steps?.["ocr"] as { output?: { extractedText?: string } } | undefined)
+              ?.output?.extractedText,
+          }),
         );
         const ocrStep = ocrRun.steps?.["ocr"] as
           | { status: string; output?: { extractedText?: string }; error?: string | Error }
@@ -95,9 +112,28 @@ export const uploadSyllabus = action({
       // Parse — Claude agent extracts structured task data
       // Workflow expects already-sanitized input; do not call without sanitizing first.
       const parseWf = client.getWorkflow("syllabus-parse-workflow");
-      const parseRun = await withTimeout(
-        parseWf.startAsync({ inputData: { sanitizedText } }),
-        "Syllabus parse"
+      const parseRun = await withAiObservability(
+        ctx,
+        {
+          callSite: "uploadSyllabus.parse",
+          provider: "mastra",
+          model: "syllabus-parse-workflow",
+          userId,
+          promptPreview: sanitizedText,
+          metadata: { syllabusId, courseId: args.courseId },
+        },
+        () =>
+          withTimeout(
+            parseWf.startAsync({ inputData: { sanitizedText } }),
+            "Syllabus parse"
+          ),
+        (r) => {
+          const step = r.steps?.["parse"];
+          return {
+            responsePreview:
+              step && "output" in step ? JSON.stringify(step.output) : undefined,
+          };
+        },
       );
 
       const parseStep = parseRun.steps?.["parse"];

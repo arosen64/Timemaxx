@@ -43,6 +43,12 @@ export const generateAcademicProfile = action({
       prompt: buildAcademicProfilePrompt(sanitizedCourseList),
       schema: academicProfileResponseSchema,
       schemaName: "AcademicProfile",
+      obs: {
+        ctx,
+        callSite: "generateAcademicProfile",
+        userId,
+        metadata: { courseCount: args.courses.length },
+      },
     });
 
     return (result.insights ?? []).slice(0, 5);

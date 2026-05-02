@@ -18,6 +18,7 @@ import {
   buildChatContext,
   buildProfileContext,
 } from "./estimateTaskTime";
+import { withAiObservability } from "../lib/aiObservability";
 
 type Ctx = GenericActionCtx<DataModel>;
 
@@ -99,7 +100,25 @@ export const estimateSubtasksBatch = internalAction({
     try {
       const client = new MastraClient({ baseUrl: mastraUrl });
       const wf = client.getWorkflow("batch-estimation-workflow");
-      const run = await wf.startAsync({ inputData: items });
+      const run = await withAiObservability(
+        ctx,
+        {
+          callSite: "estimateSubtasksBatch",
+          provider: "mastra",
+          model: "batch-estimation-workflow",
+          userId,
+          promptPreview: items.map((i) => i.contextPrompt).join("\n---\n"),
+          metadata: {
+            parentTaskId,
+            subtaskIds: args.subtaskIds,
+            batchSize: items.length,
+          },
+        },
+        () => wf.startAsync({ inputData: items }),
+        (r) => ({
+          responsePreview: JSON.stringify((r as { result?: unknown }).result),
+        }),
+      );
 
       const runStatus = (run as { status?: string }).status;
       if (runStatus === "failed") {

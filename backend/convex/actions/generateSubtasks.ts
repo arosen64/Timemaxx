@@ -82,6 +82,12 @@ Return 1–6 subtasks ordered by when they should be completed. If the assignmen
         schema: subtaskSchema,
         schemaName: "GeneratedSubtasks",
         timeoutMs: 30_000,
+        obs: {
+          ctx,
+          callSite: "generateSubtasks",
+          userId: task.userId,
+          metadata: { taskId: args.taskId, hasFileContent },
+        },
       });
 
       const rawSubtasks = json.subtasks ?? [];
