@@ -124,6 +124,7 @@ export const updateTask = mutation({
     courseId: v.optional(v.id("userCourses")),
     classTag: v.optional(v.string()),
     assignmentWeight: v.optional(v.number()),
+    clearAssignmentWeight: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -146,6 +147,7 @@ export const updateTask = mutation({
       dueDate: args.dueDate,
       courseId: args.courseId,
       ...(args.classTag !== undefined ? { classTag: normalizeClassTag(args.classTag) } : {}),
+      ...(args.clearAssignmentWeight ? { assignmentWeight: undefined } : {}),
       ...(args.assignmentWeight !== undefined ? { assignmentWeight: args.assignmentWeight } : {}),
       recommendedStart: computeRecommendedStart(Date.now(), args.dueDate),
     });

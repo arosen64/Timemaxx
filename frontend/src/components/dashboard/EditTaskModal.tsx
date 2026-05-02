@@ -20,6 +20,8 @@ export default function EditModal({
   existingSubtaskCount,
   onDeleteSubtasks,
   hideSubtaskGeneration = false,
+  hideAssignmentWeight = false,
+  existingTasks,
 }: {
   isOpen: boolean;
   task: TaskType | null;
@@ -31,6 +33,8 @@ export default function EditModal({
   existingSubtaskCount?: number;
   onDeleteSubtasks?: () => Promise<void>;
   hideSubtaskGeneration?: boolean;
+  hideAssignmentWeight?: boolean;
+  existingTasks?: TaskType[];
 }) {
   return (
     <TaskModal
@@ -43,8 +47,10 @@ export default function EditModal({
       existingSubtaskCount={existingSubtaskCount}
       existingTaskId={task?._id ?? undefined}
       existingCourseId={task?.courseId ?? undefined}
+      existingTasks={existingTasks}
       onDeleteSubtasks={onDeleteSubtasks}
       hideSubtaskGeneration={hideSubtaskGeneration}
+      hideAssignmentWeight={hideAssignmentWeight}
       initialValues={{
         taskName: task?.title ?? "",
         selectedType:
@@ -63,6 +69,8 @@ export default function EditModal({
           task?.isManualEstimate && task?.timeEstimate !== undefined
             ? String(task.timeEstimate)
             : "",
+        assignmentWeight:
+          task?.assignmentWeight !== undefined ? String(task.assignmentWeight) : "",
       }}
       classTagCourses={classTagCourses}
       onClose={onClose}
