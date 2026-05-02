@@ -1,4 +1,11 @@
-import { describe, expect, test } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+
+const mockStartAsync = vi.fn();
+vi.mock("@mastra/client-js", () => ({
+  MastraClient: vi.fn(() => ({
+    getWorkflow: vi.fn(() => ({ startAsync: mockStartAsync })),
+  })),
+}));
 import {
   roundUpTo15Min,
   isSlotValid,
@@ -380,15 +387,27 @@ describe("filterPoolForBlock", () => {
 // ---------------------------------------------------------------------------
 
 describe("selectAllSlotsWithAI", () => {
+  const DUE = MONDAY_9AM_UTC + 5 * 86400000;
+
+  beforeEach(() => {
+    vi.stubEnv("MASTRA_URL", "http://localhost:4111/mastra");
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.clearAllMocks();
+  });
+
   test("returns empty array for empty input", async () => {
     const result = await selectAllSlotsWithAI([], null);
     expect(result).toEqual([]);
   });
 
   test("falls back to all zeros when MASTRA_URL is not set", async () => {
+    vi.unstubAllEnvs(); // explicitly clear so test is not sensitive to runner env
     const candidates = enumerateSlots({
       fromMs: MONDAY_9AM_UTC,
-      dueDateMs: MONDAY_9AM_UTC + 5 * 86400000,
+      dueDateMs: DUE,
       durationMinutes: 60,
       workHoursGrid: [],
       occupiedIntervals: [],
@@ -396,12 +415,111 @@ describe("selectAllSlotsWithAI", () => {
     });
     const result = await selectAllSlotsWithAI(
       [
-        { taskTitle: "Task A", dueDate: MONDAY_9AM_UTC + 5 * 86400000, candidates },
-        { taskTitle: "Task B", dueDate: MONDAY_9AM_UTC + 5 * 86400000, candidates },
+        { taskTitle: "Task A", dueDate: DUE, candidates },
+        { taskTitle: "Task B", dueDate: DUE, candidates },
       ],
-      null,
+      null
     );
-    // No MASTRA_URL in test env → falls back to index 0 for each block
+    expect(result).toEqual([0, 0]);
+  });
+
+  test("returns correct indices on successful workflow run", async () => {
+    const candidates = enumerateSlots({
+      fromMs: MONDAY_9AM_UTC,
+      dueDateMs: DUE,
+      durationMinutes: 60,
+      workHoursGrid: [],
+      occupiedIntervals: [],
+      timezone: TIMEZONE,
+    });
+    mockStartAsync.mockResolvedValueOnce({
+      status: "success",
+      steps: { "slot-selection": { output: { selections: [1, 0] } } },
+    });
+    const result = await selectAllSlotsWithAI(
+      [
+        { taskTitle: "Task A", dueDate: DUE, candidates },
+        { taskTitle: "Task B", dueDate: DUE, candidates },
+      ],
+      null
+    );
+    expect(result).toEqual([1, 0]);
+  });
+
+  test("falls back to all zeros when workflow run status is failed", async () => {
+    mockStartAsync.mockResolvedValueOnce({ status: "failed", error: "LLM timeout" });
+    const candidates = enumerateSlots({
+      fromMs: MONDAY_9AM_UTC,
+      dueDateMs: DUE,
+      durationMinutes: 60,
+      workHoursGrid: [],
+      occupiedIntervals: [],
+      timezone: TIMEZONE,
+    });
+    const result = await selectAllSlotsWithAI(
+      [{ taskTitle: "Task A", dueDate: DUE, candidates }],
+      null
+    );
+    expect(result).toEqual([0]);
+  });
+
+  test("falls back to all zeros when step output is missing", async () => {
+    mockStartAsync.mockResolvedValueOnce({ status: "success", steps: {} });
+    const candidates = enumerateSlots({
+      fromMs: MONDAY_9AM_UTC,
+      dueDateMs: DUE,
+      durationMinutes: 60,
+      workHoursGrid: [],
+      occupiedIntervals: [],
+      timezone: TIMEZONE,
+    });
+    const result = await selectAllSlotsWithAI(
+      [{ taskTitle: "Task A", dueDate: DUE, candidates }],
+      null
+    );
+    expect(result).toEqual([0]);
+  });
+
+  test("falls back to all zeros when step output has wrong shape", async () => {
+    mockStartAsync.mockResolvedValueOnce({
+      status: "success",
+      steps: { "slot-selection": { output: { wrong: "shape" } } },
+    });
+    const candidates = enumerateSlots({
+      fromMs: MONDAY_9AM_UTC,
+      dueDateMs: DUE,
+      durationMinutes: 60,
+      workHoursGrid: [],
+      occupiedIntervals: [],
+      timezone: TIMEZONE,
+    });
+    const result = await selectAllSlotsWithAI(
+      [{ taskTitle: "Task A", dueDate: DUE, candidates }],
+      null
+    );
+    expect(result).toEqual([0]);
+  });
+
+  test("clamps out-of-range indices to 0", async () => {
+    mockStartAsync.mockResolvedValueOnce({
+      status: "success",
+      steps: { "slot-selection": { output: { selections: [999, -1] } } },
+    });
+    const candidates = enumerateSlots({
+      fromMs: MONDAY_9AM_UTC,
+      dueDateMs: DUE,
+      durationMinutes: 60,
+      workHoursGrid: [],
+      occupiedIntervals: [],
+      timezone: TIMEZONE,
+    });
+    const result = await selectAllSlotsWithAI(
+      [
+        { taskTitle: "Task A", dueDate: DUE, candidates },
+        { taskTitle: "Task B", dueDate: DUE, candidates },
+      ],
+      null
+    );
     expect(result).toEqual([0, 0]);
   });
 });
@@ -411,6 +529,11 @@ describe("selectAllSlotsWithAI", () => {
 // ---------------------------------------------------------------------------
 
 describe("selectSlotWithAI", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.clearAllMocks();
+  });
+
   test("returns null when candidates is empty", async () => {
     const result = await selectSlotWithAI({
       candidates: [],
@@ -422,7 +545,7 @@ describe("selectSlotWithAI", () => {
   });
 
   test("falls back to index 0 when MASTRA_URL is not set", async () => {
-    // No MASTRA_URL in test env → selectAllSlotsWithAI falls back to index 0
+    vi.unstubAllEnvs(); // explicitly clear so test is not sensitive to runner env
     const candidates = enumerateSlots({
       fromMs: MONDAY_9AM_UTC,
       dueDateMs: MONDAY_9AM_UTC + 5 * 86400000,
@@ -437,7 +560,6 @@ describe("selectSlotWithAI", () => {
       dueDate: MONDAY_9AM_UTC + 5 * 86400000,
       productivityTraits: null,
     });
-    // Should return the first candidate (index 0 fallback)
     expect(result).not.toBeNull();
     expect(result!.startISO).toBe(candidates[0].startISO);
   });

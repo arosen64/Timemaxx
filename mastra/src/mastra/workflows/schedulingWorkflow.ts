@@ -35,6 +35,7 @@ const slotSelectionOutputSchema = z.object({
     .describe("Array of chosen slot indices, one per block in the same order as the input"),
 });
 
+// Must stay in sync with SCHEDULING_STEP_ID in backend/convex/lib/scheduleSlots.ts
 export const SCHEDULING_STEP_ID = "slot-selection";
 
 const slotSelectionStep = createStep({
@@ -51,6 +52,7 @@ const slotSelectionStep = createStep({
       schema: slotSelectionOutputSchema,
       system: SLOT_SELECTION_SYSTEM,
       prompt: inputData.prompt,
+      abortSignal: AbortSignal.timeout(15000),
     });
     return object;
   },

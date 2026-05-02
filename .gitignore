@@ -47,6 +47,3 @@ mastra/.mastra
 
 # Local Netlify folder
 .netlify
-
-# Local dev runner
-start.sh

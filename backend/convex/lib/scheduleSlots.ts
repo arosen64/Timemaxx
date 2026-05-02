@@ -6,6 +6,7 @@ import {
   type BatchScheduleBlockEntry,
 } from "./prompts/scheduleBlock.prompt";
 
+// Must stay in sync with SCHEDULING_STEP_ID in mastra/src/mastra/workflows/schedulingWorkflow.ts
 const SCHEDULING_STEP_ID = "slot-selection";
 
 // ---------------------------------------------------------------------------
