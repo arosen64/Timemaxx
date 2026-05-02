@@ -300,3 +300,73 @@ describe("mutations/tasks – createTask", () => {
     expect(task!.assignmentWeight).toBeUndefined();
   });
 });
+
+describe("mutations/tasks – updateRecommendedStart", () => {
+  test("stores a manual recommendedStart value", async () => {
+    const t = makeTestCtx();
+    const { withAuth } = await createTestUser(t);
+    const dueDate = Date.now() + 30 * 86_400_000;
+
+    const taskId = await withAuth.mutation(api.mutations.tasks.createTask, {
+      title: "Task",
+      description: "desc",
+      taskType: "Essay",
+      dueDate,
+    });
+
+    const manualStart = dueDate - 10 * 86_400_000;
+    await withAuth.mutation(api.mutations.tasks.updateRecommendedStart, {
+      taskId,
+      recommendedStart: manualStart,
+    });
+
+    const task = await t.run((ctx) => ctx.db.get(taskId));
+    expect(task!.recommendedStart).toBe(manualStart);
+  });
+
+  test("resets to auto-computed value when null is passed", async () => {
+    const t = makeTestCtx();
+    const { withAuth } = await createTestUser(t);
+    const dueDate = Date.now() + 30 * 86_400_000;
+
+    const taskId = await withAuth.mutation(api.mutations.tasks.createTask, {
+      title: "Task",
+      description: "desc",
+      taskType: "Essay",
+      dueDate,
+    });
+
+    await withAuth.mutation(api.mutations.tasks.updateRecommendedStart, {
+      taskId,
+      recommendedStart: dueDate - 10 * 86_400_000,
+    });
+
+    await withAuth.mutation(api.mutations.tasks.updateRecommendedStart, {
+      taskId,
+      recommendedStart: null,
+    });
+
+    const task = await t.run((ctx) => ctx.db.get(taskId));
+    expect(task!.recommendedStart).toBe(dueDate - TWO_WEEKS_MS);
+  });
+
+  test("rejects a recommendedStart at or after the due date", async () => {
+    const t = makeTestCtx();
+    const { withAuth } = await createTestUser(t);
+    const dueDate = Date.now() + 30 * 86_400_000;
+
+    const taskId = await withAuth.mutation(api.mutations.tasks.createTask, {
+      title: "Task",
+      description: "desc",
+      taskType: "Essay",
+      dueDate,
+    });
+
+    await expect(
+      withAuth.mutation(api.mutations.tasks.updateRecommendedStart, {
+        taskId,
+        recommendedStart: dueDate,
+      })
+    ).rejects.toThrow("Suggested start date must be before the due date.");
+  });
+});

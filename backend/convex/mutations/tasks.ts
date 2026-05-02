@@ -415,6 +415,37 @@ export const updateTaskStatus = mutation({
   },
 });
 
+const ONE_DAY_MS = 86_400_000;
+
+export const updateRecommendedStart = mutation({
+  args: {
+    taskId: v.id("tasks"),
+    recommendedStart: v.union(v.number(), v.null()),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Unauthenticated");
+
+    const task = await ctx.db.get(args.taskId);
+    if (!task || task.userId !== userId) throw new Error("Task not found");
+
+    let newRecommendedStart: number;
+    if (args.recommendedStart === null) {
+      newRecommendedStart = computeRecommendedStart(Date.now(), task.dueDate);
+    } else {
+      if (args.recommendedStart < Date.now() - ONE_DAY_MS) {
+        throw new Error("Suggested start date cannot be in the past.");
+      }
+      if (args.recommendedStart >= task.dueDate) {
+        throw new Error("Suggested start date must be before the due date.");
+      }
+      newRecommendedStart = args.recommendedStart;
+    }
+
+    await ctx.db.patch(args.taskId, { recommendedStart: newRecommendedStart });
+  },
+});
+
 export const deleteTask = mutation({
   args: {
     taskId: v.id("tasks"),

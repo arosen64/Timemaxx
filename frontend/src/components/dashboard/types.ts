@@ -38,6 +38,7 @@ export type TaskType = {
   correctedEstimateMinutes?: number;
   estimateFeedbackSubmittedAt?: number;
   dueDate: number;
+  recommendedStart?: number;
   createdAt: number;
   classTag?: string;
   courseId?: Id<"userCourses">;
