@@ -60,7 +60,7 @@ const slotSelectionStep = createStep({
       schema: slotSelectionOutputSchema,
       system: SLOT_SELECTION_SYSTEM,
       prompt: inputData.prompt,
-      abortSignal: AbortSignal.timeout(15000),
+      abortSignal: AbortSignal.timeout(30000),
     });
     return object;
   },

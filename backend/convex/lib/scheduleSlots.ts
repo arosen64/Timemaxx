@@ -523,8 +523,13 @@ export async function selectAllSlotsWithAI(
 
     const runStatus = (run as { status?: string }).status;
     if (runStatus === "failed") {
-      const rawErr = (run as { error?: string | Error }).error;
-      const msg = rawErr instanceof Error ? rawErr.message : String(rawErr ?? "unknown");
+      const rawErr = (run as { error?: unknown }).error;
+      const msg =
+        rawErr instanceof Error
+          ? rawErr.message
+          : typeof rawErr === "string"
+            ? rawErr
+            : JSON.stringify(rawErr ?? "unknown");
       console.error("[selectAllSlotsWithAI] scheduling-workflow failed:", msg);
       return fallback();
     }
