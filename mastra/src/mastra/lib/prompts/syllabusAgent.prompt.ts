@@ -1,14 +1,5 @@
 import { z } from "zod";
-
-const TASK_TYPES = [
-  "Essay",
-  "Problem Set",
-  "Exam Prep",
-  "Coding",
-  "Reading",
-  "Lab",
-  "Presentation",
-] as const;
+import { TASK_TYPES } from "../../../../../shared/taskEnums";
 
 export const syllabusResponseSchema = z.object({
   tasks: z

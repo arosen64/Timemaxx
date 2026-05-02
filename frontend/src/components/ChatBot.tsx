@@ -2,6 +2,7 @@ import { Fragment, useEffect, useState, type ReactNode } from "react";
 import { useQuery } from "convex/react";
 import { useAuthToken } from "@convex-dev/auth/react";
 import { api } from "../../../backend/convex/_generated/api";
+import type { ActiveAgent } from "../../../shared/chatEnums";
 import {
   ChatContainerRoot,
   ChatContainerContent,
@@ -24,10 +25,7 @@ const MAIN_MENU = [
   { label: "Change preferences", route: "preferences" },
 ] as const;
 
-const ACTIVE_AGENT_LABELS: Record<
-  "task" | "feedback" | "preferences" | "classes" | "schedule",
-  string
-> = {
+const ACTIVE_AGENT_LABELS: Record<ActiveAgent, string> = {
   task: "Task agent",
   feedback: "Feedback agent",
   preferences: "Preferences agent",
@@ -44,6 +42,17 @@ type ChatApiResponse = {
   entityHasMore?: boolean;
   phase?: "task" | "class" | "block";
 };
+
+function dedupeEntityCandidates(candidates: EntityCandidate[]): EntityCandidate[] {
+  const seen = new Set<string>();
+  const unique: EntityCandidate[] = [];
+  for (const candidate of candidates) {
+    if (seen.has(candidate.id)) continue;
+    seen.add(candidate.id);
+    unique.push(candidate);
+  }
+  return unique;
+}
 
 /** Assistant copy that introduces the task/class MCQ (must stay in sync with http_chat strings). */
 function isMcqIntroAssistantContent(content: string): boolean {
@@ -139,11 +148,14 @@ export default function ChatBot() {
     if (data.status === "entity_scope_locked" || data.status === "chat_input_locked") {
       setEntityBlockAfterIndex(null);
     }
-    if (data.entityCandidates && data.entityCandidates.length > 0 && data.phase) {
+    const uniqueCandidates = data.entityCandidates
+      ? dedupeEntityCandidates(data.entityCandidates)
+      : [];
+    if (uniqueCandidates.length > 0 && data.phase) {
       setEntityBlockAfterIndex(null);
       setEntityMcq({
         phase: data.phase,
-        candidates: data.entityCandidates,
+        candidates: uniqueCandidates,
         hasMore: data.entityHasMore ?? false,
       });
     } else {
@@ -273,9 +285,9 @@ export default function ChatBot() {
               : "Pick a class"}
         </p>
         <div className="flex flex-col gap-1.5 max-h-40 overflow-y-auto">
-          {entityMcq.candidates.map((c) => (
+          {entityMcq.candidates.map((c, index) => (
             <button
-              key={c.id}
+              key={`${c.id}-${index}`}
               type="button"
               onClick={() => void handlePickEntity(entityMcq.phase, c.id)}
               disabled={isLoading}

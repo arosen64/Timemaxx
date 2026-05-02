@@ -24,6 +24,7 @@ async function seedTask(
       dueDate: FUTURE,
       createdAt: Date.now(),
       isManualEstimate: false,
+      status: "not_started",
     })
   );
 }
@@ -56,7 +57,7 @@ const MOCK_SUBTASKS = [
   },
 ];
 
-describe("actions/requestGenerateSubtasks", () => {
+describe("functions/requestGenerateSubtasks", () => {
   beforeEach(() => {
     vi.stubEnv("GEMINI_API_KEY", "test-api-key");
   });
