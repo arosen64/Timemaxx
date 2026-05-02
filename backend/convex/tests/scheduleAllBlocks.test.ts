@@ -473,6 +473,7 @@ describe("scheduleAllBlocks ownership check", () => {
         title: "Other user's task",
         description: "desc",
         taskType: "Essay",
+        status: "not_started",
         dueDate: Date.now() + 30 * 86_400_000,
         createdAt: Date.now(),
         isManualEstimate: false,
