@@ -44,7 +44,7 @@ export const autoRescheduleConflicts = action({
   handler: async (
     ctx,
     args
-  ): Promise<{ unplacedCount: number; skippedReasons: { title: string; reason: string }[] }> => {
+  ): Promise<{ unplacedCount: number; skippedReason: string | null }> => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Unauthenticated");
 
@@ -64,7 +64,7 @@ export const autoRescheduleConflicts = action({
     const conflictedBlocks = allBlocks.filter((b) => b.isConflicted && b.startTime);
     const scheduledNonConflicted = allBlocks.filter((b) => b.startTime && !b.isConflicted);
 
-    if (conflictedBlocks.length === 0) return { unplacedCount: 0, skippedReasons: [] };
+    if (conflictedBlocks.length === 0) return { unplacedCount: 0, skippedReason: null };
 
     // Sort conflicted blocks by task due date (earliest first)
     conflictedBlocks.sort((a, b) => a.taskDueDate - b.taskDueDate);
@@ -146,10 +146,10 @@ export const autoRescheduleConflicts = action({
       });
     }
 
-    // Get AI-generated reasons for blocks that couldn't be placed
-    let skippedReasons: { title: string; reason: string }[] = [];
+    // Get AI-generated overall reason for blocks that couldn't be placed
+    let skippedReason: string | null = null;
     if (zeroCandidateBlocks.length > 0) {
-      const { reasons } = await selectAllSlotsWithAI(
+      const { overallSkipReason } = await selectAllSlotsWithAI(
         zeroCandidateBlocks.map((z) => ({
           taskTitle: z.taskTitle,
           dueDate: z.taskDueDate,
@@ -158,13 +158,10 @@ export const autoRescheduleConflicts = action({
         })),
         productivityTraits
       );
-      skippedReasons = zeroCandidateBlocks.map((z, i) => ({
-        title: z.taskTitle,
-        reason: reasons[i] ?? "No open time slots before your deadline.",
-      }));
+      skippedReason = overallSkipReason ?? "No open time slots before your deadline.";
     }
 
-    return { unplacedCount, skippedReasons };
+    return { unplacedCount, skippedReason };
   },
 });
 

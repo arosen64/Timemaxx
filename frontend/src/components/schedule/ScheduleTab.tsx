@@ -79,7 +79,7 @@ export default function ScheduleTab() {
   const [draggingBlockId, setDraggingBlockId] = useState<Id<"studyBlocks"> | null>(null);
   const [autoRescheduleMsg, setAutoRescheduleMsg] = useState<{
     text: string;
-    skippedReasons?: { title: string; reason: string }[];
+    skippedReason?: string;
   } | null>(null);
   const [isRescheduling, setIsRescheduling] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
@@ -87,7 +87,7 @@ export default function ScheduleTab() {
   const [scheduleAllMsg, setScheduleAllMsg] = useState<{
     text: string;
     warn: boolean;
-    skippedReasons?: { title: string; reason: string }[];
+    skippedReason?: string;
   } | null>(null);
   const [showNudge, setShowNudge] = useState(false);
   const [pendingSchedule, setPendingSchedule] = useState<(() => void) | null>(null);
@@ -318,7 +318,7 @@ export default function ScheduleTab() {
           result.unplacedCount > 0
             ? `${result.unplacedCount} block${result.unplacedCount !== 1 ? "s" : ""} could not be placed and moved to the tray.`
             : "All conflicts resolved.",
-        skippedReasons: result.skippedReasons?.length ? result.skippedReasons : undefined,
+        skippedReason: result.skippedReason ?? undefined,
       });
     } catch {
       setAutoRescheduleMsg({ text: "Auto-reschedule failed. Please try again." });
@@ -472,14 +472,8 @@ export default function ScheduleTab() {
         <div className="mb-3 flex items-start justify-between gap-2 rounded-lg border border-border bg-bg-gray px-4 py-2 text-sm text-slate-blue">
           <div>
             <span>{autoRescheduleMsg.text}</span>
-            {autoRescheduleMsg.skippedReasons && autoRescheduleMsg.skippedReasons.length > 0 && (
-              <ul className="mt-1.5 space-y-0.5">
-                {autoRescheduleMsg.skippedReasons.map((r, i) => (
-                  <li key={i} className="text-xs">
-                    <span className="font-semibold">{r.title}:</span> {r.reason}
-                  </li>
-                ))}
-              </ul>
+            {autoRescheduleMsg.skippedReason && (
+              <p className="mt-1 text-xs opacity-80">{autoRescheduleMsg.skippedReason}</p>
             )}
           </div>
           <button
@@ -511,14 +505,8 @@ export default function ScheduleTab() {
         >
           <div>
             <span>{scheduleAllMsg.text}</span>
-            {scheduleAllMsg.skippedReasons && scheduleAllMsg.skippedReasons.length > 0 && (
-              <ul className="mt-1.5 space-y-0.5">
-                {scheduleAllMsg.skippedReasons.map((r, i) => (
-                  <li key={i} className="text-xs">
-                    <span className="font-semibold">{r.title}:</span> {r.reason}
-                  </li>
-                ))}
-              </ul>
+            {scheduleAllMsg.skippedReason && (
+              <p className="mt-1 text-xs opacity-80">{scheduleAllMsg.skippedReason}</p>
             )}
           </div>
           <button
@@ -620,8 +608,8 @@ export default function ScheduleTab() {
           assigningBlockId={assigningBlockId}
           onToggleAssign={(id) => setAssigningBlockId((prev) => (prev === id ? null : id))}
           timezone={timezone}
-          onScheduleAllMsg={(msg, warn = false, skippedReasons) =>
-            setScheduleAllMsg({ text: msg, warn, skippedReasons })
+          onScheduleAllMsg={(msg, warn = false, skippedReason) =>
+            setScheduleAllMsg({ text: msg, warn, skippedReason })
           }
           onBeforeSchedule={maybeNudge}
         />

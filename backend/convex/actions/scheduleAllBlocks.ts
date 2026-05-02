@@ -57,7 +57,7 @@ export const scheduleAllBlocks = action({
     scheduled: number;
     skipped: number;
     conflicted: number;
-    skippedReasons: { title: string; reason: string }[];
+    skippedReason: string | null;
   }> => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Unauthenticated");
@@ -200,7 +200,7 @@ export const scheduleAllBlocks = action({
       .slice(0, MAX_BLOCKS);
 
     if (sorted.length === 0)
-      return { scheduled: 0, skipped: 0, conflicted: conflictedCount, skippedReasons: [] };
+      return { scheduled: 0, skipped: 0, conflicted: conflictedCount, skippedReason: null };
 
     // Fetch calendar events once for the full 21-day window
     const timedEvents = await fetch21DayCalendarEvents(ctx, args.timezone);
@@ -367,24 +367,14 @@ export const scheduleAllBlocks = action({
       })),
     ];
 
-    const { indices: chosenIndices, reasons: aiReasons } =
+    const { indices: chosenIndices, overallSkipReason: aiSkipReason } =
       aiBatch.length > 0
         ? await selectAllSlotsWithAI(aiBatch, user.productivityTraits)
-        : { indices: [], reasons: [] };
+        : { indices: [], overallSkipReason: null };
 
     // Phase 3: place blocks using AI-chosen slots, with physical-validity fallback
     let scheduled = 0;
-    const skippedReasons: { title: string; reason: string }[] = [];
-
-    // Collect reasons for zero-candidate blocks (they appear after entries in aiBatch)
-    for (let i = 0; i < zeroCandidateBlocks.length; i++) {
-      const z = zeroCandidateBlocks[i];
-      const aiReason = aiReasons[entries.length + i];
-      skippedReasons.push({
-        title: z.parentTitle,
-        reason: aiReason ?? "No open time slots before your deadline.",
-      });
-    }
+    let phase3Skipped = 0;
 
     for (let i = 0; i < entries.length; i++) {
       const { block, candidates } = entries[i];
@@ -397,10 +387,7 @@ export const scheduleAllBlocks = action({
       if (!isPhysValid(chosen)) {
         const fallback = candidates.find(isPhysValid);
         if (!fallback) {
-          skippedReasons.push({
-            title: entries[i].parentTitle,
-            reason: "Your schedule is too full to fit this block.",
-          });
+          phase3Skipped++;
           continue;
         }
         chosen = fallback;
@@ -426,11 +413,17 @@ export const scheduleAllBlocks = action({
       scheduled++;
     }
 
+    const totalSkipped = zeroCandidateBlocks.length + phase3Skipped;
+    const skippedReason =
+      totalSkipped > 0
+        ? (aiSkipReason ?? "Your schedule is too full to place all blocks.")
+        : null;
+
     return {
       scheduled,
-      skipped: skippedReasons.length,
+      skipped: totalSkipped,
       conflicted: conflictedCount,
-      skippedReasons,
+      skippedReason,
     };
   },
 });
