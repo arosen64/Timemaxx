@@ -85,7 +85,7 @@ describe("actions/scheduleBlock – recommendedStart constraint", () => {
       timezone: "America/New_York",
     });
 
-    expect(result).toEqual({ error: "no_slot_found" });
+    expect(result).toEqual({ error: "no_slot_found", skippedReason: "No open time slots before your deadline." });
   });
 
   test("schedules successfully when recommendedStart is not set", async () => {
