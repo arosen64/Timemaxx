@@ -356,3 +356,49 @@ describe('ClassPanel – Schedule button (scheduleAllBlocks wiring)', () => {
     expect(scheduleAllMock).not.toHaveBeenCalled()
   })
 })
+
+describe('ClassPanel – past-due task filtering', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    setupMutations()
+    setupActions()
+  })
+
+  it('hides a task whose due date has passed', async () => {
+    const user = userEvent.setup()
+    const pastTask = {
+      _id: 'task-past' as Id<'tasks'>,
+      title: 'Overdue Assignment',
+      dueDate: Date.now() - 86400000,
+      status: 'not_started',
+    }
+    setupQueries({ tasks: [pastTask] })
+    renderWithProviders(<ClassPanel {...DEFAULT_PROPS} />)
+    await user.click(screen.getByText('Algorithms'))
+    expect(screen.queryByText('Overdue Assignment')).not.toBeInTheDocument()
+    expect(screen.getByText('No tasks for this class.')).toBeInTheDocument()
+  })
+
+  it('shows a task whose due date is in the future', async () => {
+    const user = userEvent.setup()
+    setupQueries()
+    renderWithProviders(<ClassPanel {...DEFAULT_PROPS} />)
+    await user.click(screen.getByText('Algorithms'))
+    expect(screen.getByText('Homework 1')).toBeInTheDocument()
+  })
+
+  it('shows only future tasks when both past-due and future tasks are present', async () => {
+    const user = userEvent.setup()
+    const pastTask = {
+      _id: 'task-past' as Id<'tasks'>,
+      title: 'Overdue Assignment',
+      dueDate: Date.now() - 86400000,
+      status: 'not_started',
+    }
+    setupQueries({ tasks: [pastTask, TASK] })
+    renderWithProviders(<ClassPanel {...DEFAULT_PROPS} />)
+    await user.click(screen.getByText('Algorithms'))
+    expect(screen.queryByText('Overdue Assignment')).not.toBeInTheDocument()
+    expect(screen.getByText('Homework 1')).toBeInTheDocument()
+  })
+})
