@@ -41,7 +41,7 @@ const analyzeCourseStep = createStep({
   execute: async ({ inputData }) => {
     const response = await courseAnalystAgent.generate(
       buildCourseAnalysisPrompt(inputData.sanitizedCourseList),
-      { structuredOutput: { schema: courseAnalysisSchema } },
+      { structuredOutput: { schema: courseAnalysisSchema } }
     );
     if (!response.object) throw new Error("courseAnalystAgent returned no structured output");
     return response.object;
@@ -57,10 +57,9 @@ const generateProfileStep = createStep({
   inputSchema: courseAnalysisSchema,
   outputSchema: academicProfileSchema,
   execute: async ({ inputData }) => {
-    const response = await academicProfileAgent.generate(
-      buildAcademicProfilePrompt(inputData),
-      { structuredOutput: { schema: academicProfileSchema } },
-    );
+    const response = await academicProfileAgent.generate(buildAcademicProfilePrompt(inputData), {
+      structuredOutput: { schema: academicProfileSchema },
+    });
     if (!response.object) throw new Error("academicProfileAgent returned no structured output");
     return response.object;
   },

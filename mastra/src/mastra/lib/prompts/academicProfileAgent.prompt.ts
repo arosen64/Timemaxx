@@ -5,16 +5,18 @@ import { z } from "zod";
 // ---------------------------------------------------------------------------
 
 export const academicProfileSchema = z.object({
-  insights: z.array(
-    z.object({
-      label: z.string().describe(
-        "One of: Academic Strengths, Areas for Improvement, Performance Trend, Course Load & Patterns, Study Recommendations"
-      ),
-      text: z.string().describe(
-        "1-2 sentence insight grounded in the analysis, under 40 words"
-      ),
-    })
-  ).describe("Exactly 5 insights in the specified label order"),
+  insights: z
+    .array(
+      z.object({
+        label: z
+          .string()
+          .describe(
+            "One of: Academic Strengths, Areas for Improvement, Performance Trend, Course Load & Patterns, Study Recommendations"
+          ),
+        text: z.string().describe("1-2 sentence insight grounded in the analysis, under 40 words"),
+      })
+    )
+    .describe("Exactly 5 insights in the specified label order"),
 });
 
 export type AcademicProfileOutput = z.infer<typeof academicProfileSchema>;
