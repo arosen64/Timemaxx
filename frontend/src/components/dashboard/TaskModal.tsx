@@ -68,6 +68,12 @@ interface TaskModalProps {
   existingCourseId?: Id<"userCourses">;
   /** Called when user clicks "Delete subtasks" */
   onDeleteSubtasks?: () => Promise<void>;
+  /** Existing tasks used to validate per-course assignment-weight totals. */
+  existingTasks?: Array<{
+    _id: Id<"tasks">;
+    courseId?: Id<"userCourses">;
+    assignmentWeight?: number;
+  }>;
   onClose: () => void;
   /** Return the created/updated taskId when generating subtasks; void for normal flow */
   onSubmit: (form: EditForm) => Promise<string | void>;
@@ -86,6 +92,7 @@ export default function TaskModal({
   existingSubtaskCount,
   existingTaskId,
   existingCourseId,
+  existingTasks = [],
   onDeleteSubtasks,
   onClose,
   onSubmit,
@@ -269,6 +276,26 @@ export default function TaskModal({
           return;
         }
         parsedWeight = w;
+      }
+      if (courseId !== undefined && parsedWeight !== undefined) {
+        const existingWeightTotal = existingTasks.reduce((sum, task) => {
+          if (task._id === existingTaskId) return sum;
+          if (task.courseId !== courseId) return sum;
+          const weight = task.assignmentWeight;
+          if (!Number.isFinite(weight)) return sum;
+          return sum + (weight ?? 0);
+        }, 0);
+        const projectedTotal = existingWeightTotal + parsedWeight;
+        if (projectedTotal > 100) {
+          const existingTotalDisplay = Number.isInteger(existingWeightTotal)
+            ? String(existingWeightTotal)
+            : existingWeightTotal.toFixed(1);
+          setError(
+            `Assignments for this course already sum to ${existingTotalDisplay}%. Total course weight cannot exceed 100%.`
+          );
+          setSubmitting(false);
+          return;
+        }
       }
       const form: EditForm = {
         title: taskName,

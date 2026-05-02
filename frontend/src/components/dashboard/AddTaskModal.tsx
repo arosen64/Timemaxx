@@ -1,7 +1,7 @@
 import { useMutation } from "convex/react";
 import { api } from "../../../../backend/convex/_generated/api";
 import { DEFAULT_DUE_TIME } from "../../validators";
-import { type ClassTagCourseOption, type EditForm } from "./types";
+import { type ClassTagCourseOption, type EditForm, type TaskType } from "./types";
 import TaskModal from "./TaskModal";
 
 interface AddTaskModalProps {
@@ -9,6 +9,7 @@ interface AddTaskModalProps {
   onClose: () => void;
   onTaskCreated?: (taskId: string) => void;
   classTagCourses?: ClassTagCourseOption[];
+  existingTasks?: TaskType[];
 }
 
 export default function AddTaskModal({
@@ -16,6 +17,7 @@ export default function AddTaskModal({
   onClose,
   onTaskCreated,
   classTagCourses,
+  existingTasks,
 }: AddTaskModalProps) {
   const createTask = useMutation(api.mutations.tasks.createTask);
 
@@ -55,6 +57,7 @@ export default function AddTaskModal({
         assignmentWeight: "",
       }}
       classTagCourses={classTagCourses}
+      existingTasks={existingTasks}
       onClose={onClose}
       onSubmit={handleSubmit}
     />

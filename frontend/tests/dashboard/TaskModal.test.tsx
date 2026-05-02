@@ -179,6 +179,65 @@ describe('TaskModal', () => {
     })
   })
 
+  it('shows an error when course assignment weights would exceed 100%', async () => {
+    const user = userEvent.setup()
+    const onSubmit = vi.fn().mockResolvedValue(undefined)
+    renderModal({
+      onSubmit,
+      classTagCourses: [
+        {
+          courseId: 'course1' as any,
+          courseCode: 'AS.110.108',
+          title: 'Calculus I',
+          classTag: 'AS.110.108: Calculus I',
+        },
+      ],
+      existingTasks: [
+        {
+          _id: 'task-existing-1' as any,
+          title: 'Existing',
+          description: 'Existing',
+          taskType: 'Essay',
+          isManualEstimate: false,
+          dueDate: Date.now() + 86400000,
+          createdAt: Date.now(),
+          courseId: 'course1' as any,
+          assignmentWeight: 80,
+        },
+      ],
+      initialValues: {
+        taskName: '',
+        selectedType: 'Essay',
+        customTaskType: '',
+        description: '',
+        dueDate: '',
+        dueTime: '23:59',
+        classTag: 'AS.110.108: Calculus I',
+        timeEstimate: '',
+        assignmentWeight: '',
+      },
+    })
+
+    await user.type(
+      screen.getByPlaceholderText('e.g. Calculus Problem Set 5'),
+      'My Task'
+    )
+    await user.type(
+      screen.getByPlaceholderText('Paste or type your assignment description here...'),
+      'Some description'
+    )
+    await user.type(screen.getByLabelText(/grade weight/i), '30')
+    await pickFutureDate(user)
+    await user.click(screen.getByRole('button', { name: /add task/i }))
+
+    expect(
+      screen.getByText(
+        'Assignments for this course already sum to 80%. Total course weight cannot exceed 100%.'
+      )
+    ).toBeInTheDocument()
+    expect(onSubmit).not.toHaveBeenCalled()
+  })
+
   it('shows loading label "Adding…" while submitting', async () => {
     const user = userEvent.setup()
     const onSubmit = vi.fn().mockReturnValue(new Promise<void>(() => {}))

@@ -402,6 +402,7 @@ export default function DashboardPage() {
         task={editingTask}
         onClose={() => setEditingTask(null)}
         onSave={handleSaveEdit}
+        existingTasks={taskRows}
         classTagCourses={classTagCourses}
         existingSubtaskCount={
           editingTask ? (subtasksByTaskId.get(editingTask._id)?.length ?? 0) : 0
@@ -460,6 +461,7 @@ export default function DashboardPage() {
         onClose={() => setIsAddModalOpen(false)}
         onTaskCreated={(taskId) => handleEstimateTask(taskId as Id<"tasks">)}
         classTagCourses={classTagCourses}
+        existingTasks={taskRows}
       />
 
       {/* ── Main ── */}
