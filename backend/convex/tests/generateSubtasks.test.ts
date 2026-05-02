@@ -24,6 +24,7 @@ async function seedTask(
       dueDate: FUTURE,
       createdAt: Date.now(),
       isManualEstimate: false,
+      status: "not_started",
     })
   );
 }

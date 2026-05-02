@@ -286,6 +286,7 @@ describe("prompt injection prevention — estimateTaskTime (context builders)", 
         dueDate: Date.now() + 7 * 86_400_000,
         createdAt: Date.now(),
         isManualEstimate: false,
+        status: "not_started",
       });
     });
 
@@ -333,6 +334,7 @@ describe("prompt injection prevention — estimateTaskTime (context builders)", 
         createdAt: Date.now(),
         courseId,
         isManualEstimate: false,
+        status: "not_started",
       });
     });
 
@@ -379,6 +381,7 @@ describe("prompt injection prevention — estimateTaskTime (context builders)", 
         createdAt: Date.now(),
         courseId,
         isManualEstimate: false,
+        status: "not_started",
       });
     });
 
@@ -417,6 +420,7 @@ describe("prompt injection prevention — estimateTaskTime (context builders)", 
         dueDate: Date.now() + 7 * 86_400_000,
         createdAt: Date.now(),
         isManualEstimate: false,
+        status: "not_started",
       });
     });
 
@@ -458,6 +462,7 @@ describe("prompt injection prevention — estimateTaskTime (context builders)", 
         correctedEstimateMinutes: 30,
         estimateFeedbackSubmittedAt: Date.now() - 7 * 86_400_000,
         isManualEstimate: false,
+        status: "not_started",
       });
     });
 
@@ -470,6 +475,7 @@ describe("prompt injection prevention — estimateTaskTime (context builders)", 
         dueDate: Date.now() + 7 * 86_400_000,
         createdAt: Date.now(),
         isManualEstimate: false,
+        status: "not_started",
       });
     });
 

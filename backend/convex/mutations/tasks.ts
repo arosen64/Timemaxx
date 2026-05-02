@@ -306,7 +306,7 @@ async function unscheduleBlock(ctx: MutationCtx, blockId: Id<"studyBlocks">, mar
   await ctx.db.patch(blockId, {
     startTime: undefined,
     googleEventId: undefined,
-    isConflicted: undefined,
+    isConflicted: false,
     needsExport: undefined,
     ...(markComplete ? { isCompleted: true } : {}),
   });

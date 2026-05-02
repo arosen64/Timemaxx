@@ -71,14 +71,17 @@ export default function PreferencesPage() {
         await updateSettings({
           major: profileDraft.major,
           year: profileDraft.year,
-          courses: profileDraft.courses.map((c) => ({
-            title: c.title,
-            studyGoal: c.studyGoal ?? "",
-          })),
         });
       } else if (editingSection === "workhours" && workHoursDraft) {
         const newGrid = Object.entries(workHoursDraft).map(([day, slots]) => ({
-          day: day as "Monday" | "Tuesday" | "Wednesday" | "Thursday" | "Friday" | "Saturday" | "Sunday",
+          day: day as
+            | "Monday"
+            | "Tuesday"
+            | "Wednesday"
+            | "Thursday"
+            | "Friday"
+            | "Saturday"
+            | "Sunday",
           blocked: slots.blocked,
         }));
         await updateSettings({ workHoursGrid: newGrid });

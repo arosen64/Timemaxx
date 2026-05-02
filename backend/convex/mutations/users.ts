@@ -12,7 +12,6 @@ export const updateUserSettings = mutation({
   args: {
     major: v.optional(v.string()),
     year: v.optional(v.string()),
-    courses: v.optional(v.array(v.object({ title: v.string(), studyGoal: v.string() }))),
     transcriptSummary: v.optional(v.array(v.object({ label: v.string(), text: v.string() }))),
     workHoursGrid: v.optional(v.array(workHoursRowValidator)),
     productivityTraits: v.optional(productivityTraitsValidator),

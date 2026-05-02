@@ -104,7 +104,14 @@ export default function OnboardingPage() {
         major: profile.major,
         year: profile.year,
         workHoursGrid: Object.entries(workHours).map(([day, slots]) => ({
-          day: day as "Monday" | "Tuesday" | "Wednesday" | "Thursday" | "Friday" | "Saturday" | "Sunday",
+          day: day as
+            | "Monday"
+            | "Tuesday"
+            | "Wednesday"
+            | "Thursday"
+            | "Friday"
+            | "Saturday"
+            | "Sunday",
           blocked: slots.blocked,
         })),
         productivityTraits: preferences.traits,
