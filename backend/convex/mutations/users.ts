@@ -4,6 +4,7 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { internal } from "../_generated/api";
 import type { Doc } from "../_generated/dataModel";
 import { cascadeDeleteTask } from "./tasks";
+import { productivityTraitsValidator, workHoursRowValidator } from "../lib/userValidators";
 
 /**
  * Partially updates the authenticated user's settings (work hours, focus block length, study profile).
@@ -12,17 +13,9 @@ export const updateUserSettings = mutation({
   args: {
     major: v.optional(v.string()),
     year: v.optional(v.string()),
-    courses: v.optional(v.array(v.object({ title: v.string(), studyGoal: v.string() }))),
     transcriptSummary: v.optional(v.array(v.object({ label: v.string(), text: v.string() }))),
-    workHoursGrid: v.optional(
-      v.array(
-        v.object({
-          day: v.string(),
-          blocked: v.array(v.number()),
-        })
-      )
-    ),
-    productivityTraits: v.optional(v.any()),
+    workHoursGrid: v.optional(v.array(workHoursRowValidator)),
+    productivityTraits: v.optional(productivityTraitsValidator),
     focusBlockLength: v.optional(v.number()),
     gcalColorMappingEnabled: v.optional(v.boolean()),
   },
@@ -52,7 +45,6 @@ export const updateUserSettings = mutation({
     const patch: Partial<Doc<"users">> = {};
     if (args.major !== undefined) patch.major = args.major;
     if (args.year !== undefined) patch.year = args.year;
-    if (args.courses !== undefined) patch.courses = args.courses;
     if (args.transcriptSummary !== undefined) patch.transcriptSummary = args.transcriptSummary;
     if (args.workHoursGrid !== undefined) patch.workHoursGrid = args.workHoursGrid;
     if (args.productivityTraits !== undefined) patch.productivityTraits = args.productivityTraits;
@@ -93,13 +85,8 @@ export const completeOnboarding = mutation({
   args: {
     major: v.string(),
     year: v.string(),
-    workHoursGrid: v.array(
-      v.object({
-        day: v.string(),
-        blocked: v.array(v.number()),
-      })
-    ),
-    productivityTraits: v.any(),
+    workHoursGrid: v.array(workHoursRowValidator),
+    productivityTraits: productivityTraitsValidator,
     focusBlockLength: v.number(),
   },
   handler: async (ctx, args) => {

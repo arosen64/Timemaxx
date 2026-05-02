@@ -23,6 +23,7 @@ async function seedTask(
       dueDate: overrides.dueDate ?? Date.now() + 86_400_000,
       createdAt: overrides.createdAt ?? Date.now(),
       isManualEstimate: false,
+      status: "not_started",
     })
   );
 }

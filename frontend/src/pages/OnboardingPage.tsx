@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "../../../backend/convex/_generated/api";
+import { type DayOfWeek } from "../../../shared/userEnums";
 import { ProfileData, WorkHoursData, PreferencesData } from "../types";
 import ProfileForm from "../components/ProfileForm";
 import CoursesForm from "../components/CoursesForm";
@@ -104,7 +105,7 @@ export default function OnboardingPage() {
         major: profile.major,
         year: profile.year,
         workHoursGrid: Object.entries(workHours).map(([day, slots]) => ({
-          day,
+          day: day as DayOfWeek,
           blocked: slots.blocked,
         })),
         productivityTraits: preferences.traits,

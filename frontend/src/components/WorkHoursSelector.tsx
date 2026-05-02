@@ -1,8 +1,9 @@
 import { Fragment, useState, useEffect, useRef, useCallback } from "react";
+import { DAYS_OF_WEEK } from "../../../shared/userEnums";
 import { WorkHoursData } from "../types";
 
-const DAYS_SHORT = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-const DAYS_FULL = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+const DAYS_FULL = DAYS_OF_WEEK;
+const DAYS_SHORT = DAYS_FULL.map((d) => d.slice(0, 3));
 const TOTAL_SLOTS = 48; // 30-min increments across 24 hours
 
 type DragAction = "paint" | "erase";
@@ -129,55 +130,55 @@ export default function WorkHoursSelector({
 
       {/* Grid */}
       <div className="overflow-x-auto rounded-xl border border-border">
-      <div className="min-w-[480px] select-none overflow-hidden">
-        {/* Sticky day header */}
-        <div
-          className="grid border-b border-border bg-bg-gray"
-          style={{ gridTemplateColumns: "2.5rem repeat(7, 1fr)" }}
-        >
-          <div />
-          {DAYS_SHORT.map((day) => (
-            <div
-              key={day}
-              className="py-2 text-center font-body text-xs font-semibold text-slate-blue"
-            >
-              {day}
-            </div>
-          ))}
-        </div>
-
-        {/* Slot rows */}
-        <div>
-          <div className="grid" style={{ gridTemplateColumns: "2.5rem repeat(7, 1fr)" }}>
-            {Array.from({ length: TOTAL_SLOTS }, (_, slot) => (
-              <Fragment key={slot}>
-                {/* Time label every 2 hours */}
-                <div className="flex h-4 items-start justify-end pr-1.5 pt-px font-body text-[10px] leading-none text-light-blue">
-                  {slot % 2 === 0 ? slotToLabel(slot) : ""}
-                </div>
-                {/* One cell per day */}
-                {DAYS_FULL.map((day) => (
-                  <div
-                    key={day}
-                    className={`h-4 border-b border-r border-border/50 transition-colors ${
-                      readOnly ? "cursor-default" : "cursor-crosshair"
-                    } ${getCellClass(day, slot)}`}
-                    onMouseDown={
-                      readOnly
-                        ? undefined
-                        : (e) => {
-                            e.preventDefault();
-                            handleMouseDown(day, slot);
-                          }
-                    }
-                    onMouseEnter={readOnly ? undefined : () => handleMouseEnter(day, slot)}
-                  />
-                ))}
-              </Fragment>
+        <div className="min-w-[480px] select-none overflow-hidden">
+          {/* Sticky day header */}
+          <div
+            className="grid border-b border-border bg-bg-gray"
+            style={{ gridTemplateColumns: "2.5rem repeat(7, 1fr)" }}
+          >
+            <div />
+            {DAYS_SHORT.map((day) => (
+              <div
+                key={day}
+                className="py-2 text-center font-body text-xs font-semibold text-slate-blue"
+              >
+                {day}
+              </div>
             ))}
           </div>
+
+          {/* Slot rows */}
+          <div>
+            <div className="grid" style={{ gridTemplateColumns: "2.5rem repeat(7, 1fr)" }}>
+              {Array.from({ length: TOTAL_SLOTS }, (_, slot) => (
+                <Fragment key={slot}>
+                  {/* Time label every 2 hours */}
+                  <div className="flex h-4 items-start justify-end pr-1.5 pt-px font-body text-[10px] leading-none text-light-blue">
+                    {slot % 2 === 0 ? slotToLabel(slot) : ""}
+                  </div>
+                  {/* One cell per day */}
+                  {DAYS_FULL.map((day) => (
+                    <div
+                      key={day}
+                      className={`h-4 border-b border-r border-border/50 transition-colors ${
+                        readOnly ? "cursor-default" : "cursor-crosshair"
+                      } ${getCellClass(day, slot)}`}
+                      onMouseDown={
+                        readOnly
+                          ? undefined
+                          : (e) => {
+                              e.preventDefault();
+                              handleMouseDown(day, slot);
+                            }
+                      }
+                      onMouseEnter={readOnly ? undefined : () => handleMouseEnter(day, slot)}
+                    />
+                  ))}
+                </Fragment>
+              ))}
+            </div>
+          </div>
         </div>
-      </div>
       </div>
     </div>
   );

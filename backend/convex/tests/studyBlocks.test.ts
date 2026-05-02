@@ -14,6 +14,7 @@ async function seedTask(t: ReturnType<typeof makeTestCtx>, userId: string) {
       dueDate: Date.now() + 86_400_000,
       createdAt: Date.now(),
       isManualEstimate: false,
+      status: "not_started",
     })
   );
 }
@@ -31,6 +32,7 @@ async function seedStudyBlock(
       startTime: overrides.startTime,
       studyBlockLength: overrides.studyBlockLength ?? 60,
       isCompleted: false,
+      isConflicted: false,
     })
   );
 }
@@ -50,6 +52,7 @@ async function seedSubtaskBlock(
       dueDate: Date.now() + 86_400_000,
       createdAt: Date.now(),
       isManualEstimate: false,
+      status: "not_started",
     })
   );
   const subtaskId = await t.run((ctx) =>
@@ -62,6 +65,7 @@ async function seedSubtaskBlock(
       color: "#000000",
       order: 0,
       createdAt: Date.now(),
+      status: "not_started",
     })
   );
   const studyBlockId = await t.run((ctx) =>
@@ -71,6 +75,7 @@ async function seedSubtaskBlock(
       title: "Subtask block",
       studyBlockLength: overrides.studyBlockLength ?? 90,
       isCompleted: false,
+      isConflicted: false,
     })
   );
   return { subtaskId, studyBlockId };
@@ -593,6 +598,7 @@ describe("mutations/studyBlocks – setGoogleEventId", () => {
         studyBlockLength: 60,
         googleEventId: "old_event_id",
         isCompleted: false,
+        isConflicted: false,
       })
     );
 
@@ -648,6 +654,7 @@ describe("mutations/studyBlocks – flagFutureBlocksForReexport", () => {
         googleEventId: "gcal-evt-123",
         needsExport: false,
         isCompleted: false,
+        isConflicted: false,
       })
     );
 
@@ -673,6 +680,7 @@ describe("mutations/studyBlocks – flagFutureBlocksForReexport", () => {
         googleEventId: "gcal-past-evt",
         needsExport: false,
         isCompleted: false,
+        isConflicted: false,
       })
     );
 
@@ -695,6 +703,7 @@ describe("mutations/studyBlocks – flagFutureBlocksForReexport", () => {
         studyBlockLength: 60,
         googleEventId: "gcal-evt-unscheduled",
         isCompleted: false,
+        isConflicted: false,
       })
     );
 
@@ -717,6 +726,7 @@ describe("mutations/studyBlocks – flagFutureBlocksForReexport", () => {
         startTime: futureStart,
         studyBlockLength: 60,
         isCompleted: false,
+        isConflicted: false,
       })
     );
 
@@ -746,6 +756,7 @@ describe("mutations/studyBlocks – flagFutureBlocksForReexport", () => {
         googleEventId: "evt-user1",
         needsExport: false,
         isCompleted: false,
+        isConflicted: false,
       })
     );
     const block2Id = await t.run((ctx) =>
@@ -758,6 +769,7 @@ describe("mutations/studyBlocks – flagFutureBlocksForReexport", () => {
         googleEventId: "evt-user2",
         needsExport: false,
         isCompleted: false,
+        isConflicted: false,
       })
     );
 
@@ -793,6 +805,7 @@ describe("mutations/studyBlocks – toggleStudyBlockComplete supertask status", 
           title: `Block ${i + 1}`,
           studyBlockLength: 60,
           isCompleted: false,
+          isConflicted: false,
         })
       );
       blockIds.push(id);
@@ -877,6 +890,7 @@ describe("mutations/studyBlocks – toggleStudyBlockComplete supertask propagati
         dueDate: Date.now() + 86_400_000,
         createdAt: Date.now(),
         isManualEstimate: false,
+        status: "not_started",
       })
     );
     const subtaskId = await t.run((ctx) =>
@@ -889,6 +903,7 @@ describe("mutations/studyBlocks – toggleStudyBlockComplete supertask propagati
         color: "#000000",
         order: 0,
         createdAt: Date.now(),
+        status: "not_started",
       })
     );
     const blockId = await t.run((ctx) =>
@@ -898,6 +913,7 @@ describe("mutations/studyBlocks – toggleStudyBlockComplete supertask propagati
         title: "Block",
         studyBlockLength: 60,
         isCompleted: false,
+        isConflicted: false,
       })
     );
     return { parentTaskId, subtaskId, blockId };
@@ -916,6 +932,7 @@ describe("mutations/studyBlocks – toggleStudyBlockComplete supertask propagati
         title: "Block 2",
         studyBlockLength: 60,
         isCompleted: false,
+        isConflicted: false,
       })
     );
 
@@ -969,6 +986,7 @@ describe("mutations/studyBlocks – toggleStudyBlockComplete supertask propagati
         dueDate: Date.now() + 86_400_000,
         createdAt: Date.now(),
         isManualEstimate: false,
+        status: "not_started",
       })
     );
 
@@ -980,6 +998,7 @@ describe("mutations/studyBlocks – toggleStudyBlockComplete supertask propagati
         title: "Task block",
         studyBlockLength: 60,
         isCompleted: false,
+        isConflicted: false,
       })
     );
 
@@ -994,6 +1013,7 @@ describe("mutations/studyBlocks – toggleStudyBlockComplete supertask propagati
         color: "#000000",
         order: 0,
         createdAt: Date.now(),
+        status: "not_started",
       })
     );
 
@@ -1021,6 +1041,7 @@ describe("mutations/studyBlocks – toggleStudyBlockComplete supertask propagati
         color: "#000000",
         order: 1,
         createdAt: Date.now(),
+        status: "not_started",
       })
     );
 

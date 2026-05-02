@@ -32,6 +32,7 @@ export default tseslint.config(
       "frontend/dist/",
       "mastra/.mastra/",
       "coverage/",
+      "backend/convex/_generated/",
     ],
   }
 );
