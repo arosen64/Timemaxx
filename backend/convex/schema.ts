@@ -31,10 +31,8 @@ export default defineSchema({
     // Auth fields
     name: v.optional(v.string()),
     email: v.optional(v.string()),
-    phone: v.optional(v.string()),
     image: v.optional(v.string()),
     emailVerificationTime: v.optional(v.number()),
-    phoneVerificationTime: v.optional(v.number()),
     isAnonymous: v.optional(v.boolean()),
 
     // Custom onboarding fields
@@ -57,9 +55,7 @@ export default defineSchema({
     ),
 
     gcalColorMappingEnabled: v.optional(v.boolean()),
-  })
-    .index("email", ["email"])
-    .index("phone", ["phone"]),
+  }).index("email", ["email"]),
 
   // UserCourses table — per-user course enrollment records
   userCourses: defineTable({
