@@ -85,17 +85,21 @@ backend/
       timeEstimate.ts
     http.ts                   # HTTP router — auth, CORS, and makeApiHandler factory (Hono-based)
     http_chat.ts              # Hono app handling POST /api/chat → Mastra → save to DB
-    actions/                  # Side-effectful functions, e.g. Google Gemini API calls
-      estimateTaskTime.ts
-      requestEstimateTaskTime.ts
-      generateAcademicProfile.ts
-      parseTranscript.ts
-      uploadSyllabus.ts
+    actions/                  # Node.js-runtime actions only ("use node" required)
+      autoRescheduleConflicts.ts
+      entityResolution.ts
+      generateSubtasks.ts
+    functions/                # Convex-runtime actions (no "use node")
+      exportStudyBlocksToCalendar.ts
       fetchCalendarEvents.ts
       getCalendarAvailability.ts
       initiateGoogleCalendarOAuth.ts
-      autoRescheduleConflicts.ts
       jhuCourses.ts
+      requestEstimateSubtaskTime.ts
+      requestGenerateSubtasks.ts
+      scheduleAllBlocks.ts
+      scheduleBlock.ts
+      scheduleSubtask.ts
 ```
 
 Routes: `/` (landing) → `/onboarding` (new users) → `/dashboard` → `/profile` → `/schedule` → `/preferences` → `/classes` → `/syllabus-review`

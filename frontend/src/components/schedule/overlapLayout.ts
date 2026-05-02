@@ -1,4 +1,4 @@
-import type { TimedEvent } from "../../../../backend/convex/actions/fetchCalendarEvents";
+import type { TimedEvent } from "../../../../backend/convex/functions/fetchCalendarEvents";
 
 export interface LayoutEvent {
   event: TimedEvent;

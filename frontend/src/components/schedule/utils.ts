@@ -1,15 +1,7 @@
+export { DAYS_OF_WEEK as DAYS_FULL } from "../../../../shared/userEnums";
 export const TOTAL_SLOTS = 48; // 30-min increments per day
 export const SLOT_HEIGHT = 28; // px per slot
 export const MAX_OFFSET_DAYS = 21;
-export const DAYS_FULL = [
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-  "Sunday",
-];
 
 /** Time label shown on the left every whole hour (e.g. "9am", "12pm"). */
 export function slotLabel(slot: number): string | null {

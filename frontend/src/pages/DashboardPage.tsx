@@ -57,10 +57,10 @@ export default function DashboardPage() {
   const submitEstimateFeedback = useMutation(api.mutations.timeEstimate.submitEstimateFeedback);
   const requestEstimate = useAction(api.ai.requestEstimateTaskTime.requestEstimateTaskTime);
   const requestEstimateSubtask = useAction(
-    api.actions.requestEstimateSubtaskTime.requestEstimateSubtaskTime
+    api.functions.requestEstimateSubtaskTime.requestEstimateSubtaskTime
   );
   const requestGenerateSubtasks = useAction(
-    api.actions.requestGenerateSubtasks.requestGenerateSubtasks
+    api.functions.requestGenerateSubtasks.requestGenerateSubtasks
   );
   const user = useQuery(api.queries.users.getCurrUser);
   const [{ todayStartMs, todayEndMs, weekStartMs, weekEndMs }, setDateBoundaries] =
@@ -402,6 +402,7 @@ export default function DashboardPage() {
         task={editingTask}
         onClose={() => setEditingTask(null)}
         onSave={handleSaveEdit}
+        existingTasks={taskRows}
         classTagCourses={classTagCourses}
         existingSubtaskCount={
           editingTask ? (subtasksByTaskId.get(editingTask._id)?.length ?? 0) : 0
@@ -420,6 +421,7 @@ export default function DashboardPage() {
         title="Edit subtask"
         subtitle="Update the subtask details below."
         hideSubtaskGeneration
+        hideAssignmentWeight
         task={
           editingSubtask
             ? {
@@ -459,6 +461,7 @@ export default function DashboardPage() {
         onClose={() => setIsAddModalOpen(false)}
         onTaskCreated={(taskId) => handleEstimateTask(taskId as Id<"tasks">)}
         classTagCourses={classTagCourses}
+        existingTasks={taskRows}
       />
 
       {/* ── Main ── */}

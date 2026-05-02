@@ -1,5 +1,9 @@
 /** Mirrors the output schema of chatWorkflow in mastra/src/mastra/workflows/chatWorkflow.ts */
 
+import type { ActiveAgent, TaskAgentIntent, CourseAgentIntent } from "../../../shared/chatEnums";
+
+export type { ActiveAgent, TaskAgentIntent, CourseAgentIntent } from "../../../shared/chatEnums";
+
 export type ChatWorkflowOutput = {
   reply: string;
   route: string | null;
@@ -49,10 +53,10 @@ export type ChatWorkflowOutput = {
   studyGoal: string | null;
   grade: string | null;
   difficultyRating: number | null;
-  newActiveAgent: "task" | "feedback" | "preferences" | "classes" | "schedule" | null;
+  newActiveAgent: ActiveAgent | null;
   clearActiveAgent: boolean;
-  newTaskAgentIntent: "create" | "rud" | null;
-  newCourseAgentIntent: "add" | "drop" | "view" | "update" | null;
+  newTaskAgentIntent: TaskAgentIntent | null;
+  newCourseAgentIntent: CourseAgentIntent | null;
   readyToRecord: boolean;
 };
 
@@ -62,7 +66,3 @@ export type SisResolvedPick = {
   term: string;
   school: string;
 };
-
-export type ActiveAgent = ChatWorkflowOutput["newActiveAgent"];
-export type TaskAgentIntent = ChatWorkflowOutput["newTaskAgentIntent"];
-export type CourseAgentIntent = ChatWorkflowOutput["newCourseAgentIntent"];
