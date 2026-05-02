@@ -83,6 +83,8 @@ export type EditForm = {
   timeEstimate?: number;
   /** True when user explicitly chose to reset to AI estimation */
   useAiEstimate?: boolean;
+  /** Grade weight of this assignment (0–100). Undefined when blank. */
+  assignmentWeight?: number;
 };
 
 export const TASK_TYPE_OPTIONS: BuiltInTaskType[] = [...BUILT_IN_TASK_TYPES];

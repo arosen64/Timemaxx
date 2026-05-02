@@ -420,6 +420,7 @@ export default function DashboardPage() {
         title="Edit subtask"
         subtitle="Update the subtask details below."
         hideSubtaskGeneration
+        hideAssignmentWeight
         task={
           editingSubtask
             ? {
