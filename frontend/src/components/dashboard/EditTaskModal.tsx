@@ -69,8 +69,7 @@ export default function EditModal({
           task?.isManualEstimate && task?.timeEstimate !== undefined
             ? String(task.timeEstimate)
             : "",
-        assignmentWeight:
-          task?.assignmentWeight !== undefined ? String(task.assignmentWeight) : "",
+        assignmentWeight: task?.assignmentWeight !== undefined ? String(task.assignmentWeight) : "",
       }}
       classTagCourses={classTagCourses}
       onClose={onClose}
