@@ -15,7 +15,7 @@ React + Vite + TypeScript + TailwindCSS + Convex + React Router + Google Gemini 
 - Run Mastra agent server: `cd mastra && npx mastra dev` (run in its own terminal — required for the chatbot)
 - Run frontend: `npm run dev` (run after backend and Mastra are running, in a separate terminal)
 - Run tests: `npm test`
-- Run linter: not configured (TypeScript type checking via `npm run build`)
+- Run linter: `npm run lint:fix`
 - Build for production: `npm run build`
 
 > The Mastra server must be publicly reachable for Convex HTTP actions to call it.
@@ -29,8 +29,8 @@ React + Vite + TypeScript + TailwindCSS + Convex + React Router + Google Gemini 
 
 ## Code Style
 
-- Formatting: (e.g., Prettier, Black, etc.)
-- Linting: (e.g., ESLint, Ruff, etc.)
+- Formatting: Prettier
+- Linting: ESLint
 - Naming conventions: camelCase for variables/functions, PascalCase for components
 
 ## Architecture
@@ -85,17 +85,21 @@ backend/
       timeEstimate.ts
     http.ts                   # HTTP router — auth, CORS, and makeApiHandler factory (Hono-based)
     http_chat.ts              # Hono app handling POST /api/chat → Mastra → save to DB
-    actions/                  # Side-effectful functions, e.g. Google Gemini API calls
-      estimateTaskTime.ts
-      requestEstimateTaskTime.ts
-      generateAcademicProfile.ts
-      parseTranscript.ts
-      uploadSyllabus.ts
+    actions/                  # Node.js-runtime actions only ("use node" required)
+      autoRescheduleConflicts.ts
+      entityResolution.ts
+      generateSubtasks.ts
+    functions/                # Convex-runtime actions (no "use node")
+      exportStudyBlocksToCalendar.ts
       fetchCalendarEvents.ts
       getCalendarAvailability.ts
       initiateGoogleCalendarOAuth.ts
-      autoRescheduleConflicts.ts
       jhuCourses.ts
+      requestEstimateSubtaskTime.ts
+      requestGenerateSubtasks.ts
+      scheduleAllBlocks.ts
+      scheduleBlock.ts
+      scheduleSubtask.ts
 ```
 
 Routes: `/` (landing) → `/onboarding` (new users) → `/dashboard` → `/profile` → `/schedule` → `/preferences` → `/classes` → `/syllabus-review`

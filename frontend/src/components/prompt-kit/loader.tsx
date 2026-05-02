@@ -1,9 +1,9 @@
-import { cn } from '../../utils/cn'
+import { cn } from "../../utils/cn";
 
 /** Typing dots loader — three dots pulsing in sequence */
 function Loader({ className }: { className?: string }) {
   return (
-    <div className={cn('flex items-center gap-1', className)} aria-label="Loading">
+    <div className={cn("flex items-center gap-1", className)} aria-label="Loading">
       {[0, 1, 2].map((i) => (
         <span
           key={i}
@@ -12,7 +12,7 @@ function Loader({ className }: { className?: string }) {
         />
       ))}
     </div>
-  )
+  );
 }
 
-export { Loader }
+export { Loader };

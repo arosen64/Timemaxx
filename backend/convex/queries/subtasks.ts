@@ -82,13 +82,9 @@ export const getSubtasksForTask = query({
 
     const subtasks = await ctx.db
       .query("subtasks")
-      .withIndex("by_parentTaskId", (q) =>
-        q.eq("parentTaskId", args.parentTaskId)
-      )
+      .withIndex("by_parentTaskId", (q) => q.eq("parentTaskId", args.parentTaskId))
       .collect();
 
-    return subtasks
-      .filter((s) => s.userId === userId)
-      .sort((a, b) => a.order - b.order);
+    return subtasks.filter((s) => s.userId === userId).sort((a, b) => a.order - b.order);
   },
 });

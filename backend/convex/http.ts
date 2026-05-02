@@ -26,7 +26,7 @@ function makeApiHandler(app: Hono<HonoEnv>, path: string) {
 
     let userId: Id<"users"> | null = null;
     try {
-      userId = await getAuthUserId(ctx) as Id<"users"> | null;
+      userId = (await getAuthUserId(ctx)) as Id<"users"> | null;
     } catch {
       // invalid token — fall through to 401
     }
@@ -59,7 +59,7 @@ function makeApiHandler(app: Hono<HonoEnv>, path: string) {
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       console.error(`[${path}] error:`, msg);
-      return new Response(JSON.stringify({ error: msg }), {
+      return new Response(JSON.stringify({ error: "Internal server error" }), {
         status: 500,
         headers: { ...corsHeaders(), "Content-Type": "application/json" },
       });

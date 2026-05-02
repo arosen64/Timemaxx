@@ -1,15 +1,19 @@
-import Modal from '../ui/Modal'
+import Modal from "../ui/Modal";
 
 interface DeleteAccountModalProps {
-  isOpen: boolean
-  onClose: () => void
-  onConfirm: () => Promise<void>
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => Promise<void>;
 }
 
-export default function DeleteAccountModal({ isOpen, onClose, onConfirm }: DeleteAccountModalProps) {
+export default function DeleteAccountModal({
+  isOpen,
+  onClose,
+  onConfirm,
+}: DeleteAccountModalProps) {
   async function handleConfirm() {
-    await onConfirm()
-    onClose()
+    await onConfirm();
+    onClose();
   }
 
   return (
@@ -25,9 +29,9 @@ export default function DeleteAccountModal({ isOpen, onClose, onConfirm }: Delet
       showCloseButton={false}
     >
       <p className="text-sm leading-relaxed text-slate-blue">
-        Your account and all associated data will be permanently deleted.{' '}
+        Your account and all associated data will be permanently deleted.{" "}
         <span className="font-semibold text-navy">This cannot be undone.</span>
       </p>
     </Modal>
-  )
+  );
 }

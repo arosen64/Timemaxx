@@ -24,13 +24,13 @@ export async function encryptToken(plaintext: string, hexSecret: string): Promis
     hexKeyToBytes(hexSecret),
     { name: "AES-GCM", length: 256 },
     false,
-    ["encrypt"] as KeyUsage[],
+    ["encrypt"] as KeyUsage[]
   );
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const encrypted = await crypto.subtle.encrypt(
     { name: "AES-GCM", iv },
     key,
-    new TextEncoder().encode(plaintext),
+    new TextEncoder().encode(plaintext)
   );
   const result = new Uint8Array(12 + encrypted.byteLength);
   result.set(iv, 0);
@@ -44,7 +44,7 @@ export async function decryptToken(ciphertext: string, hexSecret: string): Promi
     hexKeyToBytes(hexSecret),
     { name: "AES-GCM", length: 256 },
     false,
-    ["decrypt"],
+    ["decrypt"]
   );
   const raw = Uint8Array.from(atob(ciphertext), (c) => c.charCodeAt(0));
   const iv = raw.slice(0, 12);

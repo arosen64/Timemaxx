@@ -1,43 +1,40 @@
 // Pure deterministic scoring for candidate study slots — no Convex dependencies.
 
+import { TIME_OF_DAY_RANGES } from "../../../shared/preferenceEnums";
+import type { DeadlineBehaviorOption } from "../../../shared/preferenceEnums";
+
 export interface ScoreBreakdown {
-  timeOfDayMatch: number;      // 0 or +2
-  dayOfWeekMatch: number;      // 0 or +1
-  bufferComfort: number;       // 0 or +1
-  dailyLoadPenalty: number;    // 0 to −3 (one per placed block on the day)
-  difficultyBonus: number;     // 0 or +1 (high-difficulty course + time-of-day match)
+  timeOfDayMatch: number; // 0 or +2
+  dayOfWeekMatch: number; // 0 or +1
+  bufferComfort: number; // 0 or +1
+  dailyLoadPenalty: number; // 0 to −3 (one per placed block on the day)
+  difficultyBonus: number; // 0 or +1 (high-difficulty course + time-of-day match)
   deadlineBucketScore: number; // 0 to +2 (deadline-proximity signal from deadlineBehavior)
 }
 
 const HIGH_DIFFICULTY_THRESHOLD = 4;
 
 // Bucket weights per deadlineBehavior setting (bucket 0 = earliest, 4 = closest to due date).
-// Keys match the option strings in PreferencesForm.tsx. "Somewhere in between" is absent
-// intentionally — missing key → score 0 (no signal).
+// Keys are DeadlineBehaviorOption labels from shared/preferenceEnums.ts.
+// "Somewhere in between" is absent intentionally — missing key → score 0 (no signal).
 const DEADLINE_BUCKET_WEIGHTS: Record<string, number[]> = {
-  "I work best well in advance":      [3, 3, 2, 1, 0],
+  "I work best well in advance": [3, 3, 2, 1, 0],
   "I need the pressure of a deadline": [1, 1, 2, 3, 3],
-};
+} satisfies Partial<Record<DeadlineBehaviorOption, number[]>>;
 const DEADLINE_BUCKET_MAX_WEIGHTS: Record<string, number> = Object.fromEntries(
-  Object.entries(DEADLINE_BUCKET_WEIGHTS).map(([k, v]) => [k, Math.max(...v)])
+  Object.entries(DEADLINE_BUCKET_WEIGHTS).map(([k, weights]) => [k, Math.max(...weights)])
 );
 
-// Label strings from PreferencesForm.tsx → [startMinFromMidnight, endMinFromMidnight)
-const TIME_OF_DAY_RANGES: Record<string, [number, number]> = {
-  "Early Morning (5–8am)": [300, 480],
-  "Morning (8–11am)": [480, 660],
-  "Midday (11am–2pm)": [660, 840],
-  "Afternoon (2–5pm)": [840, 1020],
-  "Evening (5–8pm)": [1020, 1200],
-  "Night (8–11pm)": [1200, 1380],
-  "Late Night (11pm+)": [1380, 1440],
-};
-
 export function parseTimeOfDayRanges(prefs: string[]): Array<[number, number]> {
-  return prefs.flatMap((p) => (TIME_OF_DAY_RANGES[p] !== undefined ? [TIME_OF_DAY_RANGES[p]] : []));
+  const ranges: Record<string, [number, number]> = TIME_OF_DAY_RANGES;
+  return prefs.flatMap((p) => (ranges[p] !== undefined ? [ranges[p]] : []));
 }
 
-export function getProductivityTraits(traits: unknown): { dayOfWeek: string[]; timeOfDay: string[]; deadlineBehavior: string | undefined } {
+export function getProductivityTraits(traits: unknown): {
+  dayOfWeek: string[];
+  timeOfDay: string[];
+  deadlineBehavior: string | undefined;
+} {
   const t = traits as Record<string, unknown> | null | undefined;
   return {
     dayOfWeek: Array.isArray(t?.dayOfWeek) ? (t!.dayOfWeek as string[]) : [],
@@ -61,7 +58,7 @@ function getMinutesFromMidnight(startMs: number, timezone: string): number {
 
 function getDayOfWeek(startMs: number, timezone: string): string {
   return new Intl.DateTimeFormat("en-US", { weekday: "long", timeZone: timezone }).format(
-    new Date(startMs),
+    new Date(startMs)
   );
 }
 
@@ -69,9 +66,12 @@ function getDayOfWeek(startMs: number, timezone: string): string {
  *  across multiple blocks scored against the same pool. */
 export function getSlotTimeInfo(
   startMs: number,
-  timezone: string,
+  timezone: string
 ): { dayOfWeek: string; minutesFromMidnight: number } {
-  return { dayOfWeek: getDayOfWeek(startMs, timezone), minutesFromMidnight: getMinutesFromMidnight(startMs, timezone) };
+  return {
+    dayOfWeek: getDayOfWeek(startMs, timezone),
+    minutesFromMidnight: getMinutesFromMidnight(startMs, timezone),
+  };
 }
 
 /**
@@ -100,7 +100,8 @@ export function scoreCandidate(opts: {
   dueDateMs?: number;
   nowMs?: number;
 }): { score: number; scoreBreakdown: ScoreBreakdown } {
-  const minFromMidnight = opts.precomputed?.minutesFromMidnight ?? getMinutesFromMidnight(opts.startMs, opts.timezone);
+  const minFromMidnight =
+    opts.precomputed?.minutesFromMidnight ?? getMinutesFromMidnight(opts.startMs, opts.timezone);
   const dayOfWeek = opts.precomputed?.dayOfWeek ?? getDayOfWeek(opts.startMs, opts.timezone);
 
   const timeOfDayMatch =
@@ -121,21 +122,45 @@ export function scoreCandidate(opts: {
   const dailyLoadPenalty = opts.dailyLoadCount <= 0 ? 0 : Math.max(-3, -opts.dailyLoadCount);
 
   const difficultyBonus =
-    opts.difficultyRating !== undefined && opts.difficultyRating >= HIGH_DIFFICULTY_THRESHOLD && timeOfDayMatch > 0 ? 1 : 0;
+    opts.difficultyRating !== undefined &&
+    opts.difficultyRating >= HIGH_DIFFICULTY_THRESHOLD &&
+    timeOfDayMatch > 0
+      ? 1
+      : 0;
 
   let deadlineBucketScore = 0;
-  const weights = opts.deadlineBehavior ? DEADLINE_BUCKET_WEIGHTS[opts.deadlineBehavior] : undefined;
-  if (weights && opts.dueDateMs !== undefined && opts.nowMs !== undefined && opts.dueDateMs > opts.nowMs) {
+  const weights = opts.deadlineBehavior
+    ? DEADLINE_BUCKET_WEIGHTS[opts.deadlineBehavior]
+    : undefined;
+  if (
+    weights &&
+    opts.dueDateMs !== undefined &&
+    opts.nowMs !== undefined &&
+    opts.dueDateMs > opts.nowMs
+  ) {
     const bucketWidth = (opts.dueDateMs - opts.nowMs) / 5;
     const bucketIndex = Math.min(4, Math.floor((opts.startMs - opts.nowMs) / bucketWidth));
     const maxWeight = DEADLINE_BUCKET_MAX_WEIGHTS[opts.deadlineBehavior!];
     deadlineBucketScore = Math.round((weights[Math.max(0, bucketIndex)] / maxWeight) * 2);
   }
 
-  const score = timeOfDayMatch + dayOfWeekMatch + bufferComfort + dailyLoadPenalty + difficultyBonus + deadlineBucketScore;
+  const score =
+    timeOfDayMatch +
+    dayOfWeekMatch +
+    bufferComfort +
+    dailyLoadPenalty +
+    difficultyBonus +
+    deadlineBucketScore;
 
   return {
     score,
-    scoreBreakdown: { timeOfDayMatch, dayOfWeekMatch, bufferComfort, dailyLoadPenalty, difficultyBonus, deadlineBucketScore },
+    scoreBreakdown: {
+      timeOfDayMatch,
+      dayOfWeekMatch,
+      bufferComfort,
+      dailyLoadPenalty,
+      difficultyBonus,
+      deadlineBucketScore,
+    },
   };
 }

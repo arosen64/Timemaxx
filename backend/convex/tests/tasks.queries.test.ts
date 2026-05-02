@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { api } from "../_generated/api";
 import { makeTestCtx, createTestUser } from "../../convex-tests/helpers";
+import type { Id } from "../_generated/dataModel";
 
 // Helper: create a task directly in the db for a given userId
 async function seedTask(
@@ -15,13 +16,14 @@ async function seedTask(
 ) {
   return t.run((ctx) =>
     ctx.db.insert("tasks", {
-      userId: userId as any,
+      userId: userId as Id<"users">,
       title: overrides.title ?? "Default task",
       description: "Test description",
       taskType: overrides.taskType ?? "Essay",
       dueDate: overrides.dueDate ?? Date.now() + 86_400_000,
       createdAt: overrides.createdAt ?? Date.now(),
       isManualEstimate: false,
+      status: "not_started",
     })
   );
 }

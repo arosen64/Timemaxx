@@ -1,6 +1,6 @@
 interface DifficultyRatingProps {
-  value: number
-  onChange: (n: number) => void
+  value: number;
+  onChange: (n: number) => void;
 }
 
 export default function DifficultyRating({ value, onChange }: DifficultyRatingProps) {
@@ -15,8 +15,8 @@ export default function DifficultyRating({ value, onChange }: DifficultyRatingPr
             onClick={() => onChange(n)}
             className={`flex h-6 w-6 items-center justify-center rounded-md font-body text-xs font-semibold transition-colors ${
               value === n
-                ? 'bg-navy text-white'
-                : 'border border-border bg-white text-slate-blue hover:border-sky-blue hover:text-navy'
+                ? "bg-navy text-white"
+                : "border border-border bg-white text-slate-blue hover:border-sky-blue hover:text-navy"
             }`}
           >
             {n}
@@ -24,5 +24,5 @@ export default function DifficultyRating({ value, onChange }: DifficultyRatingPr
         ))}
       </div>
     </div>
-  )
+  );
 }

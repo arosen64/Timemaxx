@@ -12,7 +12,7 @@ function makeErrorResponse(status: number, statusText: string) {
   return { ok: false, status, statusText, json: async () => ({}) };
 }
 
-describe("actions/jhuCourses", () => {
+describe("functions/jhuCourses", () => {
   beforeEach(() => {
     vi.stubEnv("JHU_SIS_API_KEY", "test-sis-key");
     vi.stubGlobal("fetch", mockFetch);
@@ -30,36 +30,36 @@ describe("actions/jhuCourses", () => {
   describe("getAvailableTerms", () => {
     test("throws when unauthenticated", async () => {
       const t = makeTestCtx();
-      await expect(
-        t.action(api.actions.jhuCourses.getAvailableTerms, {})
-      ).rejects.toThrow("Unauthenticated");
+      await expect(t.action(api.functions.jhuCourses.getAvailableTerms, {})).rejects.toThrow(
+        "Unauthenticated"
+      );
     });
 
     test("throws when JHU_SIS_API_KEY is not set", async () => {
       vi.stubEnv("JHU_SIS_API_KEY", "");
       const t = makeTestCtx();
       const { withAuth } = await createTestUser(t);
-      await expect(
-        withAuth.action(api.actions.jhuCourses.getAvailableTerms, {})
-      ).rejects.toThrow("JHU_SIS_API_KEY");
+      await expect(withAuth.action(api.functions.jhuCourses.getAvailableTerms, {})).rejects.toThrow(
+        "JHU_SIS_API_KEY"
+      );
     });
 
     test("throws when SIS API returns a non-ok status", async () => {
       mockFetch.mockResolvedValueOnce(makeErrorResponse(503, "Service Unavailable"));
       const t = makeTestCtx();
       const { withAuth } = await createTestUser(t);
-      await expect(
-        withAuth.action(api.actions.jhuCourses.getAvailableTerms, {})
-      ).rejects.toThrow("503");
+      await expect(withAuth.action(api.functions.jhuCourses.getAvailableTerms, {})).rejects.toThrow(
+        "503"
+      );
     });
 
     test("throws when fetch throws (network error)", async () => {
       mockFetch.mockRejectedValueOnce(new Error("Network error"));
       const t = makeTestCtx();
       const { withAuth } = await createTestUser(t);
-      await expect(
-        withAuth.action(api.actions.jhuCourses.getAvailableTerms, {})
-      ).rejects.toThrow("JHU SIS API request failed for terms");
+      await expect(withAuth.action(api.functions.jhuCourses.getAvailableTerms, {})).rejects.toThrow(
+        "JHU SIS API request failed for terms"
+      );
     });
 
     test("returns terms on success", async () => {
@@ -67,7 +67,7 @@ describe("actions/jhuCourses", () => {
       mockFetch.mockResolvedValueOnce(makeOkResponse(terms));
       const t = makeTestCtx();
       const { withAuth } = await createTestUser(t);
-      const result = await withAuth.action(api.actions.jhuCourses.getAvailableTerms, {});
+      const result = await withAuth.action(api.functions.jhuCourses.getAvailableTerms, {});
       expect(result).toEqual(terms);
     });
 
@@ -75,7 +75,7 @@ describe("actions/jhuCourses", () => {
       mockFetch.mockResolvedValueOnce(makeOkResponse([]));
       const t = makeTestCtx();
       const { withAuth } = await createTestUser(t);
-      await withAuth.action(api.actions.jhuCourses.getAvailableTerms, {});
+      await withAuth.action(api.functions.jhuCourses.getAvailableTerms, {});
       const url = mockFetch.mock.calls[0][0] as string;
       expect(url).toContain("key=test-sis-key");
     });
@@ -87,9 +87,9 @@ describe("actions/jhuCourses", () => {
   describe("getAvailableSchools", () => {
     test("throws when unauthenticated", async () => {
       const t = makeTestCtx();
-      await expect(
-        t.action(api.actions.jhuCourses.getAvailableSchools, {})
-      ).rejects.toThrow("Unauthenticated");
+      await expect(t.action(api.functions.jhuCourses.getAvailableSchools, {})).rejects.toThrow(
+        "Unauthenticated"
+      );
     });
 
     test("throws when JHU_SIS_API_KEY is not set", async () => {
@@ -97,7 +97,7 @@ describe("actions/jhuCourses", () => {
       const t = makeTestCtx();
       const { withAuth } = await createTestUser(t);
       await expect(
-        withAuth.action(api.actions.jhuCourses.getAvailableSchools, {})
+        withAuth.action(api.functions.jhuCourses.getAvailableSchools, {})
       ).rejects.toThrow("JHU_SIS_API_KEY");
     });
 
@@ -106,7 +106,7 @@ describe("actions/jhuCourses", () => {
       const t = makeTestCtx();
       const { withAuth } = await createTestUser(t);
       await expect(
-        withAuth.action(api.actions.jhuCourses.getAvailableSchools, {})
+        withAuth.action(api.functions.jhuCourses.getAvailableSchools, {})
       ).rejects.toThrow("500");
     });
 
@@ -115,7 +115,7 @@ describe("actions/jhuCourses", () => {
       const t = makeTestCtx();
       const { withAuth } = await createTestUser(t);
       await expect(
-        withAuth.action(api.actions.jhuCourses.getAvailableSchools, {})
+        withAuth.action(api.functions.jhuCourses.getAvailableSchools, {})
       ).rejects.toThrow("JHU SIS API request failed for schools");
     });
 
@@ -127,7 +127,7 @@ describe("actions/jhuCourses", () => {
       mockFetch.mockResolvedValueOnce(makeOkResponse(schools));
       const t = makeTestCtx();
       const { withAuth } = await createTestUser(t);
-      const result = await withAuth.action(api.actions.jhuCourses.getAvailableSchools, {});
+      const result = await withAuth.action(api.functions.jhuCourses.getAvailableSchools, {});
       expect(result).toEqual(schools);
     });
 
@@ -135,7 +135,7 @@ describe("actions/jhuCourses", () => {
       mockFetch.mockResolvedValueOnce(makeOkResponse([]));
       const t = makeTestCtx();
       const { withAuth } = await createTestUser(t);
-      await withAuth.action(api.actions.jhuCourses.getAvailableSchools, {});
+      await withAuth.action(api.functions.jhuCourses.getAvailableSchools, {});
       const url = mockFetch.mock.calls[0][0] as string;
       expect(url).toContain("key=test-sis-key");
     });
@@ -148,7 +148,7 @@ describe("actions/jhuCourses", () => {
     test("throws when unauthenticated", async () => {
       const t = makeTestCtx();
       await expect(
-        t.action(api.actions.jhuCourses.getCoursesByTerm, { term: "Fall 2025" })
+        t.action(api.functions.jhuCourses.getCoursesByTerm, { term: "Fall 2025" })
       ).rejects.toThrow("Unauthenticated");
     });
 
@@ -157,7 +157,7 @@ describe("actions/jhuCourses", () => {
       const t = makeTestCtx();
       const { withAuth } = await createTestUser(t);
       await expect(
-        withAuth.action(api.actions.jhuCourses.getCoursesByTerm, { term: "Fall 2025" })
+        withAuth.action(api.functions.jhuCourses.getCoursesByTerm, { term: "Fall 2025" })
       ).rejects.toThrow("JHU_SIS_API_KEY");
     });
 
@@ -166,7 +166,7 @@ describe("actions/jhuCourses", () => {
       const t = makeTestCtx();
       const { withAuth } = await createTestUser(t);
       await expect(
-        withAuth.action(api.actions.jhuCourses.getCoursesByTerm, { term: "Fall 2025" })
+        withAuth.action(api.functions.jhuCourses.getCoursesByTerm, { term: "Fall 2025" })
       ).rejects.toThrow("404");
     });
 
@@ -175,7 +175,7 @@ describe("actions/jhuCourses", () => {
       const t = makeTestCtx();
       const { withAuth } = await createTestUser(t);
       await expect(
-        withAuth.action(api.actions.jhuCourses.getCoursesByTerm, { term: "Fall 2025" })
+        withAuth.action(api.functions.jhuCourses.getCoursesByTerm, { term: "Fall 2025" })
       ).rejects.toThrow("JHU SIS API request failed for courses");
     });
 
@@ -185,7 +185,7 @@ describe("actions/jhuCourses", () => {
       const t = makeTestCtx();
       const { withAuth } = await createTestUser(t);
       await expect(
-        withAuth.action(api.actions.jhuCourses.getCoursesByTerm, { term: "Fall 2025" })
+        withAuth.action(api.functions.jhuCourses.getCoursesByTerm, { term: "Fall 2025" })
       ).rejects.toThrow("Too many results");
     });
 
@@ -194,7 +194,7 @@ describe("actions/jhuCourses", () => {
       mockFetch.mockResolvedValueOnce(makeOkResponse(list));
       const t = makeTestCtx();
       const { withAuth } = await createTestUser(t);
-      const result = await withAuth.action(api.actions.jhuCourses.getCoursesByTerm, {
+      const result = await withAuth.action(api.functions.jhuCourses.getCoursesByTerm, {
         term: "Fall 2025",
       });
       expect((result as object[]).length).toBe(8000);
@@ -205,7 +205,7 @@ describe("actions/jhuCourses", () => {
       mockFetch.mockResolvedValueOnce(makeOkResponse(courses));
       const t = makeTestCtx();
       const { withAuth } = await createTestUser(t);
-      const result = await withAuth.action(api.actions.jhuCourses.getCoursesByTerm, {
+      const result = await withAuth.action(api.functions.jhuCourses.getCoursesByTerm, {
         term: "Fall 2025",
         school: "EN",
       });
@@ -216,7 +216,7 @@ describe("actions/jhuCourses", () => {
       mockFetch.mockResolvedValueOnce(makeOkResponse([]));
       const t = makeTestCtx();
       const { withAuth } = await createTestUser(t);
-      await withAuth.action(api.actions.jhuCourses.getCoursesByTerm, {
+      await withAuth.action(api.functions.jhuCourses.getCoursesByTerm, {
         term: "Fall 2025",
         school: "EN",
       });
@@ -229,7 +229,7 @@ describe("actions/jhuCourses", () => {
       mockFetch.mockResolvedValueOnce(makeOkResponse([]));
       const t = makeTestCtx();
       const { withAuth } = await createTestUser(t);
-      await withAuth.action(api.actions.jhuCourses.getCoursesByTerm, {
+      await withAuth.action(api.functions.jhuCourses.getCoursesByTerm, {
         term: "Fall 2025",
         department: "Computer Science/Electrical Engineering",
       });
@@ -242,7 +242,7 @@ describe("actions/jhuCourses", () => {
       mockFetch.mockResolvedValueOnce(makeOkResponse([]));
       const t = makeTestCtx();
       const { withAuth } = await createTestUser(t);
-      await withAuth.action(api.actions.jhuCourses.getCoursesByTerm, { term: "Fall 2025" });
+      await withAuth.action(api.functions.jhuCourses.getCoursesByTerm, { term: "Fall 2025" });
       const url = mockFetch.mock.calls[0][0] as string;
       expect(url).not.toContain("School=");
       expect(url).not.toContain("Department=");

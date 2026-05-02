@@ -1,17 +1,23 @@
-import { ProfileData } from '../types'
-import { YEARS, GRADES, STUDY_GOALS } from '../constants'
+import { ProfileData } from "../types";
+import { YEARS } from "../../../shared/userEnums";
+import { GRADES, STUDY_GOALS } from "../../../shared/courseEnums";
 
 interface ProfileFormProps {
-  data: ProfileData
-  onChange: (data: ProfileData) => void
-  errors: { major?: string; year?: string }
-  readOnly?: boolean
+  data: ProfileData;
+  onChange: (data: ProfileData) => void;
+  errors: { major?: string; year?: string };
+  readOnly?: boolean;
 }
 
-export default function ProfileForm({ data, onChange, errors, readOnly = false }: ProfileFormProps) {
+export default function ProfileForm({
+  data,
+  onChange,
+  errors,
+  readOnly = false,
+}: ProfileFormProps) {
   const update = <K extends keyof ProfileData>(field: K, value: ProfileData[K]) => {
-    onChange({ ...data, [field]: value })
-  }
+    onChange({ ...data, [field]: value });
+  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -24,17 +30,19 @@ export default function ProfileForm({ data, onChange, errors, readOnly = false }
           type="text"
           value={data.major}
           readOnly={readOnly}
-          onChange={readOnly ? undefined : (e) => update('major', e.target.value)}
-          placeholder={readOnly ? undefined : 'e.g. Computer Science'}
+          onChange={readOnly ? undefined : (e) => update("major", e.target.value)}
+          placeholder={readOnly ? undefined : "e.g. Computer Science"}
           className={`rounded-lg border bg-bg-gray px-3 py-2 font-body text-sm text-navy outline-none ${
             readOnly
-              ? 'cursor-default border-border'
+              ? "cursor-default border-border"
               : `placeholder:text-light-blue focus:ring-2 focus:ring-sky-blue/20 ${
-                  errors.major ? 'border-urgent-red' : 'border-border focus:border-sky-blue'
+                  errors.major ? "border-urgent-red" : "border-border focus:border-sky-blue"
                 }`
           }`}
         />
-        {!readOnly && errors.major && <p className="font-body text-xs text-urgent-red">{errors.major}</p>}
+        {!readOnly && errors.major && (
+          <p className="font-body text-xs text-urgent-red">{errors.major}</p>
+        )}
       </div>
 
       {/* Year */}
@@ -49,22 +57,26 @@ export default function ProfileForm({ data, onChange, errors, readOnly = false }
             id="year-select"
             value={data.year}
             disabled={readOnly}
-            onChange={(e) => update('year', e.target.value)}
+            onChange={(e) => update("year", e.target.value)}
             className={`rounded-lg border bg-bg-gray px-3 py-2 font-body text-sm text-navy outline-none disabled:pointer-events-none ${
               readOnly
-                ? 'cursor-default border-border'
+                ? "cursor-default border-border"
                 : `focus:ring-2 focus:ring-sky-blue/20 ${
-                    errors.year ? 'border-urgent-red' : 'border-border focus:border-sky-blue'
+                    errors.year ? "border-urgent-red" : "border-border focus:border-sky-blue"
                   }`
             }`}
           >
             <option value="">Select your year</option>
             {YEARS.map((y) => (
-              <option key={y} value={y}>{y}</option>
+              <option key={y} value={y}>
+                {y}
+              </option>
             ))}
           </select>
         )}
-        {!readOnly && errors.year && <p className="font-body text-xs text-urgent-red">{errors.year}</p>}
+        {!readOnly && errors.year && (
+          <p className="font-body text-xs text-urgent-red">{errors.year}</p>
+        )}
       </div>
 
       {/* Courses — read-only display */}
@@ -72,7 +84,10 @@ export default function ProfileForm({ data, onChange, errors, readOnly = false }
         <div className="flex flex-col gap-3">
           <label className="font-heading text-sm font-semibold text-navy">Courses</label>
           {data.courses.map((course, i) => (
-            <div key={i} className="flex flex-col gap-2 rounded-lg border border-border bg-bg-gray p-3">
+            <div
+              key={i}
+              className="flex flex-col gap-2 rounded-lg border border-border bg-bg-gray p-3"
+            >
               <div className="flex flex-col gap-0.5">
                 <span className="font-body text-sm font-semibold text-navy">{course.title}</span>
                 {course.term && (
@@ -94,7 +109,9 @@ export default function ProfileForm({ data, onChange, errors, readOnly = false }
                     >
                       <option value="">Select grade</option>
                       {GRADES.map((g) => (
-                        <option key={g} value={g}>{g}</option>
+                        <option key={g} value={g}>
+                          {g}
+                        </option>
                       ))}
                     </select>
                   )}
@@ -106,8 +123,8 @@ export default function ProfileForm({ data, onChange, errors, readOnly = false }
                       key={goal}
                       className={`flex flex-1 cursor-default items-center justify-center rounded-lg border px-2 py-2 font-body text-xs font-medium ${
                         course.studyGoal === goal
-                          ? 'border-sky-blue bg-sky-blue/10 text-navy'
-                          : 'border-border text-slate-blue'
+                          ? "border-sky-blue bg-sky-blue/10 text-navy"
+                          : "border-border text-slate-blue"
                       }`}
                     >
                       <input
@@ -129,5 +146,5 @@ export default function ProfileForm({ data, onChange, errors, readOnly = false }
         </div>
       )}
     </div>
-  )
+  );
 }

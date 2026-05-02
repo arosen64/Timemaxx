@@ -1,9 +1,5 @@
 import { describe, expect, test } from "vitest";
-import {
-  buildChatChunkSpecs,
-  CHUNK_OVERLAP_CHARS,
-  CHUNK_TARGET_CHARS,
-} from "../lib/chatChunking";
+import { buildChatChunkSpecs, CHUNK_OVERLAP_CHARS, CHUNK_TARGET_CHARS } from "../lib/chatChunking";
 import type { Id } from "../_generated/dataModel";
 
 const taskA = "abc123" as Id<"tasks">;
@@ -74,7 +70,7 @@ describe("buildChatChunkSpecs", () => {
     ]);
     expect(specs.length).toBeGreaterThanOrEqual(1);
     const withBoth = specs.find(
-      (s) => s.linkedTaskIds.includes(taskA) && s.linkedCourseIds.includes(courseA),
+      (s) => s.linkedTaskIds.includes(taskA) && s.linkedCourseIds.includes(courseA)
     );
     expect(withBoth).toBeDefined();
   });
@@ -97,13 +93,13 @@ describe("buildChatChunkSpecs", () => {
     ]);
     // Should have at least 2 chunks since messages have different taskIds
     expect(specs.length).toBeGreaterThanOrEqual(2);
-    const taskAChunks = specs.filter(s => s.linkedTaskIds.includes(taskA));
-    const taskBChunks = specs.filter(s => s.linkedTaskIds.includes(taskB));
+    const taskAChunks = specs.filter((s) => s.linkedTaskIds.includes(taskA));
+    const taskBChunks = specs.filter((s) => s.linkedTaskIds.includes(taskB));
     expect(taskAChunks.length).toBeGreaterThan(0);
     expect(taskBChunks.length).toBeGreaterThan(0);
     // No chunk should contain both taskIds
-    const mixedChunks = specs.filter(s =>
-      s.linkedTaskIds.includes(taskA) && s.linkedTaskIds.includes(taskB)
+    const mixedChunks = specs.filter(
+      (s) => s.linkedTaskIds.includes(taskA) && s.linkedTaskIds.includes(taskB)
     );
     expect(mixedChunks.length).toBe(0);
   });

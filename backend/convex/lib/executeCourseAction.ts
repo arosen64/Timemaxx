@@ -15,7 +15,7 @@ function isValidDifficultyRating(n: number): boolean {
 async function addCourseFromOutput(
   ctx: ActionCtx,
   output: ChatWorkflowOutput,
-  resolvedSisPick: SisResolvedPick | undefined,
+  resolvedSisPick: SisResolvedPick | undefined
 ): Promise<void> {
   if (!output.sisQuery || !output.term || !output.school) {
     throw new Error("Missing required course fields (query, term, or school).");
@@ -29,18 +29,20 @@ async function addCourseFromOutput(
     offeringName = resolvedSisPick.offeringName;
     titleText = resolvedSisPick.title;
   } else {
-    const sisResults = (await ctx.runAction(api.actions.jhuCourses.getCoursesByTerm, {
+    const sisResults = (await ctx.runAction(api.functions.jhuCourses.getCoursesByTerm, {
       term: output.term,
       school: output.school,
       courseTitle: output.sisQuery,
     })) as SisRow[];
     if (!Array.isArray(sisResults) || sisResults.length === 0) {
-      throw new Error("I could not find a matching SIS course. Please provide a more specific code or title.");
+      throw new Error(
+        "I could not find a matching SIS course. Please provide a more specific code or title."
+      );
     }
     const normalizedQuery = output.sisQuery.trim().toLowerCase();
     const exact =
       sisResults.find((c) =>
-        `${c.OfferingName ?? ""} ${c.Title ?? ""}`.toLowerCase().includes(normalizedQuery),
+        `${c.OfferingName ?? ""} ${c.Title ?? ""}`.toLowerCase().includes(normalizedQuery)
       ) ?? sisResults[0];
     const on = exact.OfferingName;
     const tt = exact.Title;
@@ -61,20 +63,26 @@ async function addCourseFromOutput(
       throw new Error("For past terms, difficulty rating must be a whole number from 1 to 5.");
     }
   } else if (!output.studyGoal || !STUDY_GOAL_SET.has(output.studyGoal)) {
-    throw new Error("For current/future terms, study goal must be one of: Just pass, Do well, Ace it.");
+    throw new Error(
+      "For current/future terms, study goal must be one of: Just pass, Do well, Ace it."
+    );
   }
 
   let description: string | undefined;
   let prereqs: string[] | undefined;
   try {
-    const details = (await ctx.runAction(api.actions.jhuCourses.getCourseDetails, {
+    const details = (await ctx.runAction(api.functions.jhuCourses.getCourseDetails, {
       offeringName,
       term: output.term,
     })) as { description?: string; prereqs?: string[]; credits?: number } | null;
     if (details) {
       description = typeof details.description === "string" ? details.description : undefined;
       prereqs = Array.isArray(details.prereqs) ? details.prereqs : undefined;
-      if (credits === undefined && typeof details.credits === "number" && !Number.isNaN(details.credits)) {
+      if (
+        credits === undefined &&
+        typeof details.credits === "number" &&
+        !Number.isNaN(details.credits)
+      ) {
         credits = details.credits;
       }
     }
@@ -90,9 +98,9 @@ async function addCourseFromOutput(
     prereqs,
     credits,
     term: output.term,
-    studyGoal: !isPast ? output.studyGoal ?? undefined : undefined,
-    grade: isPast ? output.grade ?? undefined : undefined,
-    difficultyRating: isPast ? output.difficultyRating ?? undefined : undefined,
+    studyGoal: !isPast ? (output.studyGoal ?? undefined) : undefined,
+    grade: isPast ? (output.grade ?? undefined) : undefined,
+    difficultyRating: isPast ? (output.difficultyRating ?? undefined) : undefined,
   });
 }
 
@@ -101,7 +109,7 @@ async function dropCourseFromOutput(
   userId: Id<"users">,
   sessionId: string,
   activeCourseId: Id<"userCourses"> | undefined,
-  output: ChatWorkflowOutput,
+  output: ChatWorkflowOutput
 ): Promise<{ aiText: string; clearedScope: boolean }> {
   if (activeCourseId === undefined) throw new Error("No class selected.");
   const existing = await ctx.runQuery(internal.queries.userCourses.getUserCoursesByIdsInternal, {
@@ -127,7 +135,7 @@ async function updateCourseFromOutput(
   userId: Id<"users">,
   sessionId: string,
   activeCourseId: Id<"userCourses"> | undefined,
-  output: ChatWorkflowOutput,
+  output: ChatWorkflowOutput
 ): Promise<{ clearedScope: boolean }> {
   if (activeCourseId === undefined) throw new Error("No class selected.");
   const patch: {
@@ -156,7 +164,11 @@ async function updateCourseFromOutput(
     patch.difficultyRating = output.difficultyRating;
   }
 
-  if (patch.studyGoal === undefined && patch.grade === undefined && patch.difficultyRating === undefined) {
+  if (
+    patch.studyGoal === undefined &&
+    patch.grade === undefined &&
+    patch.difficultyRating === undefined
+  ) {
     throw new Error("No supported course updates were provided.");
   }
 
@@ -174,7 +186,7 @@ async function viewCoursesFromOutput(
   userId: Id<"users">,
   sessionId: string,
   activeCourseId: Id<"userCourses"> | undefined,
-  output: ChatWorkflowOutput,
+  output: ChatWorkflowOutput
 ): Promise<{ aiText: string; clearedScope: boolean }> {
   if (activeCourseId !== undefined) {
     const selected = await ctx.runQuery(internal.queries.userCourses.getUserCoursesByIdsInternal, {
@@ -190,7 +202,9 @@ async function viewCoursesFromOutput(
       if (c.difficultyRating !== undefined) attrs.push(`Difficulty: ${c.difficultyRating}/5`);
       aiText = [
         `Here are the details for **${c.title}**:`,
-        attrs.length > 0 ? attrs.map((a) => `- ${a}`).join("\n") : "- No additional details recorded yet.",
+        attrs.length > 0
+          ? attrs.map((a) => `- ${a}`).join("\n")
+          : "- No additional details recorded yet.",
       ].join("\n");
     }
     await ctx.runMutation(internal.mutations.chatSessions.setMessageScopeInternal, {
@@ -206,7 +220,8 @@ async function viewCoursesFromOutput(
   });
   let aiText: string;
   if (courses.length === 0) {
-    aiText = "You don't have any classes added yet. Add one from the Classes page or ask me to add one.";
+    aiText =
+      "You don't have any classes added yet. Add one from the Classes page or ask me to add one.";
   } else {
     const current = courses.filter((c) => !isPastTerm(c.term ?? ""));
     const past = courses.filter((c) => isPastTerm(c.term ?? ""));
@@ -240,7 +255,7 @@ export async function executeCourseAction(
     activeCourseId?: Id<"userCourses">;
     output: ChatWorkflowOutput;
     resolvedSisPick?: SisResolvedPick;
-  },
+  }
 ): Promise<string> {
   const { userId, sessionId, activeCourseId, output } = params;
   const resolvedSisPick = params.resolvedSisPick;
@@ -276,7 +291,9 @@ export async function executeCourseAction(
     sessionId,
     role: "assistant",
     content: aiText,
-    ...(activeCourseId !== undefined && !clearedScopeAfterAction ? { courseId: activeCourseId } : {}),
+    ...(activeCourseId !== undefined && !clearedScopeAfterAction
+      ? { courseId: activeCourseId }
+      : {}),
   });
   return aiText;
 }

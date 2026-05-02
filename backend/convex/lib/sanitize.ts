@@ -1,6 +1,6 @@
 /**
  * Input sanitization and validation utilities for LLM-facing text fields.
- * Applied to all user-provided content before it enters a Gemini prompt.
+ * Applied to all user-provided content before it enters an LLM prompt.
  */
 
 /** Phrases commonly used in prompt injection attempts (case-insensitive). */
@@ -61,23 +61,15 @@ export function sanitizeUserInput(text: string, maxLength: number): string {
  * data inside XML-delimited prompt sections.
  */
 export function safeStringifyForPrompt(value: unknown): string {
-  return JSON.stringify(value)
-    .replace(/</g, "\\u003c")
-    .replace(/>/g, "\\u003e");
+  return JSON.stringify(value).replace(/</g, "\\u003c").replace(/>/g, "\\u003e");
 }
 
 /**
  * Throws a descriptive error if `text` exceeds `maxLength` characters.
  * Call this at the action level before any prompt construction.
  */
-export function validateLength(
-  text: string,
-  maxLength: number,
-  fieldName: string
-): void {
+export function validateLength(text: string, maxLength: number, fieldName: string): void {
   if (text.length > maxLength) {
-    throw new Error(
-      `${fieldName} exceeds maximum length of ${maxLength} characters`
-    );
+    throw new Error(`${fieldName} exceeds maximum length of ${maxLength} characters`);
   }
 }

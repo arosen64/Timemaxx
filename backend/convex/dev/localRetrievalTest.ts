@@ -83,11 +83,12 @@ export const inspectRetrievalForTask = internalAction({
       relevantTasks: v.array(taskHitShape),
       relevantClassIds: v.array(v.id("userCourses")),
       relevantClasses: v.array(classHitShape),
-    }),
+    })
   ),
   handler: async (ctx, args) => {
     // `as unknown as { internal: any }` breaks TS self-reference: this module is part of `internal`
     // while resolving `import("../_generated/api")`.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { internal } = (await import("../_generated/api")) as unknown as { internal: any };
     const task: Doc<"tasks"> | null = await ctx.runQuery(internal.queries.tasks.getTaskInternal, {
       taskId: args.taskId,
@@ -98,8 +99,7 @@ export const inspectRetrievalForTask = internalAction({
 
     const emb = task.embedding;
     const embeddingLength = Array.isArray(emb) ? emb.length : null;
-    const usedVectorRetrieval =
-      Array.isArray(emb) && emb.length === EMBEDDING_DIMS;
+    const usedVectorRetrieval = Array.isArray(emb) && emb.length === EMBEDDING_DIMS;
 
     const [relevantTaskIds, relevantClassIds] = await Promise.all([
       fetchRelevantTasks(ctx, args.taskId, task.userId),
@@ -120,11 +120,10 @@ export const inspectRetrievalForTask = internalAction({
             }),
       ]);
 
-    const preview = (s: string, max = 120) =>
-      s.length <= max ? s : `${s.slice(0, max)}…`;
+    const preview = (s: string, max = 120) => (s.length <= max ? s : `${s.slice(0, max)}…`);
 
     console.log(
-      `[inspectRetrievalForTask] anchor=${task._id} vector=${usedVectorRetrieval} relevantTasks=${relevantTaskIds.length} relevantClasses=${relevantClassIds.length}`,
+      `[inspectRetrievalForTask] anchor=${task._id} vector=${usedVectorRetrieval} relevantTasks=${relevantTaskIds.length} relevantClasses=${relevantClassIds.length}`
     );
 
     return {
@@ -183,9 +182,10 @@ export const inspectChatRetrievalForTask = internalAction({
       queryEmbeddingOk: v.boolean(),
       relevantChatChunkIds: v.array(v.id("chatChunks")),
       chatChunks: v.array(chatChunkHitShape),
-    }),
+    })
   ),
   handler: async (ctx, args) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { internal } = (await import("../_generated/api")) as unknown as { internal: any };
     const task: Doc<"tasks"> | null = await ctx.runQuery(internal.queries.tasks.getTaskInternal, {
       taskId: args.taskId,
@@ -206,7 +206,7 @@ export const inspectChatRetrievalForTask = internalAction({
       const retrievalQueryPreview =
         "Skipped: empty task title and description (no anchor text for chat retrieval).";
       console.log(
-        `[inspectChatRetrievalForTask] anchor=${task._id} queryEmbedOk=false chunks=0 (empty anchor text) relevantTasks=${relevantTaskIds.length} relevantClasses=${relevantClassIds.length}`,
+        `[inspectChatRetrievalForTask] anchor=${task._id} queryEmbedOk=false chunks=0 (empty anchor text) relevantTasks=${relevantTaskIds.length} relevantClasses=${relevantClassIds.length}`
       );
       return {
         ok: true as const,
@@ -233,15 +233,21 @@ export const inspectChatRetrievalForTask = internalAction({
     const queryVector = (await ctx.runAction(internal.ai.embeddings.embedRetrievalQueryInternal, {
       text: retrievalFullText,
     })) as number[] | null;
-    const queryEmbeddingOk =
-      Array.isArray(queryVector) && queryVector.length === EMBEDDING_DIMS;
+    const queryEmbeddingOk = Array.isArray(queryVector) && queryVector.length === EMBEDDING_DIMS;
 
     let relevantChatChunkIds: Doc<"chatChunks">["_id"][] = [];
     let chunksRaw: Doc<"chatChunks">[] = [];
     if (queryEmbeddingOk) {
-      const chats = await fetchRelevantChats(ctx, task.userId, args.taskId, relevantTaskIds, relevantClassIds, {
-        queryEmbedding: queryVector,
-      });
+      const chats = await fetchRelevantChats(
+        ctx,
+        task.userId,
+        args.taskId,
+        relevantTaskIds,
+        relevantClassIds,
+        {
+          queryEmbedding: queryVector,
+        }
+      );
       relevantChatChunkIds = chats.chunkIds;
       chunksRaw = chats.chunks;
     }
@@ -264,7 +270,7 @@ export const inspectChatRetrievalForTask = internalAction({
     }));
 
     console.log(
-      `[inspectChatRetrievalForTask] anchor=${task._id} queryEmbedOk=${queryEmbeddingOk} chunks=${relevantChatChunkIds.length} relevantTasks=${relevantTaskIds.length} relevantClasses=${relevantClassIds.length}`,
+      `[inspectChatRetrievalForTask] anchor=${task._id} queryEmbedOk=${queryEmbeddingOk} chunks=${relevantChatChunkIds.length} relevantTasks=${relevantTaskIds.length} relevantClasses=${relevantClassIds.length}`
     );
 
     return {
