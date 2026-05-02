@@ -465,12 +465,14 @@ const routerStep = createStep({
 
     // Always run supervisor with conversation context. When a sub-agent is
     // active, the supervisor decides whether the new message stays in the same
-    // domain (continuation) or pivots to a different route (intent switch).
+    // domain (continuation), pivots to a different route (intent switch), or
+    // exits the in-progress flow without engaging another sub-agent.
     const sv = await supervisorAgent.generate(
       buildSupervisorPrompt({ activeAgent, historyText, message: trimmed }),
       { structuredOutput: { schema: supervisorAgentOutputSchema } }
     );
-    const { route, needsDomainClarification, domainClarifyingQuestion } = sv.object;
+    const { route, needsDomainClarification, domainClarifyingQuestion, exitActiveAgent } =
+      sv.object;
 
     if (!activeAgent) {
       return {
@@ -483,9 +485,34 @@ const routerStep = createStep({
     }
 
     const activeRoute = activeAgentToRoute(activeAgent);
-    // Treat mid-flow domain clarifications as continuations of the active agent
-    // — the canned step would otherwise tear down the in-progress flow without
-    // routing us anywhere productive.
+
+    // Mid-flow EXIT: user signalled they want out of the active flow without
+    // engaging a different sub-agent (cancellation, chit-chat, generic help).
+    // Route to canned step which will deliver supervisor's friendly message.
+    // intentSwitch = true causes the canned step to clear the active agent
+    // state (via clearActiveAgent), so the next turn starts fresh.
+    if (exitActiveAgent) {
+      const exitReply =
+        domainClarifyingQuestion ??
+        "No problem — that flow is cancelled. What would you like to do? I can help with tasks, schedule, classes, study preferences, or feedback on a task or class.";
+      return {
+        ...inputData,
+        route: null,
+        needsDomainClarification: true,
+        domainClarifyingQuestion: exitReply,
+        intentSwitch: true,
+        hasCourseTag: false,
+        taggedTaskId: null,
+        taggedCourseId: null,
+        taskAgentIntent: null,
+        courseAgentIntent: null,
+      };
+    }
+
+    // Mid-flow ambiguous classifications: when supervisor returns no specific
+    // route or asks for domain clarification without explicitly signalling
+    // exit, treat as continuation of the active agent (don't tear down the
+    // in-progress flow on a single ambiguous turn).
     if (needsDomainClarification || !route) {
       return {
         ...inputData,
@@ -505,8 +532,9 @@ const routerStep = createStep({
       };
     }
 
-    // Intent switch: drop the previous agent's carried-over context so the new
-    // sub-agent starts fresh and re-infers intent / fields from the new message.
+    // Intent switch to a different sub-agent: drop the previous agent's
+    // carried-over context so the new sub-agent starts fresh and re-infers
+    // intent / fields from the new message.
     return {
       ...inputData,
       route,

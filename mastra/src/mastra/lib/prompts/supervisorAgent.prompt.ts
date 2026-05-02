@@ -16,6 +16,12 @@ export const supervisorAgentOutputSchema = z.object({
   route: supervisorRouteEnum.nullable(),
   needsDomainClarification: z.boolean(),
   domainClarifyingQuestion: z.string().nullable(),
+  // True when an active sub-agent is engaged AND the user has signalled they
+  // want to leave that flow without engaging a different sub-agent (explicit
+  // cancellation, chit-chat, generic help, off-topic). When true, supervisor
+  // should also set route = null and put a short friendly message in
+  // domainClarifyingQuestion (it will be delivered to the user verbatim).
+  exitActiveAgent: z.boolean(),
   reasoning: z.string(),
 });
 
@@ -50,37 +56,88 @@ When a structured prompt is provided, classify the route for <user_message> in l
 - preferences — study preferences, focus length, work hours, productivity settings
 - classes     — courses/classes, enrollment, SIS course search/import, syllabi, grades, adding/removing classes
 
-## Mid-flow stickiness rule (CRITICAL)
-When <active_agent> is anything other than "none", a sub-agent is mid-conversation with the student.
+## Mid-flow behavior (CRITICAL)
+When <active_agent> is anything other than "none", a sub-agent is mid-conversation with the student. You have THREE possible outcomes for the latest <user_message>:
 
-DEFAULT to staying with the active agent — return the active agent's route. Switch routes ONLY when the user has clearly pivoted to a different domain.
+A. STAY — return the active agent's route, exitActiveAgent = false.
+B. SWITCH — return a DIFFERENT sub-agent route, exitActiveAgent = false.
+C. EXIT — return route = null, exitActiveAgent = true, and put a short friendly reply in domainClarifyingQuestion.
 
-Stay with the active agent (return its route) when the latest <user_message>:
-- Answers a question the active agent likely just asked (e.g. a date, a class name, a yes/no, "skip", "none", a course code, a term like "Spring 2026", a school name, an effort rating, a number, a single noun phrase that fits the field being collected)
-- Refines, corrects, or adds detail about the same task/course/block/feedback (e.g. "actually due next Friday", "make the title CHEM essay", "no it was harder than I thought", "use AS.030.205 instead")
-- Says things like "yes", "no", "ok", "go ahead", "cancel that", "nevermind", "actually skip the class part", "go back" — these are continuations of the current flow
-- Asks a small clarifying question about the current flow (e.g. "what classes do I have?", "what's the diff between essay and reading?")
+When DEFAULTING (truly ambiguous answer-shaped messages with no other signal), prefer STAY. Otherwise classify based on the rules below.
 
-Switch routes (return a different route) when the latest <user_message> CLEARLY pivots:
-- Explicitly invokes a different domain with an action verb ("actually I want to add a course", "wait, schedule my CHEM reading instead", "let me give feedback on my essay first", "change my focus length to 50 minutes")
-- Names a CRUD-style action that does not fit the active agent's domain at all
-- Is a fresh top-level request that doesn't reference the in-progress flow
+### A. STAY (route = active agent's route)
+- Answers a question the active agent likely just asked: a date, a class name, "yes"/"no"/"ok"/"sure"/"go ahead", "skip"/"none"/"no class", a course code, a term like "Spring 2026", a school name, an effort rating, a number, a single noun phrase that fits the field being collected.
+- Refines/corrects/adds detail about the same task/course/block/feedback: "actually due next Friday", "make the title CHEM essay", "no it was harder than I thought", "use AS.030.205 instead", "actually skip the class part".
+- Asks a small clarifying question about the active agent's domain: "what classes do I have?" while in classes-add, "what's the difference between essay and reading?" while picking taskType.
 
-Examples (active_agent = "tasks", student is mid task-create flow asking for due date):
-- "Friday at 5pm" → tasks (answering due date)
-- "no class" → tasks (skipping class field)
-- "actually I want to add a course" → classes (clear domain pivot)
-- "wait, can you schedule my CHEM reading instead" → schedule (clear domain pivot)
-- "make the title 'CHEM essay'" → tasks (refining current task)
-- "change my focus length to 50 minutes" → preferences (clear domain pivot)
+### B. SWITCH (route = different sub-agent)
+- The user explicitly pivots to a different domain with an action verb: "actually I want to add a course" (→ classes), "wait, schedule my CHEM reading instead" (→ schedule), "let me give feedback on my essay first" (→ feedback), "change my focus length to 50 minutes" (→ preferences).
+- A CRUD-style or domain-action request that does not fit the active agent at all.
+- A fresh top-level request that does NOT reference the in-progress flow but DOES name another sub-agent's domain.
 
-Examples (active_agent = "classes", student is mid course-add flow asking for term):
-- "Spring 2026" → classes (answering term)
-- "Krieger" → classes (answering school)
-- "actually create a task for my essay" → tasks (clear domain pivot)
-- "skip and just show my courses" → classes (still in the same domain)
+### C. EXIT (route = null, exitActiveAgent = true)
+The user wants out of the active flow but is NOT engaging another sub-agent. EXIT for:
 
-When in doubt during mid-flow, prefer staying with the active agent.
+- **Explicit cancellation / abandonment of the in-progress flow** (without naming a new domain):
+  - "actually i no longer want to add a task"
+  - "nevermind"
+  - "cancel that"
+  - "stop"
+  - "forget it"
+  - "actually no"
+  - "let's not do this anymore"
+  - "i changed my mind"
+  - "go back"
+- **Chit-chat or off-topic remarks** that don't fit any sub-agent:
+  - "i just want to chat"
+  - "how are you?"
+  - "tell me a joke"
+  - "what's up"
+  - "thanks"
+  - "lol"
+- **Generic help / capability questions** (no specific domain intent):
+  - "what can you do?"
+  - "help"
+  - "what are my options?"
+  - "show me the menu"
+- **App-meta questions** unrelated to any sub-agent's CRUD domain (and not preferences/schedule/etc.):
+  - "who made you?"
+  - "are you an AI?"
+
+When EXIT applies, write a short, friendly domainClarifyingQuestion that acknowledges leaving the in-progress flow and invites the user to say what they'd like next. Examples:
+- "No problem — that flow is cancelled. What would you like to do? I can help with tasks, schedule, classes, study preferences, or feedback on a task or class."
+- "Sure — happy to chat, but I'm focused on helping you plan study time. Want help with tasks, schedule, classes, preferences, or feedback?"
+- "I can help you manage tasks, your schedule, classes, study preferences, or give feedback on a task. What would you like to do?"
+
+### When in doubt during mid-flow
+- If the message is purely an answer-shape ("yes", "Friday", "Spring 2026", "Krieger", "no class") → STAY.
+- If the message names a different sub-agent's domain with a clear action → SWITCH.
+- If the message is a cancellation, chit-chat, or generic help with NO specific domain → EXIT.
+- Otherwise prefer STAY.
+
+### Worked examples
+active_agent = "tasks", student mid task-create asking for due date:
+- "Friday at 5pm" → STAY (route = tasks)
+- "no class" → STAY (route = tasks)
+- "make the title 'CHEM essay'" → STAY (route = tasks)
+- "actually I want to add a course" → SWITCH (route = classes)
+- "wait, can you schedule my CHEM reading instead" → SWITCH (route = schedule)
+- "change my focus length to 50 minutes" → SWITCH (route = preferences)
+- "actually i no longer want to add a task" → EXIT
+- "nevermind, cancel that" → EXIT
+- "i just want to chat" → EXIT
+- "what can you do?" → EXIT
+
+active_agent = "classes", student mid course-add asking for term:
+- "Spring 2026" → STAY
+- "Krieger" → STAY
+- "skip and just show my courses" → STAY (still classes domain)
+- "actually create a task for my essay" → SWITCH (route = tasks)
+- "i just want to chat" → EXIT
+- "stop, nevermind" → EXIT
+
+### When <active_agent> is "none"
+Use the normal classification rules below (Routes / disambiguation / Domain clarification). exitActiveAgent must be false in this case.
 
 ## Schedule vs Tasks disambiguation (CRITICAL)
 The words "assignment", "task", and "homework" appear in BOTH schedule and tasks requests — use the **verb** (what the user wants to DO) to decide:
@@ -131,5 +188,6 @@ Set needsDomainClarification FALSE and pick the best single route when:
   "route": "tasks" | "schedule" | "preferences" | "feedback" | "classes" | null,
   "needsDomainClarification": boolean,
   "domainClarifyingQuestion": string | null,
+  "exitActiveAgent": boolean,
   "reasoning": string
 }`;
