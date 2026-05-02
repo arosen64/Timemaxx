@@ -7,7 +7,7 @@ import FileUpload from "./ui/FileUpload";
 import Modal from "./ui/Modal";
 import Selector from "./ui/Selector";
 import { SpinnerIcon } from "./icons";
-import { STUDY_GOALS } from "../constants";
+import { STUDY_GOALS } from "../../../shared/courseEnums";
 import { fileToBase64 } from "../utils/fileToBase64";
 
 interface TranscriptUploadProps {

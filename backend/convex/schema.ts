@@ -2,7 +2,11 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 import { authTables } from "@convex-dev/auth/server";
 import { sharedTaskFields } from "./lib/taskValidators";
-import { activeAgentValidator } from "./lib/chatValidators";
+import {
+  activeAgentValidator,
+  taskAgentIntentValidator,
+  courseAgentIntentValidator,
+} from "./lib/chatValidators";
 import { productivityTraitsValidator, workHoursRowValidator } from "./lib/userValidators";
 
 export default defineSchema({
@@ -175,11 +179,9 @@ export default defineSchema({
     /** Which specialist agent is handling this session */
     activeAgent: v.optional(activeAgentValidator),
     /** Intent determined by task agent: "create" skips entity MCQ, "rud" triggers it */
-    taskAgentIntent: v.optional(v.union(v.literal("create"), v.literal("rud"))),
+    taskAgentIntent: v.optional(taskAgentIntentValidator),
     /** Intent determined by course agent for multi-turn class conversations. */
-    courseAgentIntent: v.optional(
-      v.union(v.literal("add"), v.literal("drop"), v.literal("view"), v.literal("update"))
-    ),
+    courseAgentIntent: v.optional(courseAgentIntentValidator),
     /** Current scope for future chat message tagging. */
     activeTaskId: v.optional(v.id("tasks")),
     activeCourseId: v.optional(v.id("userCourses")),

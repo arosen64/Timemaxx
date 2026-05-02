@@ -5,7 +5,8 @@ import { api } from "../../../../backend/convex/_generated/api";
 import { Id } from "../../../../backend/convex/_generated/dataModel";
 import { TrashIcon, SpinnerIcon, CheckCircleIcon } from "../icons";
 import DifficultyRating from "../DifficultyRating";
-import { GRADES, STUDY_GOALS, REMOVE_CLASS_TASKS_WARNING } from "../../constants";
+import { GRADES, STUDY_GOALS } from "../../../../shared/courseEnums";
+import { REMOVE_CLASS_TASKS_WARNING } from "../../constants";
 import SyllabusUploadModal from "./SyllabusUploadModal";
 
 interface ClassCardProps {
