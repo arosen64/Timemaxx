@@ -134,21 +134,21 @@ export default function SubtaskCard({
         </div>
       </div>
 
-      <div
-        className={`grid transition-[grid-template-rows] duration-200 ${
-          showBlocks && blocks.length > 0 ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
-        }`}
-      >
-        <div className="overflow-hidden">
-          {blocks.length > 0 && (
+      {blocks.length > 0 && (
+        <div
+          className={`grid transition-[grid-template-rows] duration-200 ${
+            showBlocks ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+          }`}
+        >
+          <div className="overflow-hidden">
             <div className="flex flex-col gap-2 border-t border-border bg-bg-gray px-[18px] py-3 pl-[52px]">
               {blocks.map((block) => (
                 <StudyBlockRow key={block._id} block={block} onToggle={onToggleBlock} />
               ))}
             </div>
-          )}
+          </div>
         </div>
-      </div>
+      )}
 
       <div
         className={`grid transition-[grid-template-rows] duration-200 ${
