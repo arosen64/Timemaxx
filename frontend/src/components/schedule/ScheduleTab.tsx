@@ -174,9 +174,10 @@ export default function ScheduleTab() {
   const { scheduledBlocks, unscheduledBlocks } = useMemo(() => {
     const scheduled: StudyBlockOnGrid[] = [];
     const unscheduled: StudyBlockWithTask[] = [];
+    const now = Date.now();
     for (const b of allStudyBlocks ?? []) {
       if (b.startTime) scheduled.push(b as StudyBlockOnGrid);
-      else unscheduled.push(b);
+      else if (b.taskDueDate >= now) unscheduled.push(b);
     }
     unscheduled.sort((a, b) => {
       if (a.taskDueDate !== b.taskDueDate) return a.taskDueDate - b.taskDueDate;
