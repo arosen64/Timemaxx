@@ -72,8 +72,8 @@ export default function ClassCard({
     setStudyGoalValue(initialStudyGoal ?? "");
   }, [initialStudyGoal]);
   useEffect(() => {
-    setDifficultyValue(initialDifficultyRating ?? 3);
-  }, [initialDifficultyRating]);
+    setDifficultyValue(initialDifficultyRating ?? (isPast ? 3 : undefined));
+  }, [initialDifficultyRating, isPast]);
   useEffect(() => {
     setCurrentColor(initialColor ?? "");
   }, [initialColor]);
@@ -85,8 +85,10 @@ export default function ClassCard({
   const [studyGoalValue, setStudyGoalValue] = useState(initialStudyGoal ?? "");
   const [studyGoalError, setStudyGoalError] = useState<string | null>(null);
 
-  // Difficulty rating state (past cards only)
-  const [difficultyValue, setDifficultyValue] = useState(initialDifficultyRating ?? 3);
+  // Difficulty rating state
+  const [difficultyValue, setDifficultyValue] = useState<number | undefined>(
+    initialDifficultyRating ?? (isPast ? 3 : undefined)
+  );
   const [difficultyError, setDifficultyError] = useState<string | null>(null);
 
   async function handleConfirmRemove() {
@@ -327,6 +329,13 @@ export default function ClassCard({
             {studyGoalError && (
               <p className="font-body text-xs text-urgent-red">{studyGoalError}</p>
             )}
+            <div className="flex flex-col gap-1">
+              <span className="font-body text-xs text-light-blue">Difficulty</span>
+              <DifficultyRating value={difficultyValue} onChange={handleDifficultyChange} />
+              {difficultyError && (
+                <p className="font-body text-xs text-urgent-red">{difficultyError}</p>
+              )}
+            </div>
           </div>
         )}
         {!isPast &&
