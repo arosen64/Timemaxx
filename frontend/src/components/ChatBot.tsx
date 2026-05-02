@@ -321,7 +321,7 @@ export default function ChatBot() {
       {isOpen && (
         <div
           ref={containerRef}
-          className={`fixed inset-0 z-40 flex flex-col overflow-hidden bg-white md:static md:inset-auto md:z-auto md:rounded-2xl md:border md:border-border md:shadow-xl md:relative md:min-w-64 md:min-h-64${chatSize ? "" : " md:w-[400px] md:h-[600px]"}`}
+          className={`fixed inset-0 z-40 flex flex-col overflow-hidden bg-white md:relative md:inset-auto md:z-auto md:rounded-2xl md:border md:border-border md:shadow-xl md:min-w-64 md:min-h-64${chatSize ? "" : " md:w-[400px] md:h-[600px]"}`}
           style={
             chatSize && !isMobile ? { width: chatSize.width, height: chatSize.height } : undefined
           }
