@@ -1,4 +1,13 @@
 import { z } from "zod";
+import {
+  ACTIVE_AGENTS,
+  TASK_AGENT_INTENTS,
+  COURSE_AGENT_INTENTS,
+} from "../../../../../shared/chatEnums";
+
+const activeAgentEnum = z.enum(ACTIVE_AGENTS);
+const taskAgentIntentEnum = z.enum(TASK_AGENT_INTENTS);
+const courseAgentIntentEnum = z.enum(COURSE_AGENT_INTENTS);
 
 export const chatContextSchema = z.object({
   message: z.string(),
@@ -8,9 +17,9 @@ export const chatContextSchema = z.object({
   taggedTaskId: z.string().nullable(),
   taggedCourseId: z.string().nullable(),
   today: z.string(),
-  activeAgent: z.enum(["task", "feedback", "preferences", "classes", "schedule"]).nullable(),
-  taskAgentIntent: z.enum(["create", "rud"]).nullable(),
-  courseAgentIntent: z.enum(["add", "drop", "view", "update"]).nullable(),
+  activeAgent: activeAgentEnum.nullable(),
+  taskAgentIntent: taskAgentIntentEnum.nullable(),
+  courseAgentIntent: courseAgentIntentEnum.nullable(),
 });
 
 // routerStep passes all context through plus the routing decision
@@ -77,10 +86,10 @@ export const chatWorkflowOutputSchema = z.object({
   studyGoal: z.string().nullable(),
   grade: z.string().nullable(),
   difficultyRating: z.number().nullable(),
-  newActiveAgent: z.enum(["task", "feedback", "preferences", "classes", "schedule"]).nullable(),
+  newActiveAgent: activeAgentEnum.nullable(),
   clearActiveAgent: z.boolean(),
-  newTaskAgentIntent: z.enum(["create", "rud"]).nullable(),
-  newCourseAgentIntent: z.enum(["add", "drop", "view", "update"]).nullable(),
+  newTaskAgentIntent: taskAgentIntentEnum.nullable(),
+  newCourseAgentIntent: courseAgentIntentEnum.nullable(),
   readyToRecord: z.boolean(),
 });
 

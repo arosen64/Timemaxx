@@ -57,7 +57,7 @@ const MOCK_SUBTASKS = [
   },
 ];
 
-describe("actions/requestGenerateSubtasks", () => {
+describe("functions/requestGenerateSubtasks", () => {
   beforeEach(() => {
     vi.stubEnv("GEMINI_API_KEY", "test-api-key");
   });

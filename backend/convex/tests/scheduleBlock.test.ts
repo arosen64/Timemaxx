@@ -76,7 +76,7 @@ async function seedSubtaskBlock(
   );
 }
 
-describe("actions/scheduleBlock – recommendedStart constraint", () => {
+describe("functions/scheduleBlock – recommendedStart constraint", () => {
   test("returns no_slot_found when recommendedStart equals dueDate (zero schedulable window)", async () => {
     const t = makeTestCtx();
     const { userId, withAuth } = await createTestUser(t);

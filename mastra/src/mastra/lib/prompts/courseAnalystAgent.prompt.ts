@@ -5,21 +5,31 @@ import { z } from "zod";
 // ---------------------------------------------------------------------------
 
 export const courseAnalysisSchema = z.object({
-  subjectStrengths: z.string().describe(
-    "Subjects or departments where the student consistently performs well, with specific examples"
-  ),
-  areasForImprovement: z.string().describe(
-    "Subjects or topics where grades dipped or difficulty was high relative to grade, with specific examples"
-  ),
-  gradeTrend: z.string().describe(
-    "Whether overall performance is improving, declining, or stable across terms, with evidence"
-  ),
-  courseLoadPattern: z.string().describe(
-    "Observations about credit volume per term, mix of high- and low-difficulty courses, pacing choices"
-  ),
-  studyObservations: z.string().describe(
-    "Any additional patterns useful for study recommendations — e.g. performance in writing vs. quantitative courses"
-  ),
+  subjectStrengths: z
+    .string()
+    .describe(
+      "Subjects or departments where the student consistently performs well, with specific examples"
+    ),
+  areasForImprovement: z
+    .string()
+    .describe(
+      "Subjects or topics where grades dipped or difficulty was high relative to grade, with specific examples"
+    ),
+  gradeTrend: z
+    .string()
+    .describe(
+      "Whether overall performance is improving, declining, or stable across terms, with evidence"
+    ),
+  courseLoadPattern: z
+    .string()
+    .describe(
+      "Observations about credit volume per term, mix of high- and low-difficulty courses, pacing choices"
+    ),
+  studyObservations: z
+    .string()
+    .describe(
+      "Any additional patterns useful for study recommendations — e.g. performance in writing vs. quantitative courses"
+    ),
 });
 
 export type CourseAnalysis = z.infer<typeof courseAnalysisSchema>;

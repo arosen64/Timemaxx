@@ -321,7 +321,7 @@ describe("global scoring: speculative load spreads blocks across days", () => {
 // Sort order (block priority within a run)
 // ---------------------------------------------------------------------------
 
-// Mirrors the sort comparator in actions/scheduleAllBlocks.ts.
+// Mirrors the sort comparator in functions/scheduleAllBlocks.ts.
 // If the comparator changes, update this too.
 function sortForScheduling(
   a: { parentDueDate: number; parentWeight: number; _creationTime: number },

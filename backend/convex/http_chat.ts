@@ -359,7 +359,7 @@ async function applySessionStateChanges(
   userId: Id<"users">,
   sessionId: string,
   output: ChatWorkflowOutput,
-  previousActiveAgent: "task" | "feedback" | "preferences" | "classes" | "schedule" | null
+  previousActiveAgent: ActiveAgent | null
 ) {
   const feedbackAgentDone =
     previousActiveAgent === "feedback" &&

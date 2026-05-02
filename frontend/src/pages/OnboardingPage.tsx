@@ -3,14 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "../../../backend/convex/_generated/api";
 import { type DayOfWeek } from "../../../shared/userEnums";
+import { MIN_FOCUS_BLOCK_MINUTES } from "../../../shared/preferenceEnums";
 import { ProfileData, WorkHoursData, PreferencesData } from "../types";
 import ProfileForm from "../components/ProfileForm";
 import CoursesForm from "../components/CoursesForm";
 import WorkHoursSelector, { DEFAULT_WORK_HOURS } from "../components/WorkHoursSelector";
-import PreferencesForm, {
-  DEFAULT_PREFERENCES,
-  MIN_FOCUS_BLOCK_MINUTES,
-} from "../components/PreferencesForm";
+import PreferencesForm, { DEFAULT_PREFERENCES } from "../components/PreferencesForm";
 import AcademicProfileSummary from "../components/AcademicProfileSummary";
 import OnboardingStepShell from "../components/onboarding/OnboardingStepShell";
 import OnboardingNav from "../components/onboarding/OnboardingNav";
