@@ -28,6 +28,7 @@ async function seedTask(
       dueDate: FUTURE,
       createdAt: Date.now(),
       isManualEstimate: false,
+      status: "not_started",
     })
   );
 }
@@ -68,7 +69,7 @@ const MOCK_SUBTASKS = [
   },
 ];
 
-describe("actions/requestGenerateSubtasks", () => {
+describe("functions/requestGenerateSubtasks", () => {
   beforeEach(() => {
     vi.stubEnv("MASTRA_URL", "http://localhost:4111");
   });
