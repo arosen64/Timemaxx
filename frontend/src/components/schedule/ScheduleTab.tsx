@@ -172,14 +172,14 @@ export default function ScheduleTab() {
     return result;
   }, [days, timedEventsByDay]);
 
-  // Split study blocks into scheduled (on grid) and unscheduled (in tray)
+  // Split study blocks into scheduled (on grid) and unscheduled (in tray).
+  // Past-due and completed task blocks are excluded server-side in fetchAllStudyBlocksWithTasks.
   const { scheduledBlocks, unscheduledBlocks } = useMemo(() => {
     const scheduled: StudyBlockOnGrid[] = [];
     const unscheduled: StudyBlockWithTask[] = [];
-    const now = Date.now();
     for (const b of allStudyBlocks ?? []) {
       if (b.startTime) scheduled.push(b as StudyBlockOnGrid);
-      else if (b.taskDueDate >= now) unscheduled.push(b);
+      else unscheduled.push(b);
     }
     unscheduled.sort((a, b) => {
       if (a.taskDueDate !== b.taskDueDate) return a.taskDueDate - b.taskDueDate;
