@@ -1,4 +1,5 @@
 import { useState, KeyboardEvent } from "react";
+import { DAYS_OF_WEEK } from "../../../shared/userEnums";
 import { PreferencesData } from "../types";
 
 export const MIN_FOCUS_BLOCK_MINUTES = 15;
@@ -22,7 +23,7 @@ const CATEGORIES = [
     key: "dayOfWeek",
     label: "📅 Day of Week",
     description: "Your most productive days",
-    options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+    options: DAYS_OF_WEEK,
   },
   {
     key: "workSessionStyle",
@@ -51,7 +52,7 @@ const CATEGORIES = [
 interface CategorySectionProps {
   label: string;
   description: string;
-  options: string[];
+  options: readonly string[];
   selected: string[];
   onToggle: (option: string) => void;
   onAddCustom: (value: string) => void;

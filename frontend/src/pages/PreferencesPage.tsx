@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../backend/convex/_generated/api";
+import { type DayOfWeek } from "../../../shared/userEnums";
 import type { WorkHoursData } from "../types";
 import { CalendarIcon, ChevronDownIcon } from "../components/icons";
 import ProfileForm from "../components/ProfileForm";
@@ -74,14 +75,7 @@ export default function PreferencesPage() {
         });
       } else if (editingSection === "workhours" && workHoursDraft) {
         const newGrid = Object.entries(workHoursDraft).map(([day, slots]) => ({
-          day: day as
-            | "Monday"
-            | "Tuesday"
-            | "Wednesday"
-            | "Thursday"
-            | "Friday"
-            | "Saturday"
-            | "Sunday",
+          day: day as DayOfWeek,
           blocked: slots.blocked,
         }));
         await updateSettings({ workHoursGrid: newGrid });

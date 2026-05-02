@@ -1,14 +1,8 @@
 import { v } from "convex/values";
+import { DAYS_OF_WEEK } from "../../../shared/userEnums";
 
-export const dayOfWeekValidator = v.union(
-  v.literal("Monday"),
-  v.literal("Tuesday"),
-  v.literal("Wednesday"),
-  v.literal("Thursday"),
-  v.literal("Friday"),
-  v.literal("Saturday"),
-  v.literal("Sunday")
-);
+const [d0, d1, ...dRest] = DAYS_OF_WEEK.map((d) => v.literal(d));
+export const dayOfWeekValidator = v.union(d0, d1, ...dRest);
 
 export const workHoursRowValidator = v.object({
   day: dayOfWeekValidator,
