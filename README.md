@@ -53,8 +53,7 @@ npx convex dev
 cd mastra && npm run dev
 
 # Terminal 3 — ngrok tunnel (required so Convex can reach Mastra)
-
-
+ngrok http 4111
 
 # Terminal 4 — Vite frontend
 npm run dev
