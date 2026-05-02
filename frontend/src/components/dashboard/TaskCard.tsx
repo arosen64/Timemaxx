@@ -72,24 +72,12 @@ export default function TaskCard({
 }: TaskCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showAll, setShowAll] = useState(false);
-  const [isCancellingBlocks, setIsCancellingBlocks] = useState(false);
   const [showReasoning, setShowReasoning] = useState(false);
 
-  const deleteStudyBlocksForTask = useMutation(api.mutations.studyBlocks.deleteStudyBlocksForTask);
   const toggleStudyBlockComplete = useMutation(api.mutations.studyBlocks.toggleStudyBlockComplete);
 
   function handleToggleBlock(studyBlockId: string) {
     toggleStudyBlockComplete({ studyBlockId: studyBlockId as Id<"studyBlocks"> });
-  }
-
-  async function handleCancelBlocks(e: React.MouseEvent) {
-    e.stopPropagation();
-    setIsCancellingBlocks(true);
-    try {
-      await deleteStudyBlocksForTask({ taskId: task._id });
-    } finally {
-      setIsCancellingBlocks(false);
-    }
   }
 
   const atRiskData = useQuery(
@@ -401,20 +389,6 @@ export default function TaskCard({
                   >
                     See less
                   </button>
-                )}
-                {!isReadOnly && studyBlocks.length > 0 && (
-                  <div className="flex justify-end pt-1">
-                    <button
-                      type="button"
-                      onClick={handleCancelBlocks}
-                      disabled={isCancellingBlocks}
-                      className="flex items-center gap-1 text-[11px] font-semibold text-slate-blue hover:text-urgent-red transition disabled:opacity-50"
-                      aria-label="Cancel study block generation"
-                    >
-                      {isCancellingBlocks ? <SpinnerIcon color="currentColor" size={11} /> : null}
-                      Cancel blocks
-                    </button>
-                  </div>
                 )}
               </>
             )}
