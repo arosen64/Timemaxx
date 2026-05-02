@@ -180,12 +180,14 @@ describe("mutations/users – deleteAccount", () => {
     await t.run(async (ctx) => {
       await ctx.db.insert("chatMessages", {
         userId,
+        sessionId: "session-1",
         role: "user",
         content: "hello",
         createdAt: Date.now(),
       });
       await ctx.db.insert("chatMessages", {
         userId,
+        sessionId: "session-1",
         role: "assistant",
         content: "hi there",
         createdAt: Date.now() + 1,

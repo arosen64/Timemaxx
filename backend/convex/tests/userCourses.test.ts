@@ -82,6 +82,7 @@ describe("mutations/userCourses – deleteUserCourse", () => {
     const blockId = await t.run((ctx) =>
       ctx.db.insert("studyBlocks", {
         taskId: taskToRemove as never,
+        userId: userId as never,
         title: "Block",
         studyBlockLength: 60,
         isCompleted: false,

@@ -35,10 +35,8 @@ export default defineSchema({
     // Auth fields
     name: v.optional(v.string()),
     email: v.optional(v.string()),
-    phone: v.optional(v.string()),
     image: v.optional(v.string()),
     emailVerificationTime: v.optional(v.number()),
-    phoneVerificationTime: v.optional(v.number()),
     isAnonymous: v.optional(v.boolean()),
 
     // Custom onboarding fields
@@ -61,9 +59,7 @@ export default defineSchema({
     ),
 
     gcalColorMappingEnabled: v.optional(v.boolean()),
-  })
-    .index("email", ["email"])
-    .index("phone", ["phone"]),
+  }).index("email", ["email"]),
 
   // UserCourses table — per-user course enrollment records
   userCourses: defineTable({
@@ -126,10 +122,11 @@ export default defineSchema({
     }),
 
   // StudyBlocks table — stores scheduled time chunks assigned to tasks or subtasks
+  // Invariant: userId is always set; exactly one of (taskId, subtaskId) is set per block.
   studyBlocks: defineTable({
     taskId: v.optional(v.id("tasks")),
     subtaskId: v.optional(v.id("subtasks")),
-    userId: v.optional(v.id("users")),
+    userId: v.id("users"),
     title: v.string(),
     startTime: v.optional(v.string()),
     studyBlockLength: v.number(),
@@ -146,7 +143,7 @@ export default defineSchema({
   // Chat messages — stores chatbot conversation history per user
   chatMessages: defineTable({
     userId: v.id("users"),
-    sessionId: v.optional(v.string()),
+    sessionId: v.string(),
     role: v.union(v.literal("user"), v.literal("assistant")),
     content: v.string(),
     createdAt: v.number(),

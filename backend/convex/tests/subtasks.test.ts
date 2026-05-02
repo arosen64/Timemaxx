@@ -286,6 +286,7 @@ describe("mutations/subtasks – deleteSubtask", () => {
     const blockId = await t.run((ctx) =>
       ctx.db.insert("studyBlocks", {
         subtaskId: subtaskId as never,
+        userId: userId as never,
         title: "Block",
         studyBlockLength: 30,
         isCompleted: false,
@@ -326,6 +327,7 @@ describe("mutations/tasks – deleteTask cascade", () => {
     const subtaskBlockId = await t.run((ctx) =>
       ctx.db.insert("studyBlocks", {
         subtaskId: subtaskId as never,
+        userId: userId as never,
         title: "Subtask block",
         studyBlockLength: 30,
         isCompleted: false,
@@ -336,6 +338,7 @@ describe("mutations/tasks – deleteTask cascade", () => {
     const taskBlockId = await t.run((ctx) =>
       ctx.db.insert("studyBlocks", {
         taskId: taskId as never,
+        userId: userId as never,
         title: "Task block",
         studyBlockLength: 60,
         isCompleted: false,
@@ -387,6 +390,7 @@ describe("mutations/userCourses – deleteUserCourse cascade", () => {
     const subtaskBlockId = await t.run((ctx) =>
       ctx.db.insert("studyBlocks", {
         subtaskId: subtaskId as never,
+        userId: userId as never,
         title: "Block",
         studyBlockLength: 30,
         isCompleted: false,

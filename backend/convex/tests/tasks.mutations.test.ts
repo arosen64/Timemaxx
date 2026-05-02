@@ -20,17 +20,18 @@ async function seedTask(t: ReturnType<typeof makeTestCtx>, userId: string) {
 
 async function seedStudyBlock(
   t: ReturnType<typeof makeTestCtx>,
+  userId: string,
   taskId: string,
-  opts: { googleEventId?: string; userId?: string } = {}
+  opts: { googleEventId?: string } = {}
 ) {
   return t.run((ctx) =>
     ctx.db.insert("studyBlocks", {
       taskId: taskId as Id<"tasks">,
+      userId: userId as Id<"users">,
       title: "Block",
       studyBlockLength: 60,
       isCompleted: false,
       isConflicted: false,
-      ...(opts.userId ? { userId: opts.userId as Id<"users"> } : {}),
       ...(opts.googleEventId ? { googleEventId: opts.googleEventId } : {}),
     })
   );
@@ -54,17 +55,18 @@ async function seedSubtask(t: ReturnType<typeof makeTestCtx>, taskId: string, us
 
 async function seedSubtaskStudyBlock(
   t: ReturnType<typeof makeTestCtx>,
+  userId: string,
   subtaskId: string,
-  opts: { googleEventId?: string; userId?: string } = {}
+  opts: { googleEventId?: string } = {}
 ) {
   return t.run((ctx) =>
     ctx.db.insert("studyBlocks", {
       subtaskId: subtaskId as Id<"subtasks">,
+      userId: userId as Id<"users">,
       title: "Subtask Block",
       studyBlockLength: 60,
       isCompleted: false,
       isConflicted: false,
-      ...(opts.userId ? { userId: opts.userId as Id<"users"> } : {}),
       ...(opts.googleEventId ? { googleEventId: opts.googleEventId } : {}),
     })
   );
@@ -114,8 +116,8 @@ describe("mutations/tasks – deleteTask", () => {
     const t = makeTestCtx();
     const { userId, withAuth } = await createTestUser(t);
     const taskId = await seedTask(t, userId);
-    await seedStudyBlock(t, taskId);
-    await seedStudyBlock(t, taskId);
+    await seedStudyBlock(t, userId, taskId);
+    await seedStudyBlock(t, userId, taskId);
 
     await withAuth.mutation(api.mutations.tasks.deleteTask, { taskId });
 
@@ -131,8 +133,8 @@ describe("mutations/tasks – deleteTask", () => {
     const { userId, withAuth } = await createTestUser(t);
     const taskId1 = await seedTask(t, userId);
     const taskId2 = await seedTask(t, userId);
-    await seedStudyBlock(t, taskId1);
-    await seedStudyBlock(t, taskId2);
+    await seedStudyBlock(t, userId, taskId1);
+    await seedStudyBlock(t, userId, taskId2);
 
     await withAuth.mutation(api.mutations.tasks.deleteTask, { taskId: taskId1 });
 
@@ -148,10 +150,10 @@ describe("mutations/tasks – deleteTask", () => {
 
     const subtaskId1 = await seedSubtask(t, taskId, userId);
     const subtaskId2 = await seedSubtask(t, taskId, userId);
-    await seedSubtaskStudyBlock(t, subtaskId1, { googleEventId: "gcal-event-1" });
-    await seedSubtaskStudyBlock(t, subtaskId2, { googleEventId: "gcal-event-2" });
+    await seedSubtaskStudyBlock(t, userId, subtaskId1, { googleEventId: "gcal-event-1" });
+    await seedSubtaskStudyBlock(t, userId, subtaskId2, { googleEventId: "gcal-event-2" });
     // A subtask block without a googleEventId should not appear in the scheduled call
-    await seedSubtaskStudyBlock(t, subtaskId2);
+    await seedSubtaskStudyBlock(t, userId, subtaskId2);
 
     await withAuth.mutation(api.mutations.tasks.deleteTask, { taskId });
 
@@ -174,8 +176,8 @@ describe("mutations/tasks – updateTaskStatus study block sync", () => {
     const t = makeTestCtx();
     const { userId, withAuth } = await createTestUser(t);
     const taskId = await seedTask(t, userId);
-    await seedStudyBlock(t, taskId);
-    await seedStudyBlock(t, taskId);
+    await seedStudyBlock(t, userId, taskId);
+    await seedStudyBlock(t, userId, taskId);
 
     await withAuth.mutation(api.mutations.tasks.updateTaskStatus, {
       taskId,
@@ -191,8 +193,8 @@ describe("mutations/tasks – updateTaskStatus study block sync", () => {
     const { userId, withAuth } = await createTestUser(t);
     const taskId = await seedTask(t, userId);
     const subtaskId = await seedSubtask(t, taskId, userId);
-    await seedSubtaskStudyBlock(t, subtaskId, { userId });
-    await seedSubtaskStudyBlock(t, subtaskId, { userId });
+    await seedSubtaskStudyBlock(t, userId, subtaskId);
+    await seedSubtaskStudyBlock(t, userId, subtaskId);
 
     await withAuth.mutation(api.mutations.tasks.updateTaskStatus, {
       taskId,
@@ -207,8 +209,8 @@ describe("mutations/tasks – updateTaskStatus study block sync", () => {
     const t = makeTestCtx();
     const { userId, withAuth } = await createTestUser(t);
     const taskId = await seedTask(t, userId);
-    await seedStudyBlock(t, taskId);
-    await seedStudyBlock(t, taskId);
+    await seedStudyBlock(t, userId, taskId);
+    await seedStudyBlock(t, userId, taskId);
 
     await withAuth.mutation(api.mutations.tasks.updateTaskStatus, { taskId, status: "completed" });
     await withAuth.mutation(api.mutations.tasks.updateTaskStatus, {
@@ -225,8 +227,8 @@ describe("mutations/tasks – updateTaskStatus study block sync", () => {
     const { userId, withAuth } = await createTestUser(t);
     const taskId = await seedTask(t, userId);
     const subtaskId = await seedSubtask(t, taskId, userId);
-    await seedSubtaskStudyBlock(t, subtaskId, { userId });
-    await seedSubtaskStudyBlock(t, subtaskId, { userId });
+    await seedSubtaskStudyBlock(t, userId, subtaskId);
+    await seedSubtaskStudyBlock(t, userId, subtaskId);
 
     await withAuth.mutation(api.mutations.tasks.updateTaskStatus, { taskId, status: "completed" });
     await withAuth.mutation(api.mutations.tasks.updateTaskStatus, {
@@ -242,7 +244,7 @@ describe("mutations/tasks – updateTaskStatus study block sync", () => {
     const t = makeTestCtx();
     const { userId, withAuth } = await createTestUser(t);
     const taskId = await seedTask(t, userId);
-    await seedStudyBlock(t, taskId);
+    await seedStudyBlock(t, userId, taskId);
 
     await withAuth.mutation(api.mutations.tasks.updateTaskStatus, { taskId, status: "completed" });
     await withAuth.mutation(api.mutations.tasks.updateTaskStatus, {
@@ -258,7 +260,7 @@ describe("mutations/tasks – updateTaskStatus study block sync", () => {
     const t = makeTestCtx();
     const { userId, withAuth } = await createTestUser(t);
     const taskId = await seedTask(t, userId);
-    const blockId = await seedStudyBlock(t, taskId, { userId });
+    const blockId = await seedStudyBlock(t, userId, taskId);
 
     // Complete the task (marks block isCompleted: true)
     await withAuth.mutation(api.mutations.tasks.updateTaskStatus, { taskId, status: "completed" });

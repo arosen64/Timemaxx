@@ -22,12 +22,14 @@ async function seedTask(t: ReturnType<typeof makeTestCtx>, userId: string) {
 // Helper: seed a study block directly in the db
 async function seedStudyBlock(
   t: ReturnType<typeof makeTestCtx>,
+  userId: string,
   taskId: string,
   overrides: { title?: string; startTime?: string; studyBlockLength?: number } = {}
 ) {
   return t.run((ctx) =>
     ctx.db.insert("studyBlocks", {
       taskId: taskId as Id<"tasks">,
+      userId: userId as Id<"users">,
       title: overrides.title ?? "Block 1",
       startTime: overrides.startTime,
       studyBlockLength: overrides.studyBlockLength ?? 60,
@@ -103,7 +105,7 @@ describe("studyBlocks schema – googleEventId field", () => {
     const t = makeTestCtx();
     const { userId, withAuth } = await createTestUser(t);
     const taskId = await seedTask(t, userId);
-    const studyBlockId = await seedStudyBlock(t, taskId);
+    const studyBlockId = await seedStudyBlock(t, userId, taskId);
     const newStart = new Date(Date.now() + 3600_000).toISOString();
 
     await withAuth.mutation(api.mutations.studyBlocks.editStudyBlockTime, {
@@ -271,7 +273,7 @@ describe("mutations/studyBlocks – createTaskBlocks", () => {
     const t = makeTestCtx();
     const { userId, withAuth } = await createTestUser(t);
     const taskId = await seedTask(t, userId);
-    await seedStudyBlock(t, taskId);
+    await seedStudyBlock(t, userId, taskId);
 
     await withAuth.mutation(api.mutations.studyBlocks.createTaskBlocks, {
       taskId,
@@ -290,7 +292,7 @@ describe("mutations/studyBlocks – deleteStudyBlock", () => {
     const t = makeTestCtx();
     const { userId } = await createTestUser(t);
     const taskId = await seedTask(t, userId);
-    const studyBlockId = await seedStudyBlock(t, taskId);
+    const studyBlockId = await seedStudyBlock(t, userId, taskId);
 
     await expect(
       t.mutation(api.mutations.studyBlocks.deleteStudyBlock, { studyBlockId })
@@ -302,7 +304,7 @@ describe("mutations/studyBlocks – deleteStudyBlock", () => {
     const { userId } = await createTestUser(t);
     const { withAuth: otherAuth } = await createTestUser(t, { email: "other@example.com" });
     const taskId = await seedTask(t, userId);
-    const studyBlockId = await seedStudyBlock(t, taskId);
+    const studyBlockId = await seedStudyBlock(t, userId, taskId);
 
     await expect(
       otherAuth.mutation(api.mutations.studyBlocks.deleteStudyBlock, { studyBlockId })
@@ -313,7 +315,7 @@ describe("mutations/studyBlocks – deleteStudyBlock", () => {
     const t = makeTestCtx();
     const { userId, withAuth } = await createTestUser(t);
     const taskId = await seedTask(t, userId);
-    const studyBlockId = await seedStudyBlock(t, taskId);
+    const studyBlockId = await seedStudyBlock(t, userId, taskId);
 
     await withAuth.mutation(api.mutations.studyBlocks.deleteStudyBlock, { studyBlockId });
 
@@ -329,7 +331,7 @@ describe("mutations/studyBlocks – editStudyBlockTime", () => {
     const t = makeTestCtx();
     const { userId } = await createTestUser(t);
     const taskId = await seedTask(t, userId);
-    const studyBlockId = await seedStudyBlock(t, taskId);
+    const studyBlockId = await seedStudyBlock(t, userId, taskId);
 
     await expect(
       t.mutation(api.mutations.studyBlocks.editStudyBlockTime, {
@@ -344,7 +346,7 @@ describe("mutations/studyBlocks – editStudyBlockTime", () => {
     const { userId } = await createTestUser(t);
     const { withAuth: otherAuth } = await createTestUser(t, { email: "other@example.com" });
     const taskId = await seedTask(t, userId);
-    const studyBlockId = await seedStudyBlock(t, taskId);
+    const studyBlockId = await seedStudyBlock(t, userId, taskId);
 
     await expect(
       otherAuth.mutation(api.mutations.studyBlocks.editStudyBlockTime, {
@@ -358,7 +360,7 @@ describe("mutations/studyBlocks – editStudyBlockTime", () => {
     const t = makeTestCtx();
     const { userId, withAuth } = await createTestUser(t);
     const taskId = await seedTask(t, userId);
-    const studyBlockId = await seedStudyBlock(t, taskId);
+    const studyBlockId = await seedStudyBlock(t, userId, taskId);
     const newStart = new Date(Date.now() + 7200_000).toISOString();
 
     await withAuth.mutation(api.mutations.studyBlocks.editStudyBlockTime, {
@@ -374,7 +376,7 @@ describe("mutations/studyBlocks – editStudyBlockTime", () => {
     const t = makeTestCtx();
     const { userId, withAuth } = await createTestUser(t);
     const taskId = await seedTask(t, userId);
-    const studyBlockId = await seedStudyBlock(t, taskId, {
+    const studyBlockId = await seedStudyBlock(t, userId, taskId, {
       startTime: new Date(Date.now() + 3600_000).toISOString(),
     });
 
@@ -395,7 +397,7 @@ describe("mutations/studyBlocks – splitStudyBlock", () => {
     const t = makeTestCtx();
     const { userId } = await createTestUser(t);
     const taskId = await seedTask(t, userId);
-    const studyBlockId = await seedStudyBlock(t, taskId, { studyBlockLength: 90 });
+    const studyBlockId = await seedStudyBlock(t, userId, taskId, { studyBlockLength: 90 });
 
     await expect(
       t.mutation(api.mutations.studyBlocks.splitStudyBlock, {
@@ -410,7 +412,7 @@ describe("mutations/studyBlocks – splitStudyBlock", () => {
     const { userId } = await createTestUser(t);
     const { withAuth: otherAuth } = await createTestUser(t, { email: "other@example.com" });
     const taskId = await seedTask(t, userId);
-    const studyBlockId = await seedStudyBlock(t, taskId, { studyBlockLength: 90 });
+    const studyBlockId = await seedStudyBlock(t, userId, taskId, { studyBlockLength: 90 });
 
     await expect(
       otherAuth.mutation(api.mutations.studyBlocks.splitStudyBlock, {
@@ -424,7 +426,7 @@ describe("mutations/studyBlocks – splitStudyBlock", () => {
     const t = makeTestCtx();
     const { userId, withAuth } = await createTestUser(t);
     const taskId = await seedTask(t, userId);
-    const studyBlockId = await seedStudyBlock(t, taskId, { studyBlockLength: 45 });
+    const studyBlockId = await seedStudyBlock(t, userId, taskId, { studyBlockLength: 45 });
 
     await expect(
       withAuth.mutation(api.mutations.studyBlocks.splitStudyBlock, {
@@ -438,7 +440,7 @@ describe("mutations/studyBlocks – splitStudyBlock", () => {
     const t = makeTestCtx();
     const { userId, withAuth } = await createTestUser(t);
     const taskId = await seedTask(t, userId);
-    const studyBlockId = await seedStudyBlock(t, taskId, { studyBlockLength: 45 });
+    const studyBlockId = await seedStudyBlock(t, userId, taskId, { studyBlockLength: 45 });
 
     await expect(
       withAuth.mutation(api.mutations.studyBlocks.splitStudyBlock, {
@@ -452,7 +454,7 @@ describe("mutations/studyBlocks – splitStudyBlock", () => {
     const t = makeTestCtx();
     const { userId, withAuth } = await createTestUser(t);
     const taskId = await seedTask(t, userId);
-    const studyBlockId = await seedStudyBlock(t, taskId, { studyBlockLength: 90 });
+    const studyBlockId = await seedStudyBlock(t, userId, taskId, { studyBlockLength: 90 });
 
     const { blockAId, blockBId } = await withAuth.mutation(
       api.mutations.studyBlocks.splitStudyBlock,
@@ -473,7 +475,7 @@ describe("mutations/studyBlocks – splitStudyBlock", () => {
     const t = makeTestCtx();
     const { userId, withAuth } = await createTestUser(t);
     const taskId = await seedTask(t, userId);
-    const studyBlockId = await seedStudyBlock(t, taskId, { studyBlockLength: 89 });
+    const studyBlockId = await seedStudyBlock(t, userId, taskId, { studyBlockLength: 89 });
 
     const { blockAId, blockBId } = await withAuth.mutation(
       api.mutations.studyBlocks.splitStudyBlock,
@@ -492,7 +494,10 @@ describe("mutations/studyBlocks – splitStudyBlock", () => {
     const { userId, withAuth } = await createTestUser(t);
     const taskId = await seedTask(t, userId);
     const startTime = new Date(Date.now() + 3600_000).toISOString();
-    const studyBlockId = await seedStudyBlock(t, taskId, { studyBlockLength: 90, startTime });
+    const studyBlockId = await seedStudyBlock(t, userId, taskId, {
+      studyBlockLength: 90,
+      startTime,
+    });
 
     const { blockAId, blockBId } = await withAuth.mutation(
       api.mutations.studyBlocks.splitStudyBlock,
@@ -511,7 +516,7 @@ describe("mutations/studyBlocks – splitStudyBlock", () => {
     const t = makeTestCtx();
     const { userId, withAuth } = await createTestUser(t);
     const taskId = await seedTask(t, userId);
-    const studyBlockId = await seedStudyBlock(t, taskId, { studyBlockLength: 90 });
+    const studyBlockId = await seedStudyBlock(t, userId, taskId, { studyBlockLength: 90 });
 
     const { blockAId, blockBId } = await withAuth.mutation(
       api.mutations.studyBlocks.splitStudyBlock,
@@ -529,7 +534,7 @@ describe("mutations/studyBlocks – splitStudyBlock", () => {
     const t = makeTestCtx();
     const { userId, withAuth } = await createTestUser(t);
     const taskId = await seedTask(t, userId);
-    const studyBlockId = await seedStudyBlock(t, taskId, {
+    const studyBlockId = await seedStudyBlock(t, userId, taskId, {
       title: "Study session",
       studyBlockLength: 90,
     });
@@ -576,7 +581,7 @@ describe("mutations/studyBlocks – setGoogleEventId", () => {
     const t = makeTestCtx();
     const { userId } = await createTestUser(t);
     const taskId = await seedTask(t, userId);
-    const studyBlockId = await seedStudyBlock(t, taskId);
+    const studyBlockId = await seedStudyBlock(t, userId, taskId);
 
     await t.mutation(internal.mutations.studyBlocks.setGoogleEventId, {
       studyBlockId,
@@ -594,6 +599,7 @@ describe("mutations/studyBlocks – setGoogleEventId", () => {
     const studyBlockId = await t.run((ctx) =>
       ctx.db.insert("studyBlocks", {
         taskId: taskId as Id<"tasks">,
+        userId: userId as Id<"users">,
         title: "Block",
         studyBlockLength: 60,
         googleEventId: "old_event_id",
@@ -616,7 +622,7 @@ describe("mutations/studyBlocks – setGoogleEventId", () => {
     const { userId } = await createTestUser(t);
     const taskId = await seedTask(t, userId);
     const startTime = new Date(Date.now() + 3600_000).toISOString();
-    const studyBlockId = await seedStudyBlock(t, taskId, {
+    const studyBlockId = await seedStudyBlock(t, userId, taskId, {
       title: "My block",
       startTime,
       studyBlockLength: 45,
@@ -674,6 +680,7 @@ describe("mutations/studyBlocks – flagFutureBlocksForReexport", () => {
     const blockId = await t.run((ctx) =>
       ctx.db.insert("studyBlocks", {
         taskId: taskId as Id<"tasks">,
+        userId: userId as Id<"users">,
         title: "Past block",
         startTime: pastStart,
         studyBlockLength: 60,
@@ -699,6 +706,7 @@ describe("mutations/studyBlocks – flagFutureBlocksForReexport", () => {
     const blockId = await t.run((ctx) =>
       ctx.db.insert("studyBlocks", {
         taskId: taskId as Id<"tasks">,
+        userId: userId as Id<"users">,
         title: "Unscheduled block",
         studyBlockLength: 60,
         googleEventId: "gcal-evt-unscheduled",
@@ -722,6 +730,7 @@ describe("mutations/studyBlocks – flagFutureBlocksForReexport", () => {
     const blockId = await t.run((ctx) =>
       ctx.db.insert("studyBlocks", {
         taskId: taskId as Id<"tasks">,
+        userId: userId as Id<"users">,
         title: "Never exported",
         startTime: futureStart,
         studyBlockLength: 60,
