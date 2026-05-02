@@ -5,9 +5,10 @@ import { decryptToken } from "../lib/calendarCrypto";
 /**
  * One-time migration action for issue #632.
  *
- * Scans all calendarConnections records and deletes any whose accessToken cannot
- * be decrypted with CALENDAR_TOKEN_SECRET — indicating they were stored as
- * plaintext via the now-removed storeCalendarToken public mutation.
+ * Scans all calendarConnections records and deletes any where either
+ * accessToken or refreshToken cannot be decrypted with CALENDAR_TOKEN_SECRET,
+ * indicating they were stored as plaintext via the now-removed storeCalendarToken
+ * public mutation.
  *
  * Records written by calendarOAuthCallback (the only production write path) were
  * already encrypted and will be left untouched.
@@ -20,22 +21,43 @@ export const run = internalAction({
     const tokenSecret = process.env.CALENDAR_TOKEN_SECRET;
     if (!tokenSecret) throw new Error("CALENDAR_TOKEN_SECRET is not set");
 
-    const connections = await ctx.runQuery(
-      internal.queries.calendar.getAllCalendarConnections
-    );
-
+    let cursor: string | null = null;
+    let isDone = false;
+    let scanned = 0;
     let invalidated = 0;
-    for (const conn of connections) {
-      try {
-        await decryptToken(conn.accessToken, tokenSecret);
-      } catch {
-        await ctx.runMutation(internal.mutations.calendar.deleteCalendarTokenForUser, {
-          userId: conn.userId,
-        });
-        invalidated++;
+
+    while (!isDone) {
+      const page = await ctx.runQuery(internal.queries.calendar.getCalendarConnectionsPage, {
+        paginationOpts: { cursor, numItems: 100 },
+      });
+
+      for (const conn of page.page) {
+        scanned++;
+        let isPlaintext = false;
+        try {
+          await decryptToken(conn.accessToken, tokenSecret);
+        } catch {
+          isPlaintext = true;
+        }
+        if (!isPlaintext) {
+          try {
+            await decryptToken(conn.refreshToken, tokenSecret);
+          } catch {
+            isPlaintext = true;
+          }
+        }
+        if (isPlaintext) {
+          await ctx.runMutation(internal.mutations.calendar.deleteCalendarTokenForUser, {
+            userId: conn.userId,
+          });
+          invalidated++;
+        }
       }
+
+      cursor = page.continueCursor;
+      isDone = page.isDone;
     }
 
-    return { scanned: connections.length, invalidated };
+    return { scanned, invalidated };
   },
 });

@@ -1,4 +1,5 @@
 import { internalQuery, query } from "../_generated/server";
+import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
@@ -70,11 +71,12 @@ export const getCalendarConnectionForUser = internalQuery({
 });
 
 /**
- * Returns all calendarConnections records — used by the plaintext-token invalidation action.
+ * Returns a page of calendarConnections records — used by the plaintext-token invalidation action.
  */
-export const getAllCalendarConnections = internalQuery({
-  handler: async (ctx) => {
-    return await ctx.db.query("calendarConnections").collect();
+export const getCalendarConnectionsPage = internalQuery({
+  args: { paginationOpts: paginationOptsValidator },
+  handler: async (ctx, args) => {
+    return await ctx.db.query("calendarConnections").paginate(args.paginationOpts);
   },
 });
 
