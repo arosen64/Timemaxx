@@ -99,19 +99,23 @@ export const getTasksByCourseId = query({
 
     const order = args.sortOrder ?? "desc";
 
+    const now = Date.now();
+
     if (!args.courseId) {
-      return await ctx.db
+      const tasks = await ctx.db
         .query("tasks")
         .withIndex("by_userId_courseId", (q) => q.eq("userId", userId).eq("courseId", undefined))
         .order(order)
         .collect();
+      return tasks.filter((t) => t.status !== "completed" && t.dueDate >= now);
     }
 
-    return await ctx.db
+    const tasks = await ctx.db
       .query("tasks")
       .withIndex("by_userId_courseId", (q) => q.eq("userId", userId).eq("courseId", args.courseId!))
       .order(order)
       .collect();
+    return tasks.filter((t) => t.status !== "completed" && t.dueDate >= now);
   },
 });
 

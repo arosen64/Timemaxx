@@ -42,6 +42,7 @@ export async function rebuildStudyBlocksForSubtask(
       startTime: undefined,
       studyBlockLength,
       isCompleted: false,
+      isConflicted: false,
     });
   }
 }
@@ -78,6 +79,7 @@ export async function rebuildStudyBlocks(
       startTime: undefined,
       studyBlockLength,
       isCompleted: false,
+      isConflicted: false,
     });
   }
 }

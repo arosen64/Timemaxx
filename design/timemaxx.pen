@@ -1040,26 +1040,26 @@
                       "descendants": {
                         "xSyvj": {
                           "x": 18,
-                          "y": 16
+                          "y": 18
                         },
                         "irAAT": {
                           "width": "fit_content",
                           "height": "fit_content",
                           "x": 36,
-                          "y": 17.5
+                          "y": 16
                         },
                         "x5jOH": {
                           "content": "Calculus Problem Set 5"
                         },
                         "ks9wy": {
                           "content": "Due tomorrow · ~2.5 hrs estimated",
-                          "y": 22
+                          "y": 3.5
                         },
                         "fwllh": {
                           "width": "fit_content",
                           "height": "fit_content",
-                          "x": 247,
-                          "y": 25
+                          "x": 295,
+                          "y": 27
                         },
                         "fwllh/RDasw": {
                           "x": 10,
@@ -1075,25 +1075,25 @@
                       "width": "fill_container",
                       "height": "fit_content",
                       "x": 0,
-                      "y": 124,
+                      "y": 128,
                       "descendants": {
                         "xSyvj": {
                           "fill": "$--info",
                           "x": 18,
-                          "y": 16
+                          "y": 18
                         },
                         "irAAT": {
                           "width": "fit_content",
                           "height": "fit_content",
                           "x": 36,
-                          "y": 17.5
+                          "y": 16
                         },
                         "x5jOH": {
                           "content": "History Essay: Industrial Revolution"
                         },
                         "ks9wy": {
                           "content": "Due in 3 days · ~4 hrs estimated",
-                          "y": 22
+                          "y": 3.5
                         },
                         "fwllh": {
                           "id": "n87Ra",
@@ -1103,7 +1103,7 @@
                           "width": "fit_content",
                           "height": "fit_content",
                           "x": 290,
-                          "y": 25,
+                          "y": 27,
                           "descendants": {
                             "adDaz": {
                               "x": 10,
@@ -1121,25 +1121,25 @@
                       "width": "fill_container",
                       "height": "fit_content",
                       "x": 0,
-                      "y": 212,
+                      "y": 220,
                       "descendants": {
                         "xSyvj": {
                           "fill": "$--success",
                           "x": 18,
-                          "y": 16
+                          "y": 18
                         },
                         "irAAT": {
                           "width": "fit_content",
                           "height": "fit_content",
                           "x": 36,
-                          "y": 17.5
+                          "y": 16
                         },
                         "x5jOH": {
                           "content": "Chemistry Lab Report"
                         },
                         "ks9wy": {
                           "content": "Due in 5 days · ~3 hrs estimated",
-                          "y": 22
+                          "y": 3.5
                         },
                         "fwllh": {
                           "id": "j9AjD",
@@ -1148,8 +1148,8 @@
                           "name": "badge",
                           "width": "fit_content",
                           "height": "fit_content",
-                          "x": 233,
-                          "y": 25,
+                          "x": 281,
+                          "y": 27,
                           "descendants": {
                             "ezeW9": {
                               "x": 10,
@@ -1636,26 +1636,26 @@
                       "descendants": {
                         "xSyvj": {
                           "x": 18,
-                          "y": 16
+                          "y": 18
                         },
                         "irAAT": {
                           "width": "fit_content",
                           "height": "fit_content",
                           "x": 36,
-                          "y": 17.5
+                          "y": 16
                         },
                         "x5jOH": {
                           "content": "Calculus Problem Set 5"
                         },
                         "ks9wy": {
                           "content": "Due tomorrow · ~2.5 hrs estimated",
-                          "y": 22
+                          "y": 3.5
                         },
                         "fwllh": {
                           "width": "fit_content",
                           "height": "fit_content",
-                          "x": 247,
-                          "y": 25
+                          "x": 295,
+                          "y": 27
                         },
                         "fwllh/RDasw": {
                           "x": 10,
@@ -1671,25 +1671,25 @@
                       "width": "fill_container",
                       "height": "fit_content",
                       "x": 0,
-                      "y": 124,
+                      "y": 128,
                       "descendants": {
                         "xSyvj": {
                           "fill": "$--info",
                           "x": 18,
-                          "y": 16
+                          "y": 18
                         },
                         "irAAT": {
                           "width": "fit_content",
                           "height": "fit_content",
                           "x": 36,
-                          "y": 17.5
+                          "y": 16
                         },
                         "x5jOH": {
                           "content": "History Essay: Industrial Revolution"
                         },
                         "ks9wy": {
                           "content": "Due in 3 days · ~4 hrs estimated",
-                          "y": 22
+                          "y": 3.5
                         },
                         "fwllh": {
                           "id": "5JriD",
@@ -1699,7 +1699,7 @@
                           "width": "fit_content",
                           "height": "fit_content",
                           "x": 290,
-                          "y": 25,
+                          "y": 27,
                           "descendants": {
                             "adDaz": {
                               "x": 10,
@@ -1717,25 +1717,25 @@
                       "width": "fill_container",
                       "height": "fit_content",
                       "x": 0,
-                      "y": 212,
+                      "y": 220,
                       "descendants": {
                         "xSyvj": {
                           "fill": "$--success",
                           "x": 18,
-                          "y": 16
+                          "y": 18
                         },
                         "irAAT": {
                           "width": "fit_content",
                           "height": "fit_content",
                           "x": 36,
-                          "y": 17.5
+                          "y": 16
                         },
                         "x5jOH": {
                           "content": "Chemistry Lab Report"
                         },
                         "ks9wy": {
                           "content": "Due in 5 days · ~3 hrs estimated",
-                          "y": 22
+                          "y": 3.5
                         },
                         "fwllh": {
                           "id": "SviJc",
@@ -1744,8 +1744,8 @@
                           "name": "badge",
                           "width": "fit_content",
                           "height": "fit_content",
-                          "x": 233,
-                          "y": 25,
+                          "x": 281,
+                          "y": 27,
                           "descendants": {
                             "ezeW9": {
                               "x": 10,
@@ -3585,26 +3585,26 @@
               "descendants": {
                 "xSyvj": {
                   "x": 18,
-                  "y": 16
+                  "y": 18
                 },
                 "irAAT": {
                   "width": "fit_content",
                   "height": "fit_content",
                   "x": 36,
-                  "y": 17.5
+                  "y": 16
                 },
                 "x5jOH": {
                   "content": "Calculus Problem Set 5"
                 },
                 "ks9wy": {
                   "content": "Due tomorrow · ~2.5 hrs estimated",
-                  "y": 22
+                  "y": 3.5
                 },
                 "fwllh": {
                   "width": "fit_content",
                   "height": "fit_content",
-                  "x": 247,
-                  "y": 25
+                  "x": 295,
+                  "y": 27
                 },
                 "fwllh/RDasw": {
                   "x": 10,
@@ -4615,6 +4615,28 @@
           "height": "fit_content",
           "x": 60,
           "y": 2704
+        },
+        {
+          "type": "text",
+          "id": "M0F68W",
+          "x": 60,
+          "y": 2750,
+          "name": "loadingLabel",
+          "fill": "$--foreground",
+          "content": "Loading / Parsing",
+          "fontFamily": "Space Grotesk",
+          "fontSize": 13,
+          "fontWeight": "600"
+        },
+        {
+          "id": "WU2pA",
+          "type": "ref",
+          "ref": "dw1ql",
+          "name": "ParsingAnimation",
+          "width": "fit_content",
+          "height": "fit_content",
+          "x": 60,
+          "y": 2774
         }
       ]
     },
@@ -5200,8 +5222,8 @@
           "name": "badge",
           "width": "fit_content",
           "height": "fit_content",
-          "x": 247,
-          "y": 25,
+          "x": 295,
+          "y": 27,
           "descendants": {
             "RDasw": {
               "x": 10,
@@ -22907,7 +22929,8 @@
           "fill": "$--muted-foreground",
           "content": "Apr 25",
           "fontFamily": "Inter",
-          "fontSize": 10
+          "fontSize": 10,
+          "fontWeight": "normal"
         }
       ]
     },
@@ -22978,7 +23001,8 @@
               "fill": "$--accent",
               "content": "Apr 25",
               "fontFamily": "Inter",
-              "fontSize": 10
+              "fontSize": 10,
+              "fontWeight": "normal"
             }
           ]
         }
@@ -23023,7 +23047,8 @@
           "fill": "$--muted-foreground",
           "content": "Select a task to schedule",
           "fontFamily": "Inter",
-          "fontSize": 12
+          "fontSize": 12,
+          "fontWeight": "normal"
         },
         {
           "type": "frame",
@@ -23179,7 +23204,8 @@
                   "fill": "$--primary",
                   "content": "Outline methodology",
                   "fontFamily": "Inter",
-                  "fontSize": 12
+                  "fontSize": 12,
+                  "fontWeight": "normal"
                 },
                 {
                   "type": "text",
@@ -23224,7 +23250,8 @@
                   "fill": "$--primary",
                   "content": "Write results section",
                   "fontFamily": "Inter",
-                  "fontSize": 12
+                  "fontSize": 12,
+                  "fontWeight": "normal"
                 },
                 {
                   "type": "text",
@@ -23330,7 +23357,8 @@
                       "fill": "$--muted-foreground",
                       "content": "60 min",
                       "fontFamily": "Inter",
-                      "fontSize": 10
+                      "fontSize": 10,
+                      "fontWeight": "normal"
                     }
                   ]
                 }
@@ -23768,7 +23796,8 @@
                           "fill": "$--muted-foreground",
                           "content": "Select a task to schedule",
                           "fontFamily": "Inter",
-                          "fontSize": 11
+                          "fontSize": 11,
+                          "fontWeight": "normal"
                         },
                         {
                           "type": "frame",
@@ -23835,40 +23864,42 @@
         "fill": "$--border"
       },
       "gap": 14,
-      "padding": [16, 18],
-      "alignItems": "flex_start",
+      "padding": [
+        16,
+        18
+      ],
       "children": [
         {
           "type": "frame",
           "id": "TRC02",
           "name": "accentBar",
           "width": 4,
+          "height": "fit_content(0)",
           "fill": "$--accent",
-          "cornerRadius": 2,
-          "alignSelf": "stretch"
+          "cornerRadius": 2
         },
         {
           "type": "frame",
           "id": "TRC03",
           "name": "body",
+          "width": "fill_container",
           "layout": "vertical",
           "gap": 10,
-          "width": "fill_container",
           "children": [
             {
               "type": "frame",
               "id": "TRC04",
               "name": "titleRow",
+              "width": "fill_container",
               "gap": 8,
               "alignItems": "center",
-              "width": "fill_container",
               "children": [
                 {
                   "type": "frame",
                   "id": "TRC05",
                   "name": "titleInput",
-                  "height": 36,
                   "width": "fill_container",
+                  "height": 36,
                   "fill": "$--background",
                   "cornerRadius": 6,
                   "stroke": {
@@ -23876,7 +23907,10 @@
                     "thickness": 1,
                     "fill": "$--border"
                   },
-                  "padding": [0, 12],
+                  "padding": [
+                    0,
+                    12
+                  ],
                   "alignItems": "center",
                   "children": [
                     {
@@ -23921,7 +23955,6 @@
               "id": "TRC09",
               "name": "dateTypeRow",
               "gap": 10,
-              "alignItems": "flex_end",
               "children": [
                 {
                   "type": "frame",
@@ -23945,7 +23978,7 @@
                       "type": "ref",
                       "ref": "DTPk1",
                       "name": "datetimePicker",
-                      "width": "fit_content",
+                      "width": "fit_content(0)",
                       "height": "fit_content"
                     }
                   ]
@@ -23962,7 +23995,10 @@
                     "thickness": 1,
                     "fill": "$--border"
                   },
-                  "padding": [0, 10],
+                  "padding": [
+                    0,
+                    10
+                  ],
                   "alignItems": "center",
                   "children": [
                     {
@@ -24009,7 +24045,10 @@
                     "thickness": 1,
                     "fill": "$--border"
                   },
-                  "padding": [0, 8],
+                  "padding": [
+                    0,
+                    8
+                  ],
                   "alignItems": "center",
                   "children": [
                     {
@@ -24062,19 +24101,18 @@
           "type": "frame",
           "id": "SR003",
           "name": "main",
+          "width": "fill_container",
+          "height": "fill_container",
           "layout": "vertical",
           "gap": 28,
           "padding": 40,
-          "width": "fill_container",
-          "height": "fill_container",
           "children": [
             {
               "type": "frame",
               "id": "SR004",
               "name": "pageHeader",
-              "justifyContent": "space_between",
-              "alignItems": "flex_start",
               "width": "fill_container",
+              "justifyContent": "space_between",
               "children": [
                 {
                   "type": "frame",
@@ -24111,8 +24149,11 @@
                   "name": "readyBadge",
                   "fill": "$--success-bg",
                   "cornerRadius": 8,
-                  "padding": [6, 12],
                   "gap": 6,
+                  "padding": [
+                    6,
+                    12
+                  ],
                   "alignItems": "center",
                   "children": [
                     {
@@ -24143,9 +24184,9 @@
               "type": "frame",
               "id": "SR011",
               "name": "taskList",
+              "width": "fill_container",
               "layout": "vertical",
               "gap": 12,
-              "width": "fill_container",
               "children": [
                 {
                   "id": "SR012",
@@ -24155,8 +24196,12 @@
                   "width": "fill_container",
                   "height": "fit_content",
                   "descendants": {
-                    "TRC06": { "content": "Midterm Exam" },
-                    "TRC18": { "content": "25" }
+                    "TRC06": {
+                      "content": "Midterm Exam"
+                    },
+                    "TRC18": {
+                      "content": "25"
+                    }
                   }
                 },
                 {
@@ -24167,8 +24212,12 @@
                   "width": "fill_container",
                   "height": "fit_content",
                   "descendants": {
-                    "TRC06": { "content": "Problem Set 3" },
-                    "TRC18": { "content": "5" }
+                    "TRC06": {
+                      "content": "Problem Set 3"
+                    },
+                    "TRC18": {
+                      "content": "5"
+                    }
                   }
                 },
                 {
@@ -24185,6 +24234,7 @@
               "type": "frame",
               "id": "SR015",
               "name": "actionBar",
+              "width": "fill_container",
               "fill": "$--card",
               "cornerRadius": 8,
               "stroke": {
@@ -24192,10 +24242,12 @@
                 "thickness": 1,
                 "fill": "$--border"
               },
-              "padding": [16, 20],
+              "padding": [
+                16,
+                20
+              ],
               "justifyContent": "space_between",
               "alignItems": "center",
-              "width": "fill_container",
               "children": [
                 {
                   "type": "text",
@@ -24235,6 +24287,41 @@
               ]
             }
           ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "dw1ql",
+      "x": 13780,
+      "y": -3247,
+      "name": "ParsingAnimation",
+      "reusable": true,
+      "gap": 6,
+      "alignItems": "center",
+      "children": [
+        {
+          "type": "ellipse",
+          "id": "Q1kfOq",
+          "name": "spinner",
+          "fill": "#00000000",
+          "width": 12,
+          "height": 12,
+          "stroke": {
+            "align": "inside",
+            "thickness": 2,
+            "fill": "$--muted-foreground"
+          }
+        },
+        {
+          "type": "text",
+          "id": "eOtux",
+          "name": "phraseText",
+          "fill": "$--muted-foreground",
+          "content": "Meticulously scrutinizing your document…",
+          "fontFamily": "Inter",
+          "fontSize": 12,
+          "fontWeight": "normal"
         }
       ]
     }

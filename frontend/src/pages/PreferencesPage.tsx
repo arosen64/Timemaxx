@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../backend/convex/_generated/api";
+import { type DayOfWeek, type Year, YEARS } from "../../../shared/userEnums";
 import type { WorkHoursData } from "../types";
 import { CalendarIcon, ChevronDownIcon } from "../components/icons";
 import ProfileForm from "../components/ProfileForm";
@@ -16,6 +17,7 @@ function dbToWorkHours(grid: { day: string; blocked: number[] }[] | undefined): 
 
 export default function PreferencesPage() {
   const user = useQuery(api.queries.users.getCurrUser);
+  const userCourses = useQuery(api.queries.userCourses.getUserCourses);
   const calendarStatus = useQuery(api.queries.calendar.getCalendarConnectionStatus);
   const updateSettings = useMutation(api.mutations.users.updateUserSettings);
   const runDetectConflicts = useMutation(api.mutations.studyBlocks.runDetectConflicts);
@@ -41,7 +43,7 @@ export default function PreferencesPage() {
       setProfileDraft({
         major: user.major ?? "",
         year: user.year ?? "",
-        courses: (user.courses ?? []).map((c) => ({ title: c.title, studyGoal: c.studyGoal })),
+        courses: (userCourses ?? []).map((c) => ({ title: c.title, studyGoal: c.studyGoal })),
       });
     } else if (section === "workhours") {
       setWorkHoursDraft(
@@ -69,15 +71,14 @@ export default function PreferencesPage() {
       if (editingSection === "about" && profileDraft) {
         await updateSettings({
           major: profileDraft.major,
-          year: profileDraft.year,
-          courses: profileDraft.courses.map((c) => ({
-            title: c.title,
-            studyGoal: c.studyGoal ?? "",
-          })),
+          // ProfileForm dropdown only emits values from YEARS; skip empty draft.
+          year: (YEARS as readonly string[]).includes(profileDraft.year)
+            ? (profileDraft.year as Year)
+            : undefined,
         });
       } else if (editingSection === "workhours" && workHoursDraft) {
         const newGrid = Object.entries(workHoursDraft).map(([day, slots]) => ({
-          day,
+          day: day as DayOfWeek,
           blocked: slots.blocked,
         }));
         await updateSettings({ workHoursGrid: newGrid });
@@ -105,7 +106,7 @@ export default function PreferencesPage() {
   const profileData: ProfileData = {
     major: user?.major ?? "",
     year: user?.year ?? "",
-    courses: (user?.courses ?? []).map((c) => ({ title: c.title, studyGoal: c.studyGoal })),
+    courses: (userCourses ?? []).map((c) => ({ title: c.title, studyGoal: c.studyGoal })),
   };
   const workHoursData = dbToWorkHours(user?.workHoursGrid);
   const preferencesData: PreferencesData = {

@@ -1,16 +1,18 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 import { authTables } from "@convex-dev/auth/server";
-import { taskTypeValidator } from "./lib/taskValidators";
-import { activeAgentValidator } from "./lib/chatValidators";
-
-/** Per-category AI explanation for time estimates (tasks and subtasks). */
-const reasoningTraceValidator = v.object({
-  classes: v.string(),
-  tasks: v.string(),
-  chats: v.string(),
-  profile: v.string(),
-});
+import { sharedTaskFields } from "./lib/taskValidators";
+import {
+  activeAgentValidator,
+  taskAgentIntentValidator,
+  courseAgentIntentValidator,
+  clarificationIntentValidator,
+} from "./lib/chatValidators";
+import {
+  productivityTraitsValidator,
+  workHoursRowValidator,
+  yearValidator,
+} from "./lib/userValidators";
 
 export default defineSchema({
   ...authTables,
@@ -38,36 +40,19 @@ export default defineSchema({
     // Auth fields
     name: v.optional(v.string()),
     email: v.optional(v.string()),
-    phone: v.optional(v.string()),
     image: v.optional(v.string()),
     emailVerificationTime: v.optional(v.number()),
-    phoneVerificationTime: v.optional(v.number()),
     isAnonymous: v.optional(v.boolean()),
 
     // Custom onboarding fields
     onboardingComplete: v.optional(v.boolean()),
     focusBlockLength: v.optional(v.number()),
     major: v.optional(v.string()),
-    year: v.optional(v.string()),
-    courses: v.optional(
-      v.array(
-        v.object({
-          title: v.string(),
-          studyGoal: v.string(),
-        })
-      )
-    ),
+    year: v.optional(yearValidator),
 
-    workHoursGrid: v.optional(
-      v.array(
-        v.object({
-          day: v.string(),
-          blocked: v.array(v.number()),
-        })
-      )
-    ),
+    workHoursGrid: v.optional(v.array(workHoursRowValidator)),
 
-    productivityTraits: v.optional(v.any()),
+    productivityTraits: v.optional(productivityTraitsValidator),
 
     transcriptSummary: v.optional(
       v.array(
@@ -79,9 +64,7 @@ export default defineSchema({
     ),
 
     gcalColorMappingEnabled: v.optional(v.boolean()),
-  })
-    .index("email", ["email"])
-    .index("phone", ["phone"]),
+  }).index("email", ["email"]),
 
   // UserCourses table — per-user course enrollment records
   userCourses: defineTable({
@@ -109,25 +92,9 @@ export default defineSchema({
 
   // Tasks table
   tasks: defineTable({
-    userId: v.id("users"),
-    title: v.string(),
-    description: v.string(),
-    taskType: taskTypeValidator,
-    timeEstimate: v.optional(v.number()),
-    isManualEstimate: v.optional(v.boolean()),
-    estimateFeedbackRating: v.optional(v.union(v.literal("up"), v.literal("down"))),
-    correctedEstimateMinutes: v.optional(v.number()),
-    estimateFeedbackSubmittedAt: v.optional(v.number()),
+    ...sharedTaskFields,
     dueDate: v.number(),
-    createdAt: v.number(),
-    courseId: v.optional(v.id("userCourses")),
-    /** Free-text label for the course/class (optional; complements courseId) */
-    classTag: v.optional(v.string()),
-    embedding: v.optional(v.array(v.float64())),
-    reasoning: v.optional(reasoningTraceValidator),
-    status: v.optional(
-      v.union(v.literal("not_started"), v.literal("in_progress"), v.literal("completed"))
-    ),
+    isManualEstimate: v.optional(v.boolean()),
     assignmentWeight: v.optional(v.number()),
     recommendedStart: v.optional(v.number()),
   })
@@ -142,27 +109,12 @@ export default defineSchema({
 
   // Subtasks table — AI-generated or manually created subtasks linked to a parent task
   subtasks: defineTable({
+    ...sharedTaskFields,
     parentTaskId: v.id("tasks"),
-    userId: v.id("users"),
-    title: v.string(),
-    description: v.string(),
-    taskType: taskTypeValidator,
     color: v.string(),
-    timeEstimate: v.optional(v.number()),
     suggestedCompletionAt: v.optional(v.number()),
     dueDate: v.optional(v.number()),
-    courseId: v.optional(v.id("userCourses")),
-    classTag: v.optional(v.string()),
-    estimateFeedbackRating: v.optional(v.union(v.literal("up"), v.literal("down"))),
-    correctedEstimateMinutes: v.optional(v.number()),
-    estimateFeedbackSubmittedAt: v.optional(v.number()),
-    reasoning: v.optional(reasoningTraceValidator),
     order: v.number(),
-    createdAt: v.number(),
-    embedding: v.optional(v.array(v.float64())),
-    status: v.optional(
-      v.union(v.literal("not_started"), v.literal("in_progress"), v.literal("completed"))
-    ),
   })
     .index("by_parentTaskId", ["parentTaskId"])
     .index("by_userId", ["userId"])
@@ -173,14 +125,15 @@ export default defineSchema({
     }),
 
   // StudyBlocks table — stores scheduled time chunks assigned to tasks or subtasks
+  // Invariant: userId is always set; exactly one of (taskId, subtaskId) is set per block.
   studyBlocks: defineTable({
     taskId: v.optional(v.id("tasks")),
     subtaskId: v.optional(v.id("subtasks")),
-    userId: v.optional(v.id("users")),
+    userId: v.id("users"),
     title: v.string(),
     startTime: v.optional(v.string()),
     studyBlockLength: v.number(),
-    isConflicted: v.optional(v.boolean()),
+    isConflicted: v.boolean(),
     googleEventId: v.optional(v.string()),
     needsExport: v.optional(v.boolean()),
     isCompleted: v.boolean(),
@@ -193,13 +146,11 @@ export default defineSchema({
   // Chat messages — stores chatbot conversation history per user
   chatMessages: defineTable({
     userId: v.id("users"),
-    sessionId: v.optional(v.string()),
+    sessionId: v.string(),
     role: v.union(v.literal("user"), v.literal("assistant")),
     content: v.string(),
     createdAt: v.number(),
-    clarificationIntent: v.optional(
-      v.union(v.literal("task_feedback"), v.literal("class_difficulty"), v.literal("none"))
-    ),
+    clarificationIntent: v.optional(clarificationIntentValidator),
     /** Copied from chatSessions at insert time when that session has resolved scope */
     taskId: v.optional(v.id("tasks")),
     courseId: v.optional(v.id("userCourses")),
@@ -229,11 +180,9 @@ export default defineSchema({
     /** Which specialist agent is handling this session */
     activeAgent: v.optional(activeAgentValidator),
     /** Intent determined by task agent: "create" skips entity MCQ, "rud" triggers it */
-    taskAgentIntent: v.optional(v.union(v.literal("create"), v.literal("rud"))),
+    taskAgentIntent: v.optional(taskAgentIntentValidator),
     /** Intent determined by course agent for multi-turn class conversations. */
-    courseAgentIntent: v.optional(
-      v.union(v.literal("add"), v.literal("drop"), v.literal("view"), v.literal("update"))
-    ),
+    courseAgentIntent: v.optional(courseAgentIntentValidator),
     /** Current scope for future chat message tagging. */
     activeTaskId: v.optional(v.id("tasks")),
     activeCourseId: v.optional(v.id("userCourses")),
@@ -255,9 +204,7 @@ export default defineSchema({
     startCreatedAt: v.number(),
     linkedTaskIds: v.array(v.id("tasks")),
     linkedCourseIds: v.array(v.id("userCourses")),
-    clarificationIntent: v.optional(
-      v.union(v.literal("task_feedback"), v.literal("class_difficulty"), v.literal("none"))
-    ),
+    clarificationIntent: v.optional(clarificationIntentValidator),
     embedding: v.optional(v.array(v.float64())),
     createdAt: v.number(),
   })

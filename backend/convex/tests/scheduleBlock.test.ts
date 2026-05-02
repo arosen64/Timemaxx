@@ -19,6 +19,7 @@ async function seedTask(
       recommendedStart: opts.recommendedStart,
       createdAt: Date.now(),
       isManualEstimate: false,
+      status: "not_started",
     })
   );
 }
@@ -31,6 +32,7 @@ async function seedBlock(t: ReturnType<typeof makeTestCtx>, taskId: string, user
       title: "Block",
       studyBlockLength: 60,
       isCompleted: false,
+      isConflicted: false,
     })
   );
 }
@@ -52,6 +54,7 @@ async function seedSubtask(
       order: 0,
       createdAt: Date.now(),
       dueDate: opts.dueDate ?? Date.now() + 30 * 86_400_000,
+      status: "not_started",
     })
   );
 }
@@ -68,11 +71,12 @@ async function seedSubtaskBlock(
       title: "Subtask Block",
       studyBlockLength: 60,
       isCompleted: false,
+      isConflicted: false,
     })
   );
 }
 
-describe("actions/scheduleBlock – recommendedStart constraint", () => {
+describe("functions/scheduleBlock – recommendedStart constraint", () => {
   test("returns no_slot_found when recommendedStart equals dueDate (zero schedulable window)", async () => {
     const t = makeTestCtx();
     const { userId, withAuth } = await createTestUser(t);
@@ -80,7 +84,7 @@ describe("actions/scheduleBlock – recommendedStart constraint", () => {
     const taskId = await seedTask(t, userId, { dueDate, recommendedStart: dueDate });
     const blockId = await seedBlock(t, taskId, userId);
 
-    const result = await withAuth.action(api.actions.scheduleBlock.scheduleBlock, {
+    const result = await withAuth.action(api.functions.scheduleBlock.scheduleBlock, {
       studyBlockId: blockId,
       timezone: "America/New_York",
     });
@@ -94,7 +98,7 @@ describe("actions/scheduleBlock – recommendedStart constraint", () => {
     const taskId = await seedTask(t, userId);
     const blockId = await seedBlock(t, taskId, userId);
 
-    const result = await withAuth.action(api.actions.scheduleBlock.scheduleBlock, {
+    const result = await withAuth.action(api.functions.scheduleBlock.scheduleBlock, {
       studyBlockId: blockId,
       timezone: "America/New_York",
     });
@@ -112,7 +116,7 @@ describe("actions/scheduleBlock – recommendedStart constraint", () => {
     });
     const blockId = await seedBlock(t, taskId, userId);
 
-    const result = await withAuth.action(api.actions.scheduleBlock.scheduleBlock, {
+    const result = await withAuth.action(api.functions.scheduleBlock.scheduleBlock, {
       studyBlockId: blockId,
       timezone: "America/New_York",
     });
@@ -130,7 +134,7 @@ describe("actions/scheduleBlock – recommendedStart constraint", () => {
     });
     const blockId = await seedBlock(t, taskId, userId);
 
-    const result = await withAuth.action(api.actions.scheduleBlock.scheduleBlock, {
+    const result = await withAuth.action(api.functions.scheduleBlock.scheduleBlock, {
       studyBlockId: blockId,
       timezone: "America/New_York",
     });
@@ -153,7 +157,7 @@ describe("actions/scheduleBlock – recommendedStart constraint", () => {
     });
     const blockId = await seedSubtaskBlock(t, subtaskId, userId);
 
-    const result = await withAuth.action(api.actions.scheduleBlock.scheduleBlock, {
+    const result = await withAuth.action(api.functions.scheduleBlock.scheduleBlock, {
       studyBlockId: blockId,
       timezone: "America/New_York",
     });

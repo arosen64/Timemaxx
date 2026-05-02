@@ -7,6 +7,7 @@ vi.mock('../../backend/convex/_generated/api', () => ({
   api: {
     queries: {
       users: { getCurrUser: 'getCurrUser' },
+      userCourses: { getUserCourses: 'getUserCourses' },
       calendar: { getCalendarConnectionStatus: 'getCalendarConnectionStatus' },
     },
     mutations: {
@@ -72,6 +73,9 @@ function setup({
     const key = args[0] as unknown as string
     if (key === 'getCalendarConnectionStatus') {
       return { connected: calendarConnected, hasEventsScope: calendarConnected } as never
+    }
+    if (key === 'getUserCourses') {
+      return (user as typeof MOCK_USER | null)?.courses ?? [] as never
     }
     return user as never
   })

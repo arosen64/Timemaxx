@@ -19,7 +19,7 @@ export const getChatHistoryInternal = internalQuery({
 });
 
 export const getChatHistory = query({
-  args: { sessionId: v.optional(v.string()), limit: v.optional(v.number()) },
+  args: { sessionId: v.string(), limit: v.optional(v.number()) },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) return [];

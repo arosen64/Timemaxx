@@ -147,8 +147,8 @@ export default function ClassPanel({
       : { courseId: selectedCourseId as Id<"userCourses"> };
   const courseTasks = useQuery(api.queries.tasks.getTasksByCourseId, courseTasksArgs);
 
-  const scheduleBlockAction = useAction(api.actions.scheduleBlock.scheduleBlock);
-  const scheduleAllBlocksAction = useAction(api.actions.scheduleAllBlocks.scheduleAllBlocks);
+  const scheduleBlockAction = useAction(api.functions.scheduleBlock.scheduleBlock);
+  const scheduleAllBlocksAction = useAction(api.functions.scheduleAllBlocks.scheduleAllBlocks);
 
   const subtasks = useQuery(
     api.queries.subtasks.getSubtasksForTask,
@@ -163,7 +163,7 @@ export default function ClassPanel({
     [courses]
   );
 
-  const tasksForSelectedCourse = (courseTasks ?? []).filter((t) => t.status !== "completed");
+  const tasksForSelectedCourse = courseTasks ?? [];
 
   const selectedTask = useMemo(
     () => tasksForSelectedCourse.find((t) => t._id === selectedTaskId) ?? null,

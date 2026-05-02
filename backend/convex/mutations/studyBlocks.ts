@@ -111,6 +111,7 @@ export const createStudyBlock = mutation({
       startTime: args.startTime,
       studyBlockLength: args.studyBlockLength,
       isCompleted: false,
+      isConflicted: false,
     });
   },
 });
@@ -150,6 +151,7 @@ export const createTaskBlocks = mutation({
         startTime: undefined,
         studyBlockLength: block.studyBlockLength,
         isCompleted: false,
+        isConflicted: false,
       });
     }
   },
@@ -174,25 +176,6 @@ export const deleteStudyBlock = mutation({
     if (ownerId !== userId) throw new Error("Unauthorized");
 
     await ctx.db.delete(args.studyBlockId);
-  },
-});
-
-export const deleteStudyBlocksForTask = mutation({
-  args: { taskId: v.id("tasks") },
-  handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Unauthenticated");
-
-    const task = await ctx.db.get(args.taskId);
-    if (!task || task.userId !== userId) throw new Error("Task not found");
-
-    const blocks = await ctx.db
-      .query("studyBlocks")
-      .withIndex("by_taskId", (q) => q.eq("taskId", args.taskId))
-      .collect();
-    for (const block of blocks) {
-      await ctx.db.delete(block._id);
-    }
   },
 });
 
@@ -353,7 +336,7 @@ export const detectConflicts = internalMutation({
           args.timezone
         );
 
-        if ((block.isConflicted ?? false) !== conflicted) {
+        if (block.isConflicted !== conflicted) {
           await ctx.db.patch(block._id, { isConflicted: conflicted });
         }
       }
@@ -412,7 +395,7 @@ export const detectConflicts = internalMutation({
           args.timezone
         );
 
-        if ((block.isConflicted ?? false) !== conflicted) {
+        if (block.isConflicted !== conflicted) {
           await ctx.db.patch(block._id, { isConflicted: conflicted });
         }
       }
@@ -465,6 +448,7 @@ export const splitStudyBlock = mutation({
       studyBlockLength: splitAt,
       needsExport,
       isCompleted: false,
+      isConflicted: false,
     });
 
     const blockBId = await ctx.db.insert("studyBlocks", {
@@ -476,6 +460,7 @@ export const splitStudyBlock = mutation({
       studyBlockLength: remaining,
       needsExport,
       isCompleted: false,
+      isConflicted: false,
     });
 
     return { blockAId, blockBId };
