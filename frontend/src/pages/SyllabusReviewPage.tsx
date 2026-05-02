@@ -116,6 +116,14 @@ export default function SyllabusReviewPage() {
       });
     }
 
+    const totalWeight = toSave.reduce((sum, t) => sum + (t.assignmentWeight ?? 0), 0);
+    if (totalWeight > 100) {
+      const rounded = Math.round(totalWeight * 10) / 10;
+      const display = Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1);
+      setError(`Assignment weights sum to ${display}% — total cannot exceed 100%.`);
+      return;
+    }
+
     setIsConfirming(true);
     try {
       await confirmSyllabusTasks({ syllabusId, tasks: toSave });
