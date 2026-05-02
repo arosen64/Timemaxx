@@ -30,7 +30,7 @@ export const mastra = new Mastra({
     syllabusAgent,
     transcriptAgent,
     academicProfileAgent,
-    courseAnalystAgent
+    courseAnalystAgent,
   },
   workflows: {
     chatWorkflow,
@@ -40,6 +40,6 @@ export const mastra = new Mastra({
     syllabusParseWorkflow,
     transcriptOcrWorkflow,
     transcriptParseWorkflow,
-    academicProfileWorkflow
+    academicProfileWorkflow,
   },
 });

@@ -44,6 +44,13 @@ export const generateAcademicProfile = action({
       "Academic profile generation"
     );
 
+    const runStatus = (run as { status?: string }).status;
+    if (runStatus === "failed") {
+      const rawErr = (run as { error?: string | Error }).error;
+      const msg = rawErr instanceof Error ? rawErr.message : String(rawErr ?? "unknown");
+      throw new Error(`Academic profile workflow failed: ${msg}`);
+    }
+
     const profileStep = run.steps?.["generate-profile"] as
       | { status: string; output?: { insights?: AcademicInsight[] }; error?: string | Error }
       | undefined;
