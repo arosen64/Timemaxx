@@ -4,7 +4,11 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { internal } from "../_generated/api";
 import type { Doc } from "../_generated/dataModel";
 import { cascadeDeleteTask } from "./tasks";
-import { productivityTraitsValidator, workHoursRowValidator } from "../lib/userValidators";
+import {
+  productivityTraitsValidator,
+  workHoursRowValidator,
+  yearValidator,
+} from "../lib/userValidators";
 
 /**
  * Partially updates the authenticated user's settings (work hours, focus block length, study profile).
@@ -12,7 +16,7 @@ import { productivityTraitsValidator, workHoursRowValidator } from "../lib/userV
 export const updateUserSettings = mutation({
   args: {
     major: v.optional(v.string()),
-    year: v.optional(v.string()),
+    year: v.optional(yearValidator),
     transcriptSummary: v.optional(v.array(v.object({ label: v.string(), text: v.string() }))),
     workHoursGrid: v.optional(v.array(workHoursRowValidator)),
     productivityTraits: v.optional(productivityTraitsValidator),
@@ -30,11 +34,7 @@ export const updateUserSettings = mutation({
     // it is only set (to true) via completeOnboarding and should not be toggled
     // from the settings page.
 
-    // TODO: tighten validation for schema-level fields:
-    //   - year should be restricted to known values (Freshman, Sophomore, Junior, Senior, Graduate)
-    //   - major should reject purely numeric strings
-    //   - productivityTraits uses v.any() and has no shape enforcement
-    // Track this as a follow-up issue for backend input validation.
+    // TODO: reject purely numeric `major` strings; tracked as a follow-up.
 
     const prevUser = args.gcalColorMappingEnabled !== undefined ? await ctx.db.get(userId) : null;
 
@@ -84,7 +84,7 @@ export const updateUserSettings = mutation({
 export const completeOnboarding = mutation({
   args: {
     major: v.string(),
-    year: v.string(),
+    year: yearValidator,
     workHoursGrid: v.array(workHoursRowValidator),
     productivityTraits: productivityTraitsValidator,
     focusBlockLength: v.number(),
