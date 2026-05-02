@@ -61,7 +61,6 @@ export default function EditModal({
           ? String(task.timeEstimate)
           : '',
       }}
-      showAiEstimateReset={task?.isManualEstimate === true}
       classTagCourses={classTagCourses}
       onClose={onClose}
       onSubmit={async (form) => { await onSave(form); return task!._id }}

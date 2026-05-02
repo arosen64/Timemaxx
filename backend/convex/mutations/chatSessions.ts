@@ -1,5 +1,6 @@
 import { internalMutation } from "../_generated/server";
 import { v } from "convex/values";
+import { activeAgentValidator } from "../lib/chatValidators";
 
 export const getOrCreateChatSessionInternal = internalMutation({
   args: {
@@ -80,7 +81,6 @@ export const resolvePickedTaskInternal = internalMutation({
 
     const needsClassNext = row.needsClassAfterTask === true;
     await ctx.db.patch(row._id, {
-      resolvedTaskId: args.taskId,
       clarificationAttemptCount: 0,
       clarificationExhausted: false,
       needsClassAfterTask: false,
@@ -119,7 +119,6 @@ export const resolvePickedCourseInternal = internalMutation({
     if (!row) throw new Error("chat session missing");
 
     await ctx.db.patch(row._id, {
-      resolvedCourseId: args.courseId,
       activeEntityStep: undefined,
       awaitingEntityResolution: false,
       needsClassAfterTask: false,
@@ -153,11 +152,12 @@ export const clearEntityAwaitingInternal = internalMutation({
   },
 });
 
-export const beginAwaitingScopeConfirmInternal = internalMutation({
+/** Lock the thread after hitting the per-session message cap. */
+export const setChatInputLockedInternal = internalMutation({
   args: {
     userId: v.id("users"),
     sessionId: v.string(),
-    pendingScopeUserMessageId: v.optional(v.id("chatMessages")),
+    locked: v.boolean(),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -169,78 +169,7 @@ export const beginAwaitingScopeConfirmInternal = internalMutation({
       .unique();
     if (!row) throw new Error("chat session missing");
     await ctx.db.patch(row._id, {
-      awaitingScopeConfirm: true,
-      ...(args.pendingScopeUserMessageId !== undefined
-        ? { pendingScopeUserMessageId: args.pendingScopeUserMessageId }
-        : {}),
-    });
-    return null;
-  },
-});
-
-export const resolveScopeConfirmYesInternal = internalMutation({
-  args: {
-    userId: v.id("users"),
-    sessionId: v.string(),
-  },
-  returns: v.null(),
-  handler: async (ctx, args) => {
-    const row = await ctx.db
-      .query("chatSessions")
-      .withIndex("by_userId_sessionId", (q) =>
-        q.eq("userId", args.userId).eq("sessionId", args.sessionId),
-      )
-      .unique();
-    if (!row) throw new Error("chat session missing");
-    await ctx.db.patch(row._id, {
-      awaitingScopeConfirm: false,
-      scopeBypassNextMessage: true,
-      pendingScopeUserMessageId: undefined,
-    });
-    return null;
-  },
-});
-
-export const resolveScopeConfirmNoInternal = internalMutation({
-  args: {
-    userId: v.id("users"),
-    sessionId: v.string(),
-  },
-  returns: v.null(),
-  handler: async (ctx, args) => {
-    const row = await ctx.db
-      .query("chatSessions")
-      .withIndex("by_userId_sessionId", (q) =>
-        q.eq("userId", args.userId).eq("sessionId", args.sessionId),
-      )
-      .unique();
-    if (!row) throw new Error("chat session missing");
-    await ctx.db.patch(row._id, {
-      awaitingScopeConfirm: false,
-      scopeBypassNextMessage: false,
-      chatInputLocked: true,
-      pendingScopeUserMessageId: undefined,
-    });
-    return null;
-  },
-});
-
-export const consumeScopeBypassInternal = internalMutation({
-  args: {
-    userId: v.id("users"),
-    sessionId: v.string(),
-  },
-  returns: v.null(),
-  handler: async (ctx, args) => {
-    const row = await ctx.db
-      .query("chatSessions")
-      .withIndex("by_userId_sessionId", (q) =>
-        q.eq("userId", args.userId).eq("sessionId", args.sessionId),
-      )
-      .unique();
-    if (!row) return null;
-    await ctx.db.patch(row._id, {
-      scopeBypassNextMessage: false,
+      chatInputLocked: args.locked,
     });
     return null;
   },
@@ -250,8 +179,11 @@ export const setTaskAgentStateInternal = internalMutation({
   args: {
     userId: v.id("users"),
     sessionId: v.string(),
-    activeAgent: v.optional(v.union(v.literal("task"), v.literal("feedback"), v.literal("preferences"))),
+    activeAgent: v.optional(activeAgentValidator),
     taskAgentIntent: v.optional(v.union(v.literal("create"), v.literal("rud"))),
+    courseAgentIntent: v.optional(
+      v.union(v.literal("add"), v.literal("drop"), v.literal("view"), v.literal("update")),
+    ),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -265,12 +197,13 @@ export const setTaskAgentStateInternal = internalMutation({
     await ctx.db.patch(row._id, {
       ...(args.activeAgent !== undefined ? { activeAgent: args.activeAgent } : {}),
       ...(args.taskAgentIntent !== undefined ? { taskAgentIntent: args.taskAgentIntent } : {}),
+      ...(args.courseAgentIntent !== undefined ? { courseAgentIntent: args.courseAgentIntent } : {}),
     });
     return null;
   },
 });
 
-export const clearTaskAgentStateInternal = internalMutation({
+export const clearAgentStateInternal = internalMutation({
   args: {
     userId: v.id("users"),
     sessionId: v.string(),
@@ -284,18 +217,113 @@ export const clearTaskAgentStateInternal = internalMutation({
       )
       .unique();
     if (!row) return null;
-    // Clear agent state AND resolved entities — each subagent interaction is self-contained.
-    // The next invocation starts fresh so the user can act on a different task or class.
+    // Clear subagent mode so the next turn can route via supervisor again.
     await ctx.db.patch(row._id, {
       activeAgent: undefined,
       taskAgentIntent: undefined,
-      resolvedTaskId: undefined,
-      resolvedCourseId: undefined,
+      courseAgentIntent: undefined,
       awaitingEntityResolution: false,
       activeEntityStep: undefined,
+      lastEntityQueryText: undefined,
+      entityClarifyTriggerUserMessageId: undefined,
       needsClassAfterTask: false,
       clarificationAttemptCount: 0,
       clarificationExhausted: false,
+      activeTaskId: undefined,
+      activeCourseId: undefined,
+      pendingScheduleAction: undefined,
+      activeBlockId: undefined,
+    });
+    return null;
+  },
+});
+
+// Backwards-compatible alias for generated API/type references until next codegen.
+export const clearTaskAgentStateInternal = clearAgentStateInternal;
+
+export const setMessageScopeInternal = internalMutation({
+  args: {
+    userId: v.id("users"),
+    sessionId: v.string(),
+    taskId: v.optional(v.id("tasks")),
+    courseId: v.optional(v.id("userCourses")),
+    clear: v.boolean(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const row = await ctx.db
+      .query("chatSessions")
+      .withIndex("by_userId_sessionId", (q) =>
+        q.eq("userId", args.userId).eq("sessionId", args.sessionId),
+      )
+      .unique();
+    if (!row) return null;
+
+    if (args.clear) {
+      await ctx.db.patch(row._id, {
+        activeTaskId: undefined,
+        activeCourseId: undefined,
+      });
+      return null;
+    }
+
+    await ctx.db.patch(row._id, {
+      ...(args.taskId !== undefined ? { activeTaskId: args.taskId } : {}),
+      ...(args.courseId !== undefined ? { activeCourseId: args.courseId } : {}),
+    });
+    return null;
+  },
+});
+
+export const setBlockPromptStateInternal = internalMutation({
+  args: {
+    userId: v.id("users"),
+    sessionId: v.string(),
+    pendingScheduleAction: v.literal("schedule_block"),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const row = await ctx.db
+      .query("chatSessions")
+      .withIndex("by_userId_sessionId", (q) =>
+        q.eq("userId", args.userId).eq("sessionId", args.sessionId),
+      )
+      .unique();
+    if (!row) throw new Error("chat session missing");
+    await ctx.db.patch(row._id, {
+      pendingScheduleAction: args.pendingScheduleAction,
+      activeBlockId: undefined,
+    });
+    return null;
+  },
+});
+
+export const resolvePickedBlockInternal = internalMutation({
+  args: {
+    userId: v.id("users"),
+    sessionId: v.string(),
+    blockId: v.id("studyBlocks"),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const block = await ctx.db.get(args.blockId);
+    if (!block) throw new Error("Block not found");
+    const ownerId = block.taskId
+      ? (await ctx.db.get(block.taskId))?.userId
+      : block.subtaskId
+        ? (await ctx.db.get(block.subtaskId))?.userId
+        : undefined;
+    if (ownerId !== args.userId) throw new Error("Unauthorized");
+    const row = await ctx.db
+      .query("chatSessions")
+      .withIndex("by_userId_sessionId", (q) =>
+        q.eq("userId", args.userId).eq("sessionId", args.sessionId),
+      )
+      .unique();
+    if (!row) throw new Error("chat session missing");
+    await ctx.db.patch(row._id, {
+      activeBlockId: args.blockId,
+      pendingScheduleAction: undefined,
     });
     return null;
   },

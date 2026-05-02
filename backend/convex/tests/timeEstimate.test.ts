@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { api, internal } from "../_generated/api";
 import { makeTestCtx, createTestUser } from "../../convex-tests/helpers";
+import { TWO_WEEKS_MS } from "../lib/scheduleSlots";
 
 const makeReasoning = () => ({
   classes: "No enrolled course context was available.",
@@ -183,6 +184,34 @@ describe("mutations/timeEstimate – setTimeEstimate auto-generates study blocks
     expect(uniqueIds.size).toBe(ids.length);
   });
 
+  test("updates recommendedStart to two-week window when estimate is set", async () => {
+    const t = makeTestCtx();
+    const { userId } = await createTestUser(t);
+    const DAY_MS = 24 * 60 * 60 * 1000;
+    const now = Date.now();
+    const dueDate = now + 30 * DAY_MS;
+    const taskId = await t.run((ctx) =>
+      ctx.db.insert("tasks", {
+        userId: userId as any,
+        title: "Test task",
+        description: "desc",
+        taskType: "Essay",
+        dueDate,
+        createdAt: now,
+        isManualEstimate: false,
+      })
+    );
+
+    await t.mutation(internal.mutations.timeEstimate.setTimeEstimate, {
+      taskId,
+      timeEstimate: 240,
+      reasoning: makeReasoning(),
+    });
+
+    const task = await t.run((ctx) => ctx.db.get(taskId));
+    expect(task!.recommendedStart).toBe(dueDate - TWO_WEEKS_MS);
+  });
+
   test("persists the reasoning trace on the task", async () => {
     const t = makeTestCtx();
     const { userId } = await createTestUser(t);
@@ -245,6 +274,33 @@ describe("mutations/timeEstimate – setManualTimeEstimate", () => {
     expect(blocks.every((b) => b.studyBlockLength === 60)).toBe(true);
   });
 
+  test("updates recommendedStart to two-week window when manual estimate is set", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+    const DAY_MS = 24 * 60 * 60 * 1000;
+    const now = Date.now();
+    const dueDate = now + 30 * DAY_MS;
+    const taskId = await t.run((ctx) =>
+      ctx.db.insert("tasks", {
+        userId: userId as any,
+        title: "Test task",
+        description: "desc",
+        taskType: "Essay",
+        dueDate,
+        createdAt: now,
+        isManualEstimate: false,
+      })
+    );
+
+    await withAuth.mutation(api.mutations.timeEstimate.setManualTimeEstimate, {
+      taskId,
+      timeEstimate: 240,
+    });
+
+    const task = await t.run((ctx) => ctx.db.get(taskId));
+    expect(task!.recommendedStart).toBe(dueDate - TWO_WEEKS_MS);
+  });
+
   test("throws when user does not own the task", async () => {
     const t = makeTestCtx();
     const { userId } = await createTestUser(t);
@@ -254,6 +310,65 @@ describe("mutations/timeEstimate – setManualTimeEstimate", () => {
     await expect(
       otherAuth.mutation(api.mutations.timeEstimate.setManualTimeEstimate, { taskId, timeEstimate: 60 })
     ).rejects.toThrow("Task not found");
+  });
+
+  test("deletes existing subtasks and their blocks when switching to manual", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+    const taskId = await seedTask(t, userId, { focusBlockLength: 60 });
+
+    // Simulate AI-generated subtasks with blocks
+    const subtaskId = await t.run((ctx) =>
+      ctx.db.insert("subtasks", {
+        parentTaskId: taskId,
+        userId: userId as any,
+        title: "Subtask 1",
+        description: "desc",
+        taskType: "Essay",
+        color: "#000",
+        order: 0,
+        createdAt: Date.now(),
+        timeEstimate: 60,
+      })
+    );
+    await t.run((ctx) =>
+      ctx.db.insert("studyBlocks", {
+        subtaskId,
+        userId: userId as any,
+        title: "Subtask 1",
+        studyBlockLength: 60,
+        isCompleted: false,
+      })
+    );
+
+    await withAuth.mutation(api.mutations.timeEstimate.setManualTimeEstimate, {
+      taskId,
+      timeEstimate: 90,
+    });
+
+    const subtasks = await t.run((ctx) =>
+      ctx.db
+        .query("subtasks")
+        .withIndex("by_parentTaskId", (q) => q.eq("parentTaskId", taskId))
+        .collect()
+    );
+    expect(subtasks).toHaveLength(0);
+
+    const subtaskBlocks = await t.run((ctx) =>
+      ctx.db
+        .query("studyBlocks")
+        .withIndex("by_subtaskId", (q) => q.eq("subtaskId", subtaskId))
+        .collect()
+    );
+    expect(subtaskBlocks).toHaveLength(0);
+
+    const taskBlocks = await t.run((ctx) =>
+      ctx.db
+        .query("studyBlocks")
+        .withIndex("by_taskId", (q) => q.eq("taskId", taskId))
+        .collect()
+    );
+    expect(taskBlocks).toHaveLength(2); // 90 min / 60 min blocks
   });
 
   test("setTimeEstimate does not overwrite a manual estimate", async () => {

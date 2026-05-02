@@ -1,19 +1,12 @@
-import { Fragment, useState } from 'react'
-
-function getTextColorClass(hexColor: string): string {
-  const r = parseInt(hexColor.slice(1, 3), 16)
-  const g = parseInt(hexColor.slice(3, 5), 16)
-  const b = parseInt(hexColor.slice(5, 7), 16)
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
-  return luminance > 0.5 ? 'text-navy' : 'text-white'
-}
+import { Fragment, useState, useEffect } from 'react'
+import type { RefObject } from 'react'
 import type { AllDayEvent } from '../../../../backend/convex/actions/fetchCalendarEvents'
 import type { LayoutEvent } from './overlapLayout'
-import { TOTAL_SLOTS, SLOT_HEIGHT, DAYS_FULL, slotLabel, isoDateString, isToday, minutesFromMidnight } from './utils'
+import { TOTAL_SLOTS, SLOT_HEIGHT, DAYS_FULL, slotLabel, isoDateString, isToday, minutesFromMidnight, getTextColorClass } from './utils'
 import type { Id } from '../../../../backend/convex/_generated/dataModel'
 import ScheduleBlockConflict from './ScheduleBlockConflict'
 
-type WorkHoursRow = { day: string; available: number[]; blocked: number[] }
+type WorkHoursRow = { day: string; blocked: number[] }
 
 export type StudyBlockOnGrid = {
   _id: Id<'studyBlocks'>
@@ -31,20 +24,19 @@ export type StudyBlockOnGrid = {
 function getSlotState(grid: WorkHoursRow[] | null, dayName: string, slot: number) {
   const row = grid?.find((r) => r.day === dayName)
   if (!row) return 'none'
-  if (row.available.includes(slot)) return 'preferred'
   if (row.blocked.includes(slot)) return 'unavailable'
   return 'none'
 }
 
 function slotBgClass(
-  state: 'preferred' | 'unavailable' | 'none',
+  state: 'unavailable' | 'none',
   isHighlighted: boolean,
-  isAssignMode: boolean,
+  _isAssignMode: boolean,
+  isTodayCol: boolean = false,
 ) {
   if (isHighlighted) return 'bg-teal/60 cursor-pointer hover:bg-teal/80'
-  if (state === 'preferred') return isAssignMode ? 'bg-teal/20' : 'bg-teal/40'
   if (state === 'unavailable') return 'bg-slate-blue'
-  return 'bg-white'
+  return isTodayCol ? 'bg-today-col' : 'bg-white'
 }
 
 interface TimeGridProps {
@@ -53,7 +45,7 @@ interface TimeGridProps {
   layoutByDay: Record<string, LayoutEvent[]>
   allDayEventsByDay: Record<string, AllDayEvent[]>
   calendarConnected: boolean
-  gridRef: React.RefObject<HTMLDivElement>
+  gridRef: RefObject<HTMLDivElement>
   studyBlocksByDay: Record<string, StudyBlockOnGrid[]>
   highlightedSlots: Set<string>
   isAssignMode: boolean
@@ -84,6 +76,15 @@ export default function TimeGrid({
 }: TimeGridProps) {
   const COLS = `3rem repeat(7, 1fr)`
   const [hoveredBlockId, setHoveredBlockId] = useState<Id<'studyBlocks'> | null>(null)
+  const [now, setNow] = useState(() => new Date())
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 60_000)
+    return () => clearInterval(id)
+  }, [])
+
+  const todayColIdx = days.findIndex((d) => isToday(d))
+  const nowTopPx = todayColIdx >= 0 ? (minutesFromMidnight(now) / 30) * SLOT_HEIGHT : null
 
   return (
     <div ref={gridRef} className="flex-1 overflow-y-auto rounded-xl border border-border bg-white min-h-0">
@@ -94,11 +95,11 @@ export default function TimeGrid({
         {days.map((day) => {
           const today = isToday(day)
           return (
-            <div key={isoDateString(day)} className="border-l border-border py-2 text-center">
-              <div className={`font-body text-xs font-semibold ${today ? 'text-sky-blue' : 'text-slate-blue'}`}>
+            <div key={isoDateString(day)} className={`flex flex-col items-center justify-center border-l border-border py-2 ${today ? 'bg-navy' : ''}`}>
+              <div className={`font-body text-xs font-semibold ${today ? 'text-teal' : 'text-slate-blue'}`}>
                 {day.toLocaleDateString('en-US', { weekday: 'short' })}
               </div>
-              <div className={`font-heading text-sm font-bold ${today ? 'text-navy' : 'text-slate-blue'}`}>
+              <div className={`font-heading text-sm font-bold ${today ? 'text-white' : 'text-slate-blue'}`}>
                 {day.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric' })}
               </div>
             </div>
@@ -145,7 +146,7 @@ export default function TimeGrid({
             >
               {slotLabel(slot)}
             </div>
-            {days.map((day) => {
+            {days.map((day, colIdx) => {
               const key = isoDateString(day)
               const jsDay = day.getDay()
               const dayName = DAYS_FULL[jsDay === 0 ? 6 : jsDay - 1]
@@ -156,7 +157,7 @@ export default function TimeGrid({
               return (
                 <div
                   key={`${key}-${slot}`}
-                  className={`border-b border-l border-border/50 ${slotBgClass(state, isHighlighted, isAssignMode)}`}
+                  className={`border-b border-l border-border/50 ${slotBgClass(state, isHighlighted, isAssignMode, colIdx === todayColIdx)}`}
                   style={{ height: SLOT_HEIGHT }}
                   onClick={() => {
                     if (isHighlighted) onSlotClick(key, slot)
@@ -206,6 +207,28 @@ export default function TimeGrid({
             )
           })
         })}
+
+        {/* Current time indicator */}
+        {nowTopPx !== null && (
+          <>
+            <div
+              className="pointer-events-none absolute z-20 h-2.5 w-2.5 rounded-full bg-urgent-red"
+              style={{
+                top: nowTopPx - 5,
+                left: `calc(3rem + (100% - 3rem) * ${todayColIdx / 7} - 5px)`,
+              }}
+            />
+            <div
+              className="pointer-events-none absolute z-20 bg-urgent-red"
+              style={{
+                top: nowTopPx - 1,
+                height: 2,
+                left: `calc(3rem + (100% - 3rem) * ${todayColIdx / 7})`,
+                width: `calc((100% - 3rem) / 7)`,
+              }}
+            />
+          </>
+        )}
 
         {/* Study block overlays */}
         {days.map((day, colIdx) => {

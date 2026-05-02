@@ -68,6 +68,15 @@ export default function ClassCard({
     setConfirmedGrade(initialGrade ?? '')
     setGradeValue(initialGrade ?? '')
   }, [initialGrade])
+  useEffect(() => {
+    setStudyGoalValue(initialStudyGoal ?? '')
+  }, [initialStudyGoal])
+  useEffect(() => {
+    setDifficultyValue(initialDifficultyRating ?? 3)
+  }, [initialDifficultyRating])
+  useEffect(() => {
+    setCurrentColor(initialColor ?? '')
+  }, [initialColor])
   const [isSavingGrade, setIsSavingGrade] = useState(false)
   const [gradeSaved, setGradeSaved] = useState(false)
   const [gradeError, setGradeError] = useState<string | null>(null)
@@ -149,7 +158,7 @@ export default function ClassCard({
         />
       )}
 
-      <div className="flex flex-col gap-4 rounded-xl border border-border bg-white p-6">
+      <div className="flex flex-col min-w-0 gap-4 rounded-xl border border-border bg-white p-6">
         {/* Header row */}
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-2 min-w-0">
@@ -199,7 +208,7 @@ export default function ClassCard({
               <span className="font-heading text-xs font-semibold uppercase tracking-wide text-slate-blue">
                 {courseCode}
               </span>
-              <h3 className="font-heading text-base font-bold text-navy truncate">{title}</h3>
+              <h3 className="font-heading text-base font-bold text-navy">{title}</h3>
               <span className="font-body text-xs text-light-blue">{term}</span>
             </div>
           </div>

@@ -2,6 +2,7 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 import { authTables } from "@convex-dev/auth/server";
 import { taskTypeValidator } from "./lib/taskValidators";
+import { activeAgentValidator } from "./lib/chatValidators";
 
 /** Per-category AI explanation for time estimates (tasks and subtasks). */
 const reasoningTraceValidator = v.object({
@@ -48,8 +49,6 @@ export default defineSchema({
     focusBlockLength: v.optional(v.number()),
     major: v.optional(v.string()),
     year: v.optional(v.string()),
-    difficultSubjects: v.optional(v.array(v.string())),
-    enjoyedSubjects: v.optional(v.array(v.string())),
     courses: v.optional(
       v.array(
         v.object({
@@ -63,7 +62,6 @@ export default defineSchema({
       v.array(
         v.object({
           day: v.string(),
-          available: v.array(v.number()),
           blocked: v.array(v.number()),
         })
       )
@@ -79,6 +77,8 @@ export default defineSchema({
         })
       )
     ),
+
+    gcalColorMappingEnabled: v.optional(v.boolean()),
 
   })
     .index("email", ["email"])
@@ -122,9 +122,13 @@ export default defineSchema({
     classTag: v.optional(v.string()),
     embedding: v.optional(v.array(v.float64())),
     reasoning: v.optional(reasoningTraceValidator),
+    status: v.optional(v.union(v.literal("not_started"), v.literal("in_progress"), v.literal("completed"))),
+    assignmentWeight: v.optional(v.number()),
+    recommendedStart: v.optional(v.number()),
   })
     .index("by_userId", ["userId"])
     .index("by_userId_createdAt", ["userId", "createdAt"])
+    .index("by_userId_courseId", ["userId", "courseId"])
     .vectorIndex("by_embedding", { vectorField: "embedding", dimensions: 3072, filterFields: ["userId"] }),
 
   // Subtasks table — AI-generated or manually created subtasks linked to a parent task
@@ -146,9 +150,12 @@ export default defineSchema({
     reasoning: v.optional(reasoningTraceValidator),
     order: v.number(),
     createdAt: v.number(),
+    embedding: v.optional(v.array(v.float64())),
+    status: v.optional(v.union(v.literal("not_started"), v.literal("in_progress"), v.literal("completed"))),
   })
     .index("by_parentTaskId", ["parentTaskId"])
-    .index("by_userId", ["userId"]),
+    .index("by_userId", ["userId"])
+    .vectorIndex("by_embedding", { vectorField: "embedding", dimensions: 3072, filterFields: ["userId"] }),
 
   // StudyBlocks table — stores scheduled time chunks assigned to tasks or subtasks
   studyBlocks: defineTable({
@@ -161,10 +168,12 @@ export default defineSchema({
     isConflicted: v.optional(v.boolean()),
     googleEventId: v.optional(v.string()),
     needsExport: v.optional(v.boolean()),
+    isCompleted: v.boolean(),
   })
     .index("by_taskId", ["taskId"])
     .index("by_subtaskId", ["subtaskId"])
-    .index("by_userId", ["userId"]),
+    .index("by_userId", ["userId"])
+    .index("by_userId_startTime", ["userId", "startTime"]),
 
   // Chat messages — stores chatbot conversation history per user
   chatMessages: defineTable({
@@ -189,12 +198,10 @@ export default defineSchema({
     .index("by_taskId", ["taskId"])
     .index("by_courseId", ["courseId"]),
 
-  /** Chat widget session — resolved entities + clarification state (Part 2) */
+  /** Chat widget session — MCQ / subagent state (task & course scope live on chatMessages) */
   chatSessions: defineTable({
     userId: v.id("users"),
     sessionId: v.string(),
-    resolvedTaskId: v.optional(v.id("tasks")),
-    resolvedCourseId: v.optional(v.id("userCourses")),
     /** User message that started the active MCQ clarify flow — tagged when user picks task/class */
     entityClarifyTriggerUserMessageId: v.optional(v.id("chatMessages")),
     /** Last user utterance used for embedding search (MCQ / Other) */
@@ -208,21 +215,24 @@ export default defineSchema({
     clarificationAttemptCount: v.optional(v.number()),
     clarificationExhausted: v.optional(v.boolean()),
     awaitingEntityResolution: v.optional(v.boolean()),
-    /** User must answer Yes/No: still same scoped task/class? */
-    awaitingScopeConfirm: v.optional(v.boolean()),
-    /** Legacy / UI flags for scope confirmation (may exist on older session docs) */
-    scopeConfirmPendingTask: v.optional(v.boolean()),
-    scopeConfirmPendingClass: v.optional(v.boolean()),
-    /** After user answers No on scope — no more messages until new session */
+    /** Set when the thread hits the per-session message cap (no new user messages). */
     chatInputLocked: v.optional(v.boolean()),
-    /** One-shot: next user message skips scope-change block after Yes */
-    scopeBypassNextMessage: v.optional(v.boolean()),
-    /** User message to re-process after scope Yes (same chat turn as original question) */
-    pendingScopeUserMessageId: v.optional(v.id("chatMessages")),
     /** Which specialist agent is handling this session */
-    activeAgent: v.optional(v.union(v.literal("task"), v.literal("feedback"), v.literal("preferences"))),
+    activeAgent: v.optional(
+      activeAgentValidator,
+    ),
     /** Intent determined by task agent: "create" skips entity MCQ, "rud" triggers it */
     taskAgentIntent: v.optional(v.union(v.literal("create"), v.literal("rud"))),
+    /** Intent determined by course agent for multi-turn class conversations. */
+    courseAgentIntent: v.optional(
+      v.union(v.literal("add"), v.literal("drop"), v.literal("view"), v.literal("update")),
+    ),
+    /** Current scope for future chat message tagging. */
+    activeTaskId: v.optional(v.id("tasks")),
+    activeCourseId: v.optional(v.id("userCourses")),
+    /** Block MCQ flow: tracks the schedule sub-intent and chosen block while awaiting a pick. */
+    pendingScheduleAction: v.optional(v.literal("schedule_block")),
+    activeBlockId: v.optional(v.id("studyBlocks")),
   }).index("by_userId_sessionId", ["userId", "sessionId"]),
 
   /**

@@ -5,10 +5,12 @@ export default function EstimationErrorModal({
   isOpen,
   message,
   onClose,
+  onRetry,
 }: {
   isOpen: boolean
   message: string
   onClose: () => void
+  onRetry?: () => void
 }) {
   return (
     <Modal
@@ -16,8 +18,10 @@ export default function EstimationErrorModal({
       title="Estimation Failed"
       icon={<WarningIcon />}
       onClose={onClose}
-      onPrimary={onClose}
-      primaryLabel="Dismiss"
+      onPrimary={onRetry ?? (() => {})}
+      isPrimaryDisabled={!onRetry}
+      primaryLabel='Retry'
+      showCancelButton={true}
       showCloseButton={false}
       size="sm"
       backdrop="blur"

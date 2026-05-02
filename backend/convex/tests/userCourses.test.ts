@@ -1,7 +1,12 @@
 import { describe, expect, test } from "vitest";
+import { convexTest } from "convex-test";
 import { api } from "../_generated/api";
-import { makeTestCtx, createTestUser } from "../../convex-tests/helpers";
+import { makeTestCtx, createTestUser, TestInstance } from "../../convex-tests/helpers";
 import { COURSE_COLOR_PALETTE } from "../lib/courseColors";
+import { Id } from "../_generated/dataModel";
+import schema from "../schema";
+
+const modules = import.meta.glob("../**/*.*s");
 
 const FUTURE = Date.now() + 86_400_000;
 
@@ -80,6 +85,7 @@ describe("mutations/userCourses – deleteUserCourse", () => {
         taskId: taskToRemove as never,
         title: "Block",
         studyBlockLength: 60,
+        isCompleted: false,
       })
     );
 
@@ -229,5 +235,319 @@ describe("mutations/userCourses – deleteUserCourse", () => {
     const syllabus = await t.run((ctx) => ctx.db.get(syllabusId));
     expect(syllabus).not.toBeNull();
     expect(syllabus!.courseId).toBeUndefined();
+  });
+});
+
+describe("queries/userCourses – getCourseMetadata", () => {
+  test("returns hasSyllabus=true only when a confirmed syllabus exists for the course", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+
+    const courseWithSyllabus = await t.run((ctx) =>
+      ctx.db.insert("userCourses", {
+        userId: userId as never,
+        courseCode: "EN.601.226",
+        title: "Data Structures",
+        term: "Fall 2025",
+      })
+    );
+
+    const courseWithoutSyllabus = await t.run((ctx) =>
+      ctx.db.insert("userCourses", {
+        userId: userId as never,
+        courseCode: "EN.601.421",
+        title: "OOSE",
+        term: "Spring 2026",
+      })
+    );
+
+    await t.run((ctx) =>
+      ctx.db.insert("syllabi", {
+        userId: userId as never,
+        fileContents: "...",
+        courseId: courseWithSyllabus,
+        status: "confirmed",
+        createdAt: Date.now(),
+      })
+    );
+
+    const metadata = await withAuth.query(api.queries.userCourses.getCourseMetadata, {});
+
+    const withSyl = metadata.find((m) => m.courseId === courseWithSyllabus);
+    const withoutSyl = metadata.find((m) => m.courseId === courseWithoutSyllabus);
+
+    expect(withSyl?.hasSyllabus).toBe(true);
+    expect(withoutSyl?.hasSyllabus).toBe(false);
+  });
+
+  test("does not count a pending syllabus as hasSyllabus", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+
+    const courseId = await t.run((ctx) =>
+      ctx.db.insert("userCourses", {
+        userId: userId as never,
+        courseCode: "EN.601.226",
+        title: "Data Structures",
+        term: "Fall 2025",
+      })
+    );
+
+    await t.run((ctx) =>
+      ctx.db.insert("syllabi", {
+        userId: userId as never,
+        fileContents: "...",
+        courseId,
+        status: "pending",
+        createdAt: Date.now(),
+      })
+    );
+
+    const metadata = await withAuth.query(api.queries.userCourses.getCourseMetadata, {});
+    const entry = metadata.find((m) => m.courseId === courseId);
+    expect(entry?.hasSyllabus).toBe(false);
+  });
+
+  test("returns correct taskCount per course without counting tasks from other courses", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+
+    const courseA = await t.run((ctx) =>
+      ctx.db.insert("userCourses", {
+        userId: userId as never,
+        courseCode: "EN.601.226",
+        title: "Data Structures",
+        term: "Fall 2025",
+      })
+    );
+
+    const courseB = await t.run((ctx) =>
+      ctx.db.insert("userCourses", {
+        userId: userId as never,
+        courseCode: "EN.601.421",
+        title: "OOSE",
+        term: "Spring 2026",
+      })
+    );
+
+    const FUTURE = Date.now() + 86_400_000;
+    for (let i = 0; i < 3; i++) {
+      await t.run((ctx) =>
+        ctx.db.insert("tasks", {
+          userId: userId as never,
+          title: `Task ${i}`,
+          description: "d",
+          taskType: "Essay",
+          dueDate: FUTURE,
+          createdAt: Date.now(),
+          courseId: courseA,
+        })
+      );
+    }
+
+    await t.run((ctx) =>
+      ctx.db.insert("tasks", {
+        userId: userId as never,
+        title: "Single task",
+        description: "d",
+        taskType: "Essay",
+        dueDate: FUTURE,
+        createdAt: Date.now(),
+        courseId: courseB,
+      })
+    );
+
+    const metadata = await withAuth.query(api.queries.userCourses.getCourseMetadata, {});
+
+    const entryA = metadata.find((m) => m.courseId === courseA);
+    const entryB = metadata.find((m) => m.courseId === courseB);
+
+    expect(entryA?.taskCount).toBe(3);
+    expect(entryB?.taskCount).toBe(1);
+  });
+
+  test("returns taskCount=0 and hasSyllabus=false for a course with no tasks or syllabus", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+
+    const courseId = await t.run((ctx) =>
+      ctx.db.insert("userCourses", {
+        userId: userId as never,
+        courseCode: "EN.601.226",
+        title: "Data Structures",
+        term: "Fall 2025",
+      })
+    );
+
+    const metadata = await withAuth.query(api.queries.userCourses.getCourseMetadata, {});
+    const entry = metadata.find((m) => m.courseId === courseId);
+
+    expect(entry?.taskCount).toBe(0);
+    expect(entry?.hasSyllabus).toBe(false);
+  });
+
+  test("does not include tasks from another user in taskCount", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+    const { userId: otherUserId } = await createTestUser(t, { email: "other@example.com" });
+
+    const courseId = await t.run((ctx) =>
+      ctx.db.insert("userCourses", {
+        userId: userId as never,
+        courseCode: "EN.601.226",
+        title: "Data Structures",
+        term: "Fall 2025",
+      })
+    );
+
+    const FUTURE = Date.now() + 86_400_000;
+    await t.run((ctx) =>
+      ctx.db.insert("tasks", {
+        userId: otherUserId as never,
+        title: "Other user task",
+        description: "d",
+        taskType: "Essay",
+        dueDate: FUTURE,
+        createdAt: Date.now(),
+        courseId,
+      })
+    );
+
+    const metadata = await withAuth.query(api.queries.userCourses.getCourseMetadata, {});
+    const entry = metadata.find((m) => m.courseId === courseId);
+    expect(entry?.taskCount).toBe(0);
+  });
+});
+
+describe("getCourseMetadata – document read efficiency", () => {
+  /**
+   * Seeds a realistic dataset:
+   *   5 courses
+   *   5 syllabi (3 confirmed, 2 pending)
+   *   50 tasks  (30 tagged to courses @ 6 each, 20 untagged)
+   *
+   * Old impl: 5 + 5 + 50 = 60 document reads (all syllabi + all tasks)
+   * New impl: 5 + 3 + 30 = 38 document reads (only confirmed syllabi + only tagged tasks)
+   *
+   * The limit below (45) is between the two — new impl passes, old impl would throw.
+   */
+  async function seedLargeDataset(t: TestInstance) {
+    const userId = await t.run((ctx) =>
+      ctx.db.insert("users", { name: "Test User", email: "test@example.com" })
+    );
+
+    const FUTURE = Date.now() + 86_400_000;
+    const courseIds: Id<"userCourses">[] = [];
+
+    for (let i = 0; i < 5; i++) {
+      const id = await t.run((ctx) =>
+        ctx.db.insert("userCourses", {
+          userId: userId as never,
+          courseCode: `EN.601.${200 + i}`,
+          title: `Course ${i}`,
+          term: "Fall 2025",
+        })
+      );
+      courseIds.push(id);
+    }
+
+    // 3 confirmed syllabi for courses 0-2
+    for (let i = 0; i < 3; i++) {
+      await t.run((ctx) =>
+        ctx.db.insert("syllabi", {
+          userId: userId as never,
+          fileContents: "syllabus content",
+          courseId: courseIds[i],
+          status: "confirmed",
+          createdAt: Date.now(),
+        })
+      );
+    }
+
+    // 2 pending syllabi for courses 3-4
+    for (let i = 3; i < 5; i++) {
+      await t.run((ctx) =>
+        ctx.db.insert("syllabi", {
+          userId: userId as never,
+          fileContents: "syllabus content",
+          courseId: courseIds[i],
+          status: "pending",
+          createdAt: Date.now(),
+        })
+      );
+    }
+
+    // 6 tagged tasks per course (30 total)
+    for (const courseId of courseIds) {
+      for (let j = 0; j < 6; j++) {
+        await t.run((ctx) =>
+          ctx.db.insert("tasks", {
+            userId: userId as never,
+            title: `Task ${j}`,
+            description: "d",
+            taskType: "Essay",
+            dueDate: FUTURE,
+            createdAt: Date.now(),
+            courseId,
+          })
+        );
+      }
+    }
+
+    // 20 untagged tasks (no courseId) — old impl reads these, new impl does not
+    for (let i = 0; i < 20; i++) {
+      await t.run((ctx) =>
+        ctx.db.insert("tasks", {
+          userId: userId as never,
+          title: `Untagged ${i}`,
+          description: "d",
+          taskType: "Essay",
+          dueDate: FUTURE,
+          createdAt: Date.now(),
+        })
+      );
+    }
+
+    return { userId };
+  }
+
+  test("new impl stays within a read budget that the old full-scan approach would exceed", async () => {
+    // Limit set to 45: new impl reads ~38 docs (passes), old impl reads ~60 docs (would throw)
+    const t = convexTest({ schema, modules, transactionLimits: { documentsRead: 45 } }) as unknown as TestInstance;
+    const { userId } = await seedLargeDataset(t);
+    const withAuth = t.withIdentity({ subject: userId });
+
+    // Should not throw — new impl reads only what it needs
+    await expect(
+      withAuth.query(api.queries.userCourses.getCourseMetadata, {})
+    ).resolves.toHaveLength(5);
+  });
+
+  test("old full-scan approach would exceed the same budget", async () => {
+    const t = convexTest({ schema, modules, transactionLimits: { documentsRead: 45 } }) as unknown as TestInstance;
+    const { userId } = await seedLargeDataset(t);
+    const withAuth = t.withIdentity({ subject: userId });
+
+    // Inline replica of the old impl — reads all syllabi + all tasks for the user
+    await expect(
+      withAuth.query(async (ctx) => {
+        const courses = await ctx.db
+          .query("userCourses")
+          .withIndex("by_user", (q) => q.eq("userId", userId as never))
+          .collect();
+
+        const syllabi = await ctx.db
+          .query("syllabi")
+          .withIndex("by_userId", (q) => q.eq("userId", userId as never))
+          .collect();
+
+        const tasks = await ctx.db
+          .query("tasks")
+          .withIndex("by_userId", (q) => q.eq("userId", userId as never))
+          .collect();
+
+        return courses.length + syllabi.length + tasks.length;
+      })
+    ).rejects.toThrow();
   });
 });

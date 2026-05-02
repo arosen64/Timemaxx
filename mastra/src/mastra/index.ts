@@ -2,13 +2,21 @@ import { Mastra } from "@mastra/core";
 import { supervisorAgent } from "./agents/supervisorAgent";
 import { taskAgent } from "./agents/taskAgent";
 import { feedbackAgent } from "./agents/feedbackAgent";
-import { preferencesAgent } from "./agents/preferencesAgent";
-import { supervisorWorkflow } from "./workflows/supervisorWorkflow";
-import { taskWorkflow } from "./workflows/taskWorkflow";
-import { feedbackWorkflow } from "./workflows/feedbackWorkflow";
-import { preferencesWorkflow } from "./workflows/preferencesWorkflow";
+import { courseAgent } from "./agents/courseAgent";
+import { scheduleAgent } from "./agents/scheduleAgent";
+import { estimationAgent } from "./agents/estimationAgent";
+import { syllabusAgent } from "./agents/syllabusAgent";
+import { transcriptAgent } from "./agents/transcriptAgent";
+
+import { chatWorkflow } from "./workflows/chatWorkflow";
+import { estimationWorkflow } from "./workflows/estimationWorkflow";
+import { batchEstimationWorkflow } from "./workflows/batchEstimationWorkflow";
+import { syllabusOcrWorkflow } from "./workflows/syllabusOcrWorkflow";
+import { syllabusParseWorkflow } from "./workflows/syllabusParseWorkflow";
+import { transcriptOcrWorkflow } from "./workflows/transcriptOcrWorkflow";
+import { transcriptParseWorkflow } from "./workflows/transcriptParseWorkflow";
 
 export const mastra = new Mastra({
-  agents: { supervisorAgent, taskAgent, feedbackAgent, preferencesAgent },
-  workflows: { supervisorWorkflow, taskWorkflow, feedbackWorkflow, preferencesWorkflow },
+  agents: { supervisorAgent, taskAgent, feedbackAgent, scheduleAgent, courseAgent, estimationAgent, syllabusAgent, transcriptAgent },
+  workflows: { chatWorkflow, estimationWorkflow, batchEstimationWorkflow, syllabusOcrWorkflow, syllabusParseWorkflow, transcriptOcrWorkflow, transcriptParseWorkflow },
 });

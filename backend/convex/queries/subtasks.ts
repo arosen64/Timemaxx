@@ -40,6 +40,39 @@ export const getAllSubtasksForUser = query({
   },
 });
 
+// Internal query for fetching all subtasks for a user (used by bulk scheduling actions)
+export const getAllSubtasksInternal = internalQuery({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("subtasks")
+      .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+      .collect();
+  },
+});
+
+export const countSubtasksForTaskInternal = internalQuery({
+  args: { parentTaskId: v.id("tasks") },
+  handler: async (ctx, args) => {
+    const subtasks = await ctx.db
+      .query("subtasks")
+      .withIndex("by_parentTaskId", (q) => q.eq("parentTaskId", args.parentTaskId))
+      .collect();
+    return subtasks.length;
+  },
+});
+
+export const getSubtasksForTaskInternal = internalQuery({
+  args: { parentTaskId: v.id("tasks") },
+  handler: async (ctx, args) => {
+    const subtasks = await ctx.db
+      .query("subtasks")
+      .withIndex("by_parentTaskId", (q) => q.eq("parentTaskId", args.parentTaskId))
+      .collect();
+    return subtasks.sort((a, b) => a.order - b.order);
+  },
+});
+
 // Get all subtasks for a parent task, ordered by `order` ascending
 export const getSubtasksForTask = query({
   args: { parentTaskId: v.id("tasks") },

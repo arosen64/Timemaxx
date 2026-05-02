@@ -90,7 +90,7 @@ describe('TaskModal', () => {
     expect(screen.getByText('Please enter a description.')).toBeInTheDocument()
   })
 
-  it('shows validation error "Please enter a due date." when name and description filled but date empty', async () => {
+  it('shows validation error "Please pick a due date and time." when name and description filled but date empty', async () => {
     const user = userEvent.setup()
     renderModal()
     await user.type(
@@ -102,7 +102,7 @@ describe('TaskModal', () => {
       'Some description'
     )
     await user.click(screen.getByRole('button', { name: /add task/i }))
-    expect(screen.getByText('Please enter a due date.')).toBeInTheDocument()
+    expect(screen.getByText('Please pick a due date and time.')).toBeInTheDocument()
   })
 
   it('reveals custom type text input when "Other" is clicked', async () => {
@@ -113,6 +113,18 @@ describe('TaskModal', () => {
       screen.getByPlaceholderText('Enter other task type')
     ).toBeInTheDocument()
   })
+
+  async function pickFutureDate(user: ReturnType<typeof userEvent.setup>) {
+    // Open the DatetimePicker (trigger is a button, not an input)
+    await user.click(screen.getByRole('button', { name: /pick a due date/i }))
+    // Click the first enabled day button (single/double digit number)
+    const dayButtons = screen.getAllByRole('button').filter(
+      (b) => /^\d{1,2}$/.test(b.textContent?.trim() ?? '') && !(b as HTMLButtonElement).disabled
+    )
+    await user.click(dayButtons[0])
+    // Confirm selection
+    await user.click(screen.getByRole('button', { name: /confirm/i }))
+  }
 
   it('calls onSubmit with correct data on a fully valid form', async () => {
     const user = userEvent.setup()
@@ -125,9 +137,7 @@ describe('TaskModal', () => {
       screen.getByPlaceholderText('Paste or type your assignment description here...'),
       'Some description'
     )
-    const dateInput = screen.getByPlaceholderText('MM/DD/YYYY')
-    await user.type(dateInput, '12/31/2099')
-    await user.tab()
+    await pickFutureDate(user)
     await user.click(screen.getByRole('button', { name: /add task/i }))
     await waitFor(() => {
       expect(onSubmit).toHaveBeenCalledWith(
@@ -152,9 +162,7 @@ describe('TaskModal', () => {
       screen.getByPlaceholderText('Paste or type your assignment description here...'),
       'Some description'
     )
-    const dateInput = screen.getByPlaceholderText('MM/DD/YYYY')
-    await user.type(dateInput, '12/31/2099')
-    await user.tab()
+    await pickFutureDate(user)
     await user.click(screen.getByRole('button', { name: /add task/i }))
     await waitFor(() => {
       expect(screen.getByText('Adding…')).toBeInTheDocument()

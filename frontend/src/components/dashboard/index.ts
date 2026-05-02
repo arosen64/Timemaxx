@@ -8,12 +8,12 @@ export { default as EstimationErrorModal } from './EstimationErrorModal'
 export { default as StatCard } from './StatCard'
 export { default as ScheduleBlock } from './ScheduleBlock'
 export { default as TaskCard } from './TaskCard'
-export { default as ScheduleAllButton } from './ScheduleAllButton'
+export { default as StatusDropdown } from './StatusDropdown'
 export { default as StudyBlockRow } from './StudyBlockRow'
 export type { StudyBlock } from './StudyBlockRow'
 export { default as TaskFeedbackForm } from './TaskFeedbackForm'
 export { default as SubtaskCard } from './SubtaskCard'
-export type { TaskType, SubtaskType, EditForm, BuiltInTaskType, ClassTagCourseOption, FeedbackDraft } from './types'
+export type { TaskType, SubtaskType, TaskStatus, EditForm, BuiltInTaskType, ClassTagCourseOption, FeedbackDraft } from './types'
 export {
   BUILT_IN_TASK_TYPES,
   TASK_TYPE_OPTIONS,
@@ -23,5 +23,4 @@ export {
   displayTitle,
   formatMinutes,
   parseEstimationError,
-  BADGE_MAP,
 } from './types'

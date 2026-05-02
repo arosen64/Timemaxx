@@ -2,9 +2,9 @@
 import { action } from "../_generated/server";
 import { v } from "convex/values";
 
-type WorkHoursRow = { day: string; available: number[]; blocked: number[] }
+type WorkHoursRow = { day: string; blocked: number[] }
 type TimedEvent = { id: string; summary: string; start: string; end: string; calendarId: string }
-export type FreeBlock = { startISO: string; endISO: string; isPreferred: boolean }
+export type FreeBlock = { startISO: string; endISO: string }
 
 function getLocalDateStr(date: Date, timezone: string): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: timezone }).format(date)
@@ -33,9 +33,7 @@ function getLocalDayOfWeek(dt: Date, timezone: string): string {
  * Computes free time blocks across the 21-day window by diffing calendar events
  * against the user's workHoursGrid.
  *
- * Preferred (green) slots → isPreferred: true
- * Undesignated (white) slots → isPreferred: false
- * Unavailable (grey/blocked) slots → never returned
+ * Blocked (never-work) slots and event-occupied slots are excluded.
  * All-day events are ignored.
  */
 export function computeFreeBlocks(
@@ -82,11 +80,10 @@ export function computeFreeBlocks(
     }
 
     // Walk slots and build free blocks
-    let currentBlock: { startMins: number; endMins: number; isPreferred: boolean } | null = null
+    let currentBlock: { startMins: number; endMins: number } | null = null
 
     for (let slot = 0; slot < 48; slot++) {
-      const isBlocked = row?.blocked.includes(slot) ?? false
-      if (isBlocked) {
+      if (row?.blocked.includes(slot) ?? false) {
         if (currentBlock) {
           result.push(toFreeBlock(currentBlock, dateStr, timezone))
           currentBlock = null
@@ -102,17 +99,13 @@ export function computeFreeBlocks(
         continue
       }
 
-      const isPreferred = row?.available.includes(slot) ?? false
       const slotStartMins = slot * 30
       const slotEndMins = slotStartMins + 30
 
       if (currentBlock === null) {
-        currentBlock = { startMins: slotStartMins, endMins: slotEndMins, isPreferred }
-      } else if (currentBlock.isPreferred === isPreferred) {
-        currentBlock.endMins = slotEndMins
+        currentBlock = { startMins: slotStartMins, endMins: slotEndMins }
       } else {
-        result.push(toFreeBlock(currentBlock, dateStr, timezone))
-        currentBlock = { startMins: slotStartMins, endMins: slotEndMins, isPreferred }
+        currentBlock.endMins = slotEndMins
       }
     }
 
@@ -125,7 +118,7 @@ export function computeFreeBlocks(
 }
 
 function toFreeBlock(
-  block: { startMins: number; endMins: number; isPreferred: boolean },
+  block: { startMins: number; endMins: number },
   dateStr: string,
   timezone: string,
 ): FreeBlock {
@@ -140,7 +133,7 @@ function toFreeBlock(
   const startISO = localToUTCISO(year, month, day, startHour, startMin, timezone)
   const endISO = localToUTCISO(year, month, day, endHour, endMin, timezone)
 
-  return { startISO, endISO, isPreferred: block.isPreferred }
+  return { startISO, endISO }
 }
 
 /**
@@ -201,7 +194,6 @@ export const getCalendarAvailability = action({
     workHoursGrid: v.array(
       v.object({
         day: v.string(),
-        available: v.array(v.number()),
         blocked: v.array(v.number()),
       }),
     ),

@@ -1,13 +1,9 @@
 import { action } from "../_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
-import { callGemini } from "../lib/gemini";
-import { sanitizeUserInput, validateLength } from "../lib/sanitize";
-import {
-  TRANSCRIPT_SYSTEM,
-  buildTranscriptPrompt,
-  transcriptResponseSchema,
-} from "../lib/prompts/parseTranscript.prompt";
+import { MastraClient } from "@mastra/client-js";
+import { sanitizeUserInput } from "../lib/sanitize";
+import { withTimeout } from "../lib/withTimeout";
 
 export interface ParsedCourse {
   courseCode: string; // e.g. "EN.601.226"
@@ -17,35 +13,76 @@ export interface ParsedCourse {
   grade: string; // e.g. "A", "A-", "B+"
 }
 
+const MAX_CHARS = 1_000_000;
+// ~1 MB of base64-encoded PDF bytes (~750 KB binary)
+const MAX_PDF_BASE64_CHARS = 1_500_000;
+
 /**
- * Parses a JHU transcript using Gemini and returns extracted courses.
- * Accepts pre-extracted text (via pdfjs-dist on the client).
+ * Parses a JHU transcript using Mastra:
+ * 1. `transcript-ocr-workflow`   — Mistral OCR extracts text from base64-encoded PDF bytes
+ * 2. `sanitizeUserInput`         — prompt-injection sanitizer runs on the OCR output
+ * 3. `transcript-parse-workflow` — Claude agent extracts structured course data
  */
 export const parseTranscript = action({
   args: {
-    fileText: v.string(),
+    fileContents: v.string(),
   },
   handler: async (ctx, args): Promise<ParsedCourse[]> => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Unauthenticated");
 
-    const MAX_CHARS = 100_000;
-    validateLength(args.fileText, MAX_CHARS, "fileText");
+    if (args.fileContents.length > MAX_PDF_BASE64_CHARS) {
+      throw new Error("PDF exceeds maximum upload size of 1 MB");
+    }
 
-    const sanitized = sanitizeUserInput(args.fileText, MAX_CHARS);
+    const mastraUrl = process.env.MASTRA_URL;
+    if (!mastraUrl) throw new Error("MASTRA_URL not configured");
+    const client = new MastraClient({ baseUrl: mastraUrl });
 
-    const json = await callGemini({
-      system: TRANSCRIPT_SYSTEM,
-      prompt: buildTranscriptPrompt(sanitized),
-      schema: transcriptResponseSchema,
-      schemaName: "TranscriptResult",
-    });
+    // OCR: extract text from the base64-encoded PDF
+    const ocrWf = client.getWorkflow("transcript-ocr-workflow");
+    const ocrRun = await withTimeout(
+      ocrWf.startAsync({ inputData: { fileContents: args.fileContents } }),
+      "Transcript OCR"
+    );
+    const ocrStep = ocrRun.steps?.["ocr"] as
+      | { status: string; output?: { extractedText?: string }; error?: string | Error }
+      | undefined;
+    if (!ocrStep || ocrStep.status !== "success") {
+      const cause = ocrStep?.error ? String(ocrStep.error) : "step did not complete";
+      throw new Error(`Transcript OCR failed: ${cause}`);
+    }
+    const ocrText = ocrStep.output?.extractedText ?? "";
+    if (!ocrText) {
+      throw new Error("Transcript OCR did not return any text");
+    }
 
-    if (json.isJhuTranscript === false) {
+    // Sanitize — prompt-injection guard before sending to Claude
+    const sanitizedText = sanitizeUserInput(ocrText, MAX_CHARS);
+
+    // Parse — Claude agent extracts structured course data
+    // Workflow expects already-sanitized input; do not call without sanitizing first.
+    const parseWf = client.getWorkflow("transcript-parse-workflow");
+    const parseRun = await withTimeout(
+      parseWf.startAsync({ inputData: { sanitizedText } }),
+      "Transcript parse"
+    );
+
+    const parseStep = parseRun.steps?.["parse"];
+    if (!parseStep || parseStep.status !== "success" || !("output" in parseStep)) {
+      throw new Error("Transcript parse workflow did not complete successfully");
+    }
+
+    const parseOutput = parseStep.output as {
+      isJhuTranscript: boolean;
+      courses: ParsedCourse[];
+    };
+
+    if (parseOutput.isJhuTranscript === false) {
       throw new Error("NOT_JHU_TRANSCRIPT");
     }
 
-    const raw: ParsedCourse[] = json.courses ?? [];
+    const raw: ParsedCourse[] = parseOutput.courses ?? [];
 
     return raw
       .filter(

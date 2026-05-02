@@ -1,75 +1,5 @@
-import { KeyboardEvent, useState } from 'react'
 import { ProfileData } from '../types'
 import { YEARS, GRADES, STUDY_GOALS } from '../constants'
-
-interface TagInputProps {
-  tags: string[]
-  onChange?: (tags: string[]) => void
-  placeholder: string
-  readOnly?: boolean
-}
-
-function TagInput({ tags, onChange, placeholder, readOnly = false }: TagInputProps) {
-  const [input, setInput] = useState('')
-
-  const addTag = (value: string) => {
-    const trimmed = value.trim()
-    if (trimmed && !tags.includes(trimmed)) {
-      onChange?.([...tags, trimmed])
-    }
-    setInput('')
-  }
-
-  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' || e.key === ',') {
-      e.preventDefault()
-      addTag(input)
-    } else if (e.key === 'Backspace' && !input && tags.length > 0) {
-      onChange?.(tags.slice(0, -1))
-    }
-  }
-
-  const removeTag = (index: number) => {
-    onChange?.(tags.filter((_, i) => i !== index))
-  }
-
-  return (
-    <div className="flex flex-wrap gap-2 rounded-lg border border-border bg-bg-gray p-2 focus-within:border-sky-blue focus-within:ring-2 focus-within:ring-sky-blue/20">
-      {tags.length === 0 && readOnly ? (
-        <span className="font-body text-sm italic text-light-blue">None</span>
-      ) : (
-        tags.map((tag, i) => (
-          <span
-            key={i}
-            className="flex items-center gap-1 rounded-full bg-navy/10 px-3 py-1 font-body text-sm text-navy"
-          >
-            {tag}
-            {!readOnly && (
-              <button
-                type="button"
-                onClick={() => removeTag(i)}
-                className="ml-1 text-navy/50 hover:text-navy"
-              >
-                ×
-              </button>
-            )}
-          </span>
-        ))
-      )}
-      {!readOnly && (
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          onBlur={() => addTag(input)}
-          placeholder={tags.length === 0 ? placeholder : 'Add more...'}
-          className="min-w-[140px] flex-1 bg-transparent font-body text-sm text-navy outline-none placeholder:text-light-blue"
-        />
-      )}
-    </div>
-  )
-}
 
 interface ProfileFormProps {
   data: ProfileData
@@ -135,30 +65,6 @@ export default function ProfileForm({ data, onChange, errors, readOnly = false }
           </select>
         )}
         {!readOnly && errors.year && <p className="font-body text-xs text-urgent-red">{errors.year}</p>}
-      </div>
-
-      {/* Difficult Subjects */}
-      <div className="flex flex-col gap-1">
-        <label className="font-heading text-sm font-semibold text-navy">Subjects You Find Difficult</label>
-        {!readOnly && <p className="font-body text-xs text-light-blue">Press Enter or comma to add each subject</p>}
-        <TagInput
-          tags={data.difficultSubjects}
-          onChange={(tags) => update('difficultSubjects', tags)}
-          placeholder="e.g. Organic Chemistry"
-          readOnly={readOnly}
-        />
-      </div>
-
-      {/* Enjoyed Subjects */}
-      <div className="flex flex-col gap-1">
-        <label className="font-heading text-sm font-semibold text-navy">Subjects You Enjoy</label>
-        {!readOnly && <p className="font-body text-xs text-light-blue">Press Enter or comma to add each subject</p>}
-        <TagInput
-          tags={data.enjoyedSubjects}
-          onChange={(tags) => update('enjoyedSubjects', tags)}
-          placeholder="e.g. Linear Algebra"
-          readOnly={readOnly}
-        />
       </div>
 
       {/* Courses — read-only display */}

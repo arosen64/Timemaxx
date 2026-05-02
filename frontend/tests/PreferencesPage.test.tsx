@@ -5,7 +5,10 @@ import PreferencesPage from '../src/pages/PreferencesPage'
 
 vi.mock('../../backend/convex/_generated/api', () => ({
   api: {
-    queries: { users: { getCurrUser: 'getCurrUser' } },
+    queries: {
+      users: { getCurrUser: 'getCurrUser' },
+      calendar: { getCalendarConnectionStatus: 'getCalendarConnectionStatus' },
+    },
     mutations: {
       users: { updateUserSettings: 'updateUserSettings' },
       studyBlocks: { runDetectConflicts: 'runDetectConflicts' },
@@ -53,17 +56,25 @@ const mockUseMutation = vi.mocked(useMutation)
 const MOCK_USER = {
   major: 'Computer Science',
   year: 'Junior',
-  difficultSubjects: ['Algorithms'],
-  enjoyedSubjects: ['Art History'],
   courses: [{ title: 'Data Structures', studyGoal: 'A' }],
   workHoursGrid: [{ day: 'Monday', available: [1, 2], blocked: [] }],
   productivityTraits: { timeOfDay: ['Morning (8–11am)'] },
   focusBlockLength: 60,
+  gcalColorMappingEnabled: false,
 }
 
-function setup(user = MOCK_USER) {
+function setup({
+  user = MOCK_USER as typeof MOCK_USER | null,
+  calendarConnected = false,
+} = {}) {
   const updateSettings = makeMutationFn()
-  mockUseQuery.mockReturnValue(user as never)
+  mockUseQuery.mockImplementation((...args: Parameters<typeof useQuery>) => {
+    const key = args[0] as unknown as string
+    if (key === 'getCalendarConnectionStatus') {
+      return { connected: calendarConnected, hasEventsScope: calendarConnected } as never
+    }
+    return user as never
+  })
   mockUseMutation.mockReturnValue(updateSettings as never)
   renderWithProviders(<PreferencesPage />)
   return { updateSettings }
@@ -257,5 +268,70 @@ describe('PreferencesPage', () => {
     await waitFor(() => {
       expect(screen.getByTestId('profile-form')).toHaveAttribute('data-readonly', 'true')
     })
+  })
+})
+
+// ── GCal color mapping toggle ──────────────────────────────────────────────────
+
+describe('PreferencesPage – GCal color mapping toggle', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('does not render the toggle when calendar is not connected', () => {
+    setup({ calendarConnected: false })
+    expect(screen.queryByRole('switch')).not.toBeInTheDocument()
+  })
+
+  it('renders the toggle when calendar is connected', () => {
+    setup({ calendarConnected: true })
+    expect(screen.getByRole('switch')).toBeInTheDocument()
+  })
+
+  it('renders the label and description text', () => {
+    setup({ calendarConnected: true })
+    expect(screen.getByText('Map Timemaxx course color to exported Google Calendar blocks')).toBeInTheDocument()
+    expect(screen.getByText(/use your course colors/i)).toBeInTheDocument()
+  })
+
+  it('toggle is unchecked when gcalColorMappingEnabled is false', () => {
+    setup({ calendarConnected: true, user: { ...MOCK_USER, gcalColorMappingEnabled: false } })
+    expect(screen.getByRole('switch')).toHaveAttribute('aria-checked', 'false')
+  })
+
+  it('toggle is checked when gcalColorMappingEnabled is true', () => {
+    setup({ calendarConnected: true, user: { ...MOCK_USER, gcalColorMappingEnabled: true } })
+    expect(screen.getByRole('switch')).toHaveAttribute('aria-checked', 'true')
+  })
+
+  it('calls updateUserSettings with gcalColorMappingEnabled: true when toggled on', async () => {
+    const user = userEvent.setup()
+    const { updateSettings } = setup({
+      calendarConnected: true,
+      user: { ...MOCK_USER, gcalColorMappingEnabled: false },
+    })
+    await user.click(screen.getByRole('switch'))
+    await waitFor(() => {
+      expect(updateSettings).toHaveBeenCalledWith({ gcalColorMappingEnabled: true })
+    })
+  })
+
+  it('calls updateUserSettings with gcalColorMappingEnabled: false when toggled off', async () => {
+    const user = userEvent.setup()
+    const { updateSettings } = setup({
+      calendarConnected: true,
+      user: { ...MOCK_USER, gcalColorMappingEnabled: true },
+    })
+    await user.click(screen.getByRole('switch'))
+    await waitFor(() => {
+      expect(updateSettings).toHaveBeenCalledWith({ gcalColorMappingEnabled: false })
+    })
+  })
+
+  it('does not render the toggle after calendar is disconnected', () => {
+    // Simulate disconnected state: calendarConnected false even if user still
+    // has a stale gcalColorMappingEnabled value in DB.
+    setup({ calendarConnected: false, user: { ...MOCK_USER, gcalColorMappingEnabled: true } })
+    expect(screen.queryByRole('switch')).not.toBeInTheDocument()
   })
 })

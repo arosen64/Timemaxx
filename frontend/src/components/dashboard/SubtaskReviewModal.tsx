@@ -32,7 +32,7 @@ export default function SubtaskReviewModal({
   const [error, setError] = useState<string | null>(null)
 
   const courses = useQuery(api.queries.userCourses.getUserCourses)
-  const createSubtask = useMutation(api.mutations.subtasks.createSubtask)
+  const createSubtasksBatch = useMutation(api.mutations.subtasks.createSubtasksBatch)
 
   const parentColor: string = (() => {
     if (!courseId || !courses) return FALLBACK_COURSE_COLOR
@@ -75,22 +75,17 @@ export default function SubtaskReviewModal({
     setError(null)
     try {
       const n = valid.length
-      await Promise.all(
-        valid.map((s, i) =>
-          createSubtask({
-            parentTaskId,
-            title: s.title.trim(),
-            description: s.description.trim() || s.title.trim(),
-            taskType: s.taskType as never,
-            color: mixHexWithWhite(parentColor, i / n),
-            order: i,
-            suggestedCompletionAt: new Date(s.suggestedCompletionAt).getTime(),
-          })
-        )
-      )
+      await createSubtasksBatch({
+        parentTaskId,
+        subtasks: valid.map((s, i) => ({
+          title: s.title.trim(),
+          description: s.description.trim() || s.title.trim(),
+          taskType: s.taskType as never,
+          color: mixHexWithWhite(parentColor, i / n),
+          order: i,
+        })),
+      })
 
-      // Estimation is now scheduled automatically by the createSubtask mutation.
-      // Estimates appear in the background via the reactive query.
       onClose()
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Something went wrong. Please try again.')

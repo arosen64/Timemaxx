@@ -5,10 +5,8 @@ import { makeTestCtx, createTestUser } from "../../convex-tests/helpers";
 const VALID_ONBOARDING_ARGS = {
   major: "Computer Science",
   year: "Junior",
-  difficultSubjects: ["Math", "Physics"],
-  enjoyedSubjects: ["History"],
   workHoursGrid: [
-    { day: "Monday", available: [9, 10, 11], blocked: [] },
+    { day: "Monday", blocked: [] },
   ],
   productivityTraits: { morningPerson: true },
   focusBlockLength: 50,
@@ -160,6 +158,217 @@ describe("mutations/users – deleteAccount", () => {
     expect(userCourses).toHaveLength(0);
   });
 
+  test("deletes all chatMessages belonging to the user", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("chatMessages", {
+        userId,
+        role: "user",
+        content: "hello",
+        createdAt: Date.now(),
+      });
+      await ctx.db.insert("chatMessages", {
+        userId,
+        role: "assistant",
+        content: "hi there",
+        createdAt: Date.now() + 1,
+      });
+    });
+
+    await withAuth.mutation(api.mutations.users.deleteAccount, {});
+
+    const messages = await t.run((ctx) =>
+      ctx.db.query("chatMessages").withIndex("by_userId_createdAt", (q) => q.eq("userId", userId)).collect()
+    );
+    expect(messages).toHaveLength(0);
+  });
+
+  test("deletes all chatSessions belonging to the user", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("chatSessions", {
+        userId,
+        sessionId: "session-1",
+      });
+      await ctx.db.insert("chatSessions", {
+        userId,
+        sessionId: "session-2",
+      });
+    });
+
+    await withAuth.mutation(api.mutations.users.deleteAccount, {});
+
+    const sessions = await t.run((ctx) =>
+      ctx.db.query("chatSessions").withIndex("by_userId_sessionId", (q) => q.eq("userId", userId)).collect()
+    );
+    expect(sessions).toHaveLength(0);
+  });
+
+  test("deletes all chatChunks belonging to the user", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("chatChunks", {
+        userId,
+        sessionId: "session-1",
+        text: "chunk text",
+        chunkIndex: 0,
+        startCreatedAt: Date.now(),
+        linkedTaskIds: [],
+        linkedCourseIds: [],
+        createdAt: Date.now(),
+      });
+      await ctx.db.insert("chatChunks", {
+        userId,
+        sessionId: "session-1",
+        text: "chunk text 2",
+        chunkIndex: 1,
+        startCreatedAt: Date.now() + 1,
+        linkedTaskIds: [],
+        linkedCourseIds: [],
+        createdAt: Date.now() + 1,
+      });
+    });
+
+    await withAuth.mutation(api.mutations.users.deleteAccount, {});
+
+    const chunks = await t.run((ctx) =>
+      ctx.db.query("chatChunks").withIndex("by_userId_sessionId", (q) => q.eq("userId", userId)).collect()
+    );
+    expect(chunks).toHaveLength(0);
+  });
+
+  test("deletes all calendarConnections belonging to the user", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("calendarConnections", {
+        userId,
+        accessToken: "access-token",
+        refreshToken: "refresh-token",
+        expiresAt: Date.now() + 3600_000,
+      });
+    });
+
+    await withAuth.mutation(api.mutations.users.deleteAccount, {});
+
+    const connections = await t.run((ctx) =>
+      ctx.db.query("calendarConnections").withIndex("by_userId", (q) => q.eq("userId", userId)).collect()
+    );
+    expect(connections).toHaveLength(0);
+  });
+
+  test("deletes all calendarOAuthStates belonging to the user", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("calendarOAuthStates", {
+        userId,
+        state: "state-abc",
+        expiresAt: Date.now() + 600_000,
+      });
+      await ctx.db.insert("calendarOAuthStates", {
+        userId,
+        state: "state-xyz",
+        expiresAt: Date.now() + 600_000,
+      });
+    });
+
+    await withAuth.mutation(api.mutations.users.deleteAccount, {});
+
+    const states = await t.run((ctx) =>
+      ctx.db.query("calendarOAuthStates").filter((q) => q.eq(q.field("userId"), userId)).collect()
+    );
+    expect(states).toHaveLength(0);
+  });
+
+  test("deletes orphaned studyBlocks belonging to the user", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("studyBlocks", {
+        userId,
+        title: "Orphaned block",
+        studyBlockLength: 50,
+        isCompleted: false,
+      });
+    });
+
+    await withAuth.mutation(api.mutations.users.deleteAccount, {});
+
+    const blocks = await t.run((ctx) =>
+      ctx.db.query("studyBlocks").withIndex("by_userId", (q) => q.eq("userId", userId)).collect()
+    );
+    expect(blocks).toHaveLength(0);
+  });
+
+  test("deletes authVerificationCodes linked to the user's accounts", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+
+    await t.run(async (ctx) => {
+      const accountId = await ctx.db.insert("authAccounts", {
+        userId,
+        provider: "resend-otp",
+        providerAccountId: "user@example.com",
+      });
+      await ctx.db.insert("authVerificationCodes", {
+        accountId,
+        provider: "resend-otp",
+        code: "123456",
+        expirationTime: Date.now() + 600_000,
+      });
+    });
+
+    await withAuth.mutation(api.mutations.users.deleteAccount, {});
+
+    const accounts = await t.run((ctx) =>
+      ctx.db.query("authAccounts").withIndex("userIdAndProvider", (q) => q.eq("userId", userId)).collect()
+    );
+    expect(accounts).toHaveLength(0);
+
+    const codes = await t.run((ctx) =>
+      ctx.db.query("authVerificationCodes").collect()
+    );
+    expect(codes).toHaveLength(0);
+  });
+
+  test("deletes authRefreshTokens linked to the user's sessions", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+
+    await t.run(async (ctx) => {
+      const sessionId = await ctx.db.insert("authSessions", {
+        userId,
+        expirationTime: Date.now() + 86_400_000,
+      });
+      await ctx.db.insert("authRefreshTokens", {
+        sessionId,
+        expirationTime: Date.now() + 86_400_000,
+      });
+    });
+
+    await withAuth.mutation(api.mutations.users.deleteAccount, {});
+
+    const sessions = await t.run((ctx) =>
+      ctx.db.query("authSessions").withIndex("userId", (q) => q.eq("userId", userId)).collect()
+    );
+    expect(sessions).toHaveLength(0);
+
+    const tokens = await t.run((ctx) =>
+      ctx.db.query("authRefreshTokens").collect()
+    );
+    expect(tokens).toHaveLength(0);
+  });
+
   test("only deletes data belonging to the authenticated user", async () => {
     const t = makeTestCtx();
     const { withAuth } = await createTestUser(t);
@@ -249,7 +458,7 @@ describe("mutations/users – updateUserSettings", () => {
     const t = makeTestCtx();
     const { userId, withAuth } = await createTestUser(t);
 
-    const grid = [{ day: "Monday", available: [9, 10], blocked: [8] }];
+    const grid = [{ day: "Monday", blocked: [8] }];
     await withAuth.mutation(api.mutations.users.updateUserSettings, {
       workHoursGrid: grid,
     });
@@ -285,6 +494,47 @@ describe("mutations/users – updateUserSettings", () => {
     expect(user!.major).toBe("Computer Science");
     expect(user!.year).toBe("Junior");
     expect(user!.focusBlockLength).toBe(30);
+  });
+
+  test("sets gcalColorMappingEnabled to true", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+
+    await withAuth.mutation(api.mutations.users.updateUserSettings, {
+      gcalColorMappingEnabled: true,
+    });
+
+    const user = await t.run((ctx) => ctx.db.get(userId));
+    expect(user!.gcalColorMappingEnabled).toBe(true);
+  });
+
+  test("sets gcalColorMappingEnabled to false", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+
+    await t.run((ctx) => ctx.db.patch(userId, { gcalColorMappingEnabled: true }));
+
+    await withAuth.mutation(api.mutations.users.updateUserSettings, {
+      gcalColorMappingEnabled: false,
+    });
+
+    const user = await t.run((ctx) => ctx.db.get(userId));
+    expect(user!.gcalColorMappingEnabled).toBe(false);
+  });
+
+  test("does not affect other fields when only gcalColorMappingEnabled is updated", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+
+    await withAuth.mutation(api.mutations.users.completeOnboarding, VALID_ONBOARDING_ARGS);
+    await withAuth.mutation(api.mutations.users.updateUserSettings, {
+      gcalColorMappingEnabled: true,
+    });
+
+    const user = await t.run((ctx) => ctx.db.get(userId));
+    expect(user!.major).toBe("Computer Science");
+    expect(user!.focusBlockLength).toBe(50);
+    expect(user!.gcalColorMappingEnabled).toBe(true);
   });
 });
 
@@ -333,9 +583,6 @@ describe("mutations/users – completeOnboarding", () => {
     const user = await t.run((ctx) => ctx.db.get(userId));
     expect(user!.major).toBe("Computer Science");
     expect(user!.year).toBe("Junior");
-    expect(user!.difficultSubjects).toEqual(["Math", "Physics"]);
-    expect(user!.enjoyedSubjects).toEqual(["History"]);
-
     expect(user!.focusBlockLength).toBe(50);
   });
 });
