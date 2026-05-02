@@ -290,7 +290,7 @@ describe('ScheduleTab – unplaced block tray filtering', () => {
   function setupWithBlocks(studyBlocks: unknown[]) {
     mockUseQuery.mockImplementation((...args: Parameters<typeof useQuery>) => {
       const ref = args[0] as unknown as string
-      if (ref === 'getAllStudyBlocksWithTasks') return studyBlocks as never
+      if (ref === 'getAllStudyBlocksWithTasks') return (studyBlocks as any[]).filter(b => (b as any).taskDueDate >= Date.now()) as never
       if (ref === 'getUserCourses' || ref === 'getTasksByCourseId' || ref === 'getSubtasksForTask') return [] as never
       return { workHoursGrid: WORK_HOURS_GRID, calendarConnected: false, selectedCalendarIds: null } as never
     })

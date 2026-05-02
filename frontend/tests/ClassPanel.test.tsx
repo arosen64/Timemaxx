@@ -96,7 +96,7 @@ function setupQueries({
     const queryArgs = args[1]
     if (queryArgs === 'skip') return undefined as never
     if (ref === 'getUserCourses') return courses as never
-    if (ref === 'getTasksByCourseId') return tasks as never
+    if (ref === 'getTasksByCourseId') return tasks.filter(t => t.dueDate >= Date.now() && t.status !== 'completed') as never
     if (ref === 'getSubtasksForTask') return subtasks as never
     return undefined as never
   })
