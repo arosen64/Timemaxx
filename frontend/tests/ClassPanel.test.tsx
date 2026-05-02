@@ -371,7 +371,7 @@ describe('ClassPanel – Schedule button (scheduleAllBlocks wiring)', () => {
     await drillToTaskDetail(user, { ...DEFAULT_PROPS, onScheduleAllMsg: onMsg })
     await user.click(screen.getByRole('button', { name: `Auto-schedule "${BLOCK.title}"` }))
     await waitFor(() =>
-      expect(onMsg).toHaveBeenCalledWith(skipReason, true)
+      expect(onMsg).toHaveBeenCalledWith('Could not place this block.', true, skipReason)
     )
   })
 })

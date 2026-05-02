@@ -205,7 +205,7 @@ export default function ClassPanel({
     try {
       const result = await scheduleBlockAction({ studyBlockId: blockId, timezone });
       if ("error" in result) {
-        onScheduleAllMsg(result.skippedReason, true);
+        onScheduleAllMsg("Could not place this block.", true, result.skippedReason);
       } else if (result.scheduled === 0) {
         onScheduleAllMsg("Block is already scheduled.", true);
       }
