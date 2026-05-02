@@ -23,7 +23,7 @@ import {
 } from "../components/dashboard";
 import { type GeneratedSubtask } from "../../../backend/convex/actions/generateSubtasks";
 import { FALLBACK_COURSE_COLOR } from "../utils/color";
-import { isCurrentTerm } from "../utils/termUtils";
+import { isPastTerm } from "../utils/termUtils";
 import { buildClassTag } from "../utils/classTagUtils";
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
@@ -100,7 +100,7 @@ export default function DashboardPage() {
     if (!userCourses?.length) return [];
     const rows: ClassTagCourseOption[] = [];
     for (const c of userCourses) {
-      if (!isCurrentTerm(c.term ?? "")) continue;
+      if (isPastTerm(c.term ?? "")) continue;
       const courseCode = c.courseCode?.trim();
       const title = c.title?.trim();
       if (!courseCode || !title) continue;

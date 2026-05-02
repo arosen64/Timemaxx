@@ -40,13 +40,6 @@ export function getCurrentTermOrdinal(date: Date): number {
   return year * 10 + (idx === -1 ? 0 : idx);
 }
 
-/** True when the term string matches the calendar current term (season + year). */
-export function isCurrentTerm(termName: string, date = new Date()): boolean {
-  const termOrdinal = termToOrdinal(termName);
-  if (termOrdinal === null) return false;
-  return termOrdinal === getCurrentTermOrdinal(date);
-}
-
 export function isPastTerm(termName: string): boolean {
   const termOrdinal = termToOrdinal(termName);
   if (termOrdinal === null) return false;
