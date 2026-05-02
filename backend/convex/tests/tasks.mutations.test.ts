@@ -1,5 +1,5 @@
 import { describe, expect, test, vi, beforeEach, afterEach } from "vitest";
-import { api } from "../_generated/api";
+import { api, internal } from "../_generated/api";
 import { makeTestCtx, createTestUser } from "../../convex-tests/helpers";
 import type { Id } from "../_generated/dataModel";
 
@@ -22,13 +22,13 @@ async function seedStudyBlock(
   t: ReturnType<typeof makeTestCtx>,
   userId: string,
   taskId: string,
-  opts: { googleEventId?: string } = {}
+  opts: { googleEventId?: string; title?: string } = {}
 ) {
   return t.run((ctx) =>
     ctx.db.insert("studyBlocks", {
       taskId: taskId as Id<"tasks">,
       userId: userId as Id<"users">,
-      title: "Block",
+      title: opts.title ?? "Block",
       studyBlockLength: 60,
       isCompleted: false,
       isConflicted: false,
@@ -278,5 +278,122 @@ describe("mutations/tasks – updateTaskStatus study block sync", () => {
     const block = await t.run((ctx) => ctx.db.get(blockId));
     expect(block!.isCompleted).toBe(false);
     expect(task!.status).toBe("not_started");
+  });
+});
+
+describe("mutations/tasks – updateTask title cascade", () => {
+  test("updates study block titles when the task title changes", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+    const taskId = await seedTask(t, userId);
+    await seedStudyBlock(t, userId, taskId, { title: "Old title" });
+    await seedStudyBlock(t, userId, taskId, { title: "Old title" });
+
+    await withAuth.mutation(api.mutations.tasks.updateTask, {
+      taskId,
+      title: "New title",
+      description: "desc",
+      taskType: "Essay",
+      dueDate: Date.now() + 86_400_000,
+    });
+
+    const blocks = await t.run((ctx) => ctx.db.query("studyBlocks").collect());
+    expect(blocks).toHaveLength(2);
+    expect(blocks.every((b) => b.title === "New title")).toBe(true);
+  });
+
+  test("does not touch study blocks when the title is unchanged", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+    const taskId = await seedTask(t, userId);
+    await seedStudyBlock(t, userId, taskId, { title: "Test task" });
+
+    await withAuth.mutation(api.mutations.tasks.updateTask, {
+      taskId,
+      title: "Test task",
+      description: "updated desc",
+      taskType: "Essay",
+      dueDate: Date.now() + 86_400_000,
+    });
+
+    const blocks = await t.run((ctx) => ctx.db.query("studyBlocks").collect());
+    expect(blocks[0].title).toBe("Test task");
+  });
+
+  test("does not update blocks belonging to a different task", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+    const taskId1 = await seedTask(t, userId);
+    const taskId2 = await seedTask(t, userId);
+    await seedStudyBlock(t, userId, taskId1, { title: "Old title" });
+    await seedStudyBlock(t, userId, taskId2, { title: "Other task block" });
+
+    await withAuth.mutation(api.mutations.tasks.updateTask, {
+      taskId: taskId1,
+      title: "New title",
+      description: "desc",
+      taskType: "Essay",
+      dueDate: Date.now() + 86_400_000,
+    });
+
+    const otherBlocks = await t.run((ctx) =>
+      ctx.db
+        .query("studyBlocks")
+        .withIndex("by_taskId", (q) => q.eq("taskId", taskId2))
+        .collect()
+    );
+    expect(otherBlocks[0].title).toBe("Other task block");
+  });
+});
+
+describe("mutations/tasks – patchTaskFieldsInternal title cascade", () => {
+  test("updates study block titles when title changes via internal patch", async () => {
+    const t = makeTestCtx();
+    const { userId } = await createTestUser(t);
+    const taskId = await seedTask(t, userId);
+    await seedStudyBlock(t, userId, taskId, { title: "Old title" });
+    await seedStudyBlock(t, userId, taskId, { title: "Old title" });
+
+    await t.mutation(internal.mutations.tasks.patchTaskFieldsInternal, {
+      userId: userId as Id<"users">,
+      taskId,
+      title: "AI-updated title",
+    });
+
+    const blocks = await t.run((ctx) => ctx.db.query("studyBlocks").collect());
+    expect(blocks).toHaveLength(2);
+    expect(blocks.every((b) => b.title === "AI-updated title")).toBe(true);
+  });
+
+  test("does not update study blocks when title is not provided", async () => {
+    const t = makeTestCtx();
+    const { userId } = await createTestUser(t);
+    const taskId = await seedTask(t, userId);
+    await seedStudyBlock(t, userId, taskId, { title: "Original" });
+
+    await t.mutation(internal.mutations.tasks.patchTaskFieldsInternal, {
+      userId: userId as Id<"users">,
+      taskId,
+      description: "New description only",
+    });
+
+    const blocks = await t.run((ctx) => ctx.db.query("studyBlocks").collect());
+    expect(blocks[0].title).toBe("Original");
+  });
+
+  test("does not update study blocks when title is the same", async () => {
+    const t = makeTestCtx();
+    const { userId } = await createTestUser(t);
+    const taskId = await seedTask(t, userId);
+    await seedStudyBlock(t, userId, taskId, { title: "Test task" });
+
+    await t.mutation(internal.mutations.tasks.patchTaskFieldsInternal, {
+      userId: userId as Id<"users">,
+      taskId,
+      title: "Test task",
+    });
+
+    const blocks = await t.run((ctx) => ctx.db.query("studyBlocks").collect());
+    expect(blocks[0].title).toBe("Test task");
   });
 });
