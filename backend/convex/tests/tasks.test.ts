@@ -274,4 +274,29 @@ describe("mutations/tasks – createTask", () => {
       })
     ).rejects.toThrow("Assignment weight must be between 0 and 100");
   });
+
+  test("clears assignmentWeight when updateTask sets clearAssignmentWeight", async () => {
+    const t = makeTestCtx();
+    const { withAuth } = await createTestUser(t);
+
+    const taskId = await withAuth.mutation(api.mutations.tasks.createTask, {
+      title: "Weighted assignment",
+      description: "desc",
+      taskType: "Essay",
+      dueDate: Date.now() + 86_400_000,
+      assignmentWeight: 30,
+    });
+
+    await withAuth.mutation(api.mutations.tasks.updateTask, {
+      taskId,
+      title: "Weighted assignment",
+      description: "desc",
+      taskType: "Essay",
+      dueDate: Date.now() + 86_400_000,
+      clearAssignmentWeight: true,
+    });
+
+    const task = await t.run((ctx) => ctx.db.get(taskId));
+    expect(task!.assignmentWeight).toBeUndefined();
+  });
 });

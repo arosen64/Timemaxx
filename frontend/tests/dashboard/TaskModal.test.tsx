@@ -232,9 +232,169 @@ describe('TaskModal', () => {
 
     expect(
       screen.getByText(
-        'Assignments for this course already sum to 80%. Total course weight cannot exceed 100%.'
+        'Assignments for this course already sum to 80% of the grade. Total course weight cannot exceed 100%.'
       )
     ).toBeInTheDocument()
+    expect(onSubmit).not.toHaveBeenCalled()
+  })
+
+  it('allows editing weight without double-counting the task itself', async () => {
+    const user = userEvent.setup()
+    const onSubmit = vi.fn().mockResolvedValue(undefined)
+    renderModal({
+      onSubmit,
+      existingTaskId: 'task-self' as any,
+      classTagCourses: [
+        {
+          courseId: 'course1' as any,
+          courseCode: 'AS.110.108',
+          title: 'Calculus I',
+          classTag: 'AS.110.108: Calculus I',
+        },
+      ],
+      existingTasks: [
+        {
+          _id: 'task-self' as any,
+          title: 'Current task',
+          description: 'Current task',
+          taskType: 'Essay',
+          isManualEstimate: false,
+          dueDate: Date.now() + 86400000,
+          createdAt: Date.now(),
+          courseId: 'course1' as any,
+          assignmentWeight: 50,
+        },
+        {
+          _id: 'task-sibling' as any,
+          title: 'Sibling task',
+          description: 'Sibling task',
+          taskType: 'Essay',
+          isManualEstimate: false,
+          dueDate: Date.now() + 86400000,
+          createdAt: Date.now(),
+          courseId: 'course1' as any,
+          assignmentWeight: 30,
+        },
+      ],
+      initialValues: {
+        taskName: '',
+        selectedType: 'Essay',
+        customTaskType: '',
+        description: '',
+        dueDate: '',
+        dueTime: '23:59',
+        classTag: 'AS.110.108: Calculus I',
+        timeEstimate: '',
+        assignmentWeight: '50',
+      },
+    })
+
+    await user.type(
+      screen.getByPlaceholderText('e.g. Calculus Problem Set 5'),
+      'Edited Task'
+    )
+    await user.type(
+      screen.getByPlaceholderText('Paste or type your assignment description here...'),
+      'Updated description'
+    )
+    const weightInput = screen.getByLabelText(/grade weight/i)
+    await user.clear(weightInput)
+    await user.type(weightInput, '60')
+    await pickFutureDate(user)
+    await user.click(screen.getByRole('button', { name: /add task/i }))
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          assignmentWeight: 60,
+        })
+      )
+    })
+  })
+
+  it('passes assignmentWeight in a valid submit', async () => {
+    const user = userEvent.setup()
+    const onSubmit = vi.fn().mockResolvedValue(undefined)
+    renderModal({
+      onSubmit,
+      classTagCourses: [
+        {
+          courseId: 'course1' as any,
+          courseCode: 'AS.110.108',
+          title: 'Calculus I',
+          classTag: 'AS.110.108: Calculus I',
+        },
+      ],
+      initialValues: {
+        taskName: '',
+        selectedType: 'Essay',
+        customTaskType: '',
+        description: '',
+        dueDate: '',
+        dueTime: '23:59',
+        classTag: 'AS.110.108: Calculus I',
+        timeEstimate: '',
+        assignmentWeight: '',
+      },
+    })
+
+    await user.type(screen.getByPlaceholderText('e.g. Calculus Problem Set 5'), 'Weighted task')
+    await user.type(
+      screen.getByPlaceholderText('Paste or type your assignment description here...'),
+      'Weighted description'
+    )
+    await user.type(screen.getByLabelText(/grade weight/i), '25')
+    await pickFutureDate(user)
+    await user.click(screen.getByRole('button', { name: /add task/i }))
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          assignmentWeight: 25,
+        })
+      )
+    })
+  })
+
+  it('shows validation error for negative assignment weight', async () => {
+    const user = userEvent.setup()
+    const onSubmit = vi.fn().mockResolvedValue(undefined)
+    renderModal({
+      onSubmit,
+      classTagCourses: [
+        {
+          courseId: 'course1' as any,
+          courseCode: 'AS.110.108',
+          title: 'Calculus I',
+          classTag: 'AS.110.108: Calculus I',
+        },
+      ],
+      initialValues: {
+        taskName: '',
+        selectedType: 'Essay',
+        customTaskType: '',
+        description: '',
+        dueDate: '',
+        dueTime: '23:59',
+        classTag: 'AS.110.108: Calculus I',
+        timeEstimate: '',
+        assignmentWeight: '',
+      },
+    })
+
+    await user.type(
+      screen.getByPlaceholderText('e.g. Calculus Problem Set 5'),
+      'Invalid weight task'
+    )
+    await user.type(
+      screen.getByPlaceholderText('Paste or type your assignment description here...'),
+      'Invalid weight description'
+    )
+    await user.type(screen.getByLabelText(/grade weight/i), '-5')
+    await pickFutureDate(user)
+    await user.click(screen.getByRole('button', { name: /add task/i }))
+
+    expect(screen.getByText('Assignment weight must be between 0 and 100.')).toBeInTheDocument()
     expect(onSubmit).not.toHaveBeenCalled()
   })
 

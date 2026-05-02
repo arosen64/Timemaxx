@@ -268,6 +268,11 @@ export default function TaskModal({
       }
       const trimmedWeight = assignmentWeight.trim();
       let parsedWeight: number | undefined;
+      const shouldClearAssignmentWeight =
+        existingTaskId !== undefined &&
+        initialValues.assignmentWeight !== undefined &&
+        initialValues.assignmentWeight.trim() !== "" &&
+        trimmedWeight === "";
       if (courseId !== undefined && trimmedWeight !== "") {
         const w = Number(trimmedWeight);
         if (!Number.isFinite(w) || w < 0 || w > 100) {
@@ -282,16 +287,17 @@ export default function TaskModal({
           if (task._id === existingTaskId) return sum;
           if (task.courseId !== courseId) return sum;
           const weight = task.assignmentWeight;
-          if (!Number.isFinite(weight)) return sum;
-          return sum + (weight ?? 0);
+          if (typeof weight !== "number" || !Number.isFinite(weight)) return sum;
+          return sum + weight;
         }, 0);
         const projectedTotal = existingWeightTotal + parsedWeight;
         if (projectedTotal > 100) {
-          const existingTotalDisplay = Number.isInteger(existingWeightTotal)
-            ? String(existingWeightTotal)
-            : existingWeightTotal.toFixed(1);
+          const roundedExistingTotal = Math.round(existingWeightTotal * 10) / 10;
+          const existingTotalDisplay = Number.isInteger(roundedExistingTotal)
+            ? String(roundedExistingTotal)
+            : roundedExistingTotal.toFixed(1);
           setError(
-            `Assignments for this course already sum to ${existingTotalDisplay}%. Total course weight cannot exceed 100%.`
+            `Assignments for this course already sum to ${existingTotalDisplay}% of the grade. Total course weight cannot exceed 100%.`
           );
           setSubmitting(false);
           return;
@@ -309,6 +315,7 @@ export default function TaskModal({
           : {}),
         ...(useAiEstimate ? { useAiEstimate: true } : {}),
         ...(parsedWeight !== undefined ? { assignmentWeight: parsedWeight } : {}),
+        ...(shouldClearAssignmentWeight ? { clearAssignmentWeight: true } : {}),
       };
 
       if (generateSubtasks) {
