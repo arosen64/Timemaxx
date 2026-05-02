@@ -1,4 +1,7 @@
 import { describe, expect, test } from "vitest";
+import { api } from "../_generated/api";
+import { makeTestCtx, createTestUser } from "../../convex-tests/helpers";
+import type { Id } from "../_generated/dataModel";
 import {
   buildSlotContext,
   isSlotValid,
@@ -451,5 +454,36 @@ describe("scheduleAllBlocks block filtering", () => {
     ];
     const { conflicted } = filterBlocksForTask(blocks, TASK_ID, subtaskIds);
     expect(conflicted).toHaveLength(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Ownership verification
+// ---------------------------------------------------------------------------
+
+describe("scheduleAllBlocks ownership check", () => {
+  test("rejects taskId owned by a different user", async () => {
+    const t = makeTestCtx();
+    const { withAuth: callerAuth } = await createTestUser(t, { email: "caller@example.com" });
+    const { userId: otherUserId } = await createTestUser(t, { email: "other@example.com" });
+
+    const otherTaskId = await t.run((ctx) =>
+      ctx.db.insert("tasks", {
+        userId: otherUserId as Id<"users">,
+        title: "Other user's task",
+        description: "desc",
+        taskType: "Essay",
+        dueDate: Date.now() + 30 * 86_400_000,
+        createdAt: Date.now(),
+        isManualEstimate: false,
+      })
+    );
+
+    await expect(
+      callerAuth.action(api.actions.scheduleAllBlocks.scheduleAllBlocks, {
+        taskId: otherTaskId,
+        timezone: "America/New_York",
+      })
+    ).rejects.toThrow(/Task not found/);
   });
 });
