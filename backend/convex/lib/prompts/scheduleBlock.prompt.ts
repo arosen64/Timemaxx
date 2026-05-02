@@ -13,7 +13,7 @@ export const batchSlotSelectionResponseSchema = z.object({
     .string()
     .nullable()
     .describe(
-      "A single ≤30-word user-facing sentence explaining why some blocks could not be scheduled, if any blocks have cannotSchedule: true. Null when all blocks have candidates."
+      "A single ≤20-word user-facing sentence explaining why some blocks could not be scheduled, if any blocks have cannotSchedule: true. Null when all blocks have candidates."
     ),
 });
 
@@ -90,5 +90,5 @@ ${JSON.stringify(productivityTraits, null, 2)}
 ${JSON.stringify(blocksJson, null, 2)}
 </blocks>`);
 
-  return `Select the best slot index for each study block. If any blocks have cannotSchedule: true, set overallSkipReason to a single ≤30-word user-facing sentence explaining why those blocks could not be scheduled. Otherwise set overallSkipReason to null.\n\n${sections.join("\n\n")}`;
+  return `Select the best slot index for each study block. If any blocks have cannotSchedule: true, set overallSkipReason to a single ≤20-word user-facing sentence explaining why those blocks could not be scheduled. Otherwise set overallSkipReason to null.\n\n${sections.join("\n\n")}`;
 }
