@@ -100,7 +100,7 @@ export default function SyllabusReviewPage() {
       }
       if (
         t.assignmentWeight !== undefined &&
-        (t.assignmentWeight < 0 || t.assignmentWeight > 100)
+        (!Number.isFinite(t.assignmentWeight) || t.assignmentWeight < 0 || t.assignmentWeight > 100)
       ) {
         setError(`"${t.title || "Unnamed task"}": Grade weight must be between 0 and 100.`);
         return;

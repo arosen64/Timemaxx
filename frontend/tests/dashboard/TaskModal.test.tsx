@@ -421,7 +421,7 @@ describe('TaskModal', () => {
     })
   })
 
-  it('shows per-course weight cap error when projected total exceeds 100%', async () => {
+  it('shows per-course weight cap error with minimal existingTasks shape (only required fields)', async () => {
     const user = userEvent.setup()
     renderModal({
       classTagCourses: [

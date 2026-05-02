@@ -132,6 +132,8 @@ export default function TaskModal({
   const [pendingTaskId, setPendingTaskId] = useState<Id<"tasks"> | null>(null);
   const [pendingCourseId, setPendingCourseId] = useState<Id<"userCourses"> | undefined>(undefined);
 
+  // Safe because AddTaskModal/EditTaskModal pass a `key` that re-mounts this
+  // component on task switch, resetting prevClassTagRef to the new initial value.
   const prevClassTagRef = useRef(classTag);
   useEffect(() => {
     const prev = prevClassTagRef.current;

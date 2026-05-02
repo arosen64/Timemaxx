@@ -79,12 +79,12 @@ export default function TaskReviewCard({ task, onChange, onRemove }: TaskReviewC
             type="number"
             min={0}
             max={100}
+            step="0.1"
             value={task.assignmentWeight ?? ""}
-            onChange={(e) =>
-              update({
-                assignmentWeight: e.target.value === "" ? undefined : Number(e.target.value),
-              })
-            }
+            onChange={(e) => {
+              const parsed = e.target.value === "" ? undefined : Number(e.target.value);
+              update({ assignmentWeight: parsed !== undefined && isNaN(parsed) ? undefined : parsed });
+            }}
             placeholder="—"
             className="h-8 w-16 rounded-md border border-border bg-bg-gray px-2 font-body text-sm text-navy outline-none placeholder:text-light-blue focus:border-sky-blue"
           />
