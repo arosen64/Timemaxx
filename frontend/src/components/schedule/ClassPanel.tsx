@@ -163,7 +163,7 @@ export default function ClassPanel({
     [courses]
   );
 
-  const tasksForSelectedCourse = (courseTasks ?? []).filter((t) => t.status !== "completed");
+  const tasksForSelectedCourse = courseTasks ?? [];
 
   const selectedTask = useMemo(
     () => tasksForSelectedCourse.find((t) => t._id === selectedTaskId) ?? null,

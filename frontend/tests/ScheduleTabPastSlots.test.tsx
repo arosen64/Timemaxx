@@ -59,12 +59,20 @@ vi.mock('../src/components/schedule/TimeGrid', () => ({
   default: vi.fn(),
 }))
 
+// ── ClassPanel mock: captures unscheduledBlocks prop ─────────────────────────
+
+vi.mock('../src/components/schedule/ClassPanel', () => ({
+  default: vi.fn(),
+}))
+
 import { useQuery, useMutation, useAction } from 'convex/react'
 import TimeGrid from '../src/components/schedule/TimeGrid'
+import ClassPanel from '../src/components/schedule/ClassPanel'
 
 const mockUseQuery = vi.mocked(useQuery)
 const mockUseMutation = vi.mocked(useMutation)
 const mockUseAction = vi.mocked(useAction)
+const MockClassPanel = vi.mocked(ClassPanel as any)
 const MockTimeGrid = vi.mocked(TimeGrid as any)
 
 // ── Fixtures ─────────────────────────────────────────────────────────────────
@@ -141,6 +149,7 @@ describe('ScheduleTab – past-slot guards', () => {
     vi.setSystemTime(FAKE_NOW)
     vi.clearAllMocks()
     MockTimeGrid.mockImplementation(() => null)
+    MockClassPanel.mockImplementation(() => null)
   })
 
   afterEach(() => {
@@ -260,5 +269,97 @@ describe('ScheduleTab – past-slot guards', () => {
     })
 
     expect(editMutation).not.toHaveBeenCalled()
+  })
+})
+
+// ── Unplaced block tray filtering ────────────────────────────────────────────
+
+describe('ScheduleTab – unplaced block tray filtering', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(FAKE_NOW)
+    vi.clearAllMocks()
+    MockTimeGrid.mockImplementation(() => null)
+    MockClassPanel.mockImplementation(() => null)
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  function setupWithBlocks(studyBlocks: unknown[]) {
+    mockUseQuery.mockImplementation((...args: Parameters<typeof useQuery>) => {
+      const ref = args[0] as unknown as string
+      if (ref === 'getAllStudyBlocksWithTasks') return (studyBlocks as any[]).filter(b => (b as any).taskDueDate >= Date.now()) as never
+      if (ref === 'getUserCourses' || ref === 'getTasksByCourseId' || ref === 'getSubtasksForTask') return [] as never
+      return { workHoursGrid: WORK_HOURS_GRID, calendarConnected: false, selectedCalendarIds: null } as never
+    })
+    mockUseMutation.mockReturnValue(makeMutationFn() as never)
+    mockUseAction.mockReturnValue(
+      makeMutationFn({ calendarList: [], timedEvents: [], allDayEvents: [], error: false }) as never,
+    )
+    renderWithProviders(<ScheduleTab />)
+  }
+
+  function getLastUnscheduledBlocks() {
+    const lastCall = MockClassPanel.mock.calls.at(-1)?.[0] as any
+    if (!lastCall) throw new Error('ClassPanel was never rendered')
+    return lastCall.unscheduledBlocks as unknown[]
+  }
+
+  it('excludes unplaced blocks whose task due date has passed', async () => {
+    setupWithBlocks([{
+      _id: 'block-past',
+      taskId: 'task-past',
+      title: 'Overdue Study',
+      startTime: undefined,
+      studyBlockLength: 60,
+      taskDueDate: FAKE_NOW.getTime() - 86400000,
+    }])
+
+    await waitFor(() => expect(MockClassPanel.mock.calls.length).toBeGreaterThan(0))
+    expect(getLastUnscheduledBlocks()).toHaveLength(0)
+  })
+
+  it('includes unplaced blocks whose task due date is in the future', async () => {
+    setupWithBlocks([{
+      _id: 'block-future',
+      taskId: 'task-future',
+      title: 'Upcoming Study',
+      startTime: undefined,
+      studyBlockLength: 60,
+      taskDueDate: FAKE_NOW.getTime() + 86400000 * 7,
+    }])
+
+    await waitFor(() => expect(MockClassPanel.mock.calls.length).toBeGreaterThan(0))
+    const blocks = getLastUnscheduledBlocks()
+    expect(blocks).toHaveLength(1)
+    expect((blocks[0] as any)._id).toBe('block-future')
+  })
+
+  it('filters out only past-due unplaced blocks when both past and future are present', async () => {
+    setupWithBlocks([
+      {
+        _id: 'block-past',
+        taskId: 'task-past',
+        title: 'Overdue Study',
+        startTime: undefined,
+        studyBlockLength: 60,
+        taskDueDate: FAKE_NOW.getTime() - 86400000,
+      },
+      {
+        _id: 'block-future',
+        taskId: 'task-future',
+        title: 'Upcoming Study',
+        startTime: undefined,
+        studyBlockLength: 60,
+        taskDueDate: FAKE_NOW.getTime() + 86400000 * 7,
+      },
+    ])
+
+    await waitFor(() => expect(MockClassPanel.mock.calls.length).toBeGreaterThan(0))
+    const blocks = getLastUnscheduledBlocks()
+    expect(blocks).toHaveLength(1)
+    expect((blocks[0] as any)._id).toBe('block-future')
   })
 })
