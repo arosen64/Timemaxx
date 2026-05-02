@@ -52,7 +52,7 @@ export default function AcademicProfileSummary({ profile, onChange }: AcademicPr
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
         <div>
           <h2 className="font-heading text-2xl font-bold text-navy">Academic Profile</h2>
           <p className="mt-1 font-body text-sm text-slate-blue">
@@ -63,7 +63,7 @@ export default function AcademicProfileSummary({ profile, onChange }: AcademicPr
           </p>
         </div>
         {hasCourses && !loading && (
-          <div className="flex shrink-0 flex-col items-end gap-1">
+          <div className="flex shrink-0 flex-col items-start gap-1 sm:items-end">
             <Button variant="primary" onClick={generate} className="px-3 h-8 text-xs">
               Regenerate
             </Button>

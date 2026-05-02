@@ -51,11 +51,15 @@ interface TaskModalProps {
     dueTime: string;
     classTag: string;
     timeEstimate: string;
+    /** Grade weight as a string (e.g. "20"); empty string means no weight. Optional for backward compatibility. */
+    assignmentWeight?: string;
   };
   /** Current-term classes; class tag may only be empty or one of these (optional field) */
   classTagCourses?: ClassTagCourseOption[];
   /** When true, hides the entire subtask generation section (e.g. when editing a subtask) */
   hideSubtaskGeneration?: boolean;
+  /** When true, hides the assignment-weight input (e.g. when editing a subtask) */
+  hideAssignmentWeight?: boolean;
   /** When > 0, show Delete/Regenerate subtask buttons instead of the generate checkbox */
   existingSubtaskCount?: number;
   /** Task ID for regenerating subtasks on an already-saved task */
@@ -64,6 +68,12 @@ interface TaskModalProps {
   existingCourseId?: Id<"userCourses">;
   /** Called when user clicks "Delete subtasks" */
   onDeleteSubtasks?: () => Promise<void>;
+  /** Existing tasks used to validate per-course assignment-weight totals. */
+  existingTasks?: Array<{
+    _id: Id<"tasks">;
+    courseId?: Id<"userCourses">;
+    assignmentWeight?: number;
+  }>;
   onClose: () => void;
   /** Return the created/updated taskId when generating subtasks; void for normal flow */
   onSubmit: (form: EditForm) => Promise<string | void>;
@@ -78,9 +88,11 @@ export default function TaskModal({
   initialValues,
   classTagCourses,
   hideSubtaskGeneration = false,
+  hideAssignmentWeight = false,
   existingSubtaskCount,
   existingTaskId,
   existingCourseId,
+  existingTasks = [],
   onDeleteSubtasks,
   onClose,
   onSubmit,
@@ -110,6 +122,7 @@ export default function TaskModal({
   const [useAiEstimate, setUseAiEstimate] = useState(() =>
     isNaN(parseInt(initialValues.timeEstimate, 10))
   );
+  const [assignmentWeight, setAssignmentWeight] = useState(initialValues.assignmentWeight ?? "");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [generateSubtasks, setGenerateSubtasks] = useState(false);
@@ -119,7 +132,7 @@ export default function TaskModal({
   const [pendingTaskId, setPendingTaskId] = useState<Id<"tasks"> | null>(null);
   const [pendingCourseId, setPendingCourseId] = useState<Id<"userCourses"> | undefined>(undefined);
   const requestGenerateSubtasks = useAction(
-    api.actions.requestGenerateSubtasks.requestGenerateSubtasks
+    api.functions.requestGenerateSubtasks.requestGenerateSubtasks
   );
 
   // useAiEstimate is the single source of truth for AI vs manual mode.
@@ -133,6 +146,10 @@ export default function TaskModal({
       })),
     [courses]
   );
+  const selectedCourseId = useMemo(() => {
+    const resolvedClassTag = allowedClassTagValue(classTag, courses);
+    return courses.find((c) => c.classTag === resolvedClassTag)?.courseId;
+  }, [classTag, courses]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -149,6 +166,7 @@ export default function TaskModal({
     setEstimateHours(isNaN(mins) ? "" : String(Math.floor(mins / 60)));
     setEstimateMinutes(isNaN(mins) ? "" : String(mins % 60));
     setUseAiEstimate(isNaN(mins));
+    setAssignmentWeight(initialValues.assignmentWeight ?? "");
     setError(null);
     setSubmitting(false);
     setGenerateSubtasks(false);
@@ -167,6 +185,7 @@ export default function TaskModal({
     initialValues.dueTime,
     initialValues.classTag,
     initialValues.timeEstimate,
+    initialValues.assignmentWeight,
     courses,
   ]);
 
@@ -247,6 +266,43 @@ export default function TaskModal({
         setSubmitting(false);
         return;
       }
+      const trimmedWeight = assignmentWeight.trim();
+      let parsedWeight: number | undefined;
+      const shouldClearAssignmentWeight =
+        existingTaskId !== undefined &&
+        initialValues.assignmentWeight !== undefined &&
+        initialValues.assignmentWeight.trim() !== "" &&
+        trimmedWeight === "";
+      if (courseId !== undefined && trimmedWeight !== "") {
+        const w = Number(trimmedWeight);
+        if (!Number.isFinite(w) || w < 0 || w > 100) {
+          setError("Assignment weight must be between 0 and 100.");
+          setSubmitting(false);
+          return;
+        }
+        parsedWeight = w;
+      }
+      if (courseId !== undefined && parsedWeight !== undefined) {
+        const existingWeightTotal = existingTasks.reduce((sum, task) => {
+          if (task._id === existingTaskId) return sum;
+          if (task.courseId !== courseId) return sum;
+          const weight = task.assignmentWeight;
+          if (typeof weight !== "number" || !Number.isFinite(weight)) return sum;
+          return sum + weight;
+        }, 0);
+        const projectedTotal = existingWeightTotal + parsedWeight;
+        if (projectedTotal > 100) {
+          const roundedExistingTotal = Math.round(existingWeightTotal * 10) / 10;
+          const existingTotalDisplay = Number.isInteger(roundedExistingTotal)
+            ? String(roundedExistingTotal)
+            : roundedExistingTotal.toFixed(1);
+          setError(
+            `Assignments for this course already sum to ${existingTotalDisplay}% of the grade. Total course weight cannot exceed 100%.`
+          );
+          setSubmitting(false);
+          return;
+        }
+      }
       const form: EditForm = {
         title: taskName,
         description,
@@ -258,6 +314,8 @@ export default function TaskModal({
           ? { timeEstimate: parsedEstimate }
           : {}),
         ...(useAiEstimate ? { useAiEstimate: true } : {}),
+        ...(parsedWeight !== undefined ? { assignmentWeight: parsedWeight } : {}),
+        ...(shouldClearAssignmentWeight ? { clearAssignmentWeight: true } : {}),
       };
 
       if (generateSubtasks) {
@@ -374,6 +432,41 @@ export default function TaskModal({
               </div>
             )}
           </div>
+
+          {/* Assignment weight — percentage of final grade (optional) */}
+          {!hideAssignmentWeight && selectedCourseId !== undefined && (
+            <div className="flex w-full flex-col gap-1.5">
+              <label
+                htmlFor="task-assignment-weight"
+                className="font-heading text-[13px] font-semibold text-navy"
+              >
+                Grade weight <span className="font-normal text-light-blue">(optional)</span>
+              </label>
+              <p className="-mt-0.5 font-body text-xs text-light-blue">
+                What percentage of your final grade is this assignment worth?
+              </p>
+              <div className="relative w-32">
+                <input
+                  id="task-assignment-weight"
+                  type="number"
+                  min={0}
+                  max={100}
+                  step="0.1"
+                  inputMode="decimal"
+                  value={assignmentWeight}
+                  onChange={(e) => {
+                    setAssignmentWeight(e.target.value);
+                    setError(null);
+                  }}
+                  placeholder="—"
+                  className="h-11 w-full rounded-md border border-border bg-bg-gray pl-3.5 pr-8 font-body text-sm text-navy outline-none placeholder:text-light-blue"
+                />
+                <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center font-body text-sm text-light-blue">
+                  %
+                </span>
+              </div>
+            </div>
+          )}
 
           {/* Description */}
           <div className="flex w-full flex-col gap-1.5">

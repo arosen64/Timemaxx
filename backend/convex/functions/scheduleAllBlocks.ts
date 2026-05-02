@@ -1,4 +1,3 @@
-"use node";
 import { action } from "../_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
@@ -56,6 +55,11 @@ export const scheduleAllBlocks = action({
   ): Promise<{ scheduled: number; skipped: number; conflicted: number }> => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Unauthenticated");
+
+    const task = await ctx.runQuery(internal.queries.tasks.getTaskInternal, {
+      taskId: args.taskId,
+    });
+    if (!task || task.userId !== userId) throw new Error("Task not found");
 
     const user = await ctx.runQuery(internal.queries.users.getUserInternal, { userId });
     if (!user) throw new Error("User not found");

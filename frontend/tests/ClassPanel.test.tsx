@@ -14,7 +14,7 @@ vi.mock('../../backend/convex/_generated/api', () => ({
     mutations: {
       studyBlocks: { splitStudyBlock: 'splitStudyBlock' },
     },
-    actions: {
+    functions: {
       scheduleBlock: { scheduleBlock: 'scheduleBlock' },
       scheduleAllBlocks: { scheduleAllBlocks: 'scheduleAllBlocks' },
     },

@@ -1,57 +1,45 @@
 import { useState, KeyboardEvent } from "react";
+import { DAYS_OF_WEEK } from "../../../shared/userEnums";
+import {
+  TIME_OF_DAY_OPTIONS,
+  WORK_SESSION_STYLE_OPTIONS,
+  DEADLINE_BEHAVIOR_OPTIONS,
+  MIN_FOCUS_BLOCK_MINUTES,
+} from "../../../shared/preferenceEnums";
 import { PreferencesData } from "../types";
-
-export const MIN_FOCUS_BLOCK_MINUTES = 15;
 
 const CATEGORIES = [
   {
     key: "timeOfDay",
     label: "🕐 Time of Day",
     description: "When you feel most productive",
-    options: [
-      "Early Morning (5–8am)",
-      "Morning (8–11am)",
-      "Midday (11am–2pm)",
-      "Afternoon (2–5pm)",
-      "Evening (5–8pm)",
-      "Night (8–11pm)",
-      "Late Night (11pm+)",
-    ],
+    options: TIME_OF_DAY_OPTIONS,
   },
   {
     key: "dayOfWeek",
     label: "📅 Day of Week",
     description: "Your most productive days",
-    options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+    options: DAYS_OF_WEEK,
   },
   {
     key: "workSessionStyle",
     label: "⚡ Work Session Style",
     description: "How you prefer to structure study sessions",
-    options: [
-      "Short bursts (25–30 min)",
-      "Medium sessions (45–60 min)",
-      "Long deep work (2+ hours)",
-      "Varies by task",
-    ],
+    options: WORK_SESSION_STYLE_OPTIONS,
   },
   {
     key: "deadlineBehavior",
     label: "⏰ Deadline Behavior",
     description: "How deadlines affect your work",
     singleSelect: true,
-    options: [
-      "I work best well in advance",
-      "I need the pressure of a deadline",
-      "Somewhere in between",
-    ],
+    options: DEADLINE_BEHAVIOR_OPTIONS,
   },
 ];
 
 interface CategorySectionProps {
   label: string;
   description: string;
-  options: string[];
+  options: readonly string[];
   selected: string[];
   onToggle: (option: string) => void;
   onAddCustom: (value: string) => void;

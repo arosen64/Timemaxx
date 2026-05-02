@@ -27,15 +27,15 @@ export async function fetch21DayCalendarEvents(
 
   try {
     const [r1, r2, r3] = await Promise.all([
-      ctx.runAction(api.actions.fetchCalendarEvents.fetchCalendarEvents, {
+      ctx.runAction(api.functions.fetchCalendarEvents.fetchCalendarEvents, {
         startDate: toDateStr(today, timezone),
         timezone,
       }),
-      ctx.runAction(api.actions.fetchCalendarEvents.fetchCalendarEvents, {
+      ctx.runAction(api.functions.fetchCalendarEvents.fetchCalendarEvents, {
         startDate: toDateStr(week2Start, timezone),
         timezone,
       }),
-      ctx.runAction(api.actions.fetchCalendarEvents.fetchCalendarEvents, {
+      ctx.runAction(api.functions.fetchCalendarEvents.fetchCalendarEvents, {
         startDate: toDateStr(week3Start, timezone),
         timezone,
       }),

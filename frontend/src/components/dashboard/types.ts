@@ -1,15 +1,13 @@
 import { Id } from "../../../../backend/convex/_generated/dataModel";
 import { formatEstimatedTime } from "../../utils/timeUtils";
+import {
+  TASK_TYPES,
+  type TaskStatus,
+  type ReasoningTrace,
+  type EstimateFeedbackRating,
+} from "../../../../shared/taskEnums";
 
-/** Matches Convex `reasoningTraceValidator` — AI explanation for time estimates. */
-export type ReasoningTrace = {
-  classes: string;
-  tasks: string;
-  chats: string;
-  profile: string;
-};
-
-export type TaskStatus = "not_started" | "in_progress" | "completed";
+export type { TaskStatus, ReasoningTrace } from "../../../../shared/taskEnums";
 
 export type SubtaskType = {
   _id: Id<"subtasks">;
@@ -36,7 +34,7 @@ export type TaskType = {
   taskType: string;
   timeEstimate?: number;
   isManualEstimate: boolean;
-  estimateFeedbackRating?: "up" | "down";
+  estimateFeedbackRating?: EstimateFeedbackRating;
   correctedEstimateMinutes?: number;
   estimateFeedbackSubmittedAt?: number;
   dueDate: number;
@@ -48,17 +46,9 @@ export type TaskType = {
   assignmentWeight?: number;
 };
 
-export const BUILT_IN_TASK_TYPES = [
-  "Essay",
-  "Problem Set",
-  "Exam Prep",
-  "Coding",
-  "Reading",
-  "Lab",
-  "Presentation",
-] as const;
-export type BuiltInTaskType = (typeof BUILT_IN_TASK_TYPES)[number];
+export type BuiltInTaskType = (typeof TASK_TYPES)[number];
 export type SchemaTaskType = BuiltInTaskType;
+/** UI-only sentinel for the "Other" choice in the task-type picker. */
 export const CUSTOM_TASK_TYPE_OPTION = "Other";
 
 /** Current-term class row for the class-tag combobox (matches Classes page course search). */
@@ -83,9 +73,13 @@ export type EditForm = {
   timeEstimate?: number;
   /** True when user explicitly chose to reset to AI estimation */
   useAiEstimate?: boolean;
+  /** Grade weight of this assignment (0–100). Undefined when blank. */
+  assignmentWeight?: number;
+  /** True when editing and user clears a previously-set grade weight. */
+  clearAssignmentWeight?: boolean;
 };
 
-export const TASK_TYPE_OPTIONS: BuiltInTaskType[] = [...BUILT_IN_TASK_TYPES];
+export const TASK_TYPE_OPTIONS: BuiltInTaskType[] = [...TASK_TYPES];
 
 export function formatDateMMDDYYYY(ms: number) {
   const d = new Date(ms);
@@ -115,7 +109,11 @@ export function formatMinutes(minutes: number) {
   return formatEstimatedTime(minutes);
 }
 
-export type FeedbackDraft = { rating?: "up" | "down"; hours: string; minutes: string };
+export type FeedbackDraft = {
+  rating?: EstimateFeedbackRating;
+  hours: string;
+  minutes: string;
+};
 
 export function parseEstimationError(err: unknown): string {
   const raw = err instanceof Error ? err.message : String(err);

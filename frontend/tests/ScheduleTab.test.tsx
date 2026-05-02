@@ -20,8 +20,10 @@ vi.mock('../../backend/convex/_generated/api', () => ({
       },
     },
     actions: {
-      fetchCalendarEvents: { fetchCalendarEvents: 'fetchCalendarEvents' },
       autoRescheduleConflicts: { autoRescheduleConflicts: 'autoRescheduleConflicts' },
+    },
+    functions: {
+      fetchCalendarEvents: { fetchCalendarEvents: 'fetchCalendarEvents' },
       exportStudyBlocksToCalendar: { exportStudyBlocksToCalendar: 'exportStudyBlocksToCalendar' },
       scheduleBlock: { scheduleBlock: 'scheduleBlock' },
       scheduleAllBlocks: { scheduleAllBlocks: 'scheduleAllBlocks' },

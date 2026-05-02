@@ -1,18 +1,11 @@
 import { internalMutation, mutation } from "../_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
-import { taskTypeValidator } from "../lib/taskValidators";
+import { reasoningTraceValidator } from "../lib/taskValidators";
 import { internal } from "../_generated/api";
 import { rebuildStudyBlocksForSubtask } from "./timeEstimate";
 import { computeRecommendedStart, computeSubtaskCascade } from "../lib/scheduleSlots";
 import { Id } from "../_generated/dataModel";
-
-const reasoningTraceArgs = v.object({
-  classes: v.string(),
-  tasks: v.string(),
-  chats: v.string(),
-  profile: v.string(),
-});
 
 const GENERATED_SUBTASK_COLORS = [
   "#68ACE5",
@@ -31,7 +24,7 @@ export const createSubtasksBatch = mutation({
       v.object({
         title: v.string(),
         description: v.string(),
-        taskType: taskTypeValidator,
+        taskType: v.string(),
         color: v.string(),
         order: v.number(),
       })
@@ -71,6 +64,7 @@ export const createSubtasksBatch = mutation({
         classTag: parent.classTag,
         dueDate: parent.dueDate,
         createdAt: now,
+        status: "not_started",
       });
       subtaskIds.push(subtaskId);
     }
@@ -129,6 +123,7 @@ export const createSubtasksFromGeneratedInternal = internalMutation({
         classTag: parent.classTag,
         dueDate: parent.dueDate,
         createdAt: now,
+        status: "not_started",
       });
       subtaskIds.push(subtaskId);
     }
@@ -155,7 +150,7 @@ export const createSubtask = mutation({
     parentTaskId: v.id("tasks"),
     title: v.string(),
     description: v.string(),
-    taskType: taskTypeValidator,
+    taskType: v.string(),
     color: v.string(),
     order: v.number(),
     suggestedCompletionAt: v.optional(v.number()),
@@ -186,6 +181,7 @@ export const createSubtask = mutation({
       classTag: parent.classTag,
       dueDate: parent.dueDate,
       createdAt: Date.now(),
+      status: "not_started",
     });
 
     // Parent time is rolled up from subtasks; drop any prior whole-task AI reasoning
@@ -215,7 +211,7 @@ export const updateSubtask = mutation({
     subtaskId: v.id("subtasks"),
     title: v.string(),
     description: v.string(),
-    taskType: taskTypeValidator,
+    taskType: v.string(),
     suggestedCompletionAt: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
@@ -257,7 +253,7 @@ export const setSubtaskTimeEstimate = internalMutation({
   args: {
     subtaskId: v.id("subtasks"),
     timeEstimate: v.number(),
-    reasoning: reasoningTraceArgs,
+    reasoning: reasoningTraceValidator,
   },
   handler: async (ctx, args) => {
     const subtask = await ctx.db.get(args.subtaskId);

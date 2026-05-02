@@ -1,4 +1,7 @@
 import { describe, expect, test } from "vitest";
+import { api } from "../_generated/api";
+import { makeTestCtx, createTestUser } from "../../convex-tests/helpers";
+import type { Id } from "../_generated/dataModel";
 import {
   buildSlotContext,
   isSlotValid,
@@ -318,7 +321,7 @@ describe("global scoring: speculative load spreads blocks across days", () => {
 // Sort order (block priority within a run)
 // ---------------------------------------------------------------------------
 
-// Mirrors the sort comparator in actions/scheduleAllBlocks.ts.
+// Mirrors the sort comparator in functions/scheduleAllBlocks.ts.
 // If the comparator changes, update this too.
 function sortForScheduling(
   a: { parentDueDate: number; parentWeight: number; _creationTime: number },
@@ -451,5 +454,37 @@ describe("scheduleAllBlocks block filtering", () => {
     ];
     const { conflicted } = filterBlocksForTask(blocks, TASK_ID, subtaskIds);
     expect(conflicted).toHaveLength(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Ownership verification
+// ---------------------------------------------------------------------------
+
+describe("scheduleAllBlocks ownership check", () => {
+  test("rejects taskId owned by a different user", async () => {
+    const t = makeTestCtx();
+    const { withAuth: callerAuth } = await createTestUser(t, { email: "caller@example.com" });
+    const { userId: otherUserId } = await createTestUser(t, { email: "other@example.com" });
+
+    const otherTaskId = await t.run((ctx) =>
+      ctx.db.insert("tasks", {
+        userId: otherUserId as Id<"users">,
+        title: "Other user's task",
+        description: "desc",
+        taskType: "Essay",
+        status: "not_started",
+        dueDate: Date.now() + 30 * 86_400_000,
+        createdAt: Date.now(),
+        isManualEstimate: false,
+      })
+    );
+
+    await expect(
+      callerAuth.action(api.functions.scheduleAllBlocks.scheduleAllBlocks, {
+        taskId: otherTaskId,
+        timezone: "America/New_York",
+      })
+    ).rejects.toThrow(/Task not found/);
   });
 });
