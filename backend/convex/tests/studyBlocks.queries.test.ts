@@ -13,6 +13,7 @@ async function seedTask(t: ReturnType<typeof makeTestCtx>, userId: string) {
       dueDate: Date.now() + 86_400_000,
       createdAt: Date.now(),
       isManualEstimate: false,
+      status: "not_started",
     })
   );
 }
@@ -34,6 +35,7 @@ async function seedStudyBlock(
       startTime: overrides.startTime,
       studyBlockLength: overrides.studyBlockLength ?? 60,
       isCompleted: overrides.isCompleted ?? false,
+      isConflicted: false,
     })
   );
 }
@@ -179,6 +181,7 @@ describe("queries/studyBlocks – getFutureStudyBlocksForExport", () => {
         studyBlockLength: 60,
         googleEventId: "existing_gcal_event",
         isCompleted: false,
+        isConflicted: false,
       })
     );
 
@@ -232,6 +235,8 @@ describe("queries/studyBlocks – getFutureStudyBlocksForExport", () => {
         dueDate: Date.now() + 86_400_000,
         createdAt: Date.now(),
         courseId: courseId as Id<"userCourses">,
+        isManualEstimate: false,
+        status: "not_started",
       })
     );
     const futureStart = new Date(Date.now() + 3600_000).toISOString();
@@ -292,6 +297,7 @@ describe("queries/studyBlocks – getAllStudyBlocksWithTasksInternal taskRecomme
         recommendedStart: recommendedStart,
         createdAt: Date.now(),
         isManualEstimate: false,
+        status: "not_started",
       })
     );
     await seedStudyBlock(t, taskId);

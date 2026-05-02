@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useAction, useMutation } from "convex/react";
 import { api } from "../../../backend/convex/_generated/api";
 import { JhuCourse, JhuSchool, JhuTerm, CourseSelectorProps } from "../types";
-import { GRADES, STUDY_GOALS } from "../constants";
+import { GRADES, STUDY_GOALS } from "../../../shared/courseEnums";
 import { isPastTerm } from "../utils/termUtils";
 import {
   getCachedTerms,

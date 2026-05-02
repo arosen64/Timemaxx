@@ -12,7 +12,7 @@ function makeErrorResponse(status: number, statusText: string) {
   return { ok: false, status, statusText, json: async () => ({}) };
 }
 
-describe("actions/jhuCourses", () => {
+describe("functions/jhuCourses", () => {
   beforeEach(() => {
     vi.stubEnv("JHU_SIS_API_KEY", "test-sis-key");
     vi.stubGlobal("fetch", mockFetch);

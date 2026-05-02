@@ -1,8 +1,9 @@
 import { Fragment, useState, useEffect, useRef, useCallback } from "react";
+import { DAYS_OF_WEEK } from "../../../shared/userEnums";
 import { WorkHoursData } from "../types";
 
-const DAYS_SHORT = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-const DAYS_FULL = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+const DAYS_FULL = DAYS_OF_WEEK;
+const DAYS_SHORT = DAYS_FULL.map((d) => d.slice(0, 3));
 const TOTAL_SLOTS = 48; // 30-min increments across 24 hours
 
 type DragAction = "paint" | "erase";

@@ -2,7 +2,7 @@ import { mutation, internalMutation, MutationCtx } from "../_generated/server";
 import { internal } from "../_generated/api";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
-import { taskTypeValidator } from "../lib/taskValidators";
+import { taskStatusValidator } from "../lib/taskValidators";
 import { Id } from "../_generated/dataModel";
 import { rebuildStudyBlocks } from "./timeEstimate";
 import { computeRecommendedStart, computeSubtaskCascade } from "../lib/scheduleSlots";
@@ -46,7 +46,7 @@ export const createTask = mutation({
   args: {
     title: v.string(),
     description: v.string(),
-    taskType: taskTypeValidator,
+    taskType: v.string(),
     dueDate: v.number(),
     courseId: v.optional(v.id("userCourses")),
     classTag: v.optional(v.string()),
@@ -95,6 +95,7 @@ export const createTask = mutation({
       assignmentWeight: args.assignmentWeight,
       recommendedStart: computeRecommendedStart(now, args.dueDate),
       createdAt: Date.now(),
+      status: "not_started",
     });
 
     if (isManualEstimate) {
@@ -118,11 +119,12 @@ export const updateTask = mutation({
     taskId: v.id("tasks"),
     title: v.string(),
     description: v.string(),
-    taskType: taskTypeValidator,
+    taskType: v.string(),
     dueDate: v.number(),
     courseId: v.optional(v.id("userCourses")),
     classTag: v.optional(v.string()),
     assignmentWeight: v.optional(v.number()),
+    clearAssignmentWeight: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -145,6 +147,7 @@ export const updateTask = mutation({
       dueDate: args.dueDate,
       courseId: args.courseId,
       ...(args.classTag !== undefined ? { classTag: normalizeClassTag(args.classTag) } : {}),
+      ...(args.clearAssignmentWeight ? { assignmentWeight: undefined } : {}),
       ...(args.assignmentWeight !== undefined ? { assignmentWeight: args.assignmentWeight } : {}),
       recommendedStart: computeRecommendedStart(Date.now(), args.dueDate),
     });
@@ -212,6 +215,7 @@ export const createTaskInternal = internalMutation({
       recommendedStart: computeRecommendedStart(Date.now(), args.dueDate),
       createdAt: Date.now(),
       isManualEstimate: false,
+      status: "not_started",
     });
     if (process.env.GEMINI_API_KEY) {
       await ctx.scheduler.runAfter(0, internal.ai.embeddings.generateTaskEmbedding, {
@@ -299,18 +303,12 @@ export const patchTaskEmbedding = internalMutation({
   },
 });
 
-const taskStatusValidator = v.union(
-  v.literal("not_started"),
-  v.literal("in_progress"),
-  v.literal("completed")
-);
-
 /** Unsets all calendar-scheduling fields on a study block, leaving the block itself intact. */
 async function unscheduleBlock(ctx: MutationCtx, blockId: Id<"studyBlocks">, markComplete = false) {
   await ctx.db.patch(blockId, {
     startTime: undefined,
     googleEventId: undefined,
-    isConflicted: undefined,
+    isConflicted: false,
     needsExport: undefined,
     ...(markComplete ? { isCompleted: true } : {}),
   });

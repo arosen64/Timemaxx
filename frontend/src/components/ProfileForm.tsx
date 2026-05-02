@@ -1,5 +1,6 @@
 import { ProfileData } from "../types";
-import { YEARS, GRADES, STUDY_GOALS } from "../constants";
+import { YEARS } from "../../../shared/userEnums";
+import { GRADES, STUDY_GOALS } from "../../../shared/courseEnums";
 
 interface ProfileFormProps {
   data: ProfileData;

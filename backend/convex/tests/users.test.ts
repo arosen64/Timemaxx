@@ -5,8 +5,8 @@ import { makeTestCtx, createTestUser } from "../../convex-tests/helpers";
 const VALID_ONBOARDING_ARGS = {
   major: "Computer Science",
   year: "Junior",
-  workHoursGrid: [{ day: "Monday", blocked: [] }],
-  productivityTraits: { morningPerson: true },
+  workHoursGrid: [{ day: "Monday" as const, blocked: [] as number[] }],
+  productivityTraits: { timeOfDay: ["Morning"] },
   focusBlockLength: 50,
 };
 
@@ -41,6 +41,7 @@ describe("mutations/users – deleteAccount", () => {
         dueDate: Date.now() + 86_400_000,
         createdAt: Date.now(),
         isManualEstimate: false,
+        status: "not_started",
       });
       await ctx.db.insert("tasks", {
         userId,
@@ -50,6 +51,7 @@ describe("mutations/users – deleteAccount", () => {
         dueDate: Date.now() + 86_400_000,
         createdAt: Date.now(),
         isManualEstimate: false,
+        status: "not_started",
       });
     });
 
@@ -327,6 +329,7 @@ describe("mutations/users – deleteAccount", () => {
         title: "Orphaned block",
         studyBlockLength: 50,
         isCompleted: false,
+        isConflicted: false,
       });
     });
 
@@ -416,6 +419,7 @@ describe("mutations/users – deleteAccount", () => {
         dueDate: Date.now() + 86_400_000,
         createdAt: Date.now(),
         isManualEstimate: false,
+        status: "not_started",
       });
       await ctx.db.insert("syllabi", {
         userId: otherUserId,
@@ -497,27 +501,13 @@ describe("mutations/users – updateUserSettings", () => {
     const t = makeTestCtx();
     const { userId, withAuth } = await createTestUser(t);
 
-    const grid = [{ day: "Monday", blocked: [8] }];
+    const grid = [{ day: "Monday" as const, blocked: [8] }];
     await withAuth.mutation(api.mutations.users.updateUserSettings, {
       workHoursGrid: grid,
     });
 
     const user = await t.run((ctx) => ctx.db.get(userId));
     expect(user!.workHoursGrid).toEqual(grid);
-  });
-
-  test("updates courses field", async () => {
-    const t = makeTestCtx();
-    const { userId, withAuth } = await createTestUser(t);
-
-    const courses = [
-      { title: "CS101", studyGoal: "A" },
-      { title: "Math201", studyGoal: "B+" },
-    ];
-    await withAuth.mutation(api.mutations.users.updateUserSettings, { courses });
-
-    const user = await t.run((ctx) => ctx.db.get(userId));
-    expect(user!.courses).toEqual(courses);
   });
 
   test("does not affect unspecified fields", async () => {

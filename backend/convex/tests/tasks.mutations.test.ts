@@ -13,6 +13,7 @@ async function seedTask(t: ReturnType<typeof makeTestCtx>, userId: string) {
       dueDate: Date.now() + 86_400_000,
       createdAt: Date.now(),
       isManualEstimate: false,
+      status: "not_started",
     })
   );
 }
@@ -28,6 +29,7 @@ async function seedStudyBlock(
       title: "Block",
       studyBlockLength: 60,
       isCompleted: false,
+      isConflicted: false,
       ...(opts.userId ? { userId: opts.userId as Id<"users"> } : {}),
       ...(opts.googleEventId ? { googleEventId: opts.googleEventId } : {}),
     })
@@ -45,6 +47,7 @@ async function seedSubtask(t: ReturnType<typeof makeTestCtx>, taskId: string, us
       color: "#ffffff",
       order: 0,
       createdAt: Date.now(),
+      status: "not_started",
     })
   );
 }
@@ -60,6 +63,7 @@ async function seedSubtaskStudyBlock(
       title: "Subtask Block",
       studyBlockLength: 60,
       isCompleted: false,
+      isConflicted: false,
       ...(opts.userId ? { userId: opts.userId as Id<"users"> } : {}),
       ...(opts.googleEventId ? { googleEventId: opts.googleEventId } : {}),
     })

@@ -359,17 +359,23 @@ async function applySessionStateChanges(
   userId: Id<"users">,
   sessionId: string,
   output: ChatWorkflowOutput,
-  previousActiveAgent: "task" | "feedback" | "preferences" | "classes" | "schedule" | null
+  previousActiveAgent: ActiveAgent | null
 ) {
   const feedbackAgentDone =
     previousActiveAgent === "feedback" &&
     (output.readyToRecord || output.newActiveAgent !== "feedback");
+
+  // Two independent steps so the supervisor's mid-flow intent-switch case can
+  // clear the previous sub-agent's state AND install the new sub-agent's state
+  // in the same turn. (For action-completion turns `newActiveAgent` is null so
+  // the second step is a no-op, preserving existing behaviour.)
   if (output.clearActiveAgent || feedbackAgentDone) {
     await ctx.runMutation(internal.mutations.chatSessions.clearAgentStateInternal, {
       userId,
       sessionId,
     });
-  } else if (output.newActiveAgent || output.newTaskAgentIntent || output.newCourseAgentIntent) {
+  }
+  if (output.newActiveAgent || output.newTaskAgentIntent || output.newCourseAgentIntent) {
     await ctx.runMutation(internal.mutations.chatSessions.setTaskAgentStateInternal, {
       userId,
       sessionId,
@@ -557,6 +563,10 @@ async function handleWorkflowTurn(
       role: "assistant",
       content: introText,
     });
+    // Apply agent-state changes (which may clear prior session state on intent
+    // switch) BEFORE setting the entity-prompt state, so the new MCQ state
+    // isn't wiped out by the clear.
+    await applySessionStateChanges(ctx, userId, sessionId, output, activeAgent);
     if (candidates.length > 0) {
       await ctx.runMutation(internal.mutations.chatSessions.setEntityPromptStateInternal, {
         userId,
@@ -568,7 +578,6 @@ async function handleWorkflowTurn(
         ...(mcqTriggerId !== undefined ? { clarifyTriggerUserMessageId: mcqTriggerId } : {}),
       });
     }
-    await applySessionStateChanges(ctx, userId, sessionId, output, activeAgent);
     return c.json({
       text: introText,
       status: candidates.length > 0 ? "needs_entity_clarification" : "routed",
@@ -645,6 +654,9 @@ async function handleWorkflowTurn(
       content: introText,
       ...(taskForIntro !== undefined ? { taskId: taskForIntro } : {}),
     });
+    // See needs_task_mcq above: clear-then-set ordering matters when intent
+    // switching, so apply session state changes BEFORE the entity prompt state.
+    await applySessionStateChanges(ctx, userId, sessionId, output, activeAgent);
     if (candidates.length > 0) {
       await ctx.runMutation(internal.mutations.chatSessions.setEntityPromptStateInternal, {
         userId,
@@ -667,7 +679,6 @@ async function handleWorkflowTurn(
         ...(mcqTriggerId !== undefined ? { clarifyTriggerUserMessageId: mcqTriggerId } : {}),
       });
     }
-    await applySessionStateChanges(ctx, userId, sessionId, output, activeAgent);
     return c.json({
       text: introText,
       status: candidates.length > 0 ? "needs_entity_clarification" : "routed",

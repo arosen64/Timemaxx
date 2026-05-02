@@ -1,3 +1,4 @@
+import { DAYS_OF_WEEK } from "../../../shared/userEnums";
 import { MastraClient } from "@mastra/client-js";
 import {
   batchSlotSelectionResponseSchema,
@@ -112,7 +113,7 @@ export function computeMaxBlocksPerDay(
   focusBlockLengthMinutes: number,
   preferredDays: string[] = []
 ): Map<string, number> {
-  const ALL_DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+  const ALL_DAYS = DAYS_OF_WEEK;
   const preferred = new Set(preferredDays);
   const map = new Map<string, number>();
 
