@@ -301,7 +301,6 @@ export const patchTaskEmbedding = internalMutation({
   },
 });
 
-
 /** Unsets all calendar-scheduling fields on a study block, leaving the block itself intact. */
 async function unscheduleBlock(ctx: MutationCtx, blockId: Id<"studyBlocks">, markComplete = false) {
   await ctx.db.patch(blockId, {
