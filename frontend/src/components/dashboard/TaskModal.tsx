@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useAction } from "convex/react";
 import { api } from "../../../../backend/convex/_generated/api";
 import { type Id } from "../../../../backend/convex/_generated/dataModel";
@@ -131,6 +131,14 @@ export default function TaskModal({
   const [pendingSubtasks, setPendingSubtasks] = useState<GeneratedSubtask[] | null>(null);
   const [pendingTaskId, setPendingTaskId] = useState<Id<"tasks"> | null>(null);
   const [pendingCourseId, setPendingCourseId] = useState<Id<"userCourses"> | undefined>(undefined);
+
+  const prevClassTagRef = useRef(classTag);
+  useEffect(() => {
+    const prev = prevClassTagRef.current;
+    prevClassTagRef.current = classTag;
+    if (!classTag && prev) setAssignmentWeight("");
+  }, [classTag]);
+
   const requestGenerateSubtasks = useAction(
     api.functions.requestGenerateSubtasks.requestGenerateSubtasks
   );

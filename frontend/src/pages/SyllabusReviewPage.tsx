@@ -54,6 +54,7 @@ export default function SyllabusReviewPage() {
       taskType: t.taskType,
       dueDate: msToFormDate(t.dueDate),
       dueTime: msToTimeInputValue(t.dueDate),
+      assignmentWeight: t.assignmentWeight,
     }));
   });
   const [isConfirming, setIsConfirming] = useState(false);
@@ -85,6 +86,7 @@ export default function SyllabusReviewPage() {
       description: string;
       taskType: (typeof TASK_TYPE_OPTIONS)[number];
       dueDate: number;
+      assignmentWeight?: number;
     }> = [];
     for (const t of tasks) {
       if (!t.title.trim()) {
@@ -96,6 +98,13 @@ export default function SyllabusReviewPage() {
         setError(`"${t.title || "Unnamed task"}": ${validationError}`);
         return;
       }
+      if (
+        t.assignmentWeight !== undefined &&
+        (t.assignmentWeight < 0 || t.assignmentWeight > 100)
+      ) {
+        setError(`"${t.title || "Unnamed task"}": Grade weight must be between 0 and 100.`);
+        return;
+      }
       const dateMs = formDateToMs(t.dueDate)!;
       const ms = combineDateMsWithTime(dateMs, t.dueTime)!;
       toSave.push({
@@ -103,6 +112,7 @@ export default function SyllabusReviewPage() {
         description: t.description,
         taskType: t.taskType,
         dueDate: ms,
+        assignmentWeight: t.assignmentWeight,
       });
     }
 
