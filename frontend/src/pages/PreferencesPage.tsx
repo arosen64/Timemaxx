@@ -16,6 +16,7 @@ function dbToWorkHours(grid: { day: string; blocked: number[] }[] | undefined): 
 
 export default function PreferencesPage() {
   const user = useQuery(api.queries.users.getCurrUser);
+  const userCourses = useQuery(api.queries.userCourses.getUserCourses);
   const calendarStatus = useQuery(api.queries.calendar.getCalendarConnectionStatus);
   const updateSettings = useMutation(api.mutations.users.updateUserSettings);
   const runDetectConflicts = useMutation(api.mutations.studyBlocks.runDetectConflicts);
@@ -41,7 +42,7 @@ export default function PreferencesPage() {
       setProfileDraft({
         major: user.major ?? "",
         year: user.year ?? "",
-        courses: (user.courses ?? []).map((c) => ({ title: c.title, studyGoal: c.studyGoal })),
+        courses: (userCourses ?? []).map((c) => ({ title: c.title, studyGoal: c.studyGoal })),
       });
     } else if (section === "workhours") {
       setWorkHoursDraft(
@@ -77,7 +78,7 @@ export default function PreferencesPage() {
         });
       } else if (editingSection === "workhours" && workHoursDraft) {
         const newGrid = Object.entries(workHoursDraft).map(([day, slots]) => ({
-          day,
+          day: day as "Monday" | "Tuesday" | "Wednesday" | "Thursday" | "Friday" | "Saturday" | "Sunday",
           blocked: slots.blocked,
         }));
         await updateSettings({ workHoursGrid: newGrid });
@@ -105,7 +106,7 @@ export default function PreferencesPage() {
   const profileData: ProfileData = {
     major: user?.major ?? "",
     year: user?.year ?? "",
-    courses: (user?.courses ?? []).map((c) => ({ title: c.title, studyGoal: c.studyGoal })),
+    courses: (userCourses ?? []).map((c) => ({ title: c.title, studyGoal: c.studyGoal })),
   };
   const workHoursData = dbToWorkHours(user?.workHoursGrid);
   const preferencesData: PreferencesData = {
