@@ -205,7 +205,7 @@ export default function ClassPanel({
     try {
       const result = await scheduleBlockAction({ studyBlockId: blockId, timezone });
       if ("error" in result) {
-        onScheduleAllMsg("No valid slot found before the due date.", true);
+        onScheduleAllMsg(result.skippedReason, true);
       } else if (result.scheduled === 0) {
         onScheduleAllMsg("Block is already scheduled.", true);
       }

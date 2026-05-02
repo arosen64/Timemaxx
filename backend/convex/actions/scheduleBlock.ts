@@ -44,7 +44,10 @@ export const scheduleBlock = action({
     studyBlockId: v.id("studyBlocks"),
     timezone: v.string(),
   },
-  handler: async (ctx, args): Promise<{ scheduled: number } | { error: string }> => {
+  handler: async (
+    ctx,
+    args
+  ): Promise<{ scheduled: number } | { error: string; skippedReason: string }> => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Unauthenticated");
 
@@ -216,7 +219,8 @@ export const scheduleBlock = action({
       });
     }
 
-    if (scoredSlots.length === 0) return { error: "no_slot_found" };
+    if (scoredSlots.length === 0)
+      return { error: "no_slot_found", skippedReason: "No open time slots before your deadline." };
 
     scoredSlots.sort((a, b) => b.score - a.score);
     const candidates = scoredSlots.slice(0, MAX_CANDIDATES);
@@ -233,7 +237,8 @@ export const scheduleBlock = action({
     let chosen = candidates[chosenIndices[0] ?? 0];
     if (!isPhysValid(chosen)) {
       const fallback = candidates.find(isPhysValid);
-      if (!fallback) return { error: "no_slot_found" };
+      if (!fallback)
+        return { error: "no_slot_found", skippedReason: "Your schedule is too full to fit this block." };
       chosen = fallback;
     }
 
