@@ -70,6 +70,15 @@ export const getCalendarConnectionForUser = internalQuery({
 });
 
 /**
+ * Returns all calendarConnections records — used by the plaintext-token invalidation action.
+ */
+export const getAllCalendarConnections = internalQuery({
+  handler: async (ctx) => {
+    return await ctx.db.query("calendarConnections").collect();
+  },
+});
+
+/**
  * Looks up a calendar OAuth state record by its state string — called from the HTTP callback.
  */
 export const getCalendarOAuthState = internalQuery({

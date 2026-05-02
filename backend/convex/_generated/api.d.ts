@@ -15,6 +15,7 @@ import type * as actions_fetchCalendarEvents from "../actions/fetchCalendarEvent
 import type * as actions_generateSubtasks from "../actions/generateSubtasks.js";
 import type * as actions_getCalendarAvailability from "../actions/getCalendarAvailability.js";
 import type * as actions_initiateGoogleCalendarOAuth from "../actions/initiateGoogleCalendarOAuth.js";
+import type * as actions_invalidatePlaintextCalendarTokens from "../actions/invalidatePlaintextCalendarTokens.js";
 import type * as actions_jhuCourses from "../actions/jhuCourses.js";
 import type * as actions_requestEstimateSubtaskTime from "../actions/requestEstimateSubtaskTime.js";
 import type * as actions_requestGenerateSubtasks from "../actions/requestGenerateSubtasks.js";
@@ -83,7 +84,11 @@ import type * as queries_tasks from "../queries/tasks.js";
 import type * as queries_userCourses from "../queries/userCourses.js";
 import type * as queries_users from "../queries/users.js";
 
-import type { ApiFromModules, FilterApi, FunctionReference } from "convex/server";
+import type {
+  ApiFromModules,
+  FilterApi,
+  FunctionReference,
+} from "convex/server";
 
 declare const fullApi: ApiFromModules<{
   "actions/autoRescheduleConflicts": typeof actions_autoRescheduleConflicts;
@@ -93,6 +98,7 @@ declare const fullApi: ApiFromModules<{
   "actions/generateSubtasks": typeof actions_generateSubtasks;
   "actions/getCalendarAvailability": typeof actions_getCalendarAvailability;
   "actions/initiateGoogleCalendarOAuth": typeof actions_initiateGoogleCalendarOAuth;
+  "actions/invalidatePlaintextCalendarTokens": typeof actions_invalidatePlaintextCalendarTokens;
   "actions/jhuCourses": typeof actions_jhuCourses;
   "actions/requestEstimateSubtaskTime": typeof actions_requestEstimateSubtaskTime;
   "actions/requestGenerateSubtasks": typeof actions_requestGenerateSubtasks;
@@ -170,7 +176,10 @@ declare const fullApi: ApiFromModules<{
  * const myFunctionReference = api.myModule.myFunction;
  * ```
  */
-export declare const api: FilterApi<typeof fullApi, FunctionReference<any, "public">>;
+export declare const api: FilterApi<
+  typeof fullApi,
+  FunctionReference<any, "public">
+>;
 
 /**
  * A utility for referencing Convex functions in your app's internal API.
@@ -180,6 +189,9 @@ export declare const api: FilterApi<typeof fullApi, FunctionReference<any, "publ
  * const myFunctionReference = internal.myModule.myFunction;
  * ```
  */
-export declare const internal: FilterApi<typeof fullApi, FunctionReference<any, "internal">>;
+export declare const internal: FilterApi<
+  typeof fullApi,
+  FunctionReference<any, "internal">
+>;
 
 export declare const components: {};
