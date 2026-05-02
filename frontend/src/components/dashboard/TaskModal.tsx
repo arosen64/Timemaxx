@@ -119,7 +119,7 @@ export default function TaskModal({
   const [pendingTaskId, setPendingTaskId] = useState<Id<"tasks"> | null>(null);
   const [pendingCourseId, setPendingCourseId] = useState<Id<"userCourses"> | undefined>(undefined);
   const requestGenerateSubtasks = useAction(
-    api.actions.requestGenerateSubtasks.requestGenerateSubtasks
+    api.functions.requestGenerateSubtasks.requestGenerateSubtasks
   );
 
   // useAiEstimate is the single source of truth for AI vs manual mode.

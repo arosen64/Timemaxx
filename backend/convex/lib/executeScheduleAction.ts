@@ -32,7 +32,7 @@ async function scheduleTaskFromOutput(
     return { aiText: "All blocks for this task are already scheduled!" };
   }
 
-  const result = await ctx.runAction(api.actions.scheduleAllBlocks.scheduleAllBlocks, {
+  const result = await ctx.runAction(api.functions.scheduleAllBlocks.scheduleAllBlocks, {
     taskId: activeTaskId,
     timezone,
   });
@@ -74,7 +74,7 @@ async function scheduleBlockFromOutput(
     if (!picked) {
       return { aiText: "That block doesn't belong to the selected task." };
     }
-    const result = await ctx.runAction(api.actions.scheduleBlock.scheduleBlock, {
+    const result = await ctx.runAction(api.functions.scheduleBlock.scheduleBlock, {
       studyBlockId: activeBlockId,
       timezone,
     });
@@ -97,7 +97,7 @@ async function scheduleBlockFromOutput(
   }
 
   if (unscheduled.length === 1) {
-    const result = await ctx.runAction(api.actions.scheduleBlock.scheduleBlock, {
+    const result = await ctx.runAction(api.functions.scheduleBlock.scheduleBlock, {
       studyBlockId: unscheduled[0]._id,
       timezone,
     });

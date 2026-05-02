@@ -28,7 +28,7 @@ export default function OnboardingPage() {
   const saveOnboarding = useMutation(api.mutations.users.completeOnboarding);
   const calendarStatus = useQuery(api.queries.calendar.getCalendarConnectionStatus);
   const initiateCalendarOAuth = useAction(
-    api.actions.initiateGoogleCalendarOAuth.initiateGoogleCalendarOAuth
+    api.functions.initiateGoogleCalendarOAuth.initiateGoogleCalendarOAuth
   );
 
   const [step, setStep] = useState<Step>(() => {

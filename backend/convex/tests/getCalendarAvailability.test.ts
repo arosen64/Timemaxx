@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { computeFreeBlocks } from "../actions/getCalendarAvailability";
+import { computeFreeBlocks } from "../functions/getCalendarAvailability";
 
 // All tests use a fixed start date of 2026-03-28 (a Saturday).
 // In America/New_York (EDT, UTC-4), UTC midnight on March 28 corresponds to

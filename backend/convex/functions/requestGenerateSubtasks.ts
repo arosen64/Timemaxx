@@ -1,7 +1,7 @@
 import { action } from "../_generated/server";
 import { v } from "convex/values";
 import { internal, api } from "../_generated/api";
-import { type GenerateSubtasksResult } from "./generateSubtasks";
+import { type GenerateSubtasksResult } from "../actions/generateSubtasks";
 
 export const requestGenerateSubtasks = action({
   args: {

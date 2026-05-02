@@ -16,7 +16,7 @@ interface TranscriptUploadProps {
 
 export default function TranscriptUpload({ onCoursesAdded }: TranscriptUploadProps) {
   const parseTranscript = useAction(api.ai.parseTranscript.parseTranscript);
-  const getCourseDetails = useAction(api.actions.jhuCourses.getCourseDetails);
+  const getCourseDetails = useAction(api.functions.jhuCourses.getCourseDetails);
   const addUserCourse = useMutation(api.mutations.userCourses.addUserCourse);
 
   const [file, setFile] = useState<File | null>(null);

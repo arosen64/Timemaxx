@@ -29,7 +29,7 @@ async function addCourseFromOutput(
     offeringName = resolvedSisPick.offeringName;
     titleText = resolvedSisPick.title;
   } else {
-    const sisResults = (await ctx.runAction(api.actions.jhuCourses.getCoursesByTerm, {
+    const sisResults = (await ctx.runAction(api.functions.jhuCourses.getCoursesByTerm, {
       term: output.term,
       school: output.school,
       courseTitle: output.sisQuery,
@@ -71,7 +71,7 @@ async function addCourseFromOutput(
   let description: string | undefined;
   let prereqs: string[] | undefined;
   try {
-    const details = (await ctx.runAction(api.actions.jhuCourses.getCourseDetails, {
+    const details = (await ctx.runAction(api.functions.jhuCourses.getCourseDetails, {
       offeringName,
       term: output.term,
     })) as { description?: string; prereqs?: string[]; credits?: number } | null;

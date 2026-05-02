@@ -5,7 +5,7 @@ import TaskModal from '../../src/components/dashboard/TaskModal'
 
 vi.mock('../../../backend/convex/_generated/api', () => ({
   api: {
-    actions: {
+    functions: {
       requestGenerateSubtasks: { requestGenerateSubtasks: 'requestGenerateSubtasks' },
     },
   },

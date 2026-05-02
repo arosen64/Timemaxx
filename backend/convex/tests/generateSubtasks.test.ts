@@ -72,7 +72,7 @@ describe("actions/requestGenerateSubtasks", () => {
     const taskId = await seedTask(t, userId, "");
 
     const result = await withAuth.action(
-      api.actions.requestGenerateSubtasks.requestGenerateSubtasks,
+      api.functions.requestGenerateSubtasks.requestGenerateSubtasks,
       { taskId }
     );
 
@@ -89,7 +89,7 @@ describe("actions/requestGenerateSubtasks", () => {
     const taskId = await seedTask(t, userId, "   ");
 
     const result = await withAuth.action(
-      api.actions.requestGenerateSubtasks.requestGenerateSubtasks,
+      api.functions.requestGenerateSubtasks.requestGenerateSubtasks,
       { taskId }
     );
 
@@ -105,7 +105,7 @@ describe("actions/requestGenerateSubtasks", () => {
     const taskId = await seedTask(t, userId);
 
     const result = await withAuth.action(
-      api.actions.requestGenerateSubtasks.requestGenerateSubtasks,
+      api.functions.requestGenerateSubtasks.requestGenerateSubtasks,
       { taskId }
     );
 
@@ -127,7 +127,7 @@ describe("actions/requestGenerateSubtasks", () => {
     const taskId = await seedTask(t, userId, "");
 
     const result = await withAuth.action(
-      api.actions.requestGenerateSubtasks.requestGenerateSubtasks,
+      api.functions.requestGenerateSubtasks.requestGenerateSubtasks,
       {
         taskId,
         fileContent:
@@ -146,7 +146,7 @@ describe("actions/requestGenerateSubtasks", () => {
     const taskId = await seedTask(t, ownerUserId);
 
     await expect(
-      attackerAuth.action(api.actions.requestGenerateSubtasks.requestGenerateSubtasks, { taskId })
+      attackerAuth.action(api.functions.requestGenerateSubtasks.requestGenerateSubtasks, { taskId })
     ).rejects.toThrow("Task not found or access denied");
     expect(mockCallGemini).not.toHaveBeenCalled();
   });
@@ -159,7 +159,7 @@ describe("actions/requestGenerateSubtasks", () => {
     const taskId = await seedTask(t, userId);
 
     const result = await withAuth.action(
-      api.actions.requestGenerateSubtasks.requestGenerateSubtasks,
+      api.functions.requestGenerateSubtasks.requestGenerateSubtasks,
       { taskId }
     );
 
