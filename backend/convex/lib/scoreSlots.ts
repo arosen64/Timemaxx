@@ -1,5 +1,8 @@
 // Pure deterministic scoring for candidate study slots — no Convex dependencies.
 
+import { TIME_OF_DAY_RANGES } from "../../../shared/preferenceEnums";
+import type { DeadlineBehaviorOption } from "../../../shared/preferenceEnums";
+
 export interface ScoreBreakdown {
   timeOfDayMatch: number; // 0 or +2
   dayOfWeekMatch: number; // 0 or +1
@@ -12,29 +15,19 @@ export interface ScoreBreakdown {
 const HIGH_DIFFICULTY_THRESHOLD = 4;
 
 // Bucket weights per deadlineBehavior setting (bucket 0 = earliest, 4 = closest to due date).
-// Keys match the option strings in PreferencesForm.tsx. "Somewhere in between" is absent
-// intentionally — missing key → score 0 (no signal).
+// Keys are DeadlineBehaviorOption labels from shared/preferenceEnums.ts.
+// "Somewhere in between" is absent intentionally — missing key → score 0 (no signal).
 const DEADLINE_BUCKET_WEIGHTS: Record<string, number[]> = {
   "I work best well in advance": [3, 3, 2, 1, 0],
   "I need the pressure of a deadline": [1, 1, 2, 3, 3],
-};
+} satisfies Partial<Record<DeadlineBehaviorOption, number[]>>;
 const DEADLINE_BUCKET_MAX_WEIGHTS: Record<string, number> = Object.fromEntries(
-  Object.entries(DEADLINE_BUCKET_WEIGHTS).map(([k, v]) => [k, Math.max(...v)])
+  Object.entries(DEADLINE_BUCKET_WEIGHTS).map(([k, weights]) => [k, Math.max(...weights)])
 );
 
-// Label strings from PreferencesForm.tsx → [startMinFromMidnight, endMinFromMidnight)
-const TIME_OF_DAY_RANGES: Record<string, [number, number]> = {
-  "Early Morning (5–8am)": [300, 480],
-  "Morning (8–11am)": [480, 660],
-  "Midday (11am–2pm)": [660, 840],
-  "Afternoon (2–5pm)": [840, 1020],
-  "Evening (5–8pm)": [1020, 1200],
-  "Night (8–11pm)": [1200, 1380],
-  "Late Night (11pm+)": [1380, 1440],
-};
-
 export function parseTimeOfDayRanges(prefs: string[]): Array<[number, number]> {
-  return prefs.flatMap((p) => (TIME_OF_DAY_RANGES[p] !== undefined ? [TIME_OF_DAY_RANGES[p]] : []));
+  const ranges: Record<string, [number, number]> = TIME_OF_DAY_RANGES;
+  return prefs.flatMap((p) => (ranges[p] !== undefined ? [ranges[p]] : []));
 }
 
 export function getProductivityTraits(traits: unknown): {

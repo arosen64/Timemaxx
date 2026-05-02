@@ -2,14 +2,17 @@
 
 ## Overview
 
-Tests are written with [Vitest](https://vitest.dev/). The project has two test environments that run together under `npm test`:
+The project has three layers of automated tests:
 
-| Project | Environment | What it tests |
-|---|---|---|
-| `backend` | `edge-runtime` | Convex mutations and queries using an in-memory Convex instance |
-| `frontend` | `happy-dom` | React components and pages using React Testing Library |
+| Layer | Tool | Environment | What it tests |
+|---|---|---|---|
+| `backend` | [Vitest](https://vitest.dev/) | `edge-runtime` | Convex mutations and queries using an in-memory Convex instance |
+| `frontend` | [Vitest](https://vitest.dev/) | `happy-dom` | React components and pages using React Testing Library |
+| `e2e` | [Playwright](https://playwright.dev/) | Headless Chromium | The production-built frontend running end-to-end against `vite preview` |
 
-No running Convex backend or internet connection is needed to run any tests.
+`npm test` runs the Vitest backend + frontend suites; `npm run test:e2e` runs the
+Playwright E2E suite separately. None of the suites require a running Convex
+backend or internet connection.
 
 ---
 
@@ -76,3 +79,33 @@ mockUseMutation.mockReturnValue(saveOnboarding as never)
 ```
 
 Each test file mocks `convex/react` at the module level so `useQuery`, `useMutation`, `useAction`, and `useConvexAuth` can be controlled per-test.
+
+---
+
+## End-to-End Tests (Playwright)
+
+E2E test files live in `e2e/tests/`, with shared page objects in `e2e/fixtures/`.
+The Playwright config is at `playwright.config.ts` in the project root. See
+[`e2e/README.md`](../e2e/README.md) for full conventions.
+
+```bash
+# One-time browser install (after npm install)
+npm run test:e2e:install
+
+# Run all E2E tests — auto-builds the frontend and serves it via vite preview
+npm run test:e2e
+
+# Run with the Playwright UI
+npm run test:e2e:ui
+
+# Run against a server you have already started yourself
+E2E_BASE_URL=http://localhost:5173 npm run test:e2e
+```
+
+Current scope is **unauthenticated UI flows only** (landing page, public
+routing). The build is invoked with a placeholder `VITE_CONVEX_URL`, so tests
+never reach a real backend. Authenticated flows will be added once we have a
+deterministic test deployment.
+
+In CI, the `e2e` job runs after `build-and-test` and uploads the
+`playwright-report/` artifact on failure.

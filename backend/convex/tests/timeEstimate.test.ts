@@ -32,6 +32,7 @@ async function seedTask(
       dueDate: Date.now() + 86_400_000,
       createdAt: Date.now(),
       isManualEstimate: false,
+      status: "not_started",
     })
   );
 }
@@ -200,6 +201,7 @@ describe("mutations/timeEstimate – setTimeEstimate auto-generates study blocks
         dueDate,
         createdAt: now,
         isManualEstimate: false,
+        status: "not_started",
       })
     );
 
@@ -290,6 +292,7 @@ describe("mutations/timeEstimate – setManualTimeEstimate", () => {
         dueDate,
         createdAt: now,
         isManualEstimate: false,
+        status: "not_started",
       })
     );
 
@@ -333,6 +336,7 @@ describe("mutations/timeEstimate – setManualTimeEstimate", () => {
         order: 0,
         createdAt: Date.now(),
         timeEstimate: 60,
+        status: "not_started",
       })
     );
     await t.run((ctx) =>
@@ -342,6 +346,7 @@ describe("mutations/timeEstimate – setManualTimeEstimate", () => {
         title: "Subtask 1",
         studyBlockLength: 60,
         isCompleted: false,
+        isConflicted: false,
       })
     );
 

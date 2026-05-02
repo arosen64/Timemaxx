@@ -1,13 +1,9 @@
 import { action } from "../_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
-import { callGemini } from "../lib/gemini";
+import { MastraClient } from "@mastra/client-js";
 import { sanitizeUserInput } from "../lib/sanitize";
-import {
-  ACADEMIC_PROFILE_SYSTEM,
-  buildAcademicProfilePrompt,
-  academicProfileResponseSchema,
-} from "../lib/prompts/generateAcademicProfile.prompt";
+import { withTimeout } from "../lib/withTimeout";
 
 export interface AcademicInsight {
   label: string;
@@ -29,6 +25,9 @@ export const generateAcademicProfile = action({
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Unauthenticated");
 
+    const mastraUrl = process.env.MASTRA_URL;
+    if (!mastraUrl) throw new Error("MASTRA_URL not configured");
+
     const courseList = args.courses
       .map(
         (c) =>
@@ -38,13 +37,29 @@ export const generateAcademicProfile = action({
 
     const sanitizedCourseList = sanitizeUserInput(courseList, 50_000);
 
-    const result = await callGemini({
-      system: ACADEMIC_PROFILE_SYSTEM,
-      prompt: buildAcademicProfilePrompt(sanitizedCourseList),
-      schema: academicProfileResponseSchema,
-      schemaName: "AcademicProfile",
-    });
+    const client = new MastraClient({ baseUrl: mastraUrl });
+    const wf = client.getWorkflow("academic-profile-workflow");
+    const run = await withTimeout(
+      wf.startAsync({ inputData: { sanitizedCourseList } }),
+      "Academic profile generation"
+    );
 
-    return (result.insights ?? []).slice(0, 5);
+    const runStatus = (run as { status?: string }).status;
+    if (runStatus === "failed") {
+      const rawErr = (run as { error?: string | Error }).error;
+      const msg = rawErr instanceof Error ? rawErr.message : String(rawErr ?? "unknown");
+      throw new Error(`Academic profile workflow failed: ${msg}`);
+    }
+
+    const profileStep = run.steps?.["generate-profile"] as
+      | { status: string; output?: { insights?: AcademicInsight[] }; error?: string | Error }
+      | undefined;
+
+    if (!profileStep || profileStep.status !== "success") {
+      const cause = profileStep?.error ? String(profileStep.error) : "step did not complete";
+      throw new Error(`Academic profile generation failed: ${cause}`);
+    }
+
+    return (profileStep.output?.insights ?? []).slice(0, 5);
   },
 });

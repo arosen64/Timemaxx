@@ -6,7 +6,8 @@ import { Course } from "../types";
 import DifficultyRating from "./DifficultyRating";
 import Button from "./ui/Button";
 import Selector from "./ui/Selector";
-import { GRADES, STUDY_GOALS, REMOVE_CLASS_TASKS_WARNING } from "../constants";
+import { GRADES, STUDY_GOALS } from "../../../shared/courseEnums";
+import { REMOVE_CLASS_TASKS_WARNING } from "../constants";
 
 const PAGE_SIZE = 4;
 

@@ -22,6 +22,7 @@ async function seedTask(t: ReturnType<typeof makeTestCtx>, userId: string) {
       dueDate: FUTURE,
       isManualEstimate: false,
       createdAt: Date.now(),
+      status: "not_started",
     })
   );
 }
@@ -42,6 +43,7 @@ async function seedSubtask(
       color: "#2563eb",
       order,
       createdAt: Date.now(),
+      status: "not_started",
     })
   );
 }
@@ -228,6 +230,7 @@ describe("mutations/subtasks – setSubtaskTimeEstimate", () => {
         recommendedStart: dueDate - 2 * DAY_MS,
         isManualEstimate: false,
         createdAt: Date.now(),
+        status: "not_started",
       })
     );
     const subtaskId = await seedSubtask(t, userId, parentTaskId);
@@ -255,6 +258,7 @@ describe("mutations/subtasks – setSubtaskTimeEstimate", () => {
         dueDate,
         isManualEstimate: false,
         createdAt: Date.now(),
+        status: "not_started",
       })
     );
     const subtaskId = await seedSubtask(t, userId, parentTaskId);
@@ -282,9 +286,11 @@ describe("mutations/subtasks – deleteSubtask", () => {
     const blockId = await t.run((ctx) =>
       ctx.db.insert("studyBlocks", {
         subtaskId: subtaskId as never,
+        userId: userId as never,
         title: "Block",
         studyBlockLength: 30,
         isCompleted: false,
+        isConflicted: false,
       })
     );
 
@@ -321,18 +327,22 @@ describe("mutations/tasks – deleteTask cascade", () => {
     const subtaskBlockId = await t.run((ctx) =>
       ctx.db.insert("studyBlocks", {
         subtaskId: subtaskId as never,
+        userId: userId as never,
         title: "Subtask block",
         studyBlockLength: 30,
         isCompleted: false,
+        isConflicted: false,
       })
     );
 
     const taskBlockId = await t.run((ctx) =>
       ctx.db.insert("studyBlocks", {
         taskId: taskId as never,
+        userId: userId as never,
         title: "Task block",
         studyBlockLength: 60,
         isCompleted: false,
+        isConflicted: false,
       })
     );
 
@@ -371,6 +381,7 @@ describe("mutations/userCourses – deleteUserCourse cascade", () => {
         isManualEstimate: false,
         createdAt: Date.now(),
         courseId: userCourseId,
+        status: "not_started",
       })
     );
 
@@ -379,9 +390,11 @@ describe("mutations/userCourses – deleteUserCourse cascade", () => {
     const subtaskBlockId = await t.run((ctx) =>
       ctx.db.insert("studyBlocks", {
         subtaskId: subtaskId as never,
+        userId: userId as never,
         title: "Block",
         studyBlockLength: 30,
         isCompleted: false,
+        isConflicted: false,
       })
     );
 
@@ -422,6 +435,7 @@ describe("mutations/subtasks – createSubtasksBatch suggestedCompletionAt casca
         dueDate,
         isManualEstimate: false,
         createdAt: now,
+        status: "not_started",
       })
     );
 
@@ -463,6 +477,7 @@ describe("mutations/subtasks – createSubtasksBatch suggestedCompletionAt casca
         dueDate,
         isManualEstimate: false,
         createdAt: now,
+        status: "not_started",
       })
     );
 
@@ -506,6 +521,7 @@ describe("mutations/subtasks – createSubtasksBatch suggestedCompletionAt casca
         dueDate,
         isManualEstimate: false,
         createdAt: now,
+        status: "not_started",
       })
     );
 
@@ -540,6 +556,7 @@ describe("mutations/subtasks – createSubtasksBatch suggestedCompletionAt casca
         dueDate,
         isManualEstimate: false,
         createdAt: now,
+        status: "not_started",
       })
     );
 

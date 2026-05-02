@@ -17,10 +17,10 @@ export default function ProfilePage() {
   const connected = calendarStatus?.connected ?? false;
   const hasEventsScope = calendarStatus?.hasEventsScope ?? false;
   const revokeCalendarAccess = useAction(
-    api.actions.exportStudyBlocksToCalendar.revokeCalendarAccess
+    api.functions.exportStudyBlocksToCalendar.revokeCalendarAccess
   );
   const initiateCalendarOAuth = useAction(
-    api.actions.initiateGoogleCalendarOAuth.initiateGoogleCalendarOAuth
+    api.functions.initiateGoogleCalendarOAuth.initiateGoogleCalendarOAuth
   );
 
   async function handleConnectCalendar() {

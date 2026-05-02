@@ -6,8 +6,8 @@ import { type Course } from "../types";
 import FileUpload from "./ui/FileUpload";
 import Modal from "./ui/Modal";
 import Selector from "./ui/Selector";
-import { SpinnerIcon } from "./icons";
-import { STUDY_GOALS } from "../constants";
+import ParsingAnimation from "./ParsingAnimation";
+import { STUDY_GOALS } from "../../../shared/courseEnums";
 import { fileToBase64 } from "../utils/fileToBase64";
 
 interface TranscriptUploadProps {
@@ -16,7 +16,7 @@ interface TranscriptUploadProps {
 
 export default function TranscriptUpload({ onCoursesAdded }: TranscriptUploadProps) {
   const parseTranscript = useAction(api.ai.parseTranscript.parseTranscript);
-  const getCourseDetails = useAction(api.actions.jhuCourses.getCourseDetails);
+  const getCourseDetails = useAction(api.functions.jhuCourses.getCourseDetails);
   const addUserCourse = useMutation(api.mutations.userCourses.addUserCourse);
 
   const [file, setFile] = useState<File | null>(null);
@@ -218,12 +218,7 @@ export default function TranscriptUpload({ onCoursesAdded }: TranscriptUploadPro
         }}
         onRemove={handleRemove}
       />
-      {parsing && (
-        <div className="flex items-center gap-2 font-body text-xs text-slate-blue">
-          <SpinnerIcon size={12} />
-          <span>Parsing transcript…</span>
-        </div>
-      )}
+      {parsing && <ParsingAnimation size={12} />}
       {summary && <p className="font-body text-xs text-teal">{summary}</p>}
       {error && <p className="font-body text-xs text-urgent-red">{error}</p>}
 

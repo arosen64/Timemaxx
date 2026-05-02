@@ -2,30 +2,6 @@
 export const REMOVE_CLASS_TASKS_WARNING =
   "Removing this class deletes all dashboard tasks tagged with it, including any study blocks on your schedule. This cannot be undone.";
 
-export const GRADES = [
-  "A+",
-  "A",
-  "A-",
-  "B+",
-  "B",
-  "B-",
-  "C+",
-  "C",
-  "C-",
-  "D+",
-  "D",
-  "D-",
-  "F",
-  "IP",
-  "S",
-  "U",
-  "NG",
-] as const;
-
-export const STUDY_GOALS = ["Just pass", "Do well", "Ace it"] as const;
-
-export const YEARS = ["Freshman", "Sophomore", "Junior", "Senior", "Graduate"] as const;
-
 // Fixed accent colors per insight slot
 export const ACCENTS = [
   { bg: "bg-teal/10", border: "border-teal/30", dot: "bg-teal", label: "text-teal" },
