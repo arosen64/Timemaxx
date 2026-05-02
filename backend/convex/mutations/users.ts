@@ -70,7 +70,7 @@ export const updateUserSettings = mutation({
       if (connection) {
         await ctx.scheduler.runAfter(
           0,
-          internal.actions.exportStudyBlocksToCalendar.internalExportStudyBlocksToCalendar,
+          internal.functions.exportStudyBlocksToCalendar.internalExportStudyBlocksToCalendar,
           { userId }
         );
       }

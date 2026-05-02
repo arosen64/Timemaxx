@@ -84,7 +84,7 @@ describe("functions/scheduleBlock – recommendedStart constraint", () => {
     const taskId = await seedTask(t, userId, { dueDate, recommendedStart: dueDate });
     const blockId = await seedBlock(t, taskId, userId);
 
-    const result = await withAuth.action(api.actions.scheduleBlock.scheduleBlock, {
+    const result = await withAuth.action(api.functions.scheduleBlock.scheduleBlock, {
       studyBlockId: blockId,
       timezone: "America/New_York",
     });
@@ -98,7 +98,7 @@ describe("functions/scheduleBlock – recommendedStart constraint", () => {
     const taskId = await seedTask(t, userId);
     const blockId = await seedBlock(t, taskId, userId);
 
-    const result = await withAuth.action(api.actions.scheduleBlock.scheduleBlock, {
+    const result = await withAuth.action(api.functions.scheduleBlock.scheduleBlock, {
       studyBlockId: blockId,
       timezone: "America/New_York",
     });
@@ -116,7 +116,7 @@ describe("functions/scheduleBlock – recommendedStart constraint", () => {
     });
     const blockId = await seedBlock(t, taskId, userId);
 
-    const result = await withAuth.action(api.actions.scheduleBlock.scheduleBlock, {
+    const result = await withAuth.action(api.functions.scheduleBlock.scheduleBlock, {
       studyBlockId: blockId,
       timezone: "America/New_York",
     });
@@ -134,7 +134,7 @@ describe("functions/scheduleBlock – recommendedStart constraint", () => {
     });
     const blockId = await seedBlock(t, taskId, userId);
 
-    const result = await withAuth.action(api.actions.scheduleBlock.scheduleBlock, {
+    const result = await withAuth.action(api.functions.scheduleBlock.scheduleBlock, {
       studyBlockId: blockId,
       timezone: "America/New_York",
     });
@@ -157,7 +157,7 @@ describe("functions/scheduleBlock – recommendedStart constraint", () => {
     });
     const blockId = await seedSubtaskBlock(t, subtaskId, userId);
 
-    const result = await withAuth.action(api.actions.scheduleBlock.scheduleBlock, {
+    const result = await withAuth.action(api.functions.scheduleBlock.scheduleBlock, {
       studyBlockId: blockId,
       timezone: "America/New_York",
     });

@@ -17,10 +17,10 @@ import Button from "./ui/Button";
 import DifficultyRating from "./DifficultyRating";
 
 export default function CourseSelector({ onAddCourse, mode = "all" }: CourseSelectorProps) {
-  const getAvailableTerms = useAction(api.actions.jhuCourses.getAvailableTerms);
-  const getAvailableSchools = useAction(api.actions.jhuCourses.getAvailableSchools);
-  const getCoursesByTerm = useAction(api.actions.jhuCourses.getCoursesByTerm);
-  const getCourseDetails = useAction(api.actions.jhuCourses.getCourseDetails);
+  const getAvailableTerms = useAction(api.functions.jhuCourses.getAvailableTerms);
+  const getAvailableSchools = useAction(api.functions.jhuCourses.getAvailableSchools);
+  const getCoursesByTerm = useAction(api.functions.jhuCourses.getCoursesByTerm);
+  const getCourseDetails = useAction(api.functions.jhuCourses.getCourseDetails);
   const addUserCourse = useMutation(api.mutations.userCourses.addUserCourse);
 
   const [terms, setTerms] = useState<JhuTerm[]>([]);

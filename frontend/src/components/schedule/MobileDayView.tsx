@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import type { Id } from "../../../../backend/convex/_generated/dataModel";
-import type { AllDayEvent } from "../../../../backend/convex/actions/fetchCalendarEvents";
+import type { AllDayEvent } from "../../../../backend/convex/functions/fetchCalendarEvents";
 import type { LayoutEvent } from "./overlapLayout";
 import type { StudyBlockOnGrid } from "./TimeGrid";
 import ScheduleBlockConflict from "./ScheduleBlockConflict";

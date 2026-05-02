@@ -6,7 +6,7 @@ import type {
   CalendarEntry,
   TimedEvent,
   AllDayEvent,
-} from "../../../../backend/convex/actions/fetchCalendarEvents";
+} from "../../../../backend/convex/functions/fetchCalendarEvents";
 import { CalendarIcon, SpinnerIcon, WarningIcon } from "../icons";
 import TimeGrid, { type StudyBlockOnGrid } from "./TimeGrid";
 import MobileDayView from "./MobileDayView";
@@ -62,12 +62,14 @@ export default function ScheduleTab() {
   const autoRescheduleAction = useAction(
     api.actions.autoRescheduleConflicts.autoRescheduleConflicts
   );
-  const fetchCalendarEventsAction = useAction(api.actions.fetchCalendarEvents.fetchCalendarEvents);
+  const fetchCalendarEventsAction = useAction(
+    api.functions.fetchCalendarEvents.fetchCalendarEvents
+  );
   const exportStudyBlocksAction = useAction(
-    api.actions.exportStudyBlocksToCalendar.exportStudyBlocksToCalendar
+    api.functions.exportStudyBlocksToCalendar.exportStudyBlocksToCalendar
   );
   const initiateCalendarOAuth = useAction(
-    api.actions.initiateGoogleCalendarOAuth.initiateGoogleCalendarOAuth
+    api.functions.initiateGoogleCalendarOAuth.initiateGoogleCalendarOAuth
   );
 
   const isMobile = useIsMobile();

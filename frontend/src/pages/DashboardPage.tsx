@@ -57,10 +57,10 @@ export default function DashboardPage() {
   const submitEstimateFeedback = useMutation(api.mutations.timeEstimate.submitEstimateFeedback);
   const requestEstimate = useAction(api.ai.requestEstimateTaskTime.requestEstimateTaskTime);
   const requestEstimateSubtask = useAction(
-    api.actions.requestEstimateSubtaskTime.requestEstimateSubtaskTime
+    api.functions.requestEstimateSubtaskTime.requestEstimateSubtaskTime
   );
   const requestGenerateSubtasks = useAction(
-    api.actions.requestGenerateSubtasks.requestGenerateSubtasks
+    api.functions.requestGenerateSubtasks.requestGenerateSubtasks
   );
   const user = useQuery(api.queries.users.getCurrUser);
   const [{ todayStartMs, todayEndMs, weekStartMs, weekEndMs }, setDateBoundaries] =

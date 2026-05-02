@@ -6,7 +6,7 @@ import EstimateBadge from '../src/components/dashboard/EstimateBadge'
 
 vi.mock('../../backend/convex/_generated/api', () => ({
   api: {
-    actions: {
+    functions: {
       requestGenerateSubtasks: { requestGenerateSubtasks: 'requestGenerateSubtasks' },
     },
     mutations: {

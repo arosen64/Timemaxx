@@ -30,9 +30,7 @@ export default function AddTaskModal({
       ...(form.courseId !== undefined ? { courseId: form.courseId } : {}),
       classTag: form.classTag,
       ...(form.timeEstimate !== undefined ? { timeEstimate: form.timeEstimate } : {}),
-      ...(form.assignmentWeight !== undefined
-        ? { assignmentWeight: form.assignmentWeight }
-        : {}),
+      ...(form.assignmentWeight !== undefined ? { assignmentWeight: form.assignmentWeight } : {}),
     });
     onTaskCreated?.(taskId);
     return taskId;

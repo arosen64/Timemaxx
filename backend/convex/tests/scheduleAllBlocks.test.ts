@@ -481,7 +481,7 @@ describe("scheduleAllBlocks ownership check", () => {
     );
 
     await expect(
-      callerAuth.action(api.actions.scheduleAllBlocks.scheduleAllBlocks, {
+      callerAuth.action(api.functions.scheduleAllBlocks.scheduleAllBlocks, {
         taskId: otherTaskId,
         timezone: "America/New_York",
       })

@@ -614,7 +614,7 @@ async function handleWorkflowTurn(
         candidates = [];
         hasMore = false;
       } else {
-        const rows = (await ctx.runAction(api.actions.jhuCourses.getCoursesByTerm, {
+        const rows = (await ctx.runAction(api.functions.jhuCourses.getCoursesByTerm, {
           term: sisTerm,
           school: sisSchool,
           courseTitle: sisQuery,
@@ -858,7 +858,7 @@ chatApp.post("/api/chat", async (c) => {
             .filter((v): v is NonNullable<typeof v> => v !== null)
             .map((v) => v.offeringName)
         );
-        const rows = (await ctx.runAction(api.actions.jhuCourses.getCoursesByTerm, {
+        const rows = (await ctx.runAction(api.functions.jhuCourses.getCoursesByTerm, {
           term: sisCtx.term,
           school: sisCtx.school,
           courseTitle: sisCtx.query,
