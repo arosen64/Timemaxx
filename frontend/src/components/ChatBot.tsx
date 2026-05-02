@@ -2,6 +2,7 @@ import { Fragment, useEffect, useState, type ReactNode } from "react";
 import { useQuery } from "convex/react";
 import { useAuthToken } from "@convex-dev/auth/react";
 import { api } from "../../../backend/convex/_generated/api";
+import type { ActiveAgent } from "../../../shared/chatEnums";
 import {
   ChatContainerRoot,
   ChatContainerContent,
@@ -24,10 +25,7 @@ const MAIN_MENU = [
   { label: "Change preferences", route: "preferences" },
 ] as const;
 
-const ACTIVE_AGENT_LABELS: Record<
-  "task" | "feedback" | "preferences" | "classes" | "schedule",
-  string
-> = {
+const ACTIVE_AGENT_LABELS: Record<ActiveAgent, string> = {
   task: "Task agent",
   feedback: "Feedback agent",
   preferences: "Preferences agent",

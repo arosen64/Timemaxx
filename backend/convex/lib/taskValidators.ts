@@ -1,26 +1,15 @@
 import { v } from "convex/values";
+import { TASK_TYPES, TASK_STATUSES, ESTIMATE_FEEDBACK_RATINGS } from "../../../shared/taskEnums";
 
-/**
- * Built-in task types shown in UI and used for syllabus extraction.
- */
-export const TASK_TYPES = [
-  "Essay",
-  "Problem Set",
-  "Exam Prep",
-  "Coding",
-  "Reading",
-  "Lab",
-  "Presentation",
-] as const;
+/** Re-exported for backward compatibility with backend imports. */
+export { TASK_TYPES };
+export type { TaskType } from "../../../shared/taskEnums";
 
-/** TypeScript union type for built-in task types. */
-export type TaskType = (typeof TASK_TYPES)[number];
+const [s0, s1, ...sRest] = TASK_STATUSES.map((s) => v.literal(s));
+export const taskStatusValidator = v.union(s0, s1, ...sRest);
 
-export const taskStatusValidator = v.union(
-  v.literal("not_started"),
-  v.literal("in_progress"),
-  v.literal("completed")
-);
+const [r0, r1, ...rRest] = ESTIMATE_FEEDBACK_RATINGS.map((r) => v.literal(r));
+export const estimateFeedbackRatingValidator = v.union(r0, r1, ...rRest);
 
 export const reasoningTraceValidator = v.object({
   classes: v.string(),
@@ -36,7 +25,7 @@ export const sharedTaskFields = {
   description: v.string(),
   taskType: v.string(),
   timeEstimate: v.optional(v.number()),
-  estimateFeedbackRating: v.optional(v.union(v.literal("up"), v.literal("down"))),
+  estimateFeedbackRating: v.optional(estimateFeedbackRatingValidator),
   correctedEstimateMinutes: v.optional(v.number()),
   estimateFeedbackSubmittedAt: v.optional(v.number()),
   courseId: v.optional(v.id("userCourses")),
