@@ -221,7 +221,7 @@ export const scheduleBlock = action({
     scoredSlots.sort((a, b) => b.score - a.score);
     const candidates = scoredSlots.slice(0, MAX_CANDIDATES);
 
-    const [chosenIndex] = await selectAllSlotsWithAI(
+    const { indices: chosenIndices } = await selectAllSlotsWithAI(
       [{ taskTitle, dueDate, recommendedStart, candidates }],
       user.productivityTraits
     );
@@ -230,7 +230,7 @@ export const scheduleBlock = action({
     const isPhysValid = (c: { startMs: number }) =>
       isSlotValid(c.startMs, blockDurationMs, workHoursGrid, occupiedIntervals, args.timezone);
 
-    let chosen = candidates[chosenIndex ?? 0];
+    let chosen = candidates[chosenIndices[0] ?? 0];
     if (!isPhysValid(chosen)) {
       const fallback = candidates.find(isPhysValid);
       if (!fallback) return { error: "no_slot_found" };

@@ -90,7 +90,7 @@ export const scheduleSubtask = action({
 
     if (placeable.length === 0) return { error: "no_slot_found" };
 
-    const chosenIndices = await selectAllSlotsWithAI(
+    const { indices: chosenIndices } = await selectAllSlotsWithAI(
       placeable.map(({ candidates }) => ({
         taskTitle: subtask.title,
         dueDate: dueDateMs,
