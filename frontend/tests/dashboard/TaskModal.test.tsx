@@ -72,6 +72,35 @@ describe('TaskModal', () => {
     expect(screen.queryByRole('dialog')).toBeNull()
   })
 
+  it('hides assignment weight input when no course is associated', () => {
+    renderModal()
+    expect(screen.queryByLabelText(/grade weight/i)).toBeNull()
+  })
+
+  it('shows assignment weight input when a course is associated', () => {
+    renderModal({
+      classTagCourses: [
+        {
+          courseId: 'course1' as any,
+          courseCode: 'AS.110.108',
+          title: 'Calculus I',
+          classTag: 'AS.110.108: Calculus I',
+        },
+      ],
+      initialValues: {
+        taskName: '',
+        selectedType: 'Essay',
+        customTaskType: '',
+        description: '',
+        dueDate: '',
+        dueTime: '23:59',
+        classTag: 'AS.110.108: Calculus I',
+        timeEstimate: '',
+      },
+    })
+    expect(screen.getByLabelText(/grade weight/i)).toBeInTheDocument()
+  })
+
   it('shows validation error "Please enter a task name." when submitted with empty name', async () => {
     const user = userEvent.setup()
     renderModal()

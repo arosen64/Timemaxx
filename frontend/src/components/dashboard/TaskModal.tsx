@@ -139,6 +139,10 @@ export default function TaskModal({
       })),
     [courses]
   );
+  const selectedCourseId = useMemo(() => {
+    const resolvedClassTag = allowedClassTagValue(classTag, courses);
+    return courses.find((c) => c.classTag === resolvedClassTag)?.courseId;
+  }, [classTag, courses]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -257,7 +261,7 @@ export default function TaskModal({
       }
       const trimmedWeight = assignmentWeight.trim();
       let parsedWeight: number | undefined;
-      if (trimmedWeight !== "") {
+      if (courseId !== undefined && trimmedWeight !== "") {
         const w = Number(trimmedWeight);
         if (!Number.isFinite(w) || w < 0 || w > 100) {
           setError("Assignment weight must be between 0 and 100.");
@@ -396,7 +400,7 @@ export default function TaskModal({
           </div>
 
           {/* Assignment weight — percentage of final grade (optional) */}
-          {!hideAssignmentWeight && (
+          {!hideAssignmentWeight && selectedCourseId !== undefined && (
             <div className="flex w-full flex-col gap-1.5">
               <label
                 htmlFor="task-assignment-weight"
