@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../backend/convex/_generated/api";
-import { type DayOfWeek } from "../../../shared/userEnums";
+import { type DayOfWeek, type Year, YEARS } from "../../../shared/userEnums";
 import type { WorkHoursData } from "../types";
 import { CalendarIcon, ChevronDownIcon } from "../components/icons";
 import ProfileForm from "../components/ProfileForm";
@@ -71,7 +71,10 @@ export default function PreferencesPage() {
       if (editingSection === "about" && profileDraft) {
         await updateSettings({
           major: profileDraft.major,
-          year: profileDraft.year,
+          // ProfileForm dropdown only emits values from YEARS; skip empty draft.
+          year: (YEARS as readonly string[]).includes(profileDraft.year)
+            ? (profileDraft.year as Year)
+            : undefined,
         });
       } else if (editingSection === "workhours" && workHoursDraft) {
         const newGrid = Object.entries(workHoursDraft).map(([day, slots]) => ({

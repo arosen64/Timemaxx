@@ -29,6 +29,7 @@ export const sharedTaskFields = {
   correctedEstimateMinutes: v.optional(v.number()),
   estimateFeedbackSubmittedAt: v.optional(v.number()),
   courseId: v.optional(v.id("userCourses")),
+  /** Free-text label for the course/class (optional; complements courseId). */
   classTag: v.optional(v.string()),
   embedding: v.optional(v.array(v.float64())),
   reasoning: v.optional(reasoningTraceValidator),

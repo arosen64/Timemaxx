@@ -2,6 +2,7 @@ import { internalMutation } from "../_generated/server";
 import { internal } from "../_generated/api";
 import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
+import { clarificationIntentValidator } from "../lib/chatValidators";
 
 export const saveMessage = internalMutation({
   args: {
@@ -141,11 +142,7 @@ export const patchUserMessageClarificationIntent = internalMutation({
   args: {
     userId: v.id("users"),
     messageId: v.id("chatMessages"),
-    clarificationIntent: v.union(
-      v.literal("task_feedback"),
-      v.literal("class_difficulty"),
-      v.literal("none")
-    ),
+    clarificationIntent: clarificationIntentValidator,
   },
   returns: v.null(),
   handler: async (ctx, args) => {
