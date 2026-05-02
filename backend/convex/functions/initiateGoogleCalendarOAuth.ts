@@ -1,4 +1,3 @@
-"use node";
 import { action } from "../_generated/server";
 import { internal } from "../_generated/api";
 import { getAuthUserId } from "@convex-dev/auth/server";

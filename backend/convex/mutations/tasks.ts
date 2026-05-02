@@ -456,7 +456,7 @@ export const deleteTask = mutation({
     if (googleEventIds.length > 0) {
       await ctx.scheduler.runAfter(
         0,
-        internal.actions.exportStudyBlocksToCalendar.deleteLinkedCalendarEvents,
+        internal.functions.exportStudyBlocksToCalendar.deleteLinkedCalendarEvents,
         { userId, googleEventIds }
       );
     }

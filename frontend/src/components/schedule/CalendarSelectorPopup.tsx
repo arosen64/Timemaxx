@@ -1,4 +1,4 @@
-import type { CalendarEntry } from "../../../../backend/convex/actions/fetchCalendarEvents";
+import type { CalendarEntry } from "../../../../backend/convex/functions/fetchCalendarEvents";
 import { XIcon } from "../icons";
 
 interface CalendarSelectorPopupProps {
