@@ -27,6 +27,11 @@ export const routedContextSchema = chatContextSchema.extend({
   route: z.string().nullable(),
   needsDomainClarification: z.boolean(),
   domainClarifyingQuestion: z.string().nullable(),
+  // True when the supervisor decided the new user message switches domains
+  // away from a currently active sub-agent. When true, the downstream sub-agent
+  // step should signal `clearActiveAgent: true` so the http handler wipes the
+  // prior agent's session state before applying the new agent's state.
+  intentSwitch: z.boolean(),
 });
 
 export const chatWorkflowOutputSchema = z.object({
