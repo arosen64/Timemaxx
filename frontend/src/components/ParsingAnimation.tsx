@@ -26,20 +26,26 @@ export default function ParsingAnimation({ size = 12 }: ParsingAnimationProps) {
   const [visible, setVisible] = useState(true);
 
   useEffect(() => {
-    const interval = setInterval(() => {
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+    const intervalId = setInterval(() => {
       setVisible(false);
-      setTimeout(() => {
+      timeoutId = setTimeout(() => {
         setIndex((i) => (i + 1) % PHRASES.length);
         setVisible(true);
       }, 300);
     }, 2500);
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(intervalId);
+      if (timeoutId) clearTimeout(timeoutId);
+    };
   }, []);
 
+  const textSize = size >= 14 ? "text-sm" : "text-xs";
+
   return (
-    <div className="flex items-center gap-2 font-body text-xs text-slate-blue">
+    <div className={`flex items-center gap-2 font-body ${textSize} text-slate-blue`}>
       <SpinnerIcon size={size} />
-      <span className="transition-opacity duration-300" style={{ opacity: visible ? 1 : 0 }}>
+      <span className={`transition-opacity duration-300 ${visible ? "opacity-100" : "opacity-0"}`}>
         {PHRASES[index]}
       </span>
     </div>
