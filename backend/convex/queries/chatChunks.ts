@@ -15,8 +15,10 @@ export const getChatChunksByIdsInternal = internalQuery({
     const byId = new Map(
       rows
         .filter((r): r is NonNullable<typeof r> => r !== null && r.userId === args.userId)
-        .map((r) => [r._id, r]),
+        .map((r) => [r._id, r])
     );
-    return args.chunkIds.map((id) => byId.get(id)).filter((r): r is NonNullable<typeof r> => r !== undefined);
+    return args.chunkIds
+      .map((id) => byId.get(id))
+      .filter((r): r is NonNullable<typeof r> => r !== undefined);
   },
 });

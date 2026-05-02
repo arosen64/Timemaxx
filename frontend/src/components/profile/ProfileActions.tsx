@@ -1,27 +1,27 @@
-import { useState } from 'react'
-import { useAuthActions } from '@convex-dev/auth/react'
-import { useMutation } from 'convex/react'
-import { useNavigate } from 'react-router-dom'
-import { api } from '../../../../backend/convex/_generated/api'
-import { LogoutIcon, TrashIcon } from '../icons'
-import DeleteAccountModal from './DeleteAccountModal'
-import Button from '../ui/Button'
+import { useState } from "react";
+import { useAuthActions } from "@convex-dev/auth/react";
+import { useMutation } from "convex/react";
+import { useNavigate } from "react-router-dom";
+import { api } from "../../../../backend/convex/_generated/api";
+import { LogoutIcon, TrashIcon } from "../icons";
+import DeleteAccountModal from "./DeleteAccountModal";
+import Button from "../ui/Button";
 
 export default function ProfileActions() {
-  const { signOut } = useAuthActions()
-  const navigate = useNavigate()
-  const deleteAccount = useMutation(api.mutations.users.deleteAccount)
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const { signOut } = useAuthActions();
+  const navigate = useNavigate();
+  const deleteAccount = useMutation(api.mutations.users.deleteAccount);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   async function handleLogout() {
-    await signOut()
-    navigate('/')
+    await signOut();
+    navigate("/");
   }
 
   async function handleDeleteAccount() {
-    await deleteAccount()
-    await signOut()
-    navigate('/')
+    await deleteAccount();
+    await signOut();
+    navigate("/");
   }
 
   return (
@@ -30,7 +30,12 @@ export default function ProfileActions() {
         <Button variant="destructive" icon={<LogoutIcon />} onClick={handleLogout} className="w-40">
           Log Out
         </Button>
-        <Button variant="destructive" icon={<TrashIcon />} onClick={() => setShowDeleteConfirm(true)} className="w-[200px]">
+        <Button
+          variant="destructive"
+          icon={<TrashIcon />}
+          onClick={() => setShowDeleteConfirm(true)}
+          className="w-[200px]"
+        >
           Delete Account
         </Button>
       </div>
@@ -41,5 +46,5 @@ export default function ProfileActions() {
         onConfirm={handleDeleteAccount}
       />
     </>
-  )
+  );
 }

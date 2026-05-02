@@ -1,15 +1,15 @@
-import { useRef, useState } from 'react'
-import { FileIcon, UploadIcon } from '../icons'
+import { useRef, useState } from "react";
+import { FileIcon, UploadIcon } from "../icons";
 
 interface FileUploadProps {
-  accept: string
-  acceptedMimeTypes: string[]
-  maxBytes: number
-  hint: string
-  file: File | null
-  onFile: (file: File) => void
-  onError: (message: string) => void
-  onRemove: () => void
+  accept: string;
+  acceptedMimeTypes: string[];
+  maxBytes: number;
+  hint: string;
+  file: File | null;
+  onFile: (file: File) => void;
+  onError: (message: string) => void;
+  onRemove: () => void;
 }
 
 export default function FileUpload({
@@ -22,44 +22,45 @@ export default function FileUpload({
   onError,
   onRemove,
 }: FileUploadProps) {
-  const [isDragging, setIsDragging] = useState(false)
-  const inputRef = useRef<HTMLInputElement>(null)
+  const [isDragging, setIsDragging] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   function validate(f: File): string | null {
-    if (!acceptedMimeTypes.includes(f.type)) return `Unsupported file type. Accepted: ${hint}`
-    if (f.size > maxBytes) return `File exceeds the ${Math.round(maxBytes / 1024 / 1024)} MB limit.`
-    return null
+    if (!acceptedMimeTypes.includes(f.type)) return `Unsupported file type. Accepted: ${hint}`;
+    if (f.size > maxBytes)
+      return `File exceeds the ${Math.round(maxBytes / 1024 / 1024)} MB limit.`;
+    return null;
   }
 
   function pick(f: File) {
-    const err = validate(f)
+    const err = validate(f);
     if (err) {
-      onError(err)
+      onError(err);
     } else {
-      onFile(f)
+      onFile(f);
     }
   }
 
   function handleDragOver(e: React.DragEvent) {
-    e.preventDefault()
-    setIsDragging(true)
+    e.preventDefault();
+    setIsDragging(true);
   }
 
   function handleDragLeave() {
-    setIsDragging(false)
+    setIsDragging(false);
   }
 
   function handleDrop(e: React.DragEvent) {
-    e.preventDefault()
-    setIsDragging(false)
-    const dropped = e.dataTransfer.files[0]
-    if (dropped) pick(dropped)
+    e.preventDefault();
+    setIsDragging(false);
+    const dropped = e.dataTransfer.files[0];
+    if (dropped) pick(dropped);
   }
 
   function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const selected = e.target.files?.[0]
-    if (selected) pick(selected)
-    e.target.value = ''
+    const selected = e.target.files?.[0];
+    if (selected) pick(selected);
+    e.target.value = "";
   }
 
   if (file) {
@@ -81,7 +82,7 @@ export default function FileUpload({
           &times;
         </button>
       </div>
-    )
+    );
   }
 
   return (
@@ -90,17 +91,17 @@ export default function FileUpload({
       tabIndex={0}
       aria-label="Upload file drop zone"
       onClick={() => inputRef.current?.click()}
-      onKeyDown={(e) => e.key === 'Enter' && inputRef.current?.click()}
+      onKeyDown={(e) => e.key === "Enter" && inputRef.current?.click()}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       className={`flex flex-col items-center justify-center w-full h-36 rounded-xl border-2 border-dashed cursor-pointer transition gap-2 ${
-        isDragging ? 'border-teal bg-teal/5' : 'border-border bg-bg-gray hover:border-light-blue'
+        isDragging ? "border-teal bg-teal/5" : "border-border bg-bg-gray hover:border-light-blue"
       }`}
     >
       <UploadIcon color="#8FA6C2" />
       <p className="text-sm font-body text-slate-blue">
-        Drag & drop or{' '}
+        Drag & drop or{" "}
         <span className="text-teal font-semibold underline underline-offset-2">browse</span>
       </p>
       <p className="text-xs font-body text-light-blue">{hint}</p>
@@ -112,5 +113,5 @@ export default function FileUpload({
         onChange={handleInputChange}
       />
     </div>
-  )
+  );
 }

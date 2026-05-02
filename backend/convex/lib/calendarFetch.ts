@@ -17,7 +17,7 @@ export type TimedEvent = {
  */
 export async function fetch21DayCalendarEvents(
   ctx: ActionCtx,
-  timezone: string,
+  timezone: string
 ): Promise<TimedEvent[]> {
   const today = new Date();
   const week2Start = new Date(today);
@@ -27,15 +27,15 @@ export async function fetch21DayCalendarEvents(
 
   try {
     const [r1, r2, r3] = await Promise.all([
-      ctx.runAction(api.actions.fetchCalendarEvents.fetchCalendarEvents, {
+      ctx.runAction(api.functions.fetchCalendarEvents.fetchCalendarEvents, {
         startDate: toDateStr(today, timezone),
         timezone,
       }),
-      ctx.runAction(api.actions.fetchCalendarEvents.fetchCalendarEvents, {
+      ctx.runAction(api.functions.fetchCalendarEvents.fetchCalendarEvents, {
         startDate: toDateStr(week2Start, timezone),
         timezone,
       }),
-      ctx.runAction(api.actions.fetchCalendarEvents.fetchCalendarEvents, {
+      ctx.runAction(api.functions.fetchCalendarEvents.fetchCalendarEvents, {
         startDate: toDateStr(week3Start, timezone),
         timezone,
       }),

@@ -22,7 +22,6 @@ export const getAllTasksForUserInternal = internalQuery({
   },
 });
 
-
 export const getEstimateFeedbackContextInternal = internalQuery({
   args: { userId: v.id("users") },
   handler: async (ctx, args) => {
@@ -33,11 +32,7 @@ export const getEstimateFeedbackContextInternal = internalQuery({
       .take(25);
 
     return tasks
-      .filter(
-        (t) =>
-          t.timeEstimate !== undefined &&
-          t.estimateFeedbackRating !== undefined
-      )
+      .filter((t) => t.timeEstimate !== undefined && t.estimateFeedbackRating !== undefined)
       .slice(0, 10)
       .map((t) => ({
         title: t.title,
@@ -48,7 +43,6 @@ export const getEstimateFeedbackContextInternal = internalQuery({
       }));
   },
 });
-
 
 // Get a single task by ID
 export const getTask = query({
@@ -121,7 +115,6 @@ export const getTasksByCourseId = query({
   },
 });
 
-
 // Internal query for fetching all tasks for a user.
 // Used by the retrieval layer (slices to 10) and AI scheduling actions (needs all tasks).
 export const getAllTasksInternal = internalQuery({
@@ -165,9 +158,7 @@ export const getTasksPaginated = query({
 
     return {
       ...result,
-      page: args.taskType
-        ? result.page.filter((t) => t.taskType === args.taskType)
-        : result.page,
+      page: args.taskType ? result.page.filter((t) => t.taskType === args.taskType) : result.page,
     };
   },
 });

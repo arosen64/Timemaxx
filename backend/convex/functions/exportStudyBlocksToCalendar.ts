@@ -1,4 +1,3 @@
-"use node";
 import { action, internalAction } from "../_generated/server";
 import type { ActionCtx } from "../_generated/server";
 import { internal } from "../_generated/api";
@@ -17,15 +16,14 @@ const BLUEBERRY_COLOR_ID = "9";
  */
 async function runExport(
   ctx: ActionCtx,
-  userId: Id<"users">,
+  userId: Id<"users">
 ): Promise<{ exported: number; patched: number; noCalendar?: boolean }> {
   const tokenSecret = process.env.CALENDAR_TOKEN_SECRET;
   if (!tokenSecret) throw new Error("Missing CALENDAR_TOKEN_SECRET");
 
-  const connection = await ctx.runQuery(
-    internal.queries.calendar.getCalendarConnectionForUser,
-    { userId },
-  );
+  const connection = await ctx.runQuery(internal.queries.calendar.getCalendarConnectionForUser, {
+    userId,
+  });
   if (!connection) return { exported: 0, patched: 0, noCalendar: true };
 
   const user = await ctx.runQuery(internal.queries.users.getUserInternal, { userId });
@@ -33,12 +31,12 @@ async function runExport(
 
   const accessToken = await resolveAccessToken(ctx, connection, userId, tokenSecret);
 
-  const blocks = await ctx.runQuery(
-    internal.queries.studyBlocks.getFutureStudyBlocksForExport,
-    { userId },
-  );
+  const blocks = await ctx.runQuery(internal.queries.studyBlocks.getFutureStudyBlocksForExport, {
+    userId,
+  });
 
-  if (!connection.timemaxxCalendarId) throw new Error("No Timemaxx calendar found — reconnect Google Calendar to create one");
+  if (!connection.timemaxxCalendarId)
+    throw new Error("No Timemaxx calendar found — reconnect Google Calendar to create one");
   const calendarId = connection.timemaxxCalendarId;
 
   let exported = 0;
@@ -46,12 +44,13 @@ async function runExport(
 
   for (const block of blocks) {
     const endTime = new Date(
-      new Date(block.startTime).getTime() + block.studyBlockLength * 60 * 1000,
+      new Date(block.startTime).getTime() + block.studyBlockLength * 60 * 1000
     ).toISOString();
 
-    const colorId = useColorMapping && block.courseColor
-      ? hexToGcalColorId(block.courseColor)
-      : BLUEBERRY_COLOR_ID;
+    const colorId =
+      useColorMapping && block.courseColor
+        ? hexToGcalColorId(block.courseColor)
+        : BLUEBERRY_COLOR_ID;
 
     const eventBody: Record<string, unknown> = {
       summary: block.title,
@@ -72,10 +71,10 @@ async function runExport(
             "Content-Type": "application/json",
           },
           body: JSON.stringify(eventBody),
-        },
+        }
       );
       if (!res.ok) continue;
-      const data = await res.json() as { id?: string };
+      const data = (await res.json()) as { id?: string };
       if (!data.id) continue;
       try {
         await ctx.runMutation(internal.mutations.studyBlocks.setGoogleEventId, {
@@ -99,7 +98,7 @@ async function runExport(
             "Content-Type": "application/json",
           },
           body: JSON.stringify(eventBody),
-        },
+        }
       );
       if (!res.ok) continue;
       await ctx.runMutation(internal.mutations.studyBlocks.clearNeedsExport, {
@@ -134,7 +133,10 @@ export const exportStudyBlocksToCalendar = action({
  */
 export const internalExportStudyBlocksToCalendar = internalAction({
   args: { userId: v.id("users") },
-  handler: async (ctx, args): Promise<{ exported: number; patched: number; noCalendar?: boolean }> => {
+  handler: async (
+    ctx,
+    args
+  ): Promise<{ exported: number; patched: number; noCalendar?: boolean }> => {
     return runExport(ctx, args.userId);
   },
 });
@@ -152,10 +154,9 @@ export const revokeCalendarAccess = action({
     const tokenSecret = process.env.CALENDAR_TOKEN_SECRET;
     if (!tokenSecret) throw new Error("Missing CALENDAR_TOKEN_SECRET");
 
-    const connection = await ctx.runQuery(
-      internal.queries.calendar.getCalendarConnectionForUser,
-      { userId },
-    );
+    const connection = await ctx.runQuery(internal.queries.calendar.getCalendarConnectionForUser, {
+      userId,
+    });
     if (!connection) return;
 
     // Attempt to delete the timemaxx calendar from Google Calendar
@@ -163,13 +164,10 @@ export const revokeCalendarAccess = action({
     if (timemaxxCalendarId) {
       try {
         const accessToken = await resolveAccessToken(ctx, connection, userId, tokenSecret);
-        await fetch(
-          `${GOOGLE_CALENDAR_API}/calendars/${encodeURIComponent(timemaxxCalendarId)}`,
-          {
-            method: "DELETE",
-            headers: { Authorization: `Bearer ${accessToken}` },
-          },
-        );
+        await fetch(`${GOOGLE_CALENDAR_API}/calendars/${encodeURIComponent(timemaxxCalendarId)}`, {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
       } catch {
         // Ignore errors — still revoke locally even if Google deletion fails
       }
@@ -193,10 +191,9 @@ export const deleteLinkedCalendarEvents = internalAction({
     const tokenSecret = process.env.CALENDAR_TOKEN_SECRET;
     if (!tokenSecret) return;
 
-    const connection = await ctx.runQuery(
-      internal.queries.calendar.getCalendarConnectionForUser,
-      { userId: args.userId },
-    );
+    const connection = await ctx.runQuery(internal.queries.calendar.getCalendarConnectionForUser, {
+      userId: args.userId,
+    });
     if (!connection) return;
 
     let accessToken: string;
@@ -215,7 +212,7 @@ export const deleteLinkedCalendarEvents = internalAction({
         {
           method: "DELETE",
           headers: { Authorization: `Bearer ${accessToken}` },
-        },
+        }
       );
       if (!res.ok) {
         console.warn(`Failed to delete GCal event ${eventId}: HTTP ${res.status}`);

@@ -1,10 +1,10 @@
-import { useMemo, useState, useEffect } from 'react'
-import { useQuery, useMutation, useAction } from 'convex/react'
-import { api } from '../../../backend/convex/_generated/api'
-import { Id } from '../../../backend/convex/_generated/dataModel'
-import { formatEstimatedTime } from '../utils/timeUtils'
-import { PlusIcon, SparklesIcon } from '../components/icons'
-import Button from '../components/ui/Button'
+import { useMemo, useState, useEffect } from "react";
+import { useQuery, useMutation, useAction } from "convex/react";
+import { api } from "../../../backend/convex/_generated/api";
+import { Id } from "../../../backend/convex/_generated/dataModel";
+import { formatEstimatedTime } from "../utils/timeUtils";
+import { PlusIcon, SparklesIcon } from "../components/icons";
+import Button from "../components/ui/Button";
 import {
   AddTaskModal,
   EditModal,
@@ -20,11 +20,11 @@ import {
   type SubtaskType,
   type TaskStatus,
   type EditForm,
-} from '../components/dashboard'
-import { type GeneratedSubtask } from '../../../backend/convex/actions/generateSubtasks'
-import { FALLBACK_COURSE_COLOR } from '../utils/color'
-import { isCurrentTerm } from '../utils/termUtils'
-import { buildClassTag } from '../utils/classTagUtils'
+} from "../components/dashboard";
+import { type GeneratedSubtask } from "../../../backend/convex/actions/generateSubtasks";
+import { FALLBACK_COURSE_COLOR } from "../utils/color";
+import { isCurrentTerm } from "../utils/termUtils";
+import { buildClassTag } from "../utils/classTagUtils";
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 
@@ -41,93 +41,114 @@ function getDateBoundaries() {
 }
 
 export default function DashboardPage() {
-  const tasks = useQuery(api.queries.tasks.getAllTasks, {}) as TaskType[] | undefined
-  const allSubtasks = useQuery(api.queries.subtasks.getAllSubtasksForUser) as SubtaskType[] | undefined
-  const userCourses = useQuery(api.queries.userCourses.getUserCourses)
-  const updateTask = useMutation(api.mutations.tasks.updateTask)
-  const updateTaskStatus = useMutation(api.mutations.tasks.updateTaskStatus)
-  const updateSubtaskStatus = useMutation(api.mutations.subtasks.updateSubtaskStatus)
-  const setManualTimeEstimate = useMutation(api.mutations.timeEstimate.setManualTimeEstimate)
-  const clearManualEstimate = useMutation(api.mutations.timeEstimate.clearManualEstimate)
-  const deleteTask = useMutation(api.mutations.tasks.deleteTask)
-  const deleteSubtask = useMutation(api.mutations.subtasks.deleteSubtask)
-  const updateSubtask = useMutation(api.mutations.subtasks.updateSubtask)
-  const submitEstimateFeedback = useMutation(api.mutations.timeEstimate.submitEstimateFeedback)
-  const requestEstimate = useAction(api.ai.requestEstimateTaskTime.requestEstimateTaskTime)
-  const requestEstimateSubtask = useAction(api.actions.requestEstimateSubtaskTime.requestEstimateSubtaskTime)
-  const requestGenerateSubtasks = useAction(api.actions.requestGenerateSubtasks.requestGenerateSubtasks)
-  const user = useQuery(api.queries.users.getCurrUser)
-  const [{ todayStartMs, todayEndMs, weekStartMs, weekEndMs }, setDateBoundaries] = useState(getDateBoundaries);
-  const todayStudyMinutes = useQuery(api.queries.studyBlocks.getTodayStudyBlockMinutes, { todayStartMs, todayEndMs }) ?? 0
-  const thisWeekBlocks = useQuery(api.queries.studyBlocks.getThisWeekStudyBlocks, { weekStartMs, weekEndMs }) ?? { total: 0, completed: 0 }
+  const tasks = useQuery(api.queries.tasks.getAllTasks, {}) as TaskType[] | undefined;
+  const allSubtasks = useQuery(api.queries.subtasks.getAllSubtasksForUser) as
+    | SubtaskType[]
+    | undefined;
+  const userCourses = useQuery(api.queries.userCourses.getUserCourses);
+  const updateTask = useMutation(api.mutations.tasks.updateTask);
+  const updateTaskStatus = useMutation(api.mutations.tasks.updateTaskStatus);
+  const updateSubtaskStatus = useMutation(api.mutations.subtasks.updateSubtaskStatus);
+  const setManualTimeEstimate = useMutation(api.mutations.timeEstimate.setManualTimeEstimate);
+  const clearManualEstimate = useMutation(api.mutations.timeEstimate.clearManualEstimate);
+  const deleteTask = useMutation(api.mutations.tasks.deleteTask);
+  const deleteSubtask = useMutation(api.mutations.subtasks.deleteSubtask);
+  const updateSubtask = useMutation(api.mutations.subtasks.updateSubtask);
+  const submitEstimateFeedback = useMutation(api.mutations.timeEstimate.submitEstimateFeedback);
+  const requestEstimate = useAction(api.ai.requestEstimateTaskTime.requestEstimateTaskTime);
+  const requestEstimateSubtask = useAction(
+    api.functions.requestEstimateSubtaskTime.requestEstimateSubtaskTime
+  );
+  const requestGenerateSubtasks = useAction(
+    api.functions.requestGenerateSubtasks.requestGenerateSubtasks
+  );
+  const user = useQuery(api.queries.users.getCurrUser);
+  const [{ todayStartMs, todayEndMs, weekStartMs, weekEndMs }, setDateBoundaries] =
+    useState(getDateBoundaries);
+  const todayStudyMinutes =
+    useQuery(api.queries.studyBlocks.getTodayStudyBlockMinutes, { todayStartMs, todayEndMs }) ?? 0;
+  const thisWeekBlocks = useQuery(api.queries.studyBlocks.getThisWeekStudyBlocks, {
+    weekStartMs,
+    weekEndMs,
+  }) ?? { total: 0, completed: 0 };
 
-  const taskRows = useMemo(() => tasks ?? [], [tasks])
+  const taskRows = useMemo(() => tasks ?? [], [tasks]);
 
   function getTaskBarColor(task: TaskType): string {
-    if (!task.courseId || !userCourses) return FALLBACK_COURSE_COLOR
-    const course = userCourses.find((c) => c._id === task.courseId)
-    return course?.color ?? FALLBACK_COURSE_COLOR
+    if (!task.courseId || !userCourses) return FALLBACK_COURSE_COLOR;
+    const course = userCourses.find((c) => c._id === task.courseId);
+    return course?.color ?? FALLBACK_COURSE_COLOR;
   }
 
   const subtasksByTaskId = useMemo(() => {
-    const map = new Map<Id<'tasks'>, SubtaskType[]>()
+    const map = new Map<Id<"tasks">, SubtaskType[]>();
     for (const s of allSubtasks ?? []) {
-      const list = map.get(s.parentTaskId) ?? []
-      list.push(s)
-      map.set(s.parentTaskId, list)
+      const list = map.get(s.parentTaskId) ?? [];
+      list.push(s);
+      map.set(s.parentTaskId, list);
     }
     // already sorted by order from query, but sort again to be safe
-    for (const [k, v] of map) map.set(k, v.sort((a, b) => a.order - b.order))
-    return map
-  }, [allSubtasks])
+    for (const [k, v] of map)
+      map.set(
+        k,
+        v.sort((a, b) => a.order - b.order)
+      );
+    return map;
+  }, [allSubtasks]);
 
   const classTagCourses = useMemo((): ClassTagCourseOption[] => {
-    if (!userCourses?.length) return []
-    const rows: ClassTagCourseOption[] = []
+    if (!userCourses?.length) return [];
+    const rows: ClassTagCourseOption[] = [];
     for (const c of userCourses) {
-      if (!isCurrentTerm(c.term ?? '')) continue
-      const courseCode = c.courseCode?.trim()
-      const title = c.title?.trim()
-      if (!courseCode || !title) continue
+      if (!isCurrentTerm(c.term ?? "")) continue;
+      const courseCode = c.courseCode?.trim();
+      const title = c.title?.trim();
+      if (!courseCode || !title) continue;
       rows.push({
         courseId: c._id,
         courseCode,
         title,
         classTag: buildClassTag(courseCode, title),
-      })
+      });
     }
-    return rows.sort((a, b) => a.courseCode.localeCompare(b.courseCode))
-  }, [userCourses])
+    return rows.sort((a, b) => a.courseCode.localeCompare(b.courseCode));
+  }, [userCourses]);
 
-  const [activeTab, setActiveTab] = useState<'active' | 'completed'>('active')
+  const [activeTab, setActiveTab] = useState<"active" | "completed">("active");
 
   const activeTasks = useMemo(
-    () => taskRows.filter((t) => (t.status ?? 'not_started') !== 'completed'),
-    [taskRows],
-  )
+    () => taskRows.filter((t) => (t.status ?? "not_started") !== "completed"),
+    [taskRows]
+  );
   const completedTasks = useMemo(
-    () => taskRows.filter((t) => t.status === 'completed'),
-    [taskRows],
-  )
+    () => taskRows.filter((t) => t.status === "completed"),
+    [taskRows]
+  );
 
-  const [editingTask, setEditingTask] = useState<TaskType | null>(null)
-  const [deletingTask, setDeletingTask] = useState<TaskType | null>(null)
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
-  const [estimatingTasks, setEstimatingTasks] = useState<Set<Id<'tasks'>>>(new Set())
-  const [estimatingSubtasks, setEstimatingSubtasks] = useState<Set<Id<'subtasks'>>>(new Set())
-  const [editingSubtask, setEditingSubtask] = useState<SubtaskType | null>(null)
-  const [submittingFeedbackTasks, setSubmittingFeedbackTasks] = useState<Set<Id<'tasks'>>>(new Set())
-  const [editingFeedbackTasks, setEditingFeedbackTasks] = useState<Set<Id<'tasks'>>>(new Set())
+  const [editingTask, setEditingTask] = useState<TaskType | null>(null);
+  const [deletingTask, setDeletingTask] = useState<TaskType | null>(null);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [estimatingTasks, setEstimatingTasks] = useState<Set<Id<"tasks">>>(new Set());
+  const [estimatingSubtasks, setEstimatingSubtasks] = useState<Set<Id<"subtasks">>>(new Set());
+  const [editingSubtask, setEditingSubtask] = useState<SubtaskType | null>(null);
+  const [submittingFeedbackTasks, setSubmittingFeedbackTasks] = useState<Set<Id<"tasks">>>(
+    new Set()
+  );
+  const [editingFeedbackTasks, setEditingFeedbackTasks] = useState<Set<Id<"tasks">>>(new Set());
   const [feedbackDrafts, setFeedbackDrafts] = useState<
-    Record<string, { rating?: 'up' | 'down'; hours: string; minutes: string }>
-  >({})
-  const [feedbackErrors, setFeedbackErrors] = useState<Record<string, string>>({})
-  const [estimationError, setEstimationError] = useState<string | null>(null)
-  const [generatingSubtasksTasks, setGeneratingSubtasksTasks] = useState<Set<Id<'tasks'>>>(new Set())
-  const [pendingSubtasks, setPendingSubtasks] = useState<GeneratedSubtask[] | null>(null)
-  const [pendingSubtasksTaskId, setPendingSubtasksTaskId] = useState<Id<'tasks'> | null>(null)
-  const [pendingSubtasksCourseId, setPendingSubtasksCourseId] = useState<Id<'userCourses'> | undefined>(undefined)
-  const [estimationRetry, setEstimationRetry] = useState<(() => void) | null>(null)
+    Record<string, { rating?: "up" | "down"; hours: string; minutes: string }>
+  >({});
+  const [feedbackErrors, setFeedbackErrors] = useState<Record<string, string>>({});
+  const [estimationError, setEstimationError] = useState<string | null>(null);
+  const [generatingSubtasksTasks, setGeneratingSubtasksTasks] = useState<Set<Id<"tasks">>>(
+    new Set()
+  );
+  const [pendingSubtasks, setPendingSubtasks] = useState<GeneratedSubtask[] | null>(null);
+  const [pendingSubtasksTaskId, setPendingSubtasksTaskId] = useState<Id<"tasks"> | null>(null);
+  const [pendingSubtasksCourseId, setPendingSubtasksCourseId] = useState<
+    Id<"userCourses"> | undefined
+  >(undefined);
+  const [estimationRetry, setEstimationRetry] = useState<(() => void) | null>(null);
 
   useEffect(() => {
     const msUntilMidnight = todayEndMs - Date.now();
@@ -138,157 +159,160 @@ export default function DashboardPage() {
   // Clear tasks from estimatingTasks once their timeEstimate is populated by the server
   useEffect(() => {
     setEstimatingTasks((prev) => {
-      if (prev.size === 0) return prev
-      const next = new Set(prev)
+      if (prev.size === 0) return prev;
+      const next = new Set(prev);
       for (const id of prev) {
-        const task = taskRows.find((t) => t._id === id)
-        if (task?.timeEstimate !== undefined) next.delete(id)
+        const task = taskRows.find((t) => t._id === id);
+        if (task?.timeEstimate !== undefined) next.delete(id);
       }
-      return next.size === prev.size ? prev : next
-    })
-  }, [taskRows])
+      return next.size === prev.size ? prev : next;
+    });
+  }, [taskRows]);
 
   // Clear subtasks from estimatingSubtasks once their timeEstimate arrives
   useEffect(() => {
     setEstimatingSubtasks((prev) => {
-      if (prev.size === 0) return prev
-      const next = new Set(prev)
+      if (prev.size === 0) return prev;
+      const next = new Set(prev);
       for (const id of prev) {
-        const subtask = (allSubtasks ?? []).find((s) => s._id === id)
-        if (subtask?.timeEstimate !== undefined) next.delete(id)
+        const subtask = (allSubtasks ?? []).find((s) => s._id === id);
+        if (subtask?.timeEstimate !== undefined) next.delete(id);
       }
-      return next.size === prev.size ? prev : next
-    })
-  }, [allSubtasks])
+      return next.size === prev.size ? prev : next;
+    });
+  }, [allSubtasks]);
 
   async function handleSaveEdit(form: EditForm) {
-    if (!editingTask) return
-    const taskId = editingTask._id
-    const { timeEstimate, useAiEstimate, ...taskFields } = form
-    await updateTask({ taskId, ...taskFields })
+    if (!editingTask) return;
+    const taskId = editingTask._id;
+    const { timeEstimate, useAiEstimate, ...taskFields } = form;
+    await updateTask({ taskId, ...taskFields });
     if (useAiEstimate) {
-      await clearManualEstimate({ taskId })
-      handleEstimateTask(taskId)
+      await clearManualEstimate({ taskId });
+      handleEstimateTask(taskId);
     } else if (timeEstimate !== undefined) {
-      await setManualTimeEstimate({ taskId, timeEstimate })
+      await setManualTimeEstimate({ taskId, timeEstimate });
     } else {
-      handleEstimateTask(taskId)
+      handleEstimateTask(taskId);
     }
   }
 
   async function handleConfirmDelete() {
-    if (!deletingTask) return
-    await deleteTask({ taskId: deletingTask._id })
+    if (!deletingTask) return;
+    await deleteTask({ taskId: deletingTask._id });
   }
 
-  async function handleEstimateSubtask(subtaskId: Id<'subtasks'>) {
-    setEstimatingSubtasks((prev) => new Set(prev).add(subtaskId))
+  async function handleEstimateSubtask(subtaskId: Id<"subtasks">) {
+    setEstimatingSubtasks((prev) => new Set(prev).add(subtaskId));
     try {
-      await requestEstimateSubtask({ subtaskId })
+      await requestEstimateSubtask({ subtaskId });
     } catch (err) {
-      setEstimationError(parseEstimationError(err))
-      setEstimationRetry(() => () => handleEstimateSubtask(subtaskId))
+      setEstimationError(parseEstimationError(err));
+      setEstimationRetry(() => () => handleEstimateSubtask(subtaskId));
     } finally {
       setEstimatingSubtasks((prev) => {
-        const next = new Set(prev)
-        next.delete(subtaskId)
-        return next
-      })
+        const next = new Set(prev);
+        next.delete(subtaskId);
+        return next;
+      });
     }
   }
 
-  async function handleEstimateTask(taskId: Id<'tasks'>) {
-    setEstimatingTasks((prev) => new Set(prev).add(taskId))
+  async function handleEstimateTask(taskId: Id<"tasks">) {
+    setEstimatingTasks((prev) => new Set(prev).add(taskId));
     try {
-      await requestEstimate({ taskId })
+      await requestEstimate({ taskId });
     } catch (err) {
-      setEstimationError(parseEstimationError(err))
-      setEstimationRetry(() => () => handleEstimateTask(taskId))
+      setEstimationError(parseEstimationError(err));
+      setEstimationRetry(() => () => handleEstimateTask(taskId));
     } finally {
       setEstimatingTasks((prev) => {
-        const next = new Set(prev)
-        next.delete(taskId)
-        return next
-      })
+        const next = new Set(prev);
+        next.delete(taskId);
+        return next;
+      });
     }
   }
 
   async function handleGenerateSubtasks(task: TaskType) {
-    setGeneratingSubtasksTasks((prev) => new Set(prev).add(task._id))
+    setGeneratingSubtasksTasks((prev) => new Set(prev).add(task._id));
     try {
-      const result = await requestGenerateSubtasks({ taskId: task._id })
-      if ('error' in result) {
-        setEstimationError(result.error)
+      const result = await requestGenerateSubtasks({ taskId: task._id });
+      if ("error" in result) {
+        setEstimationError(result.error);
       } else {
-        setPendingSubtasks(result.subtasks)
-        setPendingSubtasksTaskId(task._id)
-        setPendingSubtasksCourseId(task.courseId)
+        setPendingSubtasks(result.subtasks);
+        setPendingSubtasksTaskId(task._id);
+        setPendingSubtasksCourseId(task.courseId);
       }
     } catch (err) {
-      setEstimationError(parseEstimationError(err))
+      setEstimationError(parseEstimationError(err));
     } finally {
       setGeneratingSubtasksTasks((prev) => {
-        const next = new Set(prev)
-        next.delete(task._id)
-        return next
-      })
+        const next = new Set(prev);
+        next.delete(task._id);
+        return next;
+      });
     }
   }
 
-  function getFeedbackDraft(taskId: Id<'tasks'>) {
-    return feedbackDrafts[taskId] ?? { rating: undefined, hours: '', minutes: '' }
+  function getFeedbackDraft(taskId: Id<"tasks">) {
+    return feedbackDrafts[taskId] ?? { rating: undefined, hours: "", minutes: "" };
   }
 
   function updateFeedbackDraft(
-    taskId: Id<'tasks'>,
-    updater: (current: { rating?: 'up' | 'down'; hours: string; minutes: string }) => {
-      rating?: 'up' | 'down'
-      hours: string
-      minutes: string
+    taskId: Id<"tasks">,
+    updater: (current: { rating?: "up" | "down"; hours: string; minutes: string }) => {
+      rating?: "up" | "down";
+      hours: string;
+      minutes: string;
     }
   ) {
     setFeedbackDrafts((prev) => {
-      const current = prev[taskId] ?? { rating: undefined, hours: '', minutes: '' }
-      return { ...prev, [taskId]: updater(current) }
-    })
+      const current = prev[taskId] ?? { rating: undefined, hours: "", minutes: "" };
+      return { ...prev, [taskId]: updater(current) };
+    });
     setFeedbackErrors((prev) => {
-      if (!prev[taskId]) return prev
-      const { [taskId]: _omit, ...rest } = prev
-      return rest
-    })
+      if (!prev[taskId]) return prev;
+      const { [taskId]: _omit, ...rest } = prev;
+      return rest;
+    });
   }
 
-  async function handleSubmitFeedback(taskId: Id<'tasks'>) {
-    const draft = getFeedbackDraft(taskId)
+  async function handleSubmitFeedback(taskId: Id<"tasks">) {
+    const draft = getFeedbackDraft(taskId);
     if (!draft.rating) {
-      setFeedbackErrors((prev) => ({ ...prev, [taskId]: 'Select thumbs up or thumbs down.' }))
-      return
+      setFeedbackErrors((prev) => ({ ...prev, [taskId]: "Select thumbs up or thumbs down." }));
+      return;
     }
 
-    const hoursValue = draft.hours.trim()
-    const minutesValue = draft.minutes.trim()
-    let correctedEstimateMinutes: number | undefined
+    const hoursValue = draft.hours.trim();
+    const minutesValue = draft.minutes.trim();
+    let correctedEstimateMinutes: number | undefined;
 
     if (hoursValue.length > 0 || minutesValue.length > 0) {
-      const parsedHours = hoursValue.length > 0 ? Number(hoursValue) : 0
-      const parsedMinutes = minutesValue.length > 0 ? Number(minutesValue) : 0
-      const validHours = Number.isInteger(parsedHours) && parsedHours >= 0
-      const validMinutes = Number.isInteger(parsedMinutes) && parsedMinutes >= 0
+      const parsedHours = hoursValue.length > 0 ? Number(hoursValue) : 0;
+      const parsedMinutes = minutesValue.length > 0 ? Number(minutesValue) : 0;
+      const validHours = Number.isInteger(parsedHours) && parsedHours >= 0;
+      const validMinutes = Number.isInteger(parsedMinutes) && parsedMinutes >= 0;
       if (!validHours || !validMinutes) {
-        setFeedbackErrors((prev) => ({ ...prev, [taskId]: 'Hours/minutes must be whole numbers.' }))
-        return
+        setFeedbackErrors((prev) => ({
+          ...prev,
+          [taskId]: "Hours/minutes must be whole numbers.",
+        }));
+        return;
       }
-      correctedEstimateMinutes = parsedHours * 60 + parsedMinutes
+      correctedEstimateMinutes = parsedHours * 60 + parsedMinutes;
       if (correctedEstimateMinutes <= 0) {
         setFeedbackErrors((prev) => ({
           ...prev,
-          [taskId]: 'Corrected estimate must be greater than 0 minutes.',
-        }))
-        return
+          [taskId]: "Corrected estimate must be greater than 0 minutes.",
+        }));
+        return;
       }
     }
 
-    setSubmittingFeedbackTasks((prev) => new Set(prev).add(taskId))
+    setSubmittingFeedbackTasks((prev) => new Set(prev).add(taskId));
     try {
       await submitEstimateFeedback({
         taskId,
@@ -296,42 +320,42 @@ export default function DashboardPage() {
           rating: draft.rating,
           correctedEstimateMinutes,
         },
-      })
+      });
       setEditingFeedbackTasks((prev) => {
-        const next = new Set(prev)
-        next.delete(taskId)
-        return next
-      })
+        const next = new Set(prev);
+        next.delete(taskId);
+        return next;
+      });
       setFeedbackErrors((prev) => {
-        const { [taskId]: _omit, ...rest } = prev
-        return rest
-      })
+        const { [taskId]: _omit, ...rest } = prev;
+        return rest;
+      });
     } catch (err) {
       setFeedbackErrors((prev) => ({
         ...prev,
-        [taskId]: err instanceof Error ? err.message : 'Failed to submit feedback.',
-      }))
+        [taskId]: err instanceof Error ? err.message : "Failed to submit feedback.",
+      }));
     } finally {
       setSubmittingFeedbackTasks((prev) => {
-        const next = new Set(prev)
-        next.delete(taskId)
-        return next
-      })
+        const next = new Set(prev);
+        next.delete(taskId);
+        return next;
+      });
     }
   }
 
   function startEditFeedback(task: TaskType) {
-    if (!task.estimateFeedbackRating) return
+    if (!task.estimateFeedbackRating) return;
 
-    const minutesTotal = task.correctedEstimateMinutes
+    const minutesTotal = task.correctedEstimateMinutes;
     const hrs =
-      typeof minutesTotal === 'number' && Number.isFinite(minutesTotal)
+      typeof minutesTotal === "number" && Number.isFinite(minutesTotal)
         ? String(Math.floor(minutesTotal / 60))
-        : ''
+        : "";
     const mins =
-      typeof minutesTotal === 'number' && Number.isFinite(minutesTotal)
+      typeof minutesTotal === "number" && Number.isFinite(minutesTotal)
         ? String(minutesTotal % 60)
-        : ''
+        : "";
 
     setFeedbackDrafts((prev) => ({
       ...prev,
@@ -340,19 +364,18 @@ export default function DashboardPage() {
         hours: hrs,
         minutes: mins,
       },
-    }))
+    }));
     setFeedbackErrors((prev) => {
-      if (!prev[task._id]) return prev
-      const { [task._id]: _omit, ...rest } = prev
-      return rest
-    })
+      if (!prev[task._id]) return prev;
+      const { [task._id]: _omit, ...rest } = prev;
+      return rest;
+    });
 
-    setEditingFeedbackTasks((prev) => new Set(prev).add(task._id))
+    setEditingFeedbackTasks((prev) => new Set(prev).add(task._id));
   }
 
   return (
     <div className="flex flex-1 min-h-0 overflow-hidden font-body text-slate-blue">
-
       {/* Modals */}
       <SubtaskReviewModal
         isOpen={pendingSubtasks !== null && pendingSubtasksTaskId !== null}
@@ -360,15 +383,18 @@ export default function DashboardPage() {
         parentTaskId={pendingSubtasksTaskId!}
         courseId={pendingSubtasksCourseId}
         onClose={() => {
-          setPendingSubtasks(null)
-          setPendingSubtasksTaskId(null)
-          setPendingSubtasksCourseId(undefined)
+          setPendingSubtasks(null);
+          setPendingSubtasksTaskId(null);
+          setPendingSubtasksCourseId(undefined);
         }}
       />
       <EstimationErrorModal
         isOpen={estimationError !== null}
-        message={estimationError ?? ''}
-        onClose={() => { setEstimationError(null); setEstimationRetry(null) }}
+        message={estimationError ?? ""}
+        onClose={() => {
+          setEstimationError(null);
+          setEstimationRetry(null);
+        }}
         onRetry={estimationRetry ?? undefined}
       />
       <EditModal
@@ -376,38 +402,50 @@ export default function DashboardPage() {
         task={editingTask}
         onClose={() => setEditingTask(null)}
         onSave={handleSaveEdit}
+        existingTasks={taskRows}
         classTagCourses={classTagCourses}
-        existingSubtaskCount={editingTask ? (subtasksByTaskId.get(editingTask._id)?.length ?? 0) : 0}
-        onDeleteSubtasks={editingTask ? async () => {
-          const subtasks = subtasksByTaskId.get(editingTask._id) ?? []
-          await Promise.all(subtasks.map((s) => deleteSubtask({ subtaskId: s._id })))
-        } : undefined}
+        existingSubtaskCount={
+          editingTask ? (subtasksByTaskId.get(editingTask._id)?.length ?? 0) : 0
+        }
+        onDeleteSubtasks={
+          editingTask
+            ? async () => {
+                const subtasks = subtasksByTaskId.get(editingTask._id) ?? [];
+                await Promise.all(subtasks.map((s) => deleteSubtask({ subtaskId: s._id })));
+              }
+            : undefined
+        }
       />
       <EditModal
         isOpen={editingSubtask !== null}
         title="Edit subtask"
         subtitle="Update the subtask details below."
         hideSubtaskGeneration
-        task={editingSubtask ? {
-          _id: editingSubtask._id as unknown as Id<'tasks'>,
-          title: editingSubtask.title,
-          description: editingSubtask.description,
-          taskType: editingSubtask.taskType,
-          dueDate: editingSubtask.dueDate ?? Date.now(),
-          classTag: editingSubtask.classTag,
-          timeEstimate: editingSubtask.timeEstimate,
-          isManualEstimate: false,
-          createdAt: editingSubtask.createdAt,
-        } : null}
+        hideAssignmentWeight
+        task={
+          editingSubtask
+            ? {
+                _id: editingSubtask._id as unknown as Id<"tasks">,
+                title: editingSubtask.title,
+                description: editingSubtask.description,
+                taskType: editingSubtask.taskType,
+                dueDate: editingSubtask.dueDate ?? Date.now(),
+                classTag: editingSubtask.classTag,
+                timeEstimate: editingSubtask.timeEstimate,
+                isManualEstimate: false,
+                createdAt: editingSubtask.createdAt,
+              }
+            : null
+        }
         onClose={() => setEditingSubtask(null)}
         onSave={async (form) => {
-          if (!editingSubtask) return
+          if (!editingSubtask) return;
           await updateSubtask({
             subtaskId: editingSubtask._id,
             title: form.title,
             description: form.description,
             taskType: form.taskType,
-          })
+          });
         }}
         classTagCourses={classTagCourses}
       />
@@ -421,13 +459,13 @@ export default function DashboardPage() {
       <AddTaskModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
-        onTaskCreated={(taskId) => handleEstimateTask(taskId as Id<'tasks'>)}
+        onTaskCreated={(taskId) => handleEstimateTask(taskId as Id<"tasks">)}
         classTagCourses={classTagCourses}
+        existingTasks={taskRows}
       />
 
       {/* ── Main ── */}
       <main className="flex flex-col flex-1 min-h-0 p-4 sm:p-6 lg:p-10 overflow-y-auto gap-7">
-
         {/* Page Header */}
         <header className="flex items-center justify-between">
           <div className="flex flex-col gap-1">
@@ -436,17 +474,20 @@ export default function DashboardPage() {
             ) : (
               <h1 className="font-heading text-[28px] font-bold text-navy">
                 {(() => {
-                  const hour = new Date().getHours()
-                  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
-                  return `${greeting}, ${user?.name?.split(' ')[0] ?? 'student'}!`
+                  const hour = new Date().getHours();
+                  const greeting =
+                    hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+                  return `${greeting}, ${user?.name?.split(" ")[0] ?? "student"}!`;
                 })()}
               </h1>
             )}
             <p className="text-sm text-slate-blue">
-              {new Date().toLocaleDateString('en-US', {
-                weekday: 'long', month: 'long', day: 'numeric',
-              })}{' '}
-              · {taskRows.length} task{taskRows.length !== 1 ? 's' : ''} due this week
+              {new Date().toLocaleDateString("en-US", {
+                weekday: "long",
+                month: "long",
+                day: "numeric",
+              })}{" "}
+              · {taskRows.length} task{taskRows.length !== 1 ? "s" : ""} due this week
             </p>
           </div>
           <Button
@@ -464,39 +505,50 @@ export default function DashboardPage() {
           <StatCard
             label="Study Blocks This Week"
             value={thisWeekBlocks.total}
-            indicator={{ dotClass: 'bg-success', text: `${thisWeekBlocks.completed} completed`, textClass: 'text-success' }}
+            indicator={{
+              dotClass: "bg-success",
+              text: `${thisWeekBlocks.completed} completed`,
+              textClass: "text-success",
+            }}
           />
           <StatCard
             label="Study Time Today"
             value={formatEstimatedTime(todayStudyMinutes)}
-            indicator={{ dotClass: 'bg-sky-blue', text: 'scheduled today', textClass: 'text-sky-blue' }}
+            indicator={{
+              dotClass: "bg-sky-blue",
+              text: "scheduled today",
+              textClass: "text-sky-blue",
+            }}
           />
         </div>
 
         {/* Columns */}
         <div className="flex flex-col lg:flex-row flex-1 gap-6">
-
           {/* Task Column */}
           <section className="flex flex-col flex-1 min-w-0 gap-4">
             {/* Tabs */}
             <div className="flex items-center gap-1">
               <button
                 type="button"
-                onClick={() => setActiveTab('active')}
+                onClick={() => setActiveTab("active")}
                 className={`rounded-lg px-3 py-1.5 text-sm font-semibold font-heading transition
-                  ${activeTab === 'active'
-                    ? 'bg-navy text-white'
-                    : 'text-slate-blue hover:bg-bg-gray'}`}
+                  ${
+                    activeTab === "active"
+                      ? "bg-navy text-white"
+                      : "text-slate-blue hover:bg-bg-gray"
+                  }`}
               >
                 Active ({activeTasks.length})
               </button>
               <button
                 type="button"
-                onClick={() => setActiveTab('completed')}
+                onClick={() => setActiveTab("completed")}
                 className={`rounded-lg px-3 py-1.5 text-sm font-semibold font-heading transition
-                  ${activeTab === 'completed'
-                    ? 'bg-navy text-white'
-                    : 'text-slate-blue hover:bg-bg-gray'}`}
+                  ${
+                    activeTab === "completed"
+                      ? "bg-navy text-white"
+                      : "text-slate-blue hover:bg-bg-gray"
+                  }`}
               >
                 Completed ({completedTasks.length})
               </button>
@@ -506,7 +558,7 @@ export default function DashboardPage() {
               <div className="rounded-[10px] border border-border bg-white p-5 text-sm text-slate-blue">
                 Loading tasks…
               </div>
-            ) : activeTab === 'active' ? (
+            ) : activeTab === "active" ? (
               activeTasks.length === 0 ? (
                 <div className="rounded-[10px] border border-border bg-white p-6">
                   <div className="flex items-start gap-3">
@@ -514,7 +566,9 @@ export default function DashboardPage() {
                       <SparklesIcon color="#68ACE5" />
                     </div>
                     <div>
-                      <div className="text-sm font-semibold font-heading text-navy">No tasks yet</div>
+                      <div className="text-sm font-semibold font-heading text-navy">
+                        No tasks yet
+                      </div>
                       <div className="mt-1 text-sm text-slate-blue">
                         Add your first task to get an AI time estimate and a personalized schedule.
                       </div>
@@ -529,7 +583,9 @@ export default function DashboardPage() {
                       task={task}
                       barColor={getTaskBarColor(task)}
                       isEstimating={estimatingTasks.has(task._id)}
-                      onStatusChange={(status: TaskStatus) => updateTaskStatus({ taskId: task._id, status })}
+                      onStatusChange={(status: TaskStatus) =>
+                        updateTaskStatus({ taskId: task._id, status })
+                      }
                       onEstimate={() => handleEstimateTask(task._id)}
                       onEdit={() => setEditingTask(task)}
                       onDelete={() => setDeletingTask(task)}
@@ -540,19 +596,24 @@ export default function DashboardPage() {
                       onEstimateSubtask={(subtaskId) => handleEstimateSubtask(subtaskId)}
                       isGeneratingSubtasks={generatingSubtasksTasks.has(task._id)}
                       onGenerateSubtasks={() => handleGenerateSubtasks(task)}
-                      onSubtaskStatusChange={(subtaskId, status) => updateSubtaskStatus({ subtaskId, status })}
+                      onSubtaskStatusChange={(subtaskId, status) =>
+                        updateSubtaskStatus({ subtaskId, status })
+                      }
                       feedback={{
                         draft: getFeedbackDraft(task._id),
                         error: feedbackErrors[task._id],
                         isSubmitting: submittingFeedbackTasks.has(task._id),
                         isEditing: editingFeedbackTasks.has(task._id),
-                        onToggleRating: (value) => updateFeedbackDraft(task._id, (curr) =>
-                          curr.rating === value
-                            ? { ...curr, rating: undefined, hours: '', minutes: '' }
-                            : { ...curr, rating: value }
-                        ),
-                        onHoursChange: (value) => updateFeedbackDraft(task._id, (curr) => ({ ...curr, hours: value })),
-                        onMinutesChange: (value) => updateFeedbackDraft(task._id, (curr) => ({ ...curr, minutes: value })),
+                        onToggleRating: (value) =>
+                          updateFeedbackDraft(task._id, (curr) =>
+                            curr.rating === value
+                              ? { ...curr, rating: undefined, hours: "", minutes: "" }
+                              : { ...curr, rating: value }
+                          ),
+                        onHoursChange: (value) =>
+                          updateFeedbackDraft(task._id, (curr) => ({ ...curr, hours: value })),
+                        onMinutesChange: (value) =>
+                          updateFeedbackDraft(task._id, (curr) => ({ ...curr, minutes: value })),
                         onSubmit: () => handleSubmitFeedback(task._id),
                         onStartEdit: () => startEditFeedback(task),
                       }}
@@ -560,51 +621,65 @@ export default function DashboardPage() {
                   ))}
                 </div>
               )
+            ) : completedTasks.length === 0 ? (
+              <div className="rounded-[10px] border border-border bg-white p-6 text-sm text-slate-blue">
+                No completed tasks yet.
+              </div>
             ) : (
-              completedTasks.length === 0 ? (
-                <div className="rounded-[10px] border border-border bg-white p-6 text-sm text-slate-blue">
-                  No completed tasks yet.
-                </div>
-              ) : (
-                <div className="flex flex-col gap-3">
-                  {completedTasks.map((task) => (
-                    <TaskCard
-                      key={task._id}
-                      task={task}
-                      barColor={getTaskBarColor(task)}
-                      isEstimating={false}
-                      isReadOnly
-                      onStatusChange={() => {}}
-                      onEstimate={() => {}}
-                      onEdit={() => {}}
-                      onDelete={() => {}}
-                      onReopen={() => {
-                        updateTaskStatus({ taskId: task._id, status: 'not_started' })
-                        setFeedbackDrafts((prev) => { const { [task._id]: _omit, ...rest } = prev; return rest })
-                        setFeedbackErrors((prev) => { const { [task._id]: _omit, ...rest } = prev; return rest })
-                        setEditingFeedbackTasks((prev) => { const next = new Set(prev); next.delete(task._id); return next })
-                      }}
-                      subtasks={subtasksByTaskId.get(task._id) ?? []}
-                      onSubtaskStatusChange={(subtaskId, status) => updateSubtaskStatus({ subtaskId, status })}
-                      isGeneratingSubtasks={generatingSubtasksTasks.has(task._id)}
-                      onGenerateSubtasks={() => handleGenerateSubtasks(task)}
-                      feedback={{
-                        draft: getFeedbackDraft(task._id),
-                        error: feedbackErrors[task._id],
-                        isSubmitting: submittingFeedbackTasks.has(task._id),
-                        isEditing: editingFeedbackTasks.has(task._id),
-                        onToggleRating: (value) => updateFeedbackDraft(task._id, (curr) =>
-                          ({ ...curr, rating: curr.rating === value ? undefined : value })
-                        ),
-                        onHoursChange: (value) => updateFeedbackDraft(task._id, (curr) => ({ ...curr, hours: value })),
-                        onMinutesChange: (value) => updateFeedbackDraft(task._id, (curr) => ({ ...curr, minutes: value })),
-                        onSubmit: () => handleSubmitFeedback(task._id),
-                        onStartEdit: () => startEditFeedback(task),
-                      }}
-                    />
-                  ))}
-                </div>
-              )
+              <div className="flex flex-col gap-3">
+                {completedTasks.map((task) => (
+                  <TaskCard
+                    key={task._id}
+                    task={task}
+                    barColor={getTaskBarColor(task)}
+                    isEstimating={false}
+                    isReadOnly
+                    onStatusChange={() => {}}
+                    onEstimate={() => {}}
+                    onEdit={() => {}}
+                    onDelete={() => {}}
+                    onReopen={() => {
+                      updateTaskStatus({ taskId: task._id, status: "not_started" });
+                      setFeedbackDrafts((prev) => {
+                        const { [task._id]: _omit, ...rest } = prev;
+                        return rest;
+                      });
+                      setFeedbackErrors((prev) => {
+                        const { [task._id]: _omit, ...rest } = prev;
+                        return rest;
+                      });
+                      setEditingFeedbackTasks((prev) => {
+                        const next = new Set(prev);
+                        next.delete(task._id);
+                        return next;
+                      });
+                    }}
+                    subtasks={subtasksByTaskId.get(task._id) ?? []}
+                    onSubtaskStatusChange={(subtaskId, status) =>
+                      updateSubtaskStatus({ subtaskId, status })
+                    }
+                    isGeneratingSubtasks={generatingSubtasksTasks.has(task._id)}
+                    onGenerateSubtasks={() => handleGenerateSubtasks(task)}
+                    feedback={{
+                      draft: getFeedbackDraft(task._id),
+                      error: feedbackErrors[task._id],
+                      isSubmitting: submittingFeedbackTasks.has(task._id),
+                      isEditing: editingFeedbackTasks.has(task._id),
+                      onToggleRating: (value) =>
+                        updateFeedbackDraft(task._id, (curr) => ({
+                          ...curr,
+                          rating: curr.rating === value ? undefined : value,
+                        })),
+                      onHoursChange: (value) =>
+                        updateFeedbackDraft(task._id, (curr) => ({ ...curr, hours: value })),
+                      onMinutesChange: (value) =>
+                        updateFeedbackDraft(task._id, (curr) => ({ ...curr, minutes: value })),
+                      onSubmit: () => handleSubmitFeedback(task._id),
+                      onStartEdit: () => startEditFeedback(task),
+                    }}
+                  />
+                ))}
+              </div>
             )}
           </section>
 
@@ -613,5 +688,5 @@ export default function DashboardPage() {
         </div>
       </main>
     </div>
-  )
+  );
 }

@@ -8,9 +8,7 @@ export default function LandingLoginCard() {
     <div className="flex w-full md:w-1/2 items-center justify-center bg-bg-gray py-12 px-6 md:px-0">
       <div className="flex w-full max-w-[440px] flex-col gap-8 rounded-xl border border-border bg-white p-8 md:p-12">
         <div className="flex flex-col gap-2">
-          <h2 className="font-heading text-2xl font-bold text-navy">
-            Welcome back
-          </h2>
+          <h2 className="font-heading text-2xl font-bold text-navy">Welcome back</h2>
           <p className="text-sm leading-relaxed text-slate-blue">
             Sign in to access your personalized study dashboard.
           </p>
@@ -24,8 +22,7 @@ export default function LandingLoginCard() {
           Sign in with Google
         </button>
 
-        {(import.meta.env.DEV ||
-          import.meta.env.VITE_ANONYMOUS_AUTH_ENABLED === "true") && (
+        {(import.meta.env.DEV || import.meta.env.VITE_ANONYMOUS_AUTH_ENABLED === "true") && (
           <>
             <div className="flex items-center gap-3">
               <div className="h-px flex-1 bg-border" />

@@ -1,7 +1,6 @@
 import { internalMutation, mutation } from "../_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
-import { taskTypeValidator } from "../lib/taskValidators";
 import { buildClassTag } from "../lib/classTagUtils";
 import { internal } from "../_generated/api";
 
@@ -56,11 +55,7 @@ export const deleteSyllabiForCourse = internalMutation({
 export const setSyllabusStatus = internalMutation({
   args: {
     syllabusId: v.id("syllabi"),
-    status: v.union(
-      v.literal("pending"),
-      v.literal("confirmed"),
-      v.literal("failed"),
-    ),
+    status: v.union(v.literal("pending"), v.literal("confirmed"), v.literal("failed")),
   },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.syllabusId, { status: args.status });
@@ -86,7 +81,7 @@ export const confirmSyllabusTasks = mutation({
         title: v.string(),
         description: v.string(),
         dueDate: v.number(),
-        taskType: taskTypeValidator,
+        taskType: v.string(),
       })
     ),
   },
@@ -121,6 +116,7 @@ export const confirmSyllabusTasks = mutation({
           ...(classTag !== undefined ? { classTag } : {}),
           createdAt: now,
           isManualEstimate: false,
+          status: "not_started",
         })
       )
     );

@@ -18,7 +18,7 @@ vi.mock('../../../backend/convex/_generated/api', () => ({
       timeEstimate: { submitEstimateFeedback: 'submitEstimateFeedback' },
       studyBlocks: { deleteStudyBlocksForTask: 'deleteStudyBlocksForTask', toggleStudyBlockComplete: 'toggleStudyBlockComplete' },
     },
-    actions: {
+    functions: {
       requestEstimateSubtaskTime: { requestEstimateSubtaskTime: 'requestEstimateSubtaskTime' },
       requestGenerateSubtasks: { requestGenerateSubtasks: 'requestGenerateSubtasks' },
     },

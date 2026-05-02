@@ -12,7 +12,7 @@ export const getOrCreateChatSessionInternal = internalMutation({
     const existing = await ctx.db
       .query("chatSessions")
       .withIndex("by_userId_sessionId", (q) =>
-        q.eq("userId", args.userId).eq("sessionId", args.sessionId),
+        q.eq("userId", args.userId).eq("sessionId", args.sessionId)
       )
       .unique();
     if (existing) return existing._id;
@@ -40,7 +40,7 @@ export const setEntityPromptStateInternal = internalMutation({
     const row = await ctx.db
       .query("chatSessions")
       .withIndex("by_userId_sessionId", (q) =>
-        q.eq("userId", args.userId).eq("sessionId", args.sessionId),
+        q.eq("userId", args.userId).eq("sessionId", args.sessionId)
       )
       .unique();
     if (!row) throw new Error("chat session missing");
@@ -74,7 +74,7 @@ export const resolvePickedTaskInternal = internalMutation({
     const row = await ctx.db
       .query("chatSessions")
       .withIndex("by_userId_sessionId", (q) =>
-        q.eq("userId", args.userId).eq("sessionId", args.sessionId),
+        q.eq("userId", args.userId).eq("sessionId", args.sessionId)
       )
       .unique();
     if (!row) throw new Error("chat session missing");
@@ -113,7 +113,7 @@ export const resolvePickedCourseInternal = internalMutation({
     const row = await ctx.db
       .query("chatSessions")
       .withIndex("by_userId_sessionId", (q) =>
-        q.eq("userId", args.userId).eq("sessionId", args.sessionId),
+        q.eq("userId", args.userId).eq("sessionId", args.sessionId)
       )
       .unique();
     if (!row) throw new Error("chat session missing");
@@ -139,7 +139,7 @@ export const clearEntityAwaitingInternal = internalMutation({
     const row = await ctx.db
       .query("chatSessions")
       .withIndex("by_userId_sessionId", (q) =>
-        q.eq("userId", args.userId).eq("sessionId", args.sessionId),
+        q.eq("userId", args.userId).eq("sessionId", args.sessionId)
       )
       .unique();
     if (!row) return null;
@@ -164,7 +164,7 @@ export const setChatInputLockedInternal = internalMutation({
     const row = await ctx.db
       .query("chatSessions")
       .withIndex("by_userId_sessionId", (q) =>
-        q.eq("userId", args.userId).eq("sessionId", args.sessionId),
+        q.eq("userId", args.userId).eq("sessionId", args.sessionId)
       )
       .unique();
     if (!row) throw new Error("chat session missing");
@@ -182,7 +182,7 @@ export const setTaskAgentStateInternal = internalMutation({
     activeAgent: v.optional(activeAgentValidator),
     taskAgentIntent: v.optional(v.union(v.literal("create"), v.literal("rud"))),
     courseAgentIntent: v.optional(
-      v.union(v.literal("add"), v.literal("drop"), v.literal("view"), v.literal("update")),
+      v.union(v.literal("add"), v.literal("drop"), v.literal("view"), v.literal("update"))
     ),
   },
   returns: v.null(),
@@ -190,14 +190,16 @@ export const setTaskAgentStateInternal = internalMutation({
     const row = await ctx.db
       .query("chatSessions")
       .withIndex("by_userId_sessionId", (q) =>
-        q.eq("userId", args.userId).eq("sessionId", args.sessionId),
+        q.eq("userId", args.userId).eq("sessionId", args.sessionId)
       )
       .unique();
     if (!row) throw new Error("chat session missing");
     await ctx.db.patch(row._id, {
       ...(args.activeAgent !== undefined ? { activeAgent: args.activeAgent } : {}),
       ...(args.taskAgentIntent !== undefined ? { taskAgentIntent: args.taskAgentIntent } : {}),
-      ...(args.courseAgentIntent !== undefined ? { courseAgentIntent: args.courseAgentIntent } : {}),
+      ...(args.courseAgentIntent !== undefined
+        ? { courseAgentIntent: args.courseAgentIntent }
+        : {}),
     });
     return null;
   },
@@ -213,7 +215,7 @@ export const clearAgentStateInternal = internalMutation({
     const row = await ctx.db
       .query("chatSessions")
       .withIndex("by_userId_sessionId", (q) =>
-        q.eq("userId", args.userId).eq("sessionId", args.sessionId),
+        q.eq("userId", args.userId).eq("sessionId", args.sessionId)
       )
       .unique();
     if (!row) return null;
@@ -254,7 +256,7 @@ export const setMessageScopeInternal = internalMutation({
     const row = await ctx.db
       .query("chatSessions")
       .withIndex("by_userId_sessionId", (q) =>
-        q.eq("userId", args.userId).eq("sessionId", args.sessionId),
+        q.eq("userId", args.userId).eq("sessionId", args.sessionId)
       )
       .unique();
     if (!row) return null;
@@ -286,7 +288,7 @@ export const setBlockPromptStateInternal = internalMutation({
     const row = await ctx.db
       .query("chatSessions")
       .withIndex("by_userId_sessionId", (q) =>
-        q.eq("userId", args.userId).eq("sessionId", args.sessionId),
+        q.eq("userId", args.userId).eq("sessionId", args.sessionId)
       )
       .unique();
     if (!row) throw new Error("chat session missing");
@@ -317,7 +319,7 @@ export const resolvePickedBlockInternal = internalMutation({
     const row = await ctx.db
       .query("chatSessions")
       .withIndex("by_userId_sessionId", (q) =>
-        q.eq("userId", args.userId).eq("sessionId", args.sessionId),
+        q.eq("userId", args.userId).eq("sessionId", args.sessionId)
       )
       .unique();
     if (!row) throw new Error("chat session missing");
@@ -342,7 +344,7 @@ export const incrementClarificationFailureInternal = internalMutation({
     const row = await ctx.db
       .query("chatSessions")
       .withIndex("by_userId_sessionId", (q) =>
-        q.eq("userId", args.userId).eq("sessionId", args.sessionId),
+        q.eq("userId", args.userId).eq("sessionId", args.sessionId)
       )
       .unique();
     if (!row) throw new Error("chat session missing");

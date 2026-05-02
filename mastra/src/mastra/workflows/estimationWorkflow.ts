@@ -21,9 +21,11 @@ import { estimationAgentOutputSchema } from "../lib/prompts/estimationAgent.prom
 const estimationAgentStep = createStep({
   id: "estimation-agent",
   inputSchema: z.object({
-    contextPrompt: z.string().describe(
-      "Full context prompt: task details + course context + prior task history + chat history + student profile",
-    ),
+    contextPrompt: z
+      .string()
+      .describe(
+        "Full context prompt: task details + course context + prior task history + chat history + student profile"
+      ),
   }),
   outputSchema: estimationAgentOutputSchema,
   execute: async ({ inputData }) => {

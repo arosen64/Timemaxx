@@ -13,11 +13,13 @@ export default function LandingHeroPanel() {
         <BrandLogo />
         <div className="flex flex-col gap-4">
           <h1 className="font-heading text-5xl font-bold leading-tight text-white">
-            Study smarter,<br />not harder.
+            Study smarter,
+            <br />
+            not harder.
           </h1>
           <p className="max-w-md text-base leading-relaxed text-sky-blue">
-            AI-powered scheduling that estimates your task time and builds a
-            personalized study plan around your life.
+            AI-powered scheduling that estimates your task time and builds a personalized study plan
+            around your life.
           </p>
         </div>
       </div>
@@ -34,7 +36,9 @@ export default function LandingHeroPanel() {
       <div className="flex items-center gap-2">
         <div className="h-8 w-1 flex-shrink-0 bg-teal" />
         <span className="text-xs leading-tight text-sky-blue">
-          Johns Hopkins University<br />Timemaxx
+          Johns Hopkins University
+          <br />
+          Timemaxx
         </span>
       </div>
     </div>

@@ -1,11 +1,11 @@
-"use node"; // Required: @google/genai uses Node.js APIs not available in the default Convex runtime
-
 import { internalAction } from "../_generated/server";
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { z } from "zod";
-import { callGemini } from "../lib/gemini";
+import { MastraClient } from "@mastra/client-js";
+import { sanitizeUserInput } from "../lib/sanitize";
 import { computeSubtaskCascade } from "../lib/scheduleSlots";
+import { withAiObservability } from "../lib/aiObservability";
 
 export type GeneratedSubtask = {
   title: string;
@@ -17,9 +17,19 @@ export type GeneratedSubtask = {
   suggestedCompletionAt: string; // ISO 8601
 };
 
-export type GenerateSubtasksResult =
-  | { subtasks: GeneratedSubtask[] }
-  | { error: string };
+export type GenerateSubtasksResult = { subtasks: GeneratedSubtask[] } | { error: string };
+
+const SUBTASK_STEP_ID = "subtask-generation-step";
+
+const subtaskOutputSchema = z.object({
+  subtasks: z.array(
+    z.object({
+      title: z.string(),
+      description: z.string(),
+      taskType: z.string(),
+    })
+  ),
+});
 
 export const generateSubtasks = internalAction({
   args: {
@@ -42,58 +52,105 @@ export const generateSubtasks = internalAction({
       };
     }
 
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      console.error("GEMINI_API_KEY is not set");
+    const mastraUrl = process.env.MASTRA_URL;
+    if (!mastraUrl) {
+      if (process.env.VITEST !== "true") {
+        console.error("MASTRA_URL is not set");
+      }
       return { error: "Subtask generation is unavailable. Please try again later." };
     }
 
     const dueDate = new Date(task.dueDate).toISOString();
 
-    const prompt = `You are an academic study planner. Break the following assignment into a set of concrete, actionable subtasks a student should complete to finish it on time.
+    // User-provided fields are wrapped in XML delimiters so the model can
+    // unambiguously identify section boundaries. sanitizeUserInput strips XML
+    // tags from user input, so these delimiters cannot be closed prematurely
+    // by content — preventing field-label injection across sections.
+    const sections: string[] = [];
 
-Assignment title: ${task.title}
-Assignment type: ${task.taskType}
+    sections.push(`<assignment_details>
+Title: ${sanitizeUserInput(task.title, 500)}
+Type: ${sanitizeUserInput(task.taskType, 100)}
 Due date: ${dueDate}
-${task.description.trim() ? `\nAssignment description:\n${task.description}` : ""}
-${hasFileContent ? `\nAdditional context from uploaded file:\n${args.fileContent}` : ""}
+</assignment_details>`);
 
-For each subtask provide:
-- title: short action-oriented name (e.g. "Read chapters 3–4", "Draft thesis statement")
-- description: 1-2 sentences on what the student should do
-- taskType: one of "Essay", "Problem Set", "Exam Prep", "Coding", "Reading", "Lab", "Presentation"
+    if (task.description.trim()) {
+      sections.push(`<assignment_description>
+${sanitizeUserInput(task.description, 5_000)}
+</assignment_description>`);
+    }
 
-Return 1–6 subtasks ordered by when they should be completed. If the assignment is simple and doesn't benefit from being broken down, returning a single subtask is perfectly fine.`;
+    if (hasFileContent) {
+      sections.push(`<uploaded_file_content>
+${sanitizeUserInput(args.fileContent!, 10_000)}
+</uploaded_file_content>`);
+    }
 
-    const subtaskSchema = z.object({
-      subtasks: z.array(
-        z.object({
-          title: z.string(),
-          description: z.string(),
-          taskType: z.string(),
-        })
-      ),
-    });
+    const contextPrompt = `Break this assignment into concrete, actionable subtasks.\n\n${sections.join("\n\n")}`;
 
     try {
-      const json = await callGemini({
-        system: "You are an academic study planner that breaks assignments into concrete, actionable subtasks.",
-        prompt,
-        schema: subtaskSchema,
-        schemaName: "GeneratedSubtasks",
-        timeoutMs: 30_000,
-        obs: {
-          ctx,
+      const client = new MastraClient({ baseUrl: mastraUrl });
+      const wf = client.getWorkflow("subtask-generation-workflow");
+      const run = await withAiObservability(
+        ctx,
+        {
           callSite: "generateSubtasks",
+          provider: "mastra",
+          model: "subtask-generation-workflow",
           userId: task.userId,
+          promptPreview: contextPrompt,
           metadata: { taskId: args.taskId, hasFileContent },
         },
-      });
+        () => wf.startAsync({ inputData: { contextPrompt } }),
+        (r) => {
+          const step = r.steps?.[SUBTASK_STEP_ID];
+          return {
+            responsePreview:
+              step && "output" in step ? JSON.stringify(step.output) : undefined,
+          };
+        },
+      );
 
-      const rawSubtasks = json.subtasks ?? [];
+      const runStatus = (run as { status?: string }).status;
+      if (runStatus === "failed") {
+        const rawErr = (run as { error?: string | Error }).error;
+        const runErrMsg = rawErr instanceof Error ? rawErr.message : String(rawErr ?? "unknown");
+        console.error("Subtask generation workflow top-level failure:", runErrMsg);
+        return { error: "Failed to generate subtasks. Please try again." };
+      }
 
+      for (const [stepId, step] of Object.entries(run.steps ?? {})) {
+        if (!("status" in step)) continue;
+        if (!("output" in step)) {
+          const rawErr = (step as { error?: string | Error }).error;
+          const stepStatus = (step as { status?: string }).status ?? "unknown";
+          const errMsg = rawErr instanceof Error ? rawErr.message : String(rawErr ?? "");
+          console.error(
+            `Subtask generation step "${stepId}" has no output (status: ${stepStatus}):`,
+            errMsg
+          );
+          return { error: "Failed to generate subtasks. Please try again." };
+        }
+      }
+
+      const stepOutput = run.steps?.[SUBTASK_STEP_ID];
+      if (!stepOutput || !("output" in stepOutput)) {
+        const availableKeys = Object.keys(run.steps ?? {}).join(", ") || "(none)";
+        console.error(
+          `No output from subtask generation workflow — expected step "${SUBTASK_STEP_ID}", got: ${availableKeys}`
+        );
+        return { error: "Failed to generate subtasks. Please try again." };
+      }
+
+      const parsed = subtaskOutputSchema.safeParse(stepOutput.output);
+      if (!parsed.success) {
+        console.error("Subtask agent output failed schema validation:", parsed.error);
+        return { error: "Failed to generate subtasks. Please try again." };
+      }
+
+      const rawSubtasks = parsed.data.subtasks;
       if (rawSubtasks.length === 0) {
-        return { error: "Gemini returned no subtasks. Please try again." };
+        return { error: "No subtasks were generated. Please try again." };
       }
 
       const nowMs = Date.now();

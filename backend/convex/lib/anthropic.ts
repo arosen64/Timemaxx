@@ -22,9 +22,7 @@ export interface AiCallObservability {
 function isTimeoutError(err: unknown): boolean {
   return (
     err instanceof Error &&
-    (err.name === "AbortError" ||
-      err.name === "TimeoutError" ||
-      err.name === "ResponseAborted")
+    (err.name === "AbortError" || err.name === "TimeoutError" || err.name === "ResponseAborted")
   );
 }
 
@@ -57,9 +55,7 @@ export async function callAnthropic<T>(opts: {
       }),
       system: opts.system,
       prompt: opts.prompt,
-      abortSignal: opts.timeoutMs
-        ? AbortSignal.timeout(opts.timeoutMs)
-        : undefined,
+      abortSignal: opts.timeoutMs ? AbortSignal.timeout(opts.timeoutMs) : undefined,
     });
 
     if (result.output == null) {
@@ -118,9 +114,6 @@ export async function callAnthropic<T>(opts: {
       });
     }
 
-    if (isTimeoutError(err)) {
-      throw new Error("AI generation timed out — please try again");
-    }
     throw err;
   }
 }

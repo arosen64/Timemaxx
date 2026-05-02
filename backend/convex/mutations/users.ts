@@ -2,7 +2,9 @@ import { mutation } from "../_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { internal } from "../_generated/api";
+import type { Doc } from "../_generated/dataModel";
 import { cascadeDeleteTask } from "./tasks";
+import { productivityTraitsValidator, workHoursRowValidator } from "../lib/userValidators";
 
 /**
  * Partially updates the authenticated user's settings (work hours, focus block length, study profile).
@@ -11,13 +13,9 @@ export const updateUserSettings = mutation({
   args: {
     major: v.optional(v.string()),
     year: v.optional(v.string()),
-    courses: v.optional(v.array(v.object({ title: v.string(), studyGoal: v.string() }))),
     transcriptSummary: v.optional(v.array(v.object({ label: v.string(), text: v.string() }))),
-    workHoursGrid: v.optional(v.array(v.object({
-      day: v.string(),
-      blocked: v.array(v.number()),
-    }))),
-    productivityTraits: v.optional(v.any()),
+    workHoursGrid: v.optional(v.array(workHoursRowValidator)),
+    productivityTraits: v.optional(productivityTraitsValidator),
     focusBlockLength: v.optional(v.number()),
     gcalColorMappingEnabled: v.optional(v.boolean()),
   },
@@ -38,11 +36,23 @@ export const updateUserSettings = mutation({
     //   - productivityTraits uses v.any() and has no shape enforcement
     // Track this as a follow-up issue for backend input validation.
 
-    const prevUser = args.gcalColorMappingEnabled !== undefined
-      ? await ctx.db.get(userId)
-      : null;
+    const prevUser = args.gcalColorMappingEnabled !== undefined ? await ctx.db.get(userId) : null;
 
-    await ctx.db.patch(userId, args);
+    // Explicit allowlist of updatable fields. Do NOT spread args directly — that
+    // would let any field accepted by the validator (including ones added later
+    // for unrelated reasons) flow into the user record. onboardingComplete and
+    // auth-managed fields (name/email/phone/etc.) are intentionally excluded.
+    const patch: Partial<Doc<"users">> = {};
+    if (args.major !== undefined) patch.major = args.major;
+    if (args.year !== undefined) patch.year = args.year;
+    if (args.transcriptSummary !== undefined) patch.transcriptSummary = args.transcriptSummary;
+    if (args.workHoursGrid !== undefined) patch.workHoursGrid = args.workHoursGrid;
+    if (args.productivityTraits !== undefined) patch.productivityTraits = args.productivityTraits;
+    if (args.focusBlockLength !== undefined) patch.focusBlockLength = args.focusBlockLength;
+    if (args.gcalColorMappingEnabled !== undefined)
+      patch.gcalColorMappingEnabled = args.gcalColorMappingEnabled;
+
+    await ctx.db.patch(userId, patch);
 
     // When gcalColorMappingEnabled is toggled, re-export all previously exported blocks
     // so their GCal colors reflect the new setting immediately.
@@ -60,8 +70,8 @@ export const updateUserSettings = mutation({
       if (connection) {
         await ctx.scheduler.runAfter(
           0,
-          internal.actions.exportStudyBlocksToCalendar.internalExportStudyBlocksToCalendar,
-          { userId },
+          internal.functions.exportStudyBlocksToCalendar.internalExportStudyBlocksToCalendar,
+          { userId }
         );
       }
     }
@@ -75,11 +85,8 @@ export const completeOnboarding = mutation({
   args: {
     major: v.string(),
     year: v.string(),
-    workHoursGrid: v.array(v.object({
-      day: v.string(),
-      blocked: v.array(v.number()),
-    })),
-    productivityTraits: v.any(),
+    workHoursGrid: v.array(workHoursRowValidator),
+    productivityTraits: productivityTraitsValidator,
     focusBlockLength: v.number(),
   },
   handler: async (ctx, args) => {
@@ -87,8 +94,7 @@ export const completeOnboarding = mutation({
     if (!userId) throw new Error("Not authenticated: must be logged in to complete onboarding");
 
     // Major filled check
-    if (args.major.trim().length === 0)
-      throw new Error("Major cannot be empty");
+    if (args.major.trim().length === 0) throw new Error("Major cannot be empty");
 
     await ctx.db.patch(userId, {
       ...args,

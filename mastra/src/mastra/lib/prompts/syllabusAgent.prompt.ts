@@ -1,21 +1,14 @@
 import { z } from "zod";
-
-const TASK_TYPES = ["Essay", "Problem Set", "Exam Prep", "Coding", "Reading", "Lab", "Presentation"] as const;
+import { TASK_TYPES } from "../../../../../shared/taskEnums";
 
 export const syllabusResponseSchema = z.object({
   tasks: z
     .array(
       z.object({
         title: z.string().describe("Short name of the assignment or exam"),
-        description: z
-          .string()
-          .describe("1-2 sentence summary of what the task involves"),
-        dueDate: z
-          .string()
-          .describe("ISO 8601 date string, e.g. '2025-04-15'"),
-        taskType: z
-          .enum(TASK_TYPES)
-          .describe("Category of the academic task"),
+        description: z.string().describe("1-2 sentence summary of what the task involves"),
+        dueDate: z.string().describe("ISO 8601 date string, e.g. '2025-04-15'"),
+        taskType: z.enum(TASK_TYPES).describe("Category of the academic task"),
       })
     )
     .describe("Array of extracted tasks with due dates"),

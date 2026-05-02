@@ -5,19 +5,17 @@ import { makeTestCtx, createTestUser } from "../../convex-tests/helpers";
 const VALID_ONBOARDING_ARGS = {
   major: "Computer Science",
   year: "Junior",
-  workHoursGrid: [
-    { day: "Monday", blocked: [] },
-  ],
-  productivityTraits: { morningPerson: true },
+  workHoursGrid: [{ day: "Monday" as const, blocked: [] as number[] }],
+  productivityTraits: { timeOfDay: ["Morning"] },
   focusBlockLength: 50,
 };
 
 describe("mutations/users – deleteAccount", () => {
   test("throws when unauthenticated", async () => {
     const t = makeTestCtx();
-    await expect(
-      t.mutation(api.mutations.users.deleteAccount, {})
-    ).rejects.toThrow("Not authenticated");
+    await expect(t.mutation(api.mutations.users.deleteAccount, {})).rejects.toThrow(
+      "Not authenticated"
+    );
   });
 
   test("deletes the user record", async () => {
@@ -43,6 +41,7 @@ describe("mutations/users – deleteAccount", () => {
         dueDate: Date.now() + 86_400_000,
         createdAt: Date.now(),
         isManualEstimate: false,
+        status: "not_started",
       });
       await ctx.db.insert("tasks", {
         userId,
@@ -52,13 +51,17 @@ describe("mutations/users – deleteAccount", () => {
         dueDate: Date.now() + 86_400_000,
         createdAt: Date.now(),
         isManualEstimate: false,
+        status: "not_started",
       });
     });
 
     await withAuth.mutation(api.mutations.users.deleteAccount, {});
 
     const tasks = await t.run((ctx) =>
-      ctx.db.query("tasks").withIndex("by_userId", (q) => q.eq("userId", userId)).collect()
+      ctx.db
+        .query("tasks")
+        .withIndex("by_userId", (q) => q.eq("userId", userId))
+        .collect()
     );
     expect(tasks).toHaveLength(0);
   });
@@ -85,7 +88,10 @@ describe("mutations/users – deleteAccount", () => {
     await withAuth.mutation(api.mutations.users.deleteAccount, {});
 
     const syllabi = await t.run((ctx) =>
-      ctx.db.query("syllabi").withIndex("by_userId", (q) => q.eq("userId", userId)).collect()
+      ctx.db
+        .query("syllabi")
+        .withIndex("by_userId", (q) => q.eq("userId", userId))
+        .collect()
     );
     expect(syllabi).toHaveLength(0);
   });
@@ -105,7 +111,10 @@ describe("mutations/users – deleteAccount", () => {
     await withAuth.mutation(api.mutations.users.deleteAccount, {});
 
     const accounts = await t.run((ctx) =>
-      ctx.db.query("authAccounts").withIndex("userIdAndProvider", (q) => q.eq("userId", userId)).collect()
+      ctx.db
+        .query("authAccounts")
+        .withIndex("userIdAndProvider", (q) => q.eq("userId", userId))
+        .collect()
     );
     expect(accounts).toHaveLength(0);
   });
@@ -124,7 +133,10 @@ describe("mutations/users – deleteAccount", () => {
     await withAuth.mutation(api.mutations.users.deleteAccount, {});
 
     const sessions = await t.run((ctx) =>
-      ctx.db.query("authSessions").withIndex("userId", (q) => q.eq("userId", userId)).collect()
+      ctx.db
+        .query("authSessions")
+        .withIndex("userId", (q) => q.eq("userId", userId))
+        .collect()
     );
     expect(sessions).toHaveLength(0);
   });
@@ -153,7 +165,10 @@ describe("mutations/users – deleteAccount", () => {
     await withAuth.mutation(api.mutations.users.deleteAccount, {});
 
     const userCourses = await t.run((ctx) =>
-      ctx.db.query("userCourses").withIndex("by_user", (q) => q.eq("userId", userId)).collect()
+      ctx.db
+        .query("userCourses")
+        .withIndex("by_user", (q) => q.eq("userId", userId))
+        .collect()
     );
     expect(userCourses).toHaveLength(0);
   });
@@ -165,12 +180,14 @@ describe("mutations/users – deleteAccount", () => {
     await t.run(async (ctx) => {
       await ctx.db.insert("chatMessages", {
         userId,
+        sessionId: "session-1",
         role: "user",
         content: "hello",
         createdAt: Date.now(),
       });
       await ctx.db.insert("chatMessages", {
         userId,
+        sessionId: "session-1",
         role: "assistant",
         content: "hi there",
         createdAt: Date.now() + 1,
@@ -180,7 +197,10 @@ describe("mutations/users – deleteAccount", () => {
     await withAuth.mutation(api.mutations.users.deleteAccount, {});
 
     const messages = await t.run((ctx) =>
-      ctx.db.query("chatMessages").withIndex("by_userId_createdAt", (q) => q.eq("userId", userId)).collect()
+      ctx.db
+        .query("chatMessages")
+        .withIndex("by_userId_createdAt", (q) => q.eq("userId", userId))
+        .collect()
     );
     expect(messages).toHaveLength(0);
   });
@@ -203,7 +223,10 @@ describe("mutations/users – deleteAccount", () => {
     await withAuth.mutation(api.mutations.users.deleteAccount, {});
 
     const sessions = await t.run((ctx) =>
-      ctx.db.query("chatSessions").withIndex("by_userId_sessionId", (q) => q.eq("userId", userId)).collect()
+      ctx.db
+        .query("chatSessions")
+        .withIndex("by_userId_sessionId", (q) => q.eq("userId", userId))
+        .collect()
     );
     expect(sessions).toHaveLength(0);
   });
@@ -238,7 +261,10 @@ describe("mutations/users – deleteAccount", () => {
     await withAuth.mutation(api.mutations.users.deleteAccount, {});
 
     const chunks = await t.run((ctx) =>
-      ctx.db.query("chatChunks").withIndex("by_userId_sessionId", (q) => q.eq("userId", userId)).collect()
+      ctx.db
+        .query("chatChunks")
+        .withIndex("by_userId_sessionId", (q) => q.eq("userId", userId))
+        .collect()
     );
     expect(chunks).toHaveLength(0);
   });
@@ -259,7 +285,10 @@ describe("mutations/users – deleteAccount", () => {
     await withAuth.mutation(api.mutations.users.deleteAccount, {});
 
     const connections = await t.run((ctx) =>
-      ctx.db.query("calendarConnections").withIndex("by_userId", (q) => q.eq("userId", userId)).collect()
+      ctx.db
+        .query("calendarConnections")
+        .withIndex("by_userId", (q) => q.eq("userId", userId))
+        .collect()
     );
     expect(connections).toHaveLength(0);
   });
@@ -284,7 +313,10 @@ describe("mutations/users – deleteAccount", () => {
     await withAuth.mutation(api.mutations.users.deleteAccount, {});
 
     const states = await t.run((ctx) =>
-      ctx.db.query("calendarOAuthStates").filter((q) => q.eq(q.field("userId"), userId)).collect()
+      ctx.db
+        .query("calendarOAuthStates")
+        .filter((q) => q.eq(q.field("userId"), userId))
+        .collect()
     );
     expect(states).toHaveLength(0);
   });
@@ -299,13 +331,17 @@ describe("mutations/users – deleteAccount", () => {
         title: "Orphaned block",
         studyBlockLength: 50,
         isCompleted: false,
+        isConflicted: false,
       });
     });
 
     await withAuth.mutation(api.mutations.users.deleteAccount, {});
 
     const blocks = await t.run((ctx) =>
-      ctx.db.query("studyBlocks").withIndex("by_userId", (q) => q.eq("userId", userId)).collect()
+      ctx.db
+        .query("studyBlocks")
+        .withIndex("by_userId", (q) => q.eq("userId", userId))
+        .collect()
     );
     expect(blocks).toHaveLength(0);
   });
@@ -331,13 +367,14 @@ describe("mutations/users – deleteAccount", () => {
     await withAuth.mutation(api.mutations.users.deleteAccount, {});
 
     const accounts = await t.run((ctx) =>
-      ctx.db.query("authAccounts").withIndex("userIdAndProvider", (q) => q.eq("userId", userId)).collect()
+      ctx.db
+        .query("authAccounts")
+        .withIndex("userIdAndProvider", (q) => q.eq("userId", userId))
+        .collect()
     );
     expect(accounts).toHaveLength(0);
 
-    const codes = await t.run((ctx) =>
-      ctx.db.query("authVerificationCodes").collect()
-    );
+    const codes = await t.run((ctx) => ctx.db.query("authVerificationCodes").collect());
     expect(codes).toHaveLength(0);
   });
 
@@ -359,13 +396,14 @@ describe("mutations/users – deleteAccount", () => {
     await withAuth.mutation(api.mutations.users.deleteAccount, {});
 
     const sessions = await t.run((ctx) =>
-      ctx.db.query("authSessions").withIndex("userId", (q) => q.eq("userId", userId)).collect()
+      ctx.db
+        .query("authSessions")
+        .withIndex("userId", (q) => q.eq("userId", userId))
+        .collect()
     );
     expect(sessions).toHaveLength(0);
 
-    const tokens = await t.run((ctx) =>
-      ctx.db.query("authRefreshTokens").collect()
-    );
+    const tokens = await t.run((ctx) => ctx.db.query("authRefreshTokens").collect());
     expect(tokens).toHaveLength(0);
   });
 
@@ -383,6 +421,7 @@ describe("mutations/users – deleteAccount", () => {
         dueDate: Date.now() + 86_400_000,
         createdAt: Date.now(),
         isManualEstimate: false,
+        status: "not_started",
       });
       await ctx.db.insert("syllabi", {
         userId: otherUserId,
@@ -395,10 +434,16 @@ describe("mutations/users – deleteAccount", () => {
     await withAuth.mutation(api.mutations.users.deleteAccount, {});
 
     const otherTasks = await t.run((ctx) =>
-      ctx.db.query("tasks").withIndex("by_userId", (q) => q.eq("userId", otherUserId)).collect()
+      ctx.db
+        .query("tasks")
+        .withIndex("by_userId", (q) => q.eq("userId", otherUserId))
+        .collect()
     );
     const otherSyllabi = await t.run((ctx) =>
-      ctx.db.query("syllabi").withIndex("by_userId", (q) => q.eq("userId", otherUserId)).collect()
+      ctx.db
+        .query("syllabi")
+        .withIndex("by_userId", (q) => q.eq("userId", otherUserId))
+        .collect()
     );
     expect(otherTasks).toHaveLength(1);
     expect(otherSyllabi).toHaveLength(1);
@@ -458,27 +503,13 @@ describe("mutations/users – updateUserSettings", () => {
     const t = makeTestCtx();
     const { userId, withAuth } = await createTestUser(t);
 
-    const grid = [{ day: "Monday", blocked: [8] }];
+    const grid = [{ day: "Monday" as const, blocked: [8] }];
     await withAuth.mutation(api.mutations.users.updateUserSettings, {
       workHoursGrid: grid,
     });
 
     const user = await t.run((ctx) => ctx.db.get(userId));
     expect(user!.workHoursGrid).toEqual(grid);
-  });
-
-  test("updates courses field", async () => {
-    const t = makeTestCtx();
-    const { userId, withAuth } = await createTestUser(t);
-
-    const courses = [
-      { title: "CS101", studyGoal: "A" },
-      { title: "Math201", studyGoal: "B+" },
-    ];
-    await withAuth.mutation(api.mutations.users.updateUserSettings, { courses });
-
-    const user = await t.run((ctx) => ctx.db.get(userId));
-    expect(user!.courses).toEqual(courses);
   });
 
   test("does not affect unspecified fields", async () => {
@@ -562,10 +593,7 @@ describe("mutations/users – completeOnboarding", () => {
     const t = makeTestCtx();
     const { userId, withAuth } = await createTestUser(t);
 
-    await withAuth.mutation(
-      api.mutations.users.completeOnboarding,
-      VALID_ONBOARDING_ARGS
-    );
+    await withAuth.mutation(api.mutations.users.completeOnboarding, VALID_ONBOARDING_ARGS);
 
     const user = await t.run((ctx) => ctx.db.get(userId));
     expect(user!.onboardingComplete).toBe(true);
@@ -575,10 +603,7 @@ describe("mutations/users – completeOnboarding", () => {
     const t = makeTestCtx();
     const { userId, withAuth } = await createTestUser(t);
 
-    await withAuth.mutation(
-      api.mutations.users.completeOnboarding,
-      VALID_ONBOARDING_ARGS
-    );
+    await withAuth.mutation(api.mutations.users.completeOnboarding, VALID_ONBOARDING_ARGS);
 
     const user = await t.run((ctx) => ctx.db.get(userId));
     expect(user!.major).toBe("Computer Science");
