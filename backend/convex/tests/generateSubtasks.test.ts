@@ -2,10 +2,14 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { api } from "../_generated/api";
 import { makeTestCtx, createTestUser } from "../../convex-tests/helpers";
 
-const mockCallGemini = vi.fn();
+const mockStartAsync = vi.fn();
 
-vi.mock("../lib/gemini", () => ({
-  callGemini: mockCallGemini,
+vi.mock("@mastra/client-js", () => ({
+  MastraClient: vi.fn().mockImplementation(() => ({
+    getWorkflow: vi.fn().mockReturnValue({
+      startAsync: mockStartAsync,
+    }),
+  })),
 }));
 
 const FUTURE = Date.now() + 86_400_000 * 14;
@@ -29,14 +33,22 @@ async function seedTask(
   );
 }
 
-function makeGeminiSubtaskResponse(
+function makeMastraSubtaskRun(
   subtasks: Array<{
     title: string;
     description: string;
     taskType: string;
   }>
 ) {
-  return { subtasks };
+  return {
+    status: "completed",
+    steps: {
+      "subtask-generation-step": {
+        status: "completed",
+        output: { subtasks },
+      },
+    },
+  };
 }
 
 const MOCK_SUBTASKS = [
@@ -59,7 +71,7 @@ const MOCK_SUBTASKS = [
 
 describe("functions/requestGenerateSubtasks", () => {
   beforeEach(() => {
-    vi.stubEnv("GEMINI_API_KEY", "test-api-key");
+    vi.stubEnv("MASTRA_URL", "http://localhost:4111");
   });
 
   afterEach(() => {
@@ -67,7 +79,7 @@ describe("functions/requestGenerateSubtasks", () => {
     vi.clearAllMocks();
   });
 
-  test("returns error object (without calling Gemini) when description is empty and no fileContent", async () => {
+  test("returns error object (without calling Mastra) when description is empty and no fileContent", async () => {
     const t = makeTestCtx();
     const { userId, withAuth } = await createTestUser(t);
     const taskId = await seedTask(t, userId, "");
@@ -81,7 +93,7 @@ describe("functions/requestGenerateSubtasks", () => {
       error:
         "Please provide a description or upload an assignment file before generating subtasks.",
     });
-    expect(mockCallGemini).not.toHaveBeenCalled();
+    expect(mockStartAsync).not.toHaveBeenCalled();
   });
 
   test("returns error object when description is whitespace-only and no fileContent", async () => {
@@ -95,11 +107,11 @@ describe("functions/requestGenerateSubtasks", () => {
     );
 
     expect(result).toHaveProperty("error");
-    expect(mockCallGemini).not.toHaveBeenCalled();
+    expect(mockStartAsync).not.toHaveBeenCalled();
   });
 
   test("returns subtasks array on successful generation with description", async () => {
-    mockCallGemini.mockResolvedValueOnce(makeGeminiSubtaskResponse(MOCK_SUBTASKS));
+    mockStartAsync.mockResolvedValueOnce(makeMastraSubtaskRun(MOCK_SUBTASKS));
 
     const t = makeTestCtx();
     const { userId, withAuth } = await createTestUser(t);
@@ -120,8 +132,8 @@ describe("functions/requestGenerateSubtasks", () => {
     expect(typeof result.subtasks[0].suggestedCompletionAt).toBe("string");
   });
 
-  test("calls Gemini and returns subtasks when only fileContent is provided", async () => {
-    mockCallGemini.mockResolvedValueOnce(makeGeminiSubtaskResponse(MOCK_SUBTASKS));
+  test("calls Mastra and returns subtasks when only fileContent is provided", async () => {
+    mockStartAsync.mockResolvedValueOnce(makeMastraSubtaskRun(MOCK_SUBTASKS));
 
     const t = makeTestCtx();
     const { userId, withAuth } = await createTestUser(t);
@@ -136,7 +148,7 @@ describe("functions/requestGenerateSubtasks", () => {
       }
     );
 
-    expect(mockCallGemini).toHaveBeenCalledOnce();
+    expect(mockStartAsync).toHaveBeenCalledOnce();
     expect(result).toHaveProperty("subtasks");
   });
 
@@ -149,11 +161,11 @@ describe("functions/requestGenerateSubtasks", () => {
     await expect(
       attackerAuth.action(api.actions.requestGenerateSubtasks.requestGenerateSubtasks, { taskId })
     ).rejects.toThrow("Task not found or access denied");
-    expect(mockCallGemini).not.toHaveBeenCalled();
+    expect(mockStartAsync).not.toHaveBeenCalled();
   });
 
-  test("throws when GEMINI_API_KEY is not set and description is present", async () => {
-    vi.stubEnv("GEMINI_API_KEY", "");
+  test("returns error when MASTRA_URL is not set and description is present", async () => {
+    vi.stubEnv("MASTRA_URL", "");
 
     const t = makeTestCtx();
     const { userId, withAuth } = await createTestUser(t);
@@ -165,5 +177,6 @@ describe("functions/requestGenerateSubtasks", () => {
     );
 
     expect(result).toHaveProperty("error");
+    expect(mockStartAsync).not.toHaveBeenCalled();
   });
 });
