@@ -5,7 +5,7 @@ import { makeTestCtx, createTestUser } from "../../convex-tests/helpers";
 const VALID_ONBOARDING_ARGS = {
   major: "Computer Science",
   year: "Junior",
-  workHoursGrid: [{ day: "Monday", blocked: [] }],
+  workHoursGrid: [{ day: "Monday" as const, blocked: [] as number[] }],
   productivityTraits: { timeOfDay: ["Morning"] },
   focusBlockLength: 50,
 };
@@ -501,7 +501,7 @@ describe("mutations/users – updateUserSettings", () => {
     const t = makeTestCtx();
     const { userId, withAuth } = await createTestUser(t);
 
-    const grid = [{ day: "Monday", blocked: [8] }];
+    const grid = [{ day: "Monday" as const, blocked: [8] }];
     await withAuth.mutation(api.mutations.users.updateUserSettings, {
       workHoursGrid: grid,
     });
