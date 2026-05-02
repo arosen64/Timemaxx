@@ -45,7 +45,6 @@ export const updateUserSettings = mutation({
     const patch: Partial<Doc<"users">> = {};
     if (args.major !== undefined) patch.major = args.major;
     if (args.year !== undefined) patch.year = args.year;
-    if (args.courses !== undefined) patch.courses = args.courses;
     if (args.transcriptSummary !== undefined) patch.transcriptSummary = args.transcriptSummary;
     if (args.workHoursGrid !== undefined) patch.workHoursGrid = args.workHoursGrid;
     if (args.productivityTraits !== undefined) patch.productivityTraits = args.productivityTraits;
