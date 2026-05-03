@@ -5,6 +5,7 @@ import { runEntityClarificationEval } from "./entity-clarification.eval";
 import { runTimeEstimateRangeEval } from "./time-estimate-range.eval";
 import { runRagRetrievalEval } from "./rag-retrieval.eval";
 import { runAcademicProfileEval } from "./academic-profile.eval";
+import { runSchedulingEval } from "./scheduling.eval";
 
 const evals = [
   { name: "chat-tool-calls", run: runChatToolCallsEval },
@@ -16,6 +17,7 @@ const evals = [
   { name: "time-estimate-range", run: runTimeEstimateRangeEval },
   { name: "rag-retrieval", run: runRagRetrievalEval },
   { name: "academic-profile", run: runAcademicProfileEval },
+  { name: "scheduling", run: runSchedulingEval },
 ];
 
 async function main() {
