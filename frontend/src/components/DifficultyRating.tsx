@@ -1,5 +1,5 @@
 interface DifficultyRatingProps {
-  value: number;
+  value: number | undefined;
   onChange: (n: number) => void;
 }
 
