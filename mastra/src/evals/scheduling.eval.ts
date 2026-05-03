@@ -30,6 +30,7 @@ function buildPrompt(
   blocks: Array<{
     taskTitle: string;
     dueDate: string;
+    doNotScheduleBefore?: string;
     candidates: Array<{
       index: number;
       startTime: string;
@@ -44,7 +45,14 @@ function buildPrompt(
   }>,
   productivityPreferences: Record<string, unknown>
 ): string {
-  const blocksJson = blocks.map((b, i) => ({ blockIndex: i, ...b }));
+  const blocksJson = blocks.map((b, i) => {
+    const { doNotScheduleBefore, ...rest } = b;
+    return {
+      blockIndex: i,
+      ...rest,
+      ...(doNotScheduleBefore !== undefined ? { doNotScheduleBefore } : {}),
+    };
+  });
   const sections = [
     `<productivity_preferences>\n${JSON.stringify(productivityPreferences, null, 2)}\n</productivity_preferences>`,
     `<blocks>\n${JSON.stringify(blocksJson, null, 2)}\n</blocks>`,
@@ -432,7 +440,277 @@ const scenario3 = {
   acceptable: [[0], [1], [0, 1]],
 };
 
-const SCENARIOS = [scenario1, scenario2, scenario3];
+// Scenario 4: Winner is last index
+// Slot 0 is the worst candidate (late night, tight buffer, overloaded day).
+// Slot 4 is the clear winner (preferred hours, comfortable buffer, score=5).
+// Tests that the model doesn't have positional bias toward index 0.
+const scenario4 = {
+  name: "positional-bias: winner is last index (4)",
+  prompt: buildPrompt(
+    [
+      {
+        taskTitle: "Stats Problem Set",
+        dueDate: "May 10, 2026, 11:59 PM",
+        candidates: [
+          {
+            index: 0,
+            startTime: "2026-05-05T02:00:00.000Z",
+            dayOfWeek: "Tuesday",
+            score: -2,
+            scoreBreakdown: {
+              timeOfDayMatch: 0,
+              dayOfWeekMatch: 0,
+              bufferComfort: 0,
+              dailyLoadPenalty: -3,
+              difficultyBonus: 0,
+              deadlineBucketScore: 1,
+            },
+            previousEventTitle: "Late night study session",
+            minutesSincePreviousEvent: 8,
+            nextEventTitle: null,
+            minutesUntilNextEvent: null,
+          },
+          {
+            index: 1,
+            startTime: "2026-05-05T22:30:00.000Z",
+            dayOfWeek: "Tuesday",
+            score: 0,
+            scoreBreakdown: {
+              timeOfDayMatch: 0,
+              dayOfWeekMatch: 0,
+              bufferComfort: 0,
+              dailyLoadPenalty: -1,
+              difficultyBonus: 0,
+              deadlineBucketScore: 1,
+            },
+            previousEventTitle: "Club meeting",
+            minutesSincePreviousEvent: 5,
+            nextEventTitle: null,
+            minutesUntilNextEvent: null,
+          },
+          {
+            index: 2,
+            startTime: "2026-05-06T20:00:00.000Z",
+            dayOfWeek: "Wednesday",
+            score: 1,
+            scoreBreakdown: {
+              timeOfDayMatch: 0,
+              dayOfWeekMatch: 0,
+              bufferComfort: 1,
+              dailyLoadPenalty: -1,
+              difficultyBonus: 0,
+              deadlineBucketScore: 1,
+            },
+            previousEventTitle: null,
+            minutesSincePreviousEvent: null,
+            nextEventTitle: "Dinner",
+            minutesUntilNextEvent: 12,
+          },
+          {
+            index: 3,
+            startTime: "2026-05-07T14:00:00.000Z",
+            dayOfWeek: "Thursday",
+            score: 2,
+            scoreBreakdown: {
+              timeOfDayMatch: 0,
+              dayOfWeekMatch: 0,
+              bufferComfort: 1,
+              dailyLoadPenalty: 0,
+              difficultyBonus: 0,
+              deadlineBucketScore: 2,
+            },
+            previousEventTitle: null,
+            minutesSincePreviousEvent: null,
+            nextEventTitle: null,
+            minutesUntilNextEvent: null,
+          },
+          {
+            index: 4,
+            startTime: "2026-05-08T09:00:00.000Z",
+            dayOfWeek: "Friday",
+            score: 5,
+            scoreBreakdown: {
+              timeOfDayMatch: 2,
+              dayOfWeekMatch: 1,
+              bufferComfort: 1,
+              dailyLoadPenalty: 0,
+              difficultyBonus: 0,
+              deadlineBucketScore: 1,
+            },
+            previousEventTitle: null,
+            minutesSincePreviousEvent: null,
+            nextEventTitle: null,
+            minutesUntilNextEvent: null,
+          },
+        ],
+      },
+    ],
+    {
+      timeOfDay: ["Morning (8–11am)"],
+      dayOfWeek: ["Monday", "Friday"],
+      deadlineBehavior: "Somewhere in between",
+    }
+  ),
+  acceptable: [[4]],
+};
+
+// Scenario 5: doNotScheduleBefore constraint
+// Slots 0 and 1 both have higher scores than slot 2, but they fall before the
+// doNotScheduleBefore date. The model must respect the constraint and pick slot 2.
+const scenario5 = {
+  name: "doNotScheduleBefore: ignores higher-scored early slots",
+  prompt: buildPrompt(
+    [
+      {
+        taskTitle: "Project Proposal Draft",
+        dueDate: "May 15, 2026, 11:59 PM",
+        doNotScheduleBefore: "2026-05-06T00:00:00.000Z",
+        candidates: [
+          {
+            index: 0,
+            startTime: "2026-05-04T09:00:00.000Z", // before constraint
+            dayOfWeek: "Sunday",
+            score: 6,
+            scoreBreakdown: {
+              timeOfDayMatch: 2,
+              dayOfWeekMatch: 1,
+              bufferComfort: 1,
+              dailyLoadPenalty: 0,
+              difficultyBonus: 1,
+              deadlineBucketScore: 1,
+            },
+            previousEventTitle: null,
+            minutesSincePreviousEvent: null,
+            nextEventTitle: null,
+            minutesUntilNextEvent: null,
+          },
+          {
+            index: 1,
+            startTime: "2026-05-05T10:00:00.000Z", // before constraint
+            dayOfWeek: "Monday",
+            score: 4,
+            scoreBreakdown: {
+              timeOfDayMatch: 2,
+              dayOfWeekMatch: 1,
+              bufferComfort: 1,
+              dailyLoadPenalty: 0,
+              difficultyBonus: 0,
+              deadlineBucketScore: 0,
+            },
+            previousEventTitle: null,
+            minutesSincePreviousEvent: null,
+            nextEventTitle: null,
+            minutesUntilNextEvent: null,
+          },
+          {
+            index: 2,
+            startTime: "2026-05-06T10:00:00.000Z", // on/after constraint
+            dayOfWeek: "Tuesday",
+            score: 2,
+            scoreBreakdown: {
+              timeOfDayMatch: 2,
+              dayOfWeekMatch: 0,
+              bufferComfort: 0,
+              dailyLoadPenalty: 0,
+              difficultyBonus: 0,
+              deadlineBucketScore: 0,
+            },
+            previousEventTitle: null,
+            minutesSincePreviousEvent: null,
+            nextEventTitle: null,
+            minutesUntilNextEvent: null,
+          },
+        ],
+      },
+    ],
+    {
+      timeOfDay: ["Morning (8–11am)"],
+      dayOfWeek: ["Monday", "Tuesday"],
+      deadlineBehavior: "I work best well in advance",
+    }
+  ),
+  acceptable: [[2]],
+};
+
+// Scenario 6: All-negative scores (overloaded week)
+// Every slot has a negative score due to daily load penalties and tight buffers.
+// The model should still pick the least-bad option (slot 1, score=-1) rather
+// than defaulting to index 0 (score=-3).
+const scenario6 = {
+  name: "all-negative scores: picks least-bad slot",
+  prompt: buildPrompt(
+    [
+      {
+        taskTitle: "Weekly Reading",
+        dueDate: "May 9, 2026, 9:00 AM",
+        candidates: [
+          {
+            index: 0,
+            startTime: "2026-05-05T21:00:00.000Z",
+            dayOfWeek: "Tuesday",
+            score: -3,
+            scoreBreakdown: {
+              timeOfDayMatch: 0,
+              dayOfWeekMatch: 0,
+              bufferComfort: 0,
+              dailyLoadPenalty: -3,
+              difficultyBonus: 0,
+              deadlineBucketScore: 0,
+            },
+            previousEventTitle: "Evening lecture",
+            minutesSincePreviousEvent: 10,
+            nextEventTitle: "Study group",
+            minutesUntilNextEvent: 8,
+          },
+          {
+            index: 1,
+            startTime: "2026-05-06T19:00:00.000Z",
+            dayOfWeek: "Wednesday",
+            score: -1,
+            scoreBreakdown: {
+              timeOfDayMatch: 0,
+              dayOfWeekMatch: 0,
+              bufferComfort: 0,
+              dailyLoadPenalty: -1,
+              difficultyBonus: 0,
+              deadlineBucketScore: 0,
+            },
+            previousEventTitle: "Lab section",
+            minutesSincePreviousEvent: 8,
+            nextEventTitle: null,
+            minutesUntilNextEvent: null,
+          },
+          {
+            index: 2,
+            startTime: "2026-05-07T22:00:00.000Z",
+            dayOfWeek: "Thursday",
+            score: -2,
+            scoreBreakdown: {
+              timeOfDayMatch: 0,
+              dayOfWeekMatch: 0,
+              bufferComfort: 0,
+              dailyLoadPenalty: -2,
+              difficultyBonus: 0,
+              deadlineBucketScore: 0,
+            },
+            previousEventTitle: "Dinner with friends",
+            minutesSincePreviousEvent: 12,
+            nextEventTitle: null,
+            minutesUntilNextEvent: null,
+          },
+        ],
+      },
+    ],
+    {
+      timeOfDay: [],
+      dayOfWeek: [],
+      deadlineBehavior: "Somewhere in between",
+    }
+  ),
+  acceptable: [[1]],
+};
+
+const SCENARIOS = [scenario1, scenario2, scenario3, scenario4, scenario5, scenario6];
 
 // ─── Runner ───────────────────────────────────────────────────────────────────
 
