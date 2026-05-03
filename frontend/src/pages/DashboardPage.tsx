@@ -21,7 +21,7 @@ import {
   type TaskStatus,
   type EditForm,
 } from "../components/dashboard";
-import { type GeneratedSubtask } from "../../../backend/convex/actions/generateSubtasks";
+import { type GeneratedSubtask } from "../../../backend/convex/ai/generateSubtasks";
 import { FALLBACK_COURSE_COLOR } from "../utils/color";
 import { isPastTerm } from "../utils/termUtils";
 import { buildClassTag } from "../utils/classTagUtils";

@@ -88,14 +88,21 @@ backend/
       tasks.ts, subtasks.ts, users.ts, calendar.ts, studyBlocks.ts, userCourses.ts,
       chatMessages.ts, chatSessions.ts, chatChunks.ts
     mutations/                # Write operations that modify the database (useMutation)
-      tasks.ts, subtasks.ts, users.ts, calendar.ts, studyBlocks.ts, userCourses.ts,
-      syllabi.ts, timeEstimate.ts,
-      chatMessages.ts, chatSessions.ts, chatChunks.ts, chatChunkEmbeddings.ts
-    ai/                       # AI actions on the Convex runtime (no "use node")
+      tasks.ts
+      users.ts
+      calendar.ts
+      studyBlocks.ts
+      userCourses.ts
+      syllabi.ts
+      timeEstimate.ts
+    http.ts                   # HTTP router — auth, CORS, and makeApiHandler factory (Hono-based)
+    http_chat.ts              # Hono app handling POST /api/chat → Mastra → save to DB
+    ai/                       # AI actions (Mastra, Gemini, embeddings; "use node" where required)
       estimateTaskTime.ts, requestEstimateTaskTime.ts, estimateSubtasksBatch.ts,
-      uploadSyllabus.ts, parseTranscript.ts, generateAcademicProfile.ts, embeddings.ts
+      uploadSyllabus.ts, parseTranscript.ts, generateAcademicProfile.ts,
+      embeddings.ts, generateSubtasks.ts
     actions/                  # Node.js-runtime actions only ("use node" required)
-      autoRescheduleConflicts.ts, entityResolution.ts, generateSubtasks.ts
+      autoRescheduleConflicts.ts, entityResolution.ts
     functions/                # Convex-runtime actions (no "use node")
       scheduleAllBlocks.ts, scheduleBlock.ts, scheduleSubtask.ts,
       requestEstimateSubtaskTime.ts, requestGenerateSubtasks.ts,

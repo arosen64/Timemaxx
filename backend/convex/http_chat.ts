@@ -229,7 +229,7 @@ async function executeTaskAction(
         ...(output.classTag ? { classTag: output.classTag } : {}),
       });
       if (shouldGenerateSubtasks) {
-        const generated = await ctx.runAction(internal.actions.generateSubtasks.generateSubtasks, {
+        const generated = await ctx.runAction(internal.ai.generateSubtasks.generateSubtasks, {
           taskId: createdTaskId,
         });
         if ("error" in generated) throw new Error(generated.error);
@@ -272,12 +272,9 @@ async function executeTaskAction(
       );
       if (subtaskCount === 0) {
         if (shouldGenerateSubtasks) {
-          const generated = await ctx.runAction(
-            internal.actions.generateSubtasks.generateSubtasks,
-            {
-              taskId: taggedTaskId,
-            }
-          );
+          const generated = await ctx.runAction(internal.ai.generateSubtasks.generateSubtasks, {
+            taskId: taggedTaskId,
+          });
           if ("error" in generated) throw new Error(generated.error);
           await ctx.runMutation(internal.mutations.subtasks.createSubtasksFromGeneratedInternal, {
             userId,
