@@ -1,3 +1,4 @@
+import "./loadEnv";
 import { runChatToolCallsEval } from "./chat-tool-calls.eval";
 import { runSupervisorRoutingEval } from "./supervisor-routing.eval";
 import { runEntityClarificationEval } from "./entity-clarification.eval";
