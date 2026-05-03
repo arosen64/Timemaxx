@@ -163,7 +163,7 @@ export default function ClassPanel({
     [courses]
   );
 
-  const tasksForSelectedCourse = courseTasks ?? [];
+  const tasksForSelectedCourse = useMemo(() => courseTasks ?? [], [courseTasks]);
 
   const selectedTask = useMemo(
     () => tasksForSelectedCourse.find((t) => t._id === selectedTaskId) ?? null,
