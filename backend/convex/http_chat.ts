@@ -272,12 +272,9 @@ async function executeTaskAction(
       );
       if (subtaskCount === 0) {
         if (shouldGenerateSubtasks) {
-          const generated = await ctx.runAction(
-            internal.ai.generateSubtasks.generateSubtasks,
-            {
-              taskId: taggedTaskId,
-            }
-          );
+          const generated = await ctx.runAction(internal.ai.generateSubtasks.generateSubtasks, {
+            taskId: taggedTaskId,
+          });
           if ("error" in generated) throw new Error(generated.error);
           await ctx.runMutation(internal.mutations.subtasks.createSubtasksFromGeneratedInternal, {
             userId,
