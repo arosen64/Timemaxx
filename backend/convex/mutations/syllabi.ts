@@ -96,8 +96,15 @@ export const confirmSyllabusTasks = mutation({
     }
 
     for (const task of args.tasks) {
-      if (task.assignmentWeight !== undefined && (!Number.isFinite(task.assignmentWeight) || task.assignmentWeight < 0 || task.assignmentWeight > 100)) {
-        throw new Error(`assignmentWeight must be between 0 and 100 (got ${task.assignmentWeight})`);
+      if (
+        task.assignmentWeight !== undefined &&
+        (!Number.isFinite(task.assignmentWeight) ||
+          task.assignmentWeight < 0 ||
+          task.assignmentWeight > 100)
+      ) {
+        throw new Error(
+          `assignmentWeight must be between 0 and 100 (got ${task.assignmentWeight})`
+        );
       }
     }
 

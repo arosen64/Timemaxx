@@ -12,7 +12,9 @@ export const syllabusResponseSchema = z.object({
         assignmentWeight: z
           .number()
           .optional()
-          .describe("Grade weight as a percentage (0–100), only if explicitly stated in the syllabus"),
+          .describe(
+            "Grade weight as a percentage (0–100), only if explicitly stated in the syllabus"
+          ),
       })
     )
     .describe("Array of extracted tasks with due dates"),

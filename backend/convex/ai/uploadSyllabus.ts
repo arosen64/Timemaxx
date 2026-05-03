@@ -92,7 +92,13 @@ export const uploadSyllabus = action({
         throw new Error("Syllabus parse workflow did not complete successfully");
       }
       const parseOutput = parseStep.output as {
-        tasks: { title: string; description: string; dueDate: string; taskType: string; assignmentWeight?: number }[];
+        tasks: {
+          title: string;
+          description: string;
+          dueDate: string;
+          taskType: string;
+          assignmentWeight?: number;
+        }[];
       };
 
       const rawTasks = parseOutput.tasks ?? [];

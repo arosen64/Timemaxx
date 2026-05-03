@@ -83,7 +83,9 @@ export default function TaskReviewCard({ task, onChange, onRemove }: TaskReviewC
             value={task.assignmentWeight ?? ""}
             onChange={(e) => {
               const parsed = e.target.value === "" ? undefined : Number(e.target.value);
-              update({ assignmentWeight: parsed !== undefined && isNaN(parsed) ? undefined : parsed });
+              update({
+                assignmentWeight: parsed !== undefined && isNaN(parsed) ? undefined : parsed,
+              });
             }}
             placeholder="—"
             className="h-8 w-16 rounded-md border border-border bg-bg-gray px-2 font-body text-sm text-navy outline-none placeholder:text-light-blue focus:border-sky-blue"
