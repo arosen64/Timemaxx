@@ -21,3 +21,10 @@ export type TaskAgentIntent = (typeof TASK_AGENT_INTENTS)[number];
 
 export const COURSE_AGENT_INTENTS = ["add", "drop", "view", "update"] as const;
 export type CourseAgentIntent = (typeof COURSE_AGENT_INTENTS)[number];
+
+/**
+ * Per-message clarification intent tagged onto chatMessages and propagated
+ * to chatChunks for retrieval. Mastra workflows produce these labels.
+ */
+export const CLARIFICATION_INTENTS = ["task_feedback", "class_difficulty", "none"] as const;
+export type ClarificationIntent = (typeof CLARIFICATION_INTENTS)[number];

@@ -82,6 +82,7 @@ export const confirmSyllabusTasks = mutation({
         description: v.string(),
         dueDate: v.number(),
         taskType: v.string(),
+        assignmentWeight: v.optional(v.number()),
       })
     ),
   },
@@ -92,6 +93,19 @@ export const confirmSyllabusTasks = mutation({
     const syllabus = await ctx.db.get(args.syllabusId);
     if (!syllabus || syllabus.userId !== userId) {
       throw new Error("Syllabus not found");
+    }
+
+    for (const task of args.tasks) {
+      if (
+        task.assignmentWeight !== undefined &&
+        (!Number.isFinite(task.assignmentWeight) ||
+          task.assignmentWeight < 0 ||
+          task.assignmentWeight > 100)
+      ) {
+        throw new Error(
+          `assignmentWeight must be between 0 and 100 (got ${task.assignmentWeight})`
+        );
+      }
     }
 
     let classTag: string | undefined;
@@ -112,6 +126,7 @@ export const confirmSyllabusTasks = mutation({
           description: task.description,
           dueDate: task.dueDate,
           taskType: task.taskType,
+          assignmentWeight: task.assignmentWeight,
           courseId: syllabus.courseId,
           ...(classTag !== undefined ? { classTag } : {}),
           createdAt: now,

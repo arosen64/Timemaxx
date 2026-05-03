@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "mastra dev --dir src/mastra",
-    "build": "mastra build --dir src/mastra"
+    "build": "mastra build --dir src/mastra",
+    "eval": "tsx --env-file=.env src/evals/index.ts"
   },
   "keywords": [],
   "author": "",
@@ -14,6 +15,7 @@
   "dependencies": {
     "@ai-sdk/anthropic": "^2.0.74",
     "@mastra/core": "1.28.0",
+    "@mastra/evals": "^1.2.2",
     "@mastra/loggers": "1.1.1",
     "@mastra/memory": "1.17.1",
     "@mistralai/mistralai": "^2.2.1",

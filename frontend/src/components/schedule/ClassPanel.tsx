@@ -3,7 +3,7 @@ import { useQuery, useAction, useMutation } from "convex/react";
 import { api } from "../../../../backend/convex/_generated/api";
 import type { Id } from "../../../../backend/convex/_generated/dataModel";
 import { ChevronLeftIcon, ChevronRightIcon, SpinnerIcon, CalendarIcon, SplitIcon } from "../icons";
-import { isCurrentTerm } from "../../utils/termUtils";
+import { isPastTerm } from "../../utils/termUtils";
 
 const OTHER_COURSE_KEY = "__none__";
 
@@ -24,7 +24,7 @@ type Props = {
   assigningBlockId: Id<"studyBlocks"> | null;
   onToggleAssign: (id: Id<"studyBlocks">) => void;
   timezone: string;
-  onScheduleAllMsg: (msg: string, warn?: boolean) => void;
+  onScheduleAllMsg: (msg: string, warn?: boolean, skippedReason?: string) => void;
   onBeforeSchedule: (proceed: () => void) => void;
 };
 
@@ -159,11 +159,11 @@ export default function ClassPanel({
   // Derived data
   // ---------------------------------------------------------------------------
   const currentCourses = useMemo(
-    () => (courses ?? []).filter((c) => isCurrentTerm(c.term)),
+    () => (courses ?? []).filter((c) => !isPastTerm(c.term)),
     [courses]
   );
 
-  const tasksForSelectedCourse = (courseTasks ?? []).filter((t) => t.status !== "completed");
+  const tasksForSelectedCourse = courseTasks ?? [];
 
   const selectedTask = useMemo(
     () => tasksForSelectedCourse.find((t) => t._id === selectedTaskId) ?? null,
@@ -205,7 +205,7 @@ export default function ClassPanel({
     try {
       const result = await scheduleBlockAction({ studyBlockId: blockId, timezone });
       if ("error" in result) {
-        onScheduleAllMsg("No valid slot found before the due date.", true);
+        onScheduleAllMsg("Could not place this block.", true, result.skippedReason);
       } else if (result.scheduled === 0) {
         onScheduleAllMsg("Block is already scheduled.", true);
       }
@@ -276,7 +276,7 @@ export default function ClassPanel({
         result.conflicted > 0
           ? ` ${result.conflicted} conflicted block${result.conflicted !== 1 ? "s" : ""} need${result.conflicted === 1 ? "s" : ""} auto-reschedule.`
           : "";
-      onScheduleAllMsg(base + conflictNote, result.skipped > 0);
+      onScheduleAllMsg(base + conflictNote, result.skipped > 0, result.skippedReason ?? undefined);
     } catch (err) {
       onScheduleAllMsg(
         `Scheduling failed: ${err instanceof Error ? err.message : "Unknown error"}`

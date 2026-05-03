@@ -291,7 +291,7 @@ export default function ChatBot() {
               type="button"
               onClick={() => void handlePickEntity(entityMcq.phase, c.id)}
               disabled={isLoading}
-              className="text-left rounded-lg border border-border px-2.5 py-2.5 sm:py-2 text-[13px] sm:text-[12px] hover:bg-bg-gray active:bg-bg-gray transition disabled:opacity-50"
+              className="text-left rounded-lg border border-border px-2.5 py-2.5 md:py-2 text-[13px] md:text-[12px] hover:bg-bg-gray active:bg-bg-gray transition disabled:opacity-50"
             >
               <span className="block font-medium text-navy">{c.label}</span>
               <span className="text-light-blue text-[11px]">{c.subtitle}</span>
@@ -321,7 +321,7 @@ export default function ChatBot() {
       {isOpen && (
         <div
           ref={containerRef}
-          className={`fixed inset-0 z-40 flex flex-col overflow-hidden bg-white sm:relative sm:inset-auto sm:z-auto sm:rounded-2xl sm:border sm:border-border sm:shadow-xl sm:min-w-64 sm:min-h-64${chatSize ? "" : " sm:w-[400px] sm:h-[600px]"}`}
+          className={`fixed inset-0 z-40 flex flex-col overflow-hidden bg-white md:relative md:inset-auto md:z-auto md:rounded-2xl md:border md:border-border md:shadow-xl md:min-w-64 md:min-h-64${chatSize ? "" : " md:w-[400px] md:h-[600px]"}`}
           style={
             chatSize && !isMobile ? { width: chatSize.width, height: chatSize.height } : undefined
           }
@@ -329,23 +329,23 @@ export default function ChatBot() {
           {/* Resize handles — desktop only, box is anchored bottom-right */}
           <div
             onMouseDown={(e) => startResize(e, "nw")}
-            className="hidden sm:block absolute top-0 left-0 w-3 h-3 cursor-nw-resize z-20"
+            className="hidden md:block absolute top-0 left-0 w-3 h-3 cursor-nw-resize z-20"
           />
           <div
             onMouseDown={(e) => startResize(e, "n")}
-            className="hidden sm:block absolute top-0 left-3 right-3 h-1 cursor-n-resize z-20"
+            className="hidden md:block absolute top-0 left-3 right-3 h-1 cursor-n-resize z-20"
           />
           <div
             onMouseDown={(e) => startResize(e, "ne")}
-            className="hidden sm:block absolute top-0 right-0 w-3 h-3 cursor-ne-resize z-20"
+            className="hidden md:block absolute top-0 right-0 w-3 h-3 cursor-ne-resize z-20"
           />
           <div
             onMouseDown={(e) => startResize(e, "w")}
-            className="hidden sm:block absolute top-3 bottom-3 left-0 w-1 cursor-w-resize z-20"
+            className="hidden md:block absolute top-3 bottom-3 left-0 w-1 cursor-w-resize z-20"
           />
           <div
             onMouseDown={(e) => startResize(e, "sw")}
-            className="hidden sm:block absolute bottom-0 left-0 w-3 h-3 cursor-sw-resize z-20"
+            className="hidden md:block absolute bottom-0 left-0 w-3 h-3 cursor-sw-resize z-20"
           />
 
           {/* Header */}
@@ -460,7 +460,7 @@ export default function ChatBot() {
                         type="button"
                         onClick={() => void handleMenuPick(opt.route, opt.label)}
                         disabled={isLoading}
-                        className="text-left rounded-xl border border-border bg-white px-3.5 py-3 sm:py-2.5 text-[13px] sm:text-[12px] font-body text-navy hover:border-navy/30 hover:bg-bg-gray active:bg-bg-gray transition disabled:opacity-50"
+                        className="text-left rounded-xl border border-border bg-white px-3.5 py-3 md:py-2.5 text-[13px] md:text-[12px] font-body text-navy hover:border-navy/30 hover:bg-bg-gray active:bg-bg-gray transition disabled:opacity-50"
                       >
                         {opt.label}
                       </button>
@@ -510,7 +510,7 @@ export default function ChatBot() {
                 </Button>
               </PromptInputActions>
             </PromptInput>
-            <p className="hidden sm:block mt-1.5 text-center text-[11px] font-body text-light-blue">
+            <p className="hidden md:block mt-1.5 text-center text-[11px] font-body text-light-blue">
               {chatLocked
                 ? "Start a new chat from the widget to continue."
                 : "Enter to send · Shift+Enter for new line"}
@@ -536,7 +536,7 @@ export default function ChatBot() {
           }
         }}
         aria-label={isOpen ? "Close AI chat" : "Open AI chat"}
-        className={`items-center justify-center transition rounded-full shadow-lg h-14 w-14 bg-navy hover:opacity-90 active:opacity-80 ${isOpen ? "hidden sm:flex" : "flex"}`}
+        className={`items-center justify-center transition rounded-full shadow-lg h-14 w-14 bg-navy hover:opacity-90 active:opacity-80 ${isOpen ? "hidden md:flex" : "flex"}`}
       >
         <MessageSquareIcon color="white" size={22} />
       </button>

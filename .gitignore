@@ -4,6 +4,11 @@ node_modules/
 # Test coverage (HTML + lcov)
 coverage
 
+# Playwright (E2E)
+/playwright-report/
+/test-results/
+/playwright/.cache/
+
 # Build output
 dist
 dist-ssr

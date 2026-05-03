@@ -111,8 +111,9 @@ async function fetchAllStudyBlocksWithTasks(ctx: QueryCtx, userId: Id<"users">) 
   }
 
   for (const task of tasks) {
-    // Skip completed tasks — their blocks are unscheduled and should not appear on the calendar
+    // Skip completed or past-due tasks — their blocks should not appear on the calendar or tray
     if (task.status === "completed") continue;
+    if (task.dueDate < Date.now()) continue;
 
     const course = task.courseId ? courseMap.get(task.courseId) : null;
     const courseColor: string | undefined = course?.color ?? undefined;
