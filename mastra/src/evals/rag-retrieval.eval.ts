@@ -15,12 +15,17 @@
 import { createScorer, runEvals } from "@mastra/core/evals";
 import type { ScorerRunOutputForAgent } from "@mastra/core/evals";
 import { estimationAgent } from "../mastra/agents/estimationAgent";
+import {
+  buildTimeEstimatePrompt,
+  estimationAgentOutputSchema,
+} from "../../../backend/convex/lib/prompts/estimateTaskTime.prompt";
 
 type MessagePart = { type: string; text?: string };
 type AgentMessage = { role: string; content: unknown };
 
 type RagGroundTruth = {
   scenario: "uses_retrieved_chat" | "no_chat_context";
+  retrievalExpected: string[];
   requiredAny: string[];
   requiredAll?: string[];
   forbidden?: string[];
@@ -44,6 +49,10 @@ function extractTextFromMessage(content: unknown): string {
 function parseEstimationOutput(
   output: ScorerRunOutputForAgent
 ): { estimatedMinutes?: number; reasoningTrace?: Record<string, string> } | null {
+  if (output && typeof output === "object" && !Array.isArray(output)) {
+    return output as { estimatedMinutes?: number; reasoningTrace?: Record<string, string> };
+  }
+
   const text = Array.isArray(output)
     ? (output as AgentMessage[])
         .filter((m) => m.role === "assistant")
@@ -58,61 +67,58 @@ function parseEstimationOutput(
       reasoningTrace?: Record<string, string>;
     };
   } catch {
-    const match = text.match(/\{[\s\S]*\}/);
-    if (!match) return null;
-    try {
-      return JSON.parse(match[0]) as {
-        estimatedMinutes?: number;
-        reasoningTrace?: Record<string, string>;
-      };
-    } catch {
-      return null;
+    return null;
+  }
+}
+
+function extractChatHistorySection(input: unknown): string {
+  const text = extractPromptText(input);
+  const match = text.match(/<chat_history>([\s\S]*?)<\/chat_history>/i);
+  return (match?.[1] ?? "").toLowerCase();
+}
+
+function extractPromptText(input: unknown): string {
+  if (typeof input === "string") return input;
+  if (!input || typeof input !== "object") return String(input ?? "");
+
+  const maybeRunInput = input as {
+    inputMessages?: Array<{
+      role?: string;
+      content?: unknown;
+    }>;
+  };
+
+  const userMessageText = (maybeRunInput.inputMessages ?? [])
+    .filter((m) => m.role === "user")
+    .map((m) => extractTextFromMessage(m.content))
+    .join("\n");
+
+  if (userMessageText.trim().length > 0) return userMessageText;
+  return JSON.stringify(input);
+}
+
+const ragRetrievalInputScorer = createScorer({
+  id: "rag-retrieval-input-scorer",
+  description: "Checks whether retrieved chat snippets are present in the prompt input",
+})
+  .analyze(({ run }) => {
+    const gt = run.groundTruth as RagGroundTruth | undefined;
+    if (!gt) return { score: 0 };
+
+    const chatSection = extractChatHistorySection(run.input);
+    if (gt.scenario === "no_chat_context") {
+      const hasAnyChatSectionText = chatSection.trim().length > 0;
+      return { score: hasAnyChatSectionText ? 0 : 1, chatSection };
     }
-  }
-}
 
-function buildEstimatePrompt(args: {
-  title: string;
-  taskType: string;
-  description: string;
-  courseInfo?: string;
-  courseContext?: string;
-  taskContext?: string;
-  chatContext?: string;
-  profileContext?: string;
-}): string {
-  const sections: string[] = [];
-
-  sections.push(`<task_details>
-Title: ${args.title}
-Type: ${args.taskType}
-Description: ${args.description}
-${args.courseInfo ? `Course: ${args.courseInfo}` : ""}
-</task_details>`);
-
-  if (args.courseContext) {
-    sections.push(`<course_context>
-${args.courseContext}
-</course_context>`);
-  }
-  if (args.taskContext) {
-    sections.push(`<task_history>
-${args.taskContext}
-</task_history>`);
-  }
-  if (args.chatContext) {
-    sections.push(`<chat_history>
-${args.chatContext}
-</chat_history>`);
-  }
-  if (args.profileContext) {
-    sections.push(`<student_profile>
-${args.profileContext}
-</student_profile>`);
-  }
-
-  return `Estimate the study time in minutes for this task. Use all available context to produce an accurate estimate, then provide a reasoning trace for each context category.\n\n${sections.join("\n\n")}`;
-}
+    const hasAllRetrievedSignals = gt.retrievalExpected.every((needle) =>
+      chatSection.includes(needle.toLowerCase())
+    );
+    return { score: hasAllRetrievedSignals ? 1 : 0, chatSection };
+  })
+  .generateScore(({ results }) => {
+    return (results.analyzeStepResult as { score: number }).score;
+  });
 
 const ragChatGroundingScorer = createScorer({
   id: "rag-chat-grounding-scorer",
@@ -124,7 +130,11 @@ const ragChatGroundingScorer = createScorer({
 
     const parsed = parseEstimationOutput(run.output as ScorerRunOutputForAgent);
     const chatsTrace = parsed?.reasoningTrace?.chats?.toLowerCase() ?? "";
-    if (!chatsTrace) return { score: 0 };
+    if (gt.scenario === "no_chat_context") {
+      if (!chatsTrace) return { score: 1, scenario: gt.scenario };
+    } else if (!chatsTrace) {
+      return { score: 0 };
+    }
 
     const hasAnyRequired = gt.requiredAny.some((needle) =>
       chatsTrace.includes(needle.toLowerCase())
@@ -151,7 +161,7 @@ const ragChatGroundingScorer = createScorer({
 
 const testData: Array<{ input: string; groundTruth: RagGroundTruth }> = [
   {
-    input: buildEstimatePrompt({
+    input: buildTimeEstimatePrompt({
       title: "BIO 110 Lab Report 3",
       taskType: "Lab Report",
       description: "Write a 4-page report with charts and discussion.",
@@ -175,12 +185,13 @@ const testData: Array<{ input: string; groundTruth: RagGroundTruth }> = [
     }),
     groundTruth: {
       scenario: "uses_retrieved_chat",
+      retrievalExpected: ["4 hours", "move slower on lab reports"],
       requiredAny: ["4 hour", "lab report", "data analysis", "slower"],
       forbidden: ["no chat history", "none available"],
     },
   },
   {
-    input: buildEstimatePrompt({
+    input: buildTimeEstimatePrompt({
       title: "MATH 202 Problem Set",
       taskType: "Problem Set",
       description: "Complete 12 integral and series problems.",
@@ -201,12 +212,13 @@ const testData: Array<{ input: string; groundTruth: RagGroundTruth }> = [
     }),
     groundTruth: {
       scenario: "no_chat_context",
+      retrievalExpected: [],
       requiredAny: ["no chat", "none", "not available", "without chat history"],
       requiredAll: ["chat"],
     },
   },
   {
-    input: buildEstimatePrompt({
+    input: buildTimeEstimatePrompt({
       title: "CS 230 Induction Homework",
       taskType: "Homework",
       description: "Solve 10 induction proofs with full written justifications.",
@@ -230,12 +242,13 @@ const testData: Array<{ input: string; groundTruth: RagGroundTruth }> = [
     }),
     groundTruth: {
       scenario: "uses_retrieved_chat",
+      retrievalExpected: ["3 hours", "proof explanations takes me the longest"],
       requiredAny: ["3 hour", "induction", "proof", "takes me the longest"],
       forbidden: ["no chat history", "none available"],
     },
   },
   {
-    input: buildEstimatePrompt({
+    input: buildTimeEstimatePrompt({
       title: "HIST 210 Reading Notes",
       taskType: "Reading Notes",
       description: "Read two chapters and submit bullet-point notes.",
@@ -259,12 +272,13 @@ const testData: Array<{ input: string; groundTruth: RagGroundTruth }> = [
     }),
     groundTruth: {
       scenario: "uses_retrieved_chat",
+      retrievalExpected: ["notes take about an hour", "summarize these chapters quickly"],
       requiredAny: ["about an hour", "quickly", "history readings", "summarize"],
       forbidden: ["no chat history", "none available"],
     },
   },
   {
-    input: buildEstimatePrompt({
+    input: buildTimeEstimatePrompt({
       title: "CHEM 135 Quiz Review",
       taskType: "Quiz Review",
       description: "Review notes and solve 20 practice questions before tomorrow's quiz.",
@@ -285,6 +299,7 @@ const testData: Array<{ input: string; groundTruth: RagGroundTruth }> = [
     }),
     groundTruth: {
       scenario: "no_chat_context",
+      retrievalExpected: [],
       requiredAny: ["no chat", "none", "not available", "without chat history"],
       requiredAll: ["chat"],
     },
@@ -300,19 +315,33 @@ export async function runRagRetrievalEval() {
   return runEvals({
     data: testData,
     target: estimationAgent,
-    scorers: [ragChatGroundingScorer],
+    targetOptions: {
+      structuredOutput: {
+        schema: estimationAgentOutputSchema,
+      },
+    },
+    scorers: [ragRetrievalInputScorer, ragChatGroundingScorer],
     onItemComplete: ({ item, scorerResults }) => {
-      const result = scorerResults["rag-chat-grounding-scorer"];
-      const passed = (result?.score ?? 0) === 1;
+      const retrieval = scorerResults["rag-retrieval-input-scorer"];
+      const grounding = scorerResults["rag-chat-grounding-scorer"];
+      const passed = (retrieval?.score ?? 0) === 1 && (grounding?.score ?? 0) === 1;
       const label = item.groundTruth.scenario;
       if (passed) {
         console.log(`    ✓  ${label}  PASS`);
         return;
       }
       console.log(`    ✗  ${label}  FAIL`);
-      if (!passed) {
-        console.log("    details:", JSON.stringify(result, null, 2));
-      }
+      console.log(
+        "    details:",
+        JSON.stringify(
+          {
+            retrieval,
+            grounding,
+          },
+          null,
+          2
+        )
+      );
     },
   });
 }
