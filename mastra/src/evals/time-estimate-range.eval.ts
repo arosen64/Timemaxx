@@ -6,69 +6,49 @@
  * since built-in scorers don't support numeric range validation.
  *
  * Scorers:
- *   - timeEstimateRangeScorer (custom): parses the numeric estimate from
- *     agent output and checks it falls within [minHours, maxHours]
+ *   - timeEstimateRangeScorer (custom): parses estimatedMinutes from the
+ *     agent's JSON output and checks it falls within [minMinutes, maxMinutes]
  *
- * HOW TO IMPLEMENT:
- * 1. Add items to `testData`. Each item needs:
- *      - `input`: the task description to estimate
- *      - `groundTruth`: { minHours: number, maxHours: number }
- * 2. Implement the output parser in `extractHoursFromOutput` to match
- *    the actual format your estimationAgent returns.
- * 3. Run: npm run eval (from mastra/)
- *
- * Example:
- *   {
- *     input: "Write a 5-page essay on climate change",
- *     groundTruth: { minHours: 2, maxHours: 6 },
- *   }
+ * Run: npm run eval (from mastra/)
  */
 
 import { createScorer, runEvals } from "@mastra/core/evals";
 import type { ScorerRunOutputForAgent } from "@mastra/core/evals";
 import { estimationAgent } from "../mastra/agents/estimationAgent";
+import { extractJsonFieldFromOutput } from "./eval-utils";
 
-// Parses the estimated hours from agent output text.
-// Update this to match the actual output format of estimationAgent.
-function extractHoursFromOutput(output: ScorerRunOutputForAgent): number | null {
-  type Msg = { role: string; content: unknown };
-  const text = Array.isArray(output)
-    ? (output as Msg[])
-        .filter((m) => m.role === "assistant")
-        .map((m) => (typeof m.content === "string" ? m.content : JSON.stringify(m.content)))
-        .join(" ")
-    : String(output);
+type GroundTruth = { minMinutes: number; maxMinutes: number };
 
-  const match = text.match(/(\d+(?:\.\d+)?)\s*(?:hours?|hrs?)/i);
-  return match ? parseFloat(match[1]) : null;
+// Parses estimatedMinutes from the agent's JSON output.
+// The estimationAgent always returns { estimatedMinutes: number, reasoningTrace: {...} }.
+function extractMinutesFromOutput(output: ScorerRunOutputForAgent): number | null {
+  const raw = extractJsonFieldFromOutput(output, "estimatedMinutes");
+  if (raw === null) return null;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) ? parsed : null;
 }
 
-// Custom scorer: checks that the parsed estimate falls within the expected range
+// Custom scorer: checks that the parsed estimate falls within the expected minute range
 const timeEstimateRangeScorer = createScorer({
   id: "time-estimate-range-scorer",
-  description: "Checks that the agent's time estimate falls within the expected min/max hour range",
+  description:
+    "Checks that the agent's estimatedMinutes falls within the expected [minMinutes, maxMinutes] range",
 })
   .analyze(({ run }) => {
-    const groundTruth = run.groundTruth as { minHours: number; maxHours: number } | undefined;
+    const groundTruth = run.groundTruth as GroundTruth | undefined;
     if (!groundTruth) return { score: 0 };
 
-    const estimated = extractHoursFromOutput(run.output as ScorerRunOutputForAgent);
+    const estimated = extractMinutesFromOutput(run.output as ScorerRunOutputForAgent);
     if (estimated === null) return { score: 0 };
 
-    const inRange = estimated >= groundTruth.minHours && estimated <= groundTruth.maxHours;
-    return { score: inRange ? 1 : 0 };
+    const inRange = estimated >= groundTruth.minMinutes && estimated <= groundTruth.maxMinutes;
+    return { score: inRange ? 1 : 0, estimated, groundTruth };
   })
   .generateScore(({ results }) => {
     return (results.analyzeStepResult as { score: number }).score;
   });
 
-// Add real test cases here
-const testData: Array<{ input: string; groundTruth: { minHours: number; maxHours: number } }> = [
-  // {
-  //   input: "Write a 5-page essay on climate change",
-  //   groundTruth: { minHours: 2, maxHours: 6 },
-  // },
-];
+const testData: Array<{ input: string; groundTruth: GroundTruth }> = [];
 
 export async function runTimeEstimateRangeEval() {
   if (testData.length === 0) {
