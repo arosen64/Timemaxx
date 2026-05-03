@@ -1,5 +1,5 @@
 import { describe, expect, test, vi, beforeEach, afterEach } from "vitest";
-import { api } from "../_generated/api";
+import { api, internal } from "../_generated/api";
 import { makeTestCtx, createTestUser } from "../../convex-tests/helpers";
 import type { Id } from "../_generated/dataModel";
 
@@ -278,5 +278,55 @@ describe("mutations/tasks – updateTaskStatus study block sync", () => {
     const block = await t.run((ctx) => ctx.db.get(blockId));
     expect(block!.isCompleted).toBe(false);
     expect(task!.status).toBe("not_started");
+  });
+});
+
+describe("mutations/tasks – patchTaskEmbedding ownership guard", () => {
+  const EMBEDDING = Array.from({ length: 8 }, (_, i) => i * 0.1);
+
+  test("patches embedding when userId matches task owner", async () => {
+    const t = makeTestCtx();
+    const { userId } = await createTestUser(t);
+    const taskId = await seedTask(t, userId);
+
+    await t.mutation(internal.mutations.tasks.patchTaskEmbedding, {
+      taskId,
+      userId: userId as Id<"users">,
+      embedding: EMBEDDING,
+    });
+
+    const task = await t.run((ctx) => ctx.db.get(taskId));
+    expect(task?.embedding).toEqual(EMBEDDING);
+  });
+
+  test("throws when userId does not own the task", async () => {
+    const t = makeTestCtx();
+    const { userId } = await createTestUser(t);
+    const { userId: attackerId } = await createTestUser(t, { email: "attacker@example.com" });
+    const taskId = await seedTask(t, userId);
+
+    await expect(
+      t.mutation(internal.mutations.tasks.patchTaskEmbedding, {
+        taskId,
+        userId: attackerId as Id<"users">,
+        embedding: EMBEDDING,
+      })
+    ).rejects.toThrow("Task not found");
+  });
+
+  test("throws when taskId does not exist", async () => {
+    const t = makeTestCtx();
+    const { userId } = await createTestUser(t);
+    const taskId = await seedTask(t, userId);
+    const nonExistentId = taskId;
+    await t.run((ctx) => ctx.db.delete(taskId));
+
+    await expect(
+      t.mutation(internal.mutations.tasks.patchTaskEmbedding, {
+        taskId: nonExistentId,
+        userId: userId as Id<"users">,
+        embedding: EMBEDDING,
+      })
+    ).rejects.toThrow("Task not found");
   });
 });
