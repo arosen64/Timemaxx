@@ -1,66 +1,243 @@
 /**
  * Entity Clarification Eval
  *
- * Evaluates whether the supervisor agent correctly extracts and clarifies task/class
- * entity IDs from ambiguous user input. Checks that all referenced entities are
- * identified and that the response matches the expected output.
+ * Evaluates whether sub-agents correctly set `needsEntityClarification: true`
+ * when the user refers to a task or course ambiguously, and correctly set it
+ * `false` when the entity is unambiguously identified from context.
  *
- * Scorers:
- *   - createAnswerSimilarityScorer: compares extracted entity info against ground truth
- *   - createCompletenessScorer: checks that all entities from the input are present in output
+ * Entity clarification is a sub-agent concern — the supervisor only routes.
+ * This eval targets taskAgent and courseAgent directly.
  *
- * HOW TO IMPLEMENT:
- * 1. Set ANTHROPIC_API_KEY in mastra/.env (required for the LLM judge scorer).
- * 2. Add items to `testData`:
- *      { input: "...", groundTruth: "expected entity extraction" }
- * 3. Adjust the scorer options (semanticThreshold, scale) to fit your use case.
- * 4. Run: npm run eval (from mastra/)
+ * Scorer:
+ *   - entityClarificationScorer (custom): extracts `needsEntityClarification`
+ *     from the agent's JSON and compares to groundTruth ("true" or "false").
  *
- * Example:
- *   {
- *     input: "Update the CS101 assignment due date",
- *     groundTruth: "entities: course=CS101, action=update, field=due_date",
- *   }
+ * Run: npm run eval (from mastra/)
  */
 
-import { anthropic } from "@ai-sdk/anthropic";
 import { runEvals } from "@mastra/core/evals";
 import {
-  createAnswerSimilarityScorer,
-  createCompletenessScorer,
-} from "@mastra/evals/scorers/prebuilt";
-import { supervisorAgent } from "../mastra/agents/supervisorAgent";
+  createJsonFieldScorer,
+  makeOnItemComplete,
+  printAgentSummary,
+  type ItemSummary,
+} from "./eval-utils";
+import { taskAgent } from "../mastra/agents/taskAgent";
+import { courseAgent } from "../mastra/agents/courseAgent";
 
-// Add real test cases here
-const testData: Array<{ input: string; groundTruth?: string }> = [
-  // {
-  //   input: "Update the CS101 assignment due date",
-  //   groundTruth: "entities: course=CS101, action=update, field=due_date",
-  // },
+const entityClarificationScorer = createJsonFieldScorer("needsEntityClarification");
+
+
+function taskContext(userMessage: string, resolvedTask: string): string {
+  return `Today (ISO date): 2026-04-15
+
+<conversation_history>
+user: ${userMessage}
+</conversation_history>
+
+<resolved_task_context>
+${resolvedTask}
+</resolved_task_context>
+
+<resolved_course_context>
+none
+</resolved_course_context>
+
+<turn_directive>
+Continue the current flow.
+</turn_directive>`;
+}
+
+function courseContext(userMessage: string, resolvedCourse: string): string {
+  return `Today (ISO date): 2026-04-15
+
+<conversation_history>
+user: ${userMessage}
+</conversation_history>
+
+<resolved_task_context>
+none
+</resolved_task_context>
+
+<resolved_course_context>
+${resolvedCourse}
+</resolved_course_context>
+
+<turn_directive>
+Continue the current flow.
+</turn_directive>`;
+}
+
+// ---------------------------------------------------------------------------
+// taskAgent — needsEntityClarification = true
+// No resolvedTaskId in context; agent must ask which task the user means.
+// ---------------------------------------------------------------------------
+
+const taskNeedsClarifyData: Array<{ input: string; groundTruth: string }> = [
+  {
+    // "my task" — no title, no resolvedTaskId
+    input: taskContext("Update my task", "none"),
+    groundTruth: "true",
+  },
+  {
+    // "the assignment" — ambiguous reference, no context
+    input: taskContext("Delete the assignment", "none"),
+    groundTruth: "true",
+  },
+  {
+    // Pronoun reference "it" — no prior context to resolve
+    input: taskContext("Can you reschedule it to next week?", "none"),
+    groundTruth: "true",
+  },
+  {
+    // Vague "my essay" — multiple essays could exist, no resolvedTaskId
+    input: taskContext("Show me my essay", "none"),
+    groundTruth: "true",
+  },
+  {
+    // "that task" — deictic reference, unresolvable without context
+    input: taskContext("What are the details for that task?", "none"),
+    groundTruth: "true",
+  },
 ];
 
-const answerSimilarityScorer = createAnswerSimilarityScorer({
-  model: anthropic("claude-haiku-4-5-20251001"),
-  options: { semanticThreshold: 0.7 },
-});
+// ---------------------------------------------------------------------------
+// taskAgent — needsEntityClarification = false
+// resolvedTaskId is present in context; agent can act without asking.
+// ---------------------------------------------------------------------------
 
-// Code-based completeness check (no LLM required)
-const completenessScorer = createCompletenessScorer();
+const taskClearData: Array<{ input: string; groundTruth: string }> = [
+  {
+    // resolvedTaskId provided — agent knows exactly which task
+    input: taskContext(
+      "Update the due date to April 25.",
+      "resolvedTaskId: task_eval_001\ntitle: CHEM Essay\ntaskType: Essay\ndueDateIso: 2026-04-20"
+    ),
+    groundTruth: "false",
+  },
+  {
+    // Exact title match — unambiguous even without resolvedTaskId
+    input: taskContext("Delete my CHEM Essay task", "none"),
+    groundTruth: "false",
+  },
+  {
+    // resolvedTaskId + clear action
+    input: taskContext(
+      "Show me the details for this task.",
+      "resolvedTaskId: task_eval_001\ntitle: Bio Lab Report\ntaskType: Lab\ndueDateIso: 2026-04-22\ndescription: Write up the gel electrophoresis results\nclassTag: BIO 101\nsubtasks: 0"
+    ),
+    groundTruth: "false",
+  },
+  {
+    // Full title named inline — agent can identify without resolvedTaskId
+    input: taskContext("Push back the Linear Algebra Problem Set due date by two days", "none"),
+    groundTruth: "false",
+  },
+];
+
+// ---------------------------------------------------------------------------
+// courseAgent — needsEntityClarification = true
+// No resolvedCourseId; agent must ask which course the user means.
+// ---------------------------------------------------------------------------
+
+const courseNeedsClarifyData: Array<{ input: string; groundTruth: string }> = [
+  {
+    // "my class" — completely ambiguous
+    input: courseContext("Drop my class", "none"),
+    groundTruth: "true",
+  },
+  {
+    // "the course" — no name or ID
+    input: courseContext("Update the study goal for the course", "none"),
+    groundTruth: "true",
+  },
+  {
+    // Pronoun "it" — no course in context to resolve
+    input: courseContext("Can you remove it?", "none"),
+    groundTruth: "true",
+  },
+  {
+    // Partial name match — "chemistry" 
+    input: courseContext("Drop my chemistry class", "none"),
+    groundTruth: "true",
+  },
+];
+
+// ---------------------------------------------------------------------------
+// courseAgent — needsEntityClarification = false
+// resolvedCourseId present or course named precisely enough to act.
+// ---------------------------------------------------------------------------
+
+const courseClearData: Array<{ input: string; groundTruth: string }> = [
+  {
+    // resolvedCourseId provided — unambiguous
+    input: courseContext(
+      "Drop this course.",
+      "resolvedCourseId: course_eval_001\ncourseName: Organic Chemistry\nterm: Spring 2026"
+    ),
+    groundTruth: "false",
+  },
+  {
+    // Precise course code — unambiguous even without resolvedCourseId
+    input: courseContext("Update the study goal for AS.030.205", "none"),
+    groundTruth: "false",
+  },
+  {
+    // resolvedCourseId + clear update action
+    input: courseContext(
+      "Change the study goal to Do well.",
+      "resolvedCourseId: course_eval_001\ncourseName: Organic Chemistry\nterm: Spring 2026\nstudyGoal: Ace it"
+    ),
+    groundTruth: "false",
+  },
+];
+
+// ---------------------------------------------------------------------------
+// Eval runner
+// ---------------------------------------------------------------------------
 
 export async function runEntityClarificationEval() {
-  if (testData.length === 0) {
-    console.log("  (no test cases — add items to testData to run this eval)");
+  const hasAny =
+    taskNeedsClarifyData.length > 0 ||
+    taskClearData.length > 0 ||
+    courseNeedsClarifyData.length > 0 ||
+    courseClearData.length > 0;
+
+  if (!hasAny) {
+    console.log("  (no test cases — add items to testData arrays to run this eval)");
     return { scores: {}, summary: { totalItems: 0 } };
   }
-  return runEvals({
-    data: testData,
-    target: supervisorAgent,
-    scorers: {
-      agent: [answerSimilarityScorer, completenessScorer],
-    },
-    onItemComplete: ({ item, scorerResults }) => {
-      console.log("  item input:", item.input);
-      console.log("  scores:", scorerResults);
-    },
-  });
+
+  let totalItems = 0;
+  const allScores: Record<string, unknown> = {};
+
+  const runGroup = async (
+    label: string,
+    target: typeof taskAgent | typeof courseAgent,
+    data: Array<{ input: string; groundTruth: string }>
+  ) => {
+    if (data.length === 0) return;
+    console.log(`  [${label}]`);
+    const acc: ItemSummary[] = [];
+    const r = await runEvals({
+      data,
+      target,
+      scorers: [entityClarificationScorer],
+      onItemComplete: makeOnItemComplete(
+        "needsEntityClarification",
+        "needsEntityClarification-scorer",
+        acc
+      ),
+    });
+    printAgentSummary(label, acc);
+    totalItems += r.summary.totalItems;
+    allScores[label] = r.scores;
+  };
+
+  await runGroup("taskAgent — needs clarification", taskAgent, taskNeedsClarifyData);
+  await runGroup("taskAgent — entity clear", taskAgent, taskClearData);
+  await runGroup("courseAgent — needs clarification", courseAgent, courseNeedsClarifyData);
+  await runGroup("courseAgent — entity clear", courseAgent, courseClearData);
+
+  return { scores: allScores, summary: { totalItems } };
 }

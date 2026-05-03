@@ -170,51 +170,6 @@ const exitData: Array<{ input: string; groundTruth: string }> = [
   },
 ];
 
-// ---------------------------------------------------------------------------
-// 6. Needs domain clarification — 9 cases
-//    Message is too vague or spans two equal-weight domains.
-//    groundTruth = "true" (needsDomainClarification field).
-// ---------------------------------------------------------------------------
-
-const needsClarifyData: Array<{ input: string; groundTruth: string }> = [
-  { input: "Hi", groundTruth: "true" },
-  { input: "What can you help me with?", groundTruth: "true" },
-  { input: "help", groundTruth: "true" },
-  { input: "idk", groundTruth: "true" },
-  {
-    input: "I want to create a task for my essay and also change my focus block length",
-    groundTruth: "true",
-  },
-  {
-    input: "Can you add a new assignment for CHEM and schedule it at the same time?",
-    groundTruth: "true",
-  },
-  {
-    input: "Update my essay due date and set my preferred study days to Tuesday",
-    groundTruth: "true",
-  },
-  { input: "Who made you?", groundTruth: "true" },
-  { input: "I have so much to do and I don't know where to start", groundTruth: "true" },
-];
-
-// ---------------------------------------------------------------------------
-// 7. No clarification needed — 5 cases
-//    Single clear intent even when a second topic is mentioned in passing.
-//    groundTruth = "false".
-// ---------------------------------------------------------------------------
-
-const noClarifyData: Array<{ input: string; groundTruth: string }> = [
-  { input: "Add a CHEM Essay task — I'll schedule it later", groundTruth: "false" },
-  { input: "Schedule my CHEM Essay task for this week", groundTruth: "false" },
-  { input: "Change my focus block to 30 minutes — I have a lot of tasks coming up", groundTruth: "false" },
-  { input: "Can I create a task from here?", groundTruth: "false" },
-  { input: "How do I add a new class?", groundTruth: "false" },
-];
-
-// ---------------------------------------------------------------------------
-// Eval runner
-// ---------------------------------------------------------------------------
-
 export async function runSupervisorRoutingEval() {
   let totalItems = 0;
   const allScores: Record<string, unknown> = {};
@@ -254,8 +209,6 @@ export async function runSupervisorRoutingEval() {
   await runRouteGroup("midflow-stay", stayData);
   await runRouteGroup("midflow-switch", switchData);
   await runRouteGroup("midflow-exit", exitData);
-  await runClarifyGroup("needs-clarification", needsClarifyData);
-  await runClarifyGroup("no-clarification", noClarifyData);
 
   return { scores: allScores, summary: { totalItems } };
 }
