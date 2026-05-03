@@ -19,6 +19,7 @@ In the `mastra/` directory, create a `.env` file (it is gitignored — never com
 
 ```
 ANTHROPIC_API_KEY=your_key_here
+MASTRA_SERVER_SECRET=your_secret_here
 ```
 
 A template is provided at `mastra/.env.example`.
@@ -65,6 +66,33 @@ npx convex env list
 ```
 
 > Only run this against your **dev** Convex deployment. The CD workflow sets `SITE_URL` to the deployed frontend URL on the prod deployment automatically — do not overwrite that.
+
+## Step 6: Set `MASTRA_SERVER_SECRET`
+
+The Mastra server uses a shared secret to reject unauthenticated callers. Without it, anyone who discovers the ngrok/Mastra URL can invoke workflows directly and burn LLM credits.
+
+**Generate a secret** (any random string works — use a password manager or):
+
+```bash
+openssl rand -hex 32
+```
+
+**Set it in three places:**
+
+1. `mastra/.env` — so the server enforces it:
+   ```
+   MASTRA_SERVER_SECRET=<your-secret>
+   ```
+
+2. Convex dev environment — so actions include it in requests:
+   ```bash
+   npx convex env set MASTRA_SERVER_SECRET <your-secret>
+   ```
+
+3. GitHub secret `MASTRA_SERVER_SECRET` — so the CD workflow sets it on the prod Convex deployment. Add it under **Settings → Secrets and variables → Actions** in the GitHub repo.
+
+> If `MASTRA_SERVER_SECRET` is not set in `mastra/.env`, the middleware is a no-op and all requests are allowed (safe fallback for local dev without a secret).
+> If it is set, requests without a matching `Authorization: Bearer <secret>` header receive a 401.
 
 ## Notes
 

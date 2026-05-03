@@ -97,7 +97,11 @@ export const estimateSubtasksBatch = internalAction({
     });
 
     try {
-      const client = new MastraClient({ baseUrl: mastraUrl });
+      const mastraSecret = process.env.MASTRA_SERVER_SECRET;
+      const client = new MastraClient({
+        baseUrl: mastraUrl,
+        ...(mastraSecret ? { headers: { Authorization: `Bearer ${mastraSecret}` } } : {}),
+      });
       const wf = client.getWorkflow("batch-estimation-workflow");
       const run = await wf.startAsync({ inputData: items });
 

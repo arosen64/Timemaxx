@@ -89,7 +89,11 @@ ${sanitizeUserInput(args.fileContent!, 10_000)}
     const contextPrompt = `Break this assignment into concrete, actionable subtasks.\n\n${sections.join("\n\n")}`;
 
     try {
-      const client = new MastraClient({ baseUrl: mastraUrl });
+      const mastraSecret = process.env.MASTRA_SERVER_SECRET;
+      const client = new MastraClient({
+        baseUrl: mastraUrl,
+        ...(mastraSecret ? { headers: { Authorization: `Bearer ${mastraSecret}` } } : {}),
+      });
       const wf = client.getWorkflow("subtask-generation-workflow");
       const run = await wf.startAsync({ inputData: { contextPrompt } });
 

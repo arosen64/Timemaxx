@@ -243,7 +243,11 @@ export const estimateTaskTime = internalAction({
         profileContext: profileContext ?? undefined,
       });
 
-      const client = new MastraClient({ baseUrl: mastraUrl });
+      const mastraSecret = process.env.MASTRA_SERVER_SECRET;
+      const client = new MastraClient({
+        baseUrl: mastraUrl,
+        ...(mastraSecret ? { headers: { Authorization: `Bearer ${mastraSecret}` } } : {}),
+      });
       const wf = client.getWorkflow("estimation-workflow");
       const run = await wf.startAsync({ inputData: { contextPrompt } });
 

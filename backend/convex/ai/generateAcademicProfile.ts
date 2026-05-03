@@ -37,7 +37,11 @@ export const generateAcademicProfile = action({
 
     const sanitizedCourseList = sanitizeUserInput(courseList, 50_000);
 
-    const client = new MastraClient({ baseUrl: mastraUrl });
+    const mastraSecret = process.env.MASTRA_SERVER_SECRET;
+    const client = new MastraClient({
+      baseUrl: mastraUrl,
+      ...(mastraSecret ? { headers: { Authorization: `Bearer ${mastraSecret}` } } : {}),
+    });
     const wf = client.getWorkflow("academic-profile-workflow");
     const run = await withTimeout(
       wf.startAsync({ inputData: { sanitizedCourseList } }),

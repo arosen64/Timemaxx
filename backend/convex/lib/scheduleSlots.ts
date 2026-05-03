@@ -517,7 +517,11 @@ export async function selectAllSlotsWithAI(
 
   try {
     const prompt = buildBatchScheduleBlockPrompt(blocks, productivityTraits);
-    const client = new MastraClient({ baseUrl: mastraUrl });
+    const mastraSecret = process.env.MASTRA_SERVER_SECRET;
+    const client = new MastraClient({
+      baseUrl: mastraUrl,
+      ...(mastraSecret ? { headers: { Authorization: `Bearer ${mastraSecret}` } } : {}),
+    });
     const run = await client
       .getWorkflow("scheduling-workflow")
       .startAsync({ inputData: { prompt } });

@@ -23,6 +23,19 @@ import { subtaskGenerationWorkflow } from "./workflows/subtaskGenerationWorkflow
 import { academicProfileWorkflow } from "./workflows/academicProfileWorkflow";
 
 export const mastra = new Mastra({
+  server: {
+    middleware: [
+      async (c, next) => {
+        const secret = process.env.MASTRA_SERVER_SECRET;
+        if (!secret) return next(); // no-op when secret is unset (local dev)
+        const auth = c.req.header("Authorization");
+        if (auth !== `Bearer ${secret}`) {
+          return c.json({ error: "Unauthorized" }, 401);
+        }
+        return next();
+      },
+    ],
+  },
   agents: {
     supervisorAgent,
     taskAgent,

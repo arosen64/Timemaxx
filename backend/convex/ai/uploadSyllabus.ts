@@ -52,7 +52,11 @@ export const uploadSyllabus = action({
     try {
       const mastraUrl = process.env.MASTRA_URL;
       if (!mastraUrl) throw new Error("MASTRA_URL not configured");
-      const client = new MastraClient({ baseUrl: mastraUrl });
+      const mastraSecret = process.env.MASTRA_SERVER_SECRET;
+      const client = new MastraClient({
+        baseUrl: mastraUrl,
+        ...(mastraSecret ? { headers: { Authorization: `Bearer ${mastraSecret}` } } : {}),
+      });
 
       let textForParsing: string;
 

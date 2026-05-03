@@ -37,7 +37,11 @@ export const parseTranscript = action({
 
     const mastraUrl = process.env.MASTRA_URL;
     if (!mastraUrl) throw new Error("MASTRA_URL not configured");
-    const client = new MastraClient({ baseUrl: mastraUrl });
+    const mastraSecret = process.env.MASTRA_SERVER_SECRET;
+    const client = new MastraClient({
+      baseUrl: mastraUrl,
+      ...(mastraSecret ? { headers: { Authorization: `Bearer ${mastraSecret}` } } : {}),
+    });
 
     // OCR: extract text from the base64-encoded PDF
     const ocrWf = client.getWorkflow("transcript-ocr-workflow");
