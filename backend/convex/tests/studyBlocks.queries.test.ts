@@ -47,21 +47,21 @@ async function seedStudyBlock(
 describe("queries/studyBlocks – getStudyBlocksByTask", () => {
   test("returns empty array when no blocks exist for the task", async () => {
     const t = makeTestCtx();
-    const { userId } = await createTestUser(t);
+    const { userId, withAuth } = await createTestUser(t);
     const taskId = await seedTask(t, userId);
 
-    const result = await t.query(api.queries.studyBlocks.getStudyBlocksByTask, { taskId });
+    const result = await withAuth.query(api.queries.studyBlocks.getStudyBlocksByTask, { taskId });
     expect(result).toEqual([]);
   });
 
   test("returns all blocks for the given task", async () => {
     const t = makeTestCtx();
-    const { userId } = await createTestUser(t);
+    const { userId, withAuth } = await createTestUser(t);
     const taskId = await seedTask(t, userId);
     await seedStudyBlock(t, userId, taskId, { title: "Block A" });
     await seedStudyBlock(t, userId, taskId, { title: "Block B" });
 
-    const result = await t.query(api.queries.studyBlocks.getStudyBlocksByTask, { taskId });
+    const result = await withAuth.query(api.queries.studyBlocks.getStudyBlocksByTask, { taskId });
     expect(result).toHaveLength(2);
     const titles = result.map((b) => b.title);
     expect(titles).toContain("Block A");
@@ -70,15 +70,36 @@ describe("queries/studyBlocks – getStudyBlocksByTask", () => {
 
   test("does not return blocks belonging to a different task", async () => {
     const t = makeTestCtx();
-    const { userId } = await createTestUser(t);
+    const { userId, withAuth } = await createTestUser(t);
     const taskId1 = await seedTask(t, userId);
     const taskId2 = await seedTask(t, userId);
     await seedStudyBlock(t, userId, taskId1, { title: "Task 1 block" });
     await seedStudyBlock(t, userId, taskId2, { title: "Task 2 block" });
 
-    const result = await t.query(api.queries.studyBlocks.getStudyBlocksByTask, { taskId: taskId1 });
+    const result = await withAuth.query(api.queries.studyBlocks.getStudyBlocksByTask, { taskId: taskId1 });
     expect(result).toHaveLength(1);
     expect(result[0].title).toBe("Task 1 block");
+  });
+
+  test("rejects taskId owned by a different user", async () => {
+    const t = makeTestCtx();
+    const { userId: ownerUserId } = await createTestUser(t, { email: "owner@example.com" });
+    const { withAuth: attackerAuth } = await createTestUser(t, { email: "attacker@example.com" });
+    const taskId = await seedTask(t, ownerUserId);
+    await seedStudyBlock(t, ownerUserId, taskId);
+
+    const result = await attackerAuth.query(api.queries.studyBlocks.getStudyBlocksByTask, { taskId });
+    expect(result).toEqual([]);
+  });
+
+  test("returns empty array for unauthenticated caller", async () => {
+    const t = makeTestCtx();
+    const { userId } = await createTestUser(t);
+    const taskId = await seedTask(t, userId);
+    await seedStudyBlock(t, userId, taskId);
+
+    const result = await t.query(api.queries.studyBlocks.getStudyBlocksByTask, { taskId });
+    expect(result).toEqual([]);
   });
 });
 
@@ -87,23 +108,43 @@ describe("queries/studyBlocks – getStudyBlocksByTask", () => {
 describe("queries/studyBlocks – getStudyBlockById", () => {
   test("returns the study block when it exists", async () => {
     const t = makeTestCtx();
-    const { userId } = await createTestUser(t);
+    const { userId, withAuth } = await createTestUser(t);
     const taskId = await seedTask(t, userId);
     const studyBlockId = await seedStudyBlock(t, userId, taskId, { title: "My block" });
 
-    const result = await t.query(api.queries.studyBlocks.getStudyBlockById, { studyBlockId });
+    const result = await withAuth.query(api.queries.studyBlocks.getStudyBlockById, { studyBlockId });
     expect(result).not.toBeNull();
     expect(result!.title).toBe("My block");
   });
 
   test("returns null when the study block does not exist", async () => {
     const t = makeTestCtx();
-    const { userId } = await createTestUser(t);
+    const { userId, withAuth } = await createTestUser(t);
     const taskId = await seedTask(t, userId);
     const studyBlockId = await seedStudyBlock(t, userId, taskId);
 
-    // Delete it so we can test the not-found path
     await t.run((ctx) => ctx.db.delete(studyBlockId));
+
+    const result = await withAuth.query(api.queries.studyBlocks.getStudyBlockById, { studyBlockId });
+    expect(result).toBeNull();
+  });
+
+  test("rejects studyBlockId owned by a different user", async () => {
+    const t = makeTestCtx();
+    const { userId: ownerUserId } = await createTestUser(t, { email: "owner@example.com" });
+    const { withAuth: attackerAuth } = await createTestUser(t, { email: "attacker@example.com" });
+    const taskId = await seedTask(t, ownerUserId);
+    const studyBlockId = await seedStudyBlock(t, ownerUserId, taskId);
+
+    const result = await attackerAuth.query(api.queries.studyBlocks.getStudyBlockById, { studyBlockId });
+    expect(result).toBeNull();
+  });
+
+  test("returns null for unauthenticated caller", async () => {
+    const t = makeTestCtx();
+    const { userId } = await createTestUser(t);
+    const taskId = await seedTask(t, userId);
+    const studyBlockId = await seedStudyBlock(t, userId, taskId);
 
     const result = await t.query(api.queries.studyBlocks.getStudyBlockById, { studyBlockId });
     expect(result).toBeNull();

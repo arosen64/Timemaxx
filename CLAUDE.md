@@ -109,7 +109,7 @@ backend/
     tests/                    # Convex unit/integration tests (Vitest + convex-test)
     _generated/               # Convex generated API/types (do not edit manually)
 e2e/                          # Playwright end-to-end tests — see e2e/README.md
-.github/workflows/            # ci.yml (build + tests + e2e), cd.yml (Convex + Pages + Mastra Cloud)
+.github/workflows/            # ci.yml (build + lint + tests), cd.yml (Convex + Pages + Mastra Cloud)
 ```
 
 Routes: `/` (landing) → `/onboarding` (new users) → `/dashboard` → `/profile` → `/schedule` → `/preferences` → `/classes` → `/syllabus-review`

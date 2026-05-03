@@ -147,6 +147,7 @@ export const confirmSyllabusTasks = mutation({
         const task = args.tasks[index];
         await ctx.scheduler.runAfter(0, internal.ai.embeddings.generateTaskEmbedding, {
           taskId,
+          userId,
           title: task.title,
           description: task.description,
         });

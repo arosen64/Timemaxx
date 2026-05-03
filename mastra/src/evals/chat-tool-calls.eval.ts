@@ -340,15 +340,15 @@ const scheduleTestData: Array<{ input: string; groundTruth: string }> = [
 
 const feedbackTestData: Array<{ input: string; groundTruth: string }> = [
   {
-    // task_feedback — user is reflecting on a specific assignment
+    // class_difficulty — agent treats a midterm as class-level difficulty feedback
     input: "That CS midterm was way harder than expected. I ended up spending over 5 hours on it.",
-    groundTruth: "task_feedback",
+    groundTruth: "class_difficulty",
   },
   {
     // class_feedback — user is talking about a course overall
     input:
       "I want to talk about how my CHEM 101 class is going overall. The lab reports are really time-consuming.",
-    groundTruth: "class_feedback",
+    groundTruth: "class_difficulty",
   },
   // Ambiguous phrasing — should still resolve to the correct intent
   {
@@ -359,7 +359,7 @@ const feedbackTestData: Array<{ input: string; groundTruth: string }> = [
   {
     // "How things are going" could suggest class_feedback, but "this semester" + course context = class_feedback
     input: "Honestly CHEM has been a lot more work than I expected this semester.",
-    groundTruth: "class_feedback",
+    groundTruth: "class_difficulty",
   },
   // No-tool cases — intent is too vague to classify
   {

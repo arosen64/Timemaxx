@@ -23,6 +23,7 @@ Add the following:
 | `GEMINI_API_KEY` | Google AI Studio → API Keys (Convex uses this for embeddings only — see `gemini-api-key-setup.md`) |
 | `ANTHROPIC_API_KEY` | console.anthropic.com → API Keys (used by all AI flows that go through Mastra: chat, time estimation, syllabus & transcript parsing, schedule slot selection, academic profile) |
 | `MASTRA_URL` | Public URL of the deployed Mastra server with `/mastra` path (e.g. `https://your-server.mastra.cloud/mastra`) — written automatically by the `deploy-mastra` job, so this is informational |
+| `MASTRA_SERVER_SECRET` | Shared secret enforced by Mastra's auth middleware. Must match the value Convex sends in the `Authorization: Bearer <secret>` header. Generate with `openssl rand -hex 32`. |
 | `JHU_SIS_API_KEY` | JHU SIS portal (used for JHU course catalog lookup) |
 | `CALENDAR_TOKEN_SECRET` | A random 32-byte hex string used to encrypt Google Calendar OAuth tokens — generate with `openssl rand -hex 32`. Must stay fixed across deploys, otherwise existing users' calendar tokens become unreadable. |
 | `SITE_URL` | Public URL of the deployed frontend |
@@ -50,6 +51,7 @@ Add the following:
 | `CALENDAR_TOKEN_SECRET` | Same value you set in Convex (Step 1) — CD re-applies it on every deploy so the secret stays stable |
 | `JHU_SIS_API_KEY` | Same value you set in Convex (Step 1) — CD re-applies it on every deploy |
 | `MASTRA_URL` | URL of the deployed Mastra server (`https://<deployment>.mastra.cloud/mastra`) — CD writes this into Convex after deploying Mastra |
+| `MASTRA_SERVER_SECRET` | Shared secret applied to both the Mastra server (via Mastra Cloud env) and Convex on each deploy |
 | `MASTRA_API_TOKEN`, `MASTRA_ORG_ID`, `MASTRA_PROJECT_ID` | Mastra Cloud credentials used by the `deploy-mastra` job (`npx mastra server deploy`) |
 
 > `VITE_CONVEX_URL` and `VITE_CONVEX_SITE_URL` are the only values baked into the frontend build. They are public Convex endpoints — not secrets per se, but kept here to avoid hardcoding environment-specific values in the repo.
@@ -83,12 +85,13 @@ https://<prod-deployment>.convex.site/api/calendar/callback
 
 Triggers on: pull requests to `master`, `dev`, or `cicd`; and pushes to `master` or `cicd`.
 
-Jobs:
-1. **`build-and-test`** — `npm ci`, `npm run build` (catches TypeScript and build errors), `npm test` (Vitest backend + frontend).
-2. **`e2e`** — runs after `build-and-test`. Installs Chromium, runs `npm run test:e2e` (Playwright against `vite preview`), uploads the `playwright-report/` artifact on failure.
-3. **`deploy`** — runs after `build-and-test` only on push events. Deploys the Convex backend (`npx convex deploy`).
+Single `build-and-test` job:
+1. `npm ci`
+2. `npm run build` — catches TypeScript and build errors
+3. `npm run lint` — ESLint
+4. `npm test` — Vitest (backend + frontend projects)
 
-> The only deployment CI does is the Convex backend on push to `master`/`cicd`. Frontend and Mastra deploys live in `cd.yml`.
+> CI does not deploy. All deploys live in `cd.yml`. Playwright E2E is not currently wired into CI; run `npm run test:e2e` locally before opening a PR if you've touched the frontend.
 
 ---
 

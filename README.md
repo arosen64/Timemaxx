@@ -282,7 +282,7 @@ mastra/                             # Mastra AI agent server (separate process �
     lib/schemas/                    # Shared Zod schemas
   src/evals/                        # Mastra eval suite — see guides/mastra-eval-suite.md
 e2e/                                # Playwright end-to-end tests — see e2e/README.md
-.github/workflows/                  # ci.yml (build + tests + e2e) and cd.yml (Convex + Pages + Mastra deploy)
+.github/workflows/                  # ci.yml (build + lint + tests) and cd.yml (Convex + Pages + Mastra Cloud deploy)
 ```
 
 ## Routes

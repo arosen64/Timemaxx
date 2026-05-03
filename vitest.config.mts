@@ -33,6 +33,13 @@ export default defineConfig({
         },
       },
       {
+        test: {
+          name: "mastra",
+          include: ["mastra/src/**/*.test.ts"],
+          environment: "node",
+        },
+      },
+      {
         plugins: [react()],
         test: {
           name: "frontend",
