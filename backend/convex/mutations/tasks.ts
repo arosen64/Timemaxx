@@ -156,6 +156,22 @@ export const updateTask = mutation({
       recommendedStart: computeRecommendedStart(Date.now(), args.dueDate),
     });
 
+    // Cascade title change to all task-level study blocks
+    if (args.title !== task.title) {
+      const blocks = await ctx.db
+        .query("studyBlocks")
+        .withIndex("by_taskId", (q) => q.eq("taskId", args.taskId))
+        .collect();
+      await Promise.all(
+        blocks.map((b) =>
+          ctx.db.patch(b._id, {
+            title: args.title,
+            ...(b.googleEventId ? { needsExport: true } : {}),
+          })
+        )
+      );
+    }
+
     // Cascade dueDate change to child subtasks and recompute suggestedCompletionAt
     if (args.dueDate !== task.dueDate) {
       const subtasks = await ctx.db
@@ -266,6 +282,24 @@ export const patchTaskFieldsInternal = internalMutation({
     }
     if (args.assignmentWeight !== undefined) patch.assignmentWeight = args.assignmentWeight;
     await ctx.db.patch(args.taskId, patch);
+
+    // Cascade title change to all task-level study blocks
+    if (args.title !== undefined && args.title !== task.title) {
+      const newTitle = args.title;
+      const blocks = await ctx.db
+        .query("studyBlocks")
+        .withIndex("by_taskId", (q) => q.eq("taskId", args.taskId))
+        .collect();
+      await Promise.all(
+        blocks.map((b) =>
+          ctx.db.patch(b._id, {
+            title: newTitle,
+            ...(b.googleEventId ? { needsExport: true } : {}),
+          })
+        )
+      );
+    }
+
     if (
       process.env.GEMINI_API_KEY &&
       (args.title !== undefined || args.description !== undefined)
