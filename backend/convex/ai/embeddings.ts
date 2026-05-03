@@ -30,6 +30,7 @@ export const generateCourseEmbedding = internalAction({
 export const generateTaskEmbedding = internalAction({
   args: {
     taskId: v.id("tasks"),
+    userId: v.id("users"),
     title: v.string(),
     description: v.string(),
   },
@@ -38,6 +39,7 @@ export const generateTaskEmbedding = internalAction({
     const embedding = await computeEmbedding(args.title, args.description);
     await ctx.runMutation(internal.mutations.tasks.patchTaskEmbedding, {
       taskId: args.taskId,
+      userId: args.userId,
       embedding,
     });
     return null;

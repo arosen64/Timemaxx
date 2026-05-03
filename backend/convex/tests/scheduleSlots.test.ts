@@ -398,9 +398,9 @@ describe("selectAllSlotsWithAI", () => {
     vi.clearAllMocks();
   });
 
-  test("returns empty array for empty input", async () => {
+  test("returns empty object for empty input", async () => {
     const result = await selectAllSlotsWithAI([], null);
-    expect(result).toEqual([]);
+    expect(result).toEqual({ indices: [], overallSkipReason: null });
   });
 
   test("falls back to all zeros when MASTRA_URL is not set", async () => {
@@ -420,7 +420,7 @@ describe("selectAllSlotsWithAI", () => {
       ],
       null
     );
-    expect(result).toEqual([0, 0]);
+    expect(result).toEqual({ indices: [0, 0], overallSkipReason: null });
   });
 
   test("returns correct indices on successful workflow run", async () => {
@@ -434,7 +434,7 @@ describe("selectAllSlotsWithAI", () => {
     });
     mockStartAsync.mockResolvedValueOnce({
       status: "success",
-      steps: { "slot-selection": { output: { selections: [1, 0] } } },
+      steps: { "slot-selection": { output: { selections: [1, 0], overallSkipReason: null } } },
     });
     const result = await selectAllSlotsWithAI(
       [
@@ -443,7 +443,29 @@ describe("selectAllSlotsWithAI", () => {
       ],
       null
     );
-    expect(result).toEqual([1, 0]);
+    expect(result).toEqual({ indices: [1, 0], overallSkipReason: null });
+  });
+
+  test("propagates overallSkipReason when AI returns a skip reason", async () => {
+    mockStartAsync.mockResolvedValueOnce({
+      status: "success",
+      steps: {
+        "slot-selection": {
+          output: {
+            selections: [0],
+            overallSkipReason: "Schedule too full before these deadlines.",
+          },
+        },
+      },
+    });
+    const result = await selectAllSlotsWithAI(
+      [{ taskTitle: "Task A", dueDate: DUE, cannotSchedule: true, candidates: [] }],
+      null
+    );
+    expect(result).toEqual({
+      indices: [0],
+      overallSkipReason: "Schedule too full before these deadlines.",
+    });
   });
 
   test("falls back to all zeros when workflow run status is failed", async () => {
@@ -460,7 +482,7 @@ describe("selectAllSlotsWithAI", () => {
       [{ taskTitle: "Task A", dueDate: DUE, candidates }],
       null
     );
-    expect(result).toEqual([0]);
+    expect(result).toEqual({ indices: [0], overallSkipReason: null });
   });
 
   test("falls back to all zeros when step output is missing", async () => {
@@ -477,7 +499,7 @@ describe("selectAllSlotsWithAI", () => {
       [{ taskTitle: "Task A", dueDate: DUE, candidates }],
       null
     );
-    expect(result).toEqual([0]);
+    expect(result).toEqual({ indices: [0], overallSkipReason: null });
   });
 
   test("falls back to all zeros when step output has wrong shape", async () => {
@@ -497,13 +519,13 @@ describe("selectAllSlotsWithAI", () => {
       [{ taskTitle: "Task A", dueDate: DUE, candidates }],
       null
     );
-    expect(result).toEqual([0]);
+    expect(result).toEqual({ indices: [0], overallSkipReason: null });
   });
 
   test("clamps out-of-range indices to 0", async () => {
     mockStartAsync.mockResolvedValueOnce({
       status: "success",
-      steps: { "slot-selection": { output: { selections: [999, -1] } } },
+      steps: { "slot-selection": { output: { selections: [999, -1], overallSkipReason: null } } },
     });
     const candidates = enumerateSlots({
       fromMs: MONDAY_9AM_UTC,
@@ -520,7 +542,7 @@ describe("selectAllSlotsWithAI", () => {
       ],
       null
     );
-    expect(result).toEqual([0, 0]);
+    expect(result).toEqual({ indices: [0, 0], overallSkipReason: null });
   });
 });
 

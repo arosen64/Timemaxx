@@ -8,11 +8,11 @@ The eval suite lives in `mastra/src/evals/`. It uses [`@mastra/evals`](https://m
 
 | File | Agent Under Test | Scorers |
 |------|-----------------|---------|
-| `chat-tool-calls.eval.ts` | `supervisorAgent` | Tool call accuracy, trajectory accuracy |
+| `chat-tool-calls.eval.ts` | `taskAgent`, `courseAgent`, `scheduleAgent`, `feedbackAgent` | Custom `actionType` / `intent` scorer |
 | `supervisor-routing.eval.ts` | `supervisorAgent` | Trajectory accuracy, tool call accuracy |
 | `entity-clarification.eval.ts` | `supervisorAgent` | Answer similarity, completeness |
 | `time-estimate-range.eval.ts` | `estimationAgent` | Custom numeric range scorer |
-| `rag-retrieval.eval.ts` | `taskAgent` | Context relevance, faithfulness, hallucination, context precision |
+| `rag-retrieval.eval.ts` | `estimationAgent` | Context relevance & precision (chat RAG), keyword + LLM chats-trace grounding |
 | `academic-profile.eval.ts` | `academicProfileAgent` | Completeness, faithfulness, answer similarity |
 
 ## Prerequisites
@@ -51,6 +51,70 @@ const testData = [
 - `input` — the user message sent to the agent
 - `groundTruth` — the expected answer (used by answer similarity and faithfulness scorers)
 - `expectedTrajectory` — the expected sequence of tool calls or agent handoffs
+
+### Chat tool calls eval (custom actionType / intent scorer)
+
+The subagents (`taskAgent`, `courseAgent`, `scheduleAgent`, `feedbackAgent`) use structured JSON
+output instead of Mastra `createTool()` calls. The built-in trajectory and tool-call scorers
+don't apply here. Instead, `chat-tool-calls.eval.ts` uses two custom scorers that parse a named
+field from the assistant's JSON response and compare it to a `groundTruth` string:
+
+```ts
+const testData = [
+  // taskAgent — checks `actionType` field
+  { input: "...", groundTruth: "create_task" },
+  { input: "...", groundTruth: "update_task" },
+
+  // feedbackAgent — checks `intent` field (no actionType in this agent)
+  { input: "...", groundTruth: "task_feedback" },
+];
+```
+
+Valid `actionType` values per agent:
+- `taskAgent`: `create_task` | `update_task` | `delete_task` | `read_task`
+- `courseAgent`: `add_course` | `drop_course` | `update_course` | `view_courses`
+- `scheduleAgent`: `schedule_task` | `schedule_block` | `import_google_calendar`
+- `feedbackAgent` (uses `intent`): `task_feedback` | `class_feedback`
+
+For operations that require a resolved entity (update, delete, read, drop, schedule), craft
+the `input` as a full context string so the agent sees a `resolvedTaskId` or `resolvedCourseId`:
+
+```ts
+const input = `Today (ISO date): 2026-04-15
+
+<conversation_history>
+user: Update the due date of my CHEM Essay to April 25.
+</conversation_history>
+
+<resolved_task_context>
+resolvedTaskId: task_eval_001
+title: CHEM Essay
+taskType: Essay
+dueDateIso: 2026-04-20
+</resolved_task_context>
+
+<resolved_course_context>
+none
+</resolved_course_context>
+
+<turn_directive>
+Continue the current flow.
+</turn_directive>`;
+```
+
+For `create_task`, simulate the second turn of the conversation (after the agent has gathered
+all required fields and asked about subtasks) so it sets `readyToExecute = true`:
+
+```ts
+const input = `Today (ISO date): 2026-04-15
+
+<conversation_history>
+user: Create a task: CHEM Essay, Essay type, due 2026-04-20, no class.
+assistant: {"message":"Should I generate AI subtasks?...","actionType":"none",...}
+user: No subtasks.
+</conversation_history>
+...`;
+```
 
 ### Time estimate eval (custom scorer)
 

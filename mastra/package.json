@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "mastra dev --dir src/mastra",
     "build": "mastra build --dir src/mastra",
-    "eval": "tsx src/evals/index.ts"
+    "eval": "tsx --env-file=.env src/evals/index.ts"
   },
   "keywords": [],
   "author": "",
@@ -23,6 +23,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "dotenv": "^17.3.1",
     "@types/node": "^25.5.2",
     "mastra": "1.6.3",
     "tsx": "^4.21.0",
