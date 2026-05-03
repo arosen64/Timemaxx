@@ -1,18 +1,18 @@
-import { CalendarIcon, XIcon } from '../icons'
+import { CalendarIcon, XIcon } from "../icons";
 
 type ModalButton = {
-  label: string
-  onClick: () => void
-  variant: 'primary' | 'secondary'
-  disabled?: boolean
-}
+  label: string;
+  onClick: () => void;
+  variant: "primary" | "secondary";
+  disabled?: boolean;
+};
 
 type Props = {
-  title: string
-  body: string
-  buttons: ModalButton[]
-  onDismiss: () => void
-}
+  title: string;
+  body: string;
+  buttons: ModalButton[];
+  onDismiss: () => void;
+};
 
 export default function NudgeModal({ title, body, buttons, onDismiss }: Props) {
   return (
@@ -53,9 +53,9 @@ export default function NudgeModal({ title, body, buttons, onDismiss }: Props) {
               onClick={btn.onClick}
               disabled={btn.disabled}
               className={
-                btn.variant === 'primary'
-                  ? 'flex h-10 items-center justify-center rounded-lg bg-navy px-4 font-heading text-sm font-semibold text-white hover:bg-navy/90 transition disabled:opacity-50 disabled:cursor-not-allowed'
-                  : 'flex h-10 items-center justify-center rounded-lg border border-border bg-white px-4 font-heading text-sm font-semibold text-navy hover:bg-bg-gray transition'
+                btn.variant === "primary"
+                  ? "flex h-10 items-center justify-center rounded-lg bg-navy px-4 font-heading text-sm font-semibold text-white hover:bg-navy/90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  : "flex h-10 items-center justify-center rounded-lg border border-border bg-white px-4 font-heading text-sm font-semibold text-navy hover:bg-bg-gray transition"
               }
             >
               {btn.label}
@@ -64,5 +64,5 @@ export default function NudgeModal({ title, body, buttons, onDismiss }: Props) {
         </div>
       </div>
     </div>
-  )
+  );
 }

@@ -81,32 +81,27 @@ describe("mutations/syllabi – confirmSyllabusTasks", () => {
     const { userId, withAuth } = await createTestUser(t);
     const syllabusId = await createTestSyllabus(t, userId);
 
-    const taskIds = await withAuth.mutation(
-      api.mutations.syllabi.confirmSyllabusTasks,
-      {
-        syllabusId,
-        tasks: [
-          {
-            title: "Problem Set 1",
-            description: "Solve exercises 1-10.",
-            dueDate: FUTURE_DATE,
-            taskType: "Problem Set",
-          },
-          {
-            title: "Midterm Essay",
-            description: "Write a 5-page essay on the topic.",
-            dueDate: FUTURE_DATE,
-            taskType: "Essay",
-          },
-        ],
-      }
-    );
+    const taskIds = await withAuth.mutation(api.mutations.syllabi.confirmSyllabusTasks, {
+      syllabusId,
+      tasks: [
+        {
+          title: "Problem Set 1",
+          description: "Solve exercises 1-10.",
+          dueDate: FUTURE_DATE,
+          taskType: "Problem Set",
+        },
+        {
+          title: "Midterm Essay",
+          description: "Write a 5-page essay on the topic.",
+          dueDate: FUTURE_DATE,
+          taskType: "Essay",
+        },
+      ],
+    });
 
     expect(taskIds).toHaveLength(2);
 
-    const tasks = await t.run((ctx) =>
-      Promise.all(taskIds.map((id) => ctx.db.get(id)))
-    );
+    const tasks = await t.run((ctx) => Promise.all(taskIds.map((id) => ctx.db.get(id))));
 
     expect(tasks[0]).toMatchObject({
       userId,
@@ -145,10 +140,10 @@ describe("mutations/syllabi – confirmSyllabusTasks", () => {
     const { userId, withAuth } = await createTestUser(t);
     const syllabusId = await createTestSyllabus(t, userId);
 
-    const taskIds = await withAuth.mutation(
-      api.mutations.syllabi.confirmSyllabusTasks,
-      { syllabusId, tasks: [] }
-    );
+    const taskIds = await withAuth.mutation(api.mutations.syllabi.confirmSyllabusTasks, {
+      syllabusId,
+      tasks: [],
+    });
 
     expect(taskIds).toEqual([]);
   });
@@ -168,30 +163,25 @@ describe("mutations/syllabi – confirmSyllabusTasks", () => {
 
     const syllabusId = await createTestSyllabus(t, userId, { courseId: courseId as string });
 
-    const taskIds = await withAuth.mutation(
-      api.mutations.syllabi.confirmSyllabusTasks,
-      {
-        syllabusId,
-        tasks: [
-          {
-            title: "Homework 1",
-            description: "Complete chapter 3 exercises.",
-            dueDate: FUTURE_DATE,
-            taskType: "Problem Set",
-          },
-          {
-            title: "Final Project",
-            description: "Build a full-stack app.",
-            dueDate: FUTURE_DATE,
-            taskType: "Coding",
-          },
-        ],
-      }
-    );
+    const taskIds = await withAuth.mutation(api.mutations.syllabi.confirmSyllabusTasks, {
+      syllabusId,
+      tasks: [
+        {
+          title: "Homework 1",
+          description: "Complete chapter 3 exercises.",
+          dueDate: FUTURE_DATE,
+          taskType: "Problem Set",
+        },
+        {
+          title: "Final Project",
+          description: "Build a full-stack app.",
+          dueDate: FUTURE_DATE,
+          taskType: "Coding",
+        },
+      ],
+    });
 
-    const tasks = await t.run((ctx) =>
-      Promise.all(taskIds.map((id) => ctx.db.get(id)))
-    );
+    const tasks = await t.run((ctx) => Promise.all(taskIds.map((id) => ctx.db.get(id))));
 
     const expectedTag = buildClassTag("EN.601.226", "Data Structures");
     for (const task of tasks) {
@@ -205,20 +195,17 @@ describe("mutations/syllabi – confirmSyllabusTasks", () => {
     const { userId, withAuth } = await createTestUser(t);
     const syllabusId = await createTestSyllabus(t, userId);
 
-    const [taskId] = await withAuth.mutation(
-      api.mutations.syllabi.confirmSyllabusTasks,
-      {
-        syllabusId,
-        tasks: [
-          {
-            title: "Reading 1",
-            description: "Read chapter 1.",
-            dueDate: FUTURE_DATE,
-            taskType: "Reading",
-          },
-        ],
-      }
-    );
+    const [taskId] = await withAuth.mutation(api.mutations.syllabi.confirmSyllabusTasks, {
+      syllabusId,
+      tasks: [
+        {
+          title: "Reading 1",
+          description: "Read chapter 1.",
+          dueDate: FUTURE_DATE,
+          taskType: "Reading",
+        },
+      ],
+    });
 
     const task = await t.run((ctx) => ctx.db.get(taskId));
     expect(task?.courseId).toBeUndefined();
@@ -237,16 +224,14 @@ describe("mutations/syllabi – confirmSyllabusTasks", () => {
       taskType,
     }));
 
-    const taskIds = await withAuth.mutation(
-      api.mutations.syllabi.confirmSyllabusTasks,
-      { syllabusId, tasks }
-    );
+    const taskIds = await withAuth.mutation(api.mutations.syllabi.confirmSyllabusTasks, {
+      syllabusId,
+      tasks,
+    });
 
     expect(taskIds).toHaveLength(TASK_TYPES.length);
 
-    const inserted = await t.run((ctx) =>
-      Promise.all(taskIds.map((id) => ctx.db.get(id)))
-    );
+    const inserted = await t.run((ctx) => Promise.all(taskIds.map((id) => ctx.db.get(id))));
 
     expect(inserted.map((task) => task?.taskType)).toEqual([...TASK_TYPES]);
   });
@@ -258,20 +243,17 @@ describe("mutations/syllabi – confirmSyllabusTasks", () => {
 
     const specificDate = 1_800_000_000_000;
 
-    const [taskId] = await withAuth.mutation(
-      api.mutations.syllabi.confirmSyllabusTasks,
-      {
-        syllabusId,
-        tasks: [
-          {
-            title: "Midterm",
-            description: "Covers chapters 1-5.",
-            dueDate: specificDate,
-            taskType: "Exam Prep",
-          },
-        ],
-      }
-    );
+    const [taskId] = await withAuth.mutation(api.mutations.syllabi.confirmSyllabusTasks, {
+      syllabusId,
+      tasks: [
+        {
+          title: "Midterm",
+          description: "Covers chapters 1-5.",
+          dueDate: specificDate,
+          taskType: "Exam Prep",
+        },
+      ],
+    });
 
     const task = await t.run((ctx) => ctx.db.get(taskId));
     expect(task?.dueDate).toEqual(specificDate);
@@ -282,23 +264,105 @@ describe("mutations/syllabi – confirmSyllabusTasks", () => {
     const { userId, withAuth } = await createTestUser(t);
     const syllabusId = await createTestSyllabus(t, userId);
 
-    const taskIds = await withAuth.mutation(
-      api.mutations.syllabi.confirmSyllabusTasks,
-      {
-        syllabusId,
-        tasks: [
-          {
-            title: "Quiz 1",
-            description: "Short answer questions.",
-            dueDate: FUTURE_DATE,
-            taskType: "Exam Prep",
-          },
-        ],
-      }
-    );
+    const taskIds = await withAuth.mutation(api.mutations.syllabi.confirmSyllabusTasks, {
+      syllabusId,
+      tasks: [
+        {
+          title: "Quiz 1",
+          description: "Short answer questions.",
+          dueDate: FUTURE_DATE,
+          taskType: "Exam Prep",
+        },
+      ],
+    });
 
     const task = await t.run((ctx) => ctx.db.get(taskIds[0]));
     expect(task?.userId).toEqual(userId);
+  });
+
+  test("saves assignmentWeight to the inserted task when provided", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+    const syllabusId = await createTestSyllabus(t, userId);
+
+    const [taskId] = await withAuth.mutation(api.mutations.syllabi.confirmSyllabusTasks, {
+      syllabusId,
+      tasks: [
+        {
+          title: "Midterm Exam",
+          description: "Covers chapters 1-7.",
+          dueDate: FUTURE_DATE,
+          taskType: "Exam Prep",
+          assignmentWeight: 30,
+        },
+      ],
+    });
+
+    const task = await t.run((ctx) => ctx.db.get(taskId));
+    expect(task?.assignmentWeight).toBe(30);
+  });
+
+  test("omits assignmentWeight on the inserted task when not provided", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+    const syllabusId = await createTestSyllabus(t, userId);
+
+    const [taskId] = await withAuth.mutation(api.mutations.syllabi.confirmSyllabusTasks, {
+      syllabusId,
+      tasks: [
+        {
+          title: "Problem Set 1",
+          description: "Solve exercises 1-10.",
+          dueDate: FUTURE_DATE,
+          taskType: "Problem Set",
+        },
+      ],
+    });
+
+    const task = await t.run((ctx) => ctx.db.get(taskId));
+    expect(task?.assignmentWeight).toBeUndefined();
+  });
+
+  test("throws when assignmentWeight is out of range", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+    const syllabusId = await createTestSyllabus(t, userId);
+
+    await expect(
+      withAuth.mutation(api.mutations.syllabi.confirmSyllabusTasks, {
+        syllabusId,
+        tasks: [
+          {
+            title: "Exam",
+            description: "desc",
+            dueDate: FUTURE_DATE,
+            taskType: "Exam Prep",
+            assignmentWeight: 150,
+          },
+        ],
+      })
+    ).rejects.toThrow("assignmentWeight must be between 0 and 100");
+  });
+
+  test("throws when assignmentWeight is negative", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+    const syllabusId = await createTestSyllabus(t, userId);
+
+    await expect(
+      withAuth.mutation(api.mutations.syllabi.confirmSyllabusTasks, {
+        syllabusId,
+        tasks: [
+          {
+            title: "Exam",
+            description: "desc",
+            dueDate: FUTURE_DATE,
+            taskType: "Exam Prep",
+            assignmentWeight: -1,
+          },
+        ],
+      })
+    ).rejects.toThrow("assignmentWeight must be between 0 and 100");
   });
 
   test("schedules time estimation for each confirmed task", async () => {
@@ -325,9 +389,7 @@ describe("mutations/syllabi – confirmSyllabusTasks", () => {
       ],
     });
 
-    const scheduled = await t.run((ctx) =>
-      ctx.db.system.query("_scheduled_functions").collect()
-    );
+    const scheduled = await t.run((ctx) => ctx.db.system.query("_scheduled_functions").collect());
 
     expect(scheduled).toHaveLength(2);
     expect(scheduled.every((fn) => fn.name.includes("estimateTaskTime"))).toBe(true);
@@ -354,9 +416,7 @@ describe("mutations/syllabi – confirmSyllabusTasks", () => {
       ],
     });
 
-    const scheduled = await t.run((ctx) =>
-      ctx.db.system.query("_scheduled_functions").collect()
-    );
+    const scheduled = await t.run((ctx) => ctx.db.system.query("_scheduled_functions").collect());
 
     expect(scheduled).toHaveLength(2);
     expect(scheduled.some((fn) => fn.name.includes("estimateTaskTime"))).toBe(true);

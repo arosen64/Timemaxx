@@ -33,6 +33,7 @@ function makeParseResponse(
     description: string;
     dueDate: string;
     taskType: string;
+    assignmentWeight?: number;
   }>
 ) {
   return { steps: { parse: { status: "success", output: { tasks } } } };
@@ -108,10 +109,9 @@ describe("actions/uploadSyllabus", () => {
     const t = makeTestCtx();
     const { withAuth } = await createTestUser(t);
 
-    const result = await withAuth.action(
-      api.ai.uploadSyllabus.uploadSyllabus,
-      { fileContents: SYLLABUS_TEXT }
-    );
+    const result = await withAuth.action(api.ai.uploadSyllabus.uploadSyllabus, {
+      fileContents: SYLLABUS_TEXT,
+    });
 
     expect(result.syllabusId).toBeDefined();
     expect(result.extractedTasks).toHaveLength(2);
@@ -121,6 +121,51 @@ describe("actions/uploadSyllabus", () => {
       taskType: "Problem Set",
     });
     expect(typeof result.extractedTasks[0].dueDate).toBe("number");
+  });
+
+  test("preserves assignmentWeight when present in parse output", async () => {
+    mockStartAsync.mockResolvedValueOnce(
+      makeParseResponse([
+        {
+          title: "Midterm Exam",
+          description: "Covers chapters 1-7.",
+          dueDate: futureDateISO(30),
+          taskType: "Exam Prep",
+          assignmentWeight: 30,
+        },
+      ])
+    );
+
+    const t = makeTestCtx();
+    const { withAuth } = await createTestUser(t);
+
+    const { extractedTasks } = await withAuth.action(api.ai.uploadSyllabus.uploadSyllabus, {
+      fileContents: SYLLABUS_TEXT,
+    });
+
+    expect(extractedTasks[0].assignmentWeight).toBe(30);
+  });
+
+  test("omits assignmentWeight when absent from parse output", async () => {
+    mockStartAsync.mockResolvedValueOnce(
+      makeParseResponse([
+        {
+          title: "Problem Set 1",
+          description: "Solve exercises from chapter 3.",
+          dueDate: futureDateISO(30),
+          taskType: "Problem Set",
+        },
+      ])
+    );
+
+    const t = makeTestCtx();
+    const { withAuth } = await createTestUser(t);
+
+    const { extractedTasks } = await withAuth.action(api.ai.uploadSyllabus.uploadSyllabus, {
+      fileContents: SYLLABUS_TEXT,
+    });
+
+    expect(extractedTasks[0].assignmentWeight).toBeUndefined();
   });
 
   test("converts ISO dueDate strings to millisecond timestamps", async () => {
@@ -139,10 +184,9 @@ describe("actions/uploadSyllabus", () => {
     const t = makeTestCtx();
     const { withAuth } = await createTestUser(t);
 
-    const { extractedTasks } = await withAuth.action(
-      api.ai.uploadSyllabus.uploadSyllabus,
-      { fileContents: SYLLABUS_TEXT }
-    );
+    const { extractedTasks } = await withAuth.action(api.ai.uploadSyllabus.uploadSyllabus, {
+      fileContents: SYLLABUS_TEXT,
+    });
 
     expect(extractedTasks[0].dueDate).toBe(new Date(dateStr).getTime());
   });
@@ -168,10 +212,9 @@ describe("actions/uploadSyllabus", () => {
     const t = makeTestCtx();
     const { withAuth } = await createTestUser(t);
 
-    const { extractedTasks } = await withAuth.action(
-      api.ai.uploadSyllabus.uploadSyllabus,
-      { fileContents: SYLLABUS_TEXT }
-    );
+    const { extractedTasks } = await withAuth.action(api.ai.uploadSyllabus.uploadSyllabus, {
+      fileContents: SYLLABUS_TEXT,
+    });
 
     expect(extractedTasks).toHaveLength(1);
     expect(extractedTasks[0].title).toBe("Valid Task");
@@ -199,10 +242,9 @@ describe("actions/uploadSyllabus", () => {
     const t = makeTestCtx();
     const { withAuth } = await createTestUser(t);
 
-    const { extractedTasks } = await withAuth.action(
-      api.ai.uploadSyllabus.uploadSyllabus,
-      { fileContents: SYLLABUS_TEXT }
-    );
+    const { extractedTasks } = await withAuth.action(api.ai.uploadSyllabus.uploadSyllabus, {
+      fileContents: SYLLABUS_TEXT,
+    });
 
     expect(extractedTasks).toHaveLength(1);
     expect(extractedTasks[0].title).toBe("Future Task");
@@ -214,10 +256,9 @@ describe("actions/uploadSyllabus", () => {
     const t = makeTestCtx();
     const { withAuth } = await createTestUser(t);
 
-    const { syllabusId } = await withAuth.action(
-      api.ai.uploadSyllabus.uploadSyllabus,
-      { fileContents: SYLLABUS_TEXT }
-    );
+    const { syllabusId } = await withAuth.action(api.ai.uploadSyllabus.uploadSyllabus, {
+      fileContents: SYLLABUS_TEXT,
+    });
 
     const syllabus = await t.run((ctx) => ctx.db.get(syllabusId));
     expect(syllabus?.status).toBe("confirmed");
@@ -245,10 +286,9 @@ describe("actions/uploadSyllabus", () => {
     const t = makeTestCtx();
     const { withAuth } = await createTestUser(t);
 
-    const { extractedTasks } = await withAuth.action(
-      api.ai.uploadSyllabus.uploadSyllabus,
-      { fileContents: "No assignments here." }
-    );
+    const { extractedTasks } = await withAuth.action(api.ai.uploadSyllabus.uploadSyllabus, {
+      fileContents: "No assignments here.",
+    });
 
     expect(extractedTasks).toEqual([]);
   });
@@ -259,10 +299,9 @@ describe("actions/uploadSyllabus", () => {
     const t = makeTestCtx();
     const { withAuth } = await createTestUser(t);
 
-    const { syllabusId } = await withAuth.action(
-      api.ai.uploadSyllabus.uploadSyllabus,
-      { fileContents: SYLLABUS_TEXT }
-    );
+    const { syllabusId } = await withAuth.action(api.ai.uploadSyllabus.uploadSyllabus, {
+      fileContents: SYLLABUS_TEXT,
+    });
 
     const syllabus = await t.run((ctx) => ctx.db.get(syllabusId));
     expect(syllabus?.fileContents).toBe(SYLLABUS_TEXT);
@@ -281,7 +320,9 @@ describe("actions/uploadSyllabus", () => {
 
   test("PDF path calls OCR workflow then parse workflow", async () => {
     mockStartAsync
-      .mockResolvedValueOnce({ steps: { ocr: { status: "success", output: { extractedText: "Extracted syllabus text" } } } })
+      .mockResolvedValueOnce({
+        steps: { ocr: { status: "success", output: { extractedText: "Extracted syllabus text" } } },
+      })
       .mockResolvedValueOnce(makeParseResponse([]));
 
     const t = makeTestCtx();

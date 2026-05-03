@@ -17,8 +17,7 @@ export function mixHexWithWhite(hex: string, pct: number): string {
   const g = parseInt(hex.slice(3, 5), 16);
   const b = parseInt(hex.slice(5, 7), 16);
 
-  const mix = (channel: number) =>
-    Math.round(channel + (255 - channel) * clamped);
+  const mix = (channel: number) => Math.round(channel + (255 - channel) * clamped);
 
   const toHex = (n: number) => n.toString(16).padStart(2, "0");
 

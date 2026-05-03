@@ -12,10 +12,15 @@ function termToSuffix(term: string): string {
   const season = parts[0].toLowerCase();
   const yy = parts[parts.length - 1].slice(-2);
   const code =
-    season === "spring" ? "SP" :
-    season === "summer" ? "SU" :
-    season === "fall" ? "FA" :
-    season === "intersession" ? "IN" : "";
+    season === "spring"
+      ? "SP"
+      : season === "summer"
+        ? "SU"
+        : season === "fall"
+          ? "FA"
+          : season === "intersession"
+            ? "IN"
+            : "";
   return code ? `.${code}${yy}` : "";
 }
 
@@ -45,9 +50,7 @@ export const addUserCourse = mutation({
     // Reject if the user already has this courseCode
     const existing = await ctx.db
       .query("userCourses")
-      .withIndex("by_user_course", (q) =>
-        q.eq("userId", userId).eq("courseCode", courseCode)
-      )
+      .withIndex("by_user_course", (q) => q.eq("userId", userId).eq("courseCode", courseCode))
       .first();
 
     if (existing) {
@@ -156,8 +159,7 @@ export const deleteUserCourse = mutation({
     for (const task of tasks) {
       const matchesByCourseId = task.courseId === args.userCourseId;
       const tag = task.classTag?.trim();
-      const matchesByClassTag =
-        tag === canonicalClassTag || tag === legacyNaiveTag;
+      const matchesByClassTag = tag === canonicalClassTag || tag === legacyNaiveTag;
       if (!matchesByCourseId && !matchesByClassTag) continue;
 
       await cascadeDeleteTask(ctx, task._id);

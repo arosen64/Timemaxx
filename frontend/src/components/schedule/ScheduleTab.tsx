@@ -1,397 +1,445 @@
-import { useRef, useEffect, useState, useMemo, useCallback } from 'react'
-import { useQuery, useAction, useMutation } from 'convex/react'
-import { api } from '../../../../backend/convex/_generated/api'
-import type { Id } from '../../../../backend/convex/_generated/dataModel'
-import type { CalendarEntry, TimedEvent, AllDayEvent } from '../../../../backend/convex/actions/fetchCalendarEvents'
-import { CalendarIcon, SpinnerIcon, WarningIcon } from '../icons'
-import TimeGrid, { type StudyBlockOnGrid } from './TimeGrid'
-import MobileDayView from './MobileDayView'
-import CalendarSelectorPopup from './CalendarSelectorPopup'
-import ScheduleHeader from './ScheduleHeader'
-import ClassPanel from './ClassPanel'
-import CalendarNudge from './CalendarNudge'
-import NoCalendarNudge from './NoCalendarNudge'
-import { useIsMobile } from '../../hooks/useIsMobile'
-import { computeOverlapLayout } from './overlapLayout'
-import { offsetDate, isoDateString, minutesFromMidnight, SLOT_HEIGHT, MAX_OFFSET_DAYS, DAYS_FULL } from './utils'
+import { useRef, useEffect, useState, useMemo, useCallback } from "react";
+import { useQuery, useAction, useMutation } from "convex/react";
+import { api } from "../../../../backend/convex/_generated/api";
+import type { Id } from "../../../../backend/convex/_generated/dataModel";
+import type {
+  CalendarEntry,
+  TimedEvent,
+  AllDayEvent,
+} from "../../../../backend/convex/functions/fetchCalendarEvents";
+import { CalendarIcon, SpinnerIcon, WarningIcon } from "../icons";
+import TimeGrid, { type StudyBlockOnGrid } from "./TimeGrid";
+import MobileDayView from "./MobileDayView";
+import CalendarSelectorPopup from "./CalendarSelectorPopup";
+import ScheduleHeader from "./ScheduleHeader";
+import ClassPanel from "./ClassPanel";
+import CalendarNudge from "./CalendarNudge";
+import NoCalendarNudge from "./NoCalendarNudge";
+import { useIsMobile } from "../../hooks/useIsMobile";
+import { computeOverlapLayout } from "./overlapLayout";
+import {
+  offsetDate,
+  isoDateString,
+  minutesFromMidnight,
+  SLOT_HEIGHT,
+  MAX_OFFSET_DAYS,
+  DAYS_FULL,
+} from "./utils";
 
-type WorkHoursRow = { day: string; available: number[]; blocked: number[] }
+type WorkHoursRow = { day: string; available: number[]; blocked: number[] };
 
 type CalendarData = {
-  calendarList: CalendarEntry[]
-  timedEvents: TimedEvent[]
-  allDayEvents: AllDayEvent[]
-  error: boolean
-}
+  calendarList: CalendarEntry[];
+  timedEvents: TimedEvent[];
+  allDayEvents: AllDayEvent[];
+  error: boolean;
+};
 
 type StudyBlockWithTask = {
-  _id: Id<'studyBlocks'>
-  taskId: Id<'tasks'>
-  subtaskId?: Id<'subtasks'>
-  title: string
-  startTime: string | undefined
-  studyBlockLength: number
-  isConflicted: boolean | undefined
-  googleEventId?: string
-  needsExport?: boolean
-  taskTitle: string
-  taskDueDate: number
-  courseColor?: string
-  courseName?: string
-}
+  _id: Id<"studyBlocks">;
+  taskId: Id<"tasks">;
+  subtaskId?: Id<"subtasks">;
+  title: string;
+  startTime: string | undefined;
+  studyBlockLength: number;
+  isConflicted: boolean | undefined;
+  googleEventId?: string;
+  needsExport?: boolean;
+  taskTitle: string;
+  taskDueDate: number;
+  courseColor?: string;
+  courseName?: string;
+};
 
 export default function ScheduleTab() {
-  const scheduleData = useQuery(api.queries.calendar.getScheduleData)
-  const allStudyBlocks = useQuery(api.queries.studyBlocks.getAllStudyBlocksWithTasks) as StudyBlockWithTask[] | undefined
-  const saveSelectedCalendarsMutation = useMutation(api.mutations.calendar.saveSelectedCalendars)
-  const editStudyBlockTimeMutation = useMutation(api.mutations.studyBlocks.editStudyBlockTime)
-  const runDetectConflictsMutation = useMutation(api.mutations.studyBlocks.runDetectConflicts)
-  const autoRescheduleAction = useAction(api.actions.autoRescheduleConflicts.autoRescheduleConflicts)
-  const fetchCalendarEventsAction = useAction(api.actions.fetchCalendarEvents.fetchCalendarEvents)
-  const exportStudyBlocksAction = useAction(api.actions.exportStudyBlocksToCalendar.exportStudyBlocksToCalendar)
-  const initiateCalendarOAuth = useAction(api.actions.initiateGoogleCalendarOAuth.initiateGoogleCalendarOAuth)
+  const scheduleData = useQuery(api.queries.calendar.getScheduleData);
+  const allStudyBlocks = useQuery(api.queries.studyBlocks.getAllStudyBlocksWithTasks) as
+    | StudyBlockWithTask[]
+    | undefined;
+  const saveSelectedCalendarsMutation = useMutation(api.mutations.calendar.saveSelectedCalendars);
+  const editStudyBlockTimeMutation = useMutation(api.mutations.studyBlocks.editStudyBlockTime);
+  const runDetectConflictsMutation = useMutation(api.mutations.studyBlocks.runDetectConflicts);
+  const autoRescheduleAction = useAction(
+    api.actions.autoRescheduleConflicts.autoRescheduleConflicts
+  );
+  const fetchCalendarEventsAction = useAction(
+    api.functions.fetchCalendarEvents.fetchCalendarEvents
+  );
+  const exportStudyBlocksAction = useAction(
+    api.functions.exportStudyBlocksToCalendar.exportStudyBlocksToCalendar
+  );
+  const initiateCalendarOAuth = useAction(
+    api.functions.initiateGoogleCalendarOAuth.initiateGoogleCalendarOAuth
+  );
 
-  const isMobile = useIsMobile()
-  const [weekOffset, setWeekOffset] = useState(0)
-  const [calendarData, setCalendarData] = useState<CalendarData | null>(null)
-  const [isFetchingEvents, setIsFetchingEvents] = useState(false)
-  const [selectorOpen, setSelectorOpen] = useState(false)
-  const [assigningBlockId, setAssigningBlockId] = useState<Id<'studyBlocks'> | null>(null)
-  const [draggingBlockId, setDraggingBlockId] = useState<Id<'studyBlocks'> | null>(null)
-  const [autoRescheduleMsg, setAutoRescheduleMsg] = useState<string | null>(null)
-  const [isRescheduling, setIsRescheduling] = useState(false)
-  const [isExporting, setIsExporting] = useState(false)
-  const [exportMsg, setExportMsg] = useState<string | null>(null)
-  const [scheduleAllMsg, setScheduleAllMsg] = useState<{ text: string; warn: boolean } | null>(null)
-  const [showNudge, setShowNudge] = useState(false)
-  const [pendingSchedule, setPendingSchedule] = useState<(() => void) | null>(null)
-  const [isConnecting, setIsConnecting] = useState(false)
-  const [connectError, setConnectError] = useState<string | null>(null)
-  const [noCalendarPending, setNoCalendarPending] = useState<(() => void) | null>(null)
+  const isMobile = useIsMobile();
+  const [weekOffset, setWeekOffset] = useState(0);
+  const [calendarData, setCalendarData] = useState<CalendarData | null>(null);
+  const [isFetchingEvents, setIsFetchingEvents] = useState(false);
+  const [selectorOpen, setSelectorOpen] = useState(false);
+  const [assigningBlockId, setAssigningBlockId] = useState<Id<"studyBlocks"> | null>(null);
+  const [draggingBlockId, setDraggingBlockId] = useState<Id<"studyBlocks"> | null>(null);
+  const [autoRescheduleMsg, setAutoRescheduleMsg] = useState<string | null>(null);
+  const [isRescheduling, setIsRescheduling] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportMsg, setExportMsg] = useState<string | null>(null);
+  const [scheduleAllMsg, setScheduleAllMsg] = useState<{ text: string; warn: boolean } | null>(
+    null
+  );
+  const [showNudge, setShowNudge] = useState(false);
+  const [pendingSchedule, setPendingSchedule] = useState<(() => void) | null>(null);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [connectError, setConnectError] = useState<string | null>(null);
+  const [noCalendarPending, setNoCalendarPending] = useState<(() => void) | null>(null);
 
-  const gridRef = useRef<HTMLDivElement>(null)
+  const gridRef = useRef<HTMLDivElement>(null);
 
   const days = useMemo(
     () => Array.from({ length: 7 }, (_, i) => offsetDate(weekOffset + i)),
     [weekOffset]
-  )
-  const startDateStr = useMemo(() => isoDateString(days[0]), [days])
-  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
+  );
+  const startDateStr = useMemo(() => isoDateString(days[0]), [days]);
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-  const calendarConnected = scheduleData?.calendarConnected ?? false
-  const workHoursGrid = (scheduleData?.workHoursGrid ?? null) as WorkHoursRow[] | null
-  const selectedCalendarIds = scheduleData?.selectedCalendarIds ?? null
+  const calendarConnected = scheduleData?.calendarConnected ?? false;
+  const workHoursGrid = (scheduleData?.workHoursGrid ?? null) as WorkHoursRow[] | null;
+  const selectedCalendarIds = scheduleData?.selectedCalendarIds ?? null;
 
   // Fetch calendar events when tab mounts or week changes
   useEffect(() => {
-    if (!calendarConnected) return
-    let cancelled = false
-    setIsFetchingEvents(true)
+    if (!calendarConnected) return;
+    let cancelled = false;
+    setIsFetchingEvents(true);
     fetchCalendarEventsAction({ startDate: startDateStr, timezone })
-      .then((data) => { if (!cancelled) setCalendarData(data) })
-      .catch(() => {
-        if (!cancelled) setCalendarData({ calendarList: [], timedEvents: [], allDayEvents: [], error: true })
+      .then((data) => {
+        if (!cancelled) setCalendarData(data);
       })
-      .finally(() => { if (!cancelled) setIsFetchingEvents(false) })
-    return () => { cancelled = true }
-  }, [calendarConnected, startDateStr, timezone, fetchCalendarEventsAction])
+      .catch(() => {
+        if (!cancelled)
+          setCalendarData({ calendarList: [], timedEvents: [], allDayEvents: [], error: true });
+      })
+      .finally(() => {
+        if (!cancelled) setIsFetchingEvents(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [calendarConnected, startDateStr, timezone, fetchCalendarEventsAction]);
 
   // Trigger conflict detection when tab mounts and we have events + study blocks
   useEffect(() => {
-    if (allStudyBlocks === undefined) return
-    const hasScheduledBlocks = allStudyBlocks.some((b) => b.startTime)
-    if (!hasScheduledBlocks) return
+    if (allStudyBlocks === undefined) return;
+    const hasScheduledBlocks = allStudyBlocks.some((b) => b.startTime);
+    if (!hasScheduledBlocks) return;
 
     runDetectConflictsMutation({
       timedEvents: calendarData?.timedEvents ?? [],
       workHoursGrid: workHoursGrid ?? [],
       timezone,
-    }).catch(() => {})
+    }).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [calendarData?.timedEvents, workHoursGrid])
+  }, [calendarData?.timedEvents, workHoursGrid]);
 
   // Scroll to current time on first render
   useEffect(() => {
-    const el = gridRef.current
-    if (!el) return
-    el.scrollTop = Math.max(0, (minutesFromMidnight(new Date()) / 30) * SLOT_HEIGHT - 120)
-  }, [])
+    const el = gridRef.current;
+    if (!el) return;
+    el.scrollTop = Math.max(0, (minutesFromMidnight(new Date()) / 30) * SLOT_HEIGHT - 120);
+  }, []);
 
   const timedEventsByDay = useMemo(() => {
-    const map: Record<string, TimedEvent[]> = {}
+    const map: Record<string, TimedEvent[]> = {};
     for (const e of calendarData?.timedEvents ?? []) {
-      ;(map[isoDateString(new Date(e.start))] ??= []).push(e)
+      (map[isoDateString(new Date(e.start))] ??= []).push(e);
     }
-    return map
-  }, [calendarData])
+    return map;
+  }, [calendarData]);
 
   const allDayEventsByDay = useMemo(() => {
-    const map: Record<string, AllDayEvent[]> = {}
+    const map: Record<string, AllDayEvent[]> = {};
     for (const e of calendarData?.allDayEvents ?? []) {
-      ;(map[e.date] ??= []).push(e)
+      (map[e.date] ??= []).push(e);
     }
-    return map
-  }, [calendarData])
+    return map;
+  }, [calendarData]);
 
   const layoutByDay = useMemo(() => {
-    const result: Record<string, ReturnType<typeof computeOverlapLayout>> = {}
+    const result: Record<string, ReturnType<typeof computeOverlapLayout>> = {};
     for (const day of days) {
-      const key = isoDateString(day)
-      result[key] = computeOverlapLayout(timedEventsByDay[key] ?? [])
+      const key = isoDateString(day);
+      result[key] = computeOverlapLayout(timedEventsByDay[key] ?? []);
     }
-    return result
-  }, [days, timedEventsByDay])
+    return result;
+  }, [days, timedEventsByDay]);
 
-  // Split study blocks into scheduled (on grid) and unscheduled (in tray)
+  // Split study blocks into scheduled (on grid) and unscheduled (in tray).
+  // Past-due and completed task blocks are excluded server-side in fetchAllStudyBlocksWithTasks.
   const { scheduledBlocks, unscheduledBlocks } = useMemo(() => {
-    const scheduled: StudyBlockOnGrid[] = []
-    const unscheduled: StudyBlockWithTask[] = []
+    const scheduled: StudyBlockOnGrid[] = [];
+    const unscheduled: StudyBlockWithTask[] = [];
     for (const b of allStudyBlocks ?? []) {
-      if (b.startTime) scheduled.push(b as StudyBlockOnGrid)
-      else unscheduled.push(b)
+      if (b.startTime) scheduled.push(b as StudyBlockOnGrid);
+      else unscheduled.push(b);
     }
     unscheduled.sort((a, b) => {
-      if (a.taskDueDate !== b.taskDueDate) return a.taskDueDate - b.taskDueDate
-      return a._id < b._id ? -1 : 1
-    })
-    return { scheduledBlocks: scheduled, unscheduledBlocks: unscheduled }
-  }, [allStudyBlocks])
+      if (a.taskDueDate !== b.taskDueDate) return a.taskDueDate - b.taskDueDate;
+      return a._id < b._id ? -1 : 1;
+    });
+    return { scheduledBlocks: scheduled, unscheduledBlocks: unscheduled };
+  }, [allStudyBlocks]);
 
   const studyBlocksByDay = useMemo(() => {
-    const map: Record<string, StudyBlockOnGrid[]> = {}
+    const map: Record<string, StudyBlockOnGrid[]> = {};
     for (const b of scheduledBlocks) {
-      const dateStr = isoDateString(new Date(b.startTime))
-      ;(map[dateStr] ??= []).push(b)
+      const dateStr = isoDateString(new Date(b.startTime));
+      (map[dateStr] ??= []).push(b);
     }
-    return map
-  }, [scheduledBlocks])
+    return map;
+  }, [scheduledBlocks]);
 
   const highlightedSlots = useMemo((): Set<string> => {
-    if (!assigningBlockId && !draggingBlockId) return new Set()
+    if (!assigningBlockId && !draggingBlockId) return new Set();
 
-    const activeId = assigningBlockId ?? draggingBlockId
-    const block = allStudyBlocks?.find((b) => b._id === activeId)
-    if (!block) return new Set()
+    const activeId = assigningBlockId ?? draggingBlockId;
+    const block = allStudyBlocks?.find((b) => b._id === activeId);
+    if (!block) return new Set();
 
-    const slots = new Set<string>()
-    const timedEvents = calendarData?.timedEvents ?? []
+    const slots = new Set<string>();
+    const timedEvents = calendarData?.timedEvents ?? [];
 
     for (let offset = 0; offset < MAX_OFFSET_DAYS; offset++) {
-      const date = offsetDate(offset)
-      const dateStr = isoDateString(date)
-      const jsDay = date.getDay()
-      const dayName = DAYS_FULL[jsDay === 0 ? 6 : jsDay - 1]
-      const row = workHoursGrid?.find((r) => r.day === dayName)
+      const date = offsetDate(offset);
+      const dateStr = isoDateString(date);
+      const jsDay = date.getDay();
+      const dayName = DAYS_FULL[jsDay === 0 ? 6 : jsDay - 1];
+      const row = workHoursGrid?.find((r) => r.day === dayName);
 
-      const dayEventSlots = new Set<number>()
+      const dayEventSlots = new Set<number>();
       for (const e of timedEvents) {
-        if (isoDateString(new Date(e.start)) !== dateStr) continue
-        const startMins = minutesFromMidnight(new Date(e.start))
-        const endMins = minutesFromMidnight(new Date(e.end))
-        const startSlot = Math.floor(startMins / 30)
-        const endSlot = Math.ceil(endMins / 30)
-        for (let s = startSlot; s < endSlot; s++) dayEventSlots.add(s)
+        if (isoDateString(new Date(e.start)) !== dateStr) continue;
+        const startMins = minutesFromMidnight(new Date(e.start));
+        const endMins = minutesFromMidnight(new Date(e.end));
+        const startSlot = Math.floor(startMins / 30);
+        const endSlot = Math.ceil(endMins / 30);
+        for (let s = startSlot; s < endSlot; s++) dayEventSlots.add(s);
       }
 
-      const dayBlockSlots = new Set<number>()
+      const dayBlockSlots = new Set<number>();
       for (const sb of studyBlocksByDay[dateStr] ?? []) {
-        if (sb._id === activeId) continue
-        const startMins = minutesFromMidnight(new Date(sb.startTime))
-        const blockSlots = Math.ceil(sb.studyBlockLength / 30)
-        const startSlot = Math.floor(startMins / 30)
-        for (let s = startSlot; s < startSlot + blockSlots; s++) dayBlockSlots.add(s)
+        if (sb._id === activeId) continue;
+        const startMins = minutesFromMidnight(new Date(sb.startTime));
+        const blockSlots = Math.ceil(sb.studyBlockLength / 30);
+        const startSlot = Math.floor(startMins / 30);
+        for (let s = startSlot; s < startSlot + blockSlots; s++) dayBlockSlots.add(s);
       }
 
-      const neededSlots = Math.ceil(block.studyBlockLength / 30)
+      const neededSlots = Math.ceil(block.studyBlockLength / 30);
 
       for (let slot = 0; slot <= 48 - neededSlots; slot++) {
-        let conflict = false
+        let conflict = false;
         for (let s = slot; s < slot + neededSlots; s++) {
           if (row?.blocked.includes(s) || dayEventSlots.has(s) || dayBlockSlots.has(s)) {
-            conflict = true
-            break
+            conflict = true;
+            break;
           }
         }
-        if (conflict) continue
+        if (conflict) continue;
 
-        const slotStartMs = new Date(`${dateStr}T00:00:00`).getTime() + slot * 30 * 60 * 1000
-        if (slotStartMs < Date.now()) continue
-        if (slotStartMs >= block.taskDueDate) continue
+        const slotStartMs = new Date(`${dateStr}T00:00:00`).getTime() + slot * 30 * 60 * 1000;
+        if (slotStartMs < Date.now()) continue;
+        if (slotStartMs >= block.taskDueDate) continue;
 
-        slots.add(`${dateStr}:${slot}`)
+        slots.add(`${dateStr}:${slot}`);
       }
     }
 
-    return slots
-  }, [assigningBlockId, draggingBlockId, allStudyBlocks, calendarData, workHoursGrid, studyBlocksByDay])
+    return slots;
+  }, [
+    assigningBlockId,
+    draggingBlockId,
+    allStudyBlocks,
+    calendarData,
+    workHoursGrid,
+    studyBlocksByDay,
+  ]);
 
   // Cancel assign mode on Escape
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape') {
-        setAssigningBlockId(null)
-        setDraggingBlockId(null)
+      if (e.key === "Escape") {
+        setAssigningBlockId(null);
+        setDraggingBlockId(null);
       }
     }
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  }, [])
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
 
-  const handleSlotClick = useCallback(async (dateStr: string, slot: number) => {
-    const activeId = assigningBlockId ?? draggingBlockId
-    if (!activeId) return
-    const slotStartMs = new Date(`${dateStr}T00:00:00`).getTime() + slot * 30 * 60 * 1000
-    if (slotStartMs < Date.now()) return
-    const isoStart = new Date(slotStartMs).toISOString()
-    await editStudyBlockTimeMutation({ studyBlockId: activeId, startTime: isoStart })
-    setAssigningBlockId(null)
-    setDraggingBlockId(null)
-  }, [assigningBlockId, draggingBlockId, editStudyBlockTimeMutation])
+  const handleSlotClick = useCallback(
+    async (dateStr: string, slot: number) => {
+      const activeId = assigningBlockId ?? draggingBlockId;
+      if (!activeId) return;
+      const slotStartMs = new Date(`${dateStr}T00:00:00`).getTime() + slot * 30 * 60 * 1000;
+      if (slotStartMs < Date.now()) return;
+      const isoStart = new Date(slotStartMs).toISOString();
+      await editStudyBlockTimeMutation({ studyBlockId: activeId, startTime: isoStart });
+      setAssigningBlockId(null);
+      setDraggingBlockId(null);
+    },
+    [assigningBlockId, draggingBlockId, editStudyBlockTimeMutation]
+  );
 
-  const handleDrop = useCallback(async (dateStr: string, slot: number) => {
-    if (!draggingBlockId) return
-    const slotStartMs = new Date(`${dateStr}T00:00:00`).getTime() + slot * 30 * 60 * 1000
-    if (slotStartMs < Date.now()) return
-    const isoStart = new Date(slotStartMs).toISOString()
-    await editStudyBlockTimeMutation({ studyBlockId: draggingBlockId, startTime: isoStart })
-    setDraggingBlockId(null)
-  }, [draggingBlockId, editStudyBlockTimeMutation])
+  const handleDrop = useCallback(
+    async (dateStr: string, slot: number) => {
+      if (!draggingBlockId) return;
+      const slotStartMs = new Date(`${dateStr}T00:00:00`).getTime() + slot * 30 * 60 * 1000;
+      if (slotStartMs < Date.now()) return;
+      const isoStart = new Date(slotStartMs).toISOString();
+      await editStudyBlockTimeMutation({ studyBlockId: draggingBlockId, startTime: isoStart });
+      setDraggingBlockId(null);
+    },
+    [draggingBlockId, editStudyBlockTimeMutation]
+  );
 
-  const handleMoveBlock = useCallback((studyBlockId: Id<'studyBlocks'>) => {
-    setAssigningBlockId(null)
-    setDraggingBlockId(studyBlockId)
-  }, [])
+  const handleMoveBlock = useCallback((studyBlockId: Id<"studyBlocks">) => {
+    setAssigningBlockId(null);
+    setDraggingBlockId(studyBlockId);
+  }, []);
 
   const handleAutoReschedule = useCallback(async () => {
-    setIsRescheduling(true)
-    setAutoRescheduleMsg(null)
+    setIsRescheduling(true);
+    setAutoRescheduleMsg(null);
     try {
-      const result = await autoRescheduleAction({ timezone })
+      const result = await autoRescheduleAction({ timezone });
       setAutoRescheduleMsg(
         result.unplacedCount > 0
-          ? `${result.unplacedCount} block${result.unplacedCount !== 1 ? 's' : ''} could not be placed and moved to the tray.`
-          : 'All conflicts resolved.'
-      )
+          ? `${result.unplacedCount} block${result.unplacedCount !== 1 ? "s" : ""} could not be placed and moved to the tray.`
+          : "All conflicts resolved."
+      );
     } catch {
-      setAutoRescheduleMsg('Auto-reschedule failed. Please try again.')
+      setAutoRescheduleMsg("Auto-reschedule failed. Please try again.");
     } finally {
-      setIsRescheduling(false)
+      setIsRescheduling(false);
     }
-  }, [autoRescheduleAction, timezone])
+  }, [autoRescheduleAction, timezone]);
 
   const handleExport = useCallback(async () => {
-    setIsExporting(true)
-    setExportMsg(null)
+    setIsExporting(true);
+    setExportMsg(null);
     try {
-      const result = await exportStudyBlocksAction({})
+      const result = await exportStudyBlocksAction({});
       if (result.noCalendar) {
-        setExportMsg('No calendar connected.')
+        setExportMsg("No calendar connected.");
       } else {
-        const parts: string[] = []
-        if (result.exported > 0) parts.push(`${result.exported} block${result.exported !== 1 ? 's' : ''} exported`)
-        if (result.patched > 0) parts.push(`${result.patched} updated`)
-        setExportMsg(parts.length > 0 ? parts.join(', ') + '.' : 'Nothing to export.')
+        const parts: string[] = [];
+        if (result.exported > 0)
+          parts.push(`${result.exported} block${result.exported !== 1 ? "s" : ""} exported`);
+        if (result.patched > 0) parts.push(`${result.patched} updated`);
+        setExportMsg(parts.length > 0 ? parts.join(", ") + "." : "Nothing to export.");
         // Re-fetch so the grid reflects updated GCal event positions immediately
-        const fresh = await fetchCalendarEventsAction({ startDate: startDateStr, timezone })
-        setCalendarData(fresh)
+        const fresh = await fetchCalendarEventsAction({ startDate: startDateStr, timezone });
+        setCalendarData(fresh);
       }
     } catch (err) {
-      setExportMsg(`Export failed: ${err instanceof Error ? err.message : String(err)}`)
+      setExportMsg(`Export failed: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
-      setIsExporting(false)
+      setIsExporting(false);
     }
-  }, [exportStudyBlocksAction, fetchCalendarEventsAction, startDateStr, timezone])
+  }, [exportStudyBlocksAction, fetchCalendarEventsAction, startDateStr, timezone]);
 
   // calendarList already excludes the timemaxx export calendar (filtered server-side),
   // so any selectedCalendarId that appears in calendarList is a real user-visible calendar.
   const noCalendarCondition =
     calendarConnected &&
     calendarData !== null &&
-    (selectedCalendarIds ?? []).filter(
-      (id) => calendarData.calendarList.some((c) => c.id === id)
-    ).length === 0
+    (selectedCalendarIds ?? []).filter((id) => calendarData.calendarList.some((c) => c.id === id))
+      .length === 0;
 
   function maybeNudge(proceed: () => void) {
     if (!calendarConnected) {
-      setPendingSchedule(() => proceed)
-      setShowNudge(true)
+      setPendingSchedule(() => proceed);
+      setShowNudge(true);
     } else if (noCalendarCondition) {
-      setNoCalendarPending(() => proceed)
+      setNoCalendarPending(() => proceed);
     } else {
-      proceed()
+      proceed();
     }
   }
 
   function handleNudgeConnect() {
-    setIsConnecting(true)
-    setConnectError(null)
+    setIsConnecting(true);
+    setConnectError(null);
     initiateCalendarOAuth({})
-      .then((url) => { window.location.href = url })
-      .catch(() => {
-        setIsConnecting(false)
-        setConnectError('Failed to start Google Calendar sign-in. Please try again.')
+      .then((url) => {
+        window.location.href = url;
       })
+      .catch(() => {
+        setIsConnecting(false);
+        setConnectError("Failed to start Google Calendar sign-in. Please try again.");
+      });
   }
 
   function handleNudgeScheduleAnyway() {
-    setShowNudge(false)
-    pendingSchedule?.()
-    setPendingSchedule(null)
+    setShowNudge(false);
+    pendingSchedule?.();
+    setPendingSchedule(null);
   }
 
   function handleNudgeDismiss() {
-    setShowNudge(false)
-    setPendingSchedule(null)
+    setShowNudge(false);
+    setPendingSchedule(null);
   }
 
   function handleNoCalendarScheduleAnyway() {
-    const fn = noCalendarPending
-    setNoCalendarPending(null)
-    fn?.()
+    const fn = noCalendarPending;
+    setNoCalendarPending(null);
+    fn?.();
   }
 
   function handleNoCalendarSelectCalendars() {
-    setNoCalendarPending(null)
-    setSelectorOpen(true)
+    setNoCalendarPending(null);
+    setSelectorOpen(true);
   }
 
   function handleNoCalendarDismiss() {
-    setNoCalendarPending(null)
+    setNoCalendarPending(null);
   }
 
   async function handleToggleCalendar(calId: string) {
-    const current = selectedCalendarIds ?? []
-    const next = current.includes(calId) ? current.filter((id) => id !== calId) : [...current, calId]
-    await saveSelectedCalendarsMutation({ selectedCalendarIds: next })
-    const data = await fetchCalendarEventsAction({ startDate: startDateStr, timezone })
-    setCalendarData(data)
+    const current = selectedCalendarIds ?? [];
+    const next = current.includes(calId)
+      ? current.filter((id) => id !== calId)
+      : [...current, calId];
+    await saveSelectedCalendarsMutation({ selectedCalendarIds: next });
+    const data = await fetchCalendarEventsAction({ startDate: startDateStr, timezone });
+    setCalendarData(data);
     await runDetectConflictsMutation({
       timedEvents: data.timedEvents,
       workHoursGrid: workHoursGrid ?? [],
       timezone,
-    }).catch(() => {})
+    }).catch(() => {});
   }
 
-  const hasIndicator = calendarConnected && (!selectedCalendarIds || selectedCalendarIds.length === 0)
-
+  const hasIndicator =
+    calendarConnected && (!selectedCalendarIds || selectedCalendarIds.length === 0);
 
   const pendingExportCount = useMemo(() => {
-    if (!calendarConnected) return 0
+    if (!calendarConnected) return 0;
     return (allStudyBlocks ?? []).filter((b) => {
-      if (!b.startTime) return false
+      if (!b.startTime) return false;
       // needsExport explicitly true, or never exported (no googleEventId and needsExport not yet set)
-      return b.needsExport === true || (b.needsExport === undefined && !b.googleEventId)
-    }).length
-  }, [allStudyBlocks, calendarConnected])
+      return b.needsExport === true || (b.needsExport === undefined && !b.googleEventId);
+    }).length;
+  }, [allStudyBlocks, calendarConnected]);
 
   return (
     <div
       className="flex flex-col flex-1 min-h-0 min-w-0"
       onClick={(e) => {
-        const target = e.target as HTMLElement
-        if (!target.closest('[data-grid]') && !target.closest('[data-tray]')) {
-          if (assigningBlockId) setAssigningBlockId(null)
-          if (draggingBlockId) setDraggingBlockId(null)
+        const target = e.target as HTMLElement;
+        if (!target.closest("[data-grid]") && !target.closest("[data-tray]")) {
+          if (assigningBlockId) setAssigningBlockId(null);
+          if (draggingBlockId) setDraggingBlockId(null);
         }
       }}
     >
@@ -419,29 +467,52 @@ export default function ScheduleTab() {
       {autoRescheduleMsg && (
         <div className="mb-3 flex items-center justify-between gap-2 rounded-lg border border-border bg-bg-gray px-4 py-2 text-sm text-slate-blue">
           <span>{autoRescheduleMsg}</span>
-          <button type="button" onClick={() => setAutoRescheduleMsg(null)} className="text-light-blue hover:text-slate-blue">✕</button>
+          <button
+            type="button"
+            onClick={() => setAutoRescheduleMsg(null)}
+            className="text-light-blue hover:text-slate-blue"
+          >
+            ✕
+          </button>
         </div>
       )}
 
       {exportMsg && (
         <div className="mb-3 flex items-center justify-between gap-2 rounded-lg border border-border bg-bg-gray px-4 py-2 text-sm text-slate-blue">
           <span>{exportMsg}</span>
-          <button type="button" onClick={() => setExportMsg(null)} className="text-light-blue hover:text-slate-blue">✕</button>
+          <button
+            type="button"
+            onClick={() => setExportMsg(null)}
+            className="text-light-blue hover:text-slate-blue"
+          >
+            ✕
+          </button>
         </div>
       )}
 
       {scheduleAllMsg && (
-        <div className={`mb-3 flex items-center justify-between gap-2 rounded-lg border px-4 py-2 text-sm ${scheduleAllMsg.warn ? 'border-amber-200 bg-amber-50 text-amber-800' : 'border-border bg-bg-gray text-slate-blue'}`}>
+        <div
+          className={`mb-3 flex items-center justify-between gap-2 rounded-lg border px-4 py-2 text-sm ${scheduleAllMsg.warn ? "border-amber-200 bg-amber-50 text-amber-800" : "border-border bg-bg-gray text-slate-blue"}`}
+        >
           <span>{scheduleAllMsg.text}</span>
-          <button type="button" onClick={() => setScheduleAllMsg(null)} className="opacity-60 hover:opacity-100">✕</button>
+          <button
+            type="button"
+            onClick={() => setScheduleAllMsg(null)}
+            className="opacity-60 hover:opacity-100"
+          >
+            ✕
+          </button>
         </div>
       )}
 
-{pendingExportCount > 0 && (
+      {pendingExportCount > 0 && (
         <div className="mb-3 flex items-center gap-2 rounded-lg border border-sky-blue bg-info-bg px-4 py-2 text-sm text-navy">
-          <span className="text-info-dark"><CalendarIcon color="currentColor" size={14} /></span>
+          <span className="text-info-dark">
+            <CalendarIcon color="currentColor" size={14} />
+          </span>
           <span>
-            {pendingExportCount} block{pendingExportCount !== 1 ? 's' : ''} added or moved — export to sync with Google Calendar.
+            {pendingExportCount} block{pendingExportCount !== 1 ? "s" : ""} added or moved — export
+            to sync with Google Calendar.
           </span>
         </div>
       )}
@@ -449,14 +520,18 @@ export default function ScheduleTab() {
       {assigningBlockId && (
         <div className="mb-3 flex items-center gap-2 rounded-lg border border-teal bg-teal/10 px-4 py-2 text-sm text-navy">
           <span className="font-semibold font-heading">Assign mode</span>
-          <span className="text-slate-blue">Click a highlighted slot to assign. Press Esc to cancel.</span>
+          <span className="text-slate-blue">
+            Click a highlighted slot to assign. Press Esc to cancel.
+          </span>
         </div>
       )}
 
       {draggingBlockId && (
         <div className="mb-3 flex items-center gap-2 rounded-lg border border-urgent-red-light bg-urgent-red-light/30 px-4 py-2 text-sm text-navy">
           <span className="font-semibold font-heading">Moving conflict</span>
-          <span className="text-slate-blue">Click a highlighted slot to move the block. Press Esc to cancel.</span>
+          <span className="text-slate-blue">
+            Click a highlighted slot to move the block. Press Esc to cancel.
+          </span>
         </div>
       )}
 
@@ -495,11 +570,11 @@ export default function ScheduleTab() {
               onAutoReschedule={handleAutoReschedule}
               draggingBlockId={draggingBlockId}
               onDragStart={(id) => {
-                const block = allStudyBlocks?.find((b) => b._id === id)
+                const block = allStudyBlocks?.find((b) => b._id === id);
                 if (block?.isConflicted) {
-                  setDraggingBlockId(id)
+                  setDraggingBlockId(id);
                 } else {
-                  setAssigningBlockId(id)
+                  setAssigningBlockId(id);
                 }
               }}
               onDrop={handleDrop}
@@ -551,5 +626,5 @@ export default function ScheduleTab() {
         />
       )}
     </div>
-  )
+  );
 }

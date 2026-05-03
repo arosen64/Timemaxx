@@ -1,9 +1,7 @@
-"use node";
-
 import { action } from "../_generated/server";
 import { v } from "convex/values";
 import { internal, api } from "../_generated/api";
-import { type GenerateSubtasksResult } from "./generateSubtasks";
+import { type GenerateSubtasksResult } from "../actions/generateSubtasks";
 
 export const requestGenerateSubtasks = action({
   args: {
@@ -16,9 +14,9 @@ export const requestGenerateSubtasks = action({
     });
     if (!task) throw new Error("Task not found or access denied");
 
-    return await ctx.runAction(
-      internal.actions.generateSubtasks.generateSubtasks,
-      { taskId: args.taskId, fileContent: args.fileContent }
-    );
+    return await ctx.runAction(internal.actions.generateSubtasks.generateSubtasks, {
+      taskId: args.taskId,
+      fileContent: args.fileContent,
+    });
   },
 });

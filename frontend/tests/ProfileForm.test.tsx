@@ -8,7 +8,7 @@ import { ProfileData } from '../src/types'
 
 vi.mock('../../backend/convex/_generated/api', () => ({
   api: {
-    actions: {
+    functions: {
       jhuCourses: {
         getAvailableTerms: 'getAvailableTerms',
         getAvailableSchools: 'getAvailableSchools',

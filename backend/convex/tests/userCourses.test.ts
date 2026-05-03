@@ -15,14 +15,11 @@ describe("mutations/userCourses – addUserCourse", () => {
     const t = makeTestCtx();
     const { withAuth } = await createTestUser(t);
 
-    const userCourseId = await withAuth.mutation(
-      api.mutations.userCourses.addUserCourse,
-      {
-        courseCode: "EN.601.226",
-        title: "Data Structures",
-        term: "Fall 2025",
-      }
-    );
+    const userCourseId = await withAuth.mutation(api.mutations.userCourses.addUserCourse, {
+      courseCode: "EN.601.226",
+      title: "Data Structures",
+      term: "Fall 2025",
+    });
 
     const record = await t.run((ctx) => ctx.db.get(userCourseId));
     expect(record).not.toBeNull();
@@ -64,6 +61,7 @@ describe("mutations/userCourses – deleteUserCourse", () => {
         createdAt: Date.now(),
         isManualEstimate: false,
         courseId: userCourseId,
+        status: "not_started",
       })
     );
 
@@ -77,15 +75,18 @@ describe("mutations/userCourses – deleteUserCourse", () => {
         createdAt: Date.now(),
         isManualEstimate: false,
         courseId: otherCourseId,
+        status: "not_started",
       })
     );
 
     const blockId = await t.run((ctx) =>
       ctx.db.insert("studyBlocks", {
         taskId: taskToRemove as never,
+        userId: userId as never,
         title: "Block",
         studyBlockLength: 60,
         isCompleted: false,
+        isConflicted: false,
       })
     );
 
@@ -123,6 +124,7 @@ describe("mutations/userCourses – deleteUserCourse", () => {
         createdAt: Date.now(),
         isManualEstimate: false,
         classTag: "EN.500.112.FA25: Gateway Computing",
+        status: "not_started",
       })
     );
 
@@ -146,8 +148,7 @@ describe("mutations/userCourses – deleteUserCourse", () => {
       })
     );
 
-    const legacyTag =
-      "EN.601.423.SP26: EN.601.423: AI-Enabled Software Engineering";
+    const legacyTag = "EN.601.423.SP26: EN.601.423: AI-Enabled Software Engineering";
 
     const taskLegacy = await t.run((ctx) =>
       ctx.db.insert("tasks", {
@@ -159,6 +160,7 @@ describe("mutations/userCourses – deleteUserCourse", () => {
         createdAt: Date.now(),
         isManualEstimate: false,
         classTag: legacyTag,
+        status: "not_started",
       })
     );
 
@@ -182,8 +184,7 @@ describe("mutations/userCourses – deleteUserCourse", () => {
       })
     );
 
-    const canonicalTag =
-      "EN.601.423.SP26: AI-Enabled Software Engineering";
+    const canonicalTag = "EN.601.423.SP26: AI-Enabled Software Engineering";
 
     const task = await t.run((ctx) =>
       ctx.db.insert("tasks", {
@@ -195,6 +196,7 @@ describe("mutations/userCourses – deleteUserCourse", () => {
         createdAt: Date.now(),
         isManualEstimate: false,
         classTag: canonicalTag,
+        status: "not_started",
       })
     );
 
@@ -341,6 +343,7 @@ describe("queries/userCourses – getCourseMetadata", () => {
           dueDate: FUTURE,
           createdAt: Date.now(),
           courseId: courseA,
+          status: "not_started",
         })
       );
     }
@@ -354,6 +357,7 @@ describe("queries/userCourses – getCourseMetadata", () => {
         dueDate: FUTURE,
         createdAt: Date.now(),
         courseId: courseB,
+        status: "not_started",
       })
     );
 
@@ -410,6 +414,7 @@ describe("queries/userCourses – getCourseMetadata", () => {
         dueDate: FUTURE,
         createdAt: Date.now(),
         courseId,
+        status: "not_started",
       })
     );
 
@@ -489,6 +494,7 @@ describe("getCourseMetadata – document read efficiency", () => {
             dueDate: FUTURE,
             createdAt: Date.now(),
             courseId,
+            status: "not_started",
           })
         );
       }
@@ -504,6 +510,7 @@ describe("getCourseMetadata – document read efficiency", () => {
           taskType: "Essay",
           dueDate: FUTURE,
           createdAt: Date.now(),
+          status: "not_started",
         })
       );
     }
@@ -513,7 +520,11 @@ describe("getCourseMetadata – document read efficiency", () => {
 
   test("new impl stays within a read budget that the old full-scan approach would exceed", async () => {
     // Limit set to 45: new impl reads ~38 docs (passes), old impl reads ~60 docs (would throw)
-    const t = convexTest({ schema, modules, transactionLimits: { documentsRead: 45 } }) as unknown as TestInstance;
+    const t = convexTest({
+      schema,
+      modules,
+      transactionLimits: { documentsRead: 45 },
+    }) as unknown as TestInstance;
     const { userId } = await seedLargeDataset(t);
     const withAuth = t.withIdentity({ subject: userId });
 
@@ -524,7 +535,11 @@ describe("getCourseMetadata – document read efficiency", () => {
   });
 
   test("old full-scan approach would exceed the same budget", async () => {
-    const t = convexTest({ schema, modules, transactionLimits: { documentsRead: 45 } }) as unknown as TestInstance;
+    const t = convexTest({
+      schema,
+      modules,
+      transactionLimits: { documentsRead: 45 },
+    }) as unknown as TestInstance;
     const { userId } = await seedLargeDataset(t);
     const withAuth = t.withIdentity({ subject: userId });
 

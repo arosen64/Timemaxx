@@ -1,27 +1,27 @@
-import { useState, useRef, useEffect } from 'react'
-import { useMutation } from 'convex/react'
-import { useNavigate } from 'react-router-dom'
-import { api } from '../../../../backend/convex/_generated/api'
-import { Id } from '../../../../backend/convex/_generated/dataModel'
-import { TrashIcon, SpinnerIcon, CheckCircleIcon } from '../icons'
-import DifficultyRating from '../DifficultyRating'
-import { GRADES, STUDY_GOALS, REMOVE_CLASS_TASKS_WARNING } from '../../constants'
-import SyllabusUploadModal from './SyllabusUploadModal'
-
+import { useState, useRef, useEffect } from "react";
+import { useMutation } from "convex/react";
+import { useNavigate } from "react-router-dom";
+import { api } from "../../../../backend/convex/_generated/api";
+import { Id } from "../../../../backend/convex/_generated/dataModel";
+import { TrashIcon, SpinnerIcon, CheckCircleIcon } from "../icons";
+import DifficultyRating from "../DifficultyRating";
+import { GRADES, STUDY_GOALS } from "../../../../shared/courseEnums";
+import { REMOVE_CLASS_TASKS_WARNING } from "../../constants";
+import SyllabusUploadModal from "./SyllabusUploadModal";
 
 interface ClassCardProps {
-  id: Id<'userCourses'>
-  courseCode: string
-  title: string
-  term: string
-  grade?: string
-  studyGoal?: string
-  difficultyRating?: number
-  color?: string
-  isPast: boolean
-  hasSyllabus: boolean
-  taskCount: number
-  onRemove: () => Promise<void>
+  id: Id<"userCourses">;
+  courseCode: string;
+  title: string;
+  term: string;
+  grade?: string;
+  studyGoal?: string;
+  difficultyRating?: number;
+  color?: string;
+  isPast: boolean;
+  hasSyllabus: boolean;
+  taskCount: number;
+  onRemove: () => Promise<void>;
 }
 
 export default function ClassCard({
@@ -38,104 +38,106 @@ export default function ClassCard({
   taskCount,
   onRemove,
 }: ClassCardProps) {
-  const navigate = useNavigate()
-  const updateUserCourse = useMutation(api.mutations.userCourses.updateUserCourse)
+  const navigate = useNavigate();
+  const updateUserCourse = useMutation(api.mutations.userCourses.updateUserCourse);
 
   // Remove state
-  const [confirmingRemove, setConfirmingRemove] = useState(false)
-  const [isRemoving, setIsRemoving] = useState(false)
+  const [confirmingRemove, setConfirmingRemove] = useState(false);
+  const [isRemoving, setIsRemoving] = useState(false);
 
   // Color picker state
-  const [currentColor, setCurrentColor] = useState(initialColor ?? '')
-  const colorInputRef = useRef<HTMLInputElement>(null)
-  const colorSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [currentColor, setCurrentColor] = useState(initialColor ?? "");
+  const colorInputRef = useRef<HTMLInputElement>(null);
+  const colorSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Upload state (current cards only)
-  const [uploadModalOpen, setUploadModalOpen] = useState(false)
+  const [uploadModalOpen, setUploadModalOpen] = useState(false);
 
   // Grade state (past cards only)
-  const saveGradeButtonRef = useRef<HTMLButtonElement>(null)
-  const [gradeValue, setGradeValue] = useState(initialGrade ?? '')
-  const [confirmedGrade, setConfirmedGrade] = useState(initialGrade ?? '')
+  const saveGradeButtonRef = useRef<HTMLButtonElement>(null);
+  const [gradeValue, setGradeValue] = useState(initialGrade ?? "");
+  const [confirmedGrade, setConfirmedGrade] = useState(initialGrade ?? "");
 
   useEffect(() => {
     return () => {
-      if (colorSaveTimeoutRef.current) clearTimeout(colorSaveTimeoutRef.current)
-    }
-  }, [])
+      if (colorSaveTimeoutRef.current) clearTimeout(colorSaveTimeoutRef.current);
+    };
+  }, []);
 
   useEffect(() => {
-    setConfirmedGrade(initialGrade ?? '')
-    setGradeValue(initialGrade ?? '')
-  }, [initialGrade])
+    setConfirmedGrade(initialGrade ?? "");
+    setGradeValue(initialGrade ?? "");
+  }, [initialGrade]);
   useEffect(() => {
-    setStudyGoalValue(initialStudyGoal ?? '')
-  }, [initialStudyGoal])
+    setStudyGoalValue(initialStudyGoal ?? "");
+  }, [initialStudyGoal]);
   useEffect(() => {
-    setDifficultyValue(initialDifficultyRating ?? 3)
-  }, [initialDifficultyRating])
+    setDifficultyValue(initialDifficultyRating ?? (isPast ? 3 : undefined));
+  }, [initialDifficultyRating, isPast]);
   useEffect(() => {
-    setCurrentColor(initialColor ?? '')
-  }, [initialColor])
-  const [isSavingGrade, setIsSavingGrade] = useState(false)
-  const [gradeSaved, setGradeSaved] = useState(false)
-  const [gradeError, setGradeError] = useState<string | null>(null)
+    setCurrentColor(initialColor ?? "");
+  }, [initialColor]);
+  const [isSavingGrade, setIsSavingGrade] = useState(false);
+  const [gradeSaved, setGradeSaved] = useState(false);
+  const [gradeError, setGradeError] = useState<string | null>(null);
 
   // Study goal state (current cards only)
-  const [studyGoalValue, setStudyGoalValue] = useState(initialStudyGoal ?? '')
-  const [studyGoalError, setStudyGoalError] = useState<string | null>(null)
+  const [studyGoalValue, setStudyGoalValue] = useState(initialStudyGoal ?? "");
+  const [studyGoalError, setStudyGoalError] = useState<string | null>(null);
 
-  // Difficulty rating state (past cards only)
-  const [difficultyValue, setDifficultyValue] = useState(initialDifficultyRating ?? 3)
-  const [difficultyError, setDifficultyError] = useState<string | null>(null)
+  // Difficulty rating state
+  const [difficultyValue, setDifficultyValue] = useState<number | undefined>(
+    initialDifficultyRating ?? (isPast ? 3 : undefined)
+  );
+  const [difficultyError, setDifficultyError] = useState<string | null>(null);
 
   async function handleConfirmRemove() {
-    setIsRemoving(true)
+    setIsRemoving(true);
     try {
-      await onRemove()
+      await onRemove();
     } finally {
-      setIsRemoving(false)
-      setConfirmingRemove(false)
+      setIsRemoving(false);
+      setConfirmingRemove(false);
     }
   }
 
   async function handleSaveGrade() {
     if (!gradeValue) {
-      setGradeError('Please select a grade before saving.')
-      return
+      setGradeError("Please select a grade before saving.");
+      return;
     }
-    setGradeError(null)
-    setIsSavingGrade(true)
+    setGradeError(null);
+    setIsSavingGrade(true);
     try {
-      await updateUserCourse({ userCourseId: id, grade: gradeValue })
-      setConfirmedGrade(gradeValue)
-      setGradeSaved(true)
-      setTimeout(() => setGradeSaved(false), 2000)
+      await updateUserCourse({ userCourseId: id, grade: gradeValue });
+      setConfirmedGrade(gradeValue);
+      setGradeSaved(true);
+      setTimeout(() => setGradeSaved(false), 2000);
     } catch {
-      setGradeError('Failed to save grade. Please try again.')
+      setGradeError("Failed to save grade. Please try again.");
     } finally {
-      setIsSavingGrade(false)
+      setIsSavingGrade(false);
     }
   }
 
   async function handleDifficultyChange(value: number) {
-    setDifficultyValue(value)
-    setDifficultyError(null)
+    setDifficultyValue(value);
+    setDifficultyError(null);
     try {
-      await updateUserCourse({ userCourseId: id, difficultyRating: value })
+      await updateUserCourse({ userCourseId: id, difficultyRating: value });
     } catch {
-      setDifficultyError('Failed to save difficulty. Please try again.')
+      setDifficultyError("Failed to save difficulty. Please try again.");
     }
   }
 
   async function handleStudyGoalChange(value: string) {
-    if (!value) return
-    setStudyGoalValue(value)
-    setStudyGoalError(null)
+    if (!value) return;
+    setStudyGoalValue(value);
+    setStudyGoalError(null);
     try {
-      await updateUserCourse({ userCourseId: id, studyGoal: value })
+      await updateUserCourse({ userCourseId: id, studyGoal: value });
     } catch {
-      setStudyGoalError('Failed to save study goal. Please try again.')
+      setStudyGoalError("Failed to save study goal. Please try again.");
     }
   }
 
@@ -147,13 +149,13 @@ export default function ClassCard({
           onClose={() => setUploadModalOpen(false)}
           course={{ userCourseId: id, title }}
           onSuccess={(result) => {
-            navigate('/syllabus-review', {
+            navigate("/syllabus-review", {
               state: {
                 syllabusId: result.syllabusId,
                 extractedTasks: result.extractedTasks,
                 course: { userCourseId: id, title },
               },
-            })
+            });
           }}
         />
       )}
@@ -168,37 +170,37 @@ export default function ClassCard({
                 type="button"
                 aria-label="Set course color"
                 onClick={() => colorInputRef.current?.click()}
-                className={`w-4 h-4 rounded-full border border-border transition hover:opacity-70 ${currentColor ? '' : 'bg-bg-gray'}`}
+                className={`w-4 h-4 rounded-full border border-border transition hover:opacity-70 ${currentColor ? "" : "bg-bg-gray"}`}
                 style={currentColor ? { backgroundColor: currentColor } : undefined}
               />
               <input
                 ref={colorInputRef}
                 type="color"
-                value={currentColor || '#002D72'}
+                value={currentColor || "#002D72"}
                 className="sr-only"
                 onChange={(e) => {
-                  const color = e.target.value
-                  setCurrentColor(color)
-                  if (colorSaveTimeoutRef.current) clearTimeout(colorSaveTimeoutRef.current)
+                  const color = e.target.value;
+                  setCurrentColor(color);
+                  if (colorSaveTimeoutRef.current) clearTimeout(colorSaveTimeoutRef.current);
                   colorSaveTimeoutRef.current = setTimeout(async () => {
                     try {
-                      await updateUserCourse({ userCourseId: id, color })
+                      await updateUserCourse({ userCourseId: id, color });
                     } catch {
-                      setCurrentColor(initialColor ?? '')
+                      setCurrentColor(initialColor ?? "");
                     }
-                  }, 400)
+                  }, 400);
                 }}
                 onBlur={async (e) => {
                   if (colorSaveTimeoutRef.current) {
-                    clearTimeout(colorSaveTimeoutRef.current)
-                    colorSaveTimeoutRef.current = null
+                    clearTimeout(colorSaveTimeoutRef.current);
+                    colorSaveTimeoutRef.current = null;
                   }
-                  const color = e.target.value
-                  const previousColor = currentColor
+                  const color = e.target.value;
+                  const previousColor = currentColor;
                   try {
-                    await updateUserCourse({ userCourseId: id, color })
+                    await updateUserCourse({ userCourseId: id, color });
                   } catch {
-                    setCurrentColor(previousColor)
+                    setCurrentColor(previousColor);
                   }
                 }}
               />
@@ -225,14 +227,16 @@ export default function ClassCard({
             </button>
           ) : (
             <div className="flex shrink-0 items-center gap-2">
-              <span className="font-body text-xs font-semibold text-navy whitespace-nowrap">Remove?</span>
+              <span className="font-body text-xs font-semibold text-navy whitespace-nowrap">
+                Remove?
+              </span>
               <button
                 type="button"
                 onClick={handleConfirmRemove}
                 disabled={isRemoving}
                 className="h-7 px-2.5 rounded-md bg-urgent-red font-heading text-xs font-semibold text-white hover:opacity-90 transition disabled:opacity-50"
               >
-                {isRemoving ? <SpinnerIcon size={12} /> : 'Yes'}
+                {isRemoving ? <SpinnerIcon size={12} /> : "Yes"}
               </button>
               <button
                 type="button"
@@ -253,7 +257,8 @@ export default function ClassCard({
             {REMOVE_CLASS_TASKS_WARNING}
             {taskCount > 0 && (
               <span className="mt-1 block font-medium text-amber-900">
-                This class has {taskCount} linked task{taskCount === 1 ? '' : 's'} on your dashboard.
+                This class has {taskCount} linked task{taskCount === 1 ? "" : "s"} on your
+                dashboard.
               </span>
             )}
           </div>
@@ -268,17 +273,23 @@ export default function ClassCard({
             <div className="flex items-center gap-2">
               <select
                 value={gradeValue}
-                onChange={(e) => { setGradeValue(e.target.value); setGradeSaved(false); setGradeError(null) }}
+                onChange={(e) => {
+                  setGradeValue(e.target.value);
+                  setGradeSaved(false);
+                  setGradeError(null);
+                }}
                 onBlur={(e) => {
-                  if (e.relatedTarget === saveGradeButtonRef.current) return
-                  setGradeValue(confirmedGrade)
-                  setGradeError(null)
+                  if (e.relatedTarget === saveGradeButtonRef.current) return;
+                  setGradeValue(confirmedGrade);
+                  setGradeError(null);
                 }}
                 className="flex-1 rounded-lg border border-border bg-bg-gray px-3 py-1.5 font-body text-sm text-navy outline-none focus:border-teal focus:ring-1 focus:ring-teal transition"
               >
                 <option value="">Select grade…</option>
                 {GRADES.map((g) => (
-                  <option key={g} value={g}>{g}</option>
+                  <option key={g} value={g}>
+                    {g}
+                  </option>
                 ))}
               </select>
               <button
@@ -288,14 +299,11 @@ export default function ClassCard({
                 disabled={isSavingGrade}
                 className="h-8 px-3 rounded-lg bg-navy font-heading text-xs font-semibold text-white hover:opacity-90 transition disabled:opacity-50"
               >
-                {isSavingGrade ? <SpinnerIcon size={12} /> : gradeSaved ? 'Saved ✓' : 'Save'}
+                {isSavingGrade ? <SpinnerIcon size={12} /> : gradeSaved ? "Saved ✓" : "Save"}
               </button>
             </div>
-            {gradeError && (
-              <p className="font-body text-xs text-urgent-red">{gradeError}</p>
-            )}
+            {gradeError && <p className="font-body text-xs text-urgent-red">{gradeError}</p>}
             <div className="flex flex-col gap-1">
-              <span className="font-body text-xs text-light-blue">Difficulty</span>
               <DifficultyRating value={difficultyValue} onChange={handleDifficultyChange} />
               {difficultyError && (
                 <p className="font-body text-xs text-urgent-red">{difficultyError}</p>
@@ -312,40 +320,49 @@ export default function ClassCard({
             >
               <option value="">Select study goal…</option>
               {STUDY_GOALS.map((g) => (
-                <option key={g} value={g}>{g}</option>
+                <option key={g} value={g}>
+                  {g}
+                </option>
               ))}
             </select>
             {studyGoalError && (
               <p className="font-body text-xs text-urgent-red">{studyGoalError}</p>
             )}
+            <div className="flex flex-col gap-1">
+              <DifficultyRating value={difficultyValue} onChange={handleDifficultyChange} />
+              {difficultyError && (
+                <p className="font-body text-xs text-urgent-red">{difficultyError}</p>
+              )}
+            </div>
           </div>
         )}
-        {!isPast && (hasSyllabus ? (
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5 text-success">
-              <CheckCircleIcon size={14} />
-              <span className="font-body text-sm font-medium">{taskCount} tasks confirmed</span>
+        {!isPast &&
+          (hasSyllabus ? (
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5 text-success">
+                <CheckCircleIcon size={14} />
+                <span className="font-body text-sm font-medium">{taskCount} tasks confirmed</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setUploadModalOpen(true)}
+                className="h-7 px-2.5 rounded-lg border border-border font-heading text-xs font-semibold text-slate-blue hover:opacity-80 transition"
+              >
+                Re-upload
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={() => setUploadModalOpen(true)}
-              className="h-7 px-2.5 rounded-lg border border-border font-heading text-xs font-semibold text-slate-blue hover:opacity-80 transition"
-            >
-              Re-upload
-            </button>
-          </div>
-        ) : (
-          <div className="flex items-center justify-between gap-4">
-            <button
-              type="button"
-              onClick={() => setUploadModalOpen(true)}
-              className="font-heading text-sm font-semibold text-teal hover:opacity-80 transition"
-            >
-              Upload Syllabus
-            </button>
-          </div>
-        ))}
+          ) : (
+            <div className="flex items-center justify-between gap-4">
+              <button
+                type="button"
+                onClick={() => setUploadModalOpen(true)}
+                className="font-heading text-sm font-semibold text-teal hover:opacity-80 transition"
+              >
+                Upload Syllabus
+              </button>
+            </div>
+          ))}
       </div>
     </>
-  )
+  );
 }

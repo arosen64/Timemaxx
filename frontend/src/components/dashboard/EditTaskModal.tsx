@@ -1,4 +1,4 @@
-import { DEFAULT_DUE_TIME, msToTimeInputValue } from '../../validators'
+import { DEFAULT_DUE_TIME, msToTimeInputValue } from "../../validators";
 import {
   type ClassTagCourseOption,
   type TaskType,
@@ -6,8 +6,8 @@ import {
   TASK_TYPE_OPTIONS,
   CUSTOM_TASK_TYPE_OPTION,
   formatDateMMDDYYYY,
-} from './types'
-import TaskModal from './TaskModal'
+} from "./types";
+import TaskModal from "./TaskModal";
 
 export default function EditModal({
   isOpen,
@@ -15,22 +15,26 @@ export default function EditModal({
   onClose,
   onSave,
   classTagCourses,
-  title = 'Edit task',
-  subtitle = 'Update the details below.',
+  title = "Edit task",
+  subtitle = "Update the details below.",
   existingSubtaskCount,
   onDeleteSubtasks,
   hideSubtaskGeneration = false,
+  hideAssignmentWeight = false,
+  existingTasks,
 }: {
-  isOpen: boolean
-  task: TaskType | null
-  onClose: () => void
-  onSave: (form: EditForm) => Promise<void>
-  classTagCourses?: ClassTagCourseOption[]
-  title?: string
-  subtitle?: string
-  existingSubtaskCount?: number
-  onDeleteSubtasks?: () => Promise<void>
-  hideSubtaskGeneration?: boolean
+  isOpen: boolean;
+  task: TaskType | null;
+  onClose: () => void;
+  onSave: (form: EditForm) => Promise<void>;
+  classTagCourses?: ClassTagCourseOption[];
+  title?: string;
+  subtitle?: string;
+  existingSubtaskCount?: number;
+  onDeleteSubtasks?: () => Promise<void>;
+  hideSubtaskGeneration?: boolean;
+  hideAssignmentWeight?: boolean;
+  existingTasks?: TaskType[];
 }) {
   return (
     <TaskModal
@@ -43,27 +47,36 @@ export default function EditModal({
       existingSubtaskCount={existingSubtaskCount}
       existingTaskId={task?._id ?? undefined}
       existingCourseId={task?.courseId ?? undefined}
+      existingTasks={existingTasks}
       onDeleteSubtasks={onDeleteSubtasks}
       hideSubtaskGeneration={hideSubtaskGeneration}
+      hideAssignmentWeight={hideAssignmentWeight}
       initialValues={{
-        taskName: task?.title ?? '',
-        selectedType: task && TASK_TYPE_OPTIONS.includes(task.taskType as (typeof TASK_TYPE_OPTIONS)[number])
-          ? task.taskType
-          : CUSTOM_TASK_TYPE_OPTION,
-        customTaskType: task && TASK_TYPE_OPTIONS.includes(task.taskType as (typeof TASK_TYPE_OPTIONS)[number])
-          ? ''
-          : (task?.taskType ?? ''),
-        description: task?.description ?? '',
-        dueDate: task ? formatDateMMDDYYYY(task.dueDate) : '',
+        taskName: task?.title ?? "",
+        selectedType:
+          task && TASK_TYPE_OPTIONS.includes(task.taskType as (typeof TASK_TYPE_OPTIONS)[number])
+            ? task.taskType
+            : CUSTOM_TASK_TYPE_OPTION,
+        customTaskType:
+          task && TASK_TYPE_OPTIONS.includes(task.taskType as (typeof TASK_TYPE_OPTIONS)[number])
+            ? ""
+            : (task?.taskType ?? ""),
+        description: task?.description ?? "",
+        dueDate: task ? formatDateMMDDYYYY(task.dueDate) : "",
         dueTime: task ? msToTimeInputValue(task.dueDate) : DEFAULT_DUE_TIME,
-        classTag: task?.classTag ?? '',
-        timeEstimate: task?.isManualEstimate && task?.timeEstimate !== undefined
-          ? String(task.timeEstimate)
-          : '',
+        classTag: task?.classTag ?? "",
+        timeEstimate:
+          task?.isManualEstimate && task?.timeEstimate !== undefined
+            ? String(task.timeEstimate)
+            : "",
+        assignmentWeight: task?.assignmentWeight !== undefined ? String(task.assignmentWeight) : "",
       }}
       classTagCourses={classTagCourses}
       onClose={onClose}
-      onSubmit={async (form) => { await onSave(form); return task!._id }}
+      onSubmit={async (form) => {
+        await onSave(form);
+        return task!._id;
+      }}
     />
-  )
+  );
 }

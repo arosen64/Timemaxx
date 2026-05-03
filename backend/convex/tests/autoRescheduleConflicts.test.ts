@@ -18,7 +18,7 @@ describe("filterPastFreeBlocks", () => {
   test("removes blocks that end before nowMs", () => {
     const blocks = [
       makeBlock(now - 7200_000, now - 3600_000), // fully in the past
-      makeBlock(now + 3600_000, now + 7200_000),  // fully in the future
+      makeBlock(now + 3600_000, now + 7200_000), // fully in the future
     ];
     const result = filterPastFreeBlocks(blocks, now);
     expect(result).toHaveLength(1);
@@ -48,10 +48,7 @@ describe("filterPastFreeBlocks", () => {
   });
 
   test("returns empty array when all blocks are fully in the past", () => {
-    const blocks = [
-      makeBlock(now - 7200_000, now - 3600_000),
-      makeBlock(now - 3600_000, now - 1),
-    ];
+    const blocks = [makeBlock(now - 7200_000, now - 3600_000), makeBlock(now - 3600_000, now - 1)];
     const result = filterPastFreeBlocks(blocks, now);
     expect(result).toHaveLength(0);
   });

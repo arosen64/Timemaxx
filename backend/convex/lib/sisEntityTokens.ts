@@ -9,7 +9,12 @@ const V1_CTX = "sis_ctx:v1:";
 const V1_PICK = "sis_pick:v1:";
 
 export type SisContextPayload = { term: string; school: string; query: string };
-export type SisCandidatePayload = { offeringName: string; title: string; term: string; school: string };
+export type SisCandidatePayload = {
+  offeringName: string;
+  title: string;
+  term: string;
+  school: string;
+};
 
 function utf8ToBase64(json: string): string {
   const bytes = new TextEncoder().encode(json);

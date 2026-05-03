@@ -13,9 +13,7 @@ export const getChatSessionInternal = internalQuery({
     v.object({
       _id: v.id("chatSessions"),
       lastEntityQueryText: v.optional(v.string()),
-      activeEntityStep: v.optional(
-        v.union(v.literal("task"), v.literal("class")),
-      ),
+      activeEntityStep: v.optional(v.union(v.literal("task"), v.literal("class"))),
       needsClassAfterTask: v.optional(v.boolean()),
       clarificationAttemptCount: v.optional(v.number()),
       clarificationExhausted: v.optional(v.boolean()),
@@ -24,19 +22,19 @@ export const getChatSessionInternal = internalQuery({
       activeAgent: v.optional(activeAgentValidator),
       taskAgentIntent: v.optional(v.union(v.literal("create"), v.literal("rud"))),
       courseAgentIntent: v.optional(
-        v.union(v.literal("add"), v.literal("drop"), v.literal("view"), v.literal("update")),
+        v.union(v.literal("add"), v.literal("drop"), v.literal("view"), v.literal("update"))
       ),
       activeTaskId: v.optional(v.id("tasks")),
       activeCourseId: v.optional(v.id("userCourses")),
       pendingScheduleAction: v.optional(v.literal("schedule_block")),
       activeBlockId: v.optional(v.id("studyBlocks")),
-    }),
+    })
   ),
   handler: async (ctx, args) => {
     const row = await ctx.db
       .query("chatSessions")
       .withIndex("by_userId_sessionId", (q) =>
-        q.eq("userId", args.userId).eq("sessionId", args.sessionId),
+        q.eq("userId", args.userId).eq("sessionId", args.sessionId)
       )
       .unique();
     if (!row) return null;
@@ -104,12 +102,10 @@ export const getChatSessionEntityScope = query({
   returns: v.union(
     v.null(),
     v.object({
-      entityScopeTags: v.array(
-        v.union(v.literal("task_id_set"), v.literal("class_id_set")),
-      ),
+      entityScopeTags: v.array(v.union(v.literal("task_id_set"), v.literal("class_id_set"))),
       chatInputLocked: v.boolean(),
       activeAgent: v.union(activeAgentValidator, v.null()),
-    }),
+    })
   ),
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -118,7 +114,7 @@ export const getChatSessionEntityScope = query({
     const row = await ctx.db
       .query("chatSessions")
       .withIndex("by_userId_sessionId", (q) =>
-        q.eq("userId", userId).eq("sessionId", args.sessionId),
+        q.eq("userId", userId).eq("sessionId", args.sessionId)
       )
       .unique();
     if (!row) return null;

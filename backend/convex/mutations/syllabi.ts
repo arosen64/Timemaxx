@@ -1,7 +1,6 @@
 import { internalMutation, mutation } from "../_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
-import { taskTypeValidator } from "../lib/taskValidators";
 import { buildClassTag } from "../lib/classTagUtils";
 import { internal } from "../_generated/api";
 
@@ -56,11 +55,7 @@ export const deleteSyllabiForCourse = internalMutation({
 export const setSyllabusStatus = internalMutation({
   args: {
     syllabusId: v.id("syllabi"),
-    status: v.union(
-      v.literal("pending"),
-      v.literal("confirmed"),
-      v.literal("failed"),
-    ),
+    status: v.union(v.literal("pending"), v.literal("confirmed"), v.literal("failed")),
   },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.syllabusId, { status: args.status });
@@ -86,7 +81,8 @@ export const confirmSyllabusTasks = mutation({
         title: v.string(),
         description: v.string(),
         dueDate: v.number(),
-        taskType: taskTypeValidator,
+        taskType: v.string(),
+        assignmentWeight: v.optional(v.number()),
       })
     ),
   },
@@ -97,6 +93,19 @@ export const confirmSyllabusTasks = mutation({
     const syllabus = await ctx.db.get(args.syllabusId);
     if (!syllabus || syllabus.userId !== userId) {
       throw new Error("Syllabus not found");
+    }
+
+    for (const task of args.tasks) {
+      if (
+        task.assignmentWeight !== undefined &&
+        (!Number.isFinite(task.assignmentWeight) ||
+          task.assignmentWeight < 0 ||
+          task.assignmentWeight > 100)
+      ) {
+        throw new Error(
+          `assignmentWeight must be between 0 and 100 (got ${task.assignmentWeight})`
+        );
+      }
     }
 
     let classTag: string | undefined;
@@ -117,10 +126,12 @@ export const confirmSyllabusTasks = mutation({
           description: task.description,
           dueDate: task.dueDate,
           taskType: task.taskType,
+          assignmentWeight: task.assignmentWeight,
           courseId: syllabus.courseId,
           ...(classTag !== undefined ? { classTag } : {}),
           createdAt: now,
           isManualEstimate: false,
+          status: "not_started",
         })
       )
     );

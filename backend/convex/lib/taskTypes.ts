@@ -63,10 +63,7 @@ export function taskToTaskLike(doc: Doc<"tasks">): TaskLike {
  * Adapts a subtask document to TaskLike.
  * Requires the parent task to inherit dueDate and courseId.
  */
-export function subtaskToTaskLike(
-  doc: Doc<"subtasks">,
-  parent: Doc<"tasks">
-): TaskLike {
+export function subtaskToTaskLike(doc: Doc<"subtasks">, parent: Doc<"tasks">): TaskLike {
   return {
     _id: doc._id,
     taskId: doc.parentTaskId,

@@ -6,8 +6,10 @@ import type { Id } from "../_generated/dataModel";
 import type { HonoEnv } from "./httpTypes";
 import { walkLatestTaggedTaskId, type TaggedMessageView } from "./messageTaggedScope";
 
-const ENTITY_INTRO_TASK = "Which task do you mean? Pick one below, or choose **Other** to see more options.";
-const ENTITY_INTRO_CLASS = "Which class do you mean? Pick one below, or choose **Other** to see more options.";
+const ENTITY_INTRO_TASK =
+  "Which task do you mean? Pick one below, or choose **Other** to see more options.";
+const ENTITY_INTRO_CLASS =
+  "Which class do you mean? Pick one below, or choose **Other** to see more options.";
 
 type HandleWorkflowTurn = (
   ctx: ActionCtx,
@@ -19,7 +21,7 @@ type HandleWorkflowTurn = (
     message: string;
     session: { activeAgent?: string; taskAgentIntent?: string } | null;
     triggerUserMessageId?: Id<"chatMessages">;
-  },
+  }
 ) => Promise<Response>;
 
 export async function handleEntityAction(
@@ -29,7 +31,11 @@ export async function handleEntityAction(
   params: {
     userId: Id<"users">;
     sessionId: string;
-    session: { activeAgent?: string; taskAgentIntent?: string; lastEntityQueryText?: string } | null;
+    session: {
+      activeAgent?: string;
+      taskAgentIntent?: string;
+      lastEntityQueryText?: string;
+    } | null;
     entity: {
       action: "pick_task" | "pick_course" | "other_tasks" | "other_courses";
       taskId?: string;
@@ -38,7 +44,7 @@ export async function handleEntityAction(
       excludeCourseIds?: string[];
     };
   },
-  handleWorkflowTurn: HandleWorkflowTurn,
+  handleWorkflowTurn: HandleWorkflowTurn
 ): Promise<Response> {
   const { userId, sessionId, session, entity } = params;
 
@@ -46,11 +52,11 @@ export async function handleEntityAction(
     const taskId = entity.taskId as Id<"tasks">;
     const { needsClassNext } = await ctx.runMutation(
       internal.mutations.chatSessions.resolvePickedTaskInternal,
-      { userId, sessionId, taskId },
+      { userId, sessionId, taskId }
     );
     await ctx.runMutation(
       internal.mutations.chatMessages.applyResolvedEntityToClarifyTriggerMessageInternal,
-      { userId, sessionId, taskId, clearTriggerPointer: !needsClassNext },
+      { userId, sessionId, taskId, clearTriggerPointer: !needsClassNext }
     );
     const intro = needsClassNext ? ENTITY_INTRO_CLASS : "Got it — I'll use that task.";
     await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
@@ -68,7 +74,7 @@ export async function handleEntityAction(
       const qText = s2?.lastEntityQueryText ?? "";
       const { candidates, hasMore } = await ctx.runAction(
         internal.actions.entityResolution.searchCourseCandidates,
-        { userId, queryText: qText, excludeIds: [] },
+        { userId, queryText: qText, excludeIds: [] }
       );
       await ctx.runMutation(internal.mutations.chatSessions.setEntityPromptStateInternal, {
         userId,
@@ -90,7 +96,7 @@ export async function handleEntityAction(
 
     const sessionAfterPick = await ctx.runQuery(
       internal.queries.chatSessions.getChatSessionInternal,
-      { userId, sessionId },
+      { userId, sessionId }
     );
     if (sessionAfterPick?.activeAgent) {
       return handleWorkflowTurn(ctx, c, client, {
@@ -113,12 +119,12 @@ export async function handleEntityAction(
     });
     await ctx.runMutation(
       internal.mutations.chatMessages.applyResolvedEntityToClarifyTriggerMessageInternal,
-      { userId, sessionId, courseId, clearTriggerPointer: true },
+      { userId, sessionId, courseId, clearTriggerPointer: true }
     );
 
     const sessionAfterCourse = await ctx.runQuery(
       internal.queries.chatSessions.getChatSessionInternal,
-      { userId, sessionId },
+      { userId, sessionId }
     );
     if (sessionAfterCourse?.activeAgent) {
       return handleWorkflowTurn(ctx, c, client, {
@@ -137,7 +143,7 @@ export async function handleEntityAction(
     const hadTask = walkLatestTaggedTaskId(recent) !== undefined;
     const labels = await ctx.runQuery(
       internal.queries.chatSessions.getResolvedEntityLabelsInternal,
-      { userId, sessionId },
+      { userId, sessionId }
     );
     let text: string;
     if (hadTask) {
@@ -164,7 +170,7 @@ export async function handleEntityAction(
     const exclude = (entity.excludeTaskIds ?? []) as Id<"tasks">[];
     const { candidates, hasMore } = await ctx.runAction(
       internal.actions.entityResolution.searchTaskCandidates,
-      { userId, queryText: qText, excludeIds: exclude },
+      { userId, queryText: qText, excludeIds: exclude }
     );
     return c.json({
       text: ENTITY_INTRO_TASK,
@@ -182,7 +188,7 @@ export async function handleEntityAction(
   const exclude = (entity.excludeCourseIds ?? []) as Id<"userCourses">[];
   const { candidates, hasMore } = await ctx.runAction(
     internal.actions.entityResolution.searchCourseCandidates,
-    { userId, queryText: qText, excludeIds: exclude },
+    { userId, queryText: qText, excludeIds: exclude }
   );
   return c.json({
     text: ENTITY_INTRO_CLASS,
