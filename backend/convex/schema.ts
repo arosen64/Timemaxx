@@ -243,11 +243,6 @@ export default defineSchema({
     model: v.optional(v.string()),
     status: v.union(v.literal("success"), v.literal("error"), v.literal("timeout")),
     latencyMs: v.number(),
-    promptTokens: v.optional(v.number()),
-    completionTokens: v.optional(v.number()),
-    totalTokens: v.optional(v.number()),
-    /** Estimated USD cost based on per-model pricing table. */
-    estimatedCostUsd: v.optional(v.number()),
     /** Truncated prompt — capped to keep storage bounded. */
     promptPreview: v.optional(v.string()),
     /** Truncated response — capped to keep storage bounded. */

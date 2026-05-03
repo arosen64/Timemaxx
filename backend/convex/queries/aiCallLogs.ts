@@ -64,11 +64,8 @@ export const getUsageSummaryInternal = internalQuery({
       totalSuccess: 0,
       totalErrors: 0,
       totalTimeouts: 0,
-      totalCostUsd: 0,
-      totalPromptTokens: 0,
-      totalCompletionTokens: 0,
       avgLatencyMs: 0,
-      byCallSite: {} as Record<string, { count: number; costUsd: number; avgLatencyMs: number }>,
+      byCallSite: {} as Record<string, { count: number; avgLatencyMs: number }>,
     };
 
     let latencySum = 0;
@@ -79,18 +76,13 @@ export const getUsageSummaryInternal = internalQuery({
       else if (log.status === "timeout") summary.totalTimeouts += 1;
       else summary.totalErrors += 1;
 
-      summary.totalCostUsd += log.estimatedCostUsd ?? 0;
-      summary.totalPromptTokens += log.promptTokens ?? 0;
-      summary.totalCompletionTokens += log.completionTokens ?? 0;
       latencySum += log.latencyMs;
 
       const bucket = (summary.byCallSite[log.callSite] ??= {
         count: 0,
-        costUsd: 0,
         avgLatencyMs: 0,
       });
       bucket.count += 1;
-      bucket.costUsd += log.estimatedCostUsd ?? 0;
       callSiteLatencies[log.callSite] = (callSiteLatencies[log.callSite] ?? 0) + log.latencyMs;
     }
 
