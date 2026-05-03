@@ -34,7 +34,6 @@ import type * as functions_scheduleSubtask from "../functions/scheduleSubtask.js
 import type * as http from "../http.js";
 import type * as http_chat from "../http_chat.js";
 import type * as lib_aiObservability from "../lib/aiObservability.js";
-import type * as lib_anthropic from "../lib/anthropic.js";
 import type * as lib_calendarCrypto from "../lib/calendarCrypto.js";
 import type * as lib_calendarFetch from "../lib/calendarFetch.js";
 import type * as lib_chatChunking from "../lib/chatChunking.js";
@@ -48,7 +47,6 @@ import type * as lib_entityCandidates from "../lib/entityCandidates.js";
 import type * as lib_executeCourseAction from "../lib/executeCourseAction.js";
 import type * as lib_executeScheduleAction from "../lib/executeScheduleAction.js";
 import type * as lib_gcalHelpers from "../lib/gcalHelpers.js";
-import type * as lib_gemini from "../lib/gemini.js";
 import type * as lib_geminiEmbedding from "../lib/geminiEmbedding.js";
 import type * as lib_httpTypes from "../lib/httpTypes.js";
 import type * as lib_mastraClient from "../lib/mastraClient.js";
@@ -121,7 +119,6 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   http_chat: typeof http_chat;
   "lib/aiObservability": typeof lib_aiObservability;
-  "lib/anthropic": typeof lib_anthropic;
   "lib/calendarCrypto": typeof lib_calendarCrypto;
   "lib/calendarFetch": typeof lib_calendarFetch;
   "lib/chatChunking": typeof lib_chatChunking;
@@ -135,7 +132,6 @@ declare const fullApi: ApiFromModules<{
   "lib/executeCourseAction": typeof lib_executeCourseAction;
   "lib/executeScheduleAction": typeof lib_executeScheduleAction;
   "lib/gcalHelpers": typeof lib_gcalHelpers;
-  "lib/gemini": typeof lib_gemini;
   "lib/geminiEmbedding": typeof lib_geminiEmbedding;
   "lib/httpTypes": typeof lib_httpTypes;
   "lib/mastraClient": typeof lib_mastraClient;
