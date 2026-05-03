@@ -107,6 +107,7 @@ export const createTask = mutation({
     if (process.env.GEMINI_API_KEY) {
       await ctx.scheduler.runAfter(0, internal.ai.embeddings.generateTaskEmbedding, {
         taskId,
+        userId,
         title: args.title,
         description: args.description,
       });
@@ -181,6 +182,7 @@ export const updateTask = mutation({
     if (process.env.GEMINI_API_KEY) {
       await ctx.scheduler.runAfter(0, internal.ai.embeddings.generateTaskEmbedding, {
         taskId: args.taskId,
+        userId: task.userId,
         title: args.title,
         description: args.description,
       });
@@ -224,6 +226,7 @@ export const createTaskInternal = internalMutation({
     if (process.env.GEMINI_API_KEY) {
       await ctx.scheduler.runAfter(0, internal.ai.embeddings.generateTaskEmbedding, {
         taskId,
+        userId: args.userId,
         title: args.title,
         description: args.description,
       });
@@ -272,6 +275,7 @@ export const patchTaskFieldsInternal = internalMutation({
     ) {
       await ctx.scheduler.runAfter(0, internal.ai.embeddings.generateTaskEmbedding, {
         taskId: args.taskId,
+        userId: task.userId,
         title: args.title ?? task.title,
         description: args.description ?? task.description,
       });
@@ -298,10 +302,13 @@ export const deleteTaskInternal = internalMutation({
 export const patchTaskEmbedding = internalMutation({
   args: {
     taskId: v.id("tasks"),
+    userId: v.id("users"),
     embedding: v.array(v.float64()),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
+    const task = await ctx.db.get(args.taskId);
+    if (!task || task.userId !== args.userId) throw new Error("Task not found");
     await ctx.db.patch(args.taskId, { embedding: args.embedding });
     return null;
   },
