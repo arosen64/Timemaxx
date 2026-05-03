@@ -1,5 +1,6 @@
 import { runChatToolCallsEval } from "./chat-tool-calls.eval";
 import { runSupervisorRoutingEval } from "./supervisor-routing.eval";
+import { runSupervisorClarificationEval } from "./supervisor-clarification.eval";
 import { runEntityClarificationEval } from "./entity-clarification.eval";
 import { runTimeEstimateRangeEval } from "./time-estimate-range.eval";
 import { runRagRetrievalEval } from "./rag-retrieval.eval";
@@ -8,6 +9,7 @@ import { runAcademicProfileEval } from "./academic-profile.eval";
 const evals = [
   { name: "chat-tool-calls", run: runChatToolCallsEval },
   { name: "supervisor-routing", run: runSupervisorRoutingEval },
+  { name: "supervisor-clarification", run: runSupervisorClarificationEval },
   {
     name: "entity-clarification",
     run: runEntityClarificationEval,
