@@ -2,7 +2,7 @@ name: CD
 
 on:
   push:
-    branches: [master, cicd]
+    branches: [master]
 
 permissions:
   contents: read
@@ -51,6 +51,11 @@ jobs:
       # Set the production SIS API key from GitHub secrets.
       - name: Set Convex JHU_SIS_API_KEY
         run: npx convex env set JHU_SIS_API_KEY ${{ secrets.JHU_SIS_API_KEY }}
+        env:
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
+
+      - name: Set Convex MASTRA_SERVER_SECRET
+        run: npx convex env set MASTRA_SERVER_SECRET ${{ secrets.MASTRA_SERVER_SECRET }}
         env:
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
 
