@@ -124,10 +124,12 @@ export default function SubtaskCard({
               <button
                 type="button"
                 onClick={() => setShowBlocks((prev) => !prev)}
-                className={`flex h-7 w-7 items-center justify-center rounded-md text-slate-blue transition hover:bg-bg-gray hover:text-navy ${showBlocks ? "rotate-180" : ""}`}
+                className="flex h-7 w-7 items-center justify-center rounded-md text-slate-blue transition hover:bg-bg-gray hover:text-navy"
                 aria-label={showBlocks ? "Hide study blocks" : "Show study blocks"}
               >
-                <ChevronDownIcon color="currentColor" size={14} />
+                <span className={`transition-transform duration-200 ${showBlocks ? "rotate-180" : ""}`}>
+                  <ChevronDownIcon color="currentColor" size={14} />
+                </span>
               </button>
             )}
           </div>
