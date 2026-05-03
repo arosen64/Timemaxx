@@ -328,6 +328,9 @@ describe("mutations/tasks – patchTaskEmbedding ownership guard", () => {
         embedding: EMBEDDING,
       })
     ).rejects.toThrow("Task not found");
+  });
+});
+
 describe("mutations/tasks – updateTask title cascade", () => {
   test("updates study block titles when the task title changes", async () => {
     const t = makeTestCtx();
