@@ -255,7 +255,11 @@ export const scheduleAllBlocks = action({
       { dayOfWeek: string; minutesFromMidnight: number; dateStr: string }
     >();
     const entries: BlockEntry[] = [];
-    const zeroCandidateBlocks: { parentTitle: string; parentDueDate: number; recommendedStart: number | undefined }[] = [];
+    const zeroCandidateBlocks: {
+      parentTitle: string;
+      parentDueDate: number;
+      recommendedStart: number | undefined;
+    }[] = [];
 
     for (const item of sorted) {
       const poolTarget = Math.min(item.parentDueDate, horizonMs);
@@ -366,7 +370,7 @@ export const scheduleAllBlocks = action({
         taskTitle: z.parentTitle,
         dueDate: z.parentDueDate,
         recommendedStart: z.recommendedStart,
-        candidates: [] as typeof entries[0]["candidates"],
+        candidates: [] as (typeof entries)[0]["candidates"],
         cannotSchedule: true as const,
       })),
     ];
@@ -419,9 +423,7 @@ export const scheduleAllBlocks = action({
 
     const totalSkipped = zeroCandidateBlocks.length + phase3Skipped;
     const skippedReason =
-      totalSkipped > 0
-        ? (aiSkipReason ?? "Your schedule is too full to place all blocks.")
-        : null;
+      totalSkipped > 0 ? (aiSkipReason ?? "Your schedule is too full to place all blocks.") : null;
 
     return {
       scheduled,
