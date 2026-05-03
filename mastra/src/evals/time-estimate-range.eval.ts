@@ -33,8 +33,10 @@ import { estimationAgent } from "../mastra/agents/estimationAgent";
 function extractHoursFromOutput(output: ScorerRunOutputForAgent): number | null {
   const text = Array.isArray(output)
     ? output
-        .filter((m: any) => m.role === "assistant")
-        .map((m: any) => (typeof m.content === "string" ? m.content : JSON.stringify(m.content)))
+        .filter((m: { role: string; content: unknown }) => m.role === "assistant")
+        .map((m: { role: string; content: unknown }) =>
+          typeof m.content === "string" ? m.content : JSON.stringify(m.content)
+        )
         .join(" ")
     : String(output);
 
@@ -45,20 +47,21 @@ function extractHoursFromOutput(output: ScorerRunOutputForAgent): number | null 
 // Custom scorer: checks that the parsed estimate falls within the expected range
 const timeEstimateRangeScorer = createScorer({
   id: "time-estimate-range-scorer",
-  description:
-    "Checks that the agent's time estimate falls within the expected min/max hour range",
-}).analyze(({ run }) => {
-  const groundTruth = run.groundTruth as { minHours: number; maxHours: number } | undefined;
-  if (!groundTruth) return { score: 0 };
+  description: "Checks that the agent's time estimate falls within the expected min/max hour range",
+})
+  .analyze(({ run }) => {
+    const groundTruth = run.groundTruth as { minHours: number; maxHours: number } | undefined;
+    if (!groundTruth) return { score: 0 };
 
-  const estimated = extractHoursFromOutput(run.output as ScorerRunOutputForAgent);
-  if (estimated === null) return { score: 0 };
+    const estimated = extractHoursFromOutput(run.output as ScorerRunOutputForAgent);
+    if (estimated === null) return { score: 0 };
 
-  const inRange = estimated >= groundTruth.minHours && estimated <= groundTruth.maxHours;
-  return { score: inRange ? 1 : 0 };
-}).generateScore(({ results }) => {
-  return (results.analyzeStepResult as any).score as number;
-});
+    const inRange = estimated >= groundTruth.minHours && estimated <= groundTruth.maxHours;
+    return { score: inRange ? 1 : 0 };
+  })
+  .generateScore(({ results }) => {
+    return (results.analyzeStepResult as { score: number }).score;
+  });
 
 // Add real test cases here
 const testData: Array<{ input: string; groundTruth: { minHours: number; maxHours: number } }> = [
