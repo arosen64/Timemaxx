@@ -19,10 +19,15 @@ In the `mastra/` directory, create a `.env` file (it is gitignored — never com
 
 ```
 ANTHROPIC_API_KEY=your_key_here
+MISTRAL_API_KEY=your_key_here
 MASTRA_SERVER_SECRET=your_secret_here
 ```
 
 A template is provided at `mastra/.env.example`.
+
+- `ANTHROPIC_API_KEY` — required for every chat/parsing/estimation/scheduling agent (all of them call Claude via `@ai-sdk/anthropic`).
+- `MISTRAL_API_KEY` — required by `ocrWorkflow` (`mistral-ocr-latest`) which extracts text from uploaded syllabus / transcript PDFs before the parsing agents run. Get a key at [console.mistral.ai](https://console.mistral.ai/).
+- `MASTRA_SERVER_SECRET` — shared secret enforced by the auth middleware. See Step 6 below for how to generate and propagate it.
 
 ## Step 3: Start the Mastra Server
 

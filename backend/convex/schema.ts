@@ -226,4 +226,34 @@ export default defineSchema({
   })
     .index("by_userId", ["userId"])
     .index("by_courseId", ["courseId"]),
+
+  /**
+   * Observability log for every AI/LLM call (Gemini, Anthropic, Mastra workflows).
+   * Captures prompt/response previews, latency, token usage, estimated cost, and
+   * error details so we can diagnose bad outputs and track spend after the fact.
+   */
+  aiCallLogs: defineTable({
+    /** User the call was made on behalf of (omitted for system-level batch jobs). */
+    userId: v.optional(v.id("users")),
+    /** Logical call site, e.g. "estimateTaskTime", "chat-workflow", "uploadSyllabus.parse". */
+    callSite: v.string(),
+    /** Provider: "gemini" | "anthropic" | "mastra". */
+    provider: v.string(),
+    /** Specific model version, e.g. "gemini-2.5-flash" or workflow id for Mastra. */
+    model: v.optional(v.string()),
+    status: v.union(v.literal("success"), v.literal("error"), v.literal("timeout")),
+    latencyMs: v.number(),
+    /** Truncated prompt — capped to keep storage bounded. */
+    promptPreview: v.optional(v.string()),
+    /** Truncated response — capped to keep storage bounded. */
+    responsePreview: v.optional(v.string()),
+    errorMessage: v.optional(v.string()),
+    /** Free-form context (taskId, subtaskId, sessionId, workflowId, etc.). */
+    metadata: v.optional(v.any()),
+    createdAt: v.number(),
+  })
+    .index("by_userId_createdAt", ["userId", "createdAt"])
+    .index("by_callSite_createdAt", ["callSite", "createdAt"])
+    .index("by_status_createdAt", ["status", "createdAt"])
+    .index("by_createdAt", ["createdAt"]),
 });

@@ -9,11 +9,11 @@
 **Description:** Users can sign in to Timemaxx using their Google account via Google OAuth. New users are redirected to onboarding; returning users go to the dashboard.
 
 - **Acceptance Criteria:**
-  - [ ] A "Sign in with Google" button is present on the landing/login page
-  - [ ] Clicking the button initiates the Google OAuth flow
-  - [ ] Successful authentication redirects new users to onboarding and returning users to the dashboard
-  - [ ] Failed authentication displays an appropriate error message
-  - [ ] Users remain logged in across sessions until they explicitly log out
+  - [x] A "Sign in with Google" button is present on the landing/login page
+  - [x] Clicking the button initiates the Google OAuth flow
+  - [x] Successful authentication redirects new users to onboarding and returning users to the dashboard
+  - [x] Failed authentication displays an appropriate error message
+  - [x] Users remain logged in across sessions until they explicitly log out
 
 ---
 
@@ -22,11 +22,11 @@
 **Description:** New users complete a required onboarding survey capturing study habits and preferences: preferred work hours (per day of the week) and focus block length.
 
 - **Acceptance Criteria:**
-  - [ ] New users are redirected to the onboarding survey after first login
-  - [ ] Survey collects: preferred work hours and focus block length
-  - [ ] All required fields must be completed before submission
-  - [ ] Survey can be completed in under 2 minutes
-  - [ ] Returning users (who have already completed onboarding) are not shown the survey again
+  - [x] New users are redirected to the onboarding survey after first login
+  - [x] Survey collects: preferred work hours and focus block length
+  - [x] All required fields must be completed before submission
+  - [x] Survey can be completed in under 2 minutes
+  - [x] Returning users (who have already completed onboarding) are not shown the survey again
 
 ---
 
@@ -35,10 +35,10 @@
 **Description:** Onboarding survey data is stored in Convex and persisted across sessions so users do not need to re-enter their preferences on subsequent logins.
 
 - **Acceptance Criteria:**
-  - [ ] Onboarding data is saved to Convex upon survey submission
-  - [ ] Stored data is scoped to the authenticated user's Google account ID
-  - [ ] User preferences are retrievable on subsequent logins
-  - [ ] No data is lost or corrupted between sessions
+  - [x] Onboarding data is saved to Convex upon survey submission
+  - [x] Stored data is scoped to the authenticated user's Google account ID
+  - [x] User preferences are retrievable on subsequent logins
+  - [x] No data is lost or corrupted between sessions
 
 ---
 
@@ -47,10 +47,10 @@
 **Description:** Users can manually add a task by entering or pasting an assignment description and selecting its type. The task is saved to their account.
 
 - **Acceptance Criteria:**
-  - [ ] A form is available for users to enter/paste an assignment description
-  - [ ] Users can select a task type: problem set, essay, coding assignment, or exam preparation
-  - [ ] Submitted tasks are saved to Convex and associated with the user's account
-  - [ ] Submitted tasks appear in the user's task list
+  - [x] A form is available for users to enter/paste an assignment description
+  - [x] Users can select a task type: problem set, essay, coding assignment, or exam preparation
+  - [x] Submitted tasks are saved to Convex and associated with the user's account
+  - [x] Submitted tasks appear in the user's task list
 
 ---
 
@@ -59,11 +59,11 @@
 **Description:** After a task is submitted, the system uses Google Gemini to generate an optimal time estimate based on the task description and type.
 
 - **Acceptance Criteria:**
-  - [ ] Time estimate is generated automatically after task submission
-  - [ ] Estimation uses task type as input
-  - [ ] Time estimate is displayed to the user alongside the task
-  - [ ] Estimation completes within 30 seconds of submission
-  - [ ] If estimation fails, an error is shown and the user can retry
+  - [x] Time estimate is generated automatically after task submission
+  - [x] Estimation uses task type as input
+  - [x] Time estimate is displayed to the user alongside the task
+  - [x] Estimation completes within 30 seconds of submission
+  - [x] If estimation fails, an error is shown and the user can retry
 
 ---
 
@@ -72,11 +72,11 @@
 **Description:** Users have a central dashboard displaying their task list with the ability to manually add, edit, or remove tasks.
 
 - **Acceptance Criteria:**
-  - [ ] Dashboard displays all tasks for the logged-in user (title, type, estimated time)
-  - [ ] Users can add new tasks from the dashboard
-  - [ ] Users can edit task details (description, type, due date)
-  - [ ] Users can delete tasks
-  - [ ] Dashboard is accessible immediately after login for returning users
+  - [x] Dashboard displays all tasks for the logged-in user (title, type, estimated time)
+  - [x] Users can add new tasks from the dashboard
+  - [x] Users can edit task details (description, type, due date)
+  - [x] Users can delete tasks
+  - [x] Dashboard is accessible immediately after login for returning users
 
 ---
 

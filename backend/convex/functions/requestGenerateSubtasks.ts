@@ -1,7 +1,7 @@
 import { action } from "../_generated/server";
 import { v } from "convex/values";
 import { internal, api } from "../_generated/api";
-import { type GenerateSubtasksResult } from "../actions/generateSubtasks";
+import { type GenerateSubtasksResult } from "../ai/generateSubtasks";
 
 export const requestGenerateSubtasks = action({
   args: {
@@ -14,7 +14,7 @@ export const requestGenerateSubtasks = action({
     });
     if (!task) throw new Error("Task not found or access denied");
 
-    return await ctx.runAction(internal.actions.generateSubtasks.generateSubtasks, {
+    return await ctx.runAction(internal.ai.generateSubtasks.generateSubtasks, {
       taskId: args.taskId,
       fileContent: args.fileContent,
     });

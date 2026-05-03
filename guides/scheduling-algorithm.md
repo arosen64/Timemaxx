@@ -9,7 +9,7 @@ Last updated: issue #506 (deadline-window bucket scoring)
 The scheduler turns unscheduled study blocks into placed calendar events. It runs in three phases:
 
 1. **Phase 1 — Global candidate scoring** (deterministic)
-2. **Phase 2 — AI slot selection** (Gemini Flash)
+2. **Phase 2 — AI slot selection** (Mastra `scheduling-workflow` → Anthropic Claude Sonnet)
 3. **Phase 3 — Placement & physical-validity fallback** (deterministic)
 
 Entry points:
@@ -107,15 +107,15 @@ When `deadlineBehavior` is not set, the component defaults to 0. Both scheduling
 
 `difficultyRating` comes from `userCourses` via the task's `courseId`. Both scheduling actions fetch user courses once at startup and build a `courseId → difficultyRating` map. For subtask blocks, the parent task's `courseId` is used.
 
-### What Gemini still decides
+### What the AI still decides
 
-Candidates are pre-sorted but Gemini is told it may override a lower-scored slot if surrounding calendar context makes it clearly better. The AI handles qualitative judgment (event titles, session flow, subject context) that the scorer can't capture numerically.
+Candidates are pre-sorted but the AI is told it may override a lower-scored slot if surrounding calendar context makes it clearly better. The AI handles qualitative judgment (event titles, session flow, subject context) that the scorer can't capture numerically.
 
 ---
 
 ## Phase 2 — AI slot selection
 
-One Gemini Flash call covers all blocks in the run. Each block's pre-scored, sorted candidate list and parent task context (title, due date, recommended start) are sent together. The prompt includes `score` and `scoreBreakdown` per candidate so Gemini can see why each slot ranked as it did. Gemini returns one candidate index per block. Falls back to index 0 if the API call fails or returns an invalid index.
+One Mastra `scheduling-workflow` call (Claude Sonnet) covers all blocks in the run. `selectAllSlotsWithAI` (`backend/convex/lib/scheduleSlots.ts`) sends each block's pre-scored, sorted candidate list and parent task context (title, due date, recommended start) together. The prompt includes `score` and `scoreBreakdown` per candidate so the model can see why each slot ranked as it did. The workflow returns one candidate index per block plus an optional skip reason. Falls back to index 0 if `MASTRA_URL` is unset, the workflow fails, or it returns an invalid index.
 
 ---
 

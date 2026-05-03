@@ -76,5 +76,5 @@ If `npx convex dev` was already running, restart it so it picks up the new envir
 
 - The ngrok URL changes every time you restart ngrok (free tier). Repeat steps 4–5 each session.
 - If you upgrade to a paid ngrok plan, you can set a static domain and avoid re-setting the Convex env var each time.
-- `VITE_MASTRA_URL` in `frontend/.env.local` should stay as `http://localhost:4111` — the frontend calls Mastra directly and does not need the public URL.
+- Only Convex needs the public Mastra URL — the frontend never calls Mastra directly. All chat traffic goes browser → Convex `/api/chat` → Mastra.
 - Never commit your ngrok authtoken or tunnel URLs to the repo.

@@ -1,4 +1,3 @@
-"use node";
 import { internalAction } from "../_generated/server";
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
@@ -6,6 +5,7 @@ import { z } from "zod";
 import { createMastraClient } from "../lib/mastraClient";
 import { sanitizeUserInput } from "../lib/sanitize";
 import { computeSubtaskCascade } from "../lib/scheduleSlots";
+import { withAiObservability } from "../lib/aiObservability";
 
 export type GeneratedSubtask = {
   title: string;
@@ -91,7 +91,24 @@ ${sanitizeUserInput(args.fileContent!, 10_000)}
     try {
       const client = createMastraClient(mastraUrl);
       const wf = client.getWorkflow("subtask-generation-workflow");
-      const run = await wf.startAsync({ inputData: { contextPrompt } });
+      const run = await withAiObservability(
+        ctx,
+        {
+          callSite: "generateSubtasks",
+          provider: "mastra",
+          model: "subtask-generation-workflow",
+          userId: task.userId,
+          promptPreview: contextPrompt,
+          metadata: { taskId: args.taskId, hasFileContent },
+        },
+        () => wf.startAsync({ inputData: { contextPrompt } }),
+        (r) => {
+          const step = r.steps?.[SUBTASK_STEP_ID];
+          return {
+            responsePreview: step && "output" in step ? JSON.stringify(step.output) : undefined,
+          };
+        }
+      );
 
       const runStatus = (run as { status?: string }).status;
       if (runStatus === "failed") {

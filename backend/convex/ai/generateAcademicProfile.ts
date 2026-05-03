@@ -4,6 +4,7 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { createMastraClient } from "../lib/mastraClient";
 import { sanitizeUserInput } from "../lib/sanitize";
 import { withTimeout } from "../lib/withTimeout";
+import { withAiObservability } from "../lib/aiObservability";
 
 export interface AcademicInsight {
   label: string;
@@ -39,9 +40,27 @@ export const generateAcademicProfile = action({
 
     const client = createMastraClient(mastraUrl);
     const wf = client.getWorkflow("academic-profile-workflow");
-    const run = await withTimeout(
-      wf.startAsync({ inputData: { sanitizedCourseList } }),
-      "Academic profile generation"
+    const run = await withAiObservability(
+      ctx,
+      {
+        callSite: "generateAcademicProfile",
+        provider: "mastra",
+        model: "academic-profile-workflow",
+        userId,
+        promptPreview: sanitizedCourseList,
+        metadata: { courseCount: args.courses.length },
+      },
+      () =>
+        withTimeout(
+          wf.startAsync({ inputData: { sanitizedCourseList } }),
+          "Academic profile generation"
+        ),
+      (r) => {
+        const step = r.steps?.["generate-profile"];
+        return {
+          responsePreview: step && "output" in step ? JSON.stringify(step.output) : undefined,
+        };
+      }
     );
 
     const runStatus = (run as { status?: string }).status;

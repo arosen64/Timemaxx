@@ -30,6 +30,7 @@ import {
 } from "./lib/messageTaggedScope";
 import { threadHasTaggedCourse, buildTaggedEntitiesContextBlock } from "./lib/chatEntityContext";
 import { handleEntityAction } from "./lib/chatEntityActions";
+import { withAiObservability } from "./lib/aiObservability";
 
 const chatApp = new Hono<HonoEnv>();
 
@@ -151,7 +152,10 @@ function parseDueDateIso(iso: string, timezone: string): number {
 }
 
 async function runChatWorkflow(
+  ctx: ActionCtx,
   client: ReturnType<typeof createMastraClient>,
+  userId: Id<"users">,
+  sessionId: string,
   inputData: {
     message: string;
     historyText: string;
@@ -166,7 +170,41 @@ async function runChatWorkflow(
   }
 ): Promise<ChatWorkflowOutput | "quota_exceeded" | null> {
   const wf = client.getWorkflow("chat-workflow");
-  const run = await wf.startAsync({ inputData });
+  const run = await withAiObservability(
+    ctx,
+    {
+      callSite: "chat-workflow",
+      provider: "mastra",
+      model: "chat-workflow",
+      userId,
+      promptPreview: inputData.message,
+      metadata: {
+        sessionId,
+        activeAgent: inputData.activeAgent,
+        taskAgentIntent: inputData.taskAgentIntent,
+        courseAgentIntent: inputData.courseAgentIntent,
+        hasTaggedTask: inputData.taggedTaskId !== null,
+        hasTaggedCourse: inputData.taggedCourseId !== null,
+      },
+    },
+    () => wf.startAsync({ inputData }),
+    (r) => {
+      const branchStepIds = [
+        "task_handler",
+        "feedback_handler",
+        "course_handler",
+        "schedule_handler",
+        "canned_handler",
+      ];
+      for (const id of branchStepIds) {
+        const step = r.steps?.[id];
+        if (step && "output" in step) {
+          return { responsePreview: JSON.stringify(step.output) };
+        }
+      }
+      return {};
+    }
+  );
 
   for (const step of Object.values(run.steps ?? {})) {
     if (!("output" in step)) {
@@ -229,7 +267,7 @@ async function executeTaskAction(
         ...(output.classTag ? { classTag: output.classTag } : {}),
       });
       if (shouldGenerateSubtasks) {
-        const generated = await ctx.runAction(internal.actions.generateSubtasks.generateSubtasks, {
+        const generated = await ctx.runAction(internal.ai.generateSubtasks.generateSubtasks, {
           taskId: createdTaskId,
         });
         if ("error" in generated) throw new Error(generated.error);
@@ -272,12 +310,9 @@ async function executeTaskAction(
       );
       if (subtaskCount === 0) {
         if (shouldGenerateSubtasks) {
-          const generated = await ctx.runAction(
-            internal.actions.generateSubtasks.generateSubtasks,
-            {
-              taskId: taggedTaskId,
-            }
-          );
+          const generated = await ctx.runAction(internal.ai.generateSubtasks.generateSubtasks, {
+            taskId: taggedTaskId,
+          });
           if ("error" in generated) throw new Error(generated.error);
           await ctx.runMutation(internal.mutations.subtasks.createSubtasksFromGeneratedInternal, {
             userId,
@@ -448,7 +483,7 @@ async function handleWorkflowTurn(
   const courseAgentIntent: CourseAgentIntent =
     (session?.courseAgentIntent as CourseAgentIntent) ?? null;
 
-  const result = await runChatWorkflow(client, {
+  const result = await runChatWorkflow(ctx, client, userId, sessionId, {
     message,
     historyText,
     taggedEntitiesBlock,
