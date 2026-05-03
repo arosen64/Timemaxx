@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "mastra dev --dir src/mastra",
     "build": "mastra build --dir src/mastra",
-    "eval": "tsx src/evals/index.ts"
+    "eval": "tsx --env-file=.env src/evals/index.ts"
   },
   "keywords": [],
   "author": "",

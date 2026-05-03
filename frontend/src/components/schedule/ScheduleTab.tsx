@@ -79,13 +79,18 @@ export default function ScheduleTab() {
   const [selectorOpen, setSelectorOpen] = useState(false);
   const [assigningBlockId, setAssigningBlockId] = useState<Id<"studyBlocks"> | null>(null);
   const [draggingBlockId, setDraggingBlockId] = useState<Id<"studyBlocks"> | null>(null);
-  const [autoRescheduleMsg, setAutoRescheduleMsg] = useState<string | null>(null);
+  const [autoRescheduleMsg, setAutoRescheduleMsg] = useState<{
+    text: string;
+    skippedReason?: string;
+  } | null>(null);
   const [isRescheduling, setIsRescheduling] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [exportMsg, setExportMsg] = useState<string | null>(null);
-  const [scheduleAllMsg, setScheduleAllMsg] = useState<{ text: string; warn: boolean } | null>(
-    null
-  );
+  const [scheduleAllMsg, setScheduleAllMsg] = useState<{
+    text: string;
+    warn: boolean;
+    skippedReason?: string;
+  } | null>(null);
   const [showNudge, setShowNudge] = useState(false);
   const [pendingSchedule, setPendingSchedule] = useState<(() => void) | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
@@ -311,13 +316,15 @@ export default function ScheduleTab() {
     setAutoRescheduleMsg(null);
     try {
       const result = await autoRescheduleAction({ timezone });
-      setAutoRescheduleMsg(
-        result.unplacedCount > 0
-          ? `${result.unplacedCount} block${result.unplacedCount !== 1 ? "s" : ""} could not be placed and moved to the tray.`
-          : "All conflicts resolved."
-      );
+      setAutoRescheduleMsg({
+        text:
+          result.unplacedCount > 0
+            ? `${result.unplacedCount} block${result.unplacedCount !== 1 ? "s" : ""} could not be placed and moved to the tray.`
+            : "All conflicts resolved.",
+        skippedReason: result.skippedReason ?? undefined,
+      });
     } catch {
-      setAutoRescheduleMsg("Auto-reschedule failed. Please try again.");
+      setAutoRescheduleMsg({ text: "Auto-reschedule failed. Please try again." });
     } finally {
       setIsRescheduling(false);
     }
@@ -465,12 +472,17 @@ export default function ScheduleTab() {
       )}
 
       {autoRescheduleMsg && (
-        <div className="mb-3 flex items-center justify-between gap-2 rounded-lg border border-border bg-bg-gray px-4 py-2 text-sm text-slate-blue">
-          <span>{autoRescheduleMsg}</span>
+        <div className="mb-3 flex items-start justify-between gap-2 rounded-lg border border-border bg-bg-gray px-4 py-2 text-sm text-slate-blue">
+          <div>
+            <span>{autoRescheduleMsg.text}</span>
+            {autoRescheduleMsg.skippedReason && (
+              <p className="mt-1 text-xs opacity-80">{autoRescheduleMsg.skippedReason}</p>
+            )}
+          </div>
           <button
             type="button"
             onClick={() => setAutoRescheduleMsg(null)}
-            className="text-light-blue hover:text-slate-blue"
+            className="mt-0.5 shrink-0 text-light-blue hover:text-slate-blue"
           >
             ✕
           </button>
@@ -492,13 +504,18 @@ export default function ScheduleTab() {
 
       {scheduleAllMsg && (
         <div
-          className={`mb-3 flex items-center justify-between gap-2 rounded-lg border px-4 py-2 text-sm ${scheduleAllMsg.warn ? "border-amber-200 bg-amber-50 text-amber-800" : "border-border bg-bg-gray text-slate-blue"}`}
+          className={`mb-3 flex items-start justify-between gap-2 rounded-lg border px-4 py-2 text-sm ${scheduleAllMsg.warn ? "border-amber-200 bg-amber-50 text-amber-800" : "border-border bg-bg-gray text-slate-blue"}`}
         >
-          <span>{scheduleAllMsg.text}</span>
+          <div>
+            <span>{scheduleAllMsg.text}</span>
+            {scheduleAllMsg.skippedReason && (
+              <p className="mt-1 text-xs opacity-80">{scheduleAllMsg.skippedReason}</p>
+            )}
+          </div>
           <button
             type="button"
             onClick={() => setScheduleAllMsg(null)}
-            className="opacity-60 hover:opacity-100"
+            className="mt-0.5 shrink-0 opacity-60 hover:opacity-100"
           >
             ✕
           </button>
@@ -594,7 +611,9 @@ export default function ScheduleTab() {
           assigningBlockId={assigningBlockId}
           onToggleAssign={(id) => setAssigningBlockId((prev) => (prev === id ? null : id))}
           timezone={timezone}
-          onScheduleAllMsg={(msg, warn = false) => setScheduleAllMsg({ text: msg, warn })}
+          onScheduleAllMsg={(msg, warn = false, skippedReason) =>
+            setScheduleAllMsg({ text: msg, warn, skippedReason })
+          }
           onBeforeSchedule={maybeNudge}
         />
       </div>
