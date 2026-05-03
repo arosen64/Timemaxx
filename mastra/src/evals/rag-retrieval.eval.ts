@@ -215,7 +215,12 @@ export async function runRagRetrievalEval() {
     onItemComplete: ({ item, scorerResults }) => {
       const result = scorerResults["rag-chat-grounding-scorer"];
       const passed = (result?.score ?? 0) === 1;
-      console.log(`  scenario: ${item.groundTruth.scenario} -> ${passed ? "PASS" : "FAIL"}`);
+      const label = item.groundTruth.scenario;
+      if (passed) {
+        console.log(`    ✓  ${label}  PASS`);
+        return;
+      }
+      console.log(`    ✗  ${label}  FAIL`);
       if (!passed) {
         console.log("    details:", JSON.stringify(result, null, 2));
       }
