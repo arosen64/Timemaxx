@@ -28,6 +28,25 @@ import { buildClassTag } from "../utils/classTagUtils";
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 
+function applySortKey(tasks: TaskType[], key: "newest" | "due_date" | "class"): TaskType[] {
+  const sorted = [...tasks];
+  if (key === "due_date") {
+    sorted.sort((a, b) => a.dueDate - b.dueDate);
+  } else if (key === "class") {
+    sorted.sort((a, b) => {
+      const aTag = a.classTag ?? "";
+      const bTag = b.classTag ?? "";
+      if (!aTag && bTag) return 1;
+      if (aTag && !bTag) return -1;
+      const cmp = aTag.localeCompare(bTag);
+      return cmp !== 0 ? cmp : a.dueDate - b.dueDate;
+    });
+  } else {
+    sorted.sort((a, b) => b.createdAt - a.createdAt);
+  }
+  return sorted;
+}
+
 function getDateBoundaries() {
   const d = new Date();
   const todayStart = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
@@ -115,6 +134,7 @@ export default function DashboardPage() {
   }, [userCourses]);
 
   const [activeTab, setActiveTab] = useState<"active" | "completed">("active");
+  const [sortKey, setSortKey] = useState<"newest" | "due_date" | "class">("newest");
 
   const activeTasks = useMemo(
     () => taskRows.filter((t) => (t.status ?? "not_started") !== "completed"),
@@ -123,6 +143,15 @@ export default function DashboardPage() {
   const completedTasks = useMemo(
     () => taskRows.filter((t) => t.status === "completed"),
     [taskRows]
+  );
+
+  const sortedActiveTasks = useMemo(
+    () => applySortKey(activeTasks, sortKey),
+    [activeTasks, sortKey]
+  );
+  const sortedCompletedTasks = useMemo(
+    () => applySortKey(completedTasks, sortKey),
+    [completedTasks, sortKey]
   );
 
   const [editingTask, setEditingTask] = useState<TaskType | null>(null);
@@ -526,32 +555,43 @@ export default function DashboardPage() {
         <div className="flex flex-col lg:flex-row flex-1 gap-6">
           {/* Task Column */}
           <section className="flex flex-col flex-1 min-w-0 gap-4">
-            {/* Tabs */}
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
-                onClick={() => setActiveTab("active")}
-                className={`rounded-lg px-3 py-1.5 text-sm font-semibold font-heading transition
-                  ${
-                    activeTab === "active"
-                      ? "bg-navy text-white"
-                      : "text-slate-blue hover:bg-bg-gray"
-                  }`}
+            {/* Tabs + Sort */}
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("active")}
+                  className={`rounded-lg px-3 py-1.5 text-sm font-semibold font-heading transition
+                    ${
+                      activeTab === "active"
+                        ? "bg-navy text-white"
+                        : "text-slate-blue hover:bg-bg-gray"
+                    }`}
+                >
+                  Active ({activeTasks.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("completed")}
+                  className={`rounded-lg px-3 py-1.5 text-sm font-semibold font-heading transition
+                    ${
+                      activeTab === "completed"
+                        ? "bg-navy text-white"
+                        : "text-slate-blue hover:bg-bg-gray"
+                    }`}
+                >
+                  Completed ({completedTasks.length})
+                </button>
+              </div>
+              <select
+                value={sortKey}
+                onChange={(e) => setSortKey(e.target.value as typeof sortKey)}
+                className="rounded-lg border border-border bg-white px-2.5 py-1.5 text-xs font-semibold font-heading text-slate-blue cursor-pointer focus:outline-none focus:ring-2 focus:ring-sky-blue"
               >
-                Active ({activeTasks.length})
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab("completed")}
-                className={`rounded-lg px-3 py-1.5 text-sm font-semibold font-heading transition
-                  ${
-                    activeTab === "completed"
-                      ? "bg-navy text-white"
-                      : "text-slate-blue hover:bg-bg-gray"
-                  }`}
-              >
-                Completed ({completedTasks.length})
-              </button>
+                <option value="newest">Newest added</option>
+                <option value="due_date">Soonest due</option>
+                <option value="class">Class (A–Z)</option>
+              </select>
             </div>
 
             {tasks === undefined ? (
@@ -577,7 +617,7 @@ export default function DashboardPage() {
                 </div>
               ) : (
                 <div className="flex flex-col gap-3">
-                  {activeTasks.map((task) => (
+                  {sortedActiveTasks.map((task) => (
                     <TaskCard
                       key={task._id}
                       task={task}
@@ -627,7 +667,7 @@ export default function DashboardPage() {
               </div>
             ) : (
               <div className="flex flex-col gap-3">
-                {completedTasks.map((task) => (
+                {sortedCompletedTasks.map((task) => (
                   <TaskCard
                     key={task._id}
                     task={task}
