@@ -163,6 +163,29 @@ export function chunkHasMetadataOverlap(
 }
 
 /**
+ * Vector search returns chunks in similarity order; this reorders so chunks whose
+ * `linkedTaskIds` / `linkedCourseIds` overlap the current task, related tasks,
+ * or related courses appear first, then the rest, capped for the prompt.
+ */
+export function prioritizeRetrievedChatChunks(
+  ordered: Doc<"chatChunks">[],
+  taskIdSet: Set<Id<"tasks">>,
+  courseIdSet: Set<Id<"userCourses">>,
+  cap: number = CHAT_RETRIEVAL_CAP
+): Doc<"chatChunks">[] {
+  const withOverlap: Doc<"chatChunks">[] = [];
+  const withoutOverlap: Doc<"chatChunks">[] = [];
+  for (const c of ordered) {
+    if (chunkHasMetadataOverlap(c, taskIdSet, courseIdSet)) {
+      withOverlap.push(c);
+    } else {
+      withoutOverlap.push(c);
+    }
+  }
+  return [...withOverlap, ...withoutOverlap].slice(0, cap);
+}
+
+/**
  * Vector search over `chatChunks` for the user: embeds a query from the
  * current task plus a fixed intent phrase, then prefers chunks whose
  * `linkedTaskIds` / `linkedCourseIds` overlap related tasks, the current task,
@@ -228,17 +251,7 @@ export async function fetchRelevantChats(
     courseIdSet.add(task.courseId);
   }
 
-  const withOverlap: Doc<"chatChunks">[] = [];
-  const withoutOverlap: Doc<"chatChunks">[] = [];
-  for (const c of ordered) {
-    if (chunkHasMetadataOverlap(c, taskIdSet, courseIdSet)) {
-      withOverlap.push(c);
-    } else {
-      withoutOverlap.push(c);
-    }
-  }
-
-  const mergedDocs = [...withOverlap, ...withoutOverlap].slice(0, CHAT_RETRIEVAL_CAP);
+  const mergedDocs = prioritizeRetrievedChatChunks(ordered, taskIdSet, courseIdSet);
   const chunkIds = mergedDocs.map((c) => c._id);
   return { chunkIds, chunks: mergedDocs };
 }
