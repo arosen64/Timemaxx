@@ -280,6 +280,91 @@ describe("mutations/syllabi – confirmSyllabusTasks", () => {
     expect(task?.userId).toEqual(userId);
   });
 
+  test("saves assignmentWeight to the inserted task when provided", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+    const syllabusId = await createTestSyllabus(t, userId);
+
+    const [taskId] = await withAuth.mutation(api.mutations.syllabi.confirmSyllabusTasks, {
+      syllabusId,
+      tasks: [
+        {
+          title: "Midterm Exam",
+          description: "Covers chapters 1-7.",
+          dueDate: FUTURE_DATE,
+          taskType: "Exam Prep",
+          assignmentWeight: 30,
+        },
+      ],
+    });
+
+    const task = await t.run((ctx) => ctx.db.get(taskId));
+    expect(task?.assignmentWeight).toBe(30);
+  });
+
+  test("omits assignmentWeight on the inserted task when not provided", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+    const syllabusId = await createTestSyllabus(t, userId);
+
+    const [taskId] = await withAuth.mutation(api.mutations.syllabi.confirmSyllabusTasks, {
+      syllabusId,
+      tasks: [
+        {
+          title: "Problem Set 1",
+          description: "Solve exercises 1-10.",
+          dueDate: FUTURE_DATE,
+          taskType: "Problem Set",
+        },
+      ],
+    });
+
+    const task = await t.run((ctx) => ctx.db.get(taskId));
+    expect(task?.assignmentWeight).toBeUndefined();
+  });
+
+  test("throws when assignmentWeight is out of range", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+    const syllabusId = await createTestSyllabus(t, userId);
+
+    await expect(
+      withAuth.mutation(api.mutations.syllabi.confirmSyllabusTasks, {
+        syllabusId,
+        tasks: [
+          {
+            title: "Exam",
+            description: "desc",
+            dueDate: FUTURE_DATE,
+            taskType: "Exam Prep",
+            assignmentWeight: 150,
+          },
+        ],
+      })
+    ).rejects.toThrow("assignmentWeight must be between 0 and 100");
+  });
+
+  test("throws when assignmentWeight is negative", async () => {
+    const t = makeTestCtx();
+    const { userId, withAuth } = await createTestUser(t);
+    const syllabusId = await createTestSyllabus(t, userId);
+
+    await expect(
+      withAuth.mutation(api.mutations.syllabi.confirmSyllabusTasks, {
+        syllabusId,
+        tasks: [
+          {
+            title: "Exam",
+            description: "desc",
+            dueDate: FUTURE_DATE,
+            taskType: "Exam Prep",
+            assignmentWeight: -1,
+          },
+        ],
+      })
+    ).rejects.toThrow("assignmentWeight must be between 0 and 100");
+  });
+
   test("schedules time estimation for each confirmed task", async () => {
     vi.stubEnv("GEMINI_API_KEY", "");
     const t = makeTestCtx();

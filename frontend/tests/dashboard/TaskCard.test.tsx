@@ -7,7 +7,7 @@ import TaskCard from '../../src/components/dashboard/TaskCard'
 vi.mock('../../../backend/convex/_generated/api', () => ({
   api: {
     queries: { studyBlocks: { getStudyBlocksByTask: 'getStudyBlocksByTask' } },
-    mutations: { studyBlocks: { deleteStudyBlocksForTask: 'deleteStudyBlocksForTask' } },
+    mutations: { studyBlocks: { toggleStudyBlockComplete: 'toggleStudyBlockComplete' } },
   },
 }))
 vi.mock('convex/react', () => ({ useQuery: vi.fn(), useMutation: vi.fn() }))
