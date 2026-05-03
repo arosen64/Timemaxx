@@ -325,8 +325,9 @@ export default function ClassPanel({
 
   function openStartEdit() {
     if (!selectedTask) return;
-    const stored = selectedTask.recommendedStart ?? selectedTask.dueDate - 86_400_000;
-    const ms = Math.max(stored, Date.now());
+    const ms = selectedTask.recommendedStart
+      ? Math.max(selectedTask.recommendedStart, Date.now())
+      : Date.now();
     setStartDateInput(toLocalISODate(ms));
     setStartDateError(null);
     setIsEditingStart(true);
@@ -552,7 +553,7 @@ export default function ClassPanel({
                       type="date"
                       value={startDateInput}
                       min={toLocalISODate(Date.now())}
-                      max={toLocalISODate(selectedTask.dueDate - 1)}
+                      max={toLocalISODate(selectedTask.dueDate - 86_400_000)}
                       onChange={(e) => {
                         setStartDateInput(e.target.value);
                         setStartDateError(null);

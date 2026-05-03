@@ -369,4 +369,24 @@ describe("mutations/tasks – updateRecommendedStart", () => {
       })
     ).rejects.toThrow("Suggested start date must be before the due date.");
   });
+
+  test("rejects a recommendedStart more than one day in the past", async () => {
+    const t = makeTestCtx();
+    const { withAuth } = await createTestUser(t);
+    const dueDate = Date.now() + 30 * 86_400_000;
+
+    const taskId = await withAuth.mutation(api.mutations.tasks.createTask, {
+      title: "Task",
+      description: "desc",
+      taskType: "Essay",
+      dueDate,
+    });
+
+    await expect(
+      withAuth.mutation(api.mutations.tasks.updateRecommendedStart, {
+        taskId,
+        recommendedStart: Date.now() - 2 * 86_400_000,
+      })
+    ).rejects.toThrow("Suggested start date cannot be in the past.");
+  });
 });

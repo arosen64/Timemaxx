@@ -437,6 +437,27 @@ describe('ClassPanel – Suggested Start Date', () => {
     expect(screen.getByText('Reset to default')).toBeInTheDocument()
   })
 
+  it('calls updateRecommendedStart with the selected date when saved', async () => {
+    const updateMock = vi.fn().mockResolvedValue(undefined)
+    mockUseMutation.mockReturnValue(updateMock as never)
+    const user = userEvent.setup()
+    setupQueries()
+    mockUseAction.mockImplementation(() => vi.fn().mockResolvedValue({ scheduled: 0, skipped: 0, conflicted: 0 }) as never)
+    await drillToTaskDetail(user)
+    await user.click(screen.getByLabelText('Edit suggested start date'))
+    const input = screen.getByDisplayValue(/\d{4}-\d{2}-\d{2}/)
+    const tomorrow = new Date(Date.now() + 86400000)
+    const iso = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(tomorrow.getDate()).padStart(2, '0')}`
+    await user.clear(input)
+    await user.type(input, iso)
+    await user.click(screen.getByRole('button', { name: 'Save suggested start date' }))
+    await waitFor(() =>
+      expect(updateMock).toHaveBeenCalledWith(
+        expect.objectContaining({ taskId: 'task1', recommendedStart: expect.any(Number) })
+      )
+    )
+  })
+
   it('calls updateRecommendedStart with null when "Reset to default" is clicked', async () => {
     const updateMock = vi.fn().mockResolvedValue(undefined)
     mockUseMutation.mockReturnValue(updateMock as never)
