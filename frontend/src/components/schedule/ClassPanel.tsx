@@ -178,7 +178,7 @@ export default function ClassPanel({
     [courses]
   );
 
-  const tasksForSelectedCourse = courseTasks ?? [];
+  const tasksForSelectedCourse = useMemo(() => courseTasks ?? [], [courseTasks]);
 
   const selectedTask = useMemo(
     () => tasksForSelectedCourse.find((t) => t._id === selectedTaskId) ?? null,
@@ -551,7 +551,7 @@ export default function ClassPanel({
                         new Date(
                           new Date(selectedTask.dueDate).getFullYear(),
                           new Date(selectedTask.dueDate).getMonth(),
-                          new Date(selectedTask.dueDate).getDate() - 1,
+                          new Date(selectedTask.dueDate).getDate() - 1
                         ).getTime()
                       )}
                       onChange={(e) => {
