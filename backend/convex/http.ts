@@ -84,6 +84,11 @@ makeApiHandler(chatApp, "/api/chat");
 
 function corsHeaders(): Record<string, string> {
   const siteUrl = process.env.SITE_URL ?? "http://localhost:5173";
+  if (!process.env.SITE_URL) {
+    console.error(
+      "SITE_URL is not set — CORS will block all requests. Set it with: npx convex env set SITE_URL <your-frontend-url>"
+    );
+  }
   const origin = new URL(siteUrl).origin;
   return {
     "Access-Control-Allow-Origin": origin,
