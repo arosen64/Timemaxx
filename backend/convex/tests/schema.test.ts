@@ -79,6 +79,14 @@ function getField(tableName: string, fieldName: string): FieldEntry {
   return field;
 }
 
+/** Extract the set of literal values from a `v.union(v.literal(...), ...)` field. */
+function literalValuesOf(field: FieldEntry): Set<unknown> {
+  if (field.fieldType.type !== "union") {
+    throw new Error(`Expected ${field.fieldType.type} field to be a union of literals`);
+  }
+  return new Set(field.fieldType.value.map((m) => (m.type === "literal" ? m.value : m.type)));
+}
+
 /**
  * Snapshot: expected fields per user-defined table.
  *
@@ -389,57 +397,39 @@ describe("schema – validator-level constraints (unions / literals / ids)", () 
   });
 
   test("chatMessages.role is union of 'user' | 'assistant'", () => {
-    const field = getField("chatMessages", "role");
-    expect(field.fieldType.type).toBe("union");
-    const members = (field.fieldType as Extract<FieldType, { type: "union" }>).value;
-    expect(
-      new Set(members.map((m) => (m as Extract<FieldType, { value: unknown }>).value))
-    ).toEqual(new Set(["user", "assistant"]));
+    expect(literalValuesOf(getField("chatMessages", "role"))).toEqual(
+      new Set(["user", "assistant"])
+    );
   });
 
   test("chatMessages.clarificationIntent allows the three documented values", () => {
-    const field = getField("chatMessages", "clarificationIntent");
-    expect(field.fieldType.type).toBe("union");
-    const members = (field.fieldType as Extract<FieldType, { type: "union" }>).value;
-    expect(
-      new Set(members.map((m) => (m as Extract<FieldType, { value: unknown }>).value))
-    ).toEqual(new Set(["task_feedback", "class_difficulty", "none"]));
+    expect(literalValuesOf(getField("chatMessages", "clarificationIntent"))).toEqual(
+      new Set(["task_feedback", "class_difficulty", "none"])
+    );
   });
 
   test("chatSessions.activeEntityStep is union of 'task' | 'class'", () => {
-    const field = getField("chatSessions", "activeEntityStep");
-    expect(field.fieldType.type).toBe("union");
-    const members = (field.fieldType as Extract<FieldType, { type: "union" }>).value;
-    expect(
-      new Set(members.map((m) => (m as Extract<FieldType, { value: unknown }>).value))
-    ).toEqual(new Set(["task", "class"]));
+    expect(literalValuesOf(getField("chatSessions", "activeEntityStep"))).toEqual(
+      new Set(["task", "class"])
+    );
   });
 
   test("chatSessions.activeAgent covers every specialist agent", () => {
-    const field = getField("chatSessions", "activeAgent");
-    expect(field.fieldType.type).toBe("union");
-    const members = (field.fieldType as Extract<FieldType, { type: "union" }>).value;
-    expect(
-      new Set(members.map((m) => (m as Extract<FieldType, { value: unknown }>).value))
-    ).toEqual(new Set(["task", "feedback", "preferences", "classes", "schedule"]));
+    expect(literalValuesOf(getField("chatSessions", "activeAgent"))).toEqual(
+      new Set(["task", "feedback", "preferences", "classes", "schedule"])
+    );
   });
 
   test("chatSessions.taskAgentIntent is 'create' | 'rud'", () => {
-    const field = getField("chatSessions", "taskAgentIntent");
-    expect(field.fieldType.type).toBe("union");
-    const members = (field.fieldType as Extract<FieldType, { type: "union" }>).value;
-    expect(
-      new Set(members.map((m) => (m as Extract<FieldType, { value: unknown }>).value))
-    ).toEqual(new Set(["create", "rud"]));
+    expect(literalValuesOf(getField("chatSessions", "taskAgentIntent"))).toEqual(
+      new Set(["create", "rud"])
+    );
   });
 
   test("chatSessions.courseAgentIntent covers add/drop/view/update", () => {
-    const field = getField("chatSessions", "courseAgentIntent");
-    expect(field.fieldType.type).toBe("union");
-    const members = (field.fieldType as Extract<FieldType, { type: "union" }>).value;
-    expect(
-      new Set(members.map((m) => (m as Extract<FieldType, { value: unknown }>).value))
-    ).toEqual(new Set(["add", "drop", "view", "update"]));
+    expect(literalValuesOf(getField("chatSessions", "courseAgentIntent"))).toEqual(
+      new Set(["add", "drop", "view", "update"])
+    );
   });
 
   test("chatSessions.pendingScheduleAction is the literal 'schedule_block'", () => {
@@ -451,12 +441,9 @@ describe("schema – validator-level constraints (unions / literals / ids)", () 
   });
 
   test("syllabi.status is union of 'pending' | 'confirmed' | 'failed'", () => {
-    const field = getField("syllabi", "status");
-    expect(field.fieldType.type).toBe("union");
-    const members = (field.fieldType as Extract<FieldType, { type: "union" }>).value;
-    expect(
-      new Set(members.map((m) => (m as Extract<FieldType, { value: unknown }>).value))
-    ).toEqual(new Set(["pending", "confirmed", "failed"]));
+    expect(literalValuesOf(getField("syllabi", "status"))).toEqual(
+      new Set(["pending", "confirmed", "failed"])
+    );
   });
 
   test("studyBlocks references both taskId and subtaskId by id", () => {
@@ -491,12 +478,9 @@ describe("schema – validator-level constraints (unions / literals / ids)", () 
   });
 
   test("users.year covers Freshman/Sophomore/Junior/Senior/Graduate", () => {
-    const field = getField("users", "year");
-    expect(field.fieldType.type).toBe("union");
-    const members = (field.fieldType as Extract<FieldType, { type: "union" }>).value;
-    expect(
-      new Set(members.map((m) => (m as Extract<FieldType, { value: unknown }>).value))
-    ).toEqual(new Set(["Freshman", "Sophomore", "Junior", "Senior", "Graduate"]));
+    expect(literalValuesOf(getField("users", "year"))).toEqual(
+      new Set(["Freshman", "Sophomore", "Junior", "Senior", "Graduate"])
+    );
   });
 
   test("users.productivityTraits is an object of optional string-array fields", () => {
@@ -519,11 +503,7 @@ describe("schema – validator-level constraints (unions / literals / ids)", () 
     expect(arr.value.type).toBe("object");
     const elemFields = (arr.value as Extract<FieldType, { type: "object" }>).value;
     expect(new Set(Object.keys(elemFields))).toEqual(new Set(["day", "blocked"]));
-    expect(elemFields.day.fieldType.type).toBe("union");
-    const dayMembers = (elemFields.day.fieldType as Extract<FieldType, { type: "union" }>).value;
-    expect(
-      new Set(dayMembers.map((m) => (m as Extract<FieldType, { value: unknown }>).value))
-    ).toEqual(
+    expect(literalValuesOf(elemFields.day)).toEqual(
       new Set(["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"])
     );
     expect(elemFields.blocked.fieldType.type).toBe("array");
@@ -607,127 +587,113 @@ describe("schema – vector indexes", () => {
   });
 });
 
+/**
+ * Asserts that inserting `doc` (which intentionally violates the schema)
+ * into `table` is rejected by Convex's schema validator.
+ */
+async function expectInsertRejected(
+  t: ReturnType<typeof makeTestCtx>,
+  table: "tasks",
+  doc: Record<string, unknown>
+) {
+  await expect(
+    // `as never` lets us pass deliberately-malformed documents through
+    // Convex's typed `insert` signature so we can verify runtime rejection.
+    t.run((ctx) => ctx.db.insert(table, doc as never))
+  ).rejects.toThrow();
+}
+
 describe("schema – runtime insert validation", () => {
   test("inserting a task missing the required `title` field is rejected", async () => {
     const t = makeTestCtx();
     const { userId } = await createTestUser(t);
 
-    await expect(
-      t.run((ctx) =>
-        ctx.db.insert("tasks", {
-          userId,
-          // title intentionally omitted
-          description: "desc",
-          taskType: "Essay",
-          dueDate: Date.now() + 86_400_000,
-          createdAt: Date.now(),
-          status: "not_started",
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } as any)
-      )
-    ).rejects.toThrow();
+    await expectInsertRejected(t, "tasks", {
+      userId,
+      // title intentionally omitted
+      description: "desc",
+      taskType: "Essay",
+      dueDate: Date.now() + 86_400_000,
+      createdAt: Date.now(),
+      status: "not_started",
+    });
   });
 
   test("inserting a task missing the required `dueDate` field is rejected", async () => {
     const t = makeTestCtx();
     const { userId } = await createTestUser(t);
 
-    await expect(
-      t.run((ctx) =>
-        ctx.db.insert("tasks", {
-          userId,
-          title: "T",
-          description: "desc",
-          taskType: "Essay",
-          // dueDate intentionally omitted
-          createdAt: Date.now(),
-          status: "not_started",
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } as any)
-      )
-    ).rejects.toThrow();
+    await expectInsertRejected(t, "tasks", {
+      userId,
+      title: "T",
+      description: "desc",
+      taskType: "Essay",
+      // dueDate intentionally omitted
+      createdAt: Date.now(),
+      status: "not_started",
+    });
   });
 
   test("inserting a task missing the required `status` field is rejected", async () => {
     const t = makeTestCtx();
     const { userId } = await createTestUser(t);
 
-    await expect(
-      t.run((ctx) =>
-        ctx.db.insert("tasks", {
-          userId,
-          title: "T",
-          description: "desc",
-          taskType: "Essay",
-          dueDate: Date.now() + 86_400_000,
-          createdAt: Date.now(),
-          // status intentionally omitted
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } as any)
-      )
-    ).rejects.toThrow();
+    await expectInsertRejected(t, "tasks", {
+      userId,
+      title: "T",
+      description: "desc",
+      taskType: "Essay",
+      dueDate: Date.now() + 86_400_000,
+      createdAt: Date.now(),
+      // status intentionally omitted
+    });
   });
 
   test("inserting a task with an unknown extra field is rejected", async () => {
     const t = makeTestCtx();
     const { userId } = await createTestUser(t);
 
-    await expect(
-      t.run((ctx) =>
-        ctx.db.insert("tasks", {
-          userId,
-          title: "T",
-          description: "desc",
-          taskType: "Essay",
-          dueDate: Date.now() + 86_400_000,
-          createdAt: Date.now(),
-          status: "not_started",
-          someBogusField: "nope",
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } as any)
-      )
-    ).rejects.toThrow();
+    await expectInsertRejected(t, "tasks", {
+      userId,
+      title: "T",
+      description: "desc",
+      taskType: "Essay",
+      dueDate: Date.now() + 86_400_000,
+      createdAt: Date.now(),
+      status: "not_started",
+      someBogusField: "nope",
+    });
   });
 
   test("inserting a task with a wrong-type field is rejected", async () => {
     const t = makeTestCtx();
     const { userId } = await createTestUser(t);
 
-    await expect(
-      t.run((ctx) =>
-        ctx.db.insert("tasks", {
-          userId,
-          title: "T",
-          description: "desc",
-          taskType: "Essay",
-          // dueDate must be number, not string
-          dueDate: "tomorrow" as unknown as number,
-          createdAt: Date.now(),
-          status: "not_started",
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } as any)
-      )
-    ).rejects.toThrow();
+    await expectInsertRejected(t, "tasks", {
+      userId,
+      title: "T",
+      description: "desc",
+      taskType: "Essay",
+      // dueDate must be number, not string
+      dueDate: "tomorrow",
+      createdAt: Date.now(),
+      status: "not_started",
+    });
   });
 
   test("inserting a task with a status outside the allowed union is rejected", async () => {
     const t = makeTestCtx();
     const { userId } = await createTestUser(t);
 
-    await expect(
-      t.run((ctx) =>
-        ctx.db.insert("tasks", {
-          userId,
-          title: "T",
-          description: "desc",
-          taskType: "Essay",
-          dueDate: Date.now() + 86_400_000,
-          createdAt: Date.now(),
-          status: "archived",
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } as any)
-      )
-    ).rejects.toThrow();
+    await expectInsertRejected(t, "tasks", {
+      userId,
+      title: "T",
+      description: "desc",
+      taskType: "Essay",
+      dueDate: Date.now() + 86_400_000,
+      createdAt: Date.now(),
+      status: "archived",
+    });
   });
 
   test("inserting a fully-valid task succeeds", async () => {
