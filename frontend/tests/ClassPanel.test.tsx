@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react'
+import { screen, waitFor, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { renderWithProviders, makeMutationFn } from './utils'
 import ClassPanel from '../src/components/schedule/ClassPanel'
@@ -13,6 +13,7 @@ vi.mock('../../backend/convex/_generated/api', () => ({
     },
     mutations: {
       studyBlocks: { splitStudyBlock: 'splitStudyBlock' },
+      tasks: { updateRecommendedStart: 'updateRecommendedStart' },
     },
     functions: {
       scheduleBlock: { scheduleBlock: 'scheduleBlock' },
@@ -46,7 +47,8 @@ const COURSE = {
 const TASK = {
   _id: 'task1' as Id<'tasks'>,
   title: 'Homework 1',
-  dueDate: Date.now() + 86400000 * 3,
+  dueDate: Date.now() + 86400000 * 14,
+  recommendedStart: Date.now() + 86400000 * 2,
   status: 'not_started',
 }
 
@@ -96,7 +98,7 @@ function setupQueries({
     const queryArgs = args[1]
     if (queryArgs === 'skip') return undefined as never
     if (ref === 'getUserCourses') return courses as never
-    if (ref === 'getTasksByCourseId') return tasks as never
+    if (ref === 'getTasksByCourseId') return tasks.filter(t => t.dueDate >= Date.now() && t.status !== 'completed') as never
     if (ref === 'getSubtasksForTask') return subtasks as never
     return undefined as never
   })
@@ -300,7 +302,7 @@ describe('ClassPanel – Schedule button (scheduleAllBlocks wiring)', () => {
     setupActions({ scheduleAllResult: { scheduled: 3, skipped: 0, conflicted: 0 } })
     await drillToTaskDetail(user, { ...DEFAULT_PROPS, onScheduleAllMsg: onMsg })
     await user.click(screen.getByRole('button', { name: 'Schedule (up to 10 blocks)' }))
-    await waitFor(() => expect(onMsg).toHaveBeenCalledWith('All 3 blocks scheduled.', false))
+    await waitFor(() => expect(onMsg).toHaveBeenCalledWith('All 3 blocks scheduled.', false, undefined))
   })
 
   it('uses singular "block" when exactly one block is scheduled', async () => {
@@ -310,7 +312,7 @@ describe('ClassPanel – Schedule button (scheduleAllBlocks wiring)', () => {
     setupActions({ scheduleAllResult: { scheduled: 1, skipped: 0, conflicted: 0 } })
     await drillToTaskDetail(user, { ...DEFAULT_PROPS, onScheduleAllMsg: onMsg })
     await user.click(screen.getByRole('button', { name: 'Schedule (up to 10 blocks)' }))
-    await waitFor(() => expect(onMsg).toHaveBeenCalledWith('All 1 block scheduled.', false))
+    await waitFor(() => expect(onMsg).toHaveBeenCalledWith('All 1 block scheduled.', false, undefined))
   })
 
   it('shows partial count message when some blocks are skipped', async () => {
@@ -320,7 +322,7 @@ describe('ClassPanel – Schedule button (scheduleAllBlocks wiring)', () => {
     setupActions({ scheduleAllResult: { scheduled: 2, skipped: 1, conflicted: 0 } })
     await drillToTaskDetail(user, { ...DEFAULT_PROPS, onScheduleAllMsg: onMsg })
     await user.click(screen.getByRole('button', { name: 'Schedule (up to 10 blocks)' }))
-    await waitFor(() => expect(onMsg).toHaveBeenCalledWith('2 scheduled, 1 skipped.', true))
+    await waitFor(() => expect(onMsg).toHaveBeenCalledWith('2 scheduled, 1 skipped.', true, undefined))
   })
 
   it('shows error message when scheduleAllBlocks throws', async () => {
@@ -343,7 +345,7 @@ describe('ClassPanel – Schedule button (scheduleAllBlocks wiring)', () => {
     await drillToTaskDetail(user, { ...DEFAULT_PROPS, onScheduleAllMsg: onMsg })
     await user.click(screen.getByRole('button', { name: 'Schedule (up to 10 blocks)' }))
     await waitFor(() =>
-      expect(onMsg).toHaveBeenCalledWith('All 2 blocks scheduled. 1 conflicted block needs auto-reschedule.', false)
+      expect(onMsg).toHaveBeenCalledWith('All 2 blocks scheduled. 1 conflicted block needs auto-reschedule.', false, undefined)
     )
   })
 
@@ -354,5 +356,143 @@ describe('ClassPanel – Schedule button (scheduleAllBlocks wiring)', () => {
     // Still on level 0 — schedule button not present
     expect(screen.queryByRole('button', { name: 'Schedule (up to 10 blocks)' })).not.toBeInTheDocument()
     expect(scheduleAllMock).not.toHaveBeenCalled()
+  })
+
+  it('passes skippedReason to onScheduleAllMsg when scheduleBlock returns a skip reason', async () => {
+    const user = userEvent.setup()
+    setupQueries()
+    const onMsg = vi.fn()
+    const skipReason = 'No open time slots before your deadline.'
+    const scheduleBlockMock = vi.fn().mockResolvedValue({ error: 'no_slot_found', skippedReason: skipReason })
+    mockUseAction.mockImplementation((actionRef: unknown) => {
+      const ref = actionRef as string
+      if (ref === 'scheduleBlock') return scheduleBlockMock as never
+      return vi.fn().mockResolvedValue({ scheduled: 0, skipped: 0, conflicted: 0 }) as never
+    })
+    mockUseMutation.mockReturnValue(vi.fn().mockResolvedValue(undefined) as never)
+    await drillToTaskDetail(user, { ...DEFAULT_PROPS, onScheduleAllMsg: onMsg })
+    await user.click(screen.getByRole('button', { name: `Auto-schedule "${BLOCK.title}"` }))
+    await waitFor(() =>
+      expect(onMsg).toHaveBeenCalledWith('Could not place this block.', true, skipReason)
+    )
+  })
+})
+
+describe('ClassPanel – past-due task filtering', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    setupMutations()
+    setupActions()
+  })
+
+  it('hides a task whose due date has passed', async () => {
+    const user = userEvent.setup()
+    const pastTask = {
+      _id: 'task-past' as Id<'tasks'>,
+      title: 'Overdue Assignment',
+      dueDate: Date.now() - 86400000,
+      status: 'not_started',
+    }
+    setupQueries({ tasks: [pastTask] })
+    renderWithProviders(<ClassPanel {...DEFAULT_PROPS} />)
+    await user.click(screen.getByText('Algorithms'))
+    expect(screen.queryByText('Overdue Assignment')).not.toBeInTheDocument()
+    expect(screen.getByText('No tasks for this class.')).toBeInTheDocument()
+  })
+
+  it('shows a task whose due date is in the future', async () => {
+    const user = userEvent.setup()
+    setupQueries()
+    renderWithProviders(<ClassPanel {...DEFAULT_PROPS} />)
+    await user.click(screen.getByText('Algorithms'))
+    expect(screen.getByText('Homework 1')).toBeInTheDocument()
+  })
+
+  it('shows only future tasks when both past-due and future tasks are present', async () => {
+    const user = userEvent.setup()
+    const pastTask = {
+      _id: 'task-past' as Id<'tasks'>,
+      title: 'Overdue Assignment',
+      dueDate: Date.now() - 86400000,
+      status: 'not_started',
+    }
+    setupQueries({ tasks: [pastTask, TASK] })
+    renderWithProviders(<ClassPanel {...DEFAULT_PROPS} />)
+    await user.click(screen.getByText('Algorithms'))
+    expect(screen.queryByText('Overdue Assignment')).not.toBeInTheDocument()
+    expect(screen.getByText('Homework 1')).toBeInTheDocument()
+  })
+})
+
+describe('ClassPanel – Suggested Start Date', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('shows the suggested start date in Level 2', async () => {
+    const user = userEvent.setup()
+    setupQueries()
+    setupActions()
+    await drillToTaskDetail(user)
+    expect(screen.getByText('SUGGESTED START')).toBeInTheDocument()
+  })
+
+  it('shows "Not set" when recommendedStart is undefined', async () => {
+    const user = userEvent.setup()
+    const taskWithoutStart = { ...TASK, recommendedStart: undefined }
+    setupQueries({ tasks: [taskWithoutStart] })
+    setupActions()
+    await drillToTaskDetail(user)
+    expect(screen.getByText('Not set')).toBeInTheDocument()
+  })
+
+  it('enters edit mode when the edit button is clicked', async () => {
+    const user = userEvent.setup()
+    setupQueries()
+    setupActions()
+    await drillToTaskDetail(user)
+    await user.click(screen.getByLabelText('Edit suggested start date'))
+    expect(screen.getByRole('button', { name: 'Save suggested start date' })).toBeInTheDocument()
+    expect(screen.getByText('Reset to default')).toBeInTheDocument()
+  })
+
+  it('calls updateRecommendedStart with the selected date when saved', async () => {
+    const updateMock = vi.fn().mockResolvedValue(undefined)
+    mockUseMutation.mockImplementation((ref: unknown) =>
+      ref === 'updateRecommendedStart' ? (updateMock as never) : (vi.fn().mockResolvedValue(undefined) as never)
+    )
+    const user = userEvent.setup()
+    setupQueries()
+    mockUseAction.mockImplementation(() => vi.fn().mockResolvedValue({ scheduled: 0, skipped: 0, conflicted: 0 }) as never)
+    await drillToTaskDetail(user)
+    await user.click(screen.getByLabelText('Edit suggested start date'))
+    const tomorrow = new Date(Date.now() + 86400000)
+    const iso = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(tomorrow.getDate()).padStart(2, '0')}`
+    fireEvent.change(screen.getByTestId('suggested-start-input'), { target: { value: iso } })
+    await user.click(screen.getByRole('button', { name: 'Save suggested start date' }))
+    const expectedMs = new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate()).getTime()
+    await waitFor(() =>
+      expect(updateMock).toHaveBeenCalledWith(
+        expect.objectContaining({ taskId: 'task1', recommendedStart: expectedMs })
+      )
+    )
+  })
+
+  it('calls updateRecommendedStart with null when "Reset to default" is clicked', async () => {
+    const updateMock = vi.fn().mockResolvedValue(undefined)
+    mockUseMutation.mockImplementation((ref: unknown) =>
+      ref === 'updateRecommendedStart' ? (updateMock as never) : (vi.fn().mockResolvedValue(undefined) as never)
+    )
+    const user = userEvent.setup()
+    setupQueries()
+    mockUseAction.mockImplementation(() => vi.fn().mockResolvedValue({ scheduled: 0, skipped: 0, conflicted: 0 }) as never)
+    await drillToTaskDetail(user)
+    await user.click(screen.getByLabelText('Edit suggested start date'))
+    await user.click(screen.getByText('Reset to default'))
+    await waitFor(() =>
+      expect(updateMock).toHaveBeenCalledWith(
+        expect.objectContaining({ taskId: 'task1', recommendedStart: null })
+      )
+    )
   })
 })

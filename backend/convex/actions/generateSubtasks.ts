@@ -1,8 +1,9 @@
+"use node";
 import { internalAction } from "../_generated/server";
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { z } from "zod";
-import { MastraClient } from "@mastra/client-js";
+import { createMastraClient } from "../lib/mastraClient";
 import { sanitizeUserInput } from "../lib/sanitize";
 import { computeSubtaskCascade } from "../lib/scheduleSlots";
 import { withAiObservability } from "../lib/aiObservability";
@@ -89,7 +90,7 @@ ${sanitizeUserInput(args.fileContent!, 10_000)}
     const contextPrompt = `Break this assignment into concrete, actionable subtasks.\n\n${sections.join("\n\n")}`;
 
     try {
-      const client = new MastraClient({ baseUrl: mastraUrl });
+      const client = createMastraClient(mastraUrl);
       const wf = client.getWorkflow("subtask-generation-workflow");
       const run = await withAiObservability(
         ctx,

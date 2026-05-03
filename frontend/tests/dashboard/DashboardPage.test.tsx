@@ -16,7 +16,7 @@ vi.mock('../../../backend/convex/_generated/api', () => ({
       tasks: { updateTask: 'updateTask', deleteTask: 'deleteTask' },
       subtasks: { deleteSubtask: 'deleteSubtask', updateSubtask: 'updateSubtask' },
       timeEstimate: { submitEstimateFeedback: 'submitEstimateFeedback' },
-      studyBlocks: { deleteStudyBlocksForTask: 'deleteStudyBlocksForTask', toggleStudyBlockComplete: 'toggleStudyBlockComplete' },
+      studyBlocks: { toggleStudyBlockComplete: 'toggleStudyBlockComplete' },
     },
     functions: {
       requestEstimateSubtaskTime: { requestEstimateSubtaskTime: 'requestEstimateSubtaskTime' },
@@ -112,6 +112,28 @@ const MOCK_TASKS = [
     timeEstimate: undefined,
     dueDate: Date.now() + 172800000,
     createdAt: Date.now(),
+  },
+]
+
+// Tasks with distinct due dates and class tags for sort integration tests
+const SORT_TASKS = [
+  {
+    _id: 'sort1',
+    title: 'Zoology Quiz',
+    description: '',
+    taskType: 'Quiz',
+    dueDate: Date.now() + 86400000 * 3,
+    createdAt: Date.now() - 2000,
+    classTag: 'ZOO-101: Zoology',
+  },
+  {
+    _id: 'sort2',
+    title: 'Art History Essay',
+    description: '',
+    taskType: 'Essay',
+    dueDate: Date.now() + 86400000,
+    createdAt: Date.now(),
+    classTag: 'ART-101: Art History',
   },
 ]
 
@@ -462,5 +484,50 @@ describe('DashboardPage', () => {
     // Rating buttons are visible again
     expect(screen.getByRole('button', { name: /rate estimate thumbs up/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /rate estimate thumbs down/i })).toBeInTheDocument()
+  })
+})
+
+describe('DashboardPage – sort dropdown', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('renders the sort dropdown with "Newest added" selected by default', () => {
+    setup()
+    const select = screen.getByRole('combobox', { name: /sort tasks by/i })
+    expect(select).toBeInTheDocument()
+    expect((select as HTMLSelectElement).value).toBe('newest')
+  })
+
+  it('sorts tasks soonest-due first when "Soonest due" is selected', async () => {
+    const user = userEvent.setup()
+    // sort2 (Art History) is due sooner; sort1 (Zoology) is due later
+    setup(SORT_TASKS)
+    await user.selectOptions(screen.getByRole('combobox', { name: /sort tasks by/i }), 'due_date')
+    const zoo = screen.getByText('Zoology Quiz')
+    const art = screen.getByText('Art History Essay')
+    expect(
+      art.compareDocumentPosition(zoo) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy()
+  })
+
+  it('sorts tasks alphabetically by class tag when "Class (A–Z)" is selected', async () => {
+    const user = userEvent.setup()
+    // ART-101 < ZOO-101 alphabetically, but sort1 (Zoology) was created earlier (newest default)
+    setup(SORT_TASKS)
+    await user.selectOptions(screen.getByRole('combobox', { name: /sort tasks by/i }), 'class')
+    const zoo = screen.getByText('Zoology Quiz')
+    const art = screen.getByText('Art History Essay')
+    expect(
+      art.compareDocumentPosition(zoo) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy()
+  })
+
+  it('preserves the sort selection when switching tabs', async () => {
+    const user = userEvent.setup()
+    setup([...MOCK_TASKS, { ...MOCK_TASKS[0], _id: 'task3', title: 'Completed Task', status: 'completed' as const }])
+    await user.selectOptions(screen.getByRole('combobox', { name: /sort tasks by/i }), 'due_date')
+    await user.click(screen.getByRole('button', { name: /completed/i }))
+    expect((screen.getByRole('combobox', { name: /sort tasks by/i }) as HTMLSelectElement).value).toBe('due_date')
   })
 })

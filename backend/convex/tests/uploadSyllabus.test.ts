@@ -33,6 +33,7 @@ function makeParseResponse(
     description: string;
     dueDate: string;
     taskType: string;
+    assignmentWeight?: number;
   }>
 ) {
   return { steps: { parse: { status: "success", output: { tasks } } } };
@@ -120,6 +121,51 @@ describe("actions/uploadSyllabus", () => {
       taskType: "Problem Set",
     });
     expect(typeof result.extractedTasks[0].dueDate).toBe("number");
+  });
+
+  test("preserves assignmentWeight when present in parse output", async () => {
+    mockStartAsync.mockResolvedValueOnce(
+      makeParseResponse([
+        {
+          title: "Midterm Exam",
+          description: "Covers chapters 1-7.",
+          dueDate: futureDateISO(30),
+          taskType: "Exam Prep",
+          assignmentWeight: 30,
+        },
+      ])
+    );
+
+    const t = makeTestCtx();
+    const { withAuth } = await createTestUser(t);
+
+    const { extractedTasks } = await withAuth.action(api.ai.uploadSyllabus.uploadSyllabus, {
+      fileContents: SYLLABUS_TEXT,
+    });
+
+    expect(extractedTasks[0].assignmentWeight).toBe(30);
+  });
+
+  test("omits assignmentWeight when absent from parse output", async () => {
+    mockStartAsync.mockResolvedValueOnce(
+      makeParseResponse([
+        {
+          title: "Problem Set 1",
+          description: "Solve exercises from chapter 3.",
+          dueDate: futureDateISO(30),
+          taskType: "Problem Set",
+        },
+      ])
+    );
+
+    const t = makeTestCtx();
+    const { withAuth } = await createTestUser(t);
+
+    const { extractedTasks } = await withAuth.action(api.ai.uploadSyllabus.uploadSyllabus, {
+      fileContents: SYLLABUS_TEXT,
+    });
+
+    expect(extractedTasks[0].assignmentWeight).toBeUndefined();
   });
 
   test("converts ISO dueDate strings to millisecond timestamps", async () => {

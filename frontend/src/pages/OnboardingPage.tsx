@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "../../../backend/convex/_generated/api";
-import { type DayOfWeek } from "../../../shared/userEnums";
+import { type DayOfWeek, type Year } from "../../../shared/userEnums";
 import { MIN_FOCUS_BLOCK_MINUTES } from "../../../shared/preferenceEnums";
 import { ProfileData, WorkHoursData, PreferencesData } from "../types";
 import ProfileForm from "../components/ProfileForm";
@@ -101,7 +101,8 @@ export default function OnboardingPage() {
     try {
       await saveOnboarding({
         major: profile.major,
-        year: profile.year,
+        // validateStep1 has guaranteed profile.year is one of YEARS.
+        year: profile.year as Year,
         workHoursGrid: Object.entries(workHours).map(([day, slots]) => ({
           day: day as DayOfWeek,
           blocked: slots.blocked,

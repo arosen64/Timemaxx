@@ -52,7 +52,12 @@ export const scheduleAllBlocks = action({
   handler: async (
     ctx,
     args
-  ): Promise<{ scheduled: number; skipped: number; conflicted: number }> => {
+  ): Promise<{
+    scheduled: number;
+    skipped: number;
+    conflicted: number;
+    skippedReason: string | null;
+  }> => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Unauthenticated");
 
@@ -198,7 +203,8 @@ export const scheduleAllBlocks = action({
       )
       .slice(0, MAX_BLOCKS);
 
-    if (sorted.length === 0) return { scheduled: 0, skipped: 0, conflicted: conflictedCount };
+    if (sorted.length === 0)
+      return { scheduled: 0, skipped: 0, conflicted: conflictedCount, skippedReason: null };
 
     // Fetch calendar events once for the full 21-day window
     const timedEvents = await fetch21DayCalendarEvents(ctx, args.timezone);
@@ -249,6 +255,11 @@ export const scheduleAllBlocks = action({
       { dayOfWeek: string; minutesFromMidnight: number; dateStr: string }
     >();
     const entries: BlockEntry[] = [];
+    const zeroCandidateBlocks: {
+      parentTitle: string;
+      parentDueDate: number;
+      recommendedStart: number | undefined;
+    }[] = [];
 
     for (const item of sorted) {
       const poolTarget = Math.min(item.parentDueDate, horizonMs);
@@ -315,7 +326,14 @@ export const scheduleAllBlocks = action({
         });
       }
 
-      if (scoredSlots.length === 0) continue;
+      if (scoredSlots.length === 0) {
+        zeroCandidateBlocks.push({
+          parentTitle: item.parentTitle,
+          parentDueDate: item.parentDueDate,
+          recommendedStart: item.recommendedStart,
+        });
+        continue;
+      }
 
       scoredSlots.sort((a, b) => b.score - a.score);
       const candidates = scoredSlots.slice(0, MAX_CANDIDATES);
@@ -340,23 +358,31 @@ export const scheduleAllBlocks = action({
       });
     }
 
-    // Phase 2: one Gemini call for all collected blocks
-    const chosenIndices =
-      entries.length > 0
-        ? await selectAllSlotsWithAI(
-            entries.map((e) => ({
-              taskTitle: e.parentTitle,
-              dueDate: e.parentDueDate,
-              recommendedStart: e.recommendedStart,
-              candidates: e.candidates,
-            })),
-            user.productivityTraits
-          )
-        : [];
+    // Phase 2: one AI call for schedulable blocks + zero-candidate blocks (for reasons)
+    const aiBatch = [
+      ...entries.map((e) => ({
+        taskTitle: e.parentTitle,
+        dueDate: e.parentDueDate,
+        recommendedStart: e.recommendedStart,
+        candidates: e.candidates,
+      })),
+      ...zeroCandidateBlocks.map((z) => ({
+        taskTitle: z.parentTitle,
+        dueDate: z.parentDueDate,
+        recommendedStart: z.recommendedStart,
+        candidates: [] as (typeof entries)[0]["candidates"],
+        cannotSchedule: true as const,
+      })),
+    ];
+
+    const { indices: chosenIndices, overallSkipReason: aiSkipReason } =
+      aiBatch.length > 0
+        ? await selectAllSlotsWithAI(aiBatch, user.productivityTraits)
+        : { indices: [], overallSkipReason: null };
 
     // Phase 3: place blocks using AI-chosen slots, with physical-validity fallback
     let scheduled = 0;
-    const skipped = sorted.length - entries.length;
+    let phase3Skipped = 0;
 
     for (let i = 0; i < entries.length; i++) {
       const { block, candidates } = entries[i];
@@ -368,7 +394,10 @@ export const scheduleAllBlocks = action({
       let chosen = candidates[chosenIndices[i] ?? 0];
       if (!isPhysValid(chosen)) {
         const fallback = candidates.find(isPhysValid);
-        if (!fallback) continue;
+        if (!fallback) {
+          phase3Skipped++;
+          continue;
+        }
         chosen = fallback;
       }
 
@@ -392,10 +421,15 @@ export const scheduleAllBlocks = action({
       scheduled++;
     }
 
+    const totalSkipped = zeroCandidateBlocks.length + phase3Skipped;
+    const skippedReason =
+      totalSkipped > 0 ? (aiSkipReason ?? "Your schedule is too full to place all blocks.") : null;
+
     return {
       scheduled,
-      skipped: skipped + (entries.length - scheduled),
+      skipped: totalSkipped,
       conflicted: conflictedCount,
+      skippedReason,
     };
   },
 });

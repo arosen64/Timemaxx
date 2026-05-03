@@ -6,8 +6,13 @@ import {
   activeAgentValidator,
   taskAgentIntentValidator,
   courseAgentIntentValidator,
+  clarificationIntentValidator,
 } from "./lib/chatValidators";
-import { productivityTraitsValidator, workHoursRowValidator } from "./lib/userValidators";
+import {
+  productivityTraitsValidator,
+  workHoursRowValidator,
+  yearValidator,
+} from "./lib/userValidators";
 
 export default defineSchema({
   ...authTables,
@@ -43,7 +48,7 @@ export default defineSchema({
     onboardingComplete: v.optional(v.boolean()),
     focusBlockLength: v.optional(v.number()),
     major: v.optional(v.string()),
-    year: v.optional(v.string()),
+    year: v.optional(yearValidator),
 
     workHoursGrid: v.optional(v.array(workHoursRowValidator)),
 
@@ -88,8 +93,6 @@ export default defineSchema({
   // Tasks table
   tasks: defineTable({
     ...sharedTaskFields,
-    /** Free-text label for the course/class (optional; complements courseId) */
-    classTag: v.optional(v.string()),
     dueDate: v.number(),
     isManualEstimate: v.optional(v.boolean()),
     assignmentWeight: v.optional(v.number()),
@@ -147,9 +150,7 @@ export default defineSchema({
     role: v.union(v.literal("user"), v.literal("assistant")),
     content: v.string(),
     createdAt: v.number(),
-    clarificationIntent: v.optional(
-      v.union(v.literal("task_feedback"), v.literal("class_difficulty"), v.literal("none"))
-    ),
+    clarificationIntent: v.optional(clarificationIntentValidator),
     /** Copied from chatSessions at insert time when that session has resolved scope */
     taskId: v.optional(v.id("tasks")),
     courseId: v.optional(v.id("userCourses")),
@@ -203,9 +204,7 @@ export default defineSchema({
     startCreatedAt: v.number(),
     linkedTaskIds: v.array(v.id("tasks")),
     linkedCourseIds: v.array(v.id("userCourses")),
-    clarificationIntent: v.optional(
-      v.union(v.literal("task_feedback"), v.literal("class_difficulty"), v.literal("none"))
-    ),
+    clarificationIntent: v.optional(clarificationIntentValidator),
     embedding: v.optional(v.array(v.float64())),
     createdAt: v.number(),
   })

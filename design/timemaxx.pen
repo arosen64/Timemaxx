@@ -4615,6 +4615,28 @@
           "height": "fit_content",
           "x": 60,
           "y": 2704
+        },
+        {
+          "type": "text",
+          "id": "M0F68W",
+          "x": 60,
+          "y": 2750,
+          "name": "loadingLabel",
+          "fill": "$--foreground",
+          "content": "Loading / Parsing",
+          "fontFamily": "Space Grotesk",
+          "fontSize": 13,
+          "fontWeight": "600"
+        },
+        {
+          "id": "WU2pA",
+          "type": "ref",
+          "ref": "dw1ql",
+          "name": "ParsingAnimation",
+          "width": "fit_content",
+          "height": "fit_content",
+          "x": 60,
+          "y": 2774
         }
       ]
     },
@@ -23821,6 +23843,157 @@
     },
     {
       "type": "frame",
+      "id": "SSR01",
+      "x": 12800,
+      "y": 2800,
+      "name": "TaskMetaRow/SuggestedStart",
+      "reusable": true,
+      "width": 240,
+      "fill": "$--card",
+      "gap": 8,
+      "padding": [8, 12],
+      "alignItems": "center",
+      "justifyContent": "space_between",
+      "children": [
+        {
+          "type": "text",
+          "id": "SSR02",
+          "name": "label",
+          "fill": "$--muted-foreground",
+          "content": "Suggested Start Date",
+          "fontFamily": "Space Grotesk",
+          "fontSize": 11,
+          "fontWeight": "600"
+        },
+        {
+          "type": "frame",
+          "id": "SSR03",
+          "name": "valueGroup",
+          "gap": 4,
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "SSR04",
+              "name": "value",
+              "fill": "$--primary",
+              "content": "Apr 14",
+              "fontFamily": "Inter",
+              "fontSize": 11,
+              "fontWeight": "500"
+            },
+            {
+              "type": "icon_font",
+              "id": "SSR05",
+              "name": "editIcon",
+              "width": 12,
+              "height": 12,
+              "iconFontName": "pencil",
+              "iconFontFamily": "lucide",
+              "fill": "$--muted-foreground"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "SSR10",
+      "x": 12800,
+      "y": 2880,
+      "name": "TaskMetaRow/SuggestedStart/Editing",
+      "reusable": true,
+      "width": 240,
+      "fill": "$--card",
+      "layout": "vertical",
+      "gap": 4,
+      "padding": [8, 12],
+      "children": [
+        {
+          "type": "text",
+          "id": "SSR11",
+          "name": "label",
+          "fill": "$--muted-foreground",
+          "content": "Suggested Start Date",
+          "fontFamily": "Space Grotesk",
+          "fontSize": 11,
+          "fontWeight": "600"
+        },
+        {
+          "type": "frame",
+          "id": "SSR12",
+          "name": "inputRow",
+          "width": "fill_container",
+          "gap": 6,
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "SSR13",
+              "name": "dateInput",
+              "height": 28,
+              "width": "fill_container",
+              "fill": "$--background",
+              "cornerRadius": 6,
+              "stroke": {
+                "align": "inside",
+                "thickness": 1,
+                "fill": "$--border"
+              },
+              "padding": [0, 8],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "SSR14",
+                  "name": "inputValue",
+                  "fill": "$--primary",
+                  "content": "Apr 14",
+                  "fontFamily": "Inter",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "SSR15",
+              "name": "saveBtn",
+              "width": 28,
+              "height": 28,
+              "fill": "$--primary",
+              "cornerRadius": 6,
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "SSR16",
+                  "name": "saveIcon",
+                  "width": 12,
+                  "height": 12,
+                  "iconFontName": "check",
+                  "iconFontFamily": "lucide",
+                  "fill": "$--primary-foreground"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "id": "SSR17",
+          "name": "resetLink",
+          "fill": "$--muted-foreground",
+          "content": "Reset to default",
+          "fontFamily": "Inter",
+          "fontSize": 10,
+          "fontWeight": "normal"
+        }
+      ]
+    },
+    {
+      "type": "frame",
       "id": "TRC01",
       "x": 8900,
       "y": 0,
@@ -24235,6 +24408,41 @@
               ]
             }
           ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "dw1ql",
+      "x": 13780,
+      "y": -3247,
+      "name": "ParsingAnimation",
+      "reusable": true,
+      "gap": 6,
+      "alignItems": "center",
+      "children": [
+        {
+          "type": "ellipse",
+          "id": "Q1kfOq",
+          "name": "spinner",
+          "fill": "#00000000",
+          "width": 12,
+          "height": 12,
+          "stroke": {
+            "align": "inside",
+            "thickness": 2,
+            "fill": "$--muted-foreground"
+          }
+        },
+        {
+          "type": "text",
+          "id": "eOtux",
+          "name": "phraseText",
+          "fill": "$--muted-foreground",
+          "content": "Meticulously scrutinizing your document…",
+          "fontFamily": "Inter",
+          "fontSize": 12,
+          "fontWeight": "normal"
         }
       ]
     }

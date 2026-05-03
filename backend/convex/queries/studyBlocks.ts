@@ -10,6 +10,10 @@ export const getStudyBlocksByTask = query({
     taskId: v.id("tasks"),
   },
   handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
+    const task = await ctx.db.get(args.taskId);
+    if (!task || task.userId !== userId) return [];
     return await ctx.db
       .query("studyBlocks")
       .withIndex("by_taskId", (q) => q.eq("taskId", args.taskId))
@@ -62,7 +66,11 @@ export const getStudyBlockById = query({
     studyBlockId: v.id("studyBlocks"),
   },
   handler: async (ctx, args) => {
-    return await ctx.db.get(args.studyBlockId);
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+    const block = await ctx.db.get(args.studyBlockId);
+    if (!block || block.userId !== userId) return null;
+    return block;
   },
 });
 
@@ -111,8 +119,9 @@ async function fetchAllStudyBlocksWithTasks(ctx: QueryCtx, userId: Id<"users">) 
   }
 
   for (const task of tasks) {
-    // Skip completed tasks — their blocks are unscheduled and should not appear on the calendar
+    // Skip completed or past-due tasks — their blocks should not appear on the calendar or tray
     if (task.status === "completed") continue;
+    if (task.dueDate < Date.now()) continue;
 
     const course = task.courseId ? courseMap.get(task.courseId) : null;
     const courseColor: string | undefined = course?.color ?? undefined;
