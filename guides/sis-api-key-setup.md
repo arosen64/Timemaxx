@@ -36,7 +36,7 @@ For production deploys, store the SIS key in GitHub Actions and let CD write it 
 
 1. In GitHub, go to **Settings -> Secrets and variables -> Actions -> New repository secret**
 2. Add:
-   - Name: `SIS_API_KEY`
+   - Name: `JHU_SIS_API_KEY` (the CD workflow reads `${{ secrets.JHU_SIS_API_KEY }}`)
    - Value: `<your production SIS API key>`
 
 The CD workflow sets `JHU_SIS_API_KEY` in Convex on deploy.

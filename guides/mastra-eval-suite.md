@@ -14,6 +14,7 @@ The eval suite lives in `mastra/src/evals/`. It uses [`@mastra/evals`](https://m
 | `time-estimate-range.eval.ts` | `estimationAgent` | Custom numeric range scorer |
 | `rag-retrieval.eval.ts` | `estimationAgent` | Context relevance & precision (chat RAG), keyword + LLM chats-trace grounding |
 | `academic-profile.eval.ts` | `academicProfileAgent` | Completeness, faithfulness, answer similarity |
+| `scheduling.eval.ts` | `schedulingWorkflow` | Custom acceptable-index scorer over pre-scored slot batches |
 
 ## Prerequisites
 
@@ -74,7 +75,7 @@ Valid `actionType` values per agent:
 - `taskAgent`: `create_task` | `update_task` | `delete_task` | `read_task`
 - `courseAgent`: `add_course` | `drop_course` | `update_course` | `view_courses`
 - `scheduleAgent`: `schedule_task` | `schedule_block` | `import_google_calendar`
-- `feedbackAgent` (uses `intent`): `task_feedback` | `class_feedback`
+- `feedbackAgent` (uses `intent`): `task_feedback` | `class_difficulty` | `unknown`
 
 For operations that require a resolved entity (update, delete, read, drop, schedule), craft
 the `input` as a full context string so the agent sees a `resolvedTaskId` or `resolvedCourseId`:

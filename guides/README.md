@@ -7,11 +7,12 @@ Brief "How To" guides that explain both _what_ and _why_ for each topic. Aimed a
 | [AI-Assisted Workflow](ai-assisted-workflow.md)     | Using Claude Code skills to plan iterations, create issues, branch, commit, and PR |
 | [Google Auth Setup](google-auth-setup.md)           | Connecting to the team Convex project, configuring Google OAuth credentials, and generating JWT keys for local development |
 | [Google Calendar Connection Setup](google-calendar-connection-setup.md) | One-time per-developer setup for Calendar OAuth redirect URIs, Convex token secret, and test-user access |
-| [Gemini API Key Setup](gemini-api-key-setup.md)     | Getting a Google Gemini API key and setting it in your personal Convex deployment to enable AI-powered subtask generation, syllabus parsing, and transcript analysis |
-| [OpenAI API Key Setup](openai-api-key-setup.md)     | Getting an OpenAI API key and setting it in your personal Convex deployment to enable GPT-4o mini task and subtask time estimation |
+| [Gemini API Key Setup](gemini-api-key-setup.md)     | Getting a Google Gemini API key and setting it in your personal Convex deployment for embeddings (powers chat-history RAG and task / course similarity search) |
 | [SIS API Key Setup](sis-api-key-setup.md)           | Setting the SIS API key in your Convex deployment for course lookup features |
 | [CI/CD Setup Guide](ci-cd-setup-guide.md)           | CI/CD pipeline overview, GitHub Actions workflows, secrets configuration, and deployment setup |
 | [Mastra Setup](mastra-setup.md)                     | Configuring the Mastra AI agent server with an Anthropic API key for local development |
+| [Mastra Eval Suite](mastra-eval-suite.md)           | Running the agent eval suite, scorer reference, and adding test cases per agent |
 | [ngrok Setup](ngrok-setup.md)                       | Exposing the local Mastra server via ngrok so Convex can reach it during development |
-| [Test Execution](testing.md)                        | Testing overview, execution, and helpers |
+| [Test Execution](testing.md)                        | Testing overview (Vitest backend + frontend, Playwright E2E), execution, and helpers |
+| [Scheduling Algorithm](scheduling-algorithm.md)     | Source-of-truth for the three-phase scheduler: candidate scoring, AI slot selection, placement |
 | [Convex retrieval debug](convex-retrieval-debug.md) | Locally testing retrieval (`dev/localRetrievalTest`) with `npx convex run` (time-estimate context) |

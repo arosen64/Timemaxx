@@ -9,16 +9,16 @@
 **Description:** Users can upload a transcript (PDF) during onboarding or later from their profile tab. The system extracts a natural-language description of the student's academic performance (strong/weak subjects), which is stored with the profile and used to improve time estimation. Users can edit the extracted description before saving.
 
 - **Acceptance Criteria:**
-  - [ ] A transcript upload field is available during onboarding (optional — users can skip)
-  - [ ] The same upload is also accessible from the user's profile tab after onboarding
-  - [ ] Accepted formats: PDF
-  - [ ] Maximum file size: 10 MB
-  - [ ] The transcript file is stored in Convex file storage (not as raw text in the users table)
-  - [ ] Gemini generates a plain-language description of the student's academic performance (e.g., strong in math, weaker in writing) from the transcript
-  - [ ] The extracted description is shown to the user for review and can be edited before saving
-  - [ ] The description (not a courses list) is saved to the user's profile and used as context in time estimation prompts
-  - [ ] If parsing fails, the user is shown an error and can retry or skip
-  - [ ] Transcript data is scoped to the authenticated user and persists across sessions
+  - [x] A transcript upload field is available during onboarding (optional — users can skip)
+  - [x] The same upload is also accessible from the user's profile tab after onboarding
+  - [x] Accepted formats: PDF
+  - [x] Maximum file size: 10 MB
+  - [ ] The transcript file is stored in Convex file storage (not as raw text in the users table) — descoped: file contents are passed directly to the parsing action; only the structured `transcriptSummary` is persisted
+  - [x] Gemini generates a plain-language description of the student's academic performance (e.g., strong in math, weaker in writing) from the transcript
+  - [ ] The extracted description is shown to the user for review and can be edited before saving — descoped: insights are auto-saved on parse and rendered read-only
+  - [x] The description (not a courses list) is saved to the user's profile and used as context in time estimation prompts
+  - [x] If parsing fails, the user is shown an error and can retry or skip — error is shown; retry requires removing the file and re-uploading (no explicit retry button)
+  - [x] Transcript data is scoped to the authenticated user and persists across sessions
 
 ---
 
@@ -27,17 +27,17 @@
 **Description:** Users can upload a syllabus (PDF or plain text) from the classes section of the dashboard or during the onboarding step where classes are added. Each upload is independent — users can upload just a syllabus, just a schedule, or both. Gemini extracts assignment names and due dates, which the user reviews before tasks are saved. Tasks include a tag field to associate them with a class.
 
 - **Acceptance Criteria:**
-  - [ ] Syllabus upload is accessible from the classes section of the dashboard and from onboarding where classes are added
-  - [ ] Accepted formats: PDF, plain text
-  - [ ] Maximum file size: 10 MB
-  - [ ] Syllabus and schedule can each be uploaded independently (not required together)
-  - [ ] Gemini extracts assignment names and due dates from the uploaded file
-  - [ ] Extracted items are presented to the user for review before being saved as tasks
-  - [ ] User can edit, remove, or confirm each extracted task before saving
-  - [ ] Each task created from a syllabus is tagged with the corresponding class name
-  - [ ] If extraction fails, the user is shown a clear error and can paste the syllabus text manually as a fallback
-  - [ ] Extraction completes within 30 seconds
-  - [ ] Successfully extracted tasks appear in the task list on the dashboard
+  - [x] Syllabus upload is accessible from the classes section of the dashboard and from onboarding where classes are added
+  - [x] Accepted formats: PDF, plain text
+  - [x] Maximum file size: 10 MB
+  - [x] Syllabus and schedule can each be uploaded independently (not required together)
+  - [x] Gemini extracts assignment names and due dates from the uploaded file
+  - [x] Extracted items are presented to the user for review before being saved as tasks
+  - [x] User can edit, remove, or confirm each extracted task before saving
+  - [x] Each task created from a syllabus is tagged with the corresponding class name
+  - [x] If extraction fails, the user is shown a clear error and can paste the syllabus text manually as a fallback
+  - [x] Extraction completes within 30 seconds
+  - [x] Successfully extracted tasks appear in the task list on the dashboard
 
 ---
 
@@ -46,15 +46,15 @@
 **Description:** Authenticated users can access a settings page to update onboarding preferences. Users can also permanently delete their account from settings.
 
 - **Acceptance Criteria:**
-  - [ ] A settings page is accessible from the sidebar or profile menu
-  - [ ] Settings page displays the user's current onboarding preferences
-  - [ ] Users can edit and save: preferred work hours, focus block length, difficult/enjoyed subjects, and courses
-  - [ ] Changes are saved to Convex and reflected immediately on next load
-  - [ ] Saving displays a success confirmation; errors are shown if the save fails
-  - [ ] Settings page is only accessible to authenticated users
-  - [ ] Users can permanently delete their account from the settings page
-  - [ ] Account deletion removes all user data (tasks, profile, stored files) from Convex
-  - [ ] A confirmation dialog is shown before deletion is executed
+  - [x] A settings page is accessible from the sidebar or profile menu
+  - [x] Settings page displays the user's current onboarding preferences
+  - [x] Users can edit and save: preferred work hours, focus block length, difficult/enjoyed subjects, and courses
+  - [x] Changes are saved to Convex and reflected immediately on next load
+  - [x] Saving displays a success confirmation; errors are shown if the save fails
+  - [x] Settings page is only accessible to authenticated users
+  - [x] Users can permanently delete their account from the settings page
+  - [x] Account deletion removes all user data (tasks, profile, stored files) from Convex
+  - [x] A confirmation dialog is shown before deletion is executed
 
 ---
 
@@ -63,13 +63,13 @@
 **Description:** The system connects to the user's Google Calendar to display their existing schedule and identify available time blocks. Users can pick available times for tasks, which are then shown in a dedicated schedule tab on the dashboard.
 
 - **Acceptance Criteria:**
-  - [ ] Users can connect their Google Calendar account from settings or onboarding
-  - [ ] The system reads the user's calendar events via the Google Calendar API (read-only)
-  - [ ] A schedule tab on the dashboard displays the user's Google Calendar events
-  - [ ] Available time blocks are derived by subtracting calendar events from preferred work hours
-  - [ ] Users can assign a task to an available time block and have it reflected in the schedule view
-  - [ ] If Calendar access is denied or unavailable, the system falls back to preferred work hours only
-  - [ ] Calendar data is not stored permanently — only used at schedule generation time
+  - [x] Users can connect their Google Calendar account from settings or onboarding
+  - [x] The system reads the user's calendar events via the Google Calendar API (read-only)
+  - [x] A schedule tab on the dashboard displays the user's Google Calendar events
+  - [x] Available time blocks are derived by subtracting calendar events from preferred work hours
+  - [x] Users can assign a task to an available time block and have it reflected in the schedule view — replaced with the iteration 3 schedule UI: blocks are auto-scheduled by `scheduleAllBlocks` and dragged on the calendar, not picked from a free-time list
+  - [x] If Calendar access is denied or unavailable, the system falls back to preferred work hours only
+  - [x] Calendar data is not stored permanently — only used at schedule generation time
 
 ---
 
@@ -78,11 +78,11 @@
 **Description:** The task system is extended with more built-in task types, the ability to define custom task types, a class tag field, and a mechanism for users to provide feedback on AI-generated time estimates.
 
 - **Acceptance Criteria:**
-  - [ ] Task types include at least: Essay, Problem Set, Exam Prep, Coding, Reading, Lab, Presentation, and Other
-  - [ ] Users can define a custom task type when creating or editing a task
-  - [ ] Each task has a class tag field to associate it with a course
-  - [ ] After a time estimate is generated, users can rate it (thumbs up / thumbs down) or submit a corrected estimate
-  - [ ] Feedback is stored in Convex and surfaced in future prompts as context for the same user
+  - [x] Task types include at least: Essay, Problem Set, Exam Prep, Coding, Reading, Lab, Presentation, and Other
+  - [x] Users can define a custom task type when creating or editing a task
+  - [x] Each task has a class tag field to associate it with a course
+  - [x] After a time estimate is generated, users can rate it (thumbs up / thumbs down) or submit a corrected estimate
+  - [x] Feedback is stored in Convex and surfaced in future prompts as context for the same user
 
 ---
 
@@ -91,13 +91,13 @@
 **Description:** A dedicated Classes section is added to the sidebar with its own route (`/classes`). Users can manage their courses here, upload a syllabus per class, and view extracted tasks per class. Syllabus upload is also available during onboarding at the classes step.
 
 - **Acceptance Criteria:**
-  - [ ] A "Classes" item is added to the sidebar navigation
-  - [ ] Navigating to `/classes` renders a classes page (only accessible to authenticated users)
-  - [ ] Users can add and remove classes from the classes page
-  - [ ] Each class card shows the class name and a syllabus upload option
-  - [ ] Syllabus upload on the classes page follows the same flow as R8 (independent upload, Gemini extraction, review before saving)
-  - [ ] Tasks created from a syllabus appear tagged with the corresponding class
-  - [ ] The classes page is also linked from onboarding at the step where users add their courses
+  - [x] A "Classes" item is added to the sidebar navigation
+  - [x] Navigating to `/classes` renders a classes page (only accessible to authenticated users)
+  - [x] Users can add and remove classes from the classes page
+  - [x] Each class card shows the class name and a syllabus upload option
+  - [x] Syllabus upload on the classes page follows the same flow as R8 (independent upload, Gemini extraction, review before saving)
+  - [x] Tasks created from a syllabus appear tagged with the corresponding class
+  - [x] The classes page is also linked from onboarding at the step where users add their courses
 
 ---
 

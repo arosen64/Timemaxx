@@ -76,7 +76,9 @@ describe("queries/studyBlocks – getStudyBlocksByTask", () => {
     await seedStudyBlock(t, userId, taskId1, { title: "Task 1 block" });
     await seedStudyBlock(t, userId, taskId2, { title: "Task 2 block" });
 
-    const result = await withAuth.query(api.queries.studyBlocks.getStudyBlocksByTask, { taskId: taskId1 });
+    const result = await withAuth.query(api.queries.studyBlocks.getStudyBlocksByTask, {
+      taskId: taskId1,
+    });
     expect(result).toHaveLength(1);
     expect(result[0].title).toBe("Task 1 block");
   });
@@ -88,7 +90,9 @@ describe("queries/studyBlocks – getStudyBlocksByTask", () => {
     const taskId = await seedTask(t, ownerUserId);
     await seedStudyBlock(t, ownerUserId, taskId);
 
-    const result = await attackerAuth.query(api.queries.studyBlocks.getStudyBlocksByTask, { taskId });
+    const result = await attackerAuth.query(api.queries.studyBlocks.getStudyBlocksByTask, {
+      taskId,
+    });
     expect(result).toEqual([]);
   });
 
@@ -112,7 +116,9 @@ describe("queries/studyBlocks – getStudyBlockById", () => {
     const taskId = await seedTask(t, userId);
     const studyBlockId = await seedStudyBlock(t, userId, taskId, { title: "My block" });
 
-    const result = await withAuth.query(api.queries.studyBlocks.getStudyBlockById, { studyBlockId });
+    const result = await withAuth.query(api.queries.studyBlocks.getStudyBlockById, {
+      studyBlockId,
+    });
     expect(result).not.toBeNull();
     expect(result!.title).toBe("My block");
   });
@@ -125,7 +131,9 @@ describe("queries/studyBlocks – getStudyBlockById", () => {
 
     await t.run((ctx) => ctx.db.delete(studyBlockId));
 
-    const result = await withAuth.query(api.queries.studyBlocks.getStudyBlockById, { studyBlockId });
+    const result = await withAuth.query(api.queries.studyBlocks.getStudyBlockById, {
+      studyBlockId,
+    });
     expect(result).toBeNull();
   });
 
@@ -136,7 +144,9 @@ describe("queries/studyBlocks – getStudyBlockById", () => {
     const taskId = await seedTask(t, ownerUserId);
     const studyBlockId = await seedStudyBlock(t, ownerUserId, taskId);
 
-    const result = await attackerAuth.query(api.queries.studyBlocks.getStudyBlockById, { studyBlockId });
+    const result = await attackerAuth.query(api.queries.studyBlocks.getStudyBlockById, {
+      studyBlockId,
+    });
     expect(result).toBeNull();
   });
 

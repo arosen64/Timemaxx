@@ -107,5 +107,4 @@ routing). The build is invoked with a placeholder `VITE_CONVEX_URL`, so tests
 never reach a real backend. Authenticated flows will be added once we have a
 deterministic test deployment.
 
-In CI, the `e2e` job runs after `build-and-test` and uploads the
-`playwright-report/` artifact on failure.
+Playwright is not currently wired into CI — `ci.yml` only runs `build`, `lint`, and Vitest. Run `npm run test:e2e` locally before opening a frontend PR.

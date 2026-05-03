@@ -10,11 +10,11 @@
 
 import type * as actions_autoRescheduleConflicts from "../actions/autoRescheduleConflicts.js";
 import type * as actions_entityResolution from "../actions/entityResolution.js";
-import type * as actions_generateSubtasks from "../actions/generateSubtasks.js";
 import type * as ai_embeddings from "../ai/embeddings.js";
 import type * as ai_estimateSubtasksBatch from "../ai/estimateSubtasksBatch.js";
 import type * as ai_estimateTaskTime from "../ai/estimateTaskTime.js";
 import type * as ai_generateAcademicProfile from "../ai/generateAcademicProfile.js";
+import type * as ai_generateSubtasks from "../ai/generateSubtasks.js";
 import type * as ai_parseTranscript from "../ai/parseTranscript.js";
 import type * as ai_requestEstimateTaskTime from "../ai/requestEstimateTaskTime.js";
 import type * as ai_uploadSyllabus from "../ai/uploadSyllabus.js";
@@ -97,11 +97,11 @@ import type {
 declare const fullApi: ApiFromModules<{
   "actions/autoRescheduleConflicts": typeof actions_autoRescheduleConflicts;
   "actions/entityResolution": typeof actions_entityResolution;
-  "actions/generateSubtasks": typeof actions_generateSubtasks;
   "ai/embeddings": typeof ai_embeddings;
   "ai/estimateSubtasksBatch": typeof ai_estimateSubtasksBatch;
   "ai/estimateTaskTime": typeof ai_estimateTaskTime;
   "ai/generateAcademicProfile": typeof ai_generateAcademicProfile;
+  "ai/generateSubtasks": typeof ai_generateSubtasks;
   "ai/parseTranscript": typeof ai_parseTranscript;
   "ai/requestEstimateTaskTime": typeof ai_requestEstimateTaskTime;
   "ai/uploadSyllabus": typeof ai_uploadSyllabus;
