@@ -31,12 +31,11 @@ import { estimationAgent } from "../mastra/agents/estimationAgent";
 // Parses the estimated hours from agent output text.
 // Update this to match the actual output format of estimationAgent.
 function extractHoursFromOutput(output: ScorerRunOutputForAgent): number | null {
+  type Msg = { role: string; content: unknown };
   const text = Array.isArray(output)
-    ? output
-        .filter((m: { role: string; content: unknown }) => m.role === "assistant")
-        .map((m: { role: string; content: unknown }) =>
-          typeof m.content === "string" ? m.content : JSON.stringify(m.content)
-        )
+    ? (output as Msg[])
+        .filter((m) => m.role === "assistant")
+        .map((m) => (typeof m.content === "string" ? m.content : JSON.stringify(m.content)))
         .join(" ")
     : String(output);
 

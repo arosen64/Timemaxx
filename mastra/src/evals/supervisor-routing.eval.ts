@@ -33,12 +33,7 @@ import {
 import { supervisorAgent } from "../mastra/agents/supervisorAgent";
 
 // Add real test cases here
-type ExpectedTrajectory = {
-  steps: Array<{ name: string; stepType: "tool_call" | "agent_run" }>;
-  ordering?: "relaxed" | "strict";
-};
-
-const testData: Array<{ input: string; expectedTrajectory?: ExpectedTrajectory }> = [
+const testData: Array<{ input: string; expectedTrajectory?: unknown }> = [
   // {
   //   input: "Add a new task: finish homework by Friday",
   //   expectedTrajectory: {

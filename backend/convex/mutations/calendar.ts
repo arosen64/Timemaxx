@@ -5,23 +5,6 @@ import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
 /**
- * Upserts an encrypted Google Calendar OAuth token record for the authenticated user.
- */
-export const storeCalendarToken = mutation({
-  args: {
-    accessToken: v.string(),
-    refreshToken: v.string(),
-    expiresAt: v.number(),
-  },
-  handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
-
-    await upsertCalendarToken(ctx, { userId, ...args });
-  },
-});
-
-/**
  * Upserts a calendar token for a specific user — called from the HTTP callback action.
  * timemaxxCalendarId, if provided, is stored as the first entry in selectedCalendarIds.
  */
