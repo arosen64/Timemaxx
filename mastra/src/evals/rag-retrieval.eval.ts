@@ -11,7 +11,7 @@
  *
  * Scorers:
  *   - createContextRelevanceScorerLLM + createContextPrecisionScorer: chat RAG chunk quality vs full agent output (Haiku)
- *   - chatsTraceLlmGroundingScorer: LLM judge — **only** `reasoningTrace.chats` vs **chat RAG excerpts** (targeted “did chat RAG ground this sentence?”)
+ *   - chatsTraceLlmGroundingScorer: Mastra {@link Agent} + structured output — **only** `reasoningTrace.chats` vs **chat RAG excerpts**
  *   - chatTraceKeywordGroundingScorer: deterministic phrase overlap (cheap regression check)
  *   - createHallucinationScorer (optional): whole JSON vs full prompt — noisy for estimates; off unless `RAG_EVAL_INCLUDE_HALLUCINATION=1`
  *
@@ -30,7 +30,7 @@
 
 import "./loadEnv";
 import { anthropic } from "@ai-sdk/anthropic";
-import { generateObject, generateText } from "ai";
+import { Agent } from "@mastra/core/agent";
 import { createScorer, runEvals } from "@mastra/core/evals";
 import type { ScorerRunOutputForAgent } from "@mastra/core/evals";
 import { z } from "zod";
@@ -161,6 +161,15 @@ const testData: Array<{
 /** Judges only — Haiku is much faster than Sonnet; swap to claude-sonnet-4-6 if JSON validation errors appear. */
 const judgeModel = anthropic("claude-haiku-4-5-20251001");
 
+/** Mastra {@link Agent} for chats-trace grounding only — mirrors app agents (no direct `ai` SDK generate calls). */
+const chatsGroundingJudgeAgent = new Agent({
+  id: "rag-chats-grounding-judge",
+  name: "RAG chats grounding judge",
+  instructions:
+    "You evaluate whether an assistant's reasoningTrace.chats text is grounded only in the chat excerpts given in the user message. Respond using the required structured output schema.",
+  model: judgeModel,
+});
+
 const contextRelevanceScorer = createContextRelevanceScorerLLM({
   model: judgeModel,
   options: {
@@ -231,32 +240,37 @@ async function judgeChatsTraceGrounding(
 ): Promise<{ score: number; rationale: string }> {
   const basePrompt = CHATS_GROUNDING_JUDGE_PROMPT(excerptBlock, chatsTrace);
   const providerOptions = { anthropic: { structuredOutputMode: "auto" as const } };
+  // Zod v3 schema; Mastra public API expects PublicSchema (cast matches estimation agent / runEvals).
+  const schema = chatsTraceGroundingJudgeSchema as any;
 
   try {
-    const { object } = await generateObject({
-      model: judgeModel,
-      schema: chatsTraceGroundingJudgeSchema,
-      providerOptions,
-      schemaName: "chats_grounding",
-      schemaDescription: "Score 0-1 and rationale for chat-excerpt grounding of reasoningTrace.chats",
-      prompt: basePrompt,
-      maxRetries: 1,
+    const out = await chatsGroundingJudgeAgent.generate(basePrompt, {
+      maxSteps: 1,
+      structuredOutput: {
+        schema,
+        providerOptions,
+      },
     });
-    return { score: object.score, rationale: object.rationale };
+    const obj = out.object;
+    if (obj && typeof obj.score === "number" && typeof obj.rationale === "string") {
+      return { score: obj.score, rationale: obj.rationale };
+    }
+    throw new Error(out.error?.message ?? "Judge agent returned no structured object");
   } catch (e1) {
     const first = e1 instanceof Error ? e1.message : String(e1);
     try {
-      const { text } = await generateText({
-        model: judgeModel,
-        providerOptions,
-        prompt: `${basePrompt}
+      const out2 = await chatsGroundingJudgeAgent.generate(
+        `${basePrompt}
 
 Output **only** a compact JSON object (no markdown, no prose) with this exact shape:
 {"score": <number 0-1>, "rationale": "<one short paragraph>"}`,
-        maxOutputTokens: 800,
-        maxRetries: 1,
-      });
-      const raw = parseJsonObjectFromText(text);
+        {
+          maxSteps: 1,
+          providerOptions,
+          modelSettings: { maxOutputTokens: 800 },
+        }
+      );
+      const raw = parseJsonObjectFromText(out2.text);
       const parsed = chatsTraceGroundingJudgeSchema.safeParse(raw);
       if (parsed.success) {
         return {
@@ -266,7 +280,7 @@ Output **only** a compact JSON object (no markdown, no prose) with this exact sh
       }
       return {
         score: 0,
-        rationale: `Judge error: ${first}; JSON fallback invalid: ${parsed.error.message}; raw: ${text.slice(0, 200)}`,
+        rationale: `Judge error: ${first}; JSON fallback invalid: ${parsed.error.message}; raw: ${out2.text.slice(0, 200)}`,
       };
     } catch (e2) {
       const second = e2 instanceof Error ? e2.message : String(e2);
