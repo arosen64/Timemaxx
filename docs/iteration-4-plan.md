@@ -22,10 +22,10 @@
 
 - **Acceptance Criteria:**
   - [ ] The RHS panel (ScheduleTray) has a polished, finalized design matching `timemaxx.pen`
-  - [ ] Unscheduled blocks in the tray are clearly actionable (schedule, edit, delete)
+  - [ ] Unscheduled blocks in the tray are clearly actionable (schedule, edit, delete) — only schedule + split are currently exposed; per-block edit/delete are not
   - [x] Navigation between week views is intuitive and responsive
   - [x] The calendar grid accurately reflects work hours, calendar events, and study blocks
-  - [ ] Visual feedback is provided for conflicts, scheduling actions, and export status
+  - [x] Visual feedback is provided for conflicts, scheduling actions, and export status
   - [x] The UI is responsive and usable at standard breakpoints (md, lg, xl)
 
 ---
@@ -35,10 +35,10 @@
 **Description:** Improve the dashboard right-hand side to show a daily task summary (today's tasks with progress) and revise stat cards to show daily time instead of total estimated time, and show today's completed study blocks count instead of the placeholder study streak.
 
 - **Acceptance Criteria:**
-  - [ ] The RHS panel shows a "Today's Tasks" summary listing tasks with study blocks scheduled for today
-  - [ ] Each task in the daily summary shows progress (e.g., completed blocks / total blocks)
+  - [x] The RHS panel shows a "Today's Tasks" summary listing tasks with study blocks scheduled for today
+  - [x] Each task in the daily summary shows progress (e.g., completed blocks / total blocks)
   - [x] The "Estimated Time" stat card shows today's scheduled study time, not the total across all tasks
-  - [ ] The "Study Streak" stat card shows the number of study blocks completed today (not a placeholder) — implemented as "Study Blocks This Week" with completed count
+  - [x] The "Study Streak" stat card shows the number of study blocks completed today (not a placeholder) — implemented as "Study Blocks This Week" with completed count
   - [x] A warning banner appears on a task if available time before its due date is less than the suggested time estimate
   - [x] The dashboard updates reactively when study blocks are completed or rescheduled
 
@@ -50,9 +50,9 @@
 
 - **Acceptance Criteria:**
   - [x] An `assignmentWeight` field (0–100 scale, or percentage) is added to the tasks schema
-  - [ ] Syllabus parsing extracts assignment weight/percentage when available in the syllabus
+  - [x] Syllabus parsing extracts assignment weight/percentage when available in the syllabus
   - [x] Extracted weights are shown during syllabus review and persisted when tasks are confirmed
-  - [ ] Users can manually set or override assignment weight on the task create/edit forms
+  - [x] Users can manually set or override assignment weight on the task create/edit forms
   - [x] Assignment weight is visible on task cards in the dashboard
   - [x] The scheduling algorithm uses weight to influence block priority (R19 dependency)
 
@@ -67,7 +67,7 @@
   - [x] A manual override sets `isManualEstimate: true` and persists the user-provided value
   - [x] Manual overrides are not overwritten by subsequent subtask estimate sums
   - [x] The UI indicates whether a time estimate is AI-generated, summed from subtasks, or manually set
-  - [ ] Study blocks are recalculated/rebuilt when a time estimate is manually changed
+  - [x] Study blocks are recalculated/rebuilt when a time estimate is manually changed
 
 ---
 
@@ -104,7 +104,7 @@
   - [x] A new `courseAgent` is registered in Mastra with course-specific system prompt
   - [x] The supervisor agent routes course-related messages to the course agent
   - [x] The course agent can create a new course from user input
-  - [ ] The course agent can search and import courses from the JHU SIS course catalog
+  - [x] The course agent can search and import courses from the JHU SIS course catalog
   - [x] The course agent can list the user's enrolled courses
   - [x] The course agent can update course details (study goal, difficulty rating, color)
   - [x] Agent responses are streamed and persisted to chat history
