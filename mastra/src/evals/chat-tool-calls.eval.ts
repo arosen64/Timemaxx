@@ -346,7 +346,8 @@ const feedbackTestData: Array<{ input: string; groundTruth: string }> = [
   },
   {
     // class_feedback — user is talking about a course overall
-    input: "I want to talk about how my CHEM 101 class is going overall. The lab reports are really time-consuming.",
+    input:
+      "I want to talk about how my CHEM 101 class is going overall. The lab reports are really time-consuming.",
     groundTruth: "class_feedback",
   },
   // Ambiguous phrasing — should still resolve to the correct intent

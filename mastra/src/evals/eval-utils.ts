@@ -80,10 +80,7 @@ export function createJsonFieldScorer(fieldName: string) {
       const groundTruth = run.groundTruth as string | undefined;
       if (!groundTruth) return { score: 0 };
 
-      const value = extractJsonFieldFromOutput(
-        run.output as ScorerRunOutputForAgent,
-        fieldName
-      );
+      const value = extractJsonFieldFromOutput(run.output as ScorerRunOutputForAgent, fieldName);
       return { score: value === groundTruth ? 1 : 0 };
     })
     .generateScore(({ results }) => {
@@ -106,10 +103,7 @@ export function makeOnItemComplete(fieldName: string, scorerId: string, acc: Ite
     const result = scorerResults[scorerId] as any;
     const passed = (result?.score ?? 0) === 1;
     const expected = item.groundTruth as string;
-    const actual = extractJsonFieldFromOutput(
-      result?.output as ScorerRunOutputForAgent,
-      fieldName
-    );
+    const actual = extractJsonFieldFromOutput(result?.output as ScorerRunOutputForAgent, fieldName);
 
     acc.push({ expected, actual, passed });
 
@@ -131,11 +125,7 @@ export function printAgentSummary(label: string, items: ItemSummary[]) {
   const total = items.length;
   const pct = total > 0 ? Math.round((passed / total) * 100) : 0;
   const actions = items
-    .map((i) =>
-      i.passed
-        ? `${i.expected} ✓`
-        : `${i.expected}→${i.actual ?? "(none)"} ✗`
-    )
+    .map((i) => (i.passed ? `${i.expected} ✓` : `${i.expected}→${i.actual ?? "(none)"} ✗`))
     .join(", ");
   console.log(`  ${label}: ${passed}/${total} passed (${pct}%) | actions: ${actions}`);
 }
