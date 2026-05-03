@@ -44,9 +44,8 @@ npx convex dev
 For Google OAuth configuration, see the [Google Auth Setup](guides/google-auth-setup.md) guide.
 For Google Calendar connection setup, see the [Google Calendar Connection Setup](guides/google-calendar-connection-setup.md) guide.
 For SIS API key setup, see the [SIS API Key Setup](guides/sis-api-key-setup.md) guide.
-For Gemini API key setup (details and troubleshooting), see the [Gemini API Key Setup](guides/gemini-api-key-setup.md) guide.
-For OpenAI API key setup (used by task / subtask time estimation), see the [OpenAI API Key Setup](guides/openai-api-key-setup.md) guide.
-For Mastra (AI agent server), **Gemini and Anthropic** keys for Convex/Mastra, and the ngrok `MASTRA_URL` flow, see [Mastra AI Agent Server](#mastra-ai-agent-server).
+For Gemini API key setup (used by Convex for embeddings only), see the [Gemini API Key Setup](guides/gemini-api-key-setup.md) guide.
+For Mastra (AI agent server), the **Anthropic** key it needs (also handles task estimation, syllabus / transcript parsing, schedule slot selection, and chat), and the ngrok `MASTRA_URL` flow, see [Mastra AI Agent Server](#mastra-ai-agent-server).
 For ngrok tunnel setup (required for Mastra + Convex), see the [ngrok Setup](guides/ngrok-setup.md) guide.
 For dev-only "Continue as Guest" sign-in, see [Anonymous Sign-In](docs/anonymous-sign-in.md).
 For testing details, see the [Test Execution](guides/testing.md) guide.
@@ -71,45 +70,42 @@ npm run dev
 
 The AI chat assistant runs through [Mastra](https://mastra.ai). Convex actions call Mastra over HTTP, so Mastra must be publicly reachable via an ngrok tunnel during local development.
 
-Configure **both** a Gemini key and an Anthropic key for local development: Convex uses Gemini for several features and Anthropic for others; Mastra’s `.env` should include both so nothing fails as you switch models or run different code paths. See [Gemini API Key Setup](guides/gemini-api-key-setup.md) for more detail on Gemini.
+Configure three keys for local development:
 
-### Gemini API key (Mastra and Convex)
+- **Anthropic** — required by every Mastra agent (chat, task estimation, syllabus / transcript parsing, schedule slot selection).
+- **Gemini** — required by Convex for embeddings (`gemini-embedding-001`, 3072-dim) used in chat-history RAG and task/course similarity search. Not used elsewhere.
+- **Mistral** — required by Mastra's `ocrWorkflow` for extracting text from uploaded syllabus / transcript PDFs.
 
-The Convex backend uses Google Gemini for syllabus parsing, embeddings, transcript parsing, and related flows (`GEMINI_API_KEY`). Mastra expects the same key under the variable name the Google AI SDK uses.
+### Gemini API key (Convex only)
 
-1. **Get a key** from [Google AI Studio](https://aistudio.google.com/app/apikey).
+```bash
+# In your Convex deployment
+npx convex env set GEMINI_API_KEY your_key_here
+```
 
-2. **Convex (your deployment):**
+Get a key from [Google AI Studio](https://aistudio.google.com/app/apikey). See [Gemini API Key Setup](guides/gemini-api-key-setup.md) for details.
 
-   ```bash
-   npx convex env set GEMINI_API_KEY your_key_here
-   ```
-
-3. **Mastra (local):** Add to `mastra/.env` (same key as Convex; different variable name required by the SDK):
-
-   ```
-   GOOGLE_GENERATIVE_AI_API_KEY=your_key_here
-   ```
-
-### Anthropic API key (Mastra and Convex)
-
-Mastra chat agents use Claude via `@ai-sdk/anthropic`. The Convex backend uses the same key for task time estimation and related Anthropic calls (`ANTHROPIC_API_KEY` in server code). Configure **both** Mastra and Convex:
+### Anthropic API key (Mastra)
 
 1. **Create an API key** in the [Anthropic Console](https://console.anthropic.com/settings/keys).
 
-2. **Mastra (local):** Add to `mastra/.env` (same file as above; it is gitignored):
+2. **Mastra (local):** Add to `mastra/.env` (gitignored):
 
    ```
    ANTHROPIC_API_KEY=your_key_here
    ```
 
-3. **Convex (your deployment):**
+### Mistral API key (Mastra)
 
-   ```bash
-   npx convex env set ANTHROPIC_API_KEY your_key_here
+1. **Create an API key** at [console.mistral.ai](https://console.mistral.ai/).
+
+2. **Mastra (local):** Add to `mastra/.env`:
+
+   ```
+   MISTRAL_API_KEY=your_key_here
    ```
 
-   Confirm with `npx convex env list`. Each developer must set Convex env vars on their own dev deployment.
+See [Mastra Setup](guides/mastra-setup.md) for details.
 
 ### Run Mastra
 
@@ -148,16 +144,6 @@ npx convex env set SITE_URL http://localhost:5173
 ```
 
 > Only do this on your **dev** deployment. The CD workflow manages `SITE_URL` on the prod deployment. See [Mastra Setup, Step 5](guides/mastra-setup.md) for the full explanation.
-
-### Frontend Environment Variable
-
-The frontend also calls Mastra directly for streaming. Add this to `frontend/.env.local`:
-
-```
-VITE_MASTRA_URL=http://localhost:4111
-```
-
-This file is gitignored — each developer sets it locally.
 
 ## Running Tests
 
@@ -280,8 +266,8 @@ backend/
       tasks.ts, subtasks.ts, users.ts, calendar.ts, studyBlocks.ts,
       userCourses.ts, syllabi.ts, timeEstimate.ts,
       chatMessages.ts, chatSessions.ts, chatChunks.ts, chatChunkEmbeddings.ts
-    lib/                            # Shared backend helpers (gemini wrapper, scheduling, retrieval, sanitization)
-      prompts/                      # XML-delimited prompt templates + Zod schemas for Gemini calls
+    lib/                            # Shared backend helpers (Mastra client, gemini embeddings, scheduling, retrieval, sanitization, calendar crypto)
+      prompts/                      # Server-side prompt templates (estimateTaskTime, scheduleBlock, mastraChatContext)
     dev/                            # Dev-only modules (CLI/dashboard; not wired into prod flows)
       localRetrievalTest.ts         # `inspectRetrievalForTask` — see guides/convex-retrieval-debug.md
     tests/                          # Convex unit/integration tests
@@ -325,5 +311,5 @@ e2e/                                # Playwright end-to-end tests — see e2e/RE
 ## Documentation
 
 - Project docs index: [`docs/README.md`](docs/README.md) — PRD, team agreement, iteration plans, and topic deep-dives (prompt injection prevention, anonymous sign-in)
-- Guides index: [`guides/README.md`](guides/README.md) — setup walkthroughs (Google auth, Calendar, Gemini, OpenAI, Anthropic via Mastra, ngrok, SIS), CI/CD, testing, scheduling algorithm, retrieval debug, Mastra eval suite
+- Guides index: [`guides/README.md`](guides/README.md) — setup walkthroughs (Google auth, Calendar, Gemini for embeddings, Anthropic via Mastra, ngrok, SIS), CI/CD, testing, scheduling algorithm, retrieval debug, Mastra eval suite
 - E2E test conventions: [`e2e/README.md`](e2e/README.md)

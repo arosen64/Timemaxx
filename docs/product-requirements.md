@@ -124,7 +124,7 @@ Without AI, it would be considerably more difficult to block off time work appro
 - **Backend:** TypeScript (Convex serverless functions, Hono HTTP routes)
 - **Database:** Convex (with vector indexes for embeddings)
 - **Auth:** Google OAuth (via Convex Auth); dev-only anonymous provider
-- **AI Services:** Google Gemini (parsing, embeddings), OpenAI GPT-4o mini (time estimation), Anthropic Claude (chat agents via Mastra)
+- **AI Services:** Anthropic Claude via Mastra (chat agents, time estimation, syllabus / transcript parsing, schedule slot selection, academic-profile insights), Google Gemini (embeddings only — `gemini-embedding-001`), Mistral (`mistral-ocr-latest` for syllabus / transcript OCR)
 - **Agent Framework:** Mastra (multi-agent supervisor + specialists, deployed to Mastra Cloud)
 - **External:**
   - Google Calendar API (read availability + write study-block events)

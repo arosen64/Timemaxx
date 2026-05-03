@@ -2,11 +2,11 @@
 
 ## Project Description
 
-AI-powered study scheduler that estimates task time using Google Gemini and builds personalized study plans based on user preferences.
+AI-powered study scheduler that estimates task time and builds personalized study plans based on user preferences.
 
 ## Tech Stack
 
-React + Vite + TypeScript + TailwindCSS + Convex + React Router + Google Gemini + Mastra (AI agent server)
+React + Vite + TypeScript + TailwindCSS + Convex + React Router + Mastra (Anthropic Claude agents) + Google Gemini (embeddings only) + Mistral (OCR)
 
 ## Commands
 
@@ -101,9 +101,9 @@ backend/
       requestEstimateSubtaskTime.ts, requestGenerateSubtasks.ts,
       exportStudyBlocksToCalendar.ts, fetchCalendarEvents.ts,
       getCalendarAvailability.ts, initiateGoogleCalendarOAuth.ts, jhuCourses.ts
-    lib/                      # Shared backend helpers — gemini wrapper, sanitize, scheduling,
-                              # retrieval, calendar crypto, chat workflow types, etc.
-      prompts/                # XML-delimited prompt templates + Zod schemas for Gemini calls
+    lib/                      # Shared backend helpers — Mastra client, gemini embeddings, sanitize,
+                              # scheduling, retrieval, calendar crypto, chat workflow types, etc.
+      prompts/                # Server-side prompt templates (estimateTaskTime, scheduleBlock, mastraChatContext)
     dev/                      # Dev-only modules (CLI/dashboard; not wired into prod flows)
       localRetrievalTest.ts   # `inspectRetrievalForTask` — see guides/convex-retrieval-debug.md
     tests/                    # Convex unit/integration tests (Vitest + convex-test)

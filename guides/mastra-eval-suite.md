@@ -74,7 +74,7 @@ Valid `actionType` values per agent:
 - `taskAgent`: `create_task` | `update_task` | `delete_task` | `read_task`
 - `courseAgent`: `add_course` | `drop_course` | `update_course` | `view_courses`
 - `scheduleAgent`: `schedule_task` | `schedule_block` | `import_google_calendar`
-- `feedbackAgent` (uses `intent`): `task_feedback` | `class_feedback`
+- `feedbackAgent` (uses `intent`): `task_feedback` | `class_difficulty` | `unknown`
 
 For operations that require a resolved entity (update, delete, read, drop, schedule), craft
 the `input` as a full context string so the agent sees a `resolvedTaskId` or `resolvedCourseId`:
