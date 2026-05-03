@@ -20,12 +20,12 @@ describe('isPastTerm', () => {
     expect(isPastTerm('Fall 2099')).toBe(false)
   })
 
-  it('returns false for an empty string', () => {
-    expect(isPastTerm('')).toBe(false)
+  it('returns true for an empty string (treat as past to exclude from display)', () => {
+    expect(isPastTerm('')).toBe(true)
   })
 
-  it('returns false for an unrecognized format', () => {
-    expect(isPastTerm('Unknown Term')).toBe(false)
+  it('returns true for an unrecognized format (treat as past to exclude from display)', () => {
+    expect(isPastTerm('Unknown Term')).toBe(true)
   })
 
   it('returns true for a past Summer term', () => {

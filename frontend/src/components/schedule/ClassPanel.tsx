@@ -10,7 +10,7 @@ import {
   SplitIcon,
   PencilIcon,
 } from "../icons";
-import { isCurrentTerm } from "../../utils/termUtils";
+import { isPastTerm } from "../../utils/termUtils";
 
 const OTHER_COURSE_KEY = "__none__";
 
@@ -182,7 +182,7 @@ export default function ClassPanel({
   // Derived data
   // ---------------------------------------------------------------------------
   const currentCourses = useMemo(
-    () => (courses ?? []).filter((c) => isCurrentTerm(c.term)),
+    () => (courses ?? []).filter((c) => !isPastTerm(c.term)),
     [courses]
   );
 

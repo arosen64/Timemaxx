@@ -8,11 +8,15 @@ vi.mock('../../../backend/convex/_generated/api', () => ({
     functions: {
       requestGenerateSubtasks: { requestGenerateSubtasks: 'requestGenerateSubtasks' },
     },
+    queries: {
+      tasks: { getTasksByCourseId: 'getTasksByCourseId' },
+    },
   },
 }))
 
 vi.mock('convex/react', () => ({
   useAction: vi.fn().mockReturnValue(vi.fn()),
+  useQuery: vi.fn().mockReturnValue([]),
 }))
 
 function renderModal(overrides: Partial<Parameters<typeof TaskModal>[0]> = {}) {
@@ -415,6 +419,50 @@ describe('TaskModal', () => {
     await waitFor(() => {
       expect(screen.getByText('Adding…')).toBeInTheDocument()
     })
+  })
+
+  it('shows per-course weight cap error with minimal existingTasks shape (only required fields)', async () => {
+    const user = userEvent.setup()
+    renderModal({
+      classTagCourses: [
+        {
+          courseId: 'course1' as any,
+          courseCode: 'AS.110.108',
+          title: 'Calculus I',
+          classTag: 'AS.110.108: Calculus I',
+        },
+      ],
+      existingTasks: [
+        {
+          _id: 'task1' as any,
+          courseId: 'course1' as any,
+          assignmentWeight: 80,
+        },
+      ],
+      initialValues: {
+        taskName: '',
+        selectedType: 'Essay',
+        customTaskType: '',
+        description: '',
+        dueDate: '',
+        dueTime: '23:59',
+        classTag: 'AS.110.108: Calculus I',
+        timeEstimate: '',
+      },
+    })
+    await user.type(screen.getByPlaceholderText('e.g. Calculus Problem Set 5'), 'Final Exam')
+    await user.type(
+      screen.getByPlaceholderText('Paste or type your assignment description here...'),
+      'Comprehensive final exam'
+    )
+    await pickFutureDate(user)
+    const weightInput = screen.getByLabelText(/grade weight/i)
+    await user.clear(weightInput)
+    await user.type(weightInput, '30')
+    await user.click(screen.getByRole('button', { name: /add task/i }))
+    expect(
+      screen.getByText(/assignments for this course already sum to 80%/i)
+    ).toBeInTheDocument()
   })
 
   it('pre-populates fields from initialValues', () => {
