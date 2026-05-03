@@ -13,13 +13,11 @@
  *   - createContextRelevanceScorerLLM + createContextPrecisionScorer: chat RAG chunk quality vs full agent output (Haiku)
  *   - chatsTraceLlmGroundingScorer: Mastra {@link Agent} + structured output — **only** `reasoningTrace.chats` vs **chat RAG excerpts**
  *   - chatTraceKeywordGroundingScorer: deterministic phrase overlap (cheap regression check)
- *   - createHallucinationScorer (optional): whole JSON vs full prompt — noisy for estimates; off unless `RAG_EVAL_INCLUDE_HALLUCINATION=1`
  *
  * Speed (this eval is heavy: 1× estimation Sonnet + several judge calls per case):
  *   - Cases run in parallel (`concurrency`).
  *   - `RAG_EVAL_FAST=1` — only the estimation agent + keyword scorer (no LLM judges).
  *   - `RAG_EVAL_SKIP_CHATS_LLM_GROUNDING=1` — drop chats-only LLM grounding (keeps relevance/precision/keywords).
- *   - `RAG_EVAL_INCLUDE_HALLUCINATION=1` — add full-output hallucination scorer (slow, noisy for time estimates).
  *
  * LLM judges use Haiku (cheap). If judge JSON validation fails, switch judgeModel to Sonnet below.
  *
@@ -37,7 +35,6 @@ import { z } from "zod";
 import {
   createContextPrecisionScorer,
   createContextRelevanceScorerLLM,
-  createHallucinationScorer,
 } from "@mastra/evals/scorers/prebuilt";
 import {
   getAssistantMessageFromRunOutput,
@@ -76,15 +73,6 @@ function chatRagChunksFromRunInput(input: unknown, _output?: unknown): string[] 
   void _output;
   const userText = getUserMessageFromRunInput(input) ?? "";
   return extractChatRagChunksFromEstimationPrompt(userText);
-}
-
-/**
- * Full user prompt the agent saw — for hallucination scoring. Passing only chat bullets
- * falsely flags course/task reasoning (from task_details) as "unsupported."
- */
-function fullGroundingContextFromRunInput(input: unknown): string[] {
-  const text = getUserMessageFromRunInput(input) ?? "";
-  return text.trim() ? [text] : [];
 }
 
 function parseEstimationJson(output: ScorerRunOutputForAgent): {
@@ -186,13 +174,6 @@ const contextPrecisionScorer = createContextPrecisionScorer({
   model: judgeModel,
   options: {
     contextExtractor: (input, output) => chatRagChunksFromRunInput(input, output),
-  },
-});
-
-const hallucinationScorer = createHallucinationScorer({
-  model: judgeModel,
-  options: {
-    getContext: async ({ run }) => fullGroundingContextFromRunInput(run.input),
   },
 });
 
@@ -362,7 +343,6 @@ const chatTraceKeywordGroundingScorer = createScorer({
 
 function buildRagEvalAgentScorers() {
   const fast = process.env.RAG_EVAL_FAST === "1";
-  const includeHallucination = process.env.RAG_EVAL_INCLUDE_HALLUCINATION === "1";
   const skipChatsLlm = process.env.RAG_EVAL_SKIP_CHATS_LLM_GROUNDING === "1";
 
   if (fast) {
@@ -377,9 +357,6 @@ function buildRagEvalAgentScorers() {
   if (!skipChatsLlm) {
     out.push(chatsTraceLlmGroundingScorer);
   }
-  if (includeHallucination) {
-    out.splice(2, 0, hallucinationScorer);
-  }
   return out;
 }
 
@@ -393,9 +370,6 @@ export async function runRagRetrievalEval() {
   } else {
     if (process.env.RAG_EVAL_SKIP_CHATS_LLM_GROUNDING === "1") {
       console.log("  RAG_EVAL_SKIP_CHATS_LLM_GROUNDING=1 — skipping chats-only LLM grounding scorer");
-    }
-    if (process.env.RAG_EVAL_INCLUDE_HALLUCINATION === "1") {
-      console.log("  RAG_EVAL_INCLUDE_HALLUCINATION=1 — full-output hallucination scorer enabled");
     }
   }
 
