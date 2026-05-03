@@ -27,7 +27,7 @@ vi.mock('../src/components/syllabus/TaskReviewCard', () => ({
     onChange,
     onRemove,
   }: {
-    task: { id: number; title: string }
+    task: { id: number; title: string; assignmentWeight?: number }
     onChange: (t: unknown) => void
     onRemove: () => void
   }) => (
@@ -36,6 +36,14 @@ vi.mock('../src/components/syllabus/TaskReviewCard', () => ({
         aria-label="task-title"
         value={task.title}
         onChange={(e) => onChange({ ...task, title: e.target.value })}
+      />
+      <input
+        aria-label="task-weight"
+        type="number"
+        value={task.assignmentWeight ?? ''}
+        onChange={(e) =>
+          onChange({ ...task, assignmentWeight: e.target.value === '' ? undefined : Number(e.target.value) })
+        }
       />
       <button onClick={onRemove}>Remove</button>
     </div>
@@ -163,6 +171,19 @@ describe('SyllabusReviewPage', () => {
   })
 
   describe('validation', () => {
+    test('shows error when assignment weights sum to more than 100%', async () => {
+      const user = userEvent.setup()
+      renderPage({
+        ...MOCK_STATE,
+        extractedTasks: [
+          { ...MOCK_STATE.extractedTasks[0], assignmentWeight: 60 },
+          { ...MOCK_STATE.extractedTasks[1], assignmentWeight: 60 },
+        ],
+      })
+      await user.click(screen.getByRole('button', { name: /confirm tasks/i }))
+      expect(screen.getByText(/assignment weights sum to 120%/i)).toBeInTheDocument()
+    })
+
     test('shows error when a task has no title', async () => {
       const user = userEvent.setup()
       renderPage({
