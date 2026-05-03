@@ -1,4 +1,5 @@
 import { Mastra } from "@mastra/core";
+import { createAuthMiddleware } from "./lib/authMiddleware";
 import { supervisorAgent } from "./agents/supervisorAgent";
 import { taskAgent } from "./agents/taskAgent";
 import { feedbackAgent } from "./agents/feedbackAgent";
@@ -23,6 +24,9 @@ import { subtaskGenerationWorkflow } from "./workflows/subtaskGenerationWorkflow
 import { academicProfileWorkflow } from "./workflows/academicProfileWorkflow";
 
 export const mastra = new Mastra({
+  server: {
+    middleware: [createAuthMiddleware()],
+  },
   agents: {
     supervisorAgent,
     taskAgent,

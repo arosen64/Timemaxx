@@ -1,5 +1,5 @@
 import { Hono, type Context } from "hono";
-import { MastraClient } from "@mastra/client-js";
+import { createMastraClient } from "./lib/mastraClient";
 import { api, internal } from "./_generated/api";
 import type { ActionCtx } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
@@ -151,7 +151,7 @@ function parseDueDateIso(iso: string, timezone: string): number {
 }
 
 async function runChatWorkflow(
-  client: InstanceType<typeof MastraClient>,
+  client: ReturnType<typeof createMastraClient>,
   inputData: {
     message: string;
     historyText: string;
@@ -390,7 +390,7 @@ async function applySessionStateChanges(
 async function handleWorkflowTurn(
   ctx: ActionCtx,
   c: Context<HonoEnv>,
-  client: InstanceType<typeof MastraClient>,
+  client: ReturnType<typeof createMastraClient>,
   params: {
     userId: Id<"users">;
     sessionId: string;
@@ -761,7 +761,7 @@ chatApp.post("/api/chat", async (c) => {
     console.error("MASTRA_URL not configured");
     return c.json({ error: "Service unavailable" }, 503);
   }
-  const client = new MastraClient({ baseUrl: mastraUrl });
+  const client = createMastraClient(mastraUrl);
 
   // ── Entity UI actions ──────────────────────────────────────────────────────
 

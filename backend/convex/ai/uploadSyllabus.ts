@@ -2,7 +2,7 @@ import { action } from "../_generated/server";
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { getAuthUserId } from "@convex-dev/auth/server";
-import { MastraClient } from "@mastra/client-js";
+import { createMastraClient } from "../lib/mastraClient";
 import { sanitizeUserInput, validateLength } from "../lib/sanitize";
 import { TaskType, TASK_TYPES } from "../lib/taskValidators";
 import { UploadSyllabusResult } from "../lib/syllabusTypes";
@@ -52,7 +52,7 @@ export const uploadSyllabus = action({
     try {
       const mastraUrl = process.env.MASTRA_URL;
       if (!mastraUrl) throw new Error("MASTRA_URL not configured");
-      const client = new MastraClient({ baseUrl: mastraUrl });
+      const client = createMastraClient(mastraUrl);
 
       let textForParsing: string;
 
