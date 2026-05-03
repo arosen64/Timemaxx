@@ -10,14 +10,16 @@
  * retrieved RAG context (split into chunk strings matching production bullets).
  *
  * Scorers:
- *   - createContextRelevanceScorerLLM + createContextPrecisionScorer: chat RAG quality (optional; Haiku)
- *   - createHallucinationScorer: optional — flags most estimation outputs as “unsupported”; off by default
- *   - chatTraceKeywordGroundingScorer: cheap grounding check on reasoningTrace.chats
+ *   - createContextRelevanceScorerLLM + createContextPrecisionScorer: chat RAG chunk quality vs full agent output (Haiku)
+ *   - chatsTraceLlmGroundingScorer: LLM judge — **only** `reasoningTrace.chats` vs **chat RAG excerpts** (targeted “did chat RAG ground this sentence?”)
+ *   - chatTraceKeywordGroundingScorer: deterministic phrase overlap (cheap regression check)
+ *   - createHallucinationScorer (optional): whole JSON vs full prompt — noisy for estimates; off unless `RAG_EVAL_INCLUDE_HALLUCINATION=1`
  *
  * Speed (this eval is heavy: 1× estimation Sonnet + several judge calls per case):
  *   - Cases run in parallel (`concurrency`).
  *   - `RAG_EVAL_FAST=1` — only the estimation agent + keyword scorer (no LLM judges).
- *   - `RAG_EVAL_INCLUDE_HALLUCINATION=1` — enable hallucination scorer (slow, noisy for time estimates).
+ *   - `RAG_EVAL_SKIP_CHATS_LLM_GROUNDING=1` — drop chats-only LLM grounding (keeps relevance/precision/keywords).
+ *   - `RAG_EVAL_INCLUDE_HALLUCINATION=1` — add full-output hallucination scorer (slow, noisy for time estimates).
  *
  * LLM judges use Haiku (cheap). If judge JSON validation fails, switch judgeModel to Sonnet below.
  *
@@ -26,9 +28,12 @@
  * Run: cd mastra && npm run eval
  */
 
+import "./loadEnv";
 import { anthropic } from "@ai-sdk/anthropic";
+import { generateObject, generateText } from "ai";
 import { createScorer, runEvals } from "@mastra/core/evals";
 import type { ScorerRunOutputForAgent } from "@mastra/core/evals";
+import { z } from "zod";
 import {
   createContextPrecisionScorer,
   createContextRelevanceScorerLLM,
@@ -182,6 +187,126 @@ const hallucinationScorer = createHallucinationScorer({
   },
 });
 
+const chatsTraceGroundingJudgeSchema = z.object({
+  score: z
+    .number()
+    .min(0)
+    .max(1)
+    .describe("1.0 = chats trace fully supported by excerpts; 0 = major fabrication vs excerpts"),
+  rationale: z.string().max(600).describe("One short paragraph"),
+});
+
+const CHATS_GROUNDING_JUDGE_PROMPT = (excerptBlock: string, chatsTrace: string) => `You grade whether the assistant's **chats** reasoning is grounded **only** in the chat excerpts below.
+
+## Chat excerpts (retrieved RAG — sole source of truth for this score)
+${excerptBlock}
+
+## reasoningTrace.chats (evaluate ONLY this text)
+${chatsTrace}
+
+Rules:
+- Score **1.0** if every substantive factual claim in the chats text is supported by or clearly paraphrases the excerpts. Reasonable arithmetic combining stated facts (e.g. "90 min" + buffer) is OK if it does not invent new facts.
+- Score **lower** if the chats text asserts facts **not** in the excerpts, or **contradicts** them.
+- If some excerpts are off-topic noise, **ignoring** them is fine; do not penalize unless the chats text **invents** content.
+- Do **not** use task title, course, or profile — those are out of scope; judge **only** excerpt grounding.
+
+Return score between 0 and 1.`;
+
+/** Extract a single JSON object from model text (handles ```json fences and trailing junk). */
+function parseJsonObjectFromText(text: string): unknown {
+  const t = text.trim();
+  const fence = t.match(/```(?:json)?\s*([\s\S]*?)```/);
+  const body = (fence ? fence[1] : t).trim();
+  const start = body.indexOf("{");
+  const end = body.lastIndexOf("}");
+  if (start === -1 || end === -1 || end <= start) {
+    throw new Error("No JSON object in model output");
+  }
+  return JSON.parse(body.slice(start, end + 1)) as unknown;
+}
+
+async function judgeChatsTraceGrounding(
+  excerptBlock: string,
+  chatsTrace: string
+): Promise<{ score: number; rationale: string }> {
+  const basePrompt = CHATS_GROUNDING_JUDGE_PROMPT(excerptBlock, chatsTrace);
+  const providerOptions = { anthropic: { structuredOutputMode: "auto" as const } };
+
+  try {
+    const { object } = await generateObject({
+      model: judgeModel,
+      schema: chatsTraceGroundingJudgeSchema,
+      providerOptions,
+      schemaName: "chats_grounding",
+      schemaDescription: "Score 0-1 and rationale for chat-excerpt grounding of reasoningTrace.chats",
+      prompt: basePrompt,
+      maxRetries: 1,
+    });
+    return { score: object.score, rationale: object.rationale };
+  } catch (e1) {
+    const first = e1 instanceof Error ? e1.message : String(e1);
+    try {
+      const { text } = await generateText({
+        model: judgeModel,
+        providerOptions,
+        prompt: `${basePrompt}
+
+Output **only** a compact JSON object (no markdown, no prose) with this exact shape:
+{"score": <number 0-1>, "rationale": "<one short paragraph>"}`,
+        maxOutputTokens: 800,
+        maxRetries: 1,
+      });
+      const raw = parseJsonObjectFromText(text);
+      const parsed = chatsTraceGroundingJudgeSchema.safeParse(raw);
+      if (parsed.success) {
+        return {
+          score: parsed.data.score,
+          rationale: `${parsed.data.rationale} (json fallback; primary: ${first})`,
+        };
+      }
+      return {
+        score: 0,
+        rationale: `Judge error: ${first}; JSON fallback invalid: ${parsed.error.message}; raw: ${text.slice(0, 200)}`,
+      };
+    } catch (e2) {
+      const second = e2 instanceof Error ? e2.message : String(e2);
+      return { score: 0, rationale: `Judge error: ${first}; fallback: ${second}` };
+    }
+  }
+}
+
+/**
+ * LLM judge scoped to RAG: compares **only** `reasoningTrace.chats` to the retrieved chat excerpt
+ * strings (same bullets production passes via `<chat_history>`). Ignores task_details / courses / profile.
+ * Higher score = better grounding in chat excerpts.
+ */
+const chatsTraceLlmGroundingScorer = createScorer({
+  id: "rag-chats-trace-llm-grounding-scorer",
+  description:
+    "LLM: reasoningTrace.chats grounded in chat RAG excerpts only (not whole prompt)",
+}).analyze(async ({ run }) => {
+  const ragChunks = chatRagChunksFromRunInput(run.input);
+  const parsed = parseEstimationJson(run.output as ScorerRunOutputForAgent);
+  const chatsTrace = parsed?.reasoningTrace?.chats?.trim() ?? "";
+
+  if (ragChunks.length === 0) {
+    return { score: 1, rationale: "No chat excerpts in prompt — nothing to ground." };
+  }
+  if (!chatsTrace) {
+    return {
+      score: 0,
+      rationale: "reasoningTrace.chats is empty but chat excerpts were provided.",
+    };
+  }
+
+  const excerptBlock = ragChunks.map((c, i) => `[${i}] ${c}`).join("\n\n");
+  return judgeChatsTraceGrounding(excerptBlock, chatsTrace);
+}).generateScore(({ results }) => {
+  const a = results.analyzeStepResult as { score?: number } | undefined;
+  const s = a?.score;
+  return typeof s === "number" && !Number.isNaN(s) ? s : 0;
+});
+
 /** Normalize so "10-page", "10 page", and extra spaces match. */
 function normalizeForPhraseMatch(s: string): string {
   return s
@@ -224,6 +349,7 @@ const chatTraceKeywordGroundingScorer = createScorer({
 function buildRagEvalAgentScorers() {
   const fast = process.env.RAG_EVAL_FAST === "1";
   const includeHallucination = process.env.RAG_EVAL_INCLUDE_HALLUCINATION === "1";
+  const skipChatsLlm = process.env.RAG_EVAL_SKIP_CHATS_LLM_GROUNDING === "1";
 
   if (fast) {
     return [chatTraceKeywordGroundingScorer];
@@ -234,6 +360,9 @@ function buildRagEvalAgentScorers() {
     contextPrecisionScorer,
     chatTraceKeywordGroundingScorer,
   ];
+  if (!skipChatsLlm) {
+    out.push(chatsTraceLlmGroundingScorer);
+  }
   if (includeHallucination) {
     out.splice(2, 0, hallucinationScorer);
   }
@@ -246,9 +375,14 @@ export async function runRagRetrievalEval() {
     return { scores: {}, summary: { totalItems: 0 } };
   }
   if (process.env.RAG_EVAL_FAST === "1") {
-    console.log("  RAG_EVAL_FAST=1 — skipping LLM judge scorers (relevance / precision[/hallucination])");
-  } else if (process.env.RAG_EVAL_INCLUDE_HALLUCINATION === "1") {
-    console.log("  RAG_EVAL_INCLUDE_HALLUCINATION=1 — hallucination scorer enabled (slower)");
+    console.log("  RAG_EVAL_FAST=1 — skipping LLM judge scorers (relevance / precision / chats grounding)");
+  } else {
+    if (process.env.RAG_EVAL_SKIP_CHATS_LLM_GROUNDING === "1") {
+      console.log("  RAG_EVAL_SKIP_CHATS_LLM_GROUNDING=1 — skipping chats-only LLM grounding scorer");
+    }
+    if (process.env.RAG_EVAL_INCLUDE_HALLUCINATION === "1") {
+      console.log("  RAG_EVAL_INCLUDE_HALLUCINATION=1 — full-output hallucination scorer enabled");
+    }
   }
 
   return runEvals({
