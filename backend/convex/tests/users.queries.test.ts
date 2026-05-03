@@ -27,10 +27,7 @@ describe("queries/users – getCurrUser", () => {
 describe("queries/users – isOnboardingComplete", () => {
   test("returns null when unauthenticated", async () => {
     const t = makeTestCtx();
-    const result = await t.query(
-      api.queries.users.isOnboardingComplete,
-      {}
-    );
+    const result = await t.query(api.queries.users.isOnboardingComplete, {});
     expect(result).toBeNull();
   });
 
@@ -38,10 +35,7 @@ describe("queries/users – isOnboardingComplete", () => {
     const t = makeTestCtx();
     const { withAuth } = await createTestUser(t);
 
-    const result = await withAuth.query(
-      api.queries.users.isOnboardingComplete,
-      {}
-    );
+    const result = await withAuth.query(api.queries.users.isOnboardingComplete, {});
     expect(result).toBe(false);
   });
 
@@ -50,14 +44,9 @@ describe("queries/users – isOnboardingComplete", () => {
     const { userId, withAuth } = await createTestUser(t);
 
     // Patch the user directly to simulate completed onboarding
-    await t.run((ctx) =>
-      ctx.db.patch(userId, { onboardingComplete: true })
-    );
+    await t.run((ctx) => ctx.db.patch(userId, { onboardingComplete: true }));
 
-    const result = await withAuth.query(
-      api.queries.users.isOnboardingComplete,
-      {}
-    );
+    const result = await withAuth.query(api.queries.users.isOnboardingComplete, {});
     expect(result).toBe(true);
   });
 });

@@ -1,6 +1,5 @@
 import { action } from "../_generated/server";
 import { v } from "convex/values";
-import { Id } from "../_generated/dataModel";
 import { internal } from "../_generated/api";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { MastraClient } from "@mastra/client-js";
@@ -39,28 +38,16 @@ export const uploadSyllabus = action({
     validateLength(args.fileContents, 1_500_000, "fileContents");
 
     if (args.courseId) {
-      try {
-        await ctx.runMutation(internal.mutations.syllabi.deleteSyllabiForCourse, {
-          courseId: args.courseId,
-        });
-      } catch (err) {
-        throw new Error(
-          `Reupload aborted: could not clear existing syllabus records. ${err instanceof Error ? err.message : String(err)}`
-        );
-      }
+      await ctx.runMutation(internal.mutations.syllabi.deleteSyllabiForCourse, {
+        courseId: args.courseId,
+      });
     }
 
-    let syllabusId: Id<"syllabi">;
-    try {
-      syllabusId = await ctx.runMutation(
-        internal.mutations.syllabi.createSyllabus,
-        { userId, fileContents: args.fileContents, courseId: args.courseId }
-      );
-    } catch (err) {
-      throw new Error(
-        `Reupload aborted: could not create syllabus record. ${err instanceof Error ? err.message : String(err)}`
-      );
-    }
+    const syllabusId = await ctx.runMutation(internal.mutations.syllabi.createSyllabus, {
+      userId,
+      fileContents: args.fileContents,
+      courseId: args.courseId,
+    });
 
     try {
       const mastraUrl = process.env.MASTRA_URL;
@@ -105,7 +92,13 @@ export const uploadSyllabus = action({
         throw new Error("Syllabus parse workflow did not complete successfully");
       }
       const parseOutput = parseStep.output as {
-        tasks: { title: string; description: string; dueDate: string; taskType: string }[];
+        tasks: {
+          title: string;
+          description: string;
+          dueDate: string;
+          taskType: string;
+          assignmentWeight?: number;
+        }[];
       };
 
       const rawTasks = parseOutput.tasks ?? [];
@@ -119,6 +112,7 @@ export const uploadSyllabus = action({
           description: t.description,
           dueDate: new Date(t.dueDate).getTime(),
           taskType: t.taskType as TaskType,
+          assignmentWeight: t.assignmentWeight,
         }))
         .filter((t) => !isNaN(t.dueDate) && t.dueDate > now);
 

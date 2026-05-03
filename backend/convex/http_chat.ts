@@ -49,14 +49,17 @@ const MENU_USER_LABELS: Record<string, string> = {
   preferences: "Change my preferences",
 };
 
-function formatTaskReadSummary(task: {
-  title: string;
-  description: string;
-  taskType: string;
-  dueDate: number;
-  classTag?: string;
-  timeEstimate?: number;
-}, subtasks: Array<{ title: string; status?: string; timeEstimate?: number }>): string {
+function formatTaskReadSummary(
+  task: {
+    title: string;
+    description: string;
+    taskType: string;
+    dueDate: number;
+    classTag?: string;
+    timeEstimate?: number;
+  },
+  subtasks: Array<{ title: string; status?: string; timeEstimate?: number }>
+): string {
   const due = new Date(task.dueDate).toLocaleString();
   const estimate =
     task.timeEstimate !== undefined
@@ -79,7 +82,7 @@ function formatTaskReadSummary(task: {
           ? `${Math.floor(subtask.timeEstimate / 60)}h ${subtask.timeEstimate % 60}m`
           : "estimate pending";
       lines.push(
-        `  ${index + 1}. ${subtask.title} (${subtask.status ?? "not_started"}, ${subEstimate})`,
+        `  ${index + 1}. ${subtask.title} (${subtask.status ?? "not_started"}, ${subEstimate})`
       );
     }
   } else {
@@ -111,15 +114,13 @@ function getTimeZoneOffsetMs(timeZone: string, atMs: number): number {
     Number(values.day),
     Number(values.hour),
     Number(values.minute),
-    Number(values.second),
+    Number(values.second)
   );
   return asUtc - atMs;
 }
 
 function parseAsUserLocalDateTimeMs(input: string, timeZone: string): number {
-  const m = input.match(
-    /^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2})(?::(\d{2}))?)?$/,
-  );
+  const m = input.match(/^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2})(?::(\d{2}))?)?$/);
   if (!m) return NaN;
   const year = Number(m[1]);
   const month = Number(m[2]);
@@ -149,7 +150,6 @@ function parseDueDateIso(iso: string, timezone: string): number {
   return isNaN(ms) ? Date.now() + 86_400_000 : ms;
 }
 
-
 async function runChatWorkflow(
   client: InstanceType<typeof MastraClient>,
   inputData: {
@@ -163,7 +163,7 @@ async function runChatWorkflow(
     activeAgent: "task" | "feedback" | "preferences" | "classes" | "schedule" | null;
     taskAgentIntent: "create" | "rud" | null;
     courseAgentIntent: "add" | "drop" | "view" | "update" | null;
-  },
+  }
 ): Promise<ChatWorkflowOutput | "quota_exceeded" | null> {
   const wf = client.getWorkflow("chat-workflow");
   const run = await wf.startAsync({ inputData });
@@ -171,14 +171,24 @@ async function runChatWorkflow(
   for (const step of Object.values(run.steps ?? {})) {
     if (!("output" in step)) {
       const errMsg = (step as { error?: string }).error ?? "";
-      if (errMsg.includes("quota") || errMsg.includes("RESOURCE_EXHAUSTED") || errMsg.includes("429")) {
+      if (
+        errMsg.includes("quota") ||
+        errMsg.includes("RESOURCE_EXHAUSTED") ||
+        errMsg.includes("429")
+      ) {
         return "quota_exceeded";
       }
     }
   }
 
   // Only one branch step will have run — find whichever has output.
-  const branchStepIds = ["task_handler", "feedback_handler", "course_handler", "schedule_handler", "canned_handler"];
+  const branchStepIds = [
+    "task_handler",
+    "feedback_handler",
+    "course_handler",
+    "schedule_handler",
+    "canned_handler",
+  ];
   for (const id of branchStepIds) {
     const step = run.steps?.[id];
     if (step && "output" in step) return step.output as ChatWorkflowOutput;
@@ -195,7 +205,7 @@ async function executeTaskAction(
     activeTaskId?: Id<"tasks">;
     activeCourseId?: Id<"userCourses">;
     output: ChatWorkflowOutput;
-  },
+  }
 ): Promise<string> {
   const { userId, sessionId, timezone, activeTaskId, activeCourseId, output } = params;
   const taggedTaskId = activeTaskId;
@@ -246,20 +256,28 @@ async function executeTaskAction(
         ...(output.updatedTitle ? { title: output.updatedTitle } : {}),
         ...(output.updatedDescription ? { description: output.updatedDescription } : {}),
         ...(output.updatedTaskType ? { taskType: output.updatedTaskType } : {}),
-        ...(output.updatedDueDateIso ? { dueDate: parseDueDateIso(output.updatedDueDateIso, timezone) } : {}),
+        ...(output.updatedDueDateIso
+          ? { dueDate: parseDueDateIso(output.updatedDueDateIso, timezone) }
+          : {}),
         ...(taggedCourseId ? { courseId: taggedCourseId } : {}),
         ...(output.updatedClassTag !== undefined && output.updatedClassTag !== null
           ? { classTag: output.updatedClassTag }
           : {}),
       });
-      const subtaskCount = await ctx.runQuery(internal.queries.subtasks.countSubtasksForTaskInternal, {
-        parentTaskId: taggedTaskId,
-      });
+      const subtaskCount = await ctx.runQuery(
+        internal.queries.subtasks.countSubtasksForTaskInternal,
+        {
+          parentTaskId: taggedTaskId,
+        }
+      );
       if (subtaskCount === 0) {
         if (shouldGenerateSubtasks) {
-          const generated = await ctx.runAction(internal.actions.generateSubtasks.generateSubtasks, {
-            taskId: taggedTaskId,
-          });
+          const generated = await ctx.runAction(
+            internal.actions.generateSubtasks.generateSubtasks,
+            {
+              taskId: taggedTaskId,
+            }
+          );
           if ("error" in generated) throw new Error(generated.error);
           await ctx.runMutation(internal.mutations.subtasks.createSubtasksFromGeneratedInternal, {
             userId,
@@ -297,7 +315,9 @@ async function executeTaskAction(
       clearedScopeAfterAction = true;
     } else if (output.actionType === "read_task") {
       if (taggedTaskId !== undefined) {
-        const task = await ctx.runQuery(internal.queries.tasks.getTaskInternal, { taskId: taggedTaskId });
+        const task = await ctx.runQuery(internal.queries.tasks.getTaskInternal, {
+          taskId: taggedTaskId,
+        });
         if (!task || task.userId !== userId) throw new Error("Task not found.");
         const subtasks = await ctx.runQuery(internal.queries.subtasks.getSubtasksForTaskInternal, {
           parentTaskId: taggedTaskId,
@@ -327,7 +347,9 @@ async function executeTaskAction(
     role: "assistant",
     content: aiText,
     ...(taggedTaskId !== undefined && !clearedScopeAfterAction ? { taskId: taggedTaskId } : {}),
-    ...(taggedCourseId !== undefined && !clearedScopeAfterAction ? { courseId: taggedCourseId } : {}),
+    ...(taggedCourseId !== undefined && !clearedScopeAfterAction
+      ? { courseId: taggedCourseId }
+      : {}),
   });
   return aiText;
 }
@@ -337,17 +359,23 @@ async function applySessionStateChanges(
   userId: Id<"users">,
   sessionId: string,
   output: ChatWorkflowOutput,
-  previousActiveAgent: "task" | "feedback" | "preferences" | "classes" | "schedule" | null,
+  previousActiveAgent: ActiveAgent | null
 ) {
   const feedbackAgentDone =
     previousActiveAgent === "feedback" &&
     (output.readyToRecord || output.newActiveAgent !== "feedback");
+
+  // Two independent steps so the supervisor's mid-flow intent-switch case can
+  // clear the previous sub-agent's state AND install the new sub-agent's state
+  // in the same turn. (For action-completion turns `newActiveAgent` is null so
+  // the second step is a no-op, preserving existing behaviour.)
   if (output.clearActiveAgent || feedbackAgentDone) {
     await ctx.runMutation(internal.mutations.chatSessions.clearAgentStateInternal, {
       userId,
       sessionId,
     });
-  } else if (output.newActiveAgent || output.newTaskAgentIntent || output.newCourseAgentIntent) {
+  }
+  if (output.newActiveAgent || output.newTaskAgentIntent || output.newCourseAgentIntent) {
     await ctx.runMutation(internal.mutations.chatSessions.setTaskAgentStateInternal, {
       userId,
       sessionId,
@@ -379,7 +407,7 @@ async function handleWorkflowTurn(
       resolvedSisPick?: SisResolvedPick;
     } | null;
     triggerUserMessageId?: Id<"chatMessages">;
-  },
+  }
 ): Promise<Response> {
   const { userId, sessionId, message, timezone, session, triggerUserMessageId } = params;
   const sessionActiveTaskId = session?.activeTaskId;
@@ -417,7 +445,8 @@ async function handleWorkflowTurn(
   const today = new Date().toISOString().slice(0, 10);
   const activeAgent: ActiveAgent = (session?.activeAgent as ActiveAgent) ?? null;
   const taskAgentIntent: TaskAgentIntent = (session?.taskAgentIntent as TaskAgentIntent) ?? null;
-  const courseAgentIntent: CourseAgentIntent = (session?.courseAgentIntent as CourseAgentIntent) ?? null;
+  const courseAgentIntent: CourseAgentIntent =
+    (session?.courseAgentIntent as CourseAgentIntent) ?? null;
 
   const result = await runChatWorkflow(client, {
     message,
@@ -522,7 +551,7 @@ async function handleWorkflowTurn(
     const queryText = output.mcqQueryText ?? (message.trim() || "task assignment");
     const { candidates, hasMore } = await ctx.runAction(
       internal.actions.entityResolution.searchTaskCandidates,
-      { userId, queryText, excludeIds: [] },
+      { userId, queryText, excludeIds: [] }
     );
     const introText =
       candidates.length === 0
@@ -534,6 +563,10 @@ async function handleWorkflowTurn(
       role: "assistant",
       content: introText,
     });
+    // Apply agent-state changes (which may clear prior session state on intent
+    // switch) BEFORE setting the entity-prompt state, so the new MCQ state
+    // isn't wiped out by the clear.
+    await applySessionStateChanges(ctx, userId, sessionId, output, activeAgent);
     if (candidates.length > 0) {
       await ctx.runMutation(internal.mutations.chatSessions.setEntityPromptStateInternal, {
         userId,
@@ -545,7 +578,6 @@ async function handleWorkflowTurn(
         ...(mcqTriggerId !== undefined ? { clarifyTriggerUserMessageId: mcqTriggerId } : {}),
       });
     }
-    await applySessionStateChanges(ctx, userId, sessionId, output, activeAgent);
     return c.json({
       text: introText,
       status: candidates.length > 0 ? "needs_entity_clarification" : "routed",
@@ -563,46 +595,47 @@ async function handleWorkflowTurn(
     const sessionSisContext = decodeSisContext(session?.lastEntityQueryText ?? "");
     const shouldUseSisMcq =
       output.route === "classes" &&
-      (
-        (
-          output.term !== null &&
-          output.school !== null &&
-          (output.sisQuery !== null || output.courseName !== null)
-        ) ||
-        sessionSisContext !== null
-      );
-    let candidates: EntityCandidate[] = [];
-    let hasMore = false;
+      ((output.term !== null &&
+        output.school !== null &&
+        (output.sisQuery !== null || output.courseName !== null)) ||
+        sessionSisContext !== null);
+    let candidates: EntityCandidate[];
+    let hasMore: boolean;
     if (shouldUseSisMcq) {
       const sisTerm = output.term ?? sessionSisContext?.term ?? null;
       const sisSchool = output.school ?? sessionSisContext?.school ?? null;
-      const sisQuery = (output.sisQuery ?? output.courseName ?? sessionSisContext?.query ?? queryText).trim();
+      const sisQuery = (
+        output.sisQuery ??
+        output.courseName ??
+        sessionSisContext?.query ??
+        queryText
+      ).trim();
       if (!sisTerm || !sisSchool) {
         candidates = [];
         hasMore = false;
       } else {
-      const rows = (await ctx.runAction(api.actions.jhuCourses.getCoursesByTerm, {
-        term: sisTerm,
-        school: sisSchool,
-        courseTitle: sisQuery,
-      })) as Array<{ OfferingName?: string; Title?: string }>;
-      const filtered = rows.filter((r) => r.OfferingName && r.Title).slice(0, 5);
-      candidates = filtered.map((r) => ({
-        id: encodeSisCandidate({
-          offeringName: String(r.OfferingName),
-          title: String(r.Title),
+        const rows = (await ctx.runAction(api.functions.jhuCourses.getCoursesByTerm, {
           term: sisTerm,
           school: sisSchool,
-        }),
-        label: String(r.OfferingName),
-        subtitle: String(r.Title),
-      }));
-      hasMore = rows.length > candidates.length;
+          courseTitle: sisQuery,
+        })) as Array<{ OfferingName?: string; Title?: string }>;
+        const filtered = rows.filter((r) => r.OfferingName && r.Title).slice(0, 5);
+        candidates = filtered.map((r) => ({
+          id: encodeSisCandidate({
+            offeringName: String(r.OfferingName),
+            title: String(r.Title),
+            term: sisTerm,
+            school: sisSchool,
+          }),
+          label: String(r.OfferingName),
+          subtitle: String(r.Title),
+        }));
+        hasMore = rows.length > candidates.length;
       }
     } else {
       const vectorMatches = await ctx.runAction(
         internal.actions.entityResolution.searchCourseCandidates,
-        { userId, queryText, excludeIds: [] },
+        { userId, queryText, excludeIds: [] }
       );
       candidates = vectorMatches.candidates as EntityCandidate[];
       hasMore = vectorMatches.hasMore;
@@ -621,6 +654,9 @@ async function handleWorkflowTurn(
       content: introText,
       ...(taskForIntro !== undefined ? { taskId: taskForIntro } : {}),
     });
+    // See needs_task_mcq above: clear-then-set ordering matters when intent
+    // switching, so apply session state changes BEFORE the entity prompt state.
+    await applySessionStateChanges(ctx, userId, sessionId, output, activeAgent);
     if (candidates.length > 0) {
       await ctx.runMutation(internal.mutations.chatSessions.setEntityPromptStateInternal, {
         userId,
@@ -629,7 +665,12 @@ async function handleWorkflowTurn(
           ? encodeSisContext({
               term: output.term ?? sessionSisContext?.term ?? "",
               school: output.school ?? sessionSisContext?.school ?? "",
-              query: (output.sisQuery ?? output.courseName ?? sessionSisContext?.query ?? queryText).trim(),
+              query: (
+                output.sisQuery ??
+                output.courseName ??
+                sessionSisContext?.query ??
+                queryText
+              ).trim(),
             })
           : queryText,
         activeEntityStep: "class",
@@ -638,7 +679,6 @@ async function handleWorkflowTurn(
         ...(mcqTriggerId !== undefined ? { clarifyTriggerUserMessageId: mcqTriggerId } : {}),
       });
     }
-    await applySessionStateChanges(ctx, userId, sessionId, output, activeAgent);
     return c.json({
       text: introText,
       status: candidates.length > 0 ? "needs_entity_clarification" : "routed",
@@ -686,7 +726,13 @@ chatApp.post("/api/chat", async (c) => {
     sessionId?: string;
     timezone?: string;
     entity?: {
-      action: "pick_task" | "pick_course" | "other_tasks" | "other_courses" | "menu_pick" | "pick_block";
+      action:
+        | "pick_task"
+        | "pick_course"
+        | "other_tasks"
+        | "other_courses"
+        | "menu_pick"
+        | "pick_block";
       taskId?: string;
       courseId?: string;
       blockId?: string;
@@ -711,7 +757,10 @@ chatApp.post("/api/chat", async (c) => {
   });
 
   const mastraUrl = process.env.MASTRA_URL;
-  if (!mastraUrl) return c.json({ error: "MASTRA_URL not configured" }, 503);
+  if (!mastraUrl) {
+    console.error("MASTRA_URL not configured");
+    return c.json({ error: "Service unavailable" }, 503);
+  }
   const client = new MastraClient({ baseUrl: mastraUrl });
 
   // ── Entity UI actions ──────────────────────────────────────────────────────
@@ -725,7 +774,7 @@ chatApp.post("/api/chat", async (c) => {
     });
     const sessionAfterBlock = await ctx.runQuery(
       internal.queries.chatSessions.getChatSessionInternal,
-      { userId, sessionId },
+      { userId, sessionId }
     );
     // The empty `message` below relies on `activeAgent === "schedule"` to route this turn
     // directly to the schedule agent and bypass the supervisor (which would otherwise crash
@@ -770,16 +819,22 @@ chatApp.post("/api/chat", async (c) => {
       const sis = decodeSisCandidate(body.entity.courseId);
       if (!sis) return c.json({ error: "Invalid SIS selection" }, 400);
       const synthetic = `I choose ${sis.offeringName}: ${sis.title} for ${sis.term} at ${sis.school}.`;
-      const syntheticUserMessageId = await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {
-        userId,
-        sessionId,
-        role: "user",
-        content: synthetic,
-      });
-      const sessionAfterSynthetic = await ctx.runQuery(internal.queries.chatSessions.getChatSessionInternal, {
-        userId,
-        sessionId,
-      });
+      const syntheticUserMessageId = await ctx.runMutation(
+        internal.mutations.chatMessages.saveMessage,
+        {
+          userId,
+          sessionId,
+          role: "user",
+          content: synthetic,
+        }
+      );
+      const sessionAfterSynthetic = await ctx.runQuery(
+        internal.queries.chatSessions.getChatSessionInternal,
+        {
+          userId,
+          sessionId,
+        }
+      );
       return handleWorkflowTurn(ctx, c, client, {
         userId,
         sessionId,
@@ -801,9 +856,9 @@ chatApp.post("/api/chat", async (c) => {
           excludeTokens
             .map((id) => decodeSisCandidate(id))
             .filter((v): v is NonNullable<typeof v> => v !== null)
-            .map((v) => v.offeringName),
+            .map((v) => v.offeringName)
         );
-        const rows = (await ctx.runAction(api.actions.jhuCourses.getCoursesByTerm, {
+        const rows = (await ctx.runAction(api.functions.jhuCourses.getCoursesByTerm, {
           term: sisCtx.term,
           school: sisCtx.school,
           courseTitle: sisCtx.query,
@@ -834,9 +889,17 @@ chatApp.post("/api/chat", async (c) => {
     }
 
     return handleEntityAction(
-      ctx, c, client,
-      { userId, sessionId, session, entity: body.entity as Parameters<typeof handleEntityAction>[3]["entity"] },
-      (ctx2, c2, client2, turnParams) => handleWorkflowTurn(ctx2, c2, client2, { ...turnParams, timezone }),
+      ctx,
+      c,
+      client,
+      {
+        userId,
+        sessionId,
+        session,
+        entity: body.entity as Parameters<typeof handleEntityAction>[3]["entity"],
+      },
+      (ctx2, c2, client2, turnParams) =>
+        handleWorkflowTurn(ctx2, c2, client2, { ...turnParams, timezone })
     );
   }
 
@@ -866,7 +929,7 @@ chatApp.post("/api/chat", async (c) => {
 
   const sessionBeforeMsg = await ctx.runQuery(
     internal.queries.chatSessions.getChatSessionInternal,
-    { userId, sessionId },
+    { userId, sessionId }
   );
   if (sessionBeforeMsg?.chatInputLocked === true) {
     return c.json({ text: CHAT_INPUT_LOCKED_REPLY_MSG, status: "chat_input_locked", route: null });
@@ -907,7 +970,7 @@ chatApp.post("/api/chat", async (c) => {
   if (sessionNow?.awaitingEntityResolution && !sessionNow.clarificationExhausted) {
     const inc = await ctx.runMutation(
       internal.mutations.chatSessions.incrementClarificationFailureInternal,
-      { userId, sessionId },
+      { userId, sessionId }
     );
     if (inc.exhausted) {
       await ctx.runMutation(internal.mutations.chatMessages.saveMessage, {

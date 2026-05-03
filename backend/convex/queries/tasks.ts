@@ -22,7 +22,6 @@ export const getAllTasksForUserInternal = internalQuery({
   },
 });
 
-
 export const getEstimateFeedbackContextInternal = internalQuery({
   args: { userId: v.id("users") },
   handler: async (ctx, args) => {
@@ -33,11 +32,7 @@ export const getEstimateFeedbackContextInternal = internalQuery({
       .take(25);
 
     return tasks
-      .filter(
-        (t) =>
-          t.timeEstimate !== undefined &&
-          t.estimateFeedbackRating !== undefined
-      )
+      .filter((t) => t.timeEstimate !== undefined && t.estimateFeedbackRating !== undefined)
       .slice(0, 10)
       .map((t) => ({
         title: t.title,
@@ -48,7 +43,6 @@ export const getEstimateFeedbackContextInternal = internalQuery({
       }));
   },
 });
-
 
 // Get a single task by ID
 export const getTask = query({
@@ -105,22 +99,25 @@ export const getTasksByCourseId = query({
 
     const order = args.sortOrder ?? "desc";
 
+    const now = Date.now();
+
     if (!args.courseId) {
-      return await ctx.db
+      const tasks = await ctx.db
         .query("tasks")
         .withIndex("by_userId_courseId", (q) => q.eq("userId", userId).eq("courseId", undefined))
         .order(order)
         .collect();
+      return tasks.filter((t) => t.status !== "completed" && t.dueDate >= now);
     }
 
-    return await ctx.db
+    const tasks = await ctx.db
       .query("tasks")
       .withIndex("by_userId_courseId", (q) => q.eq("userId", userId).eq("courseId", args.courseId!))
       .order(order)
       .collect();
+    return tasks.filter((t) => t.status !== "completed" && t.dueDate >= now);
   },
 });
-
 
 // Internal query for fetching all tasks for a user.
 // Used by the retrieval layer (slices to 10) and AI scheduling actions (needs all tasks).
@@ -165,9 +162,7 @@ export const getTasksPaginated = query({
 
     return {
       ...result,
-      page: args.taskType
-        ? result.page.filter((t) => t.taskType === args.taskType)
-        : result.page,
+      page: args.taskType ? result.page.filter((t) => t.taskType === args.taskType) : result.page,
     };
   },
 });

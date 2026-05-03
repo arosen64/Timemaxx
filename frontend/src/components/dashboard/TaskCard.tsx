@@ -1,40 +1,54 @@
-import { useState, useMemo } from 'react'
-import { useQuery, useMutation } from 'convex/react'
-import { api } from '../../../../backend/convex/_generated/api'
-import { PencilIcon, TrashIcon, SpinnerIcon, SparklesIcon, ChevronDownIcon, ListTreeIcon } from '../icons'
-import { type TaskType, type SubtaskType, type TaskStatus, formatDueDateTimeDisplay, displayTitle, formatMinutes } from './types'
-import { type Id } from '../../../../backend/convex/_generated/dataModel'
-import { formatClassTagForDisplay } from '../../utils/classTagUtils'
-import TaskFeedbackForm, { type TaskFeedbackFormProps } from './TaskFeedbackForm'
-import EstimateBadge from './EstimateBadge'
-import WeightBadge from './WeightBadge'
-import DueDateWarningBadge from './DueDateWarningBadge'
-import SubtaskCard from './SubtaskCard'
-import StudyBlockRow from './StudyBlockRow'
-import StatusDropdown from './StatusDropdown'
+import { useState, useMemo } from "react";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "../../../../backend/convex/_generated/api";
+import {
+  PencilIcon,
+  TrashIcon,
+  SpinnerIcon,
+  SparklesIcon,
+  ChevronDownIcon,
+  ListTreeIcon,
+} from "../icons";
+import {
+  type TaskType,
+  type SubtaskType,
+  type TaskStatus,
+  formatDueDateTimeDisplay,
+  displayTitle,
+  formatMinutes,
+} from "./types";
+import { type Id } from "../../../../backend/convex/_generated/dataModel";
+import { formatClassTagForDisplay } from "../../utils/classTagUtils";
+import TaskFeedbackForm, { type TaskFeedbackFormProps } from "./TaskFeedbackForm";
+import EstimateBadge from "./EstimateBadge";
+import WeightBadge from "./WeightBadge";
+import DueDateWarningBadge from "./DueDateWarningBadge";
+import SubtaskCard from "./SubtaskCard";
+import StudyBlockRow from "./StudyBlockRow";
+import StatusDropdown from "./StatusDropdown";
 
-const BLOCK_DISPLAY_LIMIT = 5
+const BLOCK_DISPLAY_LIMIT = 5;
 
 type TaskCardProps = {
-  task: TaskType
-  barColor: string
-  isEstimating: boolean
-  feedback: Omit<TaskFeedbackFormProps, 'task'>
-  onStatusChange?: (status: TaskStatus) => void
-  onEstimate: () => void
-  onEdit: () => void
-  onDelete: () => void
-  onReopen?: () => void
-  isReadOnly?: boolean
-  subtasks?: SubtaskType[]
-  estimatingSubtasks?: Set<Id<'subtasks'>>
-  onEditSubtask?: (subtask: SubtaskType) => void
-  onDeleteSubtask?: (id: Id<'subtasks'>) => void
-  onEstimateSubtask?: (id: Id<'subtasks'>) => void
-  isGeneratingSubtasks?: boolean
-  onGenerateSubtasks?: () => void
-  onSubtaskStatusChange?: (id: Id<'subtasks'>, status: TaskStatus) => void
-}
+  task: TaskType;
+  barColor: string;
+  isEstimating: boolean;
+  feedback: Omit<TaskFeedbackFormProps, "task">;
+  onStatusChange?: (status: TaskStatus) => void;
+  onEstimate: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+  onReopen?: () => void;
+  isReadOnly?: boolean;
+  subtasks?: SubtaskType[];
+  estimatingSubtasks?: Set<Id<"subtasks">>;
+  onEditSubtask?: (subtask: SubtaskType) => void;
+  onDeleteSubtask?: (id: Id<"subtasks">) => void;
+  onEstimateSubtask?: (id: Id<"subtasks">) => void;
+  isGeneratingSubtasks?: boolean;
+  onGenerateSubtasks?: () => void;
+  onSubtaskStatusChange?: (id: Id<"subtasks">, status: TaskStatus) => void;
+};
 
 export default function TaskCard({
   task,
@@ -56,78 +70,73 @@ export default function TaskCard({
   onGenerateSubtasks,
   onSubtaskStatusChange,
 }: TaskCardProps) {
-  const [isExpanded, setIsExpanded] = useState(false)
-  const [showAll, setShowAll] = useState(false)
-  const [isCancellingBlocks, setIsCancellingBlocks] = useState(false)
-  const [showReasoning, setShowReasoning] = useState(false)
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [showAll, setShowAll] = useState(false);
+  const [showReasoning, setShowReasoning] = useState(false);
 
-  const deleteStudyBlocksForTask = useMutation(api.mutations.studyBlocks.deleteStudyBlocksForTask)
-  const toggleStudyBlockComplete = useMutation(api.mutations.studyBlocks.toggleStudyBlockComplete)
+  const toggleStudyBlockComplete = useMutation(api.mutations.studyBlocks.toggleStudyBlockComplete);
 
   function handleToggleBlock(studyBlockId: string) {
-    toggleStudyBlockComplete({ studyBlockId: studyBlockId as Id<'studyBlocks'> })
-  }
-
-  async function handleCancelBlocks(e: React.MouseEvent) {
-    e.stopPropagation()
-    setIsCancellingBlocks(true)
-    try {
-      await deleteStudyBlocksForTask({ taskId: task._id })
-    } finally {
-      setIsCancellingBlocks(false)
-    }
+    toggleStudyBlockComplete({ studyBlockId: studyBlockId as Id<"studyBlocks"> });
   }
 
   const atRiskData = useQuery(
     api.queries.studyBlocks.getTaskAtRiskStatus,
-    task.status !== 'completed' ? { taskId: task._id } : 'skip',
-  )
+    task.status !== "completed" ? { taskId: task._id } : "skip"
+  );
 
   const studyBlocks = useQuery(
     api.queries.studyBlocks.getStudyBlocksByTask,
-    isExpanded ? { taskId: task._id } : 'skip',
-  )
+    isExpanded ? { taskId: task._id } : "skip"
+  );
 
   const subtaskBlocksRaw = useQuery(
     api.queries.studyBlocks.getStudyBlocksForTaskSubtasks,
-    isExpanded && subtasks.length > 0 ? { taskId: task._id } : 'skip',
-  )
+    isExpanded && subtasks.length > 0 ? { taskId: task._id } : "skip"
+  );
 
   const iconBtnCls =
-    'flex items-center justify-center w-8 h-8 transition rounded-lg text-slate-blue hover:bg-bg-gray hover:text-navy'
+    "flex items-center justify-center w-8 h-8 transition rounded-lg text-slate-blue hover:bg-bg-gray hover:text-navy";
 
   const visibleBlocks = studyBlocks
     ? showAll
       ? studyBlocks
       : studyBlocks.slice(0, BLOCK_DISPLAY_LIMIT)
-    : []
-  const hiddenCount = studyBlocks ? Math.max(0, studyBlocks.length - BLOCK_DISPLAY_LIMIT) : 0
+    : [];
+  const hiddenCount = studyBlocks ? Math.max(0, studyBlocks.length - BLOCK_DISPLAY_LIMIT) : 0;
 
-  const hasSubtasks = subtasks.length > 0
-  const subtaskBlocksMap = useMemo(() => new Map(
-    subtasks.map((s) => [
-      s._id,
-      (subtaskBlocksRaw ?? []).filter((b) => b.subtaskId === s._id),
-    ])
-  ), [subtasks, subtaskBlocksRaw])
+  const hasSubtasks = subtasks.length > 0;
+  const subtaskBlocksMap = useMemo(
+    () =>
+      new Map(
+        subtasks.map((s) => [s._id, (subtaskBlocksRaw ?? []).filter((b) => b.subtaskId === s._id)])
+      ),
+    [subtasks, subtaskBlocksRaw]
+  );
 
-  const anySubtaskPending = hasSubtasks && subtasks.some((s) => s.timeEstimate === undefined)
+  const anySubtaskPending = hasSubtasks && subtasks.some((s) => s.timeEstimate === undefined);
   const subtaskTotal = hasSubtasks
     ? subtasks.reduce((sum, s) => sum + (s.timeEstimate ?? 0), 0)
-    : undefined
+    : undefined;
 
   const displayedEstimate = hasSubtasks
-    ? (task.isManualEstimate ? task.timeEstimate : subtaskTotal)
-    : task.timeEstimate
-  const showEstimateSpinner = hasSubtasks ? anySubtaskPending : (task.timeEstimate === undefined && isEstimating)
+    ? task.isManualEstimate
+      ? task.timeEstimate
+      : subtaskTotal
+    : task.timeEstimate;
+  const showEstimateSpinner = hasSubtasks
+    ? anySubtaskPending
+    : task.timeEstimate === undefined && isEstimating;
 
   return (
     <div
       className="group min-w-0 cursor-pointer rounded-[10px] border border-border bg-white overflow-hidden"
-      onClick={() => setIsExpanded((prev) => {
-        if (prev) setShowAll(false)
-        return !prev
-      })}
+      onClick={() =>
+        setIsExpanded((prev) => {
+          if (prev) setShowAll(false);
+          return !prev;
+        })
+      }
     >
       {/* Main card row */}
       <div className="flex gap-3 px-[18px] py-4">
@@ -139,8 +148,14 @@ export default function TaskCard({
               {displayTitle(task)}
             </div>
             <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-blue">
-              <span className="whitespace-nowrap">Due {formatDueDateTimeDisplay(task.dueDate)}</span>
-              {task.classTag ? <span className="whitespace-nowrap">· {formatClassTagForDisplay(task.classTag)}</span> : null}
+              <span className="whitespace-nowrap">
+                Due {formatDueDateTimeDisplay(task.dueDate)}
+              </span>
+              {task.classTag ? (
+                <span className="whitespace-nowrap">
+                  · {formatClassTagForDisplay(task.classTag)}
+                </span>
+              ) : null}
               <span className="whitespace-nowrap">· {task.taskType}</span>
               {hasSubtasks ? (
                 <>
@@ -150,9 +165,13 @@ export default function TaskCard({
                     </span>
                   ) : displayedEstimate !== undefined && displayedEstimate > 0 ? (
                     <>
-                      <span className="whitespace-nowrap">· {formatMinutes(displayedEstimate)} total</span>
+                      <span className="whitespace-nowrap">
+                        · {formatMinutes(displayedEstimate)} total
+                      </span>
                       <EstimateBadge isManual={task.isManualEstimate} />
-                      <span className="whitespace-nowrap">· {subtasks.length} subtask{subtasks.length !== 1 ? 's' : ''}</span>
+                      <span className="whitespace-nowrap">
+                        · {subtasks.length} subtask{subtasks.length !== 1 ? "s" : ""}
+                      </span>
                     </>
                   ) : null}
                 </>
@@ -164,8 +183,8 @@ export default function TaskCard({
                     <button
                       type="button"
                       onClick={(e) => {
-                        e.stopPropagation()
-                        setShowReasoning((prev) => !prev)
+                        e.stopPropagation();
+                        setShowReasoning((prev) => !prev);
                       }}
                       className="flex items-center gap-1 text-info-emphasis hover:underline"
                       aria-label="Toggle AI reasoning"
@@ -192,8 +211,8 @@ export default function TaskCard({
                 <button
                   type="button"
                   onClick={(e) => {
-                    e.stopPropagation()
-                    onReopen?.()
+                    e.stopPropagation();
+                    onReopen?.();
                   }}
                   className="rounded px-2.5 py-1 text-[11px] font-semibold font-heading text-slate-blue border border-border bg-bg-gray hover:bg-white transition"
                 >
@@ -202,9 +221,9 @@ export default function TaskCard({
               ) : (
                 <>
                   <StatusDropdown
-                    value={task.status ?? 'not_started'}
+                    value={task.status ?? "not_started"}
                     onChange={(s) => {
-                      onStatusChange?.(s)
+                      onStatusChange?.(s);
                     }}
                     size="md"
                   />
@@ -212,8 +231,10 @@ export default function TaskCard({
                     <div className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-blue">
                       <SpinnerIcon color="currentColor" size={16} />
                     </div>
-                  ) : !hasSubtasks && displayedEstimate === undefined && (
-                    showEstimateSpinner ? (
+                  ) : (
+                    !hasSubtasks &&
+                    displayedEstimate === undefined &&
+                    (showEstimateSpinner ? (
                       <div className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-blue">
                         <SpinnerIcon color="currentColor" size={16} />
                       </div>
@@ -221,21 +242,21 @@ export default function TaskCard({
                       <button
                         type="button"
                         onClick={(e) => {
-                          e.stopPropagation()
-                          onEstimate()
+                          e.stopPropagation();
+                          onEstimate();
                         }}
                         className={iconBtnCls}
                         aria-label="Estimate task time"
                       >
                         <SparklesIcon color="currentColor" size={16} />
                       </button>
-                    )
+                    ))
                   )}
                   <button
                     type="button"
                     onClick={(e) => {
-                      e.stopPropagation()
-                      onEdit()
+                      e.stopPropagation();
+                      onEdit();
                     }}
                     className={iconBtnCls}
                     aria-label="Edit task"
@@ -245,16 +266,17 @@ export default function TaskCard({
                   <button
                     type="button"
                     onClick={(e) => {
-                      e.stopPropagation()
-                      onDelete()
+                      e.stopPropagation();
+                      onDelete();
                     }}
                     className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-blue hover:bg-urgent-red-light hover:text-urgent-red transition"
                     aria-label="Delete task"
                   >
                     <TrashIcon />
                   </button>
-                  {!hasSubtasks && !task.isManualEstimate && (
-                    isGeneratingSubtasks ? (
+                  {!hasSubtasks &&
+                    !task.isManualEstimate &&
+                    (isGeneratingSubtasks ? (
                       <div className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-blue">
                         <SpinnerIcon color="currentColor" size={16} />
                       </div>
@@ -262,8 +284,8 @@ export default function TaskCard({
                       <button
                         type="button"
                         onClick={(e) => {
-                          e.stopPropagation()
-                          onGenerateSubtasks?.()
+                          e.stopPropagation();
+                          onGenerateSubtasks?.();
                         }}
                         className={iconBtnCls}
                         aria-label="Generate subtasks"
@@ -271,12 +293,11 @@ export default function TaskCard({
                       >
                         <ListTreeIcon color="currentColor" size={16} />
                       </button>
-                    )
-                  )}
+                    ))}
                 </>
               )}
               <div
-                className={`text-slate-blue transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+                className={`text-slate-blue transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`}
               >
                 <ChevronDownIcon color="currentColor" size={16} />
               </div>
@@ -294,21 +315,25 @@ export default function TaskCard({
       {/* Collapsible reasoning panel */}
       <div
         className={`grid transition-[grid-template-rows] duration-200 ${
-          showReasoning && task.reasoning ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
+          showReasoning && task.reasoning ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
         }`}
       >
         <div className="overflow-hidden">
           {task.reasoning && (
             <div className="border-t border-border bg-info-bg px-[18px] py-3 flex flex-col gap-2.5">
               <div className="flex items-center gap-1.5">
-                <span className="text-info-emphasis"><SparklesIcon color="currentColor" size={12} /></span>
-                <span className="text-[11px] font-semibold font-heading text-info-emphasis">AI Reasoning</span>
+                <span className="text-info-emphasis">
+                  <SparklesIcon color="currentColor" size={12} />
+                </span>
+                <span className="text-[11px] font-semibold font-heading text-info-emphasis">
+                  AI Reasoning
+                </span>
               </div>
               {[
-                { label: 'Courses', text: task.reasoning.classes },
-                { label: 'Past Tasks', text: task.reasoning.tasks },
-                { label: 'Chat History', text: task.reasoning.chats },
-                { label: 'Profile', text: task.reasoning.profile },
+                { label: "Courses", text: task.reasoning.classes },
+                { label: "Past Tasks", text: task.reasoning.tasks },
+                { label: "Chat History", text: task.reasoning.chats },
+                { label: "Profile", text: task.reasoning.profile },
               ].map(({ label, text }) => (
                 <div key={label} className="flex flex-col gap-0.5">
                   <span className="text-[11px] font-semibold font-heading text-navy">{label}</span>
@@ -323,7 +348,7 @@ export default function TaskCard({
       {/* Collapsible panel: study blocks + subtasks */}
       <div
         className={`grid transition-all duration-200 ${
-          isExpanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
+          isExpanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
         }`}
       >
         <div className="overflow-hidden">
@@ -345,8 +370,8 @@ export default function TaskCard({
                   <button
                     type="button"
                     onClick={(e) => {
-                      e.stopPropagation()
-                      setShowAll(true)
+                      e.stopPropagation();
+                      setShowAll(true);
                     }}
                     className="self-start text-[13px] font-semibold text-sky-blue hover:underline"
                   >
@@ -357,29 +382,13 @@ export default function TaskCard({
                   <button
                     type="button"
                     onClick={(e) => {
-                      e.stopPropagation()
-                      setShowAll(false)
+                      e.stopPropagation();
+                      setShowAll(false);
                     }}
                     className="self-start text-[13px] font-semibold text-sky-blue hover:underline"
                   >
                     See less
                   </button>
-                )}
-                {!isReadOnly && studyBlocks.length > 0 && (
-                  <div className="flex justify-end pt-1">
-                    <button
-                      type="button"
-                      onClick={handleCancelBlocks}
-                      disabled={isCancellingBlocks}
-                      className="flex items-center gap-1 text-[11px] font-semibold text-slate-blue hover:text-urgent-red transition disabled:opacity-50"
-                      aria-label="Cancel study block generation"
-                    >
-                      {isCancellingBlocks
-                        ? <SpinnerIcon color="currentColor" size={11} />
-                        : null}
-                      Cancel blocks
-                    </button>
-                  </div>
                 )}
               </>
             )}
@@ -407,5 +416,5 @@ export default function TaskCard({
         </div>
       </div>
     </div>
-  )
+  );
 }

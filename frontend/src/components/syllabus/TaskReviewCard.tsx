@@ -1,33 +1,33 @@
-import DatetimePicker from '../ui/DatetimePicker'
-import { XIcon } from '../icons'
-import TaskTypePills from './TaskTypePills'
-import { type ReviewTask } from './types'
-import { parseDueDateInput, combineDateMsWithTime } from '../../validators'
+import DatetimePicker from "../ui/DatetimePicker";
+import { XIcon } from "../icons";
+import TaskTypePills from "./TaskTypePills";
+import { type ReviewTask } from "./types";
+import { parseDueDateInput, combineDateMsWithTime } from "../../validators";
 
 interface TaskReviewCardProps {
-  task: ReviewTask
-  onChange: (updated: ReviewTask) => void
-  onRemove: () => void
+  task: ReviewTask;
+  onChange: (updated: ReviewTask) => void;
+  onRemove: () => void;
 }
 
 function reviewTaskToDate(task: ReviewTask): Date | undefined {
-  const ms = parseDueDateInput(task.dueDate)
-  if (ms === null) return undefined
-  return new Date(combineDateMsWithTime(ms, task.dueTime) ?? ms)
+  const ms = parseDueDateInput(task.dueDate);
+  if (ms === null) return undefined;
+  return new Date(combineDateMsWithTime(ms, task.dueTime) ?? ms);
 }
 
 export default function TaskReviewCard({ task, onChange, onRemove }: TaskReviewCardProps) {
-  function update(fields: Partial<Omit<ReviewTask, 'id'>>) {
-    onChange({ ...task, ...fields })
+  function update(fields: Partial<Omit<ReviewTask, "id">>) {
+    onChange({ ...task, ...fields });
   }
 
   function handleDatetimeChange(date: Date) {
-    const h = String(date.getHours()).padStart(2, '0')
-    const m = String(date.getMinutes()).padStart(2, '0')
-    const month = String(date.getMonth() + 1).padStart(2, '0')
-    const day = String(date.getDate()).padStart(2, '0')
-    const year = date.getFullYear()
-    update({ dueDate: `${month}/${day}/${year}`, dueTime: `${h}:${m}` })
+    const h = String(date.getHours()).padStart(2, "0");
+    const m = String(date.getMinutes()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const year = date.getFullYear();
+    update({ dueDate: `${month}/${day}/${year}`, dueTime: `${h}:${m}` });
   }
 
   return (
@@ -57,7 +57,9 @@ export default function TaskReviewCard({ task, onChange, onRemove }: TaskReviewC
         {/* Bottom row: datetime picker + type pills */}
         <div className="flex flex-wrap items-end gap-2.5">
           <div className="flex min-w-0 flex-col gap-1">
-            <span className="font-body text-[11px] font-medium text-slate-blue">Due date & time</span>
+            <span className="font-body text-[11px] font-medium text-slate-blue">
+              Due date & time
+            </span>
             <DatetimePicker
               value={reviewTaskToDate(task)}
               onChange={handleDatetimeChange}
@@ -77,8 +79,14 @@ export default function TaskReviewCard({ task, onChange, onRemove }: TaskReviewC
             type="number"
             min={0}
             max={100}
-            value={task.assignmentWeight ?? ''}
-            onChange={(e) => update({ assignmentWeight: e.target.value === '' ? undefined : Number(e.target.value) })}
+            step="0.1"
+            value={task.assignmentWeight ?? ""}
+            onChange={(e) => {
+              const parsed = e.target.value === "" ? undefined : Number(e.target.value);
+              update({
+                assignmentWeight: parsed !== undefined && isNaN(parsed) ? undefined : parsed,
+              });
+            }}
             placeholder="—"
             className="h-8 w-16 rounded-md border border-border bg-bg-gray px-2 font-body text-sm text-navy outline-none placeholder:text-light-blue focus:border-sky-blue"
           />
@@ -86,5 +94,5 @@ export default function TaskReviewCard({ task, onChange, onRemove }: TaskReviewC
         </div>
       </div>
     </div>
-  )
+  );
 }

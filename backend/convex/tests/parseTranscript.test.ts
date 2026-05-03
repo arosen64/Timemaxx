@@ -41,8 +41,7 @@ const SAMPLE_COURSES = [
 // Simulated base64 PDF payload (not a real PDF — mock intercepts before Mistral is called)
 const FAKE_PDF_BASE64 = btoa("fake pdf bytes");
 
-const TRANSCRIPT_TEXT =
-  "Johns Hopkins University\nFall 2022\nEN.601.226 Data Structures A";
+const TRANSCRIPT_TEXT = "Johns Hopkins University\nFall 2022\nEN.601.226 Data Structures A";
 
 describe("actions/parseTranscript", () => {
   beforeEach(() => {
@@ -97,12 +96,17 @@ describe("actions/parseTranscript", () => {
     expect(mockGetWorkflow).toHaveBeenCalledWith("transcript-ocr-workflow");
     expect(mockGetWorkflow).toHaveBeenCalledWith("transcript-parse-workflow");
     expect(mockStartAsync).toHaveBeenCalledTimes(2);
-    expect(mockStartAsync.mock.calls[0][0].inputData).toHaveProperty("fileContents", FAKE_PDF_BASE64);
+    expect(mockStartAsync.mock.calls[0][0].inputData).toHaveProperty(
+      "fileContents",
+      FAKE_PDF_BASE64
+    );
     expect(mockStartAsync.mock.calls[1][0].inputData).toHaveProperty("sanitizedText");
   });
 
   test("throws when OCR step returns no text", async () => {
-    mockStartAsync.mockResolvedValueOnce({ steps: { ocr: { status: "success", output: { extractedText: "" } } } });
+    mockStartAsync.mockResolvedValueOnce({
+      steps: { ocr: { status: "success", output: { extractedText: "" } } },
+    });
     const t = makeTestCtx();
     const { withAuth } = await createTestUser(t);
     await expect(
@@ -113,7 +117,9 @@ describe("actions/parseTranscript", () => {
   });
 
   test("throws when OCR step fails with an error", async () => {
-    mockStartAsync.mockResolvedValueOnce({ steps: { ocr: { status: "failed", error: "Status 401 Unauthorized" } } });
+    mockStartAsync.mockResolvedValueOnce({
+      steps: { ocr: { status: "failed", error: "Status 401 Unauthorized" } },
+    });
     const t = makeTestCtx();
     const { withAuth } = await createTestUser(t);
     await expect(
@@ -197,14 +203,18 @@ describe("actions/parseTranscript", () => {
   });
 
   test("filters out courses with a blank grade", async () => {
-    mockStartAsync
-      .mockResolvedValueOnce(makeOcrResponse(TRANSCRIPT_TEXT))
-      .mockResolvedValueOnce(
-        makeParseResponse(true, [
-          { courseCode: "EN.601.226", title: "Data Structures", credits: 3, term: "Fall 2022", grade: "" },
-          SAMPLE_COURSES[1],
-        ])
-      );
+    mockStartAsync.mockResolvedValueOnce(makeOcrResponse(TRANSCRIPT_TEXT)).mockResolvedValueOnce(
+      makeParseResponse(true, [
+        {
+          courseCode: "EN.601.226",
+          title: "Data Structures",
+          credits: 3,
+          term: "Fall 2022",
+          grade: "",
+        },
+        SAMPLE_COURSES[1],
+      ])
+    );
     const t = makeTestCtx();
     const { withAuth } = await createTestUser(t);
     const result = await withAuth.action(api.ai.parseTranscript.parseTranscript, {

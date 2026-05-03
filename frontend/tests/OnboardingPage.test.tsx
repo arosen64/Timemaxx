@@ -14,7 +14,7 @@ vi.mock('../../backend/convex/_generated/api', () => ({
       users: { completeOnboarding: 'completeOnboarding' },
       userCourses: { addUserCourse: 'addUserCourse', deleteUserCourse: 'deleteUserCourse', updateUserCourse: 'updateUserCourse' },
     },
-    actions: {
+    functions: {
       initiateGoogleCalendarOAuth: {
         initiateGoogleCalendarOAuth: 'initiateGoogleCalendarOAuth',
       },

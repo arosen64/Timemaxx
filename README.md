@@ -131,6 +131,16 @@ npx convex env set MASTRA_URL https://abc123.ngrok-free.app/mastra
 
 You need to repeat the ngrok tunnel and `MASTRA_URL` update each time you restart ngrok, as the tunnel URL changes.
 
+### Set `SITE_URL` for local CORS
+
+The chat HTTP route uses `SITE_URL` as its allowed CORS origin. If your dev Convex deployment's `SITE_URL` is set to a deployed URL, sending a chat message from `http://localhost:5173` will be blocked by the browser. Set it to your local frontend once per dev deployment:
+
+```bash
+npx convex env set SITE_URL http://localhost:5173
+```
+
+> Only do this on your **dev** deployment. The CD workflow manages `SITE_URL` on the prod deployment. See [Mastra Setup, Step 5](guides/mastra-setup.md) for the full explanation.
+
 ### Frontend Environment Variable
 
 The frontend also calls Mastra directly for streaming. Add this to `frontend/.env.local`:

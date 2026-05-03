@@ -13,7 +13,7 @@ type ActionResult = { aiText: string } | BlockMcqResult;
 async function scheduleTaskFromOutput(
   ctx: ActionCtx,
   activeTaskId: Id<"tasks"> | undefined,
-  timezone: string,
+  timezone: string
 ): Promise<ActionResult> {
   if (!activeTaskId) throw new Error("No task selected.");
 
@@ -22,7 +22,9 @@ async function scheduleTaskFromOutput(
   });
 
   if (blocks.length === 0) {
-    return { aiText: "This task has no study blocks yet. Generate blocks from the task detail page first." };
+    return {
+      aiText: "This task has no study blocks yet. Generate blocks from the task detail page first.",
+    };
   }
 
   const unscheduledBefore = blocks.filter((b) => !b.startTime && !b.isCompleted).length;
@@ -30,7 +32,7 @@ async function scheduleTaskFromOutput(
     return { aiText: "All blocks for this task are already scheduled!" };
   }
 
-  const result = await ctx.runAction(api.actions.scheduleAllBlocks.scheduleAllBlocks, {
+  const result = await ctx.runAction(api.functions.scheduleAllBlocks.scheduleAllBlocks, {
     taskId: activeTaskId,
     timezone,
   });
@@ -39,7 +41,10 @@ async function scheduleTaskFromOutput(
   const remaining = unscheduledBefore - scheduled;
 
   if (scheduled === 0) {
-    return { aiText: "I couldn't find free time slots — try adjusting your work hours or the task's due date." };
+    return {
+      aiText:
+        "I couldn't find free time slots — try adjusting your work hours or the task's due date.",
+    };
   }
 
   if (remaining === 0) {
@@ -55,7 +60,7 @@ async function scheduleBlockFromOutput(
   ctx: ActionCtx,
   activeTaskId: Id<"tasks"> | undefined,
   activeBlockId: Id<"studyBlocks"> | undefined,
-  timezone: string,
+  timezone: string
 ): Promise<ActionResult> {
   if (!activeTaskId) throw new Error("No task selected.");
 
@@ -69,12 +74,15 @@ async function scheduleBlockFromOutput(
     if (!picked) {
       return { aiText: "That block doesn't belong to the selected task." };
     }
-    const result = await ctx.runAction(api.actions.scheduleBlock.scheduleBlock, {
+    const result = await ctx.runAction(api.functions.scheduleBlock.scheduleBlock, {
       studyBlockId: activeBlockId,
       timezone,
     });
     if ("error" in result) {
-      return { aiText: "I couldn't find a free time slot for that block — try adjusting your work hours or the task's due date." };
+      return {
+        aiText:
+          "I couldn't find a free time slot for that block — try adjusting your work hours or the task's due date.",
+      };
     }
     if (result.scheduled === 0) {
       return { aiText: "That block is already scheduled!" };
@@ -89,12 +97,15 @@ async function scheduleBlockFromOutput(
   }
 
   if (unscheduled.length === 1) {
-    const result = await ctx.runAction(api.actions.scheduleBlock.scheduleBlock, {
+    const result = await ctx.runAction(api.functions.scheduleBlock.scheduleBlock, {
       studyBlockId: unscheduled[0]._id,
       timezone,
     });
     if ("error" in result) {
-      return { aiText: "I couldn't find a free time slot for that block — try adjusting your work hours or the task's due date." };
+      return {
+        aiText:
+          "I couldn't find a free time slot for that block — try adjusting your work hours or the task's due date.",
+      };
     }
     if (result.scheduled === 0) {
       return { aiText: "That block is already scheduled!" };
@@ -116,15 +127,21 @@ async function scheduleBlockFromOutput(
 
 async function importGoogleCalendarFromOutput(
   ctx: ActionCtx,
-  userId: Id<"users">,
+  userId: Id<"users">
 ): Promise<ActionResult> {
-  const calConn = await ctx.runQuery(internal.queries.calendar.getCalendarConnectionForUser, { userId });
+  const calConn = await ctx.runQuery(internal.queries.calendar.getCalendarConnectionForUser, {
+    userId,
+  });
   if (!calConn) {
     return {
-      aiText: "You haven't connected Google Calendar yet. Head to your **Profile** page to connect it, then come back to sync.",
+      aiText:
+        "You haven't connected Google Calendar yet. Head to your **Profile** page to connect it, then come back to sync.",
     };
   }
-  return { aiText: "Your Google Calendar is connected! It's automatically used when scheduling your tasks." };
+  return {
+    aiText:
+      "Your Google Calendar is connected! It's automatically used when scheduling your tasks.",
+  };
 }
 
 export async function executeScheduleAction(
@@ -136,7 +153,7 @@ export async function executeScheduleAction(
     activeBlockId?: Id<"studyBlocks">;
     timezone: string;
     output: ChatWorkflowOutput;
-  },
+  }
 ): Promise<ActionResult> {
   const { userId, sessionId, activeTaskId, activeBlockId, timezone, output } = params;
   let result: ActionResult = { aiText: output.reply };
@@ -150,7 +167,9 @@ export async function executeScheduleAction(
       result = await importGoogleCalendarFromOutput(ctx, userId);
     }
   } catch (err) {
-    result = { aiText: `Sorry, I ran into an issue: ${err instanceof Error ? err.message : "Please try again."}` };
+    result = {
+      aiText: `Sorry, I ran into an issue: ${err instanceof Error ? err.message : "Please try again."}`,
+    };
   }
 
   // Block MCQ path: do NOT save message or clear state — http_chat.ts handles that.
@@ -164,6 +183,9 @@ export async function executeScheduleAction(
     role: "assistant",
     content: result.aiText,
   });
-  await ctx.runMutation(internal.mutations.chatSessions.clearTaskAgentStateInternal, { userId, sessionId });
+  await ctx.runMutation(internal.mutations.chatSessions.clearTaskAgentStateInternal, {
+    userId,
+    sessionId,
+  });
   return result;
 }

@@ -15,7 +15,5 @@ export const COURSE_COLOR_PALETTE = [
 ] as const;
 
 export function randomCourseColor(): string {
-  return COURSE_COLOR_PALETTE[
-    Math.floor(Math.random() * COURSE_COLOR_PALETTE.length)
-  ];
+  return COURSE_COLOR_PALETTE[Math.floor(Math.random() * COURSE_COLOR_PALETTE.length)];
 }

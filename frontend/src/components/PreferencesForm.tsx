@@ -1,62 +1,50 @@
-import { useState, KeyboardEvent } from 'react'
-import { PreferencesData } from '../types'
-
-export const MIN_FOCUS_BLOCK_MINUTES = 15;
+import { useState, KeyboardEvent } from "react";
+import { DAYS_OF_WEEK } from "../../../shared/userEnums";
+import {
+  TIME_OF_DAY_OPTIONS,
+  WORK_SESSION_STYLE_OPTIONS,
+  DEADLINE_BEHAVIOR_OPTIONS,
+  MIN_FOCUS_BLOCK_MINUTES,
+} from "../../../shared/preferenceEnums";
+import { PreferencesData } from "../types";
 
 const CATEGORIES = [
   {
-    key: 'timeOfDay',
-    label: '🕐 Time of Day',
-    description: 'When you feel most productive',
-    options: [
-      'Early Morning (5–8am)',
-      'Morning (8–11am)',
-      'Midday (11am–2pm)',
-      'Afternoon (2–5pm)',
-      'Evening (5–8pm)',
-      'Night (8–11pm)',
-      'Late Night (11pm+)',
-    ],
+    key: "timeOfDay",
+    label: "🕐 Time of Day",
+    description: "When you feel most productive",
+    options: TIME_OF_DAY_OPTIONS,
   },
   {
-    key: 'dayOfWeek',
-    label: '📅 Day of Week',
-    description: 'Your most productive days',
-    options: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+    key: "dayOfWeek",
+    label: "📅 Day of Week",
+    description: "Your most productive days",
+    options: DAYS_OF_WEEK,
   },
   {
-    key: 'workSessionStyle',
-    label: '⚡ Work Session Style',
-    description: 'How you prefer to structure study sessions',
-    options: [
-      'Short bursts (25–30 min)',
-      'Medium sessions (45–60 min)',
-      'Long deep work (2+ hours)',
-      'Varies by task',
-    ],
+    key: "workSessionStyle",
+    label: "⚡ Work Session Style",
+    description: "How you prefer to structure study sessions",
+    options: WORK_SESSION_STYLE_OPTIONS,
   },
   {
-    key: 'deadlineBehavior',
-    label: '⏰ Deadline Behavior',
-    description: 'How deadlines affect your work',
+    key: "deadlineBehavior",
+    label: "⏰ Deadline Behavior",
+    description: "How deadlines affect your work",
     singleSelect: true,
-    options: [
-      'I work best well in advance',
-      'I need the pressure of a deadline',
-      'Somewhere in between',
-    ],
+    options: DEADLINE_BEHAVIOR_OPTIONS,
   },
-]
+];
 
 interface CategorySectionProps {
-  label: string
-  description: string
-  options: string[]
-  selected: string[]
-  onToggle: (option: string) => void
-  onAddCustom: (value: string) => void
-  singleSelect?: boolean
-  readOnly?: boolean
+  label: string;
+  description: string;
+  options: readonly string[];
+  selected: string[];
+  onToggle: (option: string) => void;
+  onAddCustom: (value: string) => void;
+  singleSelect?: boolean;
+  readOnly?: boolean;
 }
 
 function CategorySection({
@@ -69,25 +57,25 @@ function CategorySection({
   singleSelect = false,
   readOnly = false,
 }: CategorySectionProps) {
-  const [customInput, setCustomInput] = useState('')
+  const [customInput, setCustomInput] = useState("");
 
   const handleAddCustom = () => {
-    const trimmed = customInput.trim()
+    const trimmed = customInput.trim();
     if (trimmed && !selected.includes(trimmed)) {
-      onAddCustom(trimmed)
+      onAddCustom(trimmed);
     }
-    setCustomInput('')
-  }
+    setCustomInput("");
+  };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      e.preventDefault()
-      handleAddCustom()
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleAddCustom();
     }
-  }
+  };
 
   // Custom traits = selected items not in the predefined options list
-  const customTraits = selected.filter((s) => !options.includes(s))
+  const customTraits = selected.filter((s) => !options.includes(s));
 
   return (
     <div className="flex flex-col gap-2">
@@ -104,31 +92,32 @@ function CategorySection({
             onClick={() => onToggle(option)}
             className={`rounded-full border px-3 py-1 font-body text-sm transition-colors disabled:pointer-events-none ${
               selected.includes(option)
-                ? 'border-navy bg-navy text-white'
-                : 'border-border text-slate-blue hover:border-sky-blue hover:bg-bg-gray'
+                ? "border-navy bg-navy text-white"
+                : "border-border text-slate-blue hover:border-sky-blue hover:bg-bg-gray"
             }`}
           >
             {option}
           </button>
         ))}
         {/* Custom trait chips */}
-        {!singleSelect && customTraits.map((trait) => (
-          <span
-            key={trait}
-            className="flex items-center gap-1 rounded-full border border-navy bg-navy px-3 py-1 font-body text-sm text-white"
-          >
-            {trait}
-            {!readOnly && (
-              <button
-                type="button"
-                onClick={() => onToggle(trait)}
-                className="ml-0.5 opacity-70 hover:opacity-100"
-              >
-                ×
-              </button>
-            )}
-          </span>
-        ))}
+        {!singleSelect &&
+          customTraits.map((trait) => (
+            <span
+              key={trait}
+              className="flex items-center gap-1 rounded-full border border-navy bg-navy px-3 py-1 font-body text-sm text-white"
+            >
+              {trait}
+              {!readOnly && (
+                <button
+                  type="button"
+                  onClick={() => onToggle(trait)}
+                  className="ml-0.5 opacity-70 hover:opacity-100"
+                >
+                  ×
+                </button>
+              )}
+            </span>
+          ))}
       </div>
       {/* Custom trait input */}
       {!singleSelect && !readOnly && (
@@ -153,41 +142,46 @@ function CategorySection({
         </div>
       )}
     </div>
-  )
+  );
 }
 
 export const DEFAULT_PREFERENCES: PreferencesData = {
   traits: {},
-  focusBlockLength: '',
-}
+  focusBlockLength: "",
+};
 
 interface PreferencesFormProps {
-  data: PreferencesData
-  onChange: (data: PreferencesData) => void
-  readOnly?: boolean
+  data: PreferencesData;
+  onChange: (data: PreferencesData) => void;
+  readOnly?: boolean;
 }
 
-export default function PreferencesForm({ data, onChange, readOnly = false }: PreferencesFormProps) {
-  const getSelected = (key: string): string[] => data.traits[key] ?? []
+export default function PreferencesForm({
+  data,
+  onChange,
+  readOnly = false,
+}: PreferencesFormProps) {
+  const getSelected = (key: string): string[] => data.traits[key] ?? [];
 
   const handleToggle = (key: string, option: string, singleSelect: boolean) => {
-    const current = getSelected(key)
+    const current = getSelected(key);
     const updated = singleSelect
-      ? current.includes(option) ? [] : [option]
+      ? current.includes(option)
+        ? []
+        : [option]
       : current.includes(option)
         ? current.filter((o) => o !== option)
-        : [...current, option]
-    onChange({ ...data, traits: { ...data.traits, [key]: updated } })
-  }
+        : [...current, option];
+    onChange({ ...data, traits: { ...data.traits, [key]: updated } });
+  };
 
   const handleAddCustom = (key: string, value: string) => {
-    const current = getSelected(key)
-    onChange({ ...data, traits: { ...data.traits, [key]: [...current, value] } })
-  }
+    const current = getSelected(key);
+    onChange({ ...data, traits: { ...data.traits, [key]: [...current, value] } });
+  };
 
   return (
     <div className="flex flex-col gap-6">
-
       {CATEGORIES.map((cat) => (
         <CategorySection
           key={cat.key}
@@ -207,30 +201,39 @@ export default function PreferencesForm({ data, onChange, readOnly = false }: Pr
         <label className="font-heading text-sm font-semibold text-navy">
           Focus Block Length (minutes)
         </label>
-        <p className="font-body text-xs text-light-blue">How long is your ideal uninterrupted study session?</p>
+        <p className="font-body text-xs text-light-blue">
+          How long is your ideal uninterrupted study session?
+        </p>
         <input
           type="number"
           min={MIN_FOCUS_BLOCK_MINUTES}
           max={480}
           value={data.focusBlockLength}
           readOnly={readOnly}
-          onChange={readOnly ? undefined : (e) =>
-            onChange({
-              ...data,
-              focusBlockLength: e.target.value === '' ? '' : Number(e.target.value),
-            })
+          onChange={
+            readOnly
+              ? undefined
+              : (e) =>
+                  onChange({
+                    ...data,
+                    focusBlockLength: e.target.value === "" ? "" : Number(e.target.value),
+                  })
           }
-          placeholder={readOnly ? undefined : 'e.g. 45'}
+          placeholder={readOnly ? undefined : "e.g. 45"}
           className={`w-32 rounded-lg border border-border bg-bg-gray px-3 py-2 font-body text-sm text-navy outline-none ${
             readOnly
-              ? 'cursor-default'
-              : 'placeholder:text-light-blue focus:border-sky-blue focus:ring-2 focus:ring-sky-blue/20'
+              ? "cursor-default"
+              : "placeholder:text-light-blue focus:border-sky-blue focus:ring-2 focus:ring-sky-blue/20"
           }`}
         />
-        {!readOnly && typeof data.focusBlockLength === 'number' && data.focusBlockLength < MIN_FOCUS_BLOCK_MINUTES && (
-          <p className="font-body text-xs text-burnt-orange">Study block length must be at least {MIN_FOCUS_BLOCK_MINUTES} minutes.</p>
-        )}
+        {!readOnly &&
+          typeof data.focusBlockLength === "number" &&
+          data.focusBlockLength < MIN_FOCUS_BLOCK_MINUTES && (
+            <p className="font-body text-xs text-burnt-orange">
+              Study block length must be at least {MIN_FOCUS_BLOCK_MINUTES} minutes.
+            </p>
+          )}
       </div>
     </div>
-  )
+  );
 }

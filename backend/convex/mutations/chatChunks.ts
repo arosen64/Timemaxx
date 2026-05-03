@@ -35,7 +35,7 @@ export const rebuildChatChunksForSessionInternal = internalMutation({
     const existing = await ctx.db
       .query("chatChunks")
       .withIndex("by_userId_sessionId", (q) =>
-        q.eq("userId", args.userId).eq("sessionId", args.sessionId),
+        q.eq("userId", args.userId).eq("sessionId", args.sessionId)
       )
       .collect();
 

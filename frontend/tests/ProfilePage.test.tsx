@@ -12,7 +12,7 @@ vi.mock('../../backend/convex/_generated/api', () => ({
     mutations: {
       users: { deleteAccount: 'deleteAccount' },
     },
-    actions: {
+    functions: {
       initiateGoogleCalendarOAuth: {
         initiateGoogleCalendarOAuth: 'initiateGoogleCalendarOAuth',
       },

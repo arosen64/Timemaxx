@@ -6,20 +6,10 @@ import { z } from "zod";
 
 export const scheduleAgentOutputSchema = z.object({
   message: z.string(),
-  intent: z.enum([
-    "schedule_task",
-    "schedule_block",
-    "import_google_calendar",
-    "unknown",
-  ]),
+  intent: z.enum(["schedule_task", "schedule_block", "import_google_calendar", "unknown"]),
   needsTaskClarification: z.boolean(),
   readyToExecute: z.boolean(),
-  actionType: z.enum([
-    "schedule_task",
-    "schedule_block",
-    "import_google_calendar",
-    "none",
-  ]),
+  actionType: z.enum(["schedule_task", "schedule_block", "import_google_calendar", "none"]),
   reasoning: z.string(),
 });
 

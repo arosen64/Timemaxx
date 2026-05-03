@@ -1,67 +1,64 @@
-export type { ExtractedTask, UploadSyllabusResult } from '../../backend/convex/lib/syllabusTypes'
+export type { ExtractedTask, UploadSyllabusResult } from "../../backend/convex/lib/syllabusTypes";
 
 //Compatible with User Courses schema in backend/convex/schema.ts
 export interface Course {
-  userCourseId?: string
-  courseCode?: string
-  title: string
-  credits?: number
-  term?: string
-  grade?: string
-  studyGoal?: string
-  difficultyRating?: number
+  userCourseId?: string;
+  courseCode?: string;
+  title: string;
+  credits?: number;
+  term?: string;
+  grade?: string;
+  studyGoal?: string;
+  difficultyRating?: number;
 }
 
 export interface AcademicInsight {
-  label: string
-  text: string
+  label: string;
+  text: string;
 }
 
 export interface AcademicProfileSummaryProps {
-  profile: ProfileData
-  onChange: (data: ProfileData) => void
+  profile: ProfileData;
+  onChange: (data: ProfileData) => void;
 }
 
-
 export interface ProfileData {
-  major: string
-  year: string
-  courses: Course[]
-  transcriptSummary?: AcademicInsight[]
+  major: string;
+  year: string;
+  courses: Course[];
+  transcriptSummary?: AcademicInsight[];
 }
 
 // Shape defined in issue #22
 export interface WorkHoursData {
-  [day: string]: { blocked: number[] }
+  [day: string]: { blocked: number[] };
 }
 
 // Shape defined in issue #23
 export interface PreferencesData {
-  traits: { [category: string]: string[] }
-  focusBlockLength: number | ''
+  traits: { [category: string]: string[] };
+  focusBlockLength: number | "";
 }
-
 
 // From Course Selector
 export interface JhuTerm {
-  Name: string
-  [key: string]: unknown
+  Name: string;
+  [key: string]: unknown;
 }
 
 export interface JhuSchool {
-  Name: string
-  [key: string]: unknown
+  Name: string;
+  [key: string]: unknown;
 }
 
 export interface JhuCourse {
-  OfferingName: string
-  Title: string
-  Credits?: string
-  [key: string]: unknown
+  OfferingName: string;
+  Title: string;
+  Credits?: string;
+  [key: string]: unknown;
 }
 
 export interface CourseSelectorProps {
-  onAddCourse: (course: Course) => void
-  mode?: 'current' | 'past' | 'all'
+  onAddCourse: (course: Course) => void;
+  mode?: "current" | "past" | "all";
 }
-

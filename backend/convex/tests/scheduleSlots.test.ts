@@ -1,4 +1,11 @@
-import { describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+
+const mockStartAsync = vi.fn();
+vi.mock("@mastra/client-js", () => ({
+  MastraClient: vi.fn(() => ({
+    getWorkflow: vi.fn(() => ({ startAsync: mockStartAsync })),
+  })),
+}));
 import {
   roundUpTo15Min,
   isSlotValid,
@@ -7,6 +14,7 @@ import {
   extendSlotPool,
   filterPoolForBlock,
   selectSlotWithAI,
+  selectAllSlotsWithAI,
   computeRecommendedStart,
   computeSubtaskCascade,
   buildDailyLoadMap,
@@ -319,7 +327,11 @@ describe("filterPoolForBlock", () => {
   test("excludes slots overlapping occupied intervals", () => {
     const pool: PoolSlot[] = [{ startMs: MONDAY_9AM_UTC }];
     const occupied: OccupiedInterval[] = [
-      { startMs: MONDAY_9AM_UTC + 30 * 60 * 1000, endMs: MONDAY_9AM_UTC + 90 * 60 * 1000, title: "Busy" },
+      {
+        startMs: MONDAY_9AM_UTC + 30 * 60 * 1000,
+        endMs: MONDAY_9AM_UTC + 90 * 60 * 1000,
+        title: "Busy",
+      },
     ];
     const candidates = filterPoolForBlock({
       pool,
@@ -371,10 +383,157 @@ describe("filterPoolForBlock", () => {
 });
 
 // ---------------------------------------------------------------------------
-// selectSlotWithAI (mock Gemini)
+// selectAllSlotsWithAI
+// ---------------------------------------------------------------------------
+
+describe("selectAllSlotsWithAI", () => {
+  const DUE = MONDAY_9AM_UTC + 5 * 86400000;
+
+  beforeEach(() => {
+    vi.stubEnv("MASTRA_URL", "http://localhost:4111/mastra");
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.clearAllMocks();
+  });
+
+  test("returns empty array for empty input", async () => {
+    const result = await selectAllSlotsWithAI([], null);
+    expect(result).toEqual([]);
+  });
+
+  test("falls back to all zeros when MASTRA_URL is not set", async () => {
+    vi.unstubAllEnvs(); // explicitly clear so test is not sensitive to runner env
+    const candidates = enumerateSlots({
+      fromMs: MONDAY_9AM_UTC,
+      dueDateMs: DUE,
+      durationMinutes: 60,
+      workHoursGrid: [],
+      occupiedIntervals: [],
+      timezone: TIMEZONE,
+    });
+    const result = await selectAllSlotsWithAI(
+      [
+        { taskTitle: "Task A", dueDate: DUE, candidates },
+        { taskTitle: "Task B", dueDate: DUE, candidates },
+      ],
+      null
+    );
+    expect(result).toEqual([0, 0]);
+  });
+
+  test("returns correct indices on successful workflow run", async () => {
+    const candidates = enumerateSlots({
+      fromMs: MONDAY_9AM_UTC,
+      dueDateMs: DUE,
+      durationMinutes: 60,
+      workHoursGrid: [],
+      occupiedIntervals: [],
+      timezone: TIMEZONE,
+    });
+    mockStartAsync.mockResolvedValueOnce({
+      status: "success",
+      steps: { "slot-selection": { output: { selections: [1, 0] } } },
+    });
+    const result = await selectAllSlotsWithAI(
+      [
+        { taskTitle: "Task A", dueDate: DUE, candidates },
+        { taskTitle: "Task B", dueDate: DUE, candidates },
+      ],
+      null
+    );
+    expect(result).toEqual([1, 0]);
+  });
+
+  test("falls back to all zeros when workflow run status is failed", async () => {
+    mockStartAsync.mockResolvedValueOnce({ status: "failed", error: "LLM timeout" });
+    const candidates = enumerateSlots({
+      fromMs: MONDAY_9AM_UTC,
+      dueDateMs: DUE,
+      durationMinutes: 60,
+      workHoursGrid: [],
+      occupiedIntervals: [],
+      timezone: TIMEZONE,
+    });
+    const result = await selectAllSlotsWithAI(
+      [{ taskTitle: "Task A", dueDate: DUE, candidates }],
+      null
+    );
+    expect(result).toEqual([0]);
+  });
+
+  test("falls back to all zeros when step output is missing", async () => {
+    mockStartAsync.mockResolvedValueOnce({ status: "success", steps: {} });
+    const candidates = enumerateSlots({
+      fromMs: MONDAY_9AM_UTC,
+      dueDateMs: DUE,
+      durationMinutes: 60,
+      workHoursGrid: [],
+      occupiedIntervals: [],
+      timezone: TIMEZONE,
+    });
+    const result = await selectAllSlotsWithAI(
+      [{ taskTitle: "Task A", dueDate: DUE, candidates }],
+      null
+    );
+    expect(result).toEqual([0]);
+  });
+
+  test("falls back to all zeros when step output has wrong shape", async () => {
+    mockStartAsync.mockResolvedValueOnce({
+      status: "success",
+      steps: { "slot-selection": { output: { wrong: "shape" } } },
+    });
+    const candidates = enumerateSlots({
+      fromMs: MONDAY_9AM_UTC,
+      dueDateMs: DUE,
+      durationMinutes: 60,
+      workHoursGrid: [],
+      occupiedIntervals: [],
+      timezone: TIMEZONE,
+    });
+    const result = await selectAllSlotsWithAI(
+      [{ taskTitle: "Task A", dueDate: DUE, candidates }],
+      null
+    );
+    expect(result).toEqual([0]);
+  });
+
+  test("clamps out-of-range indices to 0", async () => {
+    mockStartAsync.mockResolvedValueOnce({
+      status: "success",
+      steps: { "slot-selection": { output: { selections: [999, -1] } } },
+    });
+    const candidates = enumerateSlots({
+      fromMs: MONDAY_9AM_UTC,
+      dueDateMs: DUE,
+      durationMinutes: 60,
+      workHoursGrid: [],
+      occupiedIntervals: [],
+      timezone: TIMEZONE,
+    });
+    const result = await selectAllSlotsWithAI(
+      [
+        { taskTitle: "Task A", dueDate: DUE, candidates },
+        { taskTitle: "Task B", dueDate: DUE, candidates },
+      ],
+      null
+    );
+    expect(result).toEqual([0, 0]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// selectSlotWithAI
 // ---------------------------------------------------------------------------
 
 describe("selectSlotWithAI", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.clearAllMocks();
+  });
+
   test("returns null when candidates is empty", async () => {
     const result = await selectSlotWithAI({
       candidates: [],
@@ -385,8 +544,8 @@ describe("selectSlotWithAI", () => {
     expect(result).toBeNull();
   });
 
-  test("falls back to index 0 when Gemini is unavailable (no API key)", async () => {
-    // No GEMINI_API_KEY in test env → callGemini will throw → fallback to 0
+  test("falls back to index 0 when MASTRA_URL is not set", async () => {
+    vi.unstubAllEnvs(); // explicitly clear so test is not sensitive to runner env
     const candidates = enumerateSlots({
       fromMs: MONDAY_9AM_UTC,
       dueDateMs: MONDAY_9AM_UTC + 5 * 86400000,
@@ -401,7 +560,6 @@ describe("selectSlotWithAI", () => {
       dueDate: MONDAY_9AM_UTC + 5 * 86400000,
       productivityTraits: null,
     });
-    // Should return the first candidate (index 0 fallback)
     expect(result).not.toBeNull();
     expect(result!.startISO).toBe(candidates[0].startISO);
   });
@@ -624,8 +782,12 @@ describe("enumerateSlots with dailyLoadMap / maxBlocksPerDayMap", () => {
     const loadMap = new Map([["2025-01-06", 1]]);
     const capMap = new Map([
       ["Monday", 1],
-      ["Tuesday", 3], ["Wednesday", 3], ["Thursday", 3], ["Friday", 3],
-      ["Saturday", 3], ["Sunday", 3],
+      ["Tuesday", 3],
+      ["Wednesday", 3],
+      ["Thursday", 3],
+      ["Friday", 3],
+      ["Saturday", 3],
+      ["Sunday", 3],
     ]);
     const candidates = enumerateSlots({
       fromMs: MONDAY_9AM_UTC,
@@ -639,7 +801,9 @@ describe("enumerateSlots with dailyLoadMap / maxBlocksPerDayMap", () => {
     });
     const mondayDate = "2025-01-06";
     const hasMondaySlot = candidates.some(
-      (c) => new Intl.DateTimeFormat("en-CA", { timeZone: TIMEZONE }).format(new Date(c.startMs)) === mondayDate,
+      (c) =>
+        new Intl.DateTimeFormat("en-CA", { timeZone: TIMEZONE }).format(new Date(c.startMs)) ===
+        mondayDate
     );
     expect(hasMondaySlot).toBe(false);
     expect(candidates.length).toBeGreaterThan(0); // other days still have slots
@@ -673,11 +837,14 @@ describe("enumerateSlots with dailyLoadMap / maxBlocksPerDayMap", () => {
 describe("filterPoolForBlock with dailyLoadMap / maxBlocksPerDayMap", () => {
   test("excludes pool slots on days at cap", () => {
     const pool: PoolSlot[] = [
-      { startMs: MONDAY_9AM_UTC },                           // Monday — at cap
-      { startMs: MONDAY_9AM_UTC + 24 * 60 * 60 * 1000 },    // Tuesday — under cap
+      { startMs: MONDAY_9AM_UTC }, // Monday — at cap
+      { startMs: MONDAY_9AM_UTC + 24 * 60 * 60 * 1000 }, // Tuesday — under cap
     ];
     const loadMap = new Map([["2025-01-06", 3]]);
-    const capMap = new Map([["Monday", 3], ["Tuesday", 3]]);
+    const capMap = new Map([
+      ["Monday", 3],
+      ["Tuesday", 3],
+    ]);
     const candidates = filterPoolForBlock({
       pool,
       dueDateMs: MONDAY_9AM_UTC + 5 * 24 * 60 * 60 * 1000,

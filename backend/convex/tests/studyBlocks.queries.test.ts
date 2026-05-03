@@ -1,36 +1,43 @@
 import { describe, expect, test } from "vitest";
 import { api, internal } from "../_generated/api";
 import { makeTestCtx, createTestUser } from "../../convex-tests/helpers";
+import type { Id } from "../_generated/dataModel";
 
-async function seedTask(
-  t: ReturnType<typeof makeTestCtx>,
-  userId: string
-) {
+async function seedTask(t: ReturnType<typeof makeTestCtx>, userId: string) {
   return t.run((ctx) =>
     ctx.db.insert("tasks", {
-      userId: userId as any,
+      userId: userId as Id<"users">,
       title: "Test task",
       description: "Test description",
       taskType: "Essay",
       dueDate: Date.now() + 86_400_000,
       createdAt: Date.now(),
       isManualEstimate: false,
+      status: "not_started",
     })
   );
 }
 
 async function seedStudyBlock(
   t: ReturnType<typeof makeTestCtx>,
+  userId: string,
   taskId: string,
-  overrides: { title?: string; startTime?: string; studyBlockLength?: number; isCompleted?: boolean } = {}
+  overrides: {
+    title?: string;
+    startTime?: string;
+    studyBlockLength?: number;
+    isCompleted?: boolean;
+  } = {}
 ) {
   return t.run((ctx) =>
     ctx.db.insert("studyBlocks", {
-      taskId: taskId as any,
+      taskId: taskId as Id<"tasks">,
+      userId: userId as Id<"users">,
       title: overrides.title ?? "Block 1",
       startTime: overrides.startTime,
       studyBlockLength: overrides.studyBlockLength ?? 60,
       isCompleted: overrides.isCompleted ?? false,
+      isConflicted: false,
     })
   );
 }
@@ -51,8 +58,8 @@ describe("queries/studyBlocks – getStudyBlocksByTask", () => {
     const t = makeTestCtx();
     const { userId } = await createTestUser(t);
     const taskId = await seedTask(t, userId);
-    await seedStudyBlock(t, taskId, { title: "Block A" });
-    await seedStudyBlock(t, taskId, { title: "Block B" });
+    await seedStudyBlock(t, userId, taskId, { title: "Block A" });
+    await seedStudyBlock(t, userId, taskId, { title: "Block B" });
 
     const result = await t.query(api.queries.studyBlocks.getStudyBlocksByTask, { taskId });
     expect(result).toHaveLength(2);
@@ -66,8 +73,8 @@ describe("queries/studyBlocks – getStudyBlocksByTask", () => {
     const { userId } = await createTestUser(t);
     const taskId1 = await seedTask(t, userId);
     const taskId2 = await seedTask(t, userId);
-    await seedStudyBlock(t, taskId1, { title: "Task 1 block" });
-    await seedStudyBlock(t, taskId2, { title: "Task 2 block" });
+    await seedStudyBlock(t, userId, taskId1, { title: "Task 1 block" });
+    await seedStudyBlock(t, userId, taskId2, { title: "Task 2 block" });
 
     const result = await t.query(api.queries.studyBlocks.getStudyBlocksByTask, { taskId: taskId1 });
     expect(result).toHaveLength(1);
@@ -82,7 +89,7 @@ describe("queries/studyBlocks – getStudyBlockById", () => {
     const t = makeTestCtx();
     const { userId } = await createTestUser(t);
     const taskId = await seedTask(t, userId);
-    const studyBlockId = await seedStudyBlock(t, taskId, { title: "My block" });
+    const studyBlockId = await seedStudyBlock(t, userId, taskId, { title: "My block" });
 
     const result = await t.query(api.queries.studyBlocks.getStudyBlockById, { studyBlockId });
     expect(result).not.toBeNull();
@@ -93,7 +100,7 @@ describe("queries/studyBlocks – getStudyBlockById", () => {
     const t = makeTestCtx();
     const { userId } = await createTestUser(t);
     const taskId = await seedTask(t, userId);
-    const studyBlockId = await seedStudyBlock(t, taskId);
+    const studyBlockId = await seedStudyBlock(t, userId, taskId);
 
     // Delete it so we can test the not-found path
     await t.run((ctx) => ctx.db.delete(studyBlockId));
@@ -111,7 +118,7 @@ describe("queries/studyBlocks – getFutureStudyBlocksForExport", () => {
     const { userId } = await createTestUser(t);
 
     const result = await t.query(internal.queries.studyBlocks.getFutureStudyBlocksForExport, {
-      userId: userId as any,
+      userId: userId as Id<"users">,
     });
     expect(result).toEqual([]);
   });
@@ -120,10 +127,10 @@ describe("queries/studyBlocks – getFutureStudyBlocksForExport", () => {
     const t = makeTestCtx();
     const { userId } = await createTestUser(t);
     const taskId = await seedTask(t, userId);
-    await seedStudyBlock(t, taskId); // no startTime
+    await seedStudyBlock(t, userId, taskId); // no startTime
 
     const result = await t.query(internal.queries.studyBlocks.getFutureStudyBlocksForExport, {
-      userId: userId as any,
+      userId: userId as Id<"users">,
     });
     expect(result).toHaveLength(0);
   });
@@ -133,10 +140,10 @@ describe("queries/studyBlocks – getFutureStudyBlocksForExport", () => {
     const { userId } = await createTestUser(t);
     const taskId = await seedTask(t, userId);
     const pastStart = new Date(Date.now() - 3600_000).toISOString();
-    await seedStudyBlock(t, taskId, { startTime: pastStart });
+    await seedStudyBlock(t, userId, taskId, { startTime: pastStart });
 
     const result = await t.query(internal.queries.studyBlocks.getFutureStudyBlocksForExport, {
-      userId: userId as any,
+      userId: userId as Id<"users">,
     });
     expect(result).toHaveLength(0);
   });
@@ -146,10 +153,15 @@ describe("queries/studyBlocks – getFutureStudyBlocksForExport", () => {
     const { userId } = await createTestUser(t);
     const taskId = await seedTask(t, userId);
     const futureStart = new Date(Date.now() + 3600_000).toISOString();
-    await seedStudyBlock(t, taskId, { title: "Future block", startTime: futureStart, studyBlockLength: 90, isCompleted: false });
+    await seedStudyBlock(t, userId, taskId, {
+      title: "Future block",
+      startTime: futureStart,
+      studyBlockLength: 90,
+      isCompleted: false,
+    });
 
     const result = await t.query(internal.queries.studyBlocks.getFutureStudyBlocksForExport, {
-      userId: userId as any,
+      userId: userId as Id<"users">,
     });
     expect(result).toHaveLength(1);
     expect(result[0].title).toBe("Future block");
@@ -165,17 +177,19 @@ describe("queries/studyBlocks – getFutureStudyBlocksForExport", () => {
     const futureStart = new Date(Date.now() + 3600_000).toISOString();
     await t.run((ctx) =>
       ctx.db.insert("studyBlocks", {
-        taskId: taskId as any,
+        taskId: taskId as Id<"tasks">,
+        userId: userId as Id<"users">,
         title: "Exported block",
         startTime: futureStart,
         studyBlockLength: 60,
         googleEventId: "existing_gcal_event",
         isCompleted: false,
+        isConflicted: false,
       })
     );
 
     const result = await t.query(internal.queries.studyBlocks.getFutureStudyBlocksForExport, {
-      userId: userId as any,
+      userId: userId as Id<"users">,
     });
     expect(result).toHaveLength(1);
     expect(result[0].googleEventId).toBe("existing_gcal_event");
@@ -186,12 +200,19 @@ describe("queries/studyBlocks – getFutureStudyBlocksForExport", () => {
     const { userId } = await createTestUser(t);
     const taskId = await seedTask(t, userId);
     const futureStart = new Date(Date.now() + 7200_000).toISOString();
-    await seedStudyBlock(t, taskId, { title: "Unscheduled" }); // no startTime
-    await seedStudyBlock(t, taskId, { title: "Past", startTime: new Date(Date.now() - 3600_000).toISOString() });
-    await seedStudyBlock(t, taskId, { title: "Future", startTime: futureStart, isCompleted: false });
+    await seedStudyBlock(t, userId, taskId, { title: "Unscheduled" }); // no startTime
+    await seedStudyBlock(t, userId, taskId, {
+      title: "Past",
+      startTime: new Date(Date.now() - 3600_000).toISOString(),
+    });
+    await seedStudyBlock(t, userId, taskId, {
+      title: "Future",
+      startTime: futureStart,
+      isCompleted: false,
+    });
 
     const result = await t.query(internal.queries.studyBlocks.getFutureStudyBlocksForExport, {
-      userId: userId as any,
+      userId: userId as Id<"users">,
     });
     expect(result).toHaveLength(1);
     expect(result[0].title).toBe("Future");
@@ -202,7 +223,7 @@ describe("queries/studyBlocks – getFutureStudyBlocksForExport", () => {
     const { userId } = await createTestUser(t);
     const courseId = await t.run((ctx) =>
       ctx.db.insert("userCourses", {
-        userId: userId as any,
+        userId: userId as Id<"users">,
         courseCode: "EN.601.315",
         title: "Databases",
         term: "Fall 2025",
@@ -210,20 +231,22 @@ describe("queries/studyBlocks – getFutureStudyBlocksForExport", () => {
     );
     const taskId = await t.run((ctx) =>
       ctx.db.insert("tasks", {
-        userId: userId as any,
+        userId: userId as Id<"users">,
         title: "HW6",
         description: "Database homework",
         taskType: "Essay",
         dueDate: Date.now() + 86_400_000,
         createdAt: Date.now(),
-        courseId: courseId as any,
+        courseId: courseId as Id<"userCourses">,
+        isManualEstimate: false,
+        status: "not_started",
       })
     );
     const futureStart = new Date(Date.now() + 3600_000).toISOString();
-    await seedStudyBlock(t, taskId, { startTime: futureStart, isCompleted: false });
+    await seedStudyBlock(t, userId, taskId, { startTime: futureStart, isCompleted: false });
 
     const result = await t.query(internal.queries.studyBlocks.getFutureStudyBlocksForExport, {
-      userId: userId as any,
+      userId: userId as Id<"users">,
     });
     expect(result).toHaveLength(1);
     expect(result[0].courseName).toBe("Databases");
@@ -234,10 +257,10 @@ describe("queries/studyBlocks – getFutureStudyBlocksForExport", () => {
     const { userId } = await createTestUser(t);
     const taskId = await seedTask(t, userId);
     const futureStart = new Date(Date.now() + 3600_000).toISOString();
-    await seedStudyBlock(t, taskId, { startTime: futureStart, isCompleted: false });
+    await seedStudyBlock(t, userId, taskId, { startTime: futureStart, isCompleted: false });
 
     const result = await t.query(internal.queries.studyBlocks.getFutureStudyBlocksForExport, {
-      userId: userId as any,
+      userId: userId as Id<"users">,
     });
     expect(result).toHaveLength(1);
     expect(result[0].courseName).toBeUndefined();
@@ -249,10 +272,10 @@ describe("queries/studyBlocks – getFutureStudyBlocksForExport", () => {
     const { userId: bobId } = await createTestUser(t, { email: "bob@example.com" });
     const aliceTaskId = await seedTask(t, aliceId);
     const futureStart = new Date(Date.now() + 3600_000).toISOString();
-    await seedStudyBlock(t, aliceTaskId, { startTime: futureStart });
+    await seedStudyBlock(t, aliceId, aliceTaskId, { startTime: futureStart });
 
     const result = await t.query(internal.queries.studyBlocks.getFutureStudyBlocksForExport, {
-      userId: bobId as any,
+      userId: bobId as Id<"users">,
     });
     expect(result).toHaveLength(0);
   });
@@ -269,7 +292,7 @@ describe("queries/studyBlocks – getAllStudyBlocksWithTasksInternal taskRecomme
 
     const taskId = await t.run((ctx) =>
       ctx.db.insert("tasks", {
-        userId: userId as any,
+        userId: userId as Id<"users">,
         title: "Task with recommended start",
         description: "desc",
         taskType: "Essay",
@@ -277,12 +300,13 @@ describe("queries/studyBlocks – getAllStudyBlocksWithTasksInternal taskRecomme
         recommendedStart: recommendedStart,
         createdAt: Date.now(),
         isManualEstimate: false,
+        status: "not_started",
       })
     );
-    await seedStudyBlock(t, taskId);
+    await seedStudyBlock(t, userId, taskId);
 
     const result = await t.query(internal.queries.studyBlocks.getAllStudyBlocksWithTasksInternal, {
-      userId: userId as any,
+      userId: userId as Id<"users">,
     });
 
     expect(result).toHaveLength(1);
@@ -293,10 +317,10 @@ describe("queries/studyBlocks – getAllStudyBlocksWithTasksInternal taskRecomme
     const t = makeTestCtx();
     const { userId } = await createTestUser(t);
     const taskId = await seedTask(t, userId);
-    await seedStudyBlock(t, taskId);
+    await seedStudyBlock(t, userId, taskId);
 
     const result = await t.query(internal.queries.studyBlocks.getAllStudyBlocksWithTasksInternal, {
-      userId: userId as any,
+      userId: userId as Id<"users">,
     });
 
     expect(result).toHaveLength(1);

@@ -1,7 +1,7 @@
-import { useState } from 'react'
-import { TrashIcon } from '../icons'
-import { type TaskType, displayTitle } from './types'
-import { Modal } from '../ui'
+import { useState } from "react";
+import { TrashIcon } from "../icons";
+import { type TaskType, displayTitle } from "./types";
+import { Modal } from "../ui";
 
 export default function DeleteModal({
   isOpen,
@@ -10,19 +10,19 @@ export default function DeleteModal({
   onConfirm,
   subtaskCount = 0,
 }: {
-  isOpen: boolean
-  task: TaskType | null
-  onClose: () => void
-  onConfirm: () => Promise<void>
-  subtaskCount?: number
+  isOpen: boolean;
+  task: TaskType | null;
+  onClose: () => void;
+  onConfirm: () => Promise<void>;
+  subtaskCount?: number;
 }) {
-  const [deleting, setDeleting] = useState(false)
+  const [deleting, setDeleting] = useState(false);
 
   async function handleConfirm() {
-    setDeleting(true)
-    await onConfirm()
-    setDeleting(false)
-    onClose()
+    setDeleting(true);
+    await onConfirm();
+    setDeleting(false);
+    onClose();
   }
 
   return (
@@ -41,14 +41,14 @@ export default function DeleteModal({
       backdrop="blur"
     >
       <p className="text-sm leading-relaxed text-slate-blue">
-        <span className="font-semibold text-navy">"{task ? displayTitle(task) : ''}"</span> will be
+        <span className="font-semibold text-navy">"{task ? displayTitle(task) : ""}"</span> will be
         permanently deleted. This cannot be undone.
         {subtaskCount > 0 && (
           <span className="mt-1 block text-slate-blue">
-            This will also delete {subtaskCount} subtask{subtaskCount !== 1 ? 's' : ''}.
+            This will also delete {subtaskCount} subtask{subtaskCount !== 1 ? "s" : ""}.
           </span>
         )}
       </p>
     </Modal>
-  )
+  );
 }
