@@ -86,10 +86,12 @@ backend/
       timeEstimate.ts
     http.ts                   # HTTP router — auth, CORS, and makeApiHandler factory (Hono-based)
     http_chat.ts              # Hono app handling POST /api/chat → Mastra → save to DB
+    ai/                       # AI actions (Mastra, Gemini, embeddings; "use node" where required)
+      estimateTaskTime.ts, requestEstimateTaskTime.ts, estimateSubtasksBatch.ts,
+      uploadSyllabus.ts, parseTranscript.ts, generateAcademicProfile.ts,
+      embeddings.ts, generateSubtasks.ts
     actions/                  # Node.js-runtime actions only ("use node" required)
-      autoRescheduleConflicts.ts
-      entityResolution.ts
-      generateSubtasks.ts
+      autoRescheduleConflicts.ts, entityResolution.ts
     functions/                # Convex-runtime actions (no "use node")
       exportStudyBlocksToCalendar.ts
       fetchCalendarEvents.ts

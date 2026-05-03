@@ -54,8 +54,14 @@ const freshData: Array<{ input: string; groundTruth: string }> = [
   { input: "Change my focus block length to 45 minutes", groundTruth: "preferences" },
   { input: "Add Organic Chemistry for Spring 2026", groundTruth: "classes" },
   { input: "Drop my Intro to Economics class", groundTruth: "classes" },
-  { input: "That CS midterm was way harder than I expected — I spent over 6 hours on it", groundTruth: "feedback" },
-  { input: "I want to talk about how my CHEM class is going this semester", groundTruth: "feedback" },
+  {
+    input: "That CS midterm was way harder than I expected — I spent over 6 hours on it",
+    groundTruth: "feedback",
+  },
+  {
+    input: "I want to talk about how my CHEM class is going this semester",
+    groundTruth: "feedback",
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -115,7 +121,11 @@ const switchData: Array<{ input: string; groundTruth: string }> = [
     groundTruth: "classes",
   },
   {
-    input: midFlow("tasks", "assistant: What is the due date?", "wait, schedule my CHEM reading instead"),
+    input: midFlow(
+      "tasks",
+      "assistant: What is the due date?",
+      "wait, schedule my CHEM reading instead"
+    ),
     groundTruth: "schedule",
   },
   {
@@ -123,7 +133,11 @@ const switchData: Array<{ input: string; groundTruth: string }> = [
     groundTruth: "preferences",
   },
   {
-    input: midFlow("classes", "assistant: Which term?", "actually create a task for my essay first"),
+    input: midFlow(
+      "classes",
+      "assistant: Which term?",
+      "actually create a task for my essay first"
+    ),
     groundTruth: "tasks",
   },
 ];
@@ -135,7 +149,11 @@ const switchData: Array<{ input: string; groundTruth: string }> = [
 
 const exitData: Array<{ input: string; groundTruth: string }> = [
   {
-    input: midFlow("tasks", "assistant: What is the title?", "actually i no longer want to add a task"),
+    input: midFlow(
+      "tasks",
+      "assistant: What is the title?",
+      "actually i no longer want to add a task"
+    ),
     groundTruth: "null",
   },
   {
@@ -168,7 +186,10 @@ export async function runSupervisorRoutingEval() {
   let totalItems = 0;
   const allScores: Record<string, unknown> = {};
 
-  const runRouteGroup = async (label: string, data: Array<{ input: string; groundTruth: string }>) => {
+  const runRouteGroup = async (
+    label: string,
+    data: Array<{ input: string; groundTruth: string }>
+  ) => {
     if (data.length === 0) return;
     console.log(`  [${label}]`);
     const acc: ItemSummary[] = [];
@@ -182,7 +203,6 @@ export async function runSupervisorRoutingEval() {
     totalItems += r.summary.totalItems;
     allScores[label] = r.scores;
   };
-
 
   await runRouteGroup("fresh", freshData);
   await runRouteGroup("disambig (schedule vs tasks)", disambigData);

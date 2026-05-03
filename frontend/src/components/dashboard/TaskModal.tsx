@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useAction } from "convex/react";
 import { api } from "../../../../backend/convex/_generated/api";
 import { type Id } from "../../../../backend/convex/_generated/dataModel";
-import { type GeneratedSubtask } from "../../../../backend/convex/actions/generateSubtasks";
+import { type GeneratedSubtask } from "../../../../backend/convex/ai/generateSubtasks";
 import {
   type ClassTagCourseOption,
   type EditForm,
