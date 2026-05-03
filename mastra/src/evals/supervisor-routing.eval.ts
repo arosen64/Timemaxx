@@ -1,17 +1,12 @@
 /**
- * Supervisor Routing & Clarification Eval
+ * Supervisor Routing Eval
  *
- * Tests two behaviours of the supervisor agent in one suite:
+ * Tests the `route` field of the supervisor agent across 5 groups:
+ *   fresh | disambig (schedule vs tasks) | midflow-stay | midflow-switch | midflow-exit
  *
- *   1. Routing  — `route` field matches the expected domain
- *      Groups: fresh | disambig | midflow-stay | midflow-switch | midflow-exit
+ * Scorer is deterministic (no LLM judge). Total: 35 cases.
  *
- *   2. Clarification — `needsDomainClarification` field is correct
- *      Groups: needs-clarification | no-clarification
- *
- * Scorers are deterministic (no LLM judge). Total: 50 cases.
- *
- * Run: npm run eval (from mastra/)
+ * Run: npm run eval:supervisor-routing (from mastra/)
  */
 
 import { runEvals } from "@mastra/core/evals";
@@ -24,7 +19,6 @@ import {
 import { supervisorAgent } from "../mastra/agents/supervisorAgent";
 
 const routeScorer = createJsonFieldScorer("route");
-const clarificationScorer = createJsonFieldScorer("needsDomainClarification");
 
 // ---------------------------------------------------------------------------
 // Mid-flow input helper
@@ -189,20 +183,6 @@ export async function runSupervisorRoutingEval() {
     allScores[label] = r.scores;
   };
 
-  const runClarifyGroup = async (label: string, data: Array<{ input: string; groundTruth: string }>) => {
-    if (data.length === 0) return;
-    console.log(`  [${label}]`);
-    const acc: ItemSummary[] = [];
-    const r = await runEvals({
-      data,
-      target: supervisorAgent,
-      scorers: [clarificationScorer],
-      onItemComplete: makeOnItemComplete("needsDomainClarification", "needsDomainClarification-scorer", acc),
-    });
-    printAgentSummary(label, acc);
-    totalItems += r.summary.totalItems;
-    allScores[label] = r.scores;
-  };
 
   await runRouteGroup("fresh", freshData);
   await runRouteGroup("disambig (schedule vs tasks)", disambigData);

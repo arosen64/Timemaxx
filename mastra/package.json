@@ -6,13 +6,7 @@
   "scripts": {
     "dev": "mastra dev --dir src/mastra",
     "build": "mastra build --dir src/mastra",
-    "eval": "tsx --env-file=.env src/evals/index.ts",
-    "eval:supervisor-routing": "tsx --env-file=.env -e \"import('./src/evals/supervisor-routing.eval.ts').then(m => m.runSupervisorRoutingEval()).then(r => console.log(JSON.stringify(r.scores, null, 2))).catch(console.error)\"",
-    "eval:entity-clarification": "tsx --env-file=.env -e \"import('./src/evals/entity-clarification.eval.ts').then(m => m.runEntityClarificationEval()).then(r => console.log(JSON.stringify(r.scores, null, 2))).catch(console.error)\"",
-    "eval:chat-tool-calls": "tsx --env-file=.env -e \"import('./src/evals/chat-tool-calls.eval.ts').then(m => m.runChatToolCallsEval()).then(r => console.log(JSON.stringify(r.scores, null, 2))).catch(console.error)\"",
-    "eval:time-estimate": "tsx --env-file=.env -e \"import('./src/evals/time-estimate-range.eval.ts').then(m => m.runTimeEstimateRangeEval()).then(r => console.log(JSON.stringify(r.scores, null, 2))).catch(console.error)\"",
-    "eval:rag-retrieval": "tsx --env-file=.env -e \"import('./src/evals/rag-retrieval.eval.ts').then(m => m.runRagRetrievalEval()).then(r => console.log(JSON.stringify(r.scores, null, 2))).catch(console.error)\"",
-    "eval:academic-profile": "tsx --env-file=.env -e \"import('./src/evals/academic-profile.eval.ts').then(m => m.runAcademicProfileEval()).then(r => console.log(JSON.stringify(r.scores, null, 2))).catch(console.error)\""
+    "eval": "tsx --env-file=.env src/evals/index.ts"
   },
   "keywords": [],
   "author": "",
