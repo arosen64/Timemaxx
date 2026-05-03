@@ -9,20 +9,12 @@ import {
   CalendarIcon,
   SplitIcon,
   PencilIcon,
+  CheckIcon,
 } from "../icons";
 import { isPastTerm } from "../../utils/termUtils";
+import { toLocalISODate, localDateInputToMs } from "../../utils/dateUtils";
 
 const OTHER_COURSE_KEY = "__none__";
-
-function toLocalISODate(ms: number): string {
-  const d = new Date(ms);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
-
-function localDateInputToMs(iso: string): number {
-  const [y, m, d] = iso.split("-").map(Number);
-  return new Date(y, m - 1, d).getTime();
-}
 
 type StudyBlockInPanel = {
   _id: Id<"studyBlocks">;
@@ -519,7 +511,7 @@ export default function ClassPanel({
         <>
           <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3">
             {/* Suggested Start Date */}
-            <div className="rounded-lg border border-border bg-white px-3 py-2">
+            <div className="rounded-lg border border-border bg-card px-3 py-2">
               {!isEditingStart ? (
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-semibold tracking-wider text-light-blue">
@@ -528,8 +520,9 @@ export default function ClassPanel({
                   <button
                     type="button"
                     onClick={openStartEdit}
+                    disabled={Date.now() >= selectedTask.dueDate}
                     aria-label="Edit suggested start date"
-                    className="flex items-center gap-1 text-[11px] font-medium text-navy hover:text-teal"
+                    className="flex items-center gap-1 text-[11px] font-medium text-navy hover:text-teal disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     <span>
                       {selectedTask.recommendedStart !== undefined
@@ -551,9 +544,16 @@ export default function ClassPanel({
                   <div className="flex items-center gap-1.5">
                     <input
                       type="date"
+                      data-testid="suggested-start-input"
                       value={startDateInput}
-                      min={toLocalISODate(Date.now())}
-                      max={toLocalISODate(selectedTask.dueDate - 86_400_000)}
+                      min={toLocalISODate(Date.now() - 86_400_000)}
+                      max={toLocalISODate(
+                        new Date(
+                          new Date(selectedTask.dueDate).getFullYear(),
+                          new Date(selectedTask.dueDate).getMonth(),
+                          new Date(selectedTask.dueDate).getDate() - 1
+                        ).getTime()
+                      )}
                       onChange={(e) => {
                         setStartDateInput(e.target.value);
                         setStartDateError(null);
@@ -574,15 +574,7 @@ export default function ClassPanel({
                       {isSavingStart ? (
                         <SpinnerIcon color="currentColor" size={10} />
                       ) : (
-                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                          <path
-                            d="M1 4l2.5 2.5L9 1"
-                            stroke="currentColor"
-                            strokeWidth="1.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
+                        <CheckIcon color="currentColor" size={10} />
                       )}
                     </button>
                   </div>
