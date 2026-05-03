@@ -1,5 +1,5 @@
 import { DAYS_OF_WEEK } from "../../../shared/userEnums";
-import { MastraClient } from "@mastra/client-js";
+import { createMastraClient } from "./mastraClient";
 import {
   batchSlotSelectionResponseSchema,
   buildBatchScheduleBlockPrompt,
@@ -517,11 +517,7 @@ export async function selectAllSlotsWithAI(
 
   try {
     const prompt = buildBatchScheduleBlockPrompt(blocks, productivityTraits);
-    const mastraSecret = process.env.MASTRA_SERVER_SECRET;
-    const client = new MastraClient({
-      baseUrl: mastraUrl,
-      ...(mastraSecret ? { headers: { Authorization: `Bearer ${mastraSecret}` } } : {}),
-    });
+    const client = createMastraClient(mastraUrl);
     const run = await client
       .getWorkflow("scheduling-workflow")
       .startAsync({ inputData: { prompt } });

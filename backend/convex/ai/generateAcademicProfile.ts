@@ -1,7 +1,7 @@
 import { action } from "../_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
-import { MastraClient } from "@mastra/client-js";
+import { createMastraClient } from "../lib/mastraClient";
 import { sanitizeUserInput } from "../lib/sanitize";
 import { withTimeout } from "../lib/withTimeout";
 
@@ -37,11 +37,7 @@ export const generateAcademicProfile = action({
 
     const sanitizedCourseList = sanitizeUserInput(courseList, 50_000);
 
-    const mastraSecret = process.env.MASTRA_SERVER_SECRET;
-    const client = new MastraClient({
-      baseUrl: mastraUrl,
-      ...(mastraSecret ? { headers: { Authorization: `Bearer ${mastraSecret}` } } : {}),
-    });
+    const client = createMastraClient(mastraUrl);
     const wf = client.getWorkflow("academic-profile-workflow");
     const run = await withTimeout(
       wf.startAsync({ inputData: { sanitizedCourseList } }),
