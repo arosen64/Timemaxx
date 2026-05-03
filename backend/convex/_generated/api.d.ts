@@ -50,6 +50,7 @@ import type * as lib_gcalHelpers from "../lib/gcalHelpers.js";
 import type * as lib_gemini from "../lib/gemini.js";
 import type * as lib_geminiEmbedding from "../lib/geminiEmbedding.js";
 import type * as lib_httpTypes from "../lib/httpTypes.js";
+import type * as lib_mastraClient from "../lib/mastraClient.js";
 import type * as lib_messageTaggedScope from "../lib/messageTaggedScope.js";
 import type * as lib_retrieval from "../lib/retrieval.js";
 import type * as lib_sanitize from "../lib/sanitize.js";
@@ -133,6 +134,7 @@ declare const fullApi: ApiFromModules<{
   "lib/gemini": typeof lib_gemini;
   "lib/geminiEmbedding": typeof lib_geminiEmbedding;
   "lib/httpTypes": typeof lib_httpTypes;
+  "lib/mastraClient": typeof lib_mastraClient;
   "lib/messageTaggedScope": typeof lib_messageTaggedScope;
   "lib/retrieval": typeof lib_retrieval;
   "lib/sanitize": typeof lib_sanitize;
