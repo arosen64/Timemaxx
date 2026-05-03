@@ -302,7 +302,7 @@ describe('ClassPanel – Schedule button (scheduleAllBlocks wiring)', () => {
     setupActions({ scheduleAllResult: { scheduled: 3, skipped: 0, conflicted: 0 } })
     await drillToTaskDetail(user, { ...DEFAULT_PROPS, onScheduleAllMsg: onMsg })
     await user.click(screen.getByRole('button', { name: 'Schedule (up to 10 blocks)' }))
-    await waitFor(() => expect(onMsg).toHaveBeenCalledWith('All 3 blocks scheduled.', false))
+    await waitFor(() => expect(onMsg).toHaveBeenCalledWith('All 3 blocks scheduled.', false, undefined))
   })
 
   it('uses singular "block" when exactly one block is scheduled', async () => {
@@ -312,7 +312,7 @@ describe('ClassPanel – Schedule button (scheduleAllBlocks wiring)', () => {
     setupActions({ scheduleAllResult: { scheduled: 1, skipped: 0, conflicted: 0 } })
     await drillToTaskDetail(user, { ...DEFAULT_PROPS, onScheduleAllMsg: onMsg })
     await user.click(screen.getByRole('button', { name: 'Schedule (up to 10 blocks)' }))
-    await waitFor(() => expect(onMsg).toHaveBeenCalledWith('All 1 block scheduled.', false))
+    await waitFor(() => expect(onMsg).toHaveBeenCalledWith('All 1 block scheduled.', false, undefined))
   })
 
   it('shows partial count message when some blocks are skipped', async () => {
@@ -322,7 +322,7 @@ describe('ClassPanel – Schedule button (scheduleAllBlocks wiring)', () => {
     setupActions({ scheduleAllResult: { scheduled: 2, skipped: 1, conflicted: 0 } })
     await drillToTaskDetail(user, { ...DEFAULT_PROPS, onScheduleAllMsg: onMsg })
     await user.click(screen.getByRole('button', { name: 'Schedule (up to 10 blocks)' }))
-    await waitFor(() => expect(onMsg).toHaveBeenCalledWith('2 scheduled, 1 skipped.', true))
+    await waitFor(() => expect(onMsg).toHaveBeenCalledWith('2 scheduled, 1 skipped.', true, undefined))
   })
 
   it('shows error message when scheduleAllBlocks throws', async () => {
@@ -345,7 +345,7 @@ describe('ClassPanel – Schedule button (scheduleAllBlocks wiring)', () => {
     await drillToTaskDetail(user, { ...DEFAULT_PROPS, onScheduleAllMsg: onMsg })
     await user.click(screen.getByRole('button', { name: 'Schedule (up to 10 blocks)' }))
     await waitFor(() =>
-      expect(onMsg).toHaveBeenCalledWith('All 2 blocks scheduled. 1 conflicted block needs auto-reschedule.', false)
+      expect(onMsg).toHaveBeenCalledWith('All 2 blocks scheduled. 1 conflicted block needs auto-reschedule.', false, undefined)
     )
   })
 
@@ -356,6 +356,25 @@ describe('ClassPanel – Schedule button (scheduleAllBlocks wiring)', () => {
     // Still on level 0 — schedule button not present
     expect(screen.queryByRole('button', { name: 'Schedule (up to 10 blocks)' })).not.toBeInTheDocument()
     expect(scheduleAllMock).not.toHaveBeenCalled()
+  })
+
+  it('passes skippedReason to onScheduleAllMsg when scheduleBlock returns a skip reason', async () => {
+    const user = userEvent.setup()
+    setupQueries()
+    const onMsg = vi.fn()
+    const skipReason = 'No open time slots before your deadline.'
+    const scheduleBlockMock = vi.fn().mockResolvedValue({ error: 'no_slot_found', skippedReason: skipReason })
+    mockUseAction.mockImplementation((actionRef: unknown) => {
+      const ref = actionRef as string
+      if (ref === 'scheduleBlock') return scheduleBlockMock as never
+      return vi.fn().mockResolvedValue({ scheduled: 0, skipped: 0, conflicted: 0 }) as never
+    })
+    mockUseMutation.mockReturnValue(vi.fn().mockResolvedValue(undefined) as never)
+    await drillToTaskDetail(user, { ...DEFAULT_PROPS, onScheduleAllMsg: onMsg })
+    await user.click(screen.getByRole('button', { name: `Auto-schedule "${BLOCK.title}"` }))
+    await waitFor(() =>
+      expect(onMsg).toHaveBeenCalledWith('Could not place this block.', true, skipReason)
+    )
   })
 })
 
