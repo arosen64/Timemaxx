@@ -28,7 +28,7 @@ import { buildClassTag } from "../utils/classTagUtils";
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 
-function applySortKey(tasks: TaskType[], key: "newest" | "due_date" | "class"): TaskType[] {
+export function applySortKey(tasks: TaskType[], key: "newest" | "due_date" | "class"): TaskType[] {
   const sorted = [...tasks];
   if (key === "due_date") {
     sorted.sort((a, b) => a.dueDate - b.dueDate);

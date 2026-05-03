@@ -9,6 +9,7 @@ import {
   CalendarIcon,
   SplitIcon,
   PencilIcon,
+  CheckIcon,
 } from "../icons";
 import { isCurrentTerm } from "../../utils/termUtils";
 
@@ -519,7 +520,7 @@ export default function ClassPanel({
         <>
           <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3">
             {/* Suggested Start Date */}
-            <div className="rounded-lg border border-border bg-white px-3 py-2">
+            <div className="rounded-lg border border-border bg-card px-3 py-2">
               {!isEditingStart ? (
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-semibold tracking-wider text-light-blue">
@@ -574,15 +575,7 @@ export default function ClassPanel({
                       {isSavingStart ? (
                         <SpinnerIcon color="currentColor" size={10} />
                       ) : (
-                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                          <path
-                            d="M1 4l2.5 2.5L9 1"
-                            stroke="currentColor"
-                            strokeWidth="1.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
+                        <CheckIcon color="currentColor" size={10} />
                       )}
                     </button>
                   </div>
