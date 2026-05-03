@@ -264,10 +264,9 @@ export const estimateTaskTime = internalAction({
         (r) => {
           const out = r.steps?.[ESTIMATION_STEP_ID];
           return {
-            responsePreview:
-              out && "output" in out ? JSON.stringify(out.output) : undefined,
+            responsePreview: out && "output" in out ? JSON.stringify(out.output) : undefined,
           };
-        },
+        }
       );
 
       // If the workflow itself reports a top-level failure, surface it before

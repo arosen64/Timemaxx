@@ -60,7 +60,7 @@ export const parseTranscript = action({
       (r) => ({
         responsePreview: (r.steps?.["ocr"] as { output?: { extractedText?: string } } | undefined)
           ?.output?.extractedText,
-      }),
+      })
     );
     const ocrStep = ocrRun.steps?.["ocr"] as
       | { status: string; output?: { extractedText?: string }; error?: string | Error }
@@ -90,18 +90,13 @@ export const parseTranscript = action({
         promptPreview: sanitizedText,
         metadata: { workflowId: "transcript-parse-workflow" },
       },
-      () =>
-        withTimeout(
-          parseWf.startAsync({ inputData: { sanitizedText } }),
-          "Transcript parse"
-        ),
+      () => withTimeout(parseWf.startAsync({ inputData: { sanitizedText } }), "Transcript parse"),
       (r) => {
         const step = r.steps?.["parse"];
         return {
-          responsePreview:
-            step && "output" in step ? JSON.stringify(step.output) : undefined,
+          responsePreview: step && "output" in step ? JSON.stringify(step.output) : undefined,
         };
-      },
+      }
     );
 
     const parseStep = parseRun.steps?.["parse"];

@@ -11,11 +11,7 @@ export const recordAiCallLog = internalMutation({
     callSite: v.string(),
     provider: v.string(),
     model: v.optional(v.string()),
-    status: v.union(
-      v.literal("success"),
-      v.literal("error"),
-      v.literal("timeout"),
-    ),
+    status: v.union(v.literal("success"), v.literal("error"), v.literal("timeout")),
     latencyMs: v.number(),
     promptTokens: v.optional(v.number()),
     completionTokens: v.optional(v.number()),

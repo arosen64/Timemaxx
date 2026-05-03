@@ -117,7 +117,7 @@ export const estimateSubtasksBatch = internalAction({
         () => wf.startAsync({ inputData: items }),
         (r) => ({
           responsePreview: JSON.stringify((r as { result?: unknown }).result),
-        }),
+        })
       );
 
       const runStatus = (run as { status?: string }).status;

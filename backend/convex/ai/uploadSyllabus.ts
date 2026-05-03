@@ -76,9 +76,10 @@ export const uploadSyllabus = action({
               "Syllabus OCR"
             ),
           (r) => ({
-            responsePreview: (r.steps?.["ocr"] as { output?: { extractedText?: string } } | undefined)
-              ?.output?.extractedText,
-          }),
+            responsePreview: (
+              r.steps?.["ocr"] as { output?: { extractedText?: string } } | undefined
+            )?.output?.extractedText,
+          })
         );
         const ocrStep = ocrRun.steps?.["ocr"] as
           | { status: string; output?: { extractedText?: string }; error?: string | Error }
@@ -109,18 +110,13 @@ export const uploadSyllabus = action({
           promptPreview: sanitizedText,
           metadata: { syllabusId, courseId: args.courseId },
         },
-        () =>
-          withTimeout(
-            parseWf.startAsync({ inputData: { sanitizedText } }),
-            "Syllabus parse"
-          ),
+        () => withTimeout(parseWf.startAsync({ inputData: { sanitizedText } }), "Syllabus parse"),
         (r) => {
           const step = r.steps?.["parse"];
           return {
-            responsePreview:
-              step && "output" in step ? JSON.stringify(step.output) : undefined,
+            responsePreview: step && "output" in step ? JSON.stringify(step.output) : undefined,
           };
-        },
+        }
       );
 
       const parseStep = parseRun.steps?.["parse"];

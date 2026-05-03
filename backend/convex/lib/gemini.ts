@@ -3,11 +3,7 @@ import { generateText, Output } from "ai";
 import { z } from "zod";
 import type { GenericActionCtx } from "convex/server";
 import type { DataModel, Id } from "../_generated/dataModel";
-import {
-  estimateCostUsd,
-  recordAiCall,
-  type Provider,
-} from "./aiObservability";
+import { estimateCostUsd, recordAiCall, type Provider } from "./aiObservability";
 
 const MODEL = "gemini-2.5-flash";
 const PROVIDER: Provider = "gemini";
@@ -65,7 +61,11 @@ export async function callGemini<T>(opts: {
     }
 
     if (opts.obs) {
-      const usage = (result as { usage?: { promptTokens?: number; completionTokens?: number; totalTokens?: number } }).usage;
+      const usage = (
+        result as {
+          usage?: { promptTokens?: number; completionTokens?: number; totalTokens?: number };
+        }
+      ).usage;
       await recordAiCall(opts.obs.ctx, {
         userId: opts.obs.userId,
         callSite: opts.obs.callSite,
@@ -90,8 +90,7 @@ export async function callGemini<T>(opts: {
     return result.output;
   } catch (err) {
     const isTimeout =
-      err instanceof Error &&
-      ["AbortError", "TimeoutError", "ResponseAborted"].includes(err.name);
+      err instanceof Error && ["AbortError", "TimeoutError", "ResponseAborted"].includes(err.name);
 
     if (opts.obs) {
       await recordAiCall(opts.obs.ctx, {

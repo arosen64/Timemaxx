@@ -203,7 +203,7 @@ async function runChatWorkflow(
         }
       }
       return {};
-    },
+    }
   );
 
   for (const step of Object.values(run.steps ?? {})) {

@@ -6,10 +6,7 @@ import { internal } from "../_generated/api";
  * Per-million-token USD pricing for cost estimation. Update when providers
  * change rates. Unknown models return undefined cost (logged but not priced).
  */
-const PRICING_PER_MILLION_TOKENS: Record<
-  string,
-  { input: number; output: number }
-> = {
+const PRICING_PER_MILLION_TOKENS: Record<string, { input: number; output: number }> = {
   "gemini-2.5-flash": { input: 0.3, output: 2.5 },
   "gemini-2.5-pro": { input: 1.25, output: 10 },
   "gemini-1.5-flash": { input: 0.075, output: 0.3 },
@@ -57,7 +54,7 @@ function truncate(value: string | undefined, max: number): string | undefined {
 export function estimateCostUsd(
   model: string | undefined,
   promptTokens: number | undefined,
-  completionTokens: number | undefined,
+  completionTokens: number | undefined
 ): number | undefined {
   if (!model) return undefined;
   const pricing = PRICING_PER_MILLION_TOKENS[model];
@@ -71,9 +68,7 @@ export function estimateCostUsd(
 function isTimeoutError(err: unknown): boolean {
   return (
     err instanceof Error &&
-    (err.name === "AbortError" ||
-      err.name === "TimeoutError" ||
-      err.name === "ResponseAborted")
+    (err.name === "AbortError" || err.name === "TimeoutError" || err.name === "ResponseAborted")
   );
 }
 
@@ -82,7 +77,7 @@ function isTimeoutError(err: unknown): boolean {
  */
 export async function recordAiCall(
   ctx: GenericActionCtx<DataModel>,
-  input: AiCallLogInput,
+  input: AiCallLogInput
 ): Promise<void> {
   try {
     await ctx.runMutation(internal.mutations.aiCallLogs.recordAiCallLog, {
@@ -138,7 +133,7 @@ export async function withAiObservability<T>(
     promptTokens?: number;
     completionTokens?: number;
     totalTokens?: number;
-  },
+  }
 ): Promise<T> {
   const start = Date.now();
   try {
@@ -160,7 +155,7 @@ export async function withAiObservability<T>(
       estimatedCostUsd: estimateCostUsd(
         base.model,
         extracted.promptTokens,
-        extracted.completionTokens,
+        extracted.completionTokens
       ),
       responsePreview: extracted.responsePreview,
     });

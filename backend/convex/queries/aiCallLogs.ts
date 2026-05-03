@@ -41,9 +41,7 @@ export const getRecentFailuresInternal = internalQuery({
       .withIndex("by_status_createdAt", (q) => q.eq("status", "timeout"))
       .order("desc")
       .take(limit);
-    return [...errors, ...timeouts]
-      .sort((a, b) => b.createdAt - a.createdAt)
-      .slice(0, limit);
+    return [...errors, ...timeouts].sort((a, b) => b.createdAt - a.createdAt).slice(0, limit);
   },
 });
 
@@ -70,10 +68,7 @@ export const getUsageSummaryInternal = internalQuery({
       totalPromptTokens: 0,
       totalCompletionTokens: 0,
       avgLatencyMs: 0,
-      byCallSite: {} as Record<
-        string,
-        { count: number; costUsd: number; avgLatencyMs: number }
-      >,
+      byCallSite: {} as Record<string, { count: number; costUsd: number; avgLatencyMs: number }>,
     };
 
     let latencySum = 0;
@@ -96,8 +91,7 @@ export const getUsageSummaryInternal = internalQuery({
       });
       bucket.count += 1;
       bucket.costUsd += log.estimatedCostUsd ?? 0;
-      callSiteLatencies[log.callSite] =
-        (callSiteLatencies[log.callSite] ?? 0) + log.latencyMs;
+      callSiteLatencies[log.callSite] = (callSiteLatencies[log.callSite] ?? 0) + log.latencyMs;
     }
 
     summary.avgLatencyMs = logs.length > 0 ? latencySum / logs.length : 0;

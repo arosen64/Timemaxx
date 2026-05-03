@@ -58,10 +58,9 @@ export const generateAcademicProfile = action({
       (r) => {
         const step = r.steps?.["generate-profile"];
         return {
-          responsePreview:
-            step && "output" in step ? JSON.stringify(step.output) : undefined,
+          responsePreview: step && "output" in step ? JSON.stringify(step.output) : undefined,
         };
-      },
+      }
     );
 
     const runStatus = (run as { status?: string }).status;

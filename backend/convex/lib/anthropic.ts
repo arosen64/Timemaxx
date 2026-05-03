@@ -3,11 +3,7 @@ import { generateText, Output } from "ai";
 import { z } from "zod";
 import type { GenericActionCtx } from "convex/server";
 import type { DataModel, Id } from "../_generated/dataModel";
-import {
-  estimateCostUsd,
-  recordAiCall,
-  type Provider,
-} from "./aiObservability";
+import { estimateCostUsd, recordAiCall, type Provider } from "./aiObservability";
 
 const MODEL = "claude-sonnet-4-20250514";
 const PROVIDER: Provider = "anthropic";
@@ -76,7 +72,11 @@ export async function callAnthropic<T>(opts: {
     }
 
     if (opts.obs) {
-      const usage = (result as { usage?: { promptTokens?: number; completionTokens?: number; totalTokens?: number } }).usage;
+      const usage = (
+        result as {
+          usage?: { promptTokens?: number; completionTokens?: number; totalTokens?: number };
+        }
+      ).usage;
       await recordAiCall(opts.obs.ctx, {
         userId: opts.obs.userId,
         callSite: opts.obs.callSite,
