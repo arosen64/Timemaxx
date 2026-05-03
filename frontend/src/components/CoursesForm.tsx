@@ -1,18 +1,18 @@
-import { ProfileData, Course } from '../types'
-import CourseSelector from './CourseSelector'
-import TranscriptUpload from './TranscriptUpload'
-import CoursesList from './CoursesList'
+import { ProfileData, Course } from "../types";
+import CourseSelector from "./CourseSelector";
+import TranscriptUpload from "./TranscriptUpload";
+import CoursesList from "./CoursesList";
 
 interface CoursesFormProps {
-  data: ProfileData
-  onChange: (data: ProfileData) => void
+  data: ProfileData;
+  onChange: (data: ProfileData) => void;
 }
 
 export default function CoursesForm({ data, onChange }: CoursesFormProps) {
   const handleAddCourse = (course: Course) => {
-    if (data.courses.some((c) => c.title === course.title && c.term === course.term)) return
-    onChange({ ...data, courses: [...data.courses, course] })
-  }
+    if (data.courses.some((c) => c.title === course.title && c.term === course.term)) return;
+    onChange({ ...data, courses: [...data.courses, course] });
+  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -22,7 +22,8 @@ export default function CoursesForm({ data, onChange }: CoursesFormProps) {
           Upload your transcript to auto-fill, or search and add courses manually.
         </p>
         <p className="mt-1 font-body text-xs text-light-blue">
-          Rate the difficulty of past courses (1–5) — all default to 3. This helps generate a more accurate academic profile.
+          Rate the difficulty of past courses (1–5) — all default to 3. This helps generate a more
+          accurate academic profile.
         </p>
       </div>
 
@@ -49,5 +50,5 @@ export default function CoursesForm({ data, onChange }: CoursesFormProps) {
         )}
       </div>
     </div>
-  )
+  );
 }

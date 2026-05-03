@@ -1,4 +1,3 @@
-"use node";
 import { action } from "../_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
@@ -18,10 +17,7 @@ export const scheduleSubtask = action({
     subtaskId: v.id("subtasks"),
     timezone: v.string(),
   },
-  handler: async (
-    ctx,
-    args,
-  ): Promise<{ scheduled: number } | { error: string }> => {
+  handler: async (ctx, args): Promise<{ scheduled: number } | { error: string }> => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Unauthenticated");
 
@@ -36,10 +32,9 @@ export const scheduleSubtask = action({
     const workHoursGrid = (user.workHoursGrid ?? []) as WorkHoursRow[];
     const productivityTraits: unknown = user.productivityTraits;
 
-    const studyBlocks = await ctx.runQuery(
-      api.queries.studyBlocks.getStudyBlocksBySubtask,
-      { subtaskId: args.subtaskId },
-    );
+    const studyBlocks = await ctx.runQuery(api.queries.studyBlocks.getStudyBlocksBySubtask, {
+      subtaskId: args.subtaskId,
+    });
     const unscheduled = studyBlocks.filter((b) => !b.startTime);
     if (unscheduled.length === 0) return { scheduled: 0 };
 
@@ -48,7 +43,7 @@ export const scheduleSubtask = action({
     // All user blocks by userId index — covers both task-level and subtask-level blocks
     const allUserBlocks = await ctx.runQuery(
       internal.queries.studyBlocks.getAllStudyBlocksByUserInternal,
-      { userId },
+      { userId }
     );
 
     const occupiedIntervals: OccupiedInterval[] = [
@@ -57,7 +52,14 @@ export const scheduleSubtask = action({
         endMs: new Date(e.end).getTime(),
         title: e.summary,
       })),
-      ...(allUserBlocks as Array<{ _id: string; startTime?: string; studyBlockLength: number; title: string }>)
+      ...(
+        allUserBlocks as Array<{
+          _id: string;
+          startTime?: string;
+          studyBlockLength: number;
+          title: string;
+        }>
+      )
         .filter((b) => b.startTime)
         .map((b) => ({
           startMs: new Date(b.startTime!).getTime(),
@@ -68,7 +70,8 @@ export const scheduleSubtask = action({
 
     const nowMs = Date.now();
     const fromMs = Math.max(nowMs, subtask._creationTime);
-    const dueDateMs = subtask.suggestedCompletionAt ?? subtask.dueDate ?? nowMs + DEFAULT_DUE_FALLBACK_MS;
+    const dueDateMs =
+      subtask.suggestedCompletionAt ?? subtask.dueDate ?? nowMs + DEFAULT_DUE_FALLBACK_MS;
 
     const placeable = unscheduled
       .map((block) => ({
@@ -86,13 +89,13 @@ export const scheduleSubtask = action({
 
     if (placeable.length === 0) return { error: "no_slot_found" };
 
-    const chosenIndices = await selectAllSlotsWithAI(
+    const { indices: chosenIndices } = await selectAllSlotsWithAI(
       placeable.map(({ candidates }) => ({
         taskTitle: subtask.title,
         dueDate: dueDateMs,
         candidates,
       })),
-      productivityTraits,
+      productivityTraits
     );
 
     let scheduled = 0;
@@ -102,7 +105,9 @@ export const scheduleSubtask = action({
       const durationMs = block.studyBlockLength * 60000;
 
       let chosen = candidates[chosenIndices[i] ?? 0];
-      if (!isSlotValid(chosen.startMs, durationMs, workHoursGrid, occupiedIntervals, args.timezone)) {
+      if (
+        !isSlotValid(chosen.startMs, durationMs, workHoursGrid, occupiedIntervals, args.timezone)
+      ) {
         const fallback = candidates.find((c) =>
           isSlotValid(c.startMs, durationMs, workHoursGrid, occupiedIntervals, args.timezone)
         );

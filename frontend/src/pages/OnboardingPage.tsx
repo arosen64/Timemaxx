@@ -1,120 +1,146 @@
-import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useQuery, useMutation, useAction } from 'convex/react'
-import { api } from '../../../backend/convex/_generated/api'
-import { ProfileData, WorkHoursData, PreferencesData } from '../types'
-import ProfileForm from '../components/ProfileForm'
-import CoursesForm from '../components/CoursesForm'
-import WorkHoursSelector, { DEFAULT_WORK_HOURS } from '../components/WorkHoursSelector'
-import PreferencesForm, { DEFAULT_PREFERENCES, MIN_FOCUS_BLOCK_MINUTES } from '../components/PreferencesForm'
-import AcademicProfileSummary from '../components/AcademicProfileSummary'
-import OnboardingStepShell from '../components/onboarding/OnboardingStepShell'
-import OnboardingNav from '../components/onboarding/OnboardingNav'
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useQuery, useMutation, useAction } from "convex/react";
+import { api } from "../../../backend/convex/_generated/api";
+import { type DayOfWeek, type Year } from "../../../shared/userEnums";
+import { MIN_FOCUS_BLOCK_MINUTES } from "../../../shared/preferenceEnums";
+import { ProfileData, WorkHoursData, PreferencesData } from "../types";
+import ProfileForm from "../components/ProfileForm";
+import CoursesForm from "../components/CoursesForm";
+import WorkHoursSelector, { DEFAULT_WORK_HOURS } from "../components/WorkHoursSelector";
+import PreferencesForm, { DEFAULT_PREFERENCES } from "../components/PreferencesForm";
+import AcademicProfileSummary from "../components/AcademicProfileSummary";
+import OnboardingStepShell from "../components/onboarding/OnboardingStepShell";
+import OnboardingNav from "../components/onboarding/OnboardingNav";
 
-type Step = 1 | 2 | 3 | 4 | 5 | 6
+type Step = 1 | 2 | 3 | 4 | 5 | 6;
 
 const DEFAULT_PROFILE: ProfileData = {
-  major: '',
-  year: '',
+  major: "",
+  year: "",
   courses: [],
-}
+};
 
 export default function OnboardingPage() {
-  const navigate = useNavigate()
-  const isOnboardingComplete = useQuery(api.queries.users.isOnboardingComplete)
-  const saveOnboarding = useMutation(api.mutations.users.completeOnboarding)
-  const calendarStatus = useQuery(api.queries.calendar.getCalendarConnectionStatus)
-  const initiateCalendarOAuth = useAction(api.actions.initiateGoogleCalendarOAuth.initiateGoogleCalendarOAuth)
+  const navigate = useNavigate();
+  const isOnboardingComplete = useQuery(api.queries.users.isOnboardingComplete);
+  const saveOnboarding = useMutation(api.mutations.users.completeOnboarding);
+  const calendarStatus = useQuery(api.queries.calendar.getCalendarConnectionStatus);
+  const initiateCalendarOAuth = useAction(
+    api.functions.initiateGoogleCalendarOAuth.initiateGoogleCalendarOAuth
+  );
 
   const [step, setStep] = useState<Step>(() => {
     try {
-      const saved = localStorage.getItem('timemaxx_onboarding_state')
-      if (saved) return 6
+      const saved = localStorage.getItem("timemaxx_onboarding_state");
+      if (saved) return 6;
     } catch {
       // localStorage unavailable
     }
-    return 1
-  })
+    return 1;
+  });
 
   // Remove the localStorage key once — useEffect is not double-invoked by StrictMode,
   // unlike the useState initializer above.
   useEffect(() => {
-    try { localStorage.removeItem('timemaxx_onboarding_state') } catch { /* unavailable */ }
-  }, [])
-  const [profile, setProfile] = useState<ProfileData>(DEFAULT_PROFILE)
-  const [profileErrors, setProfileErrors] = useState<{ major?: string; year?: string }>({})
-  const [workHours, setWorkHours] = useState<WorkHoursData>(DEFAULT_WORK_HOURS)
-  const [preferences, setPreferences] = useState<PreferencesData>(DEFAULT_PREFERENCES)
-  const [isSubmitting, setIsSubmitting] = useState(false)
+    try {
+      localStorage.removeItem("timemaxx_onboarding_state");
+    } catch {
+      /* unavailable */
+    }
+  }, []);
+  const [profile, setProfile] = useState<ProfileData>(DEFAULT_PROFILE);
+  const [profileErrors, setProfileErrors] = useState<{ major?: string; year?: string }>({});
+  const [workHours, setWorkHours] = useState<WorkHoursData>(DEFAULT_WORK_HOURS);
+  const [preferences, setPreferences] = useState<PreferencesData>(DEFAULT_PREFERENCES);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleConnectCalendar() {
-    try { localStorage.setItem('timemaxx_onboarding_state', JSON.stringify({ returnTo: '/onboarding' })) } catch { /* unavailable */ }
-    const authUrl = await initiateCalendarOAuth({})
-    window.location.href = authUrl
+    try {
+      localStorage.setItem(
+        "timemaxx_onboarding_state",
+        JSON.stringify({ returnTo: "/onboarding" })
+      );
+    } catch {
+      /* unavailable */
+    }
+    const authUrl = await initiateCalendarOAuth({});
+    window.location.href = authUrl;
   }
 
   useEffect(() => {
-    if (isOnboardingComplete === true && step === 1) navigate('/dashboard')
-  }, [isOnboardingComplete, navigate, step])
+    if (isOnboardingComplete === true && step === 1) navigate("/dashboard");
+  }, [isOnboardingComplete, navigate, step]);
 
-  if (isOnboardingComplete === undefined) return null
+  if (isOnboardingComplete === undefined) return null;
 
   const validateStep1 = (): boolean => {
-    const errors: { major?: string; year?: string } = {}
-    if (!profile.major.trim()) errors.major = 'Major is required'
-    if (!profile.year) errors.year = 'Please select your year'
-    setProfileErrors(errors)
-    return Object.keys(errors).length === 0
-  }
+    const errors: { major?: string; year?: string } = {};
+    if (!profile.major.trim()) errors.major = "Major is required";
+    if (!profile.year) errors.year = "Please select your year";
+    setProfileErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   const handleNext = () => {
-    if (step === 1 && !validateStep1()) return
-    setStep((s) => (s + 1) as Step)
-  }
+    if (step === 1 && !validateStep1()) return;
+    setStep((s) => (s + 1) as Step);
+  };
 
   const handleBack = () => {
-    setStep((s) => (s - 1) as Step)
-  }
+    setStep((s) => (s - 1) as Step);
+  };
 
   const handleSaveAndContinue = async () => {
-    if (preferences.focusBlockLength !== '' && preferences.focusBlockLength < MIN_FOCUS_BLOCK_MINUTES) return
-    setIsSubmitting(true)
+    if (
+      preferences.focusBlockLength !== "" &&
+      preferences.focusBlockLength < MIN_FOCUS_BLOCK_MINUTES
+    )
+      return;
+    setIsSubmitting(true);
     try {
       await saveOnboarding({
         major: profile.major,
-        year: profile.year,
+        // validateStep1 has guaranteed profile.year is one of YEARS.
+        year: profile.year as Year,
         workHoursGrid: Object.entries(workHours).map(([day, slots]) => ({
-          day,
+          day: day as DayOfWeek,
           blocked: slots.blocked,
         })),
         productivityTraits: preferences.traits,
-        focusBlockLength: preferences.focusBlockLength === '' ? MIN_FOCUS_BLOCK_MINUTES : preferences.focusBlockLength,
-      })
-      setStep(6)
+        focusBlockLength:
+          preferences.focusBlockLength === ""
+            ? MIN_FOCUS_BLOCK_MINUTES
+            : preferences.focusBlockLength,
+      });
+      setStep(6);
     } catch {
       // keep submitting false so user can retry
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   return (
-    <OnboardingStepShell currentStep={step} totalSteps={6} wide={step === 2 || step === 3 || step === 4 || step === 5} tall={step === 6}>
+    <OnboardingStepShell
+      currentStep={step}
+      totalSteps={6}
+      wide={step === 2 || step === 3 || step === 4 || step === 5}
+      tall={step === 6}
+    >
       {step === 1 && (
         <div className="flex flex-col gap-6">
           <div>
             <h2 className="font-heading text-2xl font-bold text-navy">Tell us about yourself</h2>
-            <p className="mt-1 font-body text-sm text-slate-blue">This helps us personalize your study plan.</p>
+            <p className="mt-1 font-body text-sm text-slate-blue">
+              This helps us personalize your study plan.
+            </p>
           </div>
           <ProfileForm data={profile} onChange={setProfile} errors={profileErrors} />
         </div>
       )}
-      {step === 2 && (
-        <CoursesForm data={profile} onChange={setProfile} />
-      )}
-      {step === 3 && (
-        <AcademicProfileSummary profile={profile} onChange={setProfile} />
-      )}
+      {step === 2 && <CoursesForm data={profile} onChange={setProfile} />}
+      {step === 3 && <AcademicProfileSummary profile={profile} onChange={setProfile} />}
       {step === 4 && (
         <div className="flex flex-col gap-4">
           <div>
@@ -127,7 +153,9 @@ export default function OnboardingPage() {
         <div className="flex flex-col gap-6">
           <div>
             <h2 className="font-heading text-2xl font-bold text-navy">Productivity Preferences</h2>
-            <p className="mt-1 font-body text-sm text-slate-blue">Select everything that applies — this helps us schedule smarter.</p>
+            <p className="mt-1 font-body text-sm text-slate-blue">
+              Select everything that applies — this helps us schedule smarter.
+            </p>
           </div>
           <PreferencesForm data={preferences} onChange={setPreferences} />
         </div>
@@ -136,12 +164,18 @@ export default function OnboardingPage() {
         <div className="flex flex-1 flex-col gap-6">
           <div className="flex flex-col gap-1">
             <h2 className="font-heading text-2xl font-bold text-navy">Connect Google Calendar</h2>
-            <p className="font-body text-sm text-slate-blue">Optionally sync your calendar so Timemaxx can schedule around your existing events.</p>
+            <p className="font-body text-sm text-slate-blue">
+              Optionally sync your calendar so Timemaxx can schedule around your existing events.
+            </p>
           </div>
           <div className="flex flex-col items-center gap-3 rounded-lg border border-border p-4">
             <div className="flex flex-col items-center gap-1 text-center">
-              <span className="font-heading text-sm font-semibold text-navy">Google Calendar (optional)</span>
-              <span className="font-body text-xs text-slate-blue">Connect to schedule around your existing events</span>
+              <span className="font-heading text-sm font-semibold text-navy">
+                Google Calendar (optional)
+              </span>
+              <span className="font-body text-xs text-slate-blue">
+                Connect to schedule around your existing events
+              </span>
             </div>
             {calendarStatus === undefined ? (
               <div className="h-10 w-24 rounded-lg bg-border animate-pulse" />
@@ -151,7 +185,9 @@ export default function OnboardingPage() {
                   <CalendarIcon />
                   Connected
                 </span>
-                <span className="font-body text-xs text-slate-blue">You can undo this on the Profile page.</span>
+                <span className="font-body text-xs text-slate-blue">
+                  You can undo this on the Profile page.
+                </span>
               </div>
             ) : (
               <button
@@ -167,14 +203,16 @@ export default function OnboardingPage() {
 
       <OnboardingNav
         onBack={handleBack}
-        onContinue={step < 5 ? handleNext : step === 5 ? handleSaveAndContinue : () => navigate('/dashboard')}
+        onContinue={
+          step < 5 ? handleNext : step === 5 ? handleSaveAndContinue : () => navigate("/dashboard")
+        }
         isFirstStep={step === 1}
         isLastStep={step === 6}
-        continueLabel={isSubmitting ? 'Saving...' : undefined}
+        continueLabel={isSubmitting ? "Saving..." : undefined}
         disabled={isSubmitting}
       />
     </OnboardingStepShell>
-  )
+  );
 }
 
 function CalendarIcon() {
@@ -194,5 +232,5 @@ function CalendarIcon() {
       <line x1="8" y1="2" x2="8" y2="6" />
       <line x1="3" y1="10" x2="21" y2="10" />
     </svg>
-  )
+  );
 }

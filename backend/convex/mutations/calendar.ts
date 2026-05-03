@@ -1,23 +1,8 @@
 import { internalMutation, mutation } from "../_generated/server";
+import type { MutationCtx } from "../_generated/server";
+import type { Id } from "../_generated/dataModel";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
-
-/**
- * Upserts an encrypted Google Calendar OAuth token record for the authenticated user.
- */
-export const storeCalendarToken = mutation({
-  args: {
-    accessToken: v.string(),
-    refreshToken: v.string(),
-    expiresAt: v.number(),
-  },
-  handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
-
-    await upsertCalendarToken(ctx, { userId, ...args });
-  },
-});
 
 /**
  * Upserts a calendar token for a specific user — called from the HTTP callback action.
@@ -38,9 +23,9 @@ export const storeCalendarTokenForUser = internalMutation({
 });
 
 async function upsertCalendarToken(
-  ctx: any,
+  ctx: MutationCtx,
   args: {
-    userId: string;
+    userId: Id<"users">;
     accessToken: string;
     refreshToken: string;
     expiresAt: number;
@@ -50,7 +35,7 @@ async function upsertCalendarToken(
 ) {
   const existing = await ctx.db
     .query("calendarConnections")
-    .withIndex("by_userId", (q: any) => q.eq("userId", args.userId))
+    .withIndex("by_userId", (q) => q.eq("userId", args.userId))
     .unique();
 
   if (existing) {
@@ -93,7 +78,7 @@ export const updateCalendarToken = internalMutation({
   handler: async (ctx, args) => {
     const existing = await ctx.db
       .query("calendarConnections")
-      .withIndex("by_userId", (q: any) => q.eq("userId", args.userId))
+      .withIndex("by_userId", (q) => q.eq("userId", args.userId))
       .unique();
 
     if (existing) {
@@ -119,7 +104,7 @@ export const saveSelectedCalendars = mutation({
 
     const existing = await ctx.db
       .query("calendarConnections")
-      .withIndex("by_userId", (q: any) => q.eq("userId", userId))
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
       .unique();
 
     if (!existing) throw new Error("No calendar connected");
@@ -139,7 +124,7 @@ export const deleteCalendarToken = mutation({
 
     const existing = await ctx.db
       .query("calendarConnections")
-      .withIndex("by_userId", (q: any) => q.eq("userId", userId))
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
       .unique();
 
     if (existing) {
@@ -156,7 +141,7 @@ export const deleteCalendarTokenForUser = internalMutation({
   handler: async (ctx, args) => {
     const existing = await ctx.db
       .query("calendarConnections")
-      .withIndex("by_userId", (q: any) => q.eq("userId", args.userId))
+      .withIndex("by_userId", (q) => q.eq("userId", args.userId))
       .unique();
 
     if (existing) {

@@ -1,16 +1,17 @@
 import { describe, expect, test } from "vitest";
 import { api } from "../_generated/api";
 import { makeTestCtx, createTestUser } from "../../convex-tests/helpers";
+import type { Id } from "../_generated/dataModel";
 
 async function seedTask(
   t: ReturnType<typeof makeTestCtx>,
   userId: string,
-  opts: { dueDate?: number; recommendedStart?: number } = {},
+  opts: { dueDate?: number; recommendedStart?: number } = {}
 ) {
   const dueDate = opts.dueDate ?? Date.now() + 30 * 86_400_000;
   return t.run((ctx) =>
     ctx.db.insert("tasks", {
-      userId: userId as any,
+      userId: userId as Id<"users">,
       title: "Test task",
       description: "desc",
       taskType: "Essay",
@@ -18,22 +19,20 @@ async function seedTask(
       recommendedStart: opts.recommendedStart,
       createdAt: Date.now(),
       isManualEstimate: false,
+      status: "not_started",
     })
   );
 }
 
-async function seedBlock(
-  t: ReturnType<typeof makeTestCtx>,
-  taskId: string,
-  userId: string,
-) {
+async function seedBlock(t: ReturnType<typeof makeTestCtx>, taskId: string, userId: string) {
   return t.run((ctx) =>
     ctx.db.insert("studyBlocks", {
-      taskId: taskId as any,
-      userId: userId as any,
+      taskId: taskId as Id<"tasks">,
+      userId: userId as Id<"users">,
       title: "Block",
       studyBlockLength: 60,
       isCompleted: false,
+      isConflicted: false,
     })
   );
 }
@@ -42,12 +41,12 @@ async function seedSubtask(
   t: ReturnType<typeof makeTestCtx>,
   parentTaskId: string,
   userId: string,
-  opts: { dueDate?: number } = {},
+  opts: { dueDate?: number } = {}
 ) {
   return t.run((ctx) =>
     ctx.db.insert("subtasks", {
-      parentTaskId: parentTaskId as any,
-      userId: userId as any,
+      parentTaskId: parentTaskId as Id<"tasks">,
+      userId: userId as Id<"users">,
       title: "Subtask",
       description: "desc",
       taskType: "Essay",
@@ -55,6 +54,7 @@ async function seedSubtask(
       order: 0,
       createdAt: Date.now(),
       dueDate: opts.dueDate ?? Date.now() + 30 * 86_400_000,
+      status: "not_started",
     })
   );
 }
@@ -62,20 +62,21 @@ async function seedSubtask(
 async function seedSubtaskBlock(
   t: ReturnType<typeof makeTestCtx>,
   subtaskId: string,
-  userId: string,
+  userId: string
 ) {
   return t.run((ctx) =>
     ctx.db.insert("studyBlocks", {
-      subtaskId: subtaskId as any,
-      userId: userId as any,
+      subtaskId: subtaskId as Id<"subtasks">,
+      userId: userId as Id<"users">,
       title: "Subtask Block",
       studyBlockLength: 60,
       isCompleted: false,
+      isConflicted: false,
     })
   );
 }
 
-describe("actions/scheduleBlock – recommendedStart constraint", () => {
+describe("functions/scheduleBlock – recommendedStart constraint", () => {
   test("returns no_slot_found when recommendedStart equals dueDate (zero schedulable window)", async () => {
     const t = makeTestCtx();
     const { userId, withAuth } = await createTestUser(t);
@@ -83,12 +84,15 @@ describe("actions/scheduleBlock – recommendedStart constraint", () => {
     const taskId = await seedTask(t, userId, { dueDate, recommendedStart: dueDate });
     const blockId = await seedBlock(t, taskId, userId);
 
-    const result = await withAuth.action(api.actions.scheduleBlock.scheduleBlock, {
+    const result = await withAuth.action(api.functions.scheduleBlock.scheduleBlock, {
       studyBlockId: blockId,
       timezone: "America/New_York",
     });
 
-    expect(result).toEqual({ error: "no_slot_found" });
+    expect(result).toEqual({
+      error: "no_slot_found",
+      skippedReason: "No open time slots before your deadline.",
+    });
   });
 
   test("schedules successfully when recommendedStart is not set", async () => {
@@ -97,7 +101,7 @@ describe("actions/scheduleBlock – recommendedStart constraint", () => {
     const taskId = await seedTask(t, userId);
     const blockId = await seedBlock(t, taskId, userId);
 
-    const result = await withAuth.action(api.actions.scheduleBlock.scheduleBlock, {
+    const result = await withAuth.action(api.functions.scheduleBlock.scheduleBlock, {
       studyBlockId: blockId,
       timezone: "America/New_York",
     });
@@ -115,7 +119,7 @@ describe("actions/scheduleBlock – recommendedStart constraint", () => {
     });
     const blockId = await seedBlock(t, taskId, userId);
 
-    const result = await withAuth.action(api.actions.scheduleBlock.scheduleBlock, {
+    const result = await withAuth.action(api.functions.scheduleBlock.scheduleBlock, {
       studyBlockId: blockId,
       timezone: "America/New_York",
     });
@@ -133,7 +137,7 @@ describe("actions/scheduleBlock – recommendedStart constraint", () => {
     });
     const blockId = await seedBlock(t, taskId, userId);
 
-    const result = await withAuth.action(api.actions.scheduleBlock.scheduleBlock, {
+    const result = await withAuth.action(api.functions.scheduleBlock.scheduleBlock, {
       studyBlockId: blockId,
       timezone: "America/New_York",
     });
@@ -156,7 +160,7 @@ describe("actions/scheduleBlock – recommendedStart constraint", () => {
     });
     const blockId = await seedSubtaskBlock(t, subtaskId, userId);
 
-    const result = await withAuth.action(api.actions.scheduleBlock.scheduleBlock, {
+    const result = await withAuth.action(api.functions.scheduleBlock.scheduleBlock, {
       studyBlockId: blockId,
       timezone: "America/New_York",
     });

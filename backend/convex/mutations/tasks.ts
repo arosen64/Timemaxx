@@ -2,7 +2,7 @@ import { mutation, internalMutation, MutationCtx } from "../_generated/server";
 import { internal } from "../_generated/api";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
-import { taskTypeValidator } from "../lib/taskValidators";
+import { taskStatusValidator } from "../lib/taskValidators";
 import { Id } from "../_generated/dataModel";
 import { rebuildStudyBlocks } from "./timeEstimate";
 import { computeRecommendedStart, computeSubtaskCascade } from "../lib/scheduleSlots";
@@ -46,7 +46,7 @@ export const createTask = mutation({
   args: {
     title: v.string(),
     description: v.string(),
-    taskType: taskTypeValidator,
+    taskType: v.string(),
     dueDate: v.number(),
     courseId: v.optional(v.id("userCourses")),
     classTag: v.optional(v.string()),
@@ -70,7 +70,12 @@ export const createTask = mutation({
     if (args.dueDate <= now) {
       throw new Error("That due date and time are in the past. Choose a later deadline.");
     }
-    if (args.assignmentWeight !== undefined && (args.assignmentWeight < 0 || args.assignmentWeight > 100)) {
+    if (
+      args.assignmentWeight !== undefined &&
+      (!Number.isFinite(args.assignmentWeight) ||
+        args.assignmentWeight < 0 ||
+        args.assignmentWeight > 100)
+    ) {
       throw new Error("Assignment weight must be between 0 and 100");
     }
     if (args.timeEstimate !== undefined && args.timeEstimate < 15) {
@@ -92,6 +97,7 @@ export const createTask = mutation({
       assignmentWeight: args.assignmentWeight,
       recommendedStart: computeRecommendedStart(now, args.dueDate),
       createdAt: Date.now(),
+      status: "not_started",
     });
 
     if (isManualEstimate) {
@@ -101,6 +107,7 @@ export const createTask = mutation({
     if (process.env.GEMINI_API_KEY) {
       await ctx.scheduler.runAfter(0, internal.ai.embeddings.generateTaskEmbedding, {
         taskId,
+        userId,
         title: args.title,
         description: args.description,
       });
@@ -110,17 +117,17 @@ export const createTask = mutation({
   },
 });
 
-
 export const updateTask = mutation({
   args: {
     taskId: v.id("tasks"),
     title: v.string(),
     description: v.string(),
-    taskType: taskTypeValidator,
+    taskType: v.string(),
     dueDate: v.number(),
     courseId: v.optional(v.id("userCourses")),
     classTag: v.optional(v.string()),
     assignmentWeight: v.optional(v.number()),
+    clearAssignmentWeight: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -129,7 +136,12 @@ export const updateTask = mutation({
     const task = await ctx.db.get(args.taskId);
     if (!task || task.userId !== userId) throw new Error("Task not found");
 
-    if (args.assignmentWeight !== undefined && (args.assignmentWeight < 0 || args.assignmentWeight > 100)) {
+    if (
+      args.assignmentWeight !== undefined &&
+      (!Number.isFinite(args.assignmentWeight) ||
+        args.assignmentWeight < 0 ||
+        args.assignmentWeight > 100)
+    ) {
       throw new Error("Assignment weight must be between 0 and 100");
     }
 
@@ -139,14 +151,27 @@ export const updateTask = mutation({
       taskType: args.taskType,
       dueDate: args.dueDate,
       courseId: args.courseId,
-      ...(args.classTag !== undefined
-        ? { classTag: normalizeClassTag(args.classTag) }
-        : {}),
-      ...(args.assignmentWeight !== undefined
-        ? { assignmentWeight: args.assignmentWeight }
-        : {}),
+      ...(args.classTag !== undefined ? { classTag: normalizeClassTag(args.classTag) } : {}),
+      ...(args.clearAssignmentWeight ? { assignmentWeight: undefined } : {}),
+      ...(args.assignmentWeight !== undefined ? { assignmentWeight: args.assignmentWeight } : {}),
       recommendedStart: computeRecommendedStart(Date.now(), args.dueDate),
     });
+
+    // Cascade title change to all task-level study blocks
+    if (args.title !== task.title) {
+      const blocks = await ctx.db
+        .query("studyBlocks")
+        .withIndex("by_taskId", (q) => q.eq("taskId", args.taskId))
+        .collect();
+      await Promise.all(
+        blocks.map((b) =>
+          ctx.db.patch(b._id, {
+            title: args.title,
+            ...(b.googleEventId ? { needsExport: true } : {}),
+          })
+        )
+      );
+    }
 
     // Cascade dueDate change to child subtasks and recompute suggestedCompletionAt
     if (args.dueDate !== task.dueDate) {
@@ -159,16 +184,21 @@ export const updateTask = mutation({
         const n = subtasks.length;
         const dateAt = computeSubtaskCascade(now, args.dueDate, n);
         const sorted = [...subtasks].sort((a, b) => a.order - b.order);
-        await Promise.all(sorted.map((s, i) => ctx.db.patch(s._id, {
-          dueDate: args.dueDate,
-          suggestedCompletionAt: dateAt(i),
-        })));
+        await Promise.all(
+          sorted.map((s, i) =>
+            ctx.db.patch(s._id, {
+              dueDate: args.dueDate,
+              suggestedCompletionAt: dateAt(i),
+            })
+          )
+        );
       }
     }
 
     if (process.env.GEMINI_API_KEY) {
       await ctx.scheduler.runAfter(0, internal.ai.embeddings.generateTaskEmbedding, {
         taskId: args.taskId,
+        userId: task.userId,
         title: args.title,
         description: args.description,
       });
@@ -203,16 +233,16 @@ export const createTaskInternal = internalMutation({
       dueDate: args.dueDate,
       courseId: args.courseId,
       classTag,
-      ...(args.assignmentWeight !== undefined
-        ? { assignmentWeight: args.assignmentWeight }
-        : {}),
+      ...(args.assignmentWeight !== undefined ? { assignmentWeight: args.assignmentWeight } : {}),
       recommendedStart: computeRecommendedStart(Date.now(), args.dueDate),
       createdAt: Date.now(),
       isManualEstimate: false,
+      status: "not_started",
     });
     if (process.env.GEMINI_API_KEY) {
       await ctx.scheduler.runAfter(0, internal.ai.embeddings.generateTaskEmbedding, {
         taskId,
+        userId: args.userId,
         title: args.title,
         description: args.description,
       });
@@ -255,9 +285,31 @@ export const patchTaskFieldsInternal = internalMutation({
     }
     if (args.assignmentWeight !== undefined) patch.assignmentWeight = args.assignmentWeight;
     await ctx.db.patch(args.taskId, patch);
-    if (process.env.GEMINI_API_KEY && (args.title !== undefined || args.description !== undefined)) {
+
+    // Cascade title change to all task-level study blocks
+    if (args.title !== undefined && args.title !== task.title) {
+      const newTitle = args.title;
+      const blocks = await ctx.db
+        .query("studyBlocks")
+        .withIndex("by_taskId", (q) => q.eq("taskId", args.taskId))
+        .collect();
+      await Promise.all(
+        blocks.map((b) =>
+          ctx.db.patch(b._id, {
+            title: newTitle,
+            ...(b.googleEventId ? { needsExport: true } : {}),
+          })
+        )
+      );
+    }
+
+    if (
+      process.env.GEMINI_API_KEY &&
+      (args.title !== undefined || args.description !== undefined)
+    ) {
       await ctx.scheduler.runAfter(0, internal.ai.embeddings.generateTaskEmbedding, {
         taskId: args.taskId,
+        userId: task.userId,
         title: args.title ?? task.title,
         description: args.description ?? task.description,
       });
@@ -284,31 +336,24 @@ export const deleteTaskInternal = internalMutation({
 export const patchTaskEmbedding = internalMutation({
   args: {
     taskId: v.id("tasks"),
+    userId: v.id("users"),
     embedding: v.array(v.float64()),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
+    const task = await ctx.db.get(args.taskId);
+    if (!task || task.userId !== args.userId) throw new Error("Task not found");
     await ctx.db.patch(args.taskId, { embedding: args.embedding });
     return null;
   },
 });
 
-const taskStatusValidator = v.union(
-  v.literal("not_started"),
-  v.literal("in_progress"),
-  v.literal("completed"),
-);
-
 /** Unsets all calendar-scheduling fields on a study block, leaving the block itself intact. */
-async function unscheduleBlock(
-  ctx: MutationCtx,
-  blockId: Id<"studyBlocks">,
-  markComplete = false
-) {
+async function unscheduleBlock(ctx: MutationCtx, blockId: Id<"studyBlocks">, markComplete = false) {
   await ctx.db.patch(blockId, {
     startTime: undefined,
     googleEventId: undefined,
-    isConflicted: undefined,
+    isConflicted: false,
     needsExport: undefined,
     ...(markComplete ? { isCompleted: true } : {}),
   });
@@ -415,6 +460,41 @@ export const updateTaskStatus = mutation({
   },
 });
 
+// One-day buffer so a "today" date picked late in the day (whose midnight is slightly
+// in the past after localDateInputToMs converts it) is still accepted.
+const ONE_DAY_MS = 86_400_000;
+
+export const updateRecommendedStart = mutation({
+  args: {
+    taskId: v.id("tasks"),
+    recommendedStart: v.union(v.number(), v.null()),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Unauthenticated");
+
+    const task = await ctx.db.get(args.taskId);
+    if (!task || task.userId !== userId) throw new Error("Task not found");
+
+    let newRecommendedStart: number;
+    if (args.recommendedStart === null) {
+      newRecommendedStart = computeRecommendedStart(Date.now(), task.dueDate);
+    } else {
+      if (args.recommendedStart < Date.now() - ONE_DAY_MS) {
+        throw new Error("Suggested start date cannot be in the past.");
+      }
+      if (args.recommendedStart >= task.dueDate) {
+        throw new Error("Suggested start date must be before the due date.");
+      }
+      newRecommendedStart = args.recommendedStart;
+    }
+
+    await ctx.db.patch(args.taskId, { recommendedStart: newRecommendedStart });
+    return null;
+  },
+});
+
 export const deleteTask = mutation({
   args: {
     taskId: v.id("tasks"),
@@ -438,8 +518,8 @@ export const deleteTask = mutation({
           ctx.db
             .query("studyBlocks")
             .withIndex("by_subtaskId", (q) => q.eq("subtaskId", subtask._id))
-            .collect(),
-        ),
+            .collect()
+        )
       ),
       ctx.db
         .query("studyBlocks")
@@ -456,8 +536,8 @@ export const deleteTask = mutation({
     if (googleEventIds.length > 0) {
       await ctx.scheduler.runAfter(
         0,
-        internal.actions.exportStudyBlocksToCalendar.deleteLinkedCalendarEvents,
-        { userId, googleEventIds },
+        internal.functions.exportStudyBlocksToCalendar.deleteLinkedCalendarEvents,
+        { userId, googleEventIds }
       );
     }
   },

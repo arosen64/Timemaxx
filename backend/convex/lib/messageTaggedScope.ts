@@ -11,7 +11,7 @@ export type TaggedMessageView = {
 };
 
 export function getLastUserMessage(
-  historyAsc: readonly TaggedMessageView[],
+  historyAsc: readonly TaggedMessageView[]
 ): TaggedMessageView | null {
   for (let i = historyAsc.length - 1; i >= 0; i--) {
     if (historyAsc[i].role === "user") return historyAsc[i];
@@ -21,7 +21,7 @@ export function getLastUserMessage(
 
 /** Newest → oldest: first message that carries a taskId. */
 export function walkLatestTaggedTaskId(
-  historyAsc: readonly TaggedMessageView[],
+  historyAsc: readonly TaggedMessageView[]
 ): Id<"tasks"> | undefined {
   for (let i = historyAsc.length - 1; i >= 0; i--) {
     const t = historyAsc[i].taskId;
@@ -32,7 +32,7 @@ export function walkLatestTaggedTaskId(
 
 /** Newest → oldest: first message that carries a courseId. */
 export function walkLatestTaggedCourseId(
-  historyAsc: readonly TaggedMessageView[],
+  historyAsc: readonly TaggedMessageView[]
 ): Id<"userCourses"> | undefined {
   for (let i = historyAsc.length - 1; i >= 0; i--) {
     const c = historyAsc[i].courseId;
@@ -64,7 +64,7 @@ export function collectUniqueTaggedIds(historyAsc: readonly TaggedMessageView[])
 export function shouldOfferTaskEntityMcq(
   needsEntityClarification: boolean,
   historyAsc: readonly TaggedMessageView[],
-  message: string,
+  message: string
 ): boolean {
   if (!needsEntityClarification) return false;
   const trimmed = message.trim();
@@ -85,7 +85,7 @@ export function shouldOfferTaskEntityMcq(
 export function shouldOfferCourseEntityMcq(
   needsEntityClarification: boolean,
   historyAsc: readonly TaggedMessageView[],
-  message: string,
+  message: string
 ): boolean {
   if (!needsEntityClarification) return false;
   const trimmed = message.trim();

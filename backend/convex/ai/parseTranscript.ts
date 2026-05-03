@@ -1,7 +1,7 @@
 import { action } from "../_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
-import { MastraClient } from "@mastra/client-js";
+import { createMastraClient } from "../lib/mastraClient";
 import { sanitizeUserInput } from "../lib/sanitize";
 import { withTimeout } from "../lib/withTimeout";
 
@@ -37,7 +37,7 @@ export const parseTranscript = action({
 
     const mastraUrl = process.env.MASTRA_URL;
     if (!mastraUrl) throw new Error("MASTRA_URL not configured");
-    const client = new MastraClient({ baseUrl: mastraUrl });
+    const client = createMastraClient(mastraUrl);
 
     // OCR: extract text from the base64-encoded PDF
     const ocrWf = client.getWorkflow("transcript-ocr-workflow");
@@ -85,13 +85,7 @@ export const parseTranscript = action({
     const raw: ParsedCourse[] = parseOutput.courses ?? [];
 
     return raw
-      .filter(
-        (c) =>
-          c.courseCode?.trim() &&
-          c.title?.trim() &&
-          c.term?.trim() &&
-          c.grade?.trim()
-      )
+      .filter((c) => c.courseCode?.trim() && c.title?.trim() && c.term?.trim() && c.grade?.trim())
       .map((c) => ({ ...c }));
   },
 });

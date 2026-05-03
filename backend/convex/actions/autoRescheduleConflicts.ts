@@ -7,6 +7,7 @@ import type { Id } from "../_generated/dataModel";
 import {
   enumerateSlots,
   selectSlotWithAI,
+  selectAllSlotsWithAI,
   type OccupiedInterval,
   type WorkHoursRow,
 } from "../lib/scheduleSlots";
@@ -40,7 +41,7 @@ export const autoRescheduleConflicts = action({
   args: {
     timezone: v.string(),
   },
-  handler: async (ctx, args): Promise<{ unplacedCount: number }> => {
+  handler: async (ctx, args): Promise<{ unplacedCount: number; skippedReason: string | null }> => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Unauthenticated");
 
@@ -49,18 +50,18 @@ export const autoRescheduleConflicts = action({
 
     // Get user preferences
     const user = await ctx.runQuery(internal.queries.users.getUserInternal, { userId });
-    const workHoursGrid = ((user?.workHoursGrid ?? []) as WorkHoursRow[]);
+    const workHoursGrid = (user?.workHoursGrid ?? []) as WorkHoursRow[];
     const productivityTraits: unknown = user?.productivityTraits;
 
     // Get all study blocks for the user
     const allBlocks = (await ctx.runQuery(
-      api.queries.studyBlocks.getAllStudyBlocksWithTasks,
+      api.queries.studyBlocks.getAllStudyBlocksWithTasks
     )) as StudyBlockWithTask[];
 
     const conflictedBlocks = allBlocks.filter((b) => b.isConflicted && b.startTime);
     const scheduledNonConflicted = allBlocks.filter((b) => b.startTime && !b.isConflicted);
 
-    if (conflictedBlocks.length === 0) return { unplacedCount: 0 };
+    if (conflictedBlocks.length === 0) return { unplacedCount: 0, skippedReason: null };
 
     // Sort conflicted blocks by task due date (earliest first)
     conflictedBlocks.sort((a, b) => a.taskDueDate - b.taskDueDate);
@@ -81,6 +82,7 @@ export const autoRescheduleConflicts = action({
 
     const nowMs = Date.now();
     let unplacedCount = 0;
+    const zeroCandidateBlocks: { taskTitle: string; taskDueDate: number }[] = [];
 
     for (const block of conflictedBlocks) {
       const candidates = enumerateSlots({
@@ -95,6 +97,7 @@ export const autoRescheduleConflicts = action({
 
       if (candidates.length === 0) {
         unplacedCount++;
+        zeroCandidateBlocks.push({ taskTitle: block.taskTitle, taskDueDate: block.taskDueDate });
         await ctx.runMutation(internal.mutations.studyBlocks.setStudyBlockTime, {
           studyBlockId: block._id,
           startTime: null,
@@ -115,6 +118,7 @@ export const autoRescheduleConflicts = action({
 
       if (!chosen) {
         unplacedCount++;
+        zeroCandidateBlocks.push({ taskTitle: block.taskTitle, taskDueDate: block.taskDueDate });
         await ctx.runMutation(internal.mutations.studyBlocks.setStudyBlockTime, {
           studyBlockId: block._id,
           startTime: null,
@@ -139,7 +143,22 @@ export const autoRescheduleConflicts = action({
       });
     }
 
-    return { unplacedCount };
+    // Get AI-generated overall reason for blocks that couldn't be placed
+    let skippedReason: string | null = null;
+    if (zeroCandidateBlocks.length > 0) {
+      const { overallSkipReason } = await selectAllSlotsWithAI(
+        zeroCandidateBlocks.map((z) => ({
+          taskTitle: z.taskTitle,
+          dueDate: z.taskDueDate,
+          candidates: [],
+          cannotSchedule: true as const,
+        })),
+        productivityTraits
+      );
+      skippedReason = overallSkipReason ?? "No open time slots before your deadline.";
+    }
+
+    return { unplacedCount, skippedReason };
   },
 });
 
@@ -152,10 +171,9 @@ export const autoRescheduleConflicts = action({
  *
  * Exported for unit testing.
  */
-export function filterPastFreeBlocks<T extends { startMs: number; endMs: number; startISO: string }>(
-  blocks: T[],
-  nowMs: number,
-): T[] {
+export function filterPastFreeBlocks<
+  T extends { startMs: number; endMs: number; startISO: string },
+>(blocks: T[], nowMs: number): T[] {
   return blocks
     .filter((b) => b.endMs > nowMs)
     .map((b) => {

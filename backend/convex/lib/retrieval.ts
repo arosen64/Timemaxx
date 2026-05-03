@@ -51,6 +51,7 @@ export async function fetchRelevantClasses(
   userId: Id<"users">
 ): Promise<Id<"userCourses">[]> {
   // Dynamic import avoids a static import cycle (api → … → this file → api).
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { internal } = (await import("../_generated/api")) as unknown as { internal: any };
   const task = await ctx.runQuery(internal.queries.tasks.getTaskInternal, { taskId });
   if (!task || task.userId !== userId) return [];
@@ -72,10 +73,9 @@ export async function fetchRelevantClasses(
     return out;
   }
 
-  const courses = await ctx.runQuery(
-    internal.queries.userCourses.getUserCoursesInternal,
-    { userId },
-  );
+  const courses = await ctx.runQuery(internal.queries.userCourses.getUserCoursesInternal, {
+    userId,
+  });
   const typedCourses = courses as Doc<"userCourses">[];
 
   // Heuristic: prefer courses in the same department as the task's course.
@@ -112,6 +112,7 @@ export async function fetchRelevantTasks(
   taskId: Id<"tasks">,
   userId: Id<"users">
 ): Promise<Id<"tasks">[]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { internal } = (await import("../_generated/api")) as unknown as { internal: any };
   const task = await ctx.runQuery(internal.queries.tasks.getTaskInternal, { taskId });
   if (!task || task.userId !== userId) return [];
@@ -132,10 +133,7 @@ export async function fetchRelevantTasks(
     return out;
   }
 
-  const tasks = await ctx.runQuery(
-    internal.queries.tasks.getAllTasksInternal,
-    { userId },
-  );
+  const tasks = await ctx.runQuery(internal.queries.tasks.getAllTasksInternal, { userId });
   return (tasks as Doc<"tasks">[])
     .filter((t) => t._id !== taskId)
     .slice(0, RELEVANT_RESULT_CAP)
@@ -157,11 +155,34 @@ export function buildChatRetrievalQueryText(task: Doc<"tasks">): string | null {
 export function chunkHasMetadataOverlap(
   chunk: Doc<"chatChunks">,
   taskIdSet: Set<Id<"tasks">>,
-  courseIdSet: Set<Id<"userCourses">>,
+  courseIdSet: Set<Id<"userCourses">>
 ): boolean {
   const taskHit = chunk.linkedTaskIds.some((id) => taskIdSet.has(id));
   const courseHit = chunk.linkedCourseIds.some((id) => courseIdSet.has(id));
   return taskHit || courseHit;
+}
+
+/**
+ * Vector search returns chunks in similarity order; this reorders so chunks whose
+ * `linkedTaskIds` / `linkedCourseIds` overlap the current task, related tasks,
+ * or related courses appear first, then the rest, capped for the prompt.
+ */
+export function prioritizeRetrievedChatChunks(
+  ordered: Doc<"chatChunks">[],
+  taskIdSet: Set<Id<"tasks">>,
+  courseIdSet: Set<Id<"userCourses">>,
+  cap: number = CHAT_RETRIEVAL_CAP
+): Doc<"chatChunks">[] {
+  const withOverlap: Doc<"chatChunks">[] = [];
+  const withoutOverlap: Doc<"chatChunks">[] = [];
+  for (const c of ordered) {
+    if (chunkHasMetadataOverlap(c, taskIdSet, courseIdSet)) {
+      withOverlap.push(c);
+    } else {
+      withoutOverlap.push(c);
+    }
+  }
+  return [...withOverlap, ...withoutOverlap].slice(0, cap);
 }
 
 /**
@@ -182,19 +203,21 @@ export async function fetchRelevantChats(
   currentTaskId: Id<"tasks">,
   relatedTaskIds: Id<"tasks">[],
   relatedClassIds: Id<"userCourses">[],
-  opts?: { queryEmbedding?: number[] },
+  opts?: { queryEmbedding?: number[] }
 ): Promise<RelevantChats> {
   const empty: RelevantChats = { chunkIds: [], chunks: [] };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { internal } = (await import("../_generated/api")) as unknown as { internal: any };
-  const task = await ctx.runQuery(internal.queries.tasks.getTaskInternal, { taskId: currentTaskId });
+  const task = await ctx.runQuery(internal.queries.tasks.getTaskInternal, {
+    taskId: currentTaskId,
+  });
   if (!task || task.userId !== userId) return empty;
 
   const retrievalText = buildChatRetrievalQueryText(task);
   if (retrievalText === null) return empty;
 
   const pre = opts?.queryEmbedding;
-  let embedding: number[] | null =
-    Array.isArray(pre) && pre.length === EMBEDDING_DIMS ? pre : null;
+  let embedding: number[] | null = Array.isArray(pre) && pre.length === EMBEDDING_DIMS ? pre : null;
   if (!embedding) {
     embedding = (await ctx.runAction(internal.ai.embeddings.embedRetrievalQueryInternal, {
       text: retrievalText,
@@ -218,7 +241,9 @@ export async function fetchRelevantChats(
   })) as Doc<"chatChunks">[];
 
   const byId = new Map(chunks.map((c) => [c._id, c]));
-  const ordered = orderedIds.map((id) => byId.get(id)).filter((c): c is Doc<"chatChunks"> => c !== undefined);
+  const ordered = orderedIds
+    .map((id) => byId.get(id))
+    .filter((c): c is Doc<"chatChunks"> => c !== undefined);
 
   const taskIdSet = new Set<Id<"tasks">>([currentTaskId, ...relatedTaskIds]);
   const courseIdSet = new Set<Id<"userCourses">>(relatedClassIds);
@@ -226,17 +251,7 @@ export async function fetchRelevantChats(
     courseIdSet.add(task.courseId);
   }
 
-  const withOverlap: Doc<"chatChunks">[] = [];
-  const withoutOverlap: Doc<"chatChunks">[] = [];
-  for (const c of ordered) {
-    if (chunkHasMetadataOverlap(c, taskIdSet, courseIdSet)) {
-      withOverlap.push(c);
-    } else {
-      withoutOverlap.push(c);
-    }
-  }
-
-  const mergedDocs = [...withOverlap, ...withoutOverlap].slice(0, CHAT_RETRIEVAL_CAP);
+  const mergedDocs = prioritizeRetrievedChatChunks(ordered, taskIdSet, courseIdSet);
   const chunkIds = mergedDocs.map((c) => c._id);
   return { chunkIds, chunks: mergedDocs };
 }

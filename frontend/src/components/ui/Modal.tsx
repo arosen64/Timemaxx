@@ -1,29 +1,29 @@
-import { type ReactNode } from 'react'
+import { type ReactNode } from "react";
 
 interface ModalProps {
-  isOpen?: boolean
-  onClose: () => void
-  title: string
-  subtitle?: string
+  isOpen?: boolean;
+  onClose: () => void;
+  title: string;
+  subtitle?: string;
   /** Icon rendered above the title inside an accent circle (e.g. for confirm dialogs). */
-  icon?: ReactNode
-  children?: ReactNode
-  error?: string | null
-  primaryLabel: string
+  icon?: ReactNode;
+  children?: ReactNode;
+  error?: string | null;
+  primaryLabel: string;
   /** Label shown while isPrimaryDisabled is true (loading state). */
-  primaryLoadingLabel?: string
-  onPrimary: () => void
-  isPrimaryDisabled?: boolean
+  primaryLoadingLabel?: string;
+  onPrimary: () => void;
+  isPrimaryDisabled?: boolean;
   /** 'destructive' removes the teal dot and uses urgent-red for the primary button. */
-  primaryVariant?: 'default' | 'destructive'
+  primaryVariant?: "default" | "destructive";
   /** Whether to show the × close button in the header. Defaults to true. */
-  showCloseButton?: boolean
+  showCloseButton?: boolean;
   /** Whether to show the Cancel button in the footer. Defaults to true. */
-  showCancelButton?: boolean
+  showCancelButton?: boolean;
   /** 'sm' uses a narrower card with smaller padding and buttons (for confirm dialogs). */
-  size?: 'default' | 'sm'
+  size?: "default" | "sm";
   /** 'blur' uses a heavier, blurred backdrop (for confirm dialogs). */
-  backdrop?: 'default' | 'blur'
+  backdrop?: "default" | "blur";
 }
 
 export default function Modal({
@@ -38,23 +38,23 @@ export default function Modal({
   primaryLoadingLabel,
   onPrimary,
   isPrimaryDisabled = false,
-  primaryVariant = 'default',
+  primaryVariant = "default",
   showCloseButton = true,
   showCancelButton = true,
-  size = 'default',
-  backdrop = 'default',
+  size = "default",
+  backdrop = "default",
 }: ModalProps) {
-  if (!isOpen) return null
+  if (!isOpen) return null;
 
-  const isDestructive = primaryVariant === 'destructive'
-  const isSm = size === 'sm'
+  const isDestructive = primaryVariant === "destructive";
+  const isSm = size === "sm";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={onClose}>
       {/* Backdrop */}
       <div
         className={`absolute inset-0 ${
-          backdrop === 'blur' ? 'bg-navy/40 backdrop-blur-sm' : 'bg-navy/30'
+          backdrop === "blur" ? "bg-navy/40 backdrop-blur-sm" : "bg-navy/30"
         }`}
       />
 
@@ -64,9 +64,7 @@ export default function Modal({
         aria-modal="true"
         aria-label={`${title} modal`}
         className={`relative z-10 flex flex-col bg-white border border-border rounded-xl max-h-[90vh] ${
-          isSm
-            ? 'w-full max-w-sm p-8 gap-4 shadow-xl'
-            : 'w-full max-w-xl p-12 gap-6'
+          isSm ? "w-full max-w-sm p-8 gap-4 shadow-xl" : "w-full max-w-xl p-12 gap-6"
         }`}
         onClick={(e) => e.stopPropagation()}
       >
@@ -98,9 +96,7 @@ export default function Modal({
         )}
 
         {/* Body */}
-        <div className="overflow-y-auto flex-1 min-h-0">
-          {children}
-        </div>
+        <div className="overflow-y-auto flex-1 min-h-0">{children}</div>
 
         {/* Error */}
         {error && <p className="text-sm text-red-500 font-body">{error}</p>}
@@ -112,7 +108,7 @@ export default function Modal({
               type="button"
               onClick={onClose}
               className={`flex flex-1 cursor-pointer items-center justify-center rounded-lg border border-border bg-bg-gray font-heading font-semibold text-slate-blue transition hover:bg-bg-gray ${
-                isSm ? 'h-10 text-sm' : 'h-12 text-[15px]'
+                isSm ? "h-10 text-sm" : "h-12 text-[15px]"
               }`}
             >
               Cancel
@@ -123,16 +119,14 @@ export default function Modal({
             onClick={onPrimary}
             disabled={isPrimaryDisabled}
             className={`flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border-none font-heading font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 ${
-              isDestructive ? 'bg-urgent-red' : 'bg-navy'
-            } ${isSm ? 'h-10 text-sm' : 'h-12 text-[15px]'}`}
+              isDestructive ? "bg-urgent-red" : "bg-navy"
+            } ${isSm ? "h-10 text-sm" : "h-12 text-[15px]"}`}
           >
             {isPrimaryDisabled && primaryLoadingLabel ? primaryLoadingLabel : primaryLabel}
-            {!isDestructive && (
-              <span className="inline-block h-1.5 w-1.5 rounded-full bg-teal" />
-            )}
+            {!isDestructive && <span className="inline-block h-1.5 w-1.5 rounded-full bg-teal" />}
           </button>
         </div>
       </div>
     </div>
-  )
+  );
 }

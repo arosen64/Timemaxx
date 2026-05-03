@@ -1,4 +1,6 @@
 import { internalQuery, query } from "../_generated/server";
+import type { QueryCtx } from "../_generated/server";
+import type { Doc } from "../_generated/dataModel";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import type { Id } from "../_generated/dataModel";
@@ -8,6 +10,10 @@ export const getStudyBlocksByTask = query({
     taskId: v.id("tasks"),
   },
   handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
+    const task = await ctx.db.get(args.taskId);
+    if (!task || task.userId !== userId) return [];
     return await ctx.db
       .query("studyBlocks")
       .withIndex("by_taskId", (q) => q.eq("taskId", args.taskId))
@@ -47,8 +53,8 @@ export const getStudyBlocksForTaskSubtasks = query({
           .query("studyBlocks")
           .withIndex("by_subtaskId", (q) => q.eq("subtaskId", subtask._id))
           .collect()
-          .then((blocks) => blocks.map((block) => ({ ...block, subtaskId: subtask._id }))),
-      ),
+          .then((blocks) => blocks.map((block) => ({ ...block, subtaskId: subtask._id })))
+      )
     );
 
     return blockArrays.flat();
@@ -60,14 +66,18 @@ export const getStudyBlockById = query({
     studyBlockId: v.id("studyBlocks"),
   },
   handler: async (ctx, args) => {
-    return await ctx.db.get(args.studyBlockId);
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+    const block = await ctx.db.get(args.studyBlockId);
+    if (!block || block.userId !== userId) return null;
+    return block;
   },
 });
 
-async function fetchAllStudyBlocksWithTasks(ctx: any, userId: Id<"users">) {
+async function fetchAllStudyBlocksWithTasks(ctx: QueryCtx, userId: Id<"users">) {
   const tasks = await ctx.db
     .query("tasks")
-    .withIndex("by_userId", (q: any) => q.eq("userId", userId))
+    .withIndex("by_userId", (q) => q.eq("userId", userId))
     .collect();
 
   const result: Array<{
@@ -89,8 +99,8 @@ async function fetchAllStudyBlocksWithTasks(ctx: any, userId: Id<"users">) {
   }> = [];
 
   // Collect unique courseIds and batch-fetch them into a Map (avoids N+1)
-  const uniqueCourseIds = [...new Set(tasks.map((t: any) => t.courseId).filter(Boolean))];
-  const courseMap = new Map<string, any>();
+  const uniqueCourseIds = [...new Set(tasks.map((t) => t.courseId).filter(Boolean))];
+  const courseMap = new Map<string, Doc<"userCourses">>();
   for (const courseId of uniqueCourseIds) {
     const course = await ctx.db.get(courseId as Id<"userCourses">);
     if (course) courseMap.set(courseId as string, course);
@@ -99,9 +109,9 @@ async function fetchAllStudyBlocksWithTasks(ctx: any, userId: Id<"users">) {
   // Batch-fetch all subtasks for user and group by parentTaskId (avoids N+1 per task)
   const allSubtasks = await ctx.db
     .query("subtasks")
-    .withIndex("by_userId", (q: any) => q.eq("userId", userId))
+    .withIndex("by_userId", (q) => q.eq("userId", userId))
     .collect();
-  const subtasksByTask = new Map<string, any[]>();
+  const subtasksByTask = new Map<string, Doc<"subtasks">[]>();
   for (const subtask of allSubtasks) {
     const key = subtask.parentTaskId as string;
     if (!subtasksByTask.has(key)) subtasksByTask.set(key, []);
@@ -109,8 +119,9 @@ async function fetchAllStudyBlocksWithTasks(ctx: any, userId: Id<"users">) {
   }
 
   for (const task of tasks) {
-    // Skip completed tasks — their blocks are unscheduled and should not appear on the calendar
+    // Skip completed or past-due tasks — their blocks should not appear on the calendar or tray
     if (task.status === "completed") continue;
+    if (task.dueDate < Date.now()) continue;
 
     const course = task.courseId ? courseMap.get(task.courseId) : null;
     const courseColor: string | undefined = course?.color ?? undefined;
@@ -118,13 +129,13 @@ async function fetchAllStudyBlocksWithTasks(ctx: any, userId: Id<"users">) {
 
     const blocks = await ctx.db
       .query("studyBlocks")
-      .withIndex("by_taskId", (q: any) => q.eq("taskId", task._id))
+      .withIndex("by_taskId", (q) => q.eq("taskId", task._id))
       .collect();
     for (const block of blocks) {
-      if (block.isCompleted) continue
+      if (block.isCompleted) continue;
       result.push({
         _id: block._id,
-        taskId: block.taskId,
+        taskId: block.taskId!,
         subtaskId: undefined,
         title: block.title,
         startTime: block.startTime,
@@ -146,10 +157,10 @@ async function fetchAllStudyBlocksWithTasks(ctx: any, userId: Id<"users">) {
     for (const subtask of subtasks) {
       const subtaskBlocks = await ctx.db
         .query("studyBlocks")
-        .withIndex("by_subtaskId", (q: any) => q.eq("subtaskId", subtask._id))
+        .withIndex("by_subtaskId", (q) => q.eq("subtaskId", subtask._id))
         .collect();
       for (const block of subtaskBlocks) {
-        if (block.isCompleted) continue
+        if (block.isCompleted) continue;
         result.push({
           _id: block._id,
           taskId: task._id,
@@ -287,8 +298,8 @@ export const getStudyBlocksByTaskInternal = internalQuery({
         ctx.db
           .query("studyBlocks")
           .withIndex("by_subtaskId", (q) => q.eq("subtaskId", s._id))
-          .collect(),
-      ),
+          .collect()
+      )
     );
 
     return [...taskBlocks, ...subtaskBlockArrays.flat()];

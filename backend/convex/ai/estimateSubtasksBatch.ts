@@ -3,7 +3,7 @@ import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { GenericActionCtx } from "convex/server";
 import { DataModel, Doc, Id } from "../_generated/dataModel";
-import { MastraClient } from "@mastra/client-js";
+import { createMastraClient } from "../lib/mastraClient";
 import { z } from "zod";
 import { sanitizeUserInput } from "../lib/sanitize";
 import {
@@ -97,7 +97,7 @@ export const estimateSubtasksBatch = internalAction({
     });
 
     try {
-      const client = new MastraClient({ baseUrl: mastraUrl });
+      const client = createMastraClient(mastraUrl);
       const wf = client.getWorkflow("batch-estimation-workflow");
       const run = await wf.startAsync({ inputData: items });
 
@@ -118,11 +118,20 @@ export const estimateSubtasksBatch = internalAction({
           const rawErr = (step as { error?: string | Error }).error;
           const stepStatus = (step as { status?: string }).status ?? "unknown";
           const errMsg = rawErr instanceof Error ? rawErr.message : String(rawErr ?? "");
-          console.error(`Batch estimation step "${stepId}" has no output (status: ${stepStatus}):`, errMsg);
-          if (errMsg.includes("quota") || errMsg.includes("RESOURCE_EXHAUSTED") || errMsg.includes("429")) {
+          console.error(
+            `Batch estimation step "${stepId}" has no output (status: ${stepStatus}):`,
+            errMsg
+          );
+          if (
+            errMsg.includes("quota") ||
+            errMsg.includes("RESOURCE_EXHAUSTED") ||
+            errMsg.includes("429")
+          ) {
             throw new Error("quota_exceeded");
           }
-          throw new Error(`Batch estimation step "${stepId}" failed (status: ${stepStatus}): ${errMsg}`);
+          throw new Error(
+            `Batch estimation step "${stepId}" failed (status: ${stepStatus}): ${errMsg}`
+          );
         }
       }
 

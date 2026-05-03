@@ -1,4 +1,13 @@
 import { z } from "zod";
+import {
+  ACTIVE_AGENTS,
+  TASK_AGENT_INTENTS,
+  COURSE_AGENT_INTENTS,
+} from "../../../../../shared/chatEnums";
+
+const activeAgentEnum = z.enum(ACTIVE_AGENTS);
+const taskAgentIntentEnum = z.enum(TASK_AGENT_INTENTS);
+const courseAgentIntentEnum = z.enum(COURSE_AGENT_INTENTS);
 
 export const chatContextSchema = z.object({
   message: z.string(),
@@ -8,9 +17,9 @@ export const chatContextSchema = z.object({
   taggedTaskId: z.string().nullable(),
   taggedCourseId: z.string().nullable(),
   today: z.string(),
-  activeAgent: z.enum(["task", "feedback", "preferences", "classes", "schedule"]).nullable(),
-  taskAgentIntent: z.enum(["create", "rud"]).nullable(),
-  courseAgentIntent: z.enum(["add", "drop", "view", "update"]).nullable(),
+  activeAgent: activeAgentEnum.nullable(),
+  taskAgentIntent: taskAgentIntentEnum.nullable(),
+  courseAgentIntent: courseAgentIntentEnum.nullable(),
 });
 
 // routerStep passes all context through plus the routing decision
@@ -18,30 +27,46 @@ export const routedContextSchema = chatContextSchema.extend({
   route: z.string().nullable(),
   needsDomainClarification: z.boolean(),
   domainClarifyingQuestion: z.string().nullable(),
+  // True when the supervisor decided the new user message switches domains
+  // away from a currently active sub-agent. When true, the downstream sub-agent
+  // step should signal `clearActiveAgent: true` so the http handler wipes the
+  // prior agent's session state before applying the new agent's state.
+  intentSwitch: z.boolean(),
 });
 
 export const chatWorkflowOutputSchema = z.object({
   reply: z.string(),
   route: z.string().nullable(),
-  status: z.enum(["reply", "domain_clarify", "needs_task_mcq", "needs_class_mcq", "task_action", "course_action", "schedule_action", "canned"]),
+  status: z.enum([
+    "reply",
+    "domain_clarify",
+    "needs_task_mcq",
+    "needs_class_mcq",
+    "task_action",
+    "course_action",
+    "schedule_action",
+    "canned",
+  ]),
   mcqQueryText: z.string().nullable(),
   needsClassAfterTask: z.boolean(),
-  actionType: z.enum([
-    "create_task", 
-    "update_task", 
-    "delete_task", 
-    "read_task", 
-    "add_course", 
-    "drop_course", 
-    "update_course", 
-    "view_courses", 
-    "schedule_task",
-    "schedule_block",
-    "unschedule_task",
-    "unschedule_block",
-    "import_google_calendar",
-    "none"
-  ]).nullable(),
+  actionType: z
+    .enum([
+      "create_task",
+      "update_task",
+      "delete_task",
+      "read_task",
+      "add_course",
+      "drop_course",
+      "update_course",
+      "view_courses",
+      "schedule_task",
+      "schedule_block",
+      "unschedule_task",
+      "unschedule_block",
+      "import_google_calendar",
+      "none",
+    ])
+    .nullable(),
   title: z.string().nullable(),
   description: z.string().nullable(),
   taskType: z.string().nullable(),
@@ -61,10 +86,10 @@ export const chatWorkflowOutputSchema = z.object({
   studyGoal: z.string().nullable(),
   grade: z.string().nullable(),
   difficultyRating: z.number().nullable(),
-  newActiveAgent: z.enum(["task", "feedback", "preferences", "classes", "schedule"]).nullable(),
+  newActiveAgent: activeAgentEnum.nullable(),
   clearActiveAgent: z.boolean(),
-  newTaskAgentIntent: z.enum(["create", "rud"]).nullable(),
-  newCourseAgentIntent: z.enum(["add", "drop", "view", "update"]).nullable(),
+  newTaskAgentIntent: taskAgentIntentEnum.nullable(),
+  newCourseAgentIntent: courseAgentIntentEnum.nullable(),
   readyToRecord: z.boolean(),
 });
 

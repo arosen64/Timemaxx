@@ -17,11 +17,15 @@ vi.mock('../../backend/convex/_generated/api', () => ({
       studyBlocks: {
         runDetectConflicts: 'runDetectConflicts',
         editStudyBlockTime: 'editStudyBlockTime',
+        splitStudyBlock: 'splitStudyBlock',
       },
+      tasks: { updateRecommendedStart: 'updateRecommendedStart' },
     },
     actions: {
-      fetchCalendarEvents: { fetchCalendarEvents: 'fetchCalendarEvents' },
       autoRescheduleConflicts: { autoRescheduleConflicts: 'autoRescheduleConflicts' },
+    },
+    functions: {
+      fetchCalendarEvents: { fetchCalendarEvents: 'fetchCalendarEvents' },
       exportStudyBlocksToCalendar: { exportStudyBlocksToCalendar: 'exportStudyBlocksToCalendar' },
       scheduleBlock: { scheduleBlock: 'scheduleBlock' },
       scheduleAllBlocks: { scheduleAllBlocks: 'scheduleAllBlocks' },
