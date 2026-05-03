@@ -237,7 +237,10 @@ export const scheduleBlock = action({
     if (!isPhysValid(chosen)) {
       const fallback = candidates.find(isPhysValid);
       if (!fallback)
-        return { error: "no_slot_found", skippedReason: "Your schedule is too full to fit this block." };
+        return {
+          error: "no_slot_found",
+          skippedReason: "Your schedule is too full to fit this block.",
+        };
       chosen = fallback;
     }
 

@@ -41,10 +41,7 @@ export const autoRescheduleConflicts = action({
   args: {
     timezone: v.string(),
   },
-  handler: async (
-    ctx,
-    args
-  ): Promise<{ unplacedCount: number; skippedReason: string | null }> => {
+  handler: async (ctx, args): Promise<{ unplacedCount: number; skippedReason: string | null }> => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Unauthenticated");
 

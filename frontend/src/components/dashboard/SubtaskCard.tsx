@@ -127,7 +127,9 @@ export default function SubtaskCard({
                 className="flex h-7 w-7 items-center justify-center rounded-md text-slate-blue transition hover:bg-bg-gray hover:text-navy"
                 aria-label={showBlocks ? "Hide study blocks" : "Show study blocks"}
               >
-                <span className={`transition-transform duration-200 ${showBlocks ? "rotate-180" : ""}`}>
+                <span
+                  className={`transition-transform duration-200 ${showBlocks ? "rotate-180" : ""}`}
+                >
                   <ChevronDownIcon color="currentColor" size={14} />
                 </span>
               </button>
