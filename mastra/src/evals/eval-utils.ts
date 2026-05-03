@@ -50,7 +50,9 @@ export function extractJsonFieldFromOutput(
   try {
     const parsed = JSON.parse(text);
     if (parsed[fieldName] !== undefined) return String(parsed[fieldName]);
-  } catch {}
+  } catch {
+    // not valid JSON — fall through to regex extraction
+  }
 
   // Fall back to extracting the first {...} block (handles ```json ``` wrapping).
   const match = text.match(/\{[\s\S]*\}/);
