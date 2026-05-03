@@ -13,17 +13,22 @@ import type { ScorerRunOutputForAgent } from "@mastra/core/evals";
 // Output parser
 // ---------------------------------------------------------------------------
 
+type MessagePart = { type: string; text?: string };
+type AgentMessage = { role: string; content: unknown };
+type ScorerResult = { score?: number; output?: ScorerRunOutputForAgent };
+
 // Extracts plain text from a single assistant message's content.
 // Handles both legacy string content and the MastraMessageContentV2 parts format.
-function extractTextFromMessage(content: any): string {
+function extractTextFromMessage(content: unknown): string {
   if (typeof content === "string") return content;
   if (!content || typeof content !== "object") return JSON.stringify(content);
 
   // MastraMessageContentV2: { format: 2, parts: Array<{ type, text, ... }> }
-  if (Array.isArray(content.parts)) {
-    return content.parts
-      .filter((p: any) => p.type === "text" && typeof p.text === "string")
-      .map((p: any) => p.text as string)
+  const obj = content as Record<string, unknown>;
+  if (Array.isArray(obj.parts)) {
+    return (obj.parts as MessagePart[])
+      .filter((p) => p.type === "text" && typeof p.text === "string")
+      .map((p) => p.text as string)
       .join(" ");
   }
 
@@ -39,16 +44,16 @@ export function extractJsonFieldFromOutput(
   fieldName: string
 ): string | null {
   const text = Array.isArray(output)
-    ? output
-        .filter((m: any) => m.role === "assistant")
-        .map((m: any) => extractTextFromMessage(m.content))
+    ? (output as AgentMessage[])
+        .filter((m) => m.role === "assistant")
+        .map((m) => extractTextFromMessage(m.content))
         .join(" ")
         .trim()
     : String(output).trim();
 
   // Agents output exactly one JSON object — try parsing the full text first.
   try {
-    const parsed = JSON.parse(text);
+    const parsed = JSON.parse(text) as Record<string, unknown>;
     if (parsed[fieldName] !== undefined) return String(parsed[fieldName]);
   } catch {
     // not valid JSON — fall through to regex extraction
@@ -58,7 +63,7 @@ export function extractJsonFieldFromOutput(
   const match = text.match(/\{[\s\S]*\}/);
   if (!match) return null;
   try {
-    const parsed = JSON.parse(match[0]);
+    const parsed = JSON.parse(match[0]) as Record<string, unknown>;
     return parsed[fieldName] !== undefined ? String(parsed[fieldName]) : null;
   } catch {
     return null;
@@ -86,7 +91,7 @@ export function createJsonFieldScorer(fieldName: string) {
       return { score: value === groundTruth ? 1 : 0 };
     })
     .generateScore(({ results }) => {
-      return (results.analyzeStepResult as any).score as number;
+      return (results.analyzeStepResult as { score: number }).score;
     });
 }
 
@@ -101,10 +106,16 @@ export type ItemSummary = { expected: string; actual: string | null; passed: boo
  * detailed FAIL trace, and appends the result to `acc`.
  */
 export function makeOnItemComplete(fieldName: string, scorerId: string, acc: ItemSummary[]) {
-  return ({ item, scorerResults }: { item: any; scorerResults: any }) => {
-    const result = scorerResults[scorerId] as any;
+  return ({
+    item,
+    scorerResults,
+  }: {
+    item: { groundTruth?: string };
+    scorerResults: Record<string, ScorerResult>;
+  }) => {
+    const result = scorerResults[scorerId];
     const passed = (result?.score ?? 0) === 1;
-    const expected = item.groundTruth as string;
+    const expected = item.groundTruth ?? "";
     const actual = extractJsonFieldFromOutput(result?.output as ScorerRunOutputForAgent, fieldName);
 
     acc.push({ expected, actual, passed });

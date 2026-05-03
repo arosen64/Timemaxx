@@ -386,7 +386,7 @@ export async function runChatToolCallsEval() {
   }
 
   let totalItems = 0;
-  const allScores: Record<string, any> = {};
+  const allScores: Record<string, unknown> = {};
 
   if (taskTestData.length > 0) {
     console.log("  [taskAgent — actionType]");
