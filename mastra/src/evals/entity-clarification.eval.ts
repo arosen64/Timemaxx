@@ -149,10 +149,7 @@ export async function runEntityClarificationEval() {
   let totalItems = 0;
   const allScores: Record<string, unknown> = {};
 
-  const runGroup = async (
-    label: string,
-    data: Array<{ input: string; groundTruth: string }>
-  ) => {
+  const runGroup = async (label: string, data: Array<{ input: string; groundTruth: string }>) => {
     if (data.length === 0) return;
     console.log(`  [${label}]`);
     const acc: ItemSummary[] = [];
