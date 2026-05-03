@@ -451,7 +451,10 @@ describe("selectAllSlotsWithAI", () => {
       status: "success",
       steps: {
         "slot-selection": {
-          output: { selections: [0], overallSkipReason: "Schedule too full before these deadlines." },
+          output: {
+            selections: [0],
+            overallSkipReason: "Schedule too full before these deadlines.",
+          },
         },
       },
     });
@@ -459,7 +462,10 @@ describe("selectAllSlotsWithAI", () => {
       [{ taskTitle: "Task A", dueDate: DUE, cannotSchedule: true, candidates: [] }],
       null
     );
-    expect(result).toEqual({ indices: [0], overallSkipReason: "Schedule too full before these deadlines." });
+    expect(result).toEqual({
+      indices: [0],
+      overallSkipReason: "Schedule too full before these deadlines.",
+    });
   });
 
   test("falls back to all zeros when workflow run status is failed", async () => {

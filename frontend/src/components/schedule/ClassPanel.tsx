@@ -1,9 +1,18 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useQuery, useAction, useMutation } from "convex/react";
 import { api } from "../../../../backend/convex/_generated/api";
 import type { Id } from "../../../../backend/convex/_generated/dataModel";
-import { ChevronLeftIcon, ChevronRightIcon, SpinnerIcon, CalendarIcon, SplitIcon } from "../icons";
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  SpinnerIcon,
+  CalendarIcon,
+  SplitIcon,
+  PencilIcon,
+  CheckIcon,
+} from "../icons";
 import { isPastTerm } from "../../utils/termUtils";
+import { toLocalISODate, localDateInputToMs } from "../../utils/dateUtils";
 
 const OTHER_COURSE_KEY = "__none__";
 
@@ -136,6 +145,12 @@ export default function ClassPanel({
   const [splitErrors, setSplitErrors] = useState<Map<Id<"studyBlocks">, string>>(new Map());
 
   const splitStudyBlockMutation = useMutation(api.mutations.studyBlocks.splitStudyBlock);
+  const updateRecommendedStartMutation = useMutation(api.mutations.tasks.updateRecommendedStart);
+
+  const [isEditingStart, setIsEditingStart] = useState(false);
+  const [startDateInput, setStartDateInput] = useState("");
+  const [startDateError, setStartDateError] = useState<string | null>(null);
+  const [isSavingStart, setIsSavingStart] = useState(false);
 
   const courses = useQuery(api.queries.userCourses.getUserCourses);
   // getTasksByCourseId drives the task-list drill-down; skipped until a course is selected.
@@ -163,7 +178,7 @@ export default function ClassPanel({
     [courses]
   );
 
-  const tasksForSelectedCourse = courseTasks ?? [];
+  const tasksForSelectedCourse = useMemo(() => courseTasks ?? [], [courseTasks]);
 
   const selectedTask = useMemo(
     () => tasksForSelectedCourse.find((t) => t._id === selectedTaskId) ?? null,
@@ -291,6 +306,53 @@ export default function ClassPanel({
       setSelectedTaskId(null);
     } else {
       setSelectedCourseId(null);
+    }
+  }
+
+  useEffect(() => {
+    setIsEditingStart(false);
+    setStartDateInput("");
+    setStartDateError(null);
+  }, [selectedTaskId]);
+
+  function openStartEdit() {
+    if (!selectedTask) return;
+    const ms = selectedTask.recommendedStart
+      ? Math.max(selectedTask.recommendedStart, Date.now())
+      : Date.now();
+    setStartDateInput(toLocalISODate(ms));
+    setStartDateError(null);
+    setIsEditingStart(true);
+  }
+
+  async function handleSaveStart() {
+    if (!selectedTaskId || !startDateInput) return;
+    setIsSavingStart(true);
+    setStartDateError(null);
+    try {
+      await updateRecommendedStartMutation({
+        taskId: selectedTaskId,
+        recommendedStart: localDateInputToMs(startDateInput),
+      });
+      setIsEditingStart(false);
+    } catch (e) {
+      setStartDateError(e instanceof Error ? e.message : "Failed to save.");
+    } finally {
+      setIsSavingStart(false);
+    }
+  }
+
+  async function handleResetStart() {
+    if (!selectedTaskId) return;
+    setIsSavingStart(true);
+    setStartDateError(null);
+    try {
+      await updateRecommendedStartMutation({ taskId: selectedTaskId, recommendedStart: null });
+      setIsEditingStart(false);
+    } catch (e) {
+      setStartDateError(e instanceof Error ? e.message : "Failed to reset.");
+    } finally {
+      setIsSavingStart(false);
     }
   }
 
@@ -448,6 +510,89 @@ export default function ClassPanel({
       {!isCollapsed && (
         <>
           <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3">
+            {/* Suggested Start Date */}
+            <div className="rounded-lg border border-border bg-card px-3 py-2">
+              {!isEditingStart ? (
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-semibold tracking-wider text-light-blue">
+                    SUGGESTED START
+                  </span>
+                  <button
+                    type="button"
+                    onClick={openStartEdit}
+                    disabled={Date.now() >= selectedTask.dueDate}
+                    aria-label="Edit suggested start date"
+                    className="flex items-center gap-1 text-[11px] font-medium text-navy hover:text-teal disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    <span>
+                      {selectedTask.recommendedStart !== undefined
+                        ? new Date(selectedTask.recommendedStart).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                            timeZone: timezone,
+                          })
+                        : "Not set"}
+                    </span>
+                    <PencilIcon color="currentColor" size={10} />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  <span className="text-[10px] font-semibold tracking-wider text-light-blue">
+                    SUGGESTED START
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      type="date"
+                      data-testid="suggested-start-input"
+                      value={startDateInput}
+                      min={toLocalISODate(Date.now() - 86_400_000)}
+                      max={toLocalISODate(
+                        new Date(
+                          new Date(selectedTask.dueDate).getFullYear(),
+                          new Date(selectedTask.dueDate).getMonth(),
+                          new Date(selectedTask.dueDate).getDate() - 1
+                        ).getTime()
+                      )}
+                      onChange={(e) => {
+                        setStartDateInput(e.target.value);
+                        setStartDateError(null);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Escape") setIsEditingStart(false);
+                        if (e.key === "Enter") handleSaveStart();
+                      }}
+                      className="h-7 flex-1 rounded border border-border bg-bg-gray px-2 font-body text-[11px] text-navy outline-none focus:border-teal"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleSaveStart}
+                      disabled={isSavingStart || !startDateInput}
+                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded bg-navy text-white hover:bg-navy/90 disabled:opacity-40"
+                      aria-label="Save suggested start date"
+                    >
+                      {isSavingStart ? (
+                        <SpinnerIcon color="currentColor" size={10} />
+                      ) : (
+                        <CheckIcon color="currentColor" size={10} />
+                      )}
+                    </button>
+                  </div>
+                  {startDateError && (
+                    <p className="text-[10px] text-urgent-red">{startDateError}</p>
+                  )}
+                  <button
+                    type="button"
+                    onClick={handleResetStart}
+                    disabled={isSavingStart}
+                    className="text-left text-[10px] text-light-blue hover:text-slate-blue disabled:opacity-40"
+                  >
+                    Reset to default
+                  </button>
+                </div>
+              )}
+            </div>
+
             {subtasks === undefined ? (
               <div className="flex items-center justify-center py-8">
                 <SpinnerIcon color="#4E6A8C" size={14} />

@@ -1040,26 +1040,26 @@
                       "descendants": {
                         "xSyvj": {
                           "x": 18,
-                          "y": 18
+                          "y": 16
                         },
                         "irAAT": {
                           "width": "fit_content",
                           "height": "fit_content",
                           "x": 36,
-                          "y": 16
+                          "y": 17.5
                         },
                         "x5jOH": {
                           "content": "Calculus Problem Set 5"
                         },
                         "ks9wy": {
                           "content": "Due tomorrow · ~2.5 hrs estimated",
-                          "y": 3.5
+                          "y": 22
                         },
                         "fwllh": {
                           "width": "fit_content",
                           "height": "fit_content",
-                          "x": 295,
-                          "y": 27
+                          "x": 247,
+                          "y": 25
                         },
                         "fwllh/RDasw": {
                           "x": 10,
@@ -1075,25 +1075,25 @@
                       "width": "fill_container",
                       "height": "fit_content",
                       "x": 0,
-                      "y": 128,
+                      "y": 124,
                       "descendants": {
                         "xSyvj": {
                           "fill": "$--info",
                           "x": 18,
-                          "y": 18
+                          "y": 16
                         },
                         "irAAT": {
                           "width": "fit_content",
                           "height": "fit_content",
                           "x": 36,
-                          "y": 16
+                          "y": 17.5
                         },
                         "x5jOH": {
                           "content": "History Essay: Industrial Revolution"
                         },
                         "ks9wy": {
                           "content": "Due in 3 days · ~4 hrs estimated",
-                          "y": 3.5
+                          "y": 22
                         },
                         "fwllh": {
                           "id": "n87Ra",
@@ -1103,7 +1103,7 @@
                           "width": "fit_content",
                           "height": "fit_content",
                           "x": 290,
-                          "y": 27,
+                          "y": 25,
                           "descendants": {
                             "adDaz": {
                               "x": 10,
@@ -1121,25 +1121,25 @@
                       "width": "fill_container",
                       "height": "fit_content",
                       "x": 0,
-                      "y": 220,
+                      "y": 212,
                       "descendants": {
                         "xSyvj": {
                           "fill": "$--success",
                           "x": 18,
-                          "y": 18
+                          "y": 16
                         },
                         "irAAT": {
                           "width": "fit_content",
                           "height": "fit_content",
                           "x": 36,
-                          "y": 16
+                          "y": 17.5
                         },
                         "x5jOH": {
                           "content": "Chemistry Lab Report"
                         },
                         "ks9wy": {
                           "content": "Due in 5 days · ~3 hrs estimated",
-                          "y": 3.5
+                          "y": 22
                         },
                         "fwllh": {
                           "id": "j9AjD",
@@ -1148,8 +1148,8 @@
                           "name": "badge",
                           "width": "fit_content",
                           "height": "fit_content",
-                          "x": 281,
-                          "y": 27,
+                          "x": 233,
+                          "y": 25,
                           "descendants": {
                             "ezeW9": {
                               "x": 10,
@@ -1636,26 +1636,26 @@
                       "descendants": {
                         "xSyvj": {
                           "x": 18,
-                          "y": 18
+                          "y": 16
                         },
                         "irAAT": {
                           "width": "fit_content",
                           "height": "fit_content",
                           "x": 36,
-                          "y": 16
+                          "y": 17.5
                         },
                         "x5jOH": {
                           "content": "Calculus Problem Set 5"
                         },
                         "ks9wy": {
                           "content": "Due tomorrow · ~2.5 hrs estimated",
-                          "y": 3.5
+                          "y": 22
                         },
                         "fwllh": {
                           "width": "fit_content",
                           "height": "fit_content",
-                          "x": 295,
-                          "y": 27
+                          "x": 247,
+                          "y": 25
                         },
                         "fwllh/RDasw": {
                           "x": 10,
@@ -1671,25 +1671,25 @@
                       "width": "fill_container",
                       "height": "fit_content",
                       "x": 0,
-                      "y": 128,
+                      "y": 124,
                       "descendants": {
                         "xSyvj": {
                           "fill": "$--info",
                           "x": 18,
-                          "y": 18
+                          "y": 16
                         },
                         "irAAT": {
                           "width": "fit_content",
                           "height": "fit_content",
                           "x": 36,
-                          "y": 16
+                          "y": 17.5
                         },
                         "x5jOH": {
                           "content": "History Essay: Industrial Revolution"
                         },
                         "ks9wy": {
                           "content": "Due in 3 days · ~4 hrs estimated",
-                          "y": 3.5
+                          "y": 22
                         },
                         "fwllh": {
                           "id": "5JriD",
@@ -1699,7 +1699,7 @@
                           "width": "fit_content",
                           "height": "fit_content",
                           "x": 290,
-                          "y": 27,
+                          "y": 25,
                           "descendants": {
                             "adDaz": {
                               "x": 10,
@@ -1717,25 +1717,25 @@
                       "width": "fill_container",
                       "height": "fit_content",
                       "x": 0,
-                      "y": 220,
+                      "y": 212,
                       "descendants": {
                         "xSyvj": {
                           "fill": "$--success",
                           "x": 18,
-                          "y": 18
+                          "y": 16
                         },
                         "irAAT": {
                           "width": "fit_content",
                           "height": "fit_content",
                           "x": 36,
-                          "y": 16
+                          "y": 17.5
                         },
                         "x5jOH": {
                           "content": "Chemistry Lab Report"
                         },
                         "ks9wy": {
                           "content": "Due in 5 days · ~3 hrs estimated",
-                          "y": 3.5
+                          "y": 22
                         },
                         "fwllh": {
                           "id": "SviJc",
@@ -1744,8 +1744,8 @@
                           "name": "badge",
                           "width": "fit_content",
                           "height": "fit_content",
-                          "x": 281,
-                          "y": 27,
+                          "x": 233,
+                          "y": 25,
                           "descendants": {
                             "ezeW9": {
                               "x": 10,
@@ -3585,26 +3585,26 @@
               "descendants": {
                 "xSyvj": {
                   "x": 18,
-                  "y": 18
+                  "y": 16
                 },
                 "irAAT": {
                   "width": "fit_content",
                   "height": "fit_content",
                   "x": 36,
-                  "y": 16
+                  "y": 17.5
                 },
                 "x5jOH": {
                   "content": "Calculus Problem Set 5"
                 },
                 "ks9wy": {
                   "content": "Due tomorrow · ~2.5 hrs estimated",
-                  "y": 3.5
+                  "y": 22
                 },
                 "fwllh": {
                   "width": "fit_content",
                   "height": "fit_content",
-                  "x": 295,
-                  "y": 27
+                  "x": 247,
+                  "y": 25
                 },
                 "fwllh/RDasw": {
                   "x": 10,
@@ -5222,8 +5222,8 @@
           "name": "badge",
           "width": "fit_content",
           "height": "fit_content",
-          "x": 295,
-          "y": 27,
+          "x": 247,
+          "y": 25,
           "descendants": {
             "RDasw": {
               "x": 10,
@@ -22929,8 +22929,7 @@
           "fill": "$--muted-foreground",
           "content": "Apr 25",
           "fontFamily": "Inter",
-          "fontSize": 10,
-          "fontWeight": "normal"
+          "fontSize": 10
         }
       ]
     },
@@ -23001,8 +23000,7 @@
               "fill": "$--accent",
               "content": "Apr 25",
               "fontFamily": "Inter",
-              "fontSize": 10,
-              "fontWeight": "normal"
+              "fontSize": 10
             }
           ]
         }
@@ -23047,8 +23045,7 @@
           "fill": "$--muted-foreground",
           "content": "Select a task to schedule",
           "fontFamily": "Inter",
-          "fontSize": 12,
-          "fontWeight": "normal"
+          "fontSize": 12
         },
         {
           "type": "frame",
@@ -23204,8 +23201,7 @@
                   "fill": "$--primary",
                   "content": "Outline methodology",
                   "fontFamily": "Inter",
-                  "fontSize": 12,
-                  "fontWeight": "normal"
+                  "fontSize": 12
                 },
                 {
                   "type": "text",
@@ -23250,8 +23246,7 @@
                   "fill": "$--primary",
                   "content": "Write results section",
                   "fontFamily": "Inter",
-                  "fontSize": 12,
-                  "fontWeight": "normal"
+                  "fontSize": 12
                 },
                 {
                   "type": "text",
@@ -23357,8 +23352,7 @@
                       "fill": "$--muted-foreground",
                       "content": "60 min",
                       "fontFamily": "Inter",
-                      "fontSize": 10,
-                      "fontWeight": "normal"
+                      "fontSize": 10
                     }
                   ]
                 }
@@ -23796,8 +23790,7 @@
                           "fill": "$--muted-foreground",
                           "content": "Select a task to schedule",
                           "fontFamily": "Inter",
-                          "fontSize": 11,
-                          "fontWeight": "normal"
+                          "fontSize": 11
                         },
                         {
                           "type": "frame",
@@ -23850,6 +23843,157 @@
     },
     {
       "type": "frame",
+      "id": "SSR01",
+      "x": 12800,
+      "y": 2800,
+      "name": "TaskMetaRow/SuggestedStart",
+      "reusable": true,
+      "width": 240,
+      "fill": "$--card",
+      "gap": 8,
+      "padding": [8, 12],
+      "alignItems": "center",
+      "justifyContent": "space_between",
+      "children": [
+        {
+          "type": "text",
+          "id": "SSR02",
+          "name": "label",
+          "fill": "$--muted-foreground",
+          "content": "Suggested Start Date",
+          "fontFamily": "Space Grotesk",
+          "fontSize": 11,
+          "fontWeight": "600"
+        },
+        {
+          "type": "frame",
+          "id": "SSR03",
+          "name": "valueGroup",
+          "gap": 4,
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "SSR04",
+              "name": "value",
+              "fill": "$--primary",
+              "content": "Apr 14",
+              "fontFamily": "Inter",
+              "fontSize": 11,
+              "fontWeight": "500"
+            },
+            {
+              "type": "icon_font",
+              "id": "SSR05",
+              "name": "editIcon",
+              "width": 12,
+              "height": 12,
+              "iconFontName": "pencil",
+              "iconFontFamily": "lucide",
+              "fill": "$--muted-foreground"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "SSR10",
+      "x": 12800,
+      "y": 2880,
+      "name": "TaskMetaRow/SuggestedStart/Editing",
+      "reusable": true,
+      "width": 240,
+      "fill": "$--card",
+      "layout": "vertical",
+      "gap": 4,
+      "padding": [8, 12],
+      "children": [
+        {
+          "type": "text",
+          "id": "SSR11",
+          "name": "label",
+          "fill": "$--muted-foreground",
+          "content": "Suggested Start Date",
+          "fontFamily": "Space Grotesk",
+          "fontSize": 11,
+          "fontWeight": "600"
+        },
+        {
+          "type": "frame",
+          "id": "SSR12",
+          "name": "inputRow",
+          "width": "fill_container",
+          "gap": 6,
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "SSR13",
+              "name": "dateInput",
+              "height": 28,
+              "width": "fill_container",
+              "fill": "$--background",
+              "cornerRadius": 6,
+              "stroke": {
+                "align": "inside",
+                "thickness": 1,
+                "fill": "$--border"
+              },
+              "padding": [0, 8],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "SSR14",
+                  "name": "inputValue",
+                  "fill": "$--primary",
+                  "content": "Apr 14",
+                  "fontFamily": "Inter",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "SSR15",
+              "name": "saveBtn",
+              "width": 28,
+              "height": 28,
+              "fill": "$--primary",
+              "cornerRadius": 6,
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "SSR16",
+                  "name": "saveIcon",
+                  "width": 12,
+                  "height": 12,
+                  "iconFontName": "check",
+                  "iconFontFamily": "lucide",
+                  "fill": "$--primary-foreground"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "id": "SSR17",
+          "name": "resetLink",
+          "fill": "$--muted-foreground",
+          "content": "Reset to default",
+          "fontFamily": "Inter",
+          "fontSize": 10,
+          "fontWeight": "normal"
+        }
+      ]
+    },
+    {
+      "type": "frame",
       "id": "TRC01",
       "x": 8900,
       "y": 0,
@@ -23864,42 +24008,40 @@
         "fill": "$--border"
       },
       "gap": 14,
-      "padding": [
-        16,
-        18
-      ],
+      "padding": [16, 18],
+      "alignItems": "flex_start",
       "children": [
         {
           "type": "frame",
           "id": "TRC02",
           "name": "accentBar",
           "width": 4,
-          "height": "fit_content(0)",
           "fill": "$--accent",
-          "cornerRadius": 2
+          "cornerRadius": 2,
+          "alignSelf": "stretch"
         },
         {
           "type": "frame",
           "id": "TRC03",
           "name": "body",
-          "width": "fill_container",
           "layout": "vertical",
           "gap": 10,
+          "width": "fill_container",
           "children": [
             {
               "type": "frame",
               "id": "TRC04",
               "name": "titleRow",
-              "width": "fill_container",
               "gap": 8,
               "alignItems": "center",
+              "width": "fill_container",
               "children": [
                 {
                   "type": "frame",
                   "id": "TRC05",
                   "name": "titleInput",
-                  "width": "fill_container",
                   "height": 36,
+                  "width": "fill_container",
                   "fill": "$--background",
                   "cornerRadius": 6,
                   "stroke": {
@@ -23907,10 +24049,7 @@
                     "thickness": 1,
                     "fill": "$--border"
                   },
-                  "padding": [
-                    0,
-                    12
-                  ],
+                  "padding": [0, 12],
                   "alignItems": "center",
                   "children": [
                     {
@@ -23955,6 +24094,7 @@
               "id": "TRC09",
               "name": "dateTypeRow",
               "gap": 10,
+              "alignItems": "flex_end",
               "children": [
                 {
                   "type": "frame",
@@ -23978,7 +24118,7 @@
                       "type": "ref",
                       "ref": "DTPk1",
                       "name": "datetimePicker",
-                      "width": "fit_content(0)",
+                      "width": "fit_content",
                       "height": "fit_content"
                     }
                   ]
@@ -23995,10 +24135,7 @@
                     "thickness": 1,
                     "fill": "$--border"
                   },
-                  "padding": [
-                    0,
-                    10
-                  ],
+                  "padding": [0, 10],
                   "alignItems": "center",
                   "children": [
                     {
@@ -24045,10 +24182,7 @@
                     "thickness": 1,
                     "fill": "$--border"
                   },
-                  "padding": [
-                    0,
-                    8
-                  ],
+                  "padding": [0, 8],
                   "alignItems": "center",
                   "children": [
                     {
@@ -24101,18 +24235,19 @@
           "type": "frame",
           "id": "SR003",
           "name": "main",
-          "width": "fill_container",
-          "height": "fill_container",
           "layout": "vertical",
           "gap": 28,
           "padding": 40,
+          "width": "fill_container",
+          "height": "fill_container",
           "children": [
             {
               "type": "frame",
               "id": "SR004",
               "name": "pageHeader",
-              "width": "fill_container",
               "justifyContent": "space_between",
+              "alignItems": "flex_start",
+              "width": "fill_container",
               "children": [
                 {
                   "type": "frame",
@@ -24149,11 +24284,8 @@
                   "name": "readyBadge",
                   "fill": "$--success-bg",
                   "cornerRadius": 8,
+                  "padding": [6, 12],
                   "gap": 6,
-                  "padding": [
-                    6,
-                    12
-                  ],
                   "alignItems": "center",
                   "children": [
                     {
@@ -24184,9 +24316,9 @@
               "type": "frame",
               "id": "SR011",
               "name": "taskList",
-              "width": "fill_container",
               "layout": "vertical",
               "gap": 12,
+              "width": "fill_container",
               "children": [
                 {
                   "id": "SR012",
@@ -24196,12 +24328,8 @@
                   "width": "fill_container",
                   "height": "fit_content",
                   "descendants": {
-                    "TRC06": {
-                      "content": "Midterm Exam"
-                    },
-                    "TRC18": {
-                      "content": "25"
-                    }
+                    "TRC06": { "content": "Midterm Exam" },
+                    "TRC18": { "content": "25" }
                   }
                 },
                 {
@@ -24212,12 +24340,8 @@
                   "width": "fill_container",
                   "height": "fit_content",
                   "descendants": {
-                    "TRC06": {
-                      "content": "Problem Set 3"
-                    },
-                    "TRC18": {
-                      "content": "5"
-                    }
+                    "TRC06": { "content": "Problem Set 3" },
+                    "TRC18": { "content": "5" }
                   }
                 },
                 {
@@ -24234,7 +24358,6 @@
               "type": "frame",
               "id": "SR015",
               "name": "actionBar",
-              "width": "fill_container",
               "fill": "$--card",
               "cornerRadius": 8,
               "stroke": {
@@ -24242,12 +24365,10 @@
                 "thickness": 1,
                 "fill": "$--border"
               },
-              "padding": [
-                16,
-                20
-              ],
+              "padding": [16, 20],
               "justifyContent": "space_between",
               "alignItems": "center",
+              "width": "fill_container",
               "children": [
                 {
                   "type": "text",

@@ -157,6 +157,22 @@ export const updateTask = mutation({
       recommendedStart: computeRecommendedStart(Date.now(), args.dueDate),
     });
 
+    // Cascade title change to all task-level study blocks
+    if (args.title !== task.title) {
+      const blocks = await ctx.db
+        .query("studyBlocks")
+        .withIndex("by_taskId", (q) => q.eq("taskId", args.taskId))
+        .collect();
+      await Promise.all(
+        blocks.map((b) =>
+          ctx.db.patch(b._id, {
+            title: args.title,
+            ...(b.googleEventId ? { needsExport: true } : {}),
+          })
+        )
+      );
+    }
+
     // Cascade dueDate change to child subtasks and recompute suggestedCompletionAt
     if (args.dueDate !== task.dueDate) {
       const subtasks = await ctx.db
@@ -269,6 +285,24 @@ export const patchTaskFieldsInternal = internalMutation({
     }
     if (args.assignmentWeight !== undefined) patch.assignmentWeight = args.assignmentWeight;
     await ctx.db.patch(args.taskId, patch);
+
+    // Cascade title change to all task-level study blocks
+    if (args.title !== undefined && args.title !== task.title) {
+      const newTitle = args.title;
+      const blocks = await ctx.db
+        .query("studyBlocks")
+        .withIndex("by_taskId", (q) => q.eq("taskId", args.taskId))
+        .collect();
+      await Promise.all(
+        blocks.map((b) =>
+          ctx.db.patch(b._id, {
+            title: newTitle,
+            ...(b.googleEventId ? { needsExport: true } : {}),
+          })
+        )
+      );
+    }
+
     if (
       process.env.GEMINI_API_KEY &&
       (args.title !== undefined || args.description !== undefined)
@@ -423,6 +457,41 @@ export const updateTaskStatus = mutation({
         }
       }
     }
+  },
+});
+
+// One-day buffer so a "today" date picked late in the day (whose midnight is slightly
+// in the past after localDateInputToMs converts it) is still accepted.
+const ONE_DAY_MS = 86_400_000;
+
+export const updateRecommendedStart = mutation({
+  args: {
+    taskId: v.id("tasks"),
+    recommendedStart: v.union(v.number(), v.null()),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Unauthenticated");
+
+    const task = await ctx.db.get(args.taskId);
+    if (!task || task.userId !== userId) throw new Error("Task not found");
+
+    let newRecommendedStart: number;
+    if (args.recommendedStart === null) {
+      newRecommendedStart = computeRecommendedStart(Date.now(), task.dueDate);
+    } else {
+      if (args.recommendedStart < Date.now() - ONE_DAY_MS) {
+        throw new Error("Suggested start date cannot be in the past.");
+      }
+      if (args.recommendedStart >= task.dueDate) {
+        throw new Error("Suggested start date must be before the due date.");
+      }
+      newRecommendedStart = args.recommendedStart;
+    }
+
+    await ctx.db.patch(args.taskId, { recommendedStart: newRecommendedStart });
+    return null;
   },
 });
 
