@@ -21,7 +21,7 @@ const evals = [
 ];
 
 async function main() {
-  console.log("=== TimeMaxx Mastra Eval Suite ===\n");
+  console.log("TimeMaxx Mastra Eval Suite\n");
 
   for (const { name, run } of evals) {
     console.log(`\n--- Running: ${name} ---`);
