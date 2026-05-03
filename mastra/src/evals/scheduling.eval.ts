@@ -772,7 +772,13 @@ export async function runSchedulingEval(): Promise<{
       console.log(r.passed ? "PASS" : `FAIL — ${r.detail}`);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      results.push({ name: scenario.name, passed: false, selections: [], acceptable: scenario.acceptable, detail: msg });
+      results.push({
+        name: scenario.name,
+        passed: false,
+        selections: [],
+        acceptable: scenario.acceptable,
+        detail: msg,
+      });
       console.log(`ERROR — ${msg}`);
     }
   }
@@ -781,7 +787,9 @@ export async function runSchedulingEval(): Promise<{
   const total = results.length;
   const passRate = total > 0 ? passed / total : 0;
 
-  console.log(`\n  Result: ${passed}/${total} scenarios passed (pass rate: ${(passRate * 100).toFixed(0)}%)`);
+  console.log(
+    `\n  Result: ${passed}/${total} scenarios passed (pass rate: ${(passRate * 100).toFixed(0)}%)`
+  );
 
   const scores = Object.fromEntries(results.map((r) => [r.name, r.passed ? 1 : 0]));
   return { scores, summary: { totalItems: total } };

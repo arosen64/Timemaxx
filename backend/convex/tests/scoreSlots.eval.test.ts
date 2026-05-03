@@ -61,7 +61,11 @@ describe("scoring rubric — parameter documentation", () => {
   });
 
   test("daily load penalty: -1 per block, capped at -3", () => {
-    const opts = { ...base, timeOfDayRanges: [] as [number, number][], dayOfWeekPrefs: [] as string[] };
+    const opts = {
+      ...base,
+      timeOfDayRanges: [] as [number, number][],
+      dayOfWeekPrefs: [] as string[],
+    };
     expect(scoreCandidate({ ...opts, dailyLoadCount: 0 }).scoreBreakdown.dailyLoadPenalty).toBe(0);
     expect(scoreCandidate({ ...opts, dailyLoadCount: 1 }).scoreBreakdown.dailyLoadPenalty).toBe(-1);
     expect(scoreCandidate({ ...opts, dailyLoadCount: 2 }).scoreBreakdown.dailyLoadPenalty).toBe(-2);
@@ -249,8 +253,16 @@ describe("scenario 2 — overlapping blocks / buffer comfort", () => {
   });
 
   test("comfortable slot ranks 1 point higher than sandwiched slot, all else equal", () => {
-    const comfortable = scoreCandidate({ ...base, minutesSincePreviousEvent: 30, minutesUntilNextEvent: 30 });
-    const sandwiched = scoreCandidate({ ...base, minutesSincePreviousEvent: 5, minutesUntilNextEvent: 30 });
+    const comfortable = scoreCandidate({
+      ...base,
+      minutesSincePreviousEvent: 30,
+      minutesUntilNextEvent: 30,
+    });
+    const sandwiched = scoreCandidate({
+      ...base,
+      minutesSincePreviousEvent: 5,
+      minutesUntilNextEvent: 30,
+    });
     expect(comfortable.score - sandwiched.score).toBe(1);
   });
 });
@@ -347,9 +359,7 @@ describe("scenario 4 — large task load / daily load penalty", () => {
   });
 
   test("each additional block reduces score by 1 (up to 3 blocks)", () => {
-    const scores = [0, 1, 2, 3].map(
-      (n) => scoreCandidate({ ...base, dailyLoadCount: n }).score
-    );
+    const scores = [0, 1, 2, 3].map((n) => scoreCandidate({ ...base, dailyLoadCount: n }).score);
     expect(scores[0] - scores[1]).toBe(1);
     expect(scores[1] - scores[2]).toBe(1);
     expect(scores[2] - scores[3]).toBe(1);
@@ -440,19 +450,47 @@ describe("scenario 5 — mixed priorities / difficulty bonus", () => {
   });
 
   test("hard-course slot during preferred hours scores 1 point higher than easy-course slot", () => {
-    const hardCourse = scoreCandidate({ ...base, precomputed: morningPrecomputed, timeOfDayRanges: morningRange, difficultyRating: 5 });
-    const easyCourse = scoreCandidate({ ...base, precomputed: morningPrecomputed, timeOfDayRanges: morningRange, difficultyRating: 2 });
+    const hardCourse = scoreCandidate({
+      ...base,
+      precomputed: morningPrecomputed,
+      timeOfDayRanges: morningRange,
+      difficultyRating: 5,
+    });
+    const easyCourse = scoreCandidate({
+      ...base,
+      precomputed: morningPrecomputed,
+      timeOfDayRanges: morningRange,
+      difficultyRating: 2,
+    });
     expect(hardCourse.score - easyCourse.score).toBe(1);
   });
 
   test("sorting mixed-priority slots by score puts hard-course preferred-hour slot first", () => {
     const slots = [
       // easy course, off-peak, preferred day
-      scoreCandidate({ ...base, precomputed: afternoonPrecomputed, timeOfDayRanges: morningRange, dayOfWeekPrefs: ["Monday"], difficultyRating: 2 }),
+      scoreCandidate({
+        ...base,
+        precomputed: afternoonPrecomputed,
+        timeOfDayRanges: morningRange,
+        dayOfWeekPrefs: ["Monday"],
+        difficultyRating: 2,
+      }),
       // hard course, preferred hours
-      scoreCandidate({ ...base, precomputed: morningPrecomputed, timeOfDayRanges: morningRange, dayOfWeekPrefs: [], difficultyRating: 5 }),
+      scoreCandidate({
+        ...base,
+        precomputed: morningPrecomputed,
+        timeOfDayRanges: morningRange,
+        dayOfWeekPrefs: [],
+        difficultyRating: 5,
+      }),
       // no preferences
-      scoreCandidate({ ...base, precomputed: afternoonPrecomputed, timeOfDayRanges: morningRange, dayOfWeekPrefs: [], difficultyRating: 2 }),
+      scoreCandidate({
+        ...base,
+        precomputed: afternoonPrecomputed,
+        timeOfDayRanges: morningRange,
+        dayOfWeekPrefs: [],
+        difficultyRating: 2,
+      }),
     ];
     const sorted = [...slots].sort((a, b) => b.score - a.score);
     // Hard course during preferred hours (timeOfDayMatch=2, difficultyBonus=1 = score 3+) should win
