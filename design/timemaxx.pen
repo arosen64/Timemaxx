@@ -4615,6 +4615,28 @@
           "height": "fit_content",
           "x": 60,
           "y": 2704
+        },
+        {
+          "type": "text",
+          "id": "M0F68W",
+          "x": 60,
+          "y": 2750,
+          "name": "loadingLabel",
+          "fill": "$--foreground",
+          "content": "Loading / Parsing",
+          "fontFamily": "Space Grotesk",
+          "fontSize": 13,
+          "fontWeight": "600"
+        },
+        {
+          "id": "WU2pA",
+          "type": "ref",
+          "ref": "dw1ql",
+          "name": "ParsingAnimation",
+          "width": "fit_content",
+          "height": "fit_content",
+          "x": 60,
+          "y": 2774
         }
       ]
     },
@@ -24386,6 +24408,41 @@
               ]
             }
           ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "dw1ql",
+      "x": 13780,
+      "y": -3247,
+      "name": "ParsingAnimation",
+      "reusable": true,
+      "gap": 6,
+      "alignItems": "center",
+      "children": [
+        {
+          "type": "ellipse",
+          "id": "Q1kfOq",
+          "name": "spinner",
+          "fill": "#00000000",
+          "width": 12,
+          "height": 12,
+          "stroke": {
+            "align": "inside",
+            "thickness": 2,
+            "fill": "$--muted-foreground"
+          }
+        },
+        {
+          "type": "text",
+          "id": "eOtux",
+          "name": "phraseText",
+          "fill": "$--muted-foreground",
+          "content": "Meticulously scrutinizing your document…",
+          "fontFamily": "Inter",
+          "fontSize": 12,
+          "fontWeight": "normal"
         }
       ]
     }

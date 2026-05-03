@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useQuery, useAction, useMutation } from "convex/react";
 import { api } from "../../../../backend/convex/_generated/api";
 import type { Id } from "../../../../backend/convex/_generated/dataModel";
@@ -317,7 +317,7 @@ export default function ClassPanel({
     }
   }
 
-  React.useEffect(() => {
+  useEffect(() => {
     setIsEditingStart(false);
     setStartDateInput("");
     setStartDateError(null);

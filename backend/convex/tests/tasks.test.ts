@@ -389,4 +389,68 @@ describe("mutations/tasks – updateRecommendedStart", () => {
       })
     ).rejects.toThrow("Suggested start date cannot be in the past.");
   });
+
+  test("accepts a recommendedStart a few hours in the past (ONE_DAY_MS buffer)", async () => {
+    const t = makeTestCtx();
+    const { withAuth } = await createTestUser(t);
+    const dueDate = Date.now() + 30 * 86_400_000;
+
+    const taskId = await withAuth.mutation(api.mutations.tasks.createTask, {
+      title: "Task",
+      description: "desc",
+      taskType: "Essay",
+      dueDate,
+    });
+
+    // Simulates picking "today" late in the day: midnight of today is a few hours behind now.
+    const todayMidnight = Date.now() - 6 * 3_600_000;
+    await withAuth.mutation(api.mutations.tasks.updateRecommendedStart, {
+      taskId,
+      recommendedStart: todayMidnight,
+    });
+
+    const task = await t.run((ctx) => ctx.db.get(taskId));
+    expect(task!.recommendedStart).toBe(todayMidnight);
+  });
+
+  test("throws when unauthenticated", async () => {
+    const t = makeTestCtx();
+    const { withAuth } = await createTestUser(t);
+    const dueDate = Date.now() + 30 * 86_400_000;
+
+    const taskId = await withAuth.mutation(api.mutations.tasks.createTask, {
+      title: "Task",
+      description: "desc",
+      taskType: "Essay",
+      dueDate,
+    });
+
+    await expect(
+      t.mutation(api.mutations.tasks.updateRecommendedStart, {
+        taskId,
+        recommendedStart: dueDate - 10 * 86_400_000,
+      })
+    ).rejects.toThrow("Unauthenticated");
+  });
+
+  test("throws when task belongs to a different user", async () => {
+    const t = makeTestCtx();
+    const { withAuth: ownerAuth } = await createTestUser(t, { email: "owner@example.com" });
+    const { withAuth: otherAuth } = await createTestUser(t, { email: "other@example.com" });
+    const dueDate = Date.now() + 30 * 86_400_000;
+
+    const taskId = await ownerAuth.mutation(api.mutations.tasks.createTask, {
+      title: "Task",
+      description: "desc",
+      taskType: "Essay",
+      dueDate,
+    });
+
+    await expect(
+      otherAuth.mutation(api.mutations.tasks.updateRecommendedStart, {
+        taskId,
+        recommendedStart: dueDate - 10 * 86_400_000,
+      })
+    ).rejects.toThrow("Task not found");
+  });
 });

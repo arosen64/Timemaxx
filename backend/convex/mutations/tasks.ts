@@ -415,6 +415,8 @@ export const updateTaskStatus = mutation({
   },
 });
 
+// One-day buffer so a "today" date picked late in the day (whose midnight is slightly
+// in the past after localDateInputToMs converts it) is still accepted.
 const ONE_DAY_MS = 86_400_000;
 
 export const updateRecommendedStart = mutation({
@@ -422,6 +424,7 @@ export const updateRecommendedStart = mutation({
     taskId: v.id("tasks"),
     recommendedStart: v.union(v.number(), v.null()),
   },
+  returns: v.null(),
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Unauthenticated");
@@ -443,6 +446,7 @@ export const updateRecommendedStart = mutation({
     }
 
     await ctx.db.patch(args.taskId, { recommendedStart: newRecommendedStart });
+    return null;
   },
 });
 
