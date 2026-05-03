@@ -205,6 +205,90 @@ const testData: Array<{ input: string; groundTruth: RagGroundTruth }> = [
       requiredAll: ["chat"],
     },
   },
+  {
+    input: buildEstimatePrompt({
+      title: "CS 230 Induction Homework",
+      taskType: "Homework",
+      description: "Solve 10 induction proofs with full written justifications.",
+      courseInfo: "CS 230 - Discrete Mathematics",
+      courseContext:
+        "Enrolled courses (most relevant to this task):\n- Code: CS 230 | Title: Discrete Mathematics | Term: Spring 2026 | Difficulty: 4/5",
+      taskContext:
+        'Prior tasks from this student (learn from feedback to calibrate the estimate):\n- Type: Homework | Title: "Proof Worksheet 4" | Description: "Recurrence proofs" | Estimated: 110 min | Feedback: too_low (corrected to 170 min)',
+      chatContext: `Relevant chat history (excerpts from prior conversations):
+- (2026-03-10T14:00:00.000Z) I spent around 3 hours on last week's induction homework.
+- (2026-03-11T18:20:00.000Z) Writing complete proof explanations takes me the longest.`,
+      profileContext: JSON.stringify(
+        {
+          major: "Computer Science",
+          year: "Sophomore",
+          productivityTraits: ["prefers deep-work evenings"],
+        },
+        null,
+        2
+      ),
+    }),
+    groundTruth: {
+      scenario: "uses_retrieved_chat",
+      requiredAny: ["3 hour", "induction", "proof", "takes me the longest"],
+      forbidden: ["no chat history", "none available"],
+    },
+  },
+  {
+    input: buildEstimatePrompt({
+      title: "HIST 210 Reading Notes",
+      taskType: "Reading Notes",
+      description: "Read two chapters and submit bullet-point notes.",
+      courseInfo: "HIST 210 - Modern Europe",
+      courseContext:
+        "Enrolled courses (most relevant to this task):\n- Code: HIST 210 | Title: Modern Europe | Term: Spring 2026 | Difficulty: 2/5",
+      taskContext:
+        'Prior tasks from this student (learn from feedback to calibrate the estimate):\n- Type: Reading Notes | Title: "Week 6 Notes" | Description: "Industrialization chapter notes" | Estimated: 60 min | Feedback: accurate',
+      chatContext: `Relevant chat history (excerpts from prior conversations):
+- (2026-03-25T17:45:00.000Z) History readings are usually straightforward for me and notes take about an hour.
+- (2026-03-26T12:15:00.000Z) I can summarize these chapters quickly compared to my STEM classes.`,
+      profileContext: JSON.stringify(
+        {
+          major: "International Studies",
+          year: "Junior",
+          productivityTraits: ["fast reader", "strong at summarization"],
+        },
+        null,
+        2
+      ),
+    }),
+    groundTruth: {
+      scenario: "uses_retrieved_chat",
+      requiredAny: ["about an hour", "quickly", "history readings", "summarize"],
+      forbidden: ["no chat history", "none available"],
+    },
+  },
+  {
+    input: buildEstimatePrompt({
+      title: "CHEM 135 Quiz Review",
+      taskType: "Quiz Review",
+      description: "Review notes and solve 20 practice questions before tomorrow's quiz.",
+      courseInfo: "CHEM 135 - General Chemistry",
+      courseContext:
+        "Enrolled courses (most relevant to this task):\n- Code: CHEM 135 | Title: General Chemistry | Term: Spring 2026 | Difficulty: 3/5",
+      taskContext:
+        'Prior tasks from this student (learn from feedback to calibrate the estimate):\n- Type: Quiz Review | Title: "Quiz 2 prep" | Description: "Stoichiometry review" | Estimated: 95 min | Feedback: accurate',
+      profileContext: JSON.stringify(
+        {
+          major: "Public Health",
+          year: "Freshman",
+          productivityTraits: ["needs frequent short breaks"],
+        },
+        null,
+        2
+      ),
+    }),
+    groundTruth: {
+      scenario: "no_chat_context",
+      requiredAny: ["no chat", "none", "not available", "without chat history"],
+      requiredAll: ["chat"],
+    },
+  },
 ];
 
 export async function runRagRetrievalEval() {
