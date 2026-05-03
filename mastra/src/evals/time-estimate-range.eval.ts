@@ -113,7 +113,10 @@ Course: WRIT 300: Advanced Academic Writing (Spring 2026)
 
 const SCORER_ID = "time-estimate-range-scorer";
 
-type ScorerResult = { score?: number; analyzeStepResult?: { estimated?: number; groundTruth?: GroundTruth } };
+type ScorerResult = {
+  score?: number;
+  analyzeStepResult?: { estimated?: number; groundTruth?: GroundTruth };
+};
 
 export async function runTimeEstimateRangeEval() {
   if (testData.length === 0) {
@@ -138,7 +141,9 @@ export async function runTimeEstimateRangeEval() {
       const inputStr = typeof item.input === "string" ? item.input : JSON.stringify(item.input);
       const title = inputStr.match(/Title: (.+)/)?.[1] ?? inputStr.slice(0, 50);
       if (passed) {
-        console.log(`    ✓  "${title}" — ${estimated} min in [${range.minMinutes}, ${range.maxMinutes}]  PASS`);
+        console.log(
+          `    ✓  "${title}" — ${estimated} min in [${range.minMinutes}, ${range.maxMinutes}]  PASS`
+        );
       } else {
         console.log(
           `    ✗  "${title}" — got ${estimated ?? "(none)"} min, expected [${range.minMinutes}, ${range.maxMinutes}]  FAIL`
