@@ -1,19 +1,15 @@
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { generateText, Output } from "ai";
 import { z } from "zod";
-import type { GenericActionCtx } from "convex/server";
-import type { DataModel, Id } from "../_generated/dataModel";
-import { estimateCostUsd, recordAiCall, type Provider } from "./aiObservability";
+import {
+  estimateCostUsd,
+  recordAiCall,
+  type AiCallObservability,
+  type Provider,
+} from "./aiObservability";
 
 const MODEL = "gemini-2.5-flash";
 const PROVIDER: Provider = "gemini";
-
-export interface AiCallObservability {
-  ctx: GenericActionCtx<DataModel>;
-  callSite: string;
-  userId?: Id<"users">;
-  metadata?: Record<string, unknown>;
-}
 
 export async function callGemini<T>(opts: {
   system: string;
@@ -61,11 +57,7 @@ export async function callGemini<T>(opts: {
     }
 
     if (opts.obs) {
-      const usage = (
-        result as {
-          usage?: { promptTokens?: number; completionTokens?: number; totalTokens?: number };
-        }
-      ).usage;
+      const { inputTokens, outputTokens } = result.usage;
       await recordAiCall(opts.obs.ctx, {
         userId: opts.obs.userId,
         callSite: opts.obs.callSite,
@@ -73,14 +65,13 @@ export async function callGemini<T>(opts: {
         model: MODEL,
         status: "success",
         latencyMs: Date.now() - startedAt,
-        promptTokens: usage?.promptTokens,
-        completionTokens: usage?.completionTokens,
+        promptTokens: inputTokens,
+        completionTokens: outputTokens,
         totalTokens:
-          usage?.totalTokens ??
-          (usage?.promptTokens !== undefined && usage?.completionTokens !== undefined
-            ? usage.promptTokens + usage.completionTokens
-            : undefined),
-        estimatedCostUsd: estimateCostUsd(MODEL, usage?.promptTokens, usage?.completionTokens),
+          inputTokens !== undefined && outputTokens !== undefined
+            ? inputTokens + outputTokens
+            : undefined,
+        estimatedCostUsd: estimateCostUsd(MODEL, inputTokens, outputTokens),
         promptPreview: `${opts.system}\n\n${opts.prompt}`,
         responsePreview: JSON.stringify(result.output),
         metadata: opts.obs.metadata,

@@ -24,6 +24,13 @@ const ERROR_MESSAGE_LIMIT = 2_000;
 export type Provider = "gemini" | "anthropic" | "mastra";
 export type CallStatus = "success" | "error" | "timeout";
 
+export interface AiCallObservability {
+  ctx: GenericActionCtx<DataModel>;
+  callSite: string;
+  userId?: Id<"users">;
+  metadata?: Record<string, unknown>;
+}
+
 export interface AiCallLogInput {
   userId?: Id<"users">;
   callSite: string;
