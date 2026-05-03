@@ -133,12 +133,7 @@ describe("prioritizeRetrievedChatChunks (RAG re-rank after vector search)", () =
   });
 
   test("moves metadata-overlap chunks before unrelated chunks", () => {
-    const out = prioritizeRetrievedChatChunks(
-      [noLink, linked],
-      new Set([taskA]),
-      new Set(),
-      8
-    );
+    const out = prioritizeRetrievedChatChunks([noLink, linked], new Set([taskA]), new Set(), 8);
     expect(out.map((c) => c._id)).toEqual([linked._id, noLink._id]);
   });
 
@@ -168,7 +163,12 @@ describe("prioritizeRetrievedChatChunks (RAG re-rank after vector search)", () =
       text: "noise b",
     });
     const out = prioritizeRetrievedChatChunks([a, x, b, y], new Set([taskA]), new Set(), 8);
-    expect(out.map((c) => c.text)).toEqual(["first overlap", "second overlap", "noise a", "noise b"]);
+    expect(out.map((c) => c.text)).toEqual([
+      "first overlap",
+      "second overlap",
+      "noise a",
+      "noise b",
+    ]);
   });
 
   test("caps total chunks returned", () => {
@@ -188,7 +188,12 @@ describe("prioritizeRetrievedChatChunks (RAG re-rank after vector search)", () =
         text: `n${i}`,
       })
     );
-    const out = prioritizeRetrievedChatChunks([...noise, ...overlap], new Set([taskA]), new Set(), 8);
+    const out = prioritizeRetrievedChatChunks(
+      [...noise, ...overlap],
+      new Set([taskA]),
+      new Set(),
+      8
+    );
     expect(out).toHaveLength(8);
     // Overlap group first (5 items), then noise until cap (3 items).
     expect(out.slice(0, 5).every((c) => c.linkedTaskIds.includes(taskA))).toBe(true);
