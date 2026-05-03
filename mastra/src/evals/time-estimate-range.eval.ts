@@ -111,18 +111,46 @@ Course: WRIT 300: Advanced Academic Writing (Spring 2026)
   },
 ];
 
+const SCORER_ID = "time-estimate-range-scorer";
+
+type ScorerResult = { score?: number; analyzeStepResult?: { estimated?: number; groundTruth?: GroundTruth } };
+
 export async function runTimeEstimateRangeEval() {
   if (testData.length === 0) {
     console.log("  (no test cases — add items to testData to run this eval)");
     return { scores: {}, summary: { totalItems: 0 } };
   }
-  return runEvals({
+
+  const results: { passed: boolean; estimated: number | null; range: GroundTruth }[] = [];
+
+  const evalResult = await runEvals({
     data: testData,
     target: estimationAgent,
     scorers: [timeEstimateRangeScorer],
     onItemComplete: ({ item, scorerResults }) => {
-      console.log("  item input:", item.input);
-      console.log("  scores:", scorerResults);
+      const result = scorerResults[SCORER_ID] as ScorerResult | undefined;
+      const passed = (result?.score ?? 0) === 1;
+      const estimated = result?.analyzeStepResult?.estimated ?? null;
+      const range = item.groundTruth as GroundTruth;
+
+      results.push({ passed, estimated, range });
+
+      const inputStr = typeof item.input === "string" ? item.input : JSON.stringify(item.input);
+      const title = inputStr.match(/Title: (.+)/)?.[1] ?? inputStr.slice(0, 50);
+      if (passed) {
+        console.log(`    ✓  "${title}" — ${estimated} min in [${range.minMinutes}, ${range.maxMinutes}]  PASS`);
+      } else {
+        console.log(
+          `    ✗  "${title}" — got ${estimated ?? "(none)"} min, expected [${range.minMinutes}, ${range.maxMinutes}]  FAIL`
+        );
+      }
     },
   });
+
+  const passed = results.filter((r) => r.passed).length;
+  const total = results.length;
+  const pct = total > 0 ? Math.round((passed / total) * 100) : 0;
+  console.log(`  time-estimate-range: ${passed}/${total} passed (${pct}%)`);
+
+  return evalResult;
 }
