@@ -2,15 +2,13 @@ name: CD
 
 on:
   push:
-    branches: [master, cicd]
+    branches: [master]
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
-  group: "pages"
+  group: "deploy"
   cancel-in-progress: true
 
 jobs:
@@ -56,31 +54,23 @@ jobs:
         env:
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
 
+      - name: Set Convex MASTRA_SERVER_SECRET
+        run: npx convex env set MASTRA_SERVER_SECRET ${{ secrets.MASTRA_SERVER_SECRET }}
+        env:
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
+
       # Build frontend
-      - run: npm run build
+      - name: Build frontend
+        run: npm run build
         env:
           VITE_CONVEX_URL: ${{ secrets.VITE_CONVEX_URL }}
           VITE_CONVEX_SITE_URL: ${{ secrets.VITE_CONVEX_SITE_URL }}
 
-      # Copy index.html to 404.html so GitHub Pages serves the SPA for unknown routes
-      # (e.g. direct navigation to /dashboard). React Router then handles the path and
-      # the auth guard redirects unauthenticated users to the landing page.
-      - name: Create 404 fallback for SPA routing
-        run: cp frontend/dist/index.html frontend/dist/404.html
-
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: frontend/dist
-      
-      - name: Check VITE_CONVEX_URL secret
-        run: |
-          if [ -z "$VITE_CONVEX_URL" ]; then
-            echo "VITE_CONVEX_URL is empty or  unset"
-          else
-            echo "VITE_CONVEX_URL is set: $VITE_CONVEX_URL"
-          fi
+      - name: Deploy to Netlify
+        run: npx netlify-cli deploy --prod --dir frontend/dist
         env:
-          VITE_CONVEX_URL: ${{ secrets.VITE_CONVEX_URL }}
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
 
   deploy-mastra:
     runs-on: ubuntu-latest
@@ -114,15 +104,3 @@ jobs:
         run: npx convex env set MASTRA_URL ${{ secrets.MASTRA_URL }}
         env:
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-
-    environment:
-      name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}
-
-    steps:
-      - id: deploy
-        uses: actions/deploy-pages@v4
