@@ -591,8 +591,8 @@ export default function DashboardPage() {
                 aria-label="Sort tasks by"
                 className="rounded-lg border border-border bg-white px-2.5 py-1.5 text-xs font-semibold font-heading text-slate-blue cursor-pointer focus:outline-none focus:ring-2 focus:ring-sky-blue"
               >
-                <option value="newest">Newest added</option>
-                <option value="due_date">Soonest due</option>
+                <option value="newest">Date Added</option>
+                <option value="due_date">Due Date</option>
                 <option value="class">Class (A–Z)</option>
               </select>
             </div>
