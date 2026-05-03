@@ -304,7 +304,6 @@ export default function ClassCard({
             </div>
             {gradeError && <p className="font-body text-xs text-urgent-red">{gradeError}</p>}
             <div className="flex flex-col gap-1">
-              <span className="font-body text-xs text-light-blue">Difficulty</span>
               <DifficultyRating value={difficultyValue} onChange={handleDifficultyChange} />
               {difficultyError && (
                 <p className="font-body text-xs text-urgent-red">{difficultyError}</p>
