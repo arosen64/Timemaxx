@@ -20,7 +20,7 @@ function msg(
     role: "user" | "assistant";
     content: string;
     createdAt: number;
-  },
+  }
 ): TaggedMessageView {
   return {
     _id: ("m" + partial.createdAt) as Id<"chatMessages">,
@@ -38,7 +38,7 @@ describe("getLastUserMessage", () => {
       getLastUserMessage([
         msg({ role: "assistant", content: "hi", createdAt: 1 }),
         msg({ role: "assistant", content: "again", createdAt: 2 }),
-      ]),
+      ])
     ).toBeNull();
   });
 
@@ -60,7 +60,7 @@ describe("walkLatestTaggedTaskId", () => {
       walkLatestTaggedTaskId([
         msg({ role: "user", content: "hi", createdAt: 1 }),
         msg({ role: "assistant", content: "yo", createdAt: 2 }),
-      ]),
+      ])
     ).toBeUndefined();
   });
 
@@ -71,7 +71,7 @@ describe("walkLatestTaggedTaskId", () => {
         msg({ role: "assistant", content: "ack", createdAt: 2 }),
         msg({ role: "user", content: "second", createdAt: 3, taskId: taskB }),
         msg({ role: "assistant", content: "ack2", createdAt: 4 }),
-      ]),
+      ])
     ).toBe(taskB);
   });
 
@@ -81,7 +81,7 @@ describe("walkLatestTaggedTaskId", () => {
         msg({ role: "user", content: "tagged", createdAt: 1, taskId: taskA }),
         msg({ role: "assistant", content: "ack", createdAt: 2 }),
         msg({ role: "user", content: "untagged", createdAt: 3 }),
-      ]),
+      ])
     ).toBe(taskA);
   });
 });
@@ -89,9 +89,7 @@ describe("walkLatestTaggedTaskId", () => {
 describe("walkLatestTaggedCourseId", () => {
   test("returns undefined when no message has a courseId", () => {
     expect(
-      walkLatestTaggedCourseId([
-        msg({ role: "user", content: "hi", createdAt: 1 }),
-      ]),
+      walkLatestTaggedCourseId([msg({ role: "user", content: "hi", createdAt: 1 })])
     ).toBeUndefined();
   });
 
@@ -100,7 +98,7 @@ describe("walkLatestTaggedCourseId", () => {
       walkLatestTaggedCourseId([
         msg({ role: "user", content: "a", createdAt: 1, courseId: courseA }),
         msg({ role: "user", content: "b", createdAt: 2, courseId: courseB }),
-      ]),
+      ])
     ).toBe(courseB);
   });
 });
@@ -126,7 +124,7 @@ describe("collectUniqueTaggedIds", () => {
       collectUniqueTaggedIds([
         msg({ role: "user", content: "untagged", createdAt: 1 }),
         msg({ role: "assistant", content: "also untagged", createdAt: 2 }),
-      ]),
+      ])
     ).toEqual({ taskIds: [], courseIds: [] });
   });
 });
@@ -143,8 +141,8 @@ describe("shouldOfferTaskEntityMcq", () => {
       shouldOfferTaskEntityMcq(
         true,
         [msg({ role: "user", content: "x", createdAt: 1, taskId: taskA })],
-        "",
-      ),
+        ""
+      )
     ).toBe(false);
   });
 
@@ -160,9 +158,7 @@ describe("shouldOfferTaskEntityMcq", () => {
   });
 
   test("when latest user line has a task tag, does not offer MCQ", () => {
-    const history = [
-      msg({ role: "user", content: "delete it", createdAt: 1, taskId: taskA }),
-    ];
+    const history = [msg({ role: "user", content: "delete it", createdAt: 1, taskId: taskA })];
     expect(shouldOfferTaskEntityMcq(true, history, "delete it")).toBe(false);
   });
 
@@ -177,9 +173,7 @@ describe("shouldOfferTaskEntityMcq", () => {
   });
 
   test("ignores leading/trailing whitespace when matching against latest user line", () => {
-    const history = [
-      msg({ role: "user", content: "delete it", createdAt: 1 }),
-    ];
+    const history = [msg({ role: "user", content: "delete it", createdAt: 1 })];
     expect(shouldOfferTaskEntityMcq(true, history, "  delete it  ")).toBe(true);
   });
 });
@@ -190,9 +184,7 @@ describe("shouldOfferCourseEntityMcq", () => {
   });
 
   test("when message matches latest user line, uses its courseId", () => {
-    const history = [
-      msg({ role: "user", content: "drop it", createdAt: 1, courseId: courseA }),
-    ];
+    const history = [msg({ role: "user", content: "drop it", createdAt: 1, courseId: courseA })];
     expect(shouldOfferCourseEntityMcq(true, history, "drop it")).toBe(false);
   });
 
@@ -210,8 +202,8 @@ describe("shouldOfferCourseEntityMcq", () => {
       shouldOfferCourseEntityMcq(
         true,
         [msg({ role: "user", content: "x", createdAt: 1, courseId: courseA })],
-        "",
-      ),
+        ""
+      )
     ).toBe(false);
     expect(shouldOfferCourseEntityMcq(true, [], "")).toBe(true);
   });

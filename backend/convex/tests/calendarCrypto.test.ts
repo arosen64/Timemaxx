@@ -2,10 +2,8 @@ import { describe, expect, test } from "vitest";
 import { decryptToken, encryptToken } from "../lib/calendarCrypto";
 
 // 64-char hex (32 bytes) — matches `openssl rand -hex 32` output shape.
-const HEX_KEY_A =
-  "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
-const HEX_KEY_B =
-  "fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210";
+const HEX_KEY_A = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+const HEX_KEY_B = "fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210";
 
 describe("encryptToken / decryptToken", () => {
   test("round-trips a plaintext token", async () => {
@@ -66,14 +64,14 @@ describe("encryptToken / decryptToken", () => {
     ["empty key", ""],
   ])("encrypt rejects invalid key: %s", async (_label, badKey) => {
     await expect(encryptToken("anything", badKey)).rejects.toThrow(
-      /CALENDAR_TOKEN_SECRET must be exactly 64 hex characters/,
+      /CALENDAR_TOKEN_SECRET must be exactly 64 hex characters/
     );
   });
 
   test("decrypt rejects invalid key", async () => {
     const ciphertext = await encryptToken("hello", HEX_KEY_A);
     await expect(decryptToken(ciphertext, "not-hex")).rejects.toThrow(
-      /CALENDAR_TOKEN_SECRET must be exactly 64 hex characters/,
+      /CALENDAR_TOKEN_SECRET must be exactly 64 hex characters/
     );
   });
 

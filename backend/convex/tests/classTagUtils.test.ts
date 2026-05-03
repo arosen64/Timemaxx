@@ -10,7 +10,7 @@ import {
 describe("legacyNaiveClassTag", () => {
   test("concatenates trimmed code and title with separator", () => {
     expect(legacyNaiveClassTag(" EN.601.226 ", " Data Structures ")).toBe(
-      "EN.601.226: Data Structures",
+      "EN.601.226: Data Structures"
     );
   });
 });
@@ -22,39 +22,31 @@ describe("buildClassTag", () => {
   });
 
   test("appends title when no prefix overlap", () => {
-    expect(buildClassTag("EN.601.226", "Homework 3")).toBe(
-      "EN.601.226: Homework 3",
-    );
+    expect(buildClassTag("EN.601.226", "Homework 3")).toBe("EN.601.226: Homework 3");
   });
 
   test("strips a duplicated full-code prefix from the title", () => {
-    expect(buildClassTag("EN.601.226", "EN.601.226: Homework 3")).toBe(
-      "EN.601.226: Homework 3",
-    );
+    expect(buildClassTag("EN.601.226", "EN.601.226: Homework 3")).toBe("EN.601.226: Homework 3");
   });
 
   test("strips a duplicated prefix that uses the term-stripped code", () => {
-    expect(
-      buildClassTag("EN.601.226.SP25", "EN.601.226: Final Project"),
-    ).toBe("EN.601.226.SP25: Final Project");
+    expect(buildClassTag("EN.601.226.SP25", "EN.601.226: Final Project")).toBe(
+      "EN.601.226.SP25: Final Project"
+    );
   });
 
   test("prefix match is case-insensitive", () => {
-    expect(buildClassTag("EN.601.226", "en.601.226: Notes")).toBe(
-      "EN.601.226: Notes",
-    );
+    expect(buildClassTag("EN.601.226", "en.601.226: Notes")).toBe("EN.601.226: Notes");
   });
 
   test("does not strip an unrelated prefix that just contains a colon", () => {
     expect(buildClassTag("EN.601.226", "Reading: Chapter 4")).toBe(
-      "EN.601.226: Reading: Chapter 4",
+      "EN.601.226: Reading: Chapter 4"
     );
   });
 
   test("trims surrounding whitespace from inputs", () => {
-    expect(buildClassTag("  EN.601.226  ", "  Homework 3  ")).toBe(
-      "EN.601.226: Homework 3",
-    );
+    expect(buildClassTag("  EN.601.226  ", "  Homework 3  ")).toBe("EN.601.226: Homework 3");
   });
 });
 
