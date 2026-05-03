@@ -42,6 +42,6 @@ export function getCurrentTermOrdinal(date: Date): number {
 
 export function isPastTerm(termName: string): boolean {
   const termOrdinal = termToOrdinal(termName);
-  if (termOrdinal === null) return false;
+  if (termOrdinal === null) return true;
   return termOrdinal < getCurrentTermOrdinal(new Date());
 }
