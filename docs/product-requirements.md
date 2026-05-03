@@ -50,19 +50,21 @@ Without AI, it would be considerably more difficult to block off time work appro
   - Basic information about study habits and preferences (preferred work hours, highest productivity times, focus block length).
   - Transcript upload to identify strong and weak subject areas.
 - The system allows syllabi uploads and extracts relevant exams and assignment due dates. In case of failure, retries and manual text input are allowed.
-- Users can manually add, edit, or remove tasks and time estimates.
-- The system pulls the student’s availability from Google Calendar and schedules task-related time blocks and assignments in the in-app calendar, which is two-way synced with Google Calendar and Google Tasks.
-- An AI chatbot is available on the dashboard and can modify the schedule and update user habits based on input.
-- The system generates optimal time estimates for each task based on:
-  - Task type (problem set, essay, coding assignment, exam preparation).
+- Users can manually add, edit, or remove tasks, subtasks, and time estimates.
+- The system pulls the student’s availability from Google Calendar and schedules task-related time blocks in the in-app calendar; scheduled blocks are exported to Google Calendar (one-way sync).
+- An AI chatbot is available on the dashboard and can create, update, and delete tasks, courses, and study blocks, and update user habits based on input.
+- The system generates optimal time estimates for each task and subtask based on:
+  - Task type (problem set, essay, coding assignment, exam preparation, lab, reading, presentation, etc.).
   - Performance in prerequisite or related courses from transcript analysis.
-  - Course difficulty indicators (credit hours, level).
+  - Course difficulty indicators (credit hours, user-rated difficulty).
+  - Assignment weight (extracted from syllabus or set manually).
+  - Relevant past chat context retrieved via vector search.
 - The system provides finer task breakdowns for large assignments, homework, or midterm planning when sufficient information is provided.
 - Users can provide feedback on time estimates.
-- Manual time override is supported.
-- Users can designate missed study blocks.
+- Manual time and assignment-weight overrides are supported.
+- Users can mark study blocks as completed; the system reschedules conflicted or unfinished blocks on demand.
 - The system learns from edits to the plan and user feedback for future assignments.
-- The system provides a daily outline of time to spend on upcoming tasks.
+- The system provides a daily outline of time to spend on upcoming tasks (today's tasks panel and weekly stats).
 - Users can view a daily summary and upcoming deadlines in a centralized dashboard.
 - Users have a settings dashboard where they can modify their preferences.
 
@@ -77,10 +79,12 @@ Without AI, it would be considerably more difficult to block off time work appro
 #### Out of Scope (Won't Have)
 
 - Integration with non-Google calendar and task providers.
+- Two-way sync with Google Calendar (only one-way export from Timemaxx → Google Calendar is supported).
+- Google Tasks integration.
 - Native mobile apps (web-responsive design only).
 - Real-time collaboration features.
 - Grade prediction or GPA calculator.
-- Study assistance features.
+- Study assistance features (e.g., flashcards, practice quizzes).
 
 ### Non-Functional Requirements
 
@@ -116,17 +120,17 @@ Without AI, it would be considerably more difficult to block off time work appro
 
 ### Technology Stack
 
-- **Frontend:** React, Vite, TypeScript, TailwindCSS
-- **Backend:** TypeScript (Convex serverless functions)
-- **Database:** Convex
-- **Auth:** Google OAuth (via Convex Auth)
-- **AI Services:** Google Gemini, OpenAI (GPT-4o mini), Anthropic Claude (via Mastra)
-- **Agent Framework:** Mastra
+- **Frontend:** React, Vite, TypeScript, TailwindCSS, React Router
+- **Backend:** TypeScript (Convex serverless functions, Hono HTTP routes)
+- **Database:** Convex (with vector indexes for embeddings)
+- **Auth:** Google OAuth (via Convex Auth); dev-only anonymous provider
+- **AI Services:** Anthropic Claude via Mastra (chat agents, time estimation, syllabus / transcript parsing, schedule slot selection, academic-profile insights), Google Gemini (embeddings only — `gemini-embedding-001`), Mistral (`mistral-ocr-latest` for syllabus / transcript OCR)
+- **Agent Framework:** Mastra (multi-agent supervisor + specialists, deployed to Mastra Cloud)
 - **External:**
-  - Google Calendar API
-  - JHU SIS API
-- **Deployment:** GitHub Actions (CI/CD), GitHub Pages (frontend)
-- **Testing:** Vitest
+  - Google Calendar API (read availability + write study-block events)
+  - JHU SIS API (course catalog lookup)
+- **Deployment:** GitHub Actions (CI/CD) → Convex Cloud + GitHub Pages + Mastra Cloud; Netlify (iteration 4 frontend)
+- **Testing:** Vitest (backend + frontend), Playwright (end-to-end)
 
 ## Product Roadmap
 

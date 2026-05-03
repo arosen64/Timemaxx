@@ -4,9 +4,9 @@ This guide explains how to get a Google Gemini API key and configure it for loca
 
 ## Why This Is Needed
 
-The Gemini API is used by the **Convex backend** for task time estimation, syllabus parsing, transcript parsing, and course embeddings. Stored as `GEMINI_API_KEY` in your Convex deployment.
+The Gemini API is used by the **Convex backend** to generate **embeddings** for tasks, courses, and chat chunks (3072-dim `gemini-embedding-001` vectors that power vector search and RAG retrieval). Stored as `GEMINI_API_KEY` in your Convex deployment.
 
-> **Note:** The Mastra AI agent server uses the Anthropic API (not Gemini). See `guides/mastra-setup.md` for that setup.
+> **Note:** All other AI flows (task / subtask time estimation, syllabus parsing, transcript parsing, academic-profile insights, schedule slot selection, chat agents) now run through the Mastra agent server using Anthropic Claude. See `guides/mastra-setup.md` for that setup. Without `GEMINI_API_KEY`, embeddings will silently fail, which means vector search over chat history and similarity-based task/course retrieval won't work.
 
 ## Step 1: Get a Gemini API Key
 
@@ -32,4 +32,4 @@ npx convex env list
 ## Notes
 
 - Each developer has their own Convex dev deployment, so everyone must set `GEMINI_API_KEY` individually
-- If `GEMINI_API_KEY` is missing in Convex, task time estimation and embeddings will silently fail
+- If `GEMINI_API_KEY` is missing in Convex, embeddings will silently fail (vector search over chat history and task/course similarity retrieval will return nothing)
