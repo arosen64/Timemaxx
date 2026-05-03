@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react'
+import { screen, waitFor, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { renderWithProviders, makeMutationFn } from './utils'
 import ClassPanel from '../src/components/schedule/ClassPanel'
@@ -13,6 +13,7 @@ vi.mock('../../backend/convex/_generated/api', () => ({
     },
     mutations: {
       studyBlocks: { splitStudyBlock: 'splitStudyBlock' },
+      tasks: { updateRecommendedStart: 'updateRecommendedStart' },
     },
     functions: {
       scheduleBlock: { scheduleBlock: 'scheduleBlock' },
@@ -46,7 +47,8 @@ const COURSE = {
 const TASK = {
   _id: 'task1' as Id<'tasks'>,
   title: 'Homework 1',
-  dueDate: Date.now() + 86400000 * 3,
+  dueDate: Date.now() + 86400000 * 14,
+  recommendedStart: Date.now() + 86400000 * 2,
   status: 'not_started',
 }
 
@@ -419,5 +421,78 @@ describe('ClassPanel – past-due task filtering', () => {
     await user.click(screen.getByText('Algorithms'))
     expect(screen.queryByText('Overdue Assignment')).not.toBeInTheDocument()
     expect(screen.getByText('Homework 1')).toBeInTheDocument()
+  })
+})
+
+describe('ClassPanel – Suggested Start Date', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('shows the suggested start date in Level 2', async () => {
+    const user = userEvent.setup()
+    setupQueries()
+    setupActions()
+    await drillToTaskDetail(user)
+    expect(screen.getByText('SUGGESTED START')).toBeInTheDocument()
+  })
+
+  it('shows "Not set" when recommendedStart is undefined', async () => {
+    const user = userEvent.setup()
+    const taskWithoutStart = { ...TASK, recommendedStart: undefined }
+    setupQueries({ tasks: [taskWithoutStart] })
+    setupActions()
+    await drillToTaskDetail(user)
+    expect(screen.getByText('Not set')).toBeInTheDocument()
+  })
+
+  it('enters edit mode when the edit button is clicked', async () => {
+    const user = userEvent.setup()
+    setupQueries()
+    setupActions()
+    await drillToTaskDetail(user)
+    await user.click(screen.getByLabelText('Edit suggested start date'))
+    expect(screen.getByRole('button', { name: 'Save suggested start date' })).toBeInTheDocument()
+    expect(screen.getByText('Reset to default')).toBeInTheDocument()
+  })
+
+  it('calls updateRecommendedStart with the selected date when saved', async () => {
+    const updateMock = vi.fn().mockResolvedValue(undefined)
+    mockUseMutation.mockImplementation((ref: unknown) =>
+      ref === 'updateRecommendedStart' ? (updateMock as never) : (vi.fn().mockResolvedValue(undefined) as never)
+    )
+    const user = userEvent.setup()
+    setupQueries()
+    mockUseAction.mockImplementation(() => vi.fn().mockResolvedValue({ scheduled: 0, skipped: 0, conflicted: 0 }) as never)
+    await drillToTaskDetail(user)
+    await user.click(screen.getByLabelText('Edit suggested start date'))
+    const tomorrow = new Date(Date.now() + 86400000)
+    const iso = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(tomorrow.getDate()).padStart(2, '0')}`
+    fireEvent.change(screen.getByTestId('suggested-start-input'), { target: { value: iso } })
+    await user.click(screen.getByRole('button', { name: 'Save suggested start date' }))
+    const expectedMs = new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate()).getTime()
+    await waitFor(() =>
+      expect(updateMock).toHaveBeenCalledWith(
+        expect.objectContaining({ taskId: 'task1', recommendedStart: expectedMs })
+      )
+    )
+  })
+
+  it('calls updateRecommendedStart with null when "Reset to default" is clicked', async () => {
+    const updateMock = vi.fn().mockResolvedValue(undefined)
+    mockUseMutation.mockImplementation((ref: unknown) =>
+      ref === 'updateRecommendedStart' ? (updateMock as never) : (vi.fn().mockResolvedValue(undefined) as never)
+    )
+    const user = userEvent.setup()
+    setupQueries()
+    mockUseAction.mockImplementation(() => vi.fn().mockResolvedValue({ scheduled: 0, skipped: 0, conflicted: 0 }) as never)
+    await drillToTaskDetail(user)
+    await user.click(screen.getByLabelText('Edit suggested start date'))
+    await user.click(screen.getByText('Reset to default'))
+    await waitFor(() =>
+      expect(updateMock).toHaveBeenCalledWith(
+        expect.objectContaining({ taskId: 'task1', recommendedStart: null })
+      )
+    )
   })
 })

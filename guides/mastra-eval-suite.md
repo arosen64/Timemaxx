@@ -12,7 +12,7 @@ The eval suite lives in `mastra/src/evals/`. It uses [`@mastra/evals`](https://m
 | `supervisor-routing.eval.ts` | `supervisorAgent` | Trajectory accuracy, tool call accuracy |
 | `entity-clarification.eval.ts` | `supervisorAgent` | Answer similarity, completeness |
 | `time-estimate-range.eval.ts` | `estimationAgent` | Custom numeric range scorer |
-| `rag-retrieval.eval.ts` | `taskAgent` | Context relevance, faithfulness, hallucination, context precision |
+| `rag-retrieval.eval.ts` | `estimationAgent` | Context relevance & precision (chat RAG), keyword + LLM chats-trace grounding |
 | `academic-profile.eval.ts` | `academicProfileAgent` | Completeness, faithfulness, answer similarity |
 
 ## Prerequisites

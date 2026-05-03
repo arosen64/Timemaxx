@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { SpinnerIcon, SparklesIcon, PencilIcon, TrashIcon } from "../icons";
+import { SpinnerIcon, SparklesIcon, PencilIcon, TrashIcon, ChevronDownIcon } from "../icons";
 import { type SubtaskType, type TaskStatus, formatMinutes } from "./types";
 import { type Id } from "../../../../backend/convex/_generated/dataModel";
 import StatusDropdown from "./StatusDropdown";
@@ -29,6 +29,7 @@ export default function SubtaskCard({
   isReadOnly = false,
 }: SubtaskCardProps) {
   const [showReasoning, setShowReasoning] = useState(false);
+  const [showBlocks, setShowBlocks] = useState(false);
 
   const iconBtnCls =
     "flex items-center justify-center w-7 h-7 rounded-md border border-border bg-bg-gray text-slate-blue transition hover:bg-white hover:text-navy";
@@ -119,15 +120,37 @@ export default function SubtaskCard({
                 </button>
               </>
             )}
+            {blocks.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setShowBlocks((prev) => !prev)}
+                className="flex h-7 w-7 items-center justify-center rounded-md text-slate-blue transition hover:bg-bg-gray hover:text-navy"
+                aria-label={showBlocks ? "Hide study blocks" : "Show study blocks"}
+              >
+                <span
+                  className={`transition-transform duration-200 ${showBlocks ? "rotate-180" : ""}`}
+                >
+                  <ChevronDownIcon color="currentColor" size={14} />
+                </span>
+              </button>
+            )}
           </div>
         </div>
       </div>
 
       {blocks.length > 0 && (
-        <div className="flex flex-col gap-2 border-t border-border bg-bg-gray px-[18px] py-3 pl-[52px]">
-          {blocks.map((block) => (
-            <StudyBlockRow key={block._id} block={block} onToggle={onToggleBlock} />
-          ))}
+        <div
+          className={`grid transition-[grid-template-rows] duration-200 ${
+            showBlocks ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+          }`}
+        >
+          <div className="overflow-hidden">
+            <div className="flex flex-col gap-2 border-t border-border bg-bg-gray px-[18px] py-3 pl-[52px]">
+              {blocks.map((block) => (
+                <StudyBlockRow key={block._id} block={block} onToggle={onToggleBlock} />
+              ))}
+            </div>
+          </div>
         </div>
       )}
 

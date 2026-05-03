@@ -435,6 +435,20 @@ export function MenuIcon({ color = "currentColor", size = 20 }: { color?: string
   );
 }
 
+export function CheckIcon({
+  color = "currentColor",
+  size = 16,
+}: {
+  color?: string;
+  size?: number;
+}) {
+  return (
+    <IconBase color={color} size={size}>
+      <polyline points="20 6 9 17 4 12" />
+    </IconBase>
+  );
+}
+
 export function SplitIcon({
   color = "currentColor",
   size = 16,

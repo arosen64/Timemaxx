@@ -17,7 +17,9 @@ vi.mock('../../backend/convex/_generated/api', () => ({
       studyBlocks: {
         runDetectConflicts: 'runDetectConflicts',
         editStudyBlockTime: 'editStudyBlockTime',
+        splitStudyBlock: 'splitStudyBlock',
       },
+      tasks: { updateRecommendedStart: 'updateRecommendedStart' },
     },
     actions: {
       autoRescheduleConflicts: { autoRescheduleConflicts: 'autoRescheduleConflicts' },
