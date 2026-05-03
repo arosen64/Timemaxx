@@ -9,13 +9,13 @@
 **Description:** Improve time block estimation accuracy by incorporating the user's transcript summary and prior course performance. The system fetches prerequisite and same-department courses from SIS and userCourses, then includes grades and transcript context in the Gemini estimation prompt.
 
 - **Acceptance Criteria:**
-  - [ ] Time estimation prompt includes the user's transcript summary from the users table
-  - [ ] The system fetches prerequisite courses and same-department courses from SIS for the task's associated class
-  - [ ] Prior course performance (grades from userCourses) for prerequisites and related courses is included in the estimation prompt
-  - [ ] The extended prompt is sent to Gemini and returns an improved time estimate
-  - [ ] Time estimates are noticeably more personalized (e.g., a student weak in writing gets longer estimates for essay tasks)
-  - [ ] The system gracefully handles missing data (no transcript, no prereqs) by falling back to the existing estimation logic
-  - [ ] Estimation still completes within 30 seconds
+  - [x] Time estimation prompt includes the user's transcript summary from the users table
+  - [x] The system fetches prerequisite courses and same-department courses from SIS for the task's associated class
+  - [x] Prior course performance (grades from userCourses) for prerequisites and related courses is included in the estimation prompt
+  - [x] The extended prompt is sent to Gemini and returns an improved time estimate
+  - [x] Time estimates are noticeably more personalized (e.g., a student weak in writing gets longer estimates for essay tasks)
+  - [x] The system gracefully handles missing data (no transcript, no prereqs) by falling back to the existing estimation logic
+  - [x] Estimation still completes within 30 seconds
 
 ---
 
@@ -24,12 +24,12 @@
 **Description:** Enhance time estimation by retrieving relevant context from chatbot conversations via vector search. When a user reflects on tasks or study habits in the chatbot, that context is extracted and fed into the Gemini estimation prompt to improve accuracy.
 
 - **Acceptance Criteria:**
-  - [ ] Vector search is implemented over chatbot conversation history
-  - [ ] When generating a time estimate, the system queries chat history for context relevant to the task's class, type, or description
-  - [ ] Retrieved chatbot context is included in the Gemini estimation prompt alongside other signals
-  - [ ] The system gracefully handles missing chatbot history by falling back to estimation without chat context
-  - [ ] Relevance filtering ensures only meaningful context is included (not all chat messages)
-  - [ ] Estimation still completes within 30 seconds even with vector search overhead
+  - [x] Vector search is implemented over chatbot conversation history
+  - [x] When generating a time estimate, the system queries chat history for context relevant to the task's class, type, or description
+  - [x] Retrieved chatbot context is included in the Gemini estimation prompt alongside other signals
+  - [x] The system gracefully handles missing chatbot history by falling back to estimation without chat context
+  - [x] Relevance filtering ensures only meaningful context is included (not all chat messages)
+  - [x] Estimation still completes within 30 seconds even with vector search overhead
 
 ---
 
@@ -38,15 +38,15 @@
 **Description:** The system provides finer task breakdowns for large assignments, homework, or midterm planning when sufficient information is provided. Users can opt in to AI-generated subtasks, upload assignment descriptions, and manage parent/child task relationships.
 
 - **Acceptance Criteria:**
-  - [ ] A "Generate subtasks" checkbox is available on the task creation and editing forms
-  - [ ] When enabled, the system sends the task details to Gemini and returns a list of subtasks
-  - [ ] Subtasks are linked to a parent task via a `parentTaskId` field in the tasks table
-  - [ ] Subtasks appear nested under their parent task in the dashboard task list
-  - [ ] Users can upload PDF or TXT files of assignment descriptions to provide additional context for subtask generation
-  - [ ] If insufficient context is provided (e.g., title only, no description or file), the system displays an error requesting more information instead of generating low-quality subtasks
-  - [ ] Users can edit, delete, or add subtasks after generation
-  - [ ] Each subtask independently receives its own time estimate
-  - [ ] Deleting a parent task prompts whether to also delete its subtasks
+  - [x] A "Generate subtasks" checkbox is available on the task creation and editing forms
+  - [x] When enabled, the system sends the task details to Gemini and returns a list of subtasks
+  - [x] Subtasks are linked to a parent task via a `parentTaskId` field in the tasks table
+  - [x] Subtasks appear nested under their parent task in the dashboard task list
+  - [x] Users can upload PDF or TXT files of assignment descriptions to provide additional context for subtask generation
+  - [x] If insufficient context is provided (e.g., title only, no description or file), the system displays an error requesting more information instead of generating low-quality subtasks
+  - [x] Users can edit, delete, or add subtasks after generation
+  - [x] Each subtask independently receives its own time estimate
+  - [x] Deleting a parent task prompts whether to also delete its subtasks
 
 ---
 
@@ -55,14 +55,14 @@
 **Description:** An AI chatbot is present on the dashboard and can modify the schedule and update user habits based on input and feedback. The chatbot uses function calling to create, update, and delete tasks and preferences.
 
 - **Acceptance Criteria:**
-  - [ ] A chatbot interface is accessible from the dashboard (as a widget or separate tab)
-  - [ ] The chatbot can answer questions about the user's schedule, tasks, and study habits
-  - [ ] The chatbot supports function calling to create, update, and delete tasks
-  - [ ] The chatbot supports function calling to update user preferences (work hours, focus block length, etc.)
-  - [ ] Chatbot responses are contextual — they reference the user's actual tasks and schedule
-  - [ ] Conversation history is persisted per user across sessions
-  - [ ] The chatbot UI supports streaming responses for a responsive feel
-  - [ ] The chatbot is only accessible to authenticated users
+  - [x] A chatbot interface is accessible from the dashboard (as a widget or separate tab)
+  - [x] The chatbot can answer questions about the user's schedule, tasks, and study habits
+  - [x] The chatbot supports function calling to create, update, and delete tasks
+  - [x] The chatbot supports function calling to update user preferences (work hours, focus block length, etc.)
+  - [x] Chatbot responses are contextual — they reference the user's actual tasks and schedule
+  - [x] Conversation history is persisted per user across sessions
+  - [x] The chatbot UI supports streaming responses for a responsive feel
+  - [x] The chatbot is only accessible to authenticated users
 
 ---
 
@@ -71,16 +71,16 @@
 **Description:** Study blocks are automatically exported to the user's Google Calendar. OAuth scope is upgraded from `calendar.readonly` to `calendar.events` to enable write access. A sync action handles creating, updating, and deleting Google Calendar events when study blocks change.
 
 - **Acceptance Criteria:**
-  - [ ] OAuth scope is upgraded from `calendar.readonly` to `calendar.events`
-  - [ ] Existing users with a connected calendar are prompted to re-authenticate with the new scope
-  - [ ] A `googleEventId` field is added to the studyBlocks schema to track linked Google Calendar events
-  - [ ] When a study block is scheduled, a corresponding Google Calendar event is automatically created
-  - [ ] When a study block is updated (time change), the corresponding Google Calendar event is patched
-  - [ ] When a study block is deleted, the corresponding Google Calendar event is removed
-  - [ ] Cascade deletes from `deleteTask` also remove linked Google Calendar events
-  - [ ] A new `syncStudyBlockToCalendar` Convex action handles all create/update/delete sync operations
-  - [ ] Sync only applies to users with a connected calendar; others are unaffected
-  - [ ] No new packages are required — existing token storage and refresh logic is reused
+  - [x] OAuth scope is upgraded from `calendar.readonly` to `calendar.events`
+  - [x] Existing users with a connected calendar are prompted to re-authenticate with the new scope
+  - [x] A `googleEventId` field is added to the studyBlocks schema to track linked Google Calendar events
+  - [x] When a study block is scheduled, a corresponding Google Calendar event is automatically created
+  - [x] When a study block is updated (time change), the corresponding Google Calendar event is patched
+  - [x] When a study block is deleted, the corresponding Google Calendar event is removed
+  - [x] Cascade deletes from `deleteTask` also remove linked Google Calendar events
+  - [x] A new `syncStudyBlockToCalendar` Convex action handles all create/update/delete sync operations
+  - [x] Sync only applies to users with a connected calendar; others are unaffected
+  - [x] No new packages are required — existing token storage and refresh logic is reused
 
 ---
 
@@ -89,14 +89,14 @@
 **Description:** The schedule tab is redesigned to populate a local calendar view with study block time blocks, mimicking Google Calendar's UI. Time blocks are draggable, tasks are clickable with collapsible details, and both study blocks and imported Google Calendar events are displayed.
 
 - **Acceptance Criteria:**
-  - [ ] The schedule tab displays a calendar view populated with study block time blocks
-  - [ ] Time blocks are draggable in the calendar view (drag to reschedule)
-  - [ ] Dragging a time block updates the study block's start time in the database
-  - [ ] Tasks are clickable with collapsible time block details
-  - [ ] The calendar view displays both study blocks and imported Google Calendar events
-  - [ ] The UI closely mimics Google Calendar's layout and interaction patterns
-  - [ ] The calendar supports day and week views at minimum
-  - [ ] Time blocks are color-coded by class or task type for visual distinction
+  - [x] The schedule tab displays a calendar view populated with study block time blocks
+  - [x] Time blocks are draggable in the calendar view (drag to reschedule)
+  - [x] Dragging a time block updates the study block's start time in the database
+  - [x] Tasks are clickable with collapsible time block details
+  - [x] The calendar view displays both study blocks and imported Google Calendar events
+  - [x] The UI closely mimics Google Calendar's layout and interaction patterns
+  - [x] The calendar supports day and week views at minimum
+  - [x] Time blocks are color-coded by class or task type for visual distinction
 
 ---
 
@@ -107,25 +107,25 @@
 **Description:** Users can manually override AI-generated time estimates for any task.
 
 - **Acceptance Criteria:**
-  - [ ] Users can manually edit the time estimate field on any task (create and edit forms)
-  - [ ] Manual overrides replace the AI-generated estimate
-  - [ ] The UI clearly indicates when a time estimate has been manually overridden vs. AI-generated
-  - [ ] Manual overrides are persisted and do not get overwritten by subsequent AI re-estimations
-  - [ ] Study blocks are recalculated when a time estimate is manually changed
+  - [x] Users can manually edit the time estimate field on any task (create and edit forms)
+  - [x] Manual overrides replace the AI-generated estimate
+  - [x] The UI clearly indicates when a time estimate has been manually overridden vs. AI-generated
+  - [x] Manual overrides are persisted and do not get overwritten by subsequent AI re-estimations
+  - [x] Study blocks are recalculated when a time estimate is manually changed
 
 ### Prompt Injection Prevention
 
 **Description:** Harden the system against prompt injection attacks, particularly through chatbot input and any other user-provided text fields that are sent to Gemini.
 
 - **Acceptance Criteria:**
-  - [ ] All user-provided text sent to Gemini is sanitized to prevent prompt injection
-  - [ ] Chatbot input is validated and sanitized before being included in any LLM prompt
-  - [ ] Input length limits are enforced on all text fields sent to Gemini
-  - [ ] The system uses structured prompt templates that clearly separate system instructions from user input
-  - [ ] Gemini responses are validated before being used to modify tasks, preferences, or other data
-  - [ ] Attempted injection patterns are logged for monitoring
-  - [ ] Existing Gemini actions (time estimation, syllabus parsing, transcript parsing) are audited and hardened
-  - [ ] Tests are added for common injection patterns (instruction override, role hijacking, data exfiltration attempts)
+  - [x] All user-provided text sent to Gemini is sanitized to prevent prompt injection
+  - [x] Chatbot input is validated and sanitized before being included in any LLM prompt
+  - [x] Input length limits are enforced on all text fields sent to Gemini
+  - [x] The system uses structured prompt templates that clearly separate system instructions from user input
+  - [x] Gemini responses are validated before being used to modify tasks, preferences, or other data
+  - [ ] Attempted injection patterns are logged for monitoring — sanitizer replaces matches with `[FILTERED]` but does not emit a separate log/metric of detected attempts
+  - [x] Existing Gemini actions (time estimation, syllabus parsing, transcript parsing) are audited and hardened
+  - [x] Tests are added for common injection patterns (instruction override, role hijacking, data exfiltration attempts)
 
 ---
 
