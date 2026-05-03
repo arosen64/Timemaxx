@@ -28,7 +28,9 @@ import { buildClassTag } from "../utils/classTagUtils";
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 
-export function applySortKey(tasks: TaskType[], key: "newest" | "due_date" | "class"): TaskType[] {
+export type SortKey = "newest" | "due_date" | "class";
+
+export function applySortKey(tasks: TaskType[], key: SortKey): TaskType[] {
   const sorted = [...tasks];
   if (key === "due_date") {
     sorted.sort((a, b) => a.dueDate - b.dueDate);
@@ -134,7 +136,7 @@ export default function DashboardPage() {
   }, [userCourses]);
 
   const [activeTab, setActiveTab] = useState<"active" | "completed">("active");
-  const [sortKey, setSortKey] = useState<"newest" | "due_date" | "class">("newest");
+  const [sortKey, setSortKey] = useState<SortKey>("newest");
 
   const activeTasks = useMemo(
     () => taskRows.filter((t) => (t.status ?? "not_started") !== "completed"),
@@ -585,7 +587,8 @@ export default function DashboardPage() {
               </div>
               <select
                 value={sortKey}
-                onChange={(e) => setSortKey(e.target.value as typeof sortKey)}
+                onChange={(e) => setSortKey(e.target.value as SortKey)}
+                aria-label="Sort tasks by"
                 className="rounded-lg border border-border bg-white px-2.5 py-1.5 text-xs font-semibold font-heading text-slate-blue cursor-pointer focus:outline-none focus:ring-2 focus:ring-sky-blue"
               >
                 <option value="newest">Newest added</option>

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useQuery, useAction, useMutation } from "convex/react";
 import { api } from "../../../../backend/convex/_generated/api";
 import type { Id } from "../../../../backend/convex/_generated/dataModel";
@@ -12,18 +12,9 @@ import {
   CheckIcon,
 } from "../icons";
 import { isCurrentTerm } from "../../utils/termUtils";
+import { toLocalISODate, localDateInputToMs } from "../../utils/dateUtils";
 
 const OTHER_COURSE_KEY = "__none__";
-
-function toLocalISODate(ms: number): string {
-  const d = new Date(ms);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
-
-function localDateInputToMs(iso: string): number {
-  const [y, m, d] = iso.split("-").map(Number);
-  return new Date(y, m - 1, d).getTime();
-}
 
 type StudyBlockInPanel = {
   _id: Id<"studyBlocks">;
@@ -318,7 +309,7 @@ export default function ClassPanel({
     }
   }
 
-  React.useEffect(() => {
+  useEffect(() => {
     setIsEditingStart(false);
     setStartDateInput("");
     setStartDateError(null);
@@ -529,8 +520,9 @@ export default function ClassPanel({
                   <button
                     type="button"
                     onClick={openStartEdit}
+                    disabled={Date.now() >= selectedTask.dueDate}
                     aria-label="Edit suggested start date"
-                    className="flex items-center gap-1 text-[11px] font-medium text-navy hover:text-teal"
+                    className="flex items-center gap-1 text-[11px] font-medium text-navy hover:text-teal disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     <span>
                       {selectedTask.recommendedStart !== undefined
@@ -552,9 +544,16 @@ export default function ClassPanel({
                   <div className="flex items-center gap-1.5">
                     <input
                       type="date"
+                      data-testid="suggested-start-input"
                       value={startDateInput}
-                      min={toLocalISODate(Date.now())}
-                      max={toLocalISODate(selectedTask.dueDate - 86_400_000)}
+                      min={toLocalISODate(Date.now() - 86_400_000)}
+                      max={toLocalISODate(
+                        new Date(
+                          new Date(selectedTask.dueDate).getFullYear(),
+                          new Date(selectedTask.dueDate).getMonth(),
+                          new Date(selectedTask.dueDate).getDate() - 1,
+                        ).getTime()
+                      )}
                       onChange={(e) => {
                         setStartDateInput(e.target.value);
                         setStartDateError(null);

@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react'
+import { screen, waitFor, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { renderWithProviders, makeMutationFn } from './utils'
 import ClassPanel from '../src/components/schedule/ClassPanel'
@@ -439,31 +439,33 @@ describe('ClassPanel – Suggested Start Date', () => {
 
   it('calls updateRecommendedStart with the selected date when saved', async () => {
     const updateMock = vi.fn().mockResolvedValue(undefined)
-    mockUseMutation.mockReturnValue(updateMock as never)
+    mockUseMutation.mockImplementation((ref: unknown) =>
+      ref === 'updateRecommendedStart' ? (updateMock as never) : (vi.fn().mockResolvedValue(undefined) as never)
+    )
     const user = userEvent.setup()
     setupQueries()
     mockUseAction.mockImplementation(() => vi.fn().mockResolvedValue({ scheduled: 0, skipped: 0, conflicted: 0 }) as never)
     await drillToTaskDetail(user)
     await user.click(screen.getByLabelText('Edit suggested start date'))
-    const input = screen.getByDisplayValue(/\d{4}-\d{2}-\d{2}/)
     const tomorrow = new Date(Date.now() + 86400000)
     const iso = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(tomorrow.getDate()).padStart(2, '0')}`
-    await user.clear(input)
-    await user.type(input, iso)
+    fireEvent.change(screen.getByTestId('suggested-start-input'), { target: { value: iso } })
     await user.click(screen.getByRole('button', { name: 'Save suggested start date' }))
+    const expectedMs = new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate()).getTime()
     await waitFor(() =>
       expect(updateMock).toHaveBeenCalledWith(
-        expect.objectContaining({ taskId: 'task1', recommendedStart: expect.any(Number) })
+        expect.objectContaining({ taskId: 'task1', recommendedStart: expectedMs })
       )
     )
   })
 
   it('calls updateRecommendedStart with null when "Reset to default" is clicked', async () => {
     const updateMock = vi.fn().mockResolvedValue(undefined)
-    mockUseMutation.mockReturnValue(updateMock as never)
+    mockUseMutation.mockImplementation((ref: unknown) =>
+      ref === 'updateRecommendedStart' ? (updateMock as never) : (vi.fn().mockResolvedValue(undefined) as never)
+    )
     const user = userEvent.setup()
     setupQueries()
-    // Do not call setupActions so updateMock stays active
     mockUseAction.mockImplementation(() => vi.fn().mockResolvedValue({ scheduled: 0, skipped: 0, conflicted: 0 }) as never)
     await drillToTaskDetail(user)
     await user.click(screen.getByLabelText('Edit suggested start date'))
