@@ -111,18 +111,15 @@ const TABLE_FIELD_SPEC: Record<
   users: [
     ["name", { type: "string" }, true],
     ["email", { type: "string" }, true],
-    ["phone", { type: "string" }, true],
     ["image", { type: "string" }, true],
     ["emailVerificationTime", { type: "number" }, true],
-    ["phoneVerificationTime", { type: "number" }, true],
     ["isAnonymous", { type: "boolean" }, true],
     ["onboardingComplete", { type: "boolean" }, true],
     ["focusBlockLength", { type: "number" }, true],
     ["major", { type: "string" }, true],
-    ["year", { type: "string" }, true],
-    ["courses", { type: "array" }, true],
+    ["year", { type: "union" }, true],
     ["workHoursGrid", { type: "array" }, true],
-    ["productivityTraits", { type: "any" }, true],
+    ["productivityTraits", { type: "object" }, true],
     ["transcriptSummary", { type: "array" }, true],
     ["gcalColorMappingEnabled", { type: "boolean" }, true],
   ],
@@ -156,7 +153,7 @@ const TABLE_FIELD_SPEC: Record<
     ["classTag", { type: "string" }, true],
     ["embedding", { type: "array" }, true],
     ["reasoning", { type: "object" }, true],
-    ["status", { type: "union" }, true],
+    ["status", { type: "union" }, false],
     ["assignmentWeight", { type: "number" }, true],
     ["recommendedStart", { type: "number" }, true],
   ],
@@ -179,23 +176,23 @@ const TABLE_FIELD_SPEC: Record<
     ["order", { type: "number" }, false],
     ["createdAt", { type: "number" }, false],
     ["embedding", { type: "array" }, true],
-    ["status", { type: "union" }, true],
+    ["status", { type: "union" }, false],
   ],
   studyBlocks: [
     ["taskId", { type: "id", tableName: "tasks" }, true],
     ["subtaskId", { type: "id", tableName: "subtasks" }, true],
-    ["userId", { type: "id", tableName: "users" }, true],
+    ["userId", { type: "id", tableName: "users" }, false],
     ["title", { type: "string" }, false],
     ["startTime", { type: "string" }, true],
     ["studyBlockLength", { type: "number" }, false],
-    ["isConflicted", { type: "boolean" }, true],
+    ["isConflicted", { type: "boolean" }, false],
     ["googleEventId", { type: "string" }, true],
     ["needsExport", { type: "boolean" }, true],
     ["isCompleted", { type: "boolean" }, false],
   ],
   chatMessages: [
     ["userId", { type: "id", tableName: "users" }, false],
-    ["sessionId", { type: "string" }, true],
+    ["sessionId", { type: "string" }, false],
     ["role", { type: "union" }, false],
     ["content", { type: "string" }, false],
     ["createdAt", { type: "number" }, false],
@@ -252,7 +249,6 @@ const TABLE_INDEX_SPEC: Record<string, IndexEntry[]> = {
   ],
   users: [
     { indexDescriptor: "email", fields: ["email"] },
-    { indexDescriptor: "phone", fields: ["phone"] },
   ],
   userCourses: [
     { indexDescriptor: "by_user", fields: ["userId"] },
@@ -535,19 +531,35 @@ describe("schema – validator-level constraints (unions / literals / ids)", () 
     }
   });
 
-  test("users.courses is array<{title, studyGoal}> when present", () => {
-    const field = getField("users", "courses");
-    expect(field.fieldType.type).toBe("array");
-    const arr = field.fieldType as Extract<FieldType, { type: "array" }>;
-    expect(arr.value.type).toBe("object");
-    const elemFields = (arr.value as Extract<FieldType, { type: "object" }>)
+  test("users.year covers Freshman/Sophomore/Junior/Senior/Graduate", () => {
+    const field = getField("users", "year");
+    expect(field.fieldType.type).toBe("union");
+    const members = (field.fieldType as Extract<FieldType, { type: "union" }>)
       .value;
-    expect(new Set(Object.keys(elemFields))).toEqual(
-      new Set(["title", "studyGoal"]),
+    expect(new Set(members.map((m) => (m as any).value))).toEqual(
+      new Set(["Freshman", "Sophomore", "Junior", "Senior", "Graduate"]),
     );
   });
 
-  test("users.workHoursGrid is array<{day, blocked: number[]}>", () => {
+  test("users.productivityTraits is an object of optional string-array fields", () => {
+    const field = getField("users", "productivityTraits");
+    expect(field.fieldType.type).toBe("object");
+    const obj = field.fieldType as Extract<FieldType, { type: "object" }>;
+    expect(new Set(Object.keys(obj.value))).toEqual(
+      new Set([
+        "timeOfDay",
+        "dayOfWeek",
+        "workSessionStyle",
+        "deadlineBehavior",
+      ]),
+    );
+    for (const key of Object.keys(obj.value)) {
+      expect(obj.value[key].optional, `${key} should be optional`).toBe(true);
+      expect(obj.value[key].fieldType.type).toBe("array");
+    }
+  });
+
+  test("users.workHoursGrid is array<{day: DayOfWeek union, blocked: number[]}>", () => {
     const field = getField("users", "workHoursGrid");
     expect(field.fieldType.type).toBe("array");
     const arr = field.fieldType as Extract<FieldType, { type: "array" }>;
@@ -556,6 +568,21 @@ describe("schema – validator-level constraints (unions / literals / ids)", () 
       .value;
     expect(new Set(Object.keys(elemFields))).toEqual(
       new Set(["day", "blocked"]),
+    );
+    expect(elemFields.day.fieldType.type).toBe("union");
+    const dayMembers = (
+      elemFields.day.fieldType as Extract<FieldType, { type: "union" }>
+    ).value;
+    expect(new Set(dayMembers.map((m) => (m as any).value))).toEqual(
+      new Set([
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday",
+      ]),
     );
     expect(elemFields.blocked.fieldType.type).toBe("array");
   });
@@ -663,6 +690,7 @@ describe("schema – runtime insert validation", () => {
           taskType: "Essay",
           dueDate: Date.now() + 86_400_000,
           createdAt: Date.now(),
+          status: "not_started",
         } as any),
       ),
     ).rejects.toThrow();
@@ -681,6 +709,26 @@ describe("schema – runtime insert validation", () => {
           taskType: "Essay",
           // dueDate intentionally omitted
           createdAt: Date.now(),
+          status: "not_started",
+        } as any),
+      ),
+    ).rejects.toThrow();
+  });
+
+  test("inserting a task missing the required `status` field is rejected", async () => {
+    const t = makeTestCtx();
+    const { userId } = await createTestUser(t);
+
+    await expect(
+      t.run((ctx) =>
+        ctx.db.insert("tasks", {
+          userId,
+          title: "T",
+          description: "desc",
+          taskType: "Essay",
+          dueDate: Date.now() + 86_400_000,
+          createdAt: Date.now(),
+          // status intentionally omitted
         } as any),
       ),
     ).rejects.toThrow();
@@ -699,6 +747,7 @@ describe("schema – runtime insert validation", () => {
           taskType: "Essay",
           dueDate: Date.now() + 86_400_000,
           createdAt: Date.now(),
+          status: "not_started",
           someBogusField: "nope",
         } as any),
       ),
@@ -719,6 +768,7 @@ describe("schema – runtime insert validation", () => {
           // dueDate must be number, not string
           dueDate: "tomorrow" as unknown as number,
           createdAt: Date.now(),
+          status: "not_started",
         } as any),
       ),
     ).rejects.toThrow();
