@@ -6,7 +6,7 @@
 
 ### R1: Google Authentication
 
-**Description:** User can sign in to Timemaxx using their Google account via Google OAuth. New users are redirected to onboarding; returning users go to the dashboard.
+**Description:** Users can sign in to Timemaxx using their Google account via Google OAuth. New users are redirected to onboarding; returning users go to the dashboard.
 
 - **Acceptance Criteria:**
   - [ ] A "Sign in with Google" button is present on the landing/login page
