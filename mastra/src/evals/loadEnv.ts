@@ -6,5 +6,5 @@ import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const mastraDir = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
-config({ path: resolve(mastraDir, ".env") });
-config({ path: resolve(mastraDir, ".env.local"), override: true });
+config({ path: resolve(mastraDir, ".env"), quiet: true });
+config({ path: resolve(mastraDir, ".env.local"), override: true, quiet: true });

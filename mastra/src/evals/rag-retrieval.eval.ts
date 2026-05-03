@@ -53,7 +53,10 @@ function parseEstimationOutput(
     : String(output).trim();
 
   try {
-    return JSON.parse(text) as { estimatedMinutes?: number; reasoningTrace?: Record<string, string> };
+    return JSON.parse(text) as {
+      estimatedMinutes?: number;
+      reasoningTrace?: Record<string, string>;
+    };
   } catch {
     const match = text.match(/\{[\s\S]*\}/);
     if (!match) return null;
@@ -123,7 +126,9 @@ const ragChatGroundingScorer = createScorer({
     const chatsTrace = parsed?.reasoningTrace?.chats?.toLowerCase() ?? "";
     if (!chatsTrace) return { score: 0 };
 
-    const hasAnyRequired = gt.requiredAny.some((needle) => chatsTrace.includes(needle.toLowerCase()));
+    const hasAnyRequired = gt.requiredAny.some((needle) =>
+      chatsTrace.includes(needle.toLowerCase())
+    );
     const hasAllRequired = (gt.requiredAll ?? []).every((needle) =>
       chatsTrace.includes(needle.toLowerCase())
     );
