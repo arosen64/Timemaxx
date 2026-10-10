@@ -6,5 +6,5 @@ export const syllabusAgent = new Agent({
   id: "syllabus-agent",
   name: "Syllabus Parser Agent",
   instructions: SYLLABUS_SYSTEM,
-  model: anthropic("claude-sonnet-4-20250514"),
+  model: anthropic("claude-sonnet-4-6"),
 });

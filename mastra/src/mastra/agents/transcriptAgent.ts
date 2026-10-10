@@ -6,5 +6,5 @@ export const transcriptAgent = new Agent({
   id: "transcript-agent",
   name: "Transcript Parser Agent",
   instructions: TRANSCRIPT_SYSTEM,
-  model: anthropic("claude-sonnet-4-20250514"),
+  model: anthropic("claude-sonnet-4-6"),
 });

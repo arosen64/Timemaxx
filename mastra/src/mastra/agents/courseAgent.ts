@@ -9,5 +9,5 @@ export const courseAgent = new Agent({
   id: "course-agent",
   name: "Maxx Course Agent",
   instructions: COURSE_AGENT_SYSTEM,
-  model: anthropic("claude-sonnet-4-20250514"),
+  model: anthropic("claude-sonnet-4-6"),
 });

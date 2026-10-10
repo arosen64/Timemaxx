@@ -5,8 +5,9 @@ import { dirname, resolve } from 'path'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
-export default defineConfig({
-  base: '/',
+// Production builds are served from GitHub Pages at /Timemaxx/
+export default defineConfig(({ command }) => ({
+  base: command === 'build' ? '/Timemaxx/' : '/',
   plugins: [react()],
   envDir: resolve(__dirname, '..'),
   server: {
@@ -14,4 +15,4 @@ export default defineConfig({
       allow: [resolve(__dirname, '..')],
     },
   },
-})
+}))
