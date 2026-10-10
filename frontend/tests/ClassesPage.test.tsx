@@ -2,6 +2,7 @@ import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { renderWithProviders, makeMutationFn } from './utils'
 import ClassesPage from '../src/pages/ClassesPage'
+import { getCurrentTerm } from '../src/utils/termUtils'
 import type { Course } from '../src/types'
 
 vi.mock('../../backend/convex/_generated/api', () => ({
@@ -50,11 +51,17 @@ import { api } from '../../backend/convex/_generated/api'
 const mockUseQuery = vi.mocked(useQuery)
 const mockUseMutation = vi.mocked(useMutation)
 
+// Derive from today so the fixture stays in the "current term" as the calendar advances
+const CURRENT_TERM = (() => {
+  const { season, year } = getCurrentTerm(new Date())
+  return `${season} ${year}`
+})()
+
 const MOCK_CURRENT_COURSE = {
   _id: 'course1',
   courseCode: 'EN.601.421',
   title: 'Object-Oriented Software Engineering',
-  term: 'Spring 2026',
+  term: CURRENT_TERM,
   grade: undefined,
 }
 
