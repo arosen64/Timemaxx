@@ -1,0 +1,54 @@
+# Dependencies
+node_modules/
+
+# Test coverage (HTML + lcov)
+coverage
+
+# Playwright (E2E)
+/playwright-report/
+/test-results/
+/playwright/.cache/
+
+# Build output
+dist
+dist-ssr
+*.tsbuildinfo
+vite.config.js
+vite.config.d.ts
+
+# Environment variables
+.env
+.env.*
+!.env.example
+!**/.env.example
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS files
+Thumbs.db
+
+# Claude Code local settings
+.claude/settings.local.json
+
+#openspec
+opsx
+openspec*
+opsx*
+
+# Mastra generated files
+.mastra/
+# Mastra
+mastra/.mastra
+
+# Local Netlify folder
+.netlify

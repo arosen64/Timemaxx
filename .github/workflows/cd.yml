@@ -1,0 +1,106 @@
+name: CD
+
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: "deploy"
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - run: npm ci
+
+      # Install Convex CLI
+      - name: Install Convex
+        run: npm install -g convex
+
+      # Deploy backend to production
+      - name: Deploy Convex backend
+        run: npx convex deploy
+        env:
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
+
+      # Set SITE_URL so Convex Auth redirects back to the deployed frontend after OAuth
+      - name: Set Convex SITE_URL
+        run: npx convex env set SITE_URL ${{ secrets.SITE_URL }}
+        env:
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
+
+      # Set a stable production calendar token secret.
+      # Do NOT generate a new random secret on each deploy.
+      - name: Set Convex CALENDAR_TOKEN_SECRET
+        run: npx convex env set CALENDAR_TOKEN_SECRET ${{ secrets.CALENDAR_TOKEN_SECRET }}
+        env:
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
+
+      # Set the production SIS API key from GitHub secrets.
+      - name: Set Convex JHU_SIS_API_KEY
+        run: npx convex env set JHU_SIS_API_KEY ${{ secrets.JHU_SIS_API_KEY }}
+        env:
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
+
+      - name: Set Convex MASTRA_SERVER_SECRET
+        run: npx convex env set MASTRA_SERVER_SECRET ${{ secrets.MASTRA_SERVER_SECRET }}
+        env:
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
+
+      # Build frontend
+      - name: Build frontend
+        run: npm run build
+        env:
+          VITE_CONVEX_URL: ${{ secrets.VITE_CONVEX_URL }}
+          VITE_CONVEX_SITE_URL: ${{ secrets.VITE_CONVEX_SITE_URL }}
+
+      - name: Deploy to Netlify
+        run: npx netlify-cli deploy --prod --dir frontend/dist
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+
+  deploy-mastra:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: mastra/package-lock.json
+
+      - name: Install Mastra dependencies
+        run: npm ci
+        working-directory: mastra
+
+      - name: Build Mastra
+        run: npx mastra build --dir src/mastra
+        working-directory: mastra
+
+      - name: Deploy to Mastra Cloud
+        run: npx mastra server deploy -y
+        working-directory: mastra
+        env:
+          MASTRA_API_TOKEN: ${{ secrets.MASTRA_API_TOKEN }}
+          MASTRA_ORG_ID: ${{ secrets.MASTRA_ORG_ID }}
+          MASTRA_PROJECT_ID: ${{ secrets.MASTRA_PROJECT_ID }}
+
+      - name: Set Convex MASTRA_URL
+        run: npx convex env set MASTRA_URL ${{ secrets.MASTRA_URL }}
+        env:
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
